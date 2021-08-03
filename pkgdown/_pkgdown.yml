@@ -1,0 +1,30 @@
+templates:
+  params:
+    bootswatch: flatly
+# cosmo, flatly, united, sandstone all look reasonable
+reference:
+- title: "Fragment I/O"
+  desc: "Functions for reading & writing fragment objects"
+- contents:
+  - matches("(open|write)_.*_fragments")
+- title: "Fragment Transformers"
+  desc: "Functions for transforming fragment objects"
+- contents:
+  - shift_fragments
+  - select_chromosomes
+  - select_cells
+- title: "Fragment Utils"
+  desc: "Other fragment utilities"
+- contents:
+  - IterableFragments-methods
+  - nucleosome_counts
+  - scan_fragments
+  - RawFragments
+- title: "Matrices"
+- contents:
+  - IterableMatrix-methods
+  - overlapMatrix
+- title: "ATAC Analysis Utilities"
+- contents:
+  - getFootprints
+

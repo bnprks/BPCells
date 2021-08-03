@@ -1,0 +1,5 @@
+docs
+man
+*.o
+*.so
+*.o.tmp

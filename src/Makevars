@@ -1,0 +1,24 @@
+#CXX_STD = CXX11
+PKG_CXXFLAGS = -march=native -std=c++11 -DEIGEN_PERMANENTLY_DISABLE_STUPID_WARNINGS -Wno-ignored-attributes
+PKG_LIBS = -lz
+
+OBJECTS=\
+fragment_io.o \
+fragment_utils.o \
+matrix_utils.o \
+matrix_transform.o \
+r_wrapper.o \
+RcppExports.o \
+bitpacking/bp128.o \
+bitpacking/simd_vec.o \
+bitpacking/packing_utils.o \
+fragmentIterators/BedFragments.o \
+fragmentIterators/CellSelect.o \
+fragmentIterators/ChrSelect.o \
+fragmentIterators/FragmentsIterator.o \
+fragmentIterators/InsertionsIterator.o \
+fragmentIterators/PackedFragments.o \
+fragmentIterators/ShiftCoords.o \
+fragmentIterators/UnpackedFragments.o \
+matrixIterators/MatrixOps.o \
+matrixTransforms/MatrixStats.o

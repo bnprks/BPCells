@@ -1,0 +1,340 @@
+
+#' IterableMatrix methods
+#'
+#' Methods for IterableMatrix objects
+#'
+#' @name IterableMatrix-methods
+#' @rdname IterableMatrix-methods
+NULL
+
+setClass("IterableMatrix", 
+    slots = c(
+        dim = "integer",
+        transpose = "logical"
+    ),
+    prototype = list(
+        dim = integer(2),
+        transpose = FALSE
+    )
+)
+
+setGeneric("iterate_matrix", function(x) standardGeneric("iterate_matrix"))
+setMethod("iterate_matrix", "externalptr", function(x) { return (x)} )
+
+setMethod("short_description", "IterableMatrix", function(x) {
+    character(0)
+})
+
+
+#' @describeIn IterableMatrix-methods Display an IterableMatrix
+#' @param object IterableMatrix object
+setMethod("show", "IterableMatrix", function(object) {
+    cat(sprintf("%d x %d IterableMatrix object with class %s\n", nrow(object), ncol(object), class(object)))
+
+    cat("\n")
+    description <- short_description(object)
+    if (length(description) > 0) cat("Queued Operations:\n")
+    for (i in seq_along(description)) {
+        cat(sprintf("%d. %s\n", i, description[i]))
+    }
+})
+
+
+#' @describeIn IterableMatrix-methods Transpose an IterableMatrix
+#' @param x IterableMatrix object
+#' @return * `t()` Transposed object
+setMethod("t", signature(x = "IterableMatrix"), function (x) {
+    x@transpose <- !x@transpose
+    x@dim <- c(x@dim[2L], x@dim[1L])
+    return(x)
+})
+
+
+setClass("mat_uint32_t",
+    contains = "IterableMatrix"
+)
+setClass("mat_double",
+    contains = "IterableMatrix"
+)
+
+# Dense multiply operators (sparse*dense_mat and sparse*dense_vec)
+
+#' @param x IterableMatrix object
+#' @param y matrix
+#' @describeIn IterableMatrix-methods Multiply by a dense matrix
+#' @return * `x %*% y`: dense matrix result
+setMethod("%*%", signature(x="mat_double", y="matrix"), function(x, y) {
+    iter <- iterate_matrix(x)
+    if(x@transpose) {
+        return(t(dense_multiply_left_cpp(iter, t(y))))
+    } else {
+        return(dense_multiply_right_cpp(iter, y))
+    }
+})
+
+setMethod("%*%", signature(x="matrix", y="mat_double"), function(x, y) {
+    iter <- iterate_matrix(y)
+    if(y@transpose) {
+        return(t(dense_multiply_right_cpp(iter, t(x))))
+    } else {
+        return(dense_multiply_left_cpp(iter, x))
+    }
+})
+
+setMethod("%*%", signature(x="mat_double", y="numeric"), function(x, y) {
+    iter <- iterate_matrix(x)
+    if(x@transpose) {
+        return(vec_multiply_left_cpp(iter, y))
+    } else {
+        return(vec_multiply_right_cpp(iter, y))
+    }
+})
+
+setMethod("%*%", signature(x="numeric", y="mat_double"), function(x, y) {
+    iter <- iterate_matrix(y)
+    if(y@transpose) {
+        return(vec_multiply_right_cpp(iter, x))
+    } else {
+        return(vec_multiply_left_cpp(iter, x))
+    }
+})
+
+setMethod("%*%", signature(x="mat_uint32_t", y="matrix"), function(x, y) as(x, "mat_double") %*% y)
+setMethod("%*%", signature(x="matrix", y="mat_uint32_t"), function(x, y) x %*% as(y, "mat_double"))
+setMethod("%*%", signature(x="mat_uint32_t", y="numeric"), function(x, y) as(x, "mat_double") %*% y)
+setMethod("%*%", signature(x="numeric", y="mat_uint32_t"), function(x, y) x %*% as(y, "mat_double"))
+
+# Row sums and row means
+
+#' @param x IterableMatrix object
+#' @describeIn IterableMatrix-methods Calculate rowSums
+#' @return * `rowSums()`: vector of row sums
+setMethod("rowSums", signature(x="mat_double"), function(x) {
+    iter <- iterate_matrix(x)
+    if (x@transpose) 
+        col_sums_cpp(iter)
+    else
+        row_sums_cpp(iter)
+})
+
+#' @param x IterableMatrix object
+#' @describeIn IterableMatrix-methods Calculate colSums
+#' @return * `colSums()`: vector of col sums
+setMethod("colSums", signature(x="mat_double"), function(x) {
+    iter <- iterate_matrix(x)
+    if (x@transpose) 
+        row_sums_cpp(iter)
+    else
+        col_sums_cpp(iter)
+})
+
+setMethod("rowSums", signature(x="mat_uint32_t"), function(x) rowSums(as(x, "mat_double")))
+setMethod("colSums", signature(x="mat_uint32_t"), function(x) colSums(as(x, "mat_double")))
+
+#' @param x IterableMatrix object
+#' @describeIn IterableMatrix-methods Calculate rowMeans
+#' @return * `rowMeans()`: vector of row means
+setMethod("rowMeans", signature(x="IterableMatrix"), function(x) rowSums(x)/ncol(x))
+
+#' @param x IterableMatrix object
+#' @describeIn IterableMatrix-methods Calculate colMeans
+#' @return * `colMeans()`: vector of col means
+setMethod("colMeans", signature(x="IterableMatrix"), function(x) colSums(x)/nrow(x))
+
+
+# Overlap matrix from fragments
+setClass("overlapMatrix",
+    contains = "mat_uint32_t",
+    slots = c(
+        fragments = "IterableFragments",
+        chr = "character",
+        start = "integer",
+        end = "integer"
+    ),
+    prototype = list(
+        fragments = NULL,
+        chr = NA_character_,
+        start = NA_integer_,
+        end = NA_integer_
+    )
+)
+#' Calculate cell x ranges overlap matrix
+#' @param fragments Input fragments object
+#' @param ranges GRanges object with the ranges to overlap
+#' @param convert_to_0_based_coords Whether to convert the ranges from a 1-based
+#'        coordinate system to a 0-based coordinate system. 
+#'        (see http://genome.ucsc.edu/blog/the-ucsc-genome-browser-coordinate-counting-systems/)
+#' @return Iterable matrix object with dimension ranges x cells
+#' @export
+overlapMatrix <- function(fragments, ranges, convert_to_0_based_coords=TRUE) {
+    assert_is(fragments, "IterableFragments")
+    assert_is(ranges, c("GRanges", "list"))
+    
+    assert_is(convert_to_0_based_coords, "logical")
+    
+    assert_not_na(fragments@cell_names)
+
+    if(is.list(ranges)) {
+        res <- new("overlapMatrix", fragments=fragments, 
+            chr=as.character(ranges$chr),
+            start=as.integer(ranges$start) - convert_to_0_based_coords,
+            end=as.integer(ranges$end))
+    } else {
+        res <- new("overlapMatrix", fragments=fragments, 
+            chr=as.character(GenomicRanges::seqnames(ranges)),
+            start=GenomicRanges::start(ranges) - convert_to_0_based_coords,
+            end=GenomicRanges::end(ranges))
+    }
+    res@dim <- c(length(fragments@cell_names), length(ranges))
+
+    return(res)
+}
+
+setMethod("iterate_matrix", "overlapMatrix", function(x) {
+    chrs <- as.factor(x@chr)
+    iterate_overlap_matrix2_cpp(
+            iterate_fragments(x@fragments),
+            as.integer(chrs)-1,
+            x@start, x@end,
+            levels(chrs)
+        )
+})
+setMethod("short_description", "overlapMatrix", function(x) {
+    labels <- paste0(x@chr, ":", x@start+1, "-", x@end)
+    c(
+        short_description(x@fragments),
+        sprintf("Calculate overlaps with %d ranges%s", length(x@chr), 
+            pretty_print_vector(labels, prefix=": ", max_len=2)
+        )
+    )
+})
+
+# Conversions between integer and double IterableMatrix
+setClass("convertMatrixIntDouble",
+    contains = "mat_double",
+    slots = c(
+        mat = "mat_uint32_t"
+    ),
+    prototype = list(
+        mat = NULL
+    )
+)
+setMethod("iterate_matrix", "convertMatrixIntDouble", function(x) {
+    convert_matrix_uint32_t_double_cpp(iterate_matrix(x@mat))
+})
+setMethod("short_description", "convertMatrixIntDouble", function(x) {
+    c(
+        short_description(x@mat),
+        "Convert integers to doubles"
+    )
+})
+setAs("mat_uint32_t", "mat_double", function(from) {
+    new("convertMatrixIntDouble", dim=from@dim, transpose=from@transpose, mat=from)
+})
+
+setClass("convertMatrixDoubleInt",
+    contains = "mat_uint32_t",
+    slots = c(
+        mat = "mat_double"
+    ),
+    prototype = list(
+        mat = NULL
+    )
+)
+setMethod("iterate_matrix", "convertMatrixDoubleInt", function(x) {
+    convert_matrix_double_uint32_t_cpp(iterate_matrix(x@mat))
+})
+setMethod("short_description", "convertMatrixDoubleInt", function(x) {
+    c(
+        short_description(x@mat),
+        "Convert doubles to integers"
+    )
+})
+setAs("mat_double", "mat_uint32_t", function(from) {
+    new("convertMatrixDoubleInt", dim=from@dim, transpose=from@transpose, mat=from)
+})
+
+# Conversions with dgCMatrix
+setClass("Iterable_dgCMatrix_wrapper",
+    contains = "mat_double",
+    slots = c(
+        mat = "dgCMatrix"
+    ),
+    prototype = list(
+        mat=NULL
+    )
+)
+setAs("dgCMatrix", "IterableMatrix", function(from) {
+    new("Iterable_dgCMatrix_wrapper", dim=dim(from), transpose=FALSE, mat=from)
+})
+setMethod("iterate_matrix", "Iterable_dgCMatrix_wrapper", function(x) {
+    iterate_csparse_matrix_cpp(x@mat)
+})
+setMethod("short_description", "convertMatrixDoubleInt", function(x) {
+    "Load dgCMatrix from memory"
+})
+
+setMethod("iterate_matrix", "dgCMatrix", function(x) {
+    iterate_csparse_matrix_cpp(x)
+})
+
+setAs("mat_uint32_t", "dgCMatrix", function(from) {
+    iter <- iterate_matrix(from)
+    iter <- convert_matrix_uint32_t_double_cpp(iter)
+    res <- build_csparse_matrix_double_cpp(iter)
+    if (from@transpose) {
+        res <- t(res)
+    }
+    return(res)
+})
+
+setAs("mat_double", "dgCMatrix", function(from) {
+    iter <- iterate_matrix(from)
+    res <- build_csparse_matrix_double_cpp(iter)
+    if (from@transpose) {
+        res <- t(res)
+    }
+    return(res)
+})
+
+#' Calculate matrix stats
+#' @param matrix Input matrix object
+#' @param row_stats Which row statistics to compute 
+#' @param col_stats Which col statistics to compute 
+#' @return List of row_stats: matrix of n_stats x n_rows, 
+#'          col_stats: matrix of n_stats x n_cols
+#' @details The statistics will be calculated in a single pass over the matrix,
+#' so this method is desirable to use for efficiency purposes compared to 
+#' the more standard rowMeans or colMeans if multiple statistics are needed.
+#' If variance is calculated, then mean and nonzero count will be included in the
+#' output, and if mean is calculated then nonzero count will be included in the output.
+#' @export
+matrixStats <- function(matrix, 
+                        row_stats = c("none", "nonzero", "mean", "variance"), 
+                        col_stats = c("none", "nonzero", "mean", "variance")) {
+
+    stat_options <- c("none", "nonzero", "mean", "variance")
+    row_stats <- match.arg(row_stats)
+    col_stats <- match.arg(col_stats)
+
+    if (matrix@transpose) {
+        tmp <- row_stats 
+        row_stats <- col_stats
+        col_stats <- tmp
+    }
+
+    row_stats_number <- match(row_stats, stat_options) - 1
+    col_stats_number <- match(col_stats, stat_options) - 1
+    
+    res <- matrix_stats_cpp(iterate_matrix(matrix), row_stats_number, col_stats_number)
+    rownames(res$row_stats) <- stat_options[seq_len(row_stats_number) + 1]
+    rownames(res$col_stats) <- stat_options[seq_len(col_stats_number) + 1]
+    
+    if (matrix@transpose) {
+        res <- list(
+            row_stats = res$col_stats,
+            col_stats = res$row_stats
+        )
+    }
+    return(res)
+}
