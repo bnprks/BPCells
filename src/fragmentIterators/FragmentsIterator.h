@@ -109,13 +109,20 @@ public:
 
     virtual ~FragmentsIterator() = default;
     
+    inline void restart() override {
+        loader.restart();
+        idx = chunk_capacity;
+    }
+
     // Return false if there isn't a nextFragment in the current chromosome
     inline bool nextFrag() {
+        //printf("Calling nextFrag, idx = %d, buffer_size = %d ", idx, chunk_size);
         idx += 1;
         if (idx >= chunk_size) {
             chunk_size = loader.load(chunk_capacity, fragments_buf);
             idx = 0;
         }
+        //printf("chunksize = %d\n", chunk_size);
         return chunk_size > 0;
     }
     // Advance the iterator to the next chromosome. Return false if there are no more chromosomes

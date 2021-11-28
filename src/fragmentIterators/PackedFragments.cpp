@@ -46,8 +46,9 @@ bool PackedFragments::nextChr() {
 uint32_t PackedFragments::currentChr() const {return current_chr;}
 
 int32_t PackedFragments::load(uint32_t count, FragmentArray &buf) {
-    if (count % 128 != 0) return -1;
     if (current_block >= frags[current_chr].n_chunks()) return 0;
+    if (count < 128) return -1;
+    count = count & ~(128-1); // Round count to nearest 128
     
     for (int i = 0; i < count; i += 128) {
         unpack_128_frags(
@@ -62,7 +63,6 @@ int32_t PackedFragments::load(uint32_t count, FragmentArray &buf) {
             return i + 128 - (128*frags[current_chr].n_chunks() - frags[current_chr].n_frags());
         }
     }
-    
     return count;
 }
 
@@ -118,7 +118,7 @@ bool PackedFragmentsWriter::write(FragmentsIterator &fragments, void (*checkInte
             
             out.len += i;    
 
-            if (checkInterrupt != NULL && (out.len / 128) % 1000 == 0) checkInterrupt();
+            if (checkInterrupt != NULL && (out.len / 128) % 1024 == 0) checkInterrupt();
 
             // Cleanup loop in case we're at end of chromosome and
             // couldn't read all 128

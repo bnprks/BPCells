@@ -175,7 +175,6 @@ bool PeakMatrix2::nextCol() {
             std::swap(active_peaks[i], active_peaks[i+1]);
         }
     }
-
     if (!loadPeak()) return false;
     return true;
 }

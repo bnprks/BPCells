@@ -5,7 +5,7 @@ raw_fragments_to_tibble <- function(raw_fragments) {
 
 tibble_to_raw_fragments <- function(x, chr_names, cell_names) {
     fragments <- lapply(seq_along(chr_names), function(i) {
-        filter(x, chr == i) %>%
+        dplyr::filter(x, chr == i) %>%
             {list(start=.$start, end=.$end, cell_id=.$cell_id)}
     })
     new("RawFragments",
@@ -20,14 +20,46 @@ test_that("Chromosome name/index select works", {
     withr::local_seed(1258123)
 
     nfrags <- 10e3
-    short_chrs_tibble <- tibble(
+    short_chrs_tibble <- tibble::tibble(
         chr = sample.int(500, nfrags, replace=TRUE),
         start = sample.int(10000, nfrags, replace=TRUE),
         end = start + sample.int(500, nfrags, replace=TRUE),
         cell_id = sample.int(500, nfrags, replace=TRUE)
-    ) %>% arrange(chr, start)
+    ) %>% dplyr::arrange(chr, start)
 
-    
+    short_chrs <- tibble_to_raw_fragments(
+        short_chrs_tibble,
+        paste0("chr", 1:500),
+        paste0("cell", 1:500)
+    )
+
+    chr_selection <- sample.int(500, 250, replace=FALSE)
+
+    short_chrs_ans <- short_chrs
+    short_chrs_ans@fragments <- short_chrs@fragments[chr_selection]
+    short_chrs_ans@chr_names <- short_chrs@chr_names[chr_selection]
+
+    short_chrs_2 <- select_chromosomes(short_chrs, chr_selection) %>%
+        write_raw_fragments()
+
+    short_chrs_3 <- select_chromosomes(short_chrs, paste0("chr", chr_selection)) %>%
+        write_raw_fragments()
+
+    expect_equal(short_chrs_ans, short_chrs_2)
+    expect_equal(short_chrs_ans, short_chrs_3)
+})
+
+test_that("Chromosome name/index select works", {
+    # Test lots of short chromosomes with index and name selection
+    withr::local_seed(1258123)
+
+    nfrags <- 10e3
+    short_chrs_tibble <- tibble::tibble(
+        chr = sample.int(500, nfrags, replace=TRUE),
+        start = sample.int(10000, nfrags, replace=TRUE),
+        end = start + sample.int(500, nfrags, replace=TRUE),
+        cell_id = sample.int(500, nfrags, replace=TRUE)
+    ) %>% dplyr::arrange(chr, start)
 
     short_chrs <- tibble_to_raw_fragments(
         short_chrs_tibble,
@@ -63,13 +95,13 @@ test_that("Cell name/index select works", {
     ncells <- 100
     cell_selection <- sample.int(ncells, ncells/2, replace=FALSE)-1
 
-    frags_tibble <- tibble(
+    frags_tibble <- tibble::tibble(
         chr = sample.int(nchrs, nfrags, replace=TRUE),
         start = sample.int(10000, nfrags, replace=TRUE),
         end = start + sample.int(500, nfrags, replace=TRUE),
         cell_id = sample.int(ncells, nfrags, replace=TRUE)-1
-    ) %>% arrange(chr, start) %>%
-        filter(
+    ) %>% dplyr::arrange(chr, start) %>%
+        dplyr::filter(
             (chr == 2 & !(cell_id %in% cell_selection)) |
             (chr == 3 & cell_id %in% cell_selection) |
             !(chr %in% c(2, 3))
@@ -83,8 +115,8 @@ test_that("Cell name/index select works", {
 
     frags_ans <- tibble_to_raw_fragments(
         frags_tibble %>% 
-            filter(cell_id %in% cell_selection) %>%
-            mutate(cell_id = match(cell_id, cell_selection) - 1),
+            dplyr::filter(cell_id %in% cell_selection) %>%
+            dplyr::mutate(cell_id = match(cell_id, cell_selection) - 1),
         frags@chr_names,
         frags@cell_names[cell_selection+1]
     )
@@ -104,4 +136,15 @@ test_that("GRanges conversion round-trips", {
     ranges <- as(raw, "GRanges")
     raw2 <- RawFragments(ranges)
     expect_equal(raw, raw2)
+})
+
+test_that("Insertions iterator works", {
+    frags <- open_10x_fragments("../data/mini_fragments.tsv.gz")
+    raw <- write_raw_fragments(frags)
+
+    scan1 <- scan_fragments_modulo_cpp(iterate_fragments(raw))
+    scan2 <- scan_insertions2_cpp(iterate_fragments(raw))
+
+    expect_equal(scan1[4], scan2[3])
+    expect_equal(scan1[1]*2, scan2[1])
 })

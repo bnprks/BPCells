@@ -3,3 +3,8 @@ man
 *.o
 *.so
 *.o.tmp
+*.dSYM
+.idea
+timing_data.csv
+timing_plot.png
+settings.json

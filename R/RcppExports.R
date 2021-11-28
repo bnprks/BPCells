@@ -29,12 +29,40 @@ scan_fragments_cpp <- function(fragments) {
     .Call(`_BPCells_scan_fragments_cpp`, fragments)
 }
 
+scan_fragments_modulo_cpp <- function(fragments) {
+    .Call(`_BPCells_scan_fragments_modulo_cpp`, fragments)
+}
+
 iterate_overlap_matrix_cpp <- function(fragments, chr, start, end, chr_levels) {
     .Call(`_BPCells_iterate_overlap_matrix_cpp`, fragments, chr, start, end, chr_levels)
 }
 
 iterate_overlap_matrix2_cpp <- function(fragments, chr, start, end, chr_levels) {
     .Call(`_BPCells_iterate_overlap_matrix2_cpp`, fragments, chr, start, end, chr_levels)
+}
+
+iterate_overlap_matrix3_cpp <- function(fragments, chr, start, end, chr_levels) {
+    .Call(`_BPCells_iterate_overlap_matrix3_cpp`, fragments, chr, start, end, chr_levels)
+}
+
+iterate_overlap_matrix4_cpp <- function(fragments, chr, start, end, chr_levels) {
+    .Call(`_BPCells_iterate_overlap_matrix4_cpp`, fragments, chr, start, end, chr_levels)
+}
+
+iterate_overlap_matrix5_cpp <- function(fragments, chr, start, end, chr_levels) {
+    .Call(`_BPCells_iterate_overlap_matrix5_cpp`, fragments, chr, start, end, chr_levels)
+}
+
+iterate_overlap_matrix6_cpp <- function(fragments, chr, start, end, chr_levels) {
+    .Call(`_BPCells_iterate_overlap_matrix6_cpp`, fragments, chr, start, end, chr_levels)
+}
+
+iterate_tile_matrix_cpp <- function(fragments, chr, start, end, tile_width, chr_levels) {
+    .Call(`_BPCells_iterate_tile_matrix_cpp`, fragments, chr, start, end, tile_width, chr_levels)
+}
+
+iterate_tile_matrix2_cpp <- function(fragments, chr, start, end, tile_width, chr_levels) {
+    .Call(`_BPCells_iterate_tile_matrix2_cpp`, fragments, chr, start, end, tile_width, chr_levels)
 }
 
 nucleosome_counts_cpp <- function(fragments, nuc_width = 147L) {
@@ -139,6 +167,18 @@ col_sums_cpp <- function(matrix) {
 
 matrix_stats_cpp <- function(matrix, row_stats, col_stats) {
     .Call(`_BPCells_matrix_stats_cpp`, matrix, row_stats, col_stats)
+}
+
+scan_insertions_cpp <- function(fragments) {
+    .Call(`_BPCells_scan_insertions_cpp`, fragments)
+}
+
+scan_insertions2_cpp <- function(fragments) {
+    .Call(`_BPCells_scan_insertions2_cpp`, fragments)
+}
+
+scan_insertions2_verbose_cpp <- function(fragments) {
+    .Call(`_BPCells_scan_insertions2_verbose_cpp`, fragments)
 }
 
 test_bitpacking_cpp <- function() {

@@ -5,9 +5,9 @@ namespace BPCells {
 InsertionsIterator::InsertionsIterator(FragmentsLoader &loader, uint32_t buffer_size) : 
     FragmentsLoaderWrapper(loader),
     chunk_capacity(buffer_size), 
-    chunk_size(buffer_size), 
-    last_start(0), 
+    chunk_size(buffer_size),  
     current_chr(UINT32_MAX), 
+    idx(buffer_size),
     start_buf(buffer_size), end_buf(buffer_size), cell_buf(buffer_size) {
 
     if (buffer_size < 128)

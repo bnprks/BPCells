@@ -1,11 +1,21 @@
 #include <Rcpp.h>
+#include <RcppEigen.h>
+
+
 #include "fragmentIterators/FragmentsIterator.h"
 #include "fragmentIterators/ShiftCoords.h"
 #include "fragmentIterators/ChrSelect.h"
 #include "fragmentIterators/CellSelect.h"
+#include "fragmentIterators/InsertionsIterator2.h"
 
 #include "matrixIterators/PeakMatrix.h"
 #include "matrixIterators/PeakMatrix2.h"
+#include "matrixIterators/PeakMatrix3.h"
+#include "matrixIterators/PeakMatrix4.h"
+#include "matrixIterators/PeakMatrix5.h"
+#include "matrixIterators/PeakMatrix6.h"
+#include "matrixIterators/TileMatrix.h"
+#include "matrixIterators/TileMatrix2.h"
 
 using namespace Rcpp;
 using namespace BPCells;
@@ -31,6 +41,26 @@ NumericVector scan_fragments_cpp(SEXP fragments) {
     return {(double) len, (double) start_sum, (double) end_sum, (double) cell_sum};
 }
 
+// [[Rcpp::export]]
+NumericVector scan_fragments_modulo_cpp(SEXP fragments) {
+    XPtr<FragmentsLoader> xptr(fragments);
+    
+    FragmentsIterator iter(*xptr);
+    uint64_t start_sum = 0;
+    uint64_t end_sum = 0;
+    uint64_t cell_sum = 0;
+    uint64_t len = 0;
+
+    while (iter.nextChr()) {
+        while (iter.nextFrag()) {
+            len++;
+            start_sum += iter.start();
+            end_sum += iter.end();
+            cell_sum += iter.cell();
+        }
+    }
+    return {(double) len, (double) start_sum, (double) end_sum, (double) (((start_sum % 104729) + (end_sum % 104729)) % 104729)};
+}
 
 // [[Rcpp::export]]
 SEXP iterate_overlap_matrix_cpp(SEXP fragments,
@@ -52,7 +82,67 @@ SEXP iterate_overlap_matrix2_cpp(SEXP fragments,
     );
 }
 
+// [[Rcpp::export]]
+SEXP iterate_overlap_matrix3_cpp(SEXP fragments,
+        std::vector<uint32_t> chr, std::vector<uint32_t> start, std::vector<uint32_t> end,
+        std::vector<std::string> chr_levels) {
+    XPtr<FragmentsLoader> loader(fragments);
+    return Rcpp::wrap(
+        XPtr<PeakMatrix3>(new PeakMatrix3(*loader, chr, start, end, chr_levels))
+    );
+}
 
+// [[Rcpp::export]]
+SEXP iterate_overlap_matrix4_cpp(SEXP fragments,
+        std::vector<uint32_t> chr, std::vector<uint32_t> start, std::vector<uint32_t> end,
+        std::vector<std::string> chr_levels) {
+    XPtr<FragmentsLoader> loader(fragments);
+    return Rcpp::wrap(
+        XPtr<PeakMatrix4>(new PeakMatrix4(*loader, chr, start, end, chr_levels))
+    );
+}
+
+// [[Rcpp::export]]
+SEXP iterate_overlap_matrix5_cpp(SEXP fragments,
+        std::vector<uint32_t> chr, std::vector<uint32_t> start, std::vector<uint32_t> end,
+        std::vector<std::string> chr_levels) {
+    XPtr<FragmentsLoader> loader(fragments);
+    return Rcpp::wrap(
+        XPtr<PeakMatrix5>(new PeakMatrix5(*loader, chr, start, end, chr_levels))
+    );
+}
+
+// [[Rcpp::export]]
+SEXP iterate_overlap_matrix6_cpp(SEXP fragments,
+        std::vector<uint32_t> chr, std::vector<uint32_t> start, std::vector<uint32_t> end,
+        std::vector<std::string> chr_levels) {
+    XPtr<FragmentsLoader> loader(fragments);
+    return Rcpp::wrap(
+        XPtr<PeakMatrix6>(new PeakMatrix6(*loader, chr, start, end, chr_levels))
+    );
+}
+
+// [[Rcpp::export]]
+SEXP iterate_tile_matrix_cpp(SEXP fragments,
+        std::vector<uint32_t> chr, std::vector<uint32_t> start, std::vector<uint32_t> end,
+        std::vector<uint32_t> tile_width,
+        std::vector<std::string> chr_levels) {
+    XPtr<FragmentsLoader> loader(fragments);
+    return Rcpp::wrap(
+        XPtr<TileMatrix>(new TileMatrix(*loader, chr, start, end, tile_width, chr_levels))
+    );
+}
+
+// [[Rcpp::export]]
+SEXP iterate_tile_matrix2_cpp(SEXP fragments,
+        std::vector<uint32_t> chr, std::vector<uint32_t> start, std::vector<uint32_t> end,
+        std::vector<uint32_t> tile_width,
+        std::vector<std::string> chr_levels) {
+    XPtr<FragmentsLoader> loader(fragments);
+    return Rcpp::wrap(
+        XPtr<TileMatrix2>(new TileMatrix2(*loader, chr, start, end, tile_width, chr_levels))
+    );
+}
 
 //Compute number of fragments like ArchR does for cell stats
 // [[Rcpp::export]]

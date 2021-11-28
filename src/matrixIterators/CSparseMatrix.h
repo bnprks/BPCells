@@ -1,7 +1,10 @@
 #include "MatrixIterator.h"
 
+#ifndef REAL_EIGEN
 #include <RcppEigen.h>
-
+#else
+#include <Eigen>
+#endif
 // [[Rcpp::depends(RcppEigen)]]
 
 namespace BPCells {
@@ -58,7 +61,8 @@ class CSparseMatrixWriter : public MatrixWriter<double> {
 private:
     Eigen::SparseMatrix<double> eigen_mat;
 public:
-    bool write(MatrixIterator<double> &mat, void (*checkInterrupt)(void) = NULL) override {
+    bool write(MatrixLoader<double> &loader, void (*checkInterrupt)(void) = NULL) override {
+        MatrixIterator<double> mat(loader);
         uint32_t count = 0;
         std::vector<Eigen::Triplet<double>> triplets;
         
@@ -67,7 +71,7 @@ public:
                 triplets.push_back(Eigen::Triplet<double> (
                     mat.row(), mat.col(), mat.val()
                 ));
-                if(count++ % 10000 == 0 && checkInterrupt != NULL) checkInterrupt();
+                if(count++ % 8192 == 0 && checkInterrupt != NULL) checkInterrupt();
             }
         }
         

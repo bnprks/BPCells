@@ -54,7 +54,7 @@ Eigen::ArrayXXd StatsResult::colVariance() {
 // 4. Variance
 // Each of the later statistics is always calculated simultaneously to the earlier statistics 
 StatsResult computeMatrixStats(MatrixLoader<double> &mat, Stats row_stats, Stats col_stats,
-                        bool transpose, uint32_t buffer_size) {
+                        bool transpose, uint32_t buffer_size, void (*checkInterrupt)(void)) {
     if (transpose) {
         StatsResult res = computeMatrixStats(mat, col_stats, row_stats, false, buffer_size);
         return StatsResult {
@@ -83,6 +83,7 @@ StatsResult computeMatrixStats(MatrixLoader<double> &mat, Stats row_stats, Stats
     uint32_t num_loaded;
     while (mat.nextCol()) {
         current_col = mat.currentCol();
+        if (checkInterrupt != NULL && current_col % 128 == 0) checkInterrupt();
 
         while ( (num_loaded = mat.load(buffer_size, buf)) ) {
             // Update row stats if needed

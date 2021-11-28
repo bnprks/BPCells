@@ -129,7 +129,7 @@ std::vector<double> col_sums_cpp(SEXP matrix) {
 List matrix_stats_cpp(SEXP matrix, int row_stats, int col_stats) {
     MatrixLoader<double> *loader = &(*XPtr<MatrixLoader<double> >(matrix));
     
-    StatsResult res = computeMatrixStats(*loader, (Stats) row_stats, (Stats) col_stats);
+    StatsResult res = computeMatrixStats(*loader, (Stats) row_stats, (Stats) col_stats, false, 1024, &Rcpp::checkUserInterrupt);
 
     return List::create(
         Named("row_stats") = res.row_stats,

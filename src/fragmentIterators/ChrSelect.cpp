@@ -26,13 +26,13 @@ const char* ChrIndexSelect::chrNames(uint32_t chr_id) const {
 };
 
 bool ChrIndexSelect::nextChr() {
-    bool res = true;
+    bool res = loader.nextChr();
     while (res) {
-        res = loader.nextChr();
         uint32_t chr_id = loader.currentChr();
         auto result = std::find(chr_assignments.begin(), chr_assignments.end(), chr_id);
         if (result != chr_assignments.end())
             break;
+        res = loader.nextChr();
     }
     return res;
 };
@@ -57,7 +57,6 @@ void ChrIndexSelect::seek(uint32_t chr_id, uint32_t base) {
 ChrNameSelect::ChrNameSelect(FragmentsLoader &loader, const std::vector<std::string> chr_names) :
     FragmentsLoaderWrapper(loader), 
     chr_names(chr_names) {
-    
     for (int i = 0; i < chr_names.size(); i++) {    
         if(output_index.find(chr_names[i]) != output_index.end())
             throw std::invalid_argument("ChrSelect maps same input chromosome to two output IDs");
@@ -83,19 +82,20 @@ const char* ChrNameSelect::chrNames(uint32_t chr_id) const {
 };
 
 bool ChrNameSelect::nextChr() {
-    bool res = true;
+    bool res = loader.nextChr();;
     while (res) {
-        res = loader.nextChr();
         uint32_t chr_id = loader.currentChr();
         auto result = output_index.find(loader.chrNames(chr_id));
         if (result != output_index.end())
             break;
+        res = loader.nextChr();
     }
     return res;
 };
 
 uint32_t ChrNameSelect::currentChr() const {
-    return output_index.at(loader.chrNames(loader.currentChr()));
+    auto res = output_index.at(loader.chrNames(loader.currentChr()));
+    return res;
 };
 
 int32_t ChrNameSelect::load(uint32_t count, FragmentArray &buffer) {

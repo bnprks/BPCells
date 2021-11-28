@@ -96,7 +96,7 @@ bool UnpackedFragmentsWriter::write(FragmentsIterator &fragments, void (*checkIn
             out.cell_data.push_back(fragments.cell());
             max_cell_id = std::max(max_cell_id, fragments.cell());
 
-            if (checkInterrupt != NULL && (out.len % 10000) == 0) checkInterrupt();
+            if (checkInterrupt != NULL && (out.len % 8192) == 0) checkInterrupt();
         } 
         
         if (chr_id >= frags.size()) {

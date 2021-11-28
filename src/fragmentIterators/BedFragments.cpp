@@ -115,12 +115,13 @@ void BedFragments::restart() {
     if (f == NULL)
         throw std::invalid_argument("Could not open file");
     gzbuffer(f, 1 << 20);
-    
+
+    read_line();
+
     if (comment.size() == 0) return;
 
     // Loop through comment lines
     while(true) {
-        read_line();
         if (line_buf[0] == '\0') break;
         bool matches_comment = true;
         for (int i = 0; i < comment.size(); i++) {
@@ -130,6 +131,7 @@ void BedFragments::restart() {
             }
         }
         if(!matches_comment) break;
+        read_line();
     }
     current_chr = "";
 }
@@ -235,7 +237,7 @@ bool BedFragmentsWriter::write(FragmentsIterator &fragments, void (*checkInterru
                 return false;
             }
 
-            if (checkInterrupt != NULL && total_fragments++ % 1000 == 0) checkInterrupt();
+            if (checkInterrupt != NULL && total_fragments++ % 1024 == 0) checkInterrupt();
         }
     }
     return true;

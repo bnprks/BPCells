@@ -90,6 +90,17 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// scan_fragments_modulo_cpp
+NumericVector scan_fragments_modulo_cpp(SEXP fragments);
+RcppExport SEXP _BPCells_scan_fragments_modulo_cpp(SEXP fragmentsSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type fragments(fragmentsSEXP);
+    rcpp_result_gen = Rcpp::wrap(scan_fragments_modulo_cpp(fragments));
+    return rcpp_result_gen;
+END_RCPP
+}
 // iterate_overlap_matrix_cpp
 SEXP iterate_overlap_matrix_cpp(SEXP fragments, std::vector<uint32_t> chr, std::vector<uint32_t> start, std::vector<uint32_t> end, std::vector<std::string> chr_levels);
 RcppExport SEXP _BPCells_iterate_overlap_matrix_cpp(SEXP fragmentsSEXP, SEXP chrSEXP, SEXP startSEXP, SEXP endSEXP, SEXP chr_levelsSEXP) {
@@ -117,6 +128,98 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< std::vector<uint32_t> >::type end(endSEXP);
     Rcpp::traits::input_parameter< std::vector<std::string> >::type chr_levels(chr_levelsSEXP);
     rcpp_result_gen = Rcpp::wrap(iterate_overlap_matrix2_cpp(fragments, chr, start, end, chr_levels));
+    return rcpp_result_gen;
+END_RCPP
+}
+// iterate_overlap_matrix3_cpp
+SEXP iterate_overlap_matrix3_cpp(SEXP fragments, std::vector<uint32_t> chr, std::vector<uint32_t> start, std::vector<uint32_t> end, std::vector<std::string> chr_levels);
+RcppExport SEXP _BPCells_iterate_overlap_matrix3_cpp(SEXP fragmentsSEXP, SEXP chrSEXP, SEXP startSEXP, SEXP endSEXP, SEXP chr_levelsSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type fragments(fragmentsSEXP);
+    Rcpp::traits::input_parameter< std::vector<uint32_t> >::type chr(chrSEXP);
+    Rcpp::traits::input_parameter< std::vector<uint32_t> >::type start(startSEXP);
+    Rcpp::traits::input_parameter< std::vector<uint32_t> >::type end(endSEXP);
+    Rcpp::traits::input_parameter< std::vector<std::string> >::type chr_levels(chr_levelsSEXP);
+    rcpp_result_gen = Rcpp::wrap(iterate_overlap_matrix3_cpp(fragments, chr, start, end, chr_levels));
+    return rcpp_result_gen;
+END_RCPP
+}
+// iterate_overlap_matrix4_cpp
+SEXP iterate_overlap_matrix4_cpp(SEXP fragments, std::vector<uint32_t> chr, std::vector<uint32_t> start, std::vector<uint32_t> end, std::vector<std::string> chr_levels);
+RcppExport SEXP _BPCells_iterate_overlap_matrix4_cpp(SEXP fragmentsSEXP, SEXP chrSEXP, SEXP startSEXP, SEXP endSEXP, SEXP chr_levelsSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type fragments(fragmentsSEXP);
+    Rcpp::traits::input_parameter< std::vector<uint32_t> >::type chr(chrSEXP);
+    Rcpp::traits::input_parameter< std::vector<uint32_t> >::type start(startSEXP);
+    Rcpp::traits::input_parameter< std::vector<uint32_t> >::type end(endSEXP);
+    Rcpp::traits::input_parameter< std::vector<std::string> >::type chr_levels(chr_levelsSEXP);
+    rcpp_result_gen = Rcpp::wrap(iterate_overlap_matrix4_cpp(fragments, chr, start, end, chr_levels));
+    return rcpp_result_gen;
+END_RCPP
+}
+// iterate_overlap_matrix5_cpp
+SEXP iterate_overlap_matrix5_cpp(SEXP fragments, std::vector<uint32_t> chr, std::vector<uint32_t> start, std::vector<uint32_t> end, std::vector<std::string> chr_levels);
+RcppExport SEXP _BPCells_iterate_overlap_matrix5_cpp(SEXP fragmentsSEXP, SEXP chrSEXP, SEXP startSEXP, SEXP endSEXP, SEXP chr_levelsSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type fragments(fragmentsSEXP);
+    Rcpp::traits::input_parameter< std::vector<uint32_t> >::type chr(chrSEXP);
+    Rcpp::traits::input_parameter< std::vector<uint32_t> >::type start(startSEXP);
+    Rcpp::traits::input_parameter< std::vector<uint32_t> >::type end(endSEXP);
+    Rcpp::traits::input_parameter< std::vector<std::string> >::type chr_levels(chr_levelsSEXP);
+    rcpp_result_gen = Rcpp::wrap(iterate_overlap_matrix5_cpp(fragments, chr, start, end, chr_levels));
+    return rcpp_result_gen;
+END_RCPP
+}
+// iterate_overlap_matrix6_cpp
+SEXP iterate_overlap_matrix6_cpp(SEXP fragments, std::vector<uint32_t> chr, std::vector<uint32_t> start, std::vector<uint32_t> end, std::vector<std::string> chr_levels);
+RcppExport SEXP _BPCells_iterate_overlap_matrix6_cpp(SEXP fragmentsSEXP, SEXP chrSEXP, SEXP startSEXP, SEXP endSEXP, SEXP chr_levelsSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type fragments(fragmentsSEXP);
+    Rcpp::traits::input_parameter< std::vector<uint32_t> >::type chr(chrSEXP);
+    Rcpp::traits::input_parameter< std::vector<uint32_t> >::type start(startSEXP);
+    Rcpp::traits::input_parameter< std::vector<uint32_t> >::type end(endSEXP);
+    Rcpp::traits::input_parameter< std::vector<std::string> >::type chr_levels(chr_levelsSEXP);
+    rcpp_result_gen = Rcpp::wrap(iterate_overlap_matrix6_cpp(fragments, chr, start, end, chr_levels));
+    return rcpp_result_gen;
+END_RCPP
+}
+// iterate_tile_matrix_cpp
+SEXP iterate_tile_matrix_cpp(SEXP fragments, std::vector<uint32_t> chr, std::vector<uint32_t> start, std::vector<uint32_t> end, std::vector<uint32_t> tile_width, std::vector<std::string> chr_levels);
+RcppExport SEXP _BPCells_iterate_tile_matrix_cpp(SEXP fragmentsSEXP, SEXP chrSEXP, SEXP startSEXP, SEXP endSEXP, SEXP tile_widthSEXP, SEXP chr_levelsSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type fragments(fragmentsSEXP);
+    Rcpp::traits::input_parameter< std::vector<uint32_t> >::type chr(chrSEXP);
+    Rcpp::traits::input_parameter< std::vector<uint32_t> >::type start(startSEXP);
+    Rcpp::traits::input_parameter< std::vector<uint32_t> >::type end(endSEXP);
+    Rcpp::traits::input_parameter< std::vector<uint32_t> >::type tile_width(tile_widthSEXP);
+    Rcpp::traits::input_parameter< std::vector<std::string> >::type chr_levels(chr_levelsSEXP);
+    rcpp_result_gen = Rcpp::wrap(iterate_tile_matrix_cpp(fragments, chr, start, end, tile_width, chr_levels));
+    return rcpp_result_gen;
+END_RCPP
+}
+// iterate_tile_matrix2_cpp
+SEXP iterate_tile_matrix2_cpp(SEXP fragments, std::vector<uint32_t> chr, std::vector<uint32_t> start, std::vector<uint32_t> end, std::vector<uint32_t> tile_width, std::vector<std::string> chr_levels);
+RcppExport SEXP _BPCells_iterate_tile_matrix2_cpp(SEXP fragmentsSEXP, SEXP chrSEXP, SEXP startSEXP, SEXP endSEXP, SEXP tile_widthSEXP, SEXP chr_levelsSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type fragments(fragmentsSEXP);
+    Rcpp::traits::input_parameter< std::vector<uint32_t> >::type chr(chrSEXP);
+    Rcpp::traits::input_parameter< std::vector<uint32_t> >::type start(startSEXP);
+    Rcpp::traits::input_parameter< std::vector<uint32_t> >::type end(endSEXP);
+    Rcpp::traits::input_parameter< std::vector<uint32_t> >::type tile_width(tile_widthSEXP);
+    Rcpp::traits::input_parameter< std::vector<std::string> >::type chr_levels(chr_levelsSEXP);
+    rcpp_result_gen = Rcpp::wrap(iterate_tile_matrix2_cpp(fragments, chr, start, end, tile_width, chr_levels));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -428,6 +531,39 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// scan_insertions_cpp
+NumericVector scan_insertions_cpp(SEXP fragments);
+RcppExport SEXP _BPCells_scan_insertions_cpp(SEXP fragmentsSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type fragments(fragmentsSEXP);
+    rcpp_result_gen = Rcpp::wrap(scan_insertions_cpp(fragments));
+    return rcpp_result_gen;
+END_RCPP
+}
+// scan_insertions2_cpp
+NumericVector scan_insertions2_cpp(SEXP fragments);
+RcppExport SEXP _BPCells_scan_insertions2_cpp(SEXP fragmentsSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type fragments(fragmentsSEXP);
+    rcpp_result_gen = Rcpp::wrap(scan_insertions2_cpp(fragments));
+    return rcpp_result_gen;
+END_RCPP
+}
+// scan_insertions2_verbose_cpp
+NumericVector scan_insertions2_verbose_cpp(SEXP fragments);
+RcppExport SEXP _BPCells_scan_insertions2_verbose_cpp(SEXP fragmentsSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type fragments(fragmentsSEXP);
+    rcpp_result_gen = Rcpp::wrap(scan_insertions2_verbose_cpp(fragments));
+    return rcpp_result_gen;
+END_RCPP
+}
 // test_bitpacking_cpp
 bool test_bitpacking_cpp();
 RcppExport SEXP _BPCells_test_bitpacking_cpp() {
@@ -447,8 +583,15 @@ static const R_CallMethodDef CallEntries[] = {
     {"_BPCells_iterate_unpacked_fragments_cpp", (DL_FUNC) &_BPCells_iterate_unpacked_fragments_cpp, 1},
     {"_BPCells_write_unpacked_fragments_cpp", (DL_FUNC) &_BPCells_write_unpacked_fragments_cpp, 1},
     {"_BPCells_scan_fragments_cpp", (DL_FUNC) &_BPCells_scan_fragments_cpp, 1},
+    {"_BPCells_scan_fragments_modulo_cpp", (DL_FUNC) &_BPCells_scan_fragments_modulo_cpp, 1},
     {"_BPCells_iterate_overlap_matrix_cpp", (DL_FUNC) &_BPCells_iterate_overlap_matrix_cpp, 5},
     {"_BPCells_iterate_overlap_matrix2_cpp", (DL_FUNC) &_BPCells_iterate_overlap_matrix2_cpp, 5},
+    {"_BPCells_iterate_overlap_matrix3_cpp", (DL_FUNC) &_BPCells_iterate_overlap_matrix3_cpp, 5},
+    {"_BPCells_iterate_overlap_matrix4_cpp", (DL_FUNC) &_BPCells_iterate_overlap_matrix4_cpp, 5},
+    {"_BPCells_iterate_overlap_matrix5_cpp", (DL_FUNC) &_BPCells_iterate_overlap_matrix5_cpp, 5},
+    {"_BPCells_iterate_overlap_matrix6_cpp", (DL_FUNC) &_BPCells_iterate_overlap_matrix6_cpp, 5},
+    {"_BPCells_iterate_tile_matrix_cpp", (DL_FUNC) &_BPCells_iterate_tile_matrix_cpp, 6},
+    {"_BPCells_iterate_tile_matrix2_cpp", (DL_FUNC) &_BPCells_iterate_tile_matrix2_cpp, 6},
     {"_BPCells_nucleosome_counts_cpp", (DL_FUNC) &_BPCells_nucleosome_counts_cpp, 2},
     {"_BPCells_iterate_shift_cpp", (DL_FUNC) &_BPCells_iterate_shift_cpp, 3},
     {"_BPCells_iterate_chr_index_select_cpp", (DL_FUNC) &_BPCells_iterate_chr_index_select_cpp, 2},
@@ -475,6 +618,9 @@ static const R_CallMethodDef CallEntries[] = {
     {"_BPCells_row_sums_cpp", (DL_FUNC) &_BPCells_row_sums_cpp, 1},
     {"_BPCells_col_sums_cpp", (DL_FUNC) &_BPCells_col_sums_cpp, 1},
     {"_BPCells_matrix_stats_cpp", (DL_FUNC) &_BPCells_matrix_stats_cpp, 3},
+    {"_BPCells_scan_insertions_cpp", (DL_FUNC) &_BPCells_scan_insertions_cpp, 1},
+    {"_BPCells_scan_insertions2_cpp", (DL_FUNC) &_BPCells_scan_insertions2_cpp, 1},
+    {"_BPCells_scan_insertions2_verbose_cpp", (DL_FUNC) &_BPCells_scan_insertions2_verbose_cpp, 1},
     {"_BPCells_test_bitpacking_cpp", (DL_FUNC) &_BPCells_test_bitpacking_cpp, 0},
     {NULL, NULL, 0}
 };

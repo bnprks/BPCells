@@ -1,5 +1,8 @@
 #pragma once
 
+#include <cstdint>
+#include <stdexcept>
+
 namespace BPCells {
 
 template<typename T>
@@ -198,7 +201,7 @@ template<typename T>
 class MatrixWriter {
 public:
     // Return false on failure, true on success
-    virtual bool write(MatrixIterator<T> &mat, void (*checkInterrupt)(void) = NULL) = 0;
+    virtual bool write(MatrixLoader<T> &mat, void (*checkInterrupt)(void) = NULL) = 0;
 };
 
 template<typename Tin, typename Tout>

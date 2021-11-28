@@ -19,7 +19,7 @@ setClass("IterableMatrix",
 )
 
 setGeneric("iterate_matrix", function(x) standardGeneric("iterate_matrix"))
-setMethod("iterate_matrix", "externalptr", function(x) { return (x)} )
+setMethod("iterate_matrix", "externalptr", function(x) { return(x)} )
 
 setMethod("short_description", "IterableMatrix", function(x) {
     character(0)
@@ -43,7 +43,7 @@ setMethod("show", "IterableMatrix", function(object) {
 #' @describeIn IterableMatrix-methods Transpose an IterableMatrix
 #' @param x IterableMatrix object
 #' @return * `t()` Transposed object
-setMethod("t", signature(x = "IterableMatrix"), function (x) {
+setMethod("t", signature(x = "IterableMatrix"), function(x) {
     x@transpose <- !x@transpose
     x@dim <- c(x@dim[2L], x@dim[1L])
     return(x)
@@ -149,13 +149,15 @@ setClass("overlapMatrix",
         fragments = "IterableFragments",
         chr = "character",
         start = "integer",
-        end = "integer"
+        end = "integer",
+        version = "integer"
     ),
     prototype = list(
         fragments = NULL,
-        chr = NA_character_,
-        start = NA_integer_,
-        end = NA_integer_
+        chr = character(0),
+        start = integer(0),
+        end = integer(0),
+        version = NA_integer_
     )
 )
 #' Calculate cell x ranges overlap matrix
@@ -164,9 +166,9 @@ setClass("overlapMatrix",
 #' @param convert_to_0_based_coords Whether to convert the ranges from a 1-based
 #'        coordinate system to a 0-based coordinate system. 
 #'        (see http://genome.ucsc.edu/blog/the-ucsc-genome-browser-coordinate-counting-systems/)
-#' @return Iterable matrix object with dimension ranges x cells
+#' @return Iterable matrix object with dimension cell x ranges
 #' @export
-overlapMatrix <- function(fragments, ranges, convert_to_0_based_coords=TRUE) {
+overlapMatrix <- function(fragments, ranges, tile_width, convert_to_0_based_coords=TRUE, version = 1) {
     assert_is(fragments, "IterableFragments")
     assert_is(ranges, c("GRanges", "list"))
     
@@ -186,24 +188,150 @@ overlapMatrix <- function(fragments, ranges, convert_to_0_based_coords=TRUE) {
             end=GenomicRanges::end(ranges))
     }
     res@dim <- c(length(fragments@cell_names), length(ranges))
-
+    res@version <- as.integer(version)
     return(res)
 }
 
 setMethod("iterate_matrix", "overlapMatrix", function(x) {
     chrs <- as.factor(x@chr)
-    iterate_overlap_matrix2_cpp(
+    if(x@version == 1) {
+        iterate_overlap_matrix_cpp(
             iterate_fragments(x@fragments),
             as.integer(chrs)-1,
             x@start, x@end,
             levels(chrs)
         )
+    } else if (x@version == 2) {
+        iterate_overlap_matrix2_cpp(
+            iterate_fragments(x@fragments),
+            as.integer(chrs)-1,
+            x@start, x@end,
+            levels(chrs)
+        )
+    } else if (x@version == 3) {
+        iterate_overlap_matrix3_cpp(
+            iterate_fragments(x@fragments),
+            as.integer(chrs)-1,
+            x@start, x@end,
+            levels(chrs)
+        )
+    } else if (x@version == 4) {
+        iterate_overlap_matrix4_cpp(
+            iterate_fragments(x@fragments),
+            as.integer(chrs)-1,
+            x@start, x@end,
+            levels(chrs)
+        )
+    } else if (x@version == 5) {
+       iterate_overlap_matrix5_cpp(
+            iterate_fragments(x@fragments),
+            as.integer(chrs)-1,
+            x@start, x@end,
+            levels(chrs)
+        ) 
+    } else {
+        iterate_overlap_matrix6_cpp(
+            iterate_fragments(x@fragments),
+            as.integer(chrs)-1,
+            x@start, x@end,
+            levels(chrs)
+        ) 
+    }
 })
 setMethod("short_description", "overlapMatrix", function(x) {
-    labels <- paste0(x@chr, ":", x@start+1, "-", x@end)
+    # Subset strings first to avoid a very slow string concatenation process
+    indices <- c(head(seq_along(x@chr), 3), tail(seq_along(x@chr), 1))
+    labels <- paste0(x@chr[indices], ":", x@start[indices]+1, "-", x@end[indices])
     c(
         short_description(x@fragments),
         sprintf("Calculate overlaps with %d ranges%s", length(x@chr), 
+            pretty_print_vector(labels, prefix=": ", max_len=2)
+        )
+    )
+})
+
+# Tile matrix from fragments
+setClass("tileMatrix",
+    contains = "mat_uint32_t",
+    slots = c(
+        fragments = "IterableFragments",
+        chr = "character",
+        start = "integer",
+        end = "integer",
+        tile_width = "integer",
+        version = "integer"
+    ),
+    prototype = list(
+        fragments = NULL,
+        chr = character(0),
+        start = integer(0),
+        end = integer(0),
+        tile_width = integer(0)
+    )
+)
+#' Calculate cell x tiles overlap matrix
+#' @param fragments Input fragments object
+#' @param ranges GRanges object with the ranges to overlap
+#' @param convert_to_0_based_coords Whether to convert the ranges from a 1-based
+#'        coordinate system to a 0-based coordinate system. 
+#'        (see http://genome.ucsc.edu/blog/the-ucsc-genome-browser-coordinate-counting-systems/)
+#' @return Iterable matrix object with dimension cells x tiles
+#' @export
+tileMatrix <- function(fragments, ranges, tile_width, convert_to_0_based_coords=TRUE, version=1L) {
+    assert_is(fragments, "IterableFragments")
+    assert_not_na(fragments@cell_names)
+
+    assert_is(convert_to_0_based_coords, "logical")
+
+    ranges <- normalize_ranges(ranges)
+
+    assert_wholenumber(tile_width)
+    assert_greater_than_zero(tile_width)
+    tile_width <- normalize_length(tile_width, length(ranges$start))
+
+    
+    res <- new("tileMatrix", fragments=fragments,
+        chr = as.character(ranges$chr),
+        start = as.integer(ranges$start) - convert_to_0_based_coords,
+        end = as.integer(ranges$end),
+        tile_width = as.integer(tile_width),
+        version = as.integer(version)
+    )
+    
+    tiles <- ceiling((res@end - res@start) / res@tile_width)
+    res@dim <- c(length(fragments@cell_names), as.integer(sum(tiles)))
+    return(res)
+}
+
+setMethod("iterate_matrix", "tileMatrix", function(x) {
+    chrs <- as.factor(x@chr)
+
+    if (x@version == 1) {
+        iterate_tile_matrix_cpp(
+            iterate_fragments(x@fragments),
+            as.integer(chrs)-1,
+            x@start, x@end,
+            x@tile_width,
+            levels(chrs)
+        )
+    } else {
+        iterate_tile_matrix2_cpp(
+            iterate_fragments(x@fragments),
+            as.integer(chrs)-1,
+            x@start, x@end,
+            x@tile_width,
+            levels(chrs)
+        )
+    }
+})
+
+setMethod("short_description", "tileMatrix", function(x) {
+    # Subset strings first to avoid a very slow string concatenation process
+    indices <- c(head(seq_along(x@chr), 3), tail(seq_along(x@chr), 1))
+    labels <- paste0(x@chr[indices], ":", x@start[indices]+1, "-", x@end[indices], " (", x@tile_width[indices], "bp)")
+    c(
+        short_description(x@fragments),
+        sprintf("Calculate %d tiles over %d ranges%s", ncol(x), length(x@chr), 
             pretty_print_vector(labels, prefix=": ", max_len=2)
         )
     )

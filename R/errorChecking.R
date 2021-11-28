@@ -1,6 +1,8 @@
 # Error checking utilities
 # Design: Provide assert_* functions that will raise an error in the event of issues,
 #   with enough context to help the user find the source of the problem.
+#   normalize_* functions return a normalized verison of the first argument, while
+#   raising an error via assert if the argument cannot be normalized.
 #   To avoid having the assert functions themselves in the call stack, all of
 #   them take an argument "n", which specifies how many calls on the stack to 
 #   skip over during error printing.
@@ -36,7 +38,7 @@ pretty_error <- function(arg, msg, n) {
 assert_wholenumber <- function(x, n=1) {
     assert_is_numeric(x, n+1)
     # Taken from documentation for is.integer
-    if(abs(x-round(x)) >= .Machine$double.eps^0.5)
+    if(any(abs(x-round(x)) >= .Machine$double.eps^0.5))
         pretty_error(x, "must be a whole number", n)
 }
 
@@ -113,4 +115,25 @@ assert_not_na <- function(x, n=1) {
 
 assert_not_null <- function(x, n=1) {
     if (is.null(x)) pretty_error(x, "is NULL", n)
+}
+
+
+normalize_ranges <- function(x, n = 1) {
+    assert_is(x, c("GRanges", "list"), n + 1)
+    if (is(x, "GRanges")) {
+        x <- list(
+            start = GenomicRanges::start(x),
+            end = GenomicRanges::end(x),
+            chr = as.character(GenomicRanges::seqnames(x))
+        )
+    }
+    assert_has_names(x, c("chr", "start", "end"), n+1)
+    return(x)
+}
+
+normalize_length <- function(x, len, n=1) {
+    if (length(x) == 1)
+        return(rep(x, len))
+    assert_len(x, len, n+1)
+    return(x)
 }
