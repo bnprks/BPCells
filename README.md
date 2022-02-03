@@ -21,9 +21,6 @@ BPCells is easiest to install directly from github:
 devtools::install_github("bnprks/BPCells")
 ```
 
-Note that because of its use of SIMD extensions in C++, it is not yet compatible
-with ARM architectures like the M1 Macs.
-
 ## Getting started
 
 Two key principles to understand about using BPCells is that all operations are
@@ -123,22 +120,23 @@ fragments in memory.
 ### Current support:
 - Fragments
     - Reading/writing 10x fragment files on disk
-    - Creation of packed fragment objects in memory
+    - Reading/writing packed fragment objects in memory or directly from disk
     - Interconversion of fragments objects with GRanges
     - Calculation of Cell x Peak matrices
 - Matrices
     - Conversion to/from R sparse matrices
+    - Read-only access to 10x hdf5 feature matrices
+    - Reading/writing of packed sparse matrices in memory or directly from disk
     - Multiplication by dense matrices or vectors
     - Calculation of statistics like rowSums, colSums, rowMeans, and colMeans
+- Support for 
 
 ### Upcoming additions:
 - Support for additional fragment formats:
-    - Read/write packed fragments from disk (likely hdf5 format)
     - Read fragments from bam files
     - Support direct download of files from URLs
 - Support for additional matrix formats:
-    - Read/write hdf5 formats for 10X or AnnData matrices
-    - Read/write packed counts matrices in memory or on disk
+    - Read/write hdf5 AnnData matrices
 - Support for additional matrix normalizations:
     - ATAC-seq LSI
     - Seurat default normalization
@@ -150,8 +148,12 @@ fragments in memory.
     - Packed fragments can be decompressed at >5GB/s, and so decoding is disk-limited on
       SSDs or RAID arrays while remaining competitive with reading directly from uncompressed 
       RAM
-    - Packed matrices will probably be 4-6x smaller than the equivalent sparse matrices,
-      with similarly excellent decompression speed expected
+    - Packed matrices are 4-6x smaller than the equivalent sparse matrices,
+      with similarly excellent decompression speed. 
+      
+      (Note: compared to R dgCMatrices,
+      the numbers are more like 6-8x smaller due to dgCMatrices always storing
+      double-precision floats)
 - PCA calculation:
     - Compared to Seurat's default normalization + PCA, BPCells will likely be about
       10x more efficient in memory and CPU. It is unclear if this will multiply with

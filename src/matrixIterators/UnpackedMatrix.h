@@ -7,7 +7,6 @@
 
 #include "MatrixIterator.h"
 #include "../arrayIO/array_interfaces.h"
-#include "../bitpacking/bp128.h"
 
 namespace BPCells {
 // Base class to load entries from (sparse) matrices
@@ -29,22 +28,19 @@ namespace BPCells {
 //    this should return 0 repeatedly at the end of a column until nextCol is called.
 // 3. Implement nextCol() method to advance to the next available column.
 // 4. Implement restart() method to restart the iterator from the beginning
-class PackedMatrix: public MatrixLoader<uint32_t> {
+class UnpackedMatrix: public MatrixLoader<uint32_t> {
 private:
     using ReaderPtr = std::unique_ptr<UIntReader>;
-    ReaderPtr val_data, val_idx, row_data, row_starts, row_idx, col_ptr, row_count;
+    ReaderPtr val, row, col_ptr, row_count;
     uint32_t n_rows;
     uint32_t n_cols;
-    uint32_t val_buf[128], row_buf[128], prev_val_idx, prev_row_idx;
     uint32_t current_col = UINT32_MAX;
     uint32_t current_idx = UINT32_MAX;
     uint32_t next_col_ptr;
 
-    void load128(uint32_t *row_out, uint32_t *val_out);
-
 public:
-    PackedMatrix(ReaderPtr &&val_data, ReaderPtr &&val_idx, ReaderPtr &&row_data, 
-                ReaderPtr &&row_starts, ReaderPtr &&row_idx, ReaderPtr &&col_ptr, ReaderPtr &&row_count);
+    UnpackedMatrix(ReaderPtr &&val, ReaderPtr &&row, 
+                ReaderPtr &&col_ptr, ReaderPtr &&row_count);
                 
     // Return the count of rows and columns
     uint32_t rows() const override;
@@ -66,16 +62,14 @@ public:
     int32_t load(uint32_t count, SparseVector<uint32_t> buffer) override;
 };
 
-class PackedMatrixWriter: public MatrixWriter<uint32_t> {
+class UnpackedMatrixWriter: public MatrixWriter<uint32_t> {
 private: 
     using WriterPtr = std::unique_ptr<UIntWriter>;
-    WriterPtr val_data, val_idx, row_data, row_starts, row_idx, col_ptr, row_count;
-    void pack128(const uint32_t* idx_in, const uint32_t* val_in,
-                uint32_t &cur_val_idx, uint32_t &cur_row_idx);
+    WriterPtr val, row, col_ptr, row_count;
             
 public:
-    PackedMatrixWriter(WriterPtr &&val_data, WriterPtr &&val_idx, WriterPtr &&row_data, 
-                WriterPtr &&row_starts, WriterPtr &&row_idx, WriterPtr &&col_ptr, WriterPtr &&row_count);
+    UnpackedMatrixWriter(WriterPtr &&val, WriterPtr &&row, 
+                       WriterPtr &&col_ptr, WriterPtr &&row_count);
     // Return false on failure, true on success
     bool write(MatrixLoader<uint32_t> &mat, void (*checkInterrupt)(void) = NULL) override;
 };

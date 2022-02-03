@@ -73,7 +73,7 @@ std::vector<std::string> PackedFragmentsWriter::getCellNames() {return cell_name
 
 vec_uint32_t PackedFragmentsWriter::convert_to_vec(std::vector<uint32_t> &v) {
     vec_uint32_t out;
-    out.data = &v[0];
+    out.data = v.data();
     out.capacity = v.capacity();
     out.size = v.size();
     return out;
@@ -84,11 +84,10 @@ bool PackedFragmentsWriter::write(FragmentsIterator &fragments, void (*checkInte
     uint32_t start_idx, end_idx, cell_id_idx;
     uint32_t start_buffer[128];
     uint32_t end_buffer[128];
-    uint32_t end_buffer2[128];
     uint32_t cell_buffer[128];
     uint32_t chr_id, i;
     bool chr_done;
-
+    
     while (fragments.nextChr()) {
         chr_id = fragments.currentChr();
 
@@ -127,29 +126,26 @@ bool PackedFragmentsWriter::write(FragmentsIterator &fragments, void (*checkInte
                 end_buffer[i] = end_buffer[i-1];
                 cell_buffer[i] = cell_buffer[i-1];
             }
-            
             // Pack starts
             start_bits = simdmaxbitsd1(start_buffer[0], start_buffer);
             out.start_start.push_back(start_buffer[0]);
             out.start_data.resize(start_idx + start_bits*4);
             out.start_idx.push_back(start_idx + start_bits*4);
-
-            simdpackd1(start_buffer[0], start_buffer, &out.start_data[start_idx], start_bits);
+            simdpackd1(start_buffer[0], start_buffer, &out.start_data.data()[start_idx], start_bits);
             start_idx += start_bits*4;
 
             // Pack ends
-            simdsubtract(end_buffer, start_buffer, end_buffer2);
-            end_bits = simdmaxbits(end_buffer2);
-            out.end_data.resize(end_idx + end_bits*4);
-            out.end_idx.push_back(end_idx + end_bits*4);
-
-            simdpack(end_buffer2, &out.end_data[end_idx], end_bits);
-            end_idx += end_bits*4;
-
             out.end_max.push_back(std::max(
                 simdmax(&end_buffer[0]),
                 out.end_max.size() == 0 ? 0 : out.end_max[out.end_max.size() - 1]
             ));
+            simdsubtract(end_buffer, start_buffer);
+            end_bits = simdmaxbits(end_buffer);
+            out.end_data.resize(end_idx + end_bits*4);
+            out.end_idx.push_back(end_idx + end_bits*4);
+            simdpack(end_buffer, &out.end_data.data()[end_idx], end_bits);
+            end_idx += end_bits*4;
+            
 
             // Pack cell_ids
             cell_id_bits = simdmaxbits(cell_buffer);
@@ -157,7 +153,7 @@ bool PackedFragmentsWriter::write(FragmentsIterator &fragments, void (*checkInte
             out.cell_data.resize(cell_id_idx + cell_id_bits*4);
             out.cell_idx.push_back(cell_id_idx + cell_id_bits*4);
 
-            simdpack(cell_buffer, &out.cell_data[cell_id_idx], cell_id_bits);
+            simdpack(cell_buffer, &out.cell_data.data()[cell_id_idx], cell_id_bits);
             cell_id_idx += cell_id_bits*4;
         } // End loop over fragments in chromosome
 

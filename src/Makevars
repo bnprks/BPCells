@@ -1,15 +1,23 @@
-#CXX_STD = CXX11
-PKG_CXXFLAGS = -march=native -std=c++11 -DEIGEN_PERMANENTLY_DISABLE_STUPID_WARNINGS -Wno-ignored-attributes
-PKG_LIBS = -lz
+# CXX_STD = CXX17
+
+PKG_CXXFLAGS = -march=native -std=c++17 -DEIGEN_PERMANENTLY_DISABLE_STUPID_WARNINGS -Wno-ignored-attributes
+PKG_LIBS = -lz -lhdf5
+
+#PKG_CXXFLAGS = -fsanitize=undefined -march=native -std=c++17 -DEIGEN_PERMANENTLY_DISABLE_STUPID_WARNINGS -Wno-ignored-attributes
+#PKG_LIBS = -lz -lhdf5 -fsanitize=undefined
 
 OBJECTS=\
 fragment_io.o \
 fragment_utils.o \
+matrix_io.o \
 matrix_utils.o \
 matrix_transform.o \
 profiler.o \
 r_wrapper.o \
 RcppExports.o \
+arrayIO/binaryfile.o \
+arrayIO/hdf5.o \
+arrayIO/vector.o \
 bitpacking/bp128.o \
 bitpacking/simd_vec.o \
 bitpacking/packing_utils.o \
@@ -22,4 +30,6 @@ fragmentIterators/PackedFragments.o \
 fragmentIterators/ShiftCoords.o \
 fragmentIterators/UnpackedFragments.o \
 matrixIterators/MatrixOps.o \
-matrixTransforms/MatrixStats.o
+matrixIterators/PackedMatrix.o \
+matrixIterators/UnpackedMatrix.o \
+matrixTransforms/MatrixStats.o 

@@ -15,9 +15,9 @@ struct FragmentArray {
 // Main workhorse is the load function, which copies fragments into a buffer.
 // Users will call load repeatedly, until it hits the end of a chromosome or the end
 // of a file. 
-// Optionally, a FragmentLoader can support seeking, which skips the current
+// Optionally, a FragmentsLoader can support seeking, which skips the current
 // reading position to a given genomic coordinate.
-// Requirements for building a FragmentLoader:
+// Requirements for building a FragmentsLoader:
 // 1. Coordinates are assumed to be 0-based and half-open, same as the bed file format. 
 //    This means the first base in a chromosome is at position 0, and the end coordinate
 //    of a fragment is one basepair after the last mapped base.

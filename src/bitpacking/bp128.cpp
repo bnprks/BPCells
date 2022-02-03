@@ -1,7 +1,14 @@
 #include "bp128.h"
 
-
-namespace BPCells {
+// #include <iostream>
+// void print_ints(BPCells::vec i) {
+//     uint32_t array[4];
+//     BPCells::store((BPCells::vec *) &array, i);
+//     std::cout << array[0] << '\t';
+//     std::cout << array[1] << '\t';
+//     std::cout << array[2] << '\t';
+//     std::cout << array[3] << '\n';
+// }
 
 // template <unsigned B>
 // void print_vec(vec i) {
@@ -13,14 +20,11 @@ namespace BPCells {
 //     std::cout << std::bitset<B>(array[3]) << '\n';
 // }
 
-// void print_ints(vec i) {
-//     uint32_t array[4];
-//     store((vec *) &array, i);
-//     std::cout << array[0] << '\t';
-//     std::cout << array[1] << '\t';
-//     std::cout << array[2] << '\t';
-//     std::cout << array[3] << '\n';
-// }
+namespace BPCells {
+
+
+
+
 
 
 #define BP128_UNROLL_LOOP1(start, counter, body) \
@@ -42,6 +46,10 @@ namespace BPCells {
     BP128_UNROLL_LOOP4(20, counter, body)  \
     BP128_UNROLL_LOOP4(24, counter, body)  \
     BP128_UNROLL_LOOP4(28, counter, body)
+
+//##############################################################################
+//#                         BP128 CODEC                                        #
+//##############################################################################
 
 template <unsigned B>
 void unpack(const vec *in, vec *out) {
@@ -135,11 +143,17 @@ void pack_mask(const vec *in, vec *out) {
     pack<B, true>(in, out);
 }
 
-template <unsigned B>
+//##############################################################################
+//#                         BP128D1 CODEC                                      #
+//##############################################################################
+
+template <unsigned B, bool ZIGZAG>
 vec unpackd1(vec initOffset, const vec *in, vec *out) {
     unsigned int shift;
     vec InReg, OutReg;
     vec mask = (B == 32) ? splat(0xffffffff) : splat((1U << B) - 1);
+    vec zero = splat(0);
+    vec one = splat(1);
     int i;
     BP128_UNROLL_LOOP32(i, {
         shift = (i * B) & 31;
@@ -156,15 +170,24 @@ vec unpackd1(vec initOffset, const vec *in, vec *out) {
         }
 
         OutReg = bitwise_and(OutReg, mask);
+
+        if (ZIGZAG) {
+            // (i >>> 1) ^ -(i & 1)
+            OutReg = bitwise_xor(
+                shift_r(OutReg, 1), sub(zero, bitwise_and(OutReg, one))
+            );
+        }
+
         OutReg = prefixSum(OutReg, initOffset);
+
         initOffset = OutReg;
         store(out++, OutReg);
     })
     return initOffset;
 }
 
-template<>
-vec unpackd1<0>(vec initOffset, const vec *in, vec *out) {
+template <>
+vec unpackd1<0, false>(vec initOffset, const vec *in, vec *out) {
     int i;
     BP128_UNROLL_LOOP32(i, {
         store(out++, initOffset);
@@ -172,8 +195,13 @@ vec unpackd1<0>(vec initOffset, const vec *in, vec *out) {
     return initOffset;
 }
 
+template <>
+vec unpackd1<0, true>(vec initOffset, const vec *in, vec *out) {
+    return unpackd1<0, false>(initOffset, in, out);
+}
+
 template<>
-vec unpackd1<32>(vec initOffset, const vec *in, vec *out) {
+vec unpackd1<32, false>(vec initOffset, const vec *in, vec *out) {
     // To save a bit of computation time, we just do straight memory copy
     // on 32-bit packing
     int i;
@@ -185,7 +213,22 @@ vec unpackd1<32>(vec initOffset, const vec *in, vec *out) {
     return Reg;
 }
 
-template <unsigned B, bool MASK>
+template<>
+vec unpackd1<32, true>(vec initOffset, const vec *in, vec *out) {
+    return unpackd1<32, false>(initOffset, in, out);
+}
+
+template<unsigned B>
+vec unpackd1_nozigzag(vec initOffset, const vec *in, vec *out) {
+    return unpackd1<B, false>(initOffset, in, out);
+}
+
+template<unsigned B>
+vec unpackd1_zigzag(vec initOffset, const vec *in, vec *out) {
+    return unpackd1<B, true>(initOffset, in, out);
+}
+
+template <unsigned B, bool MASK, bool ZIGZAG>
 void packd1(vec initOffset, const vec *in, vec *out) {
     vec InReg, OutReg;
     vec mask = (B == 32) ? splat(0xffffffff) : splat((1U << B) - 1);
@@ -198,6 +241,11 @@ void packd1(vec initOffset, const vec *in, vec *out) {
         initOffset = InReg;
         InReg = _tmp1;
         
+        if (ZIGZAG) {
+            // (i >> 31) ^ (i << 1)
+            InReg = bitwise_xor(shift_r_arith(InReg, 31), shift_l(InReg, 1));
+        }
+
         if (MASK) {
             InReg = bitwise_and(InReg, mask);
         }
@@ -218,18 +266,14 @@ void packd1(vec initOffset, const vec *in, vec *out) {
 }
 
 template <>
-void packd1<32, true>(vec initOffset, const vec *in, vec *out) {
+void packd1<32, true, true>(vec initOffset, const vec *in, vec *out) {
     // To save a bit of computation time, we just do straight memory copy
     // on 32-bit packing
     unpack<32> (in, out);
 }
-
-template <>
-void packd1<32, false>(vec initOffset, const vec *in, vec *out) {
-    // To save a bit of computation time, we just do straight memory copy
-    // on 32-bit packing
-    unpack<32> (in, out);
-}
+template <> void packd1<32, true, false>(vec initOffset, const vec *in, vec *out) {unpack<32> (in, out);}
+template <> void packd1<32, false, true>(vec initOffset, const vec *in, vec *out) {unpack<32> (in, out);}
+template <> void packd1<32, false, false>(vec initOffset, const vec *in, vec *out) {unpack<32> (in, out);}
 
 // Temporarily removed since there's no need for unsafe operations when
 // packing is already plenty fast enough. Unpacking speed is the main bottleneck.
@@ -240,8 +284,17 @@ void packd1<32, false>(vec initOffset, const vec *in, vec *out) {
 
 template <unsigned B>
 void packd1_mask(vec initOffset, const vec *in, vec *out) {
-    packd1<B, true>(initOffset, in, out);
+    packd1<B, true, false>(initOffset, in, out);
 }
+
+template <unsigned B>
+void packd1z_mask(vec initOffset, const vec *in, vec *out) {
+    packd1<B, true, true>(initOffset, in, out);
+}
+
+//##############################################################################
+//#                         BP128FOR CODEC                                     #
+//##############################################################################
 
 template <unsigned B>
 void unpackFOR(vec initOffset, const vec *in, vec *out) {
@@ -375,11 +428,32 @@ uint32_t simdmaxbitsd1(uint32_t initvalue, const uint32_t *in) {
     return maxbitas32int(accumulator);
 }
 
+// Find maximum number of bits required to represent input in d1z encoding
+uint32_t simdmaxbitsd1z(uint32_t initvalue, const uint32_t *in) {
+    const vec *_in = (vec *)in;
+    vec InReg, tmp;
+    vec initOffset = splat(initvalue);
+    vec accumulator = splat(0);
+    int i;
+
+    BP128_UNROLL_LOOP32(i, {
+        InReg = load(_in++);
+        tmp = delta(InReg, initOffset);
+        initOffset = InReg;
+        InReg = tmp;
+
+        InReg = bitwise_xor(shift_r_arith(InReg, 31), shift_l(InReg, 1));
+        //print_ints(InReg);
+        accumulator = bitwise_or(accumulator, InReg);
+    })
+
+    return maxbitas32int(accumulator);
+}
 
 // Find maximum number of bits required to represent input in FOR encoding.
 // minvalue and bits are return values, corresponding to the number of bits
 // required when the frame of reference is set to minvalue
-void simdmaxbitsFOR(const uint32_t *in, uint32_t & bits, uint32_t & minvalue) {
+void simdmaxbitsFORwithmin(const uint32_t *in, uint32_t & bits, uint32_t & minvalue) {
     const vec *_in = (vec *)in;
     vec InReg;
     vec mins = splat(INT32_MAX);
@@ -392,6 +466,22 @@ void simdmaxbitsFOR(const uint32_t *in, uint32_t & bits, uint32_t & minvalue) {
         maxs = max(maxs, InReg);
     })
     maxdiffbitsas32int(mins, maxs, bits, minvalue);
+}
+
+// Find maximum number of bits required to represent input in FOR encoding,
+// given a known minvalue.
+uint32_t simdmaxbitsFOR(const uint32_t minvalue, const uint32_t *in) {
+    const vec *_in = (vec *)in;
+    vec InReg;
+    vec min = splat(minvalue);
+    vec accumulator = splat(0);
+    int i;
+
+    BP128_UNROLL_LOOP32(i, {
+        InReg = load(_in++);
+        accumulator = bitwise_or(accumulator, sub(InReg, min));
+    })
+    return maxbitas32int(accumulator);
 }
 
 
@@ -488,9 +578,39 @@ void simdunpackd1(uint32_t initvalue, const uint32_t *in, uint32_t *out,
     vec *_out = (vec *)out;
     switch (bit) {
     case 0:
-        unpackd1<0>(init, _in, _out);
+        unpackd1<0, false>(init, _in, _out);
         break;
-        BP128_SWITCH_CASE32(unpackd1, init, _in, _out)
+        BP128_SWITCH_CASE32(unpackd1_nozigzag, init, _in, _out)
+    }
+}
+
+/* reads 128 values from "in", writes  "bit" 128-bit vectors to "out"
+   integer values should be in nearly sorted order (for best results).
+   The values are zigzag encoded, then masked so that only the least significant
+   "bit" bits are used. 
+   ZigZag encoding references: https://developers.google.com/protocol-buffers/docs/encoding?csw=1#signed-ints
+   https://gist.github.com/lemire/b6437fbd193395d8e4ccac1a5b2e50cc*/
+void simdpackd1z(uint32_t initvalue, const uint32_t *in, uint32_t *out,
+                   const uint32_t bit) {
+    vec init = splat(initvalue);
+    const vec *_in = (vec *)in;
+    vec *_out = (vec *)out;
+    switch (bit) {
+        BP128_SWITCH_CASE32(packd1z_mask, init, _in, _out)
+    }
+}
+
+/* reads "bit" 128-bit vectors from "in", writes  128 values to "out" */
+void simdunpackd1z(uint32_t initvalue, const uint32_t *in, uint32_t *out,
+                     const uint32_t bit) {
+    vec init = splat(initvalue);
+    const vec *_in = (vec *)in;
+    vec *_out = (vec *)out;
+    switch (bit) {
+    case 0:
+        unpackd1<0, true>(init, _in, _out);
+        break;
+        BP128_SWITCH_CASE32(unpackd1_zigzag, init, _in, _out)
     }
 }
 
@@ -552,6 +672,11 @@ bool equal_buf(uint32_t *buf1, uint32_t *buf2) {
     }
     return true;
 }
+void print_buf(uint32_t *buf) {
+    for (int i = 0; i < 128; i++) {
+        printf("%d,\t", buf[i]);
+    }
+}
 
 bool test_bitpacking() {
     
@@ -563,18 +688,23 @@ bool test_bitpacking() {
     for (int bits = 0; bits <= 32; bits++) {
         fill_buf(input_buf, bits);
         if (equal_buf(input_buf, output_buf)) {
-            printf("Input and output aren't different before test\n");
+            printf("Input and output aren't different before test\nBP128, bits=%d\n", bits);
+            print_buf(input_buf); printf("\n");
             return false;
         }
         int simd_bits = simdmaxbits(input_buf);
         if (simd_bits != bits) {
-            printf("Wrong number of simdmaxbits\n");
+            printf("Wrong number of simdmaxbits\nBP128, expect=%d, got=%d\n", bits, simd_bits);
+            print_buf(input_buf); printf("\n");
             return false;
         }
         simdpack(input_buf, packed_buf, simd_bits);
         simdunpack(packed_buf, output_buf, simd_bits);
         if (!equal_buf(input_buf, output_buf)) {
-            printf("Input buffer doesn't match output buffer\n");
+            printf("Input buffer doesn't match output buffer, BP128, bits=%d\n", bits);
+            printf("input: "); print_buf(input_buf);
+            printf("\noutput: "); print_buf(output_buf);
+            printf("\n");
             return false;
         }
     }
@@ -588,18 +718,58 @@ bool test_bitpacking() {
             input_buf[i] += input_buf[i-1];
 
         if (equal_buf(input_buf, output_buf)) {
-            printf("Input and output aren't different before test\n");
+            printf("Input and output aren't different before test\nD1, bits-%d\n", bits);
+            print_buf(input_buf); printf("\n");
             return false;
         }
         int simd_bits = simdmaxbitsd1(start_val, input_buf);
         if (simd_bits != bits) {
-            printf("Wrong number of simdmaxbits\n");
+            printf("Wrong number of simdmaxbits\nD1, expect=%d, got=%d, start_val=%d\n", bits, simd_bits, start_val);
+            print_buf(input_buf); printf("\n");
             return false;
         }
         simdpackd1(start_val, input_buf, packed_buf, simd_bits);
         simdunpackd1(start_val, packed_buf, output_buf, simd_bits);
         if (!equal_buf(input_buf, output_buf)) {
-            printf("Input buffer doesn't match output buffer\n");
+            printf("Input buffer doesn't match output buffer, D1, bits=%d, start_val=%d\n", bits, start_val);
+            printf("input: "); print_buf(input_buf);
+            printf("\noutput: "); print_buf(output_buf);
+            printf("\n");
+            return false;
+        }
+    }
+
+    // Test d1z bitpacking
+    for (int bits = 0; bits <= 32; bits++) {
+        fill_buf(input_buf, bits);
+        for (int i = 0; i < 128; i++) {
+            // Do a zigzag decode on the random offsets
+            input_buf[i] = ((input_buf[i] >> 1) ^ -(input_buf[i] & 1));
+        }
+        uint32_t start_val = rand() & ((2<<12) - 1);
+        input_buf[0] += start_val;
+        for (int i = 1; i < 128; i++) {
+            input_buf[i] += input_buf[i-1];
+        }
+
+        if (equal_buf(input_buf, output_buf)) {
+            printf("Input and output aren't different before test\nD1Z, bits-%d\n", bits);
+            print_buf(input_buf); printf("\n");
+            return false;
+        }
+        int simd_bits = simdmaxbitsd1z(start_val, input_buf);
+        if (simd_bits != bits) {
+            printf("Wrong number of simdmaxbits\nD1, expect=%d, got=%d, start_val=%d\n", bits, simd_bits, start_val);
+            print_buf(input_buf); printf("\n");
+            return false;
+        }
+        simdpackd1z(start_val, input_buf, packed_buf, simd_bits);
+        simdunpackd1z(start_val, packed_buf, output_buf, simd_bits);
+        if (!equal_buf(input_buf, output_buf)) {
+            printf("Input buffer doesn't match output buffer, D1Z, bits=%d, start_val=%d\n", bits, start_val);
+            printf("input: "); print_buf(input_buf);
+            printf("\noutput: "); print_buf(output_buf);
+            printf("\n");
             return false;
         }
     }
@@ -613,27 +783,38 @@ bool test_bitpacking() {
             input_buf[i] += start_val;
 
         if (equal_buf(input_buf, output_buf)) {
-            printf("Input and output aren't different before test\n");
+            printf("Input and output aren't different before test\nFOR, bits-%d\n", bits);
+            print_buf(input_buf); printf("\n");
             return false;
         }
         uint32_t simd_bits, min_value;
-        simdmaxbitsFOR(input_buf, simd_bits, min_value);
+        simdmaxbitsFORwithmin(input_buf, simd_bits, min_value);
         uint32_t real_min = INT32_MAX;
         for (int i = 0; i < 128; i++) {
             real_min = std::min(real_min, input_buf[i]);
         }
         if (real_min != min_value) {
-            printf("Wrong minimum value\n");
+            printf("Wrong minimum value FOR. Got: %d, expected: %d, bits: %d\n", min_value, real_min, bits);
+            print_buf(input_buf); printf("\n");
             return false;
         }
         if (simd_bits != bits) {
-            printf("Wrong number of simdmaxbits\n");
+            printf("Wrong number of simdmaxbits\nFOR, expect=%d, got=%d, min_val=%d\n", bits, simd_bits, min_value);
+            print_buf(input_buf); printf("\n");
+            return false;
+        }
+        if (simdmaxbitsFOR(min_value, input_buf) != bits) {
+            printf("Wrong number of simdmaxbits from simdmaxbitsFOR\nFOR, expect=%d, got=%d, min_val=%d\n", bits, simd_bits, min_value);
+            print_buf(input_buf); printf("\n");
             return false;
         }
         simdpackFOR(start_val, input_buf, packed_buf, simd_bits);
         simdunpackFOR(start_val, packed_buf, output_buf, simd_bits);
         if (!equal_buf(input_buf, output_buf)) {
-            printf("Input buffer doesn't match output buffer\n");
+            printf("Input buffer doesn't match output buffer, FOR, bits=%d, min_val=%d\n", bits, min_value);
+            printf("input: "); print_buf(input_buf);
+            printf("\noutput: "); print_buf(output_buf);
+            printf("\n");
             return false;
         }
     }

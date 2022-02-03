@@ -15,11 +15,12 @@ CellIndexSelect::CellIndexSelect(FragmentsLoader &loader, const std::vector<uint
             throw std::invalid_argument("CellSelect maps same input cell to two output IDs");
         reverse_indices[cell_indices[i]] = i;
     }
-} ;
+};
 
 int CellIndexSelect::cellCount() const { return cell_indices.size(); };
 
 const char* CellIndexSelect::cellNames(uint32_t cell_id) const {
+    if (cell_id >= cell_indices.size()) return NULL;
     return loader.cellNames(cell_indices[cell_id]); 
 };
 

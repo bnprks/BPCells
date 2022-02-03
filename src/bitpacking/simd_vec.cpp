@@ -24,28 +24,26 @@ namespace BPCells {
     BP128_UNROLL_LOOP4(28, counter, body)
 
 // Write end - start to out for 128 integers
-void simdsubtract(const uint32_t *end, const uint32_t *start, uint32_t *out) {
+void simdsubtract(uint32_t *end, const uint32_t *start) {
     const vec *_start = (vec *) start;
-    const vec *_end = (vec *) end;
-    vec *_out = (vec *)out;
+    vec *_end = (vec *) end;
     vec Reg;
     int i;
     BP128_UNROLL_LOOP32(i, {
-        Reg = sub(load(_end++), load(_start++));
-        store(_out++, Reg);
+        Reg = sub(load(_end), load(_start++));
+        store(_end++, Reg);
     })
 }
 
-// Write end + start to out for 128 integers
-void simdadd(const uint32_t *start, const uint32_t *end, uint32_t *out) {
+// Write end + start to end for 128 integers
+void simdadd(uint32_t *end, const uint32_t *start) {
     const vec *_start = (vec *) start;
-    const vec *_end = (vec *) end;
-    vec *_out = (vec *)out;
+    vec *_end = (vec *) end;
     vec Reg;
     int i;
     BP128_UNROLL_LOOP32(i, {
-        Reg = add(load(_end++), load(_start++));
-        store(_out++, Reg);
+        Reg = add(load(_end), load(_start++));
+        store(_end++, Reg);
     })
 }
 
@@ -58,9 +56,9 @@ uint32_t simdmax(const uint32_t *in) {
         Reg = max(Reg, load(_in++));
     })
     //last of _tmp2 holds the max of maxs
-    const vec _tmp1 = max(move_r_2(Reg), Reg); 
-    const vec _tmp2 = max(move_r_1(_tmp1), _tmp1);
-    return extract_bottom(_tmp2);
+    const vec _tmp1 = max(move_l_2(Reg), Reg); 
+    const vec _tmp2 = max(move_l_1(_tmp1), _tmp1);
+    return extract_left(_tmp2);
 }
 
 

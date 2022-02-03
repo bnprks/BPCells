@@ -251,6 +251,148 @@ RawFragments <- function(x, convert_to_0_based_coords=TRUE) {
     new("RawFragments", cell_names=levels(x$cell_id), chr_names=levels(GenomicRanges::seqnames(x)), fragments=fragments)
 }
 
+
+##### RAW FRAGMENTS V2 TEST
+setClass("MemFragments",
+    contains = "IterableFragments",
+    slots = c(
+        fragments = "list",
+        compressed = "logical",
+        cell_names = "character",
+        chr_names = "character"
+    ),
+    prototype = list(
+        fragments = NULL,
+        compressed = TRUE
+    )
+)
+#' Make a RawFragments object in memory. 
+#' @param fragments Input fragments object
+#' @return MemFragments object
+#' @export
+write_fragments_memory <- function(fragments, compressed=TRUE) {
+    assert_is(fragments, "IterableFragments")
+    assert_is(compressed, "logical")
+    if (compressed)
+        res <- write_packed_fragments2_cpp(iterate_fragments(fragments))
+    else
+        res <- write_unpacked_fragments2_cpp(iterate_fragments(fragments))
+    
+    new("MemFragments", cell_names=res$cell_names, chr_names=res$chr_names, 
+                        fragments=res$fragments, compressed=compressed)
+}
+
+setMethod("iterate_fragments", "MemFragments", function(x) {
+    if (x@compressed) iterate_packed_fragments2_cpp(x)
+    else iterate_unpacked_fragments2_cpp(x)
+})
+setMethod("short_description", "MemFragments", function(x) {
+    sprintf("Read %s fragments from memory", if(x@compressed) "compressed" else "uncompressed")
+})
+#' Build a RawFragments object from an R data frame or GRanges
+#' @param x An input GRanges, list or data frame. Lists and dataframes 
+#'    must have chr, start, end, cell_id. GRanges must have a metadata column
+#'    for cell_id
+#' @param convert_to_0_based_coords Whether to convert the ranges from a 1-based
+#'    coordinate system to a 0-based coordinate system. 
+#'    (see http://genome.ucsc.edu/blog/the-ucsc-genome-browser-coordinate-counting-systems/)
+#' @return RawFragments object representing the given fragments
+RawFragments2 <- function(x, convert_to_0_based_coords=TRUE) {
+    write_raw_fragments2(RawFragments(x, convert_to_0_based_coords))
+}
+
+setClass("FragmentsDir",
+    contains = "IterableFragments",
+    slots = c(
+        dir = "character",
+        compressed = "logical"
+    ),
+    prototype = list(
+        dir = character(0),
+        compressed = TRUE
+    )
+)
+
+#' @export
+write_fragments_dir <- function(fragments, dir, compressed=TRUE) {
+    assert_is(fragments, "IterableFragments")
+    assert_is(dir, "character")
+    assert_is(compressed, "logical")
+    if (compressed)
+        write_packed_fragments_file_cpp(iterate_fragments(fragments), path.expand(dir))
+    else
+        write_unpacked_fragments_file_cpp(iterate_fragments(fragments), path.expand(dir))
+}
+
+open_fragments_dir <- function(dir, compressed=TRUE) {
+    new("FragmentsDir", dir=path.expand(dir), compressed=compressed)
+}
+
+setMethod("iterate_fragments", "FragmentsDir", function(x) {
+    if (x@compressed)
+        iterate_packed_fragments_file_cpp(x@dir)
+    else
+        iterate_unpacked_fragments_file_cpp(x@dir)
+})
+setMethod("short_description", "FragmentsDir", function(x) {
+    sprintf("Read %s fragments from %s", 
+        if(x@compressed) "compressed" else "uncompressed",
+        x@dir
+    )
+})
+
+
+
+setClass("FragmentsH5",
+    contains = "IterableFragments",
+    slots = c(
+        path = "character",
+        group = "character",
+        compressed = "logical"
+    ),
+    prototype = list(
+        path = character(0),
+        group = "",
+        compressed=TRUE
+    )
+)
+
+#' @export
+write_fragments_h5 <- function(fragments, path, group, chunk_size=250000L, compressed=TRUE) {
+    assert_is(fragments, "IterableFragments")
+    assert_is(path, "character")
+    assert_is(group, "character")
+    assert_is(compressed, "logical")
+    assert_wholenumber(chunk_size)
+
+    if (compressed)
+        write_packed_fragments_hdf5_cpp(iterate_fragments(fragments), path.expand(path), group, as.integer(chunk_size))
+    else
+        write_unpacked_fragments_hdf5_cpp(iterate_fragments(fragments), path.expand(path), group, as.integer(chunk_size))
+}
+
+open_fragments_h5 <- function(path, group="/", compressed=TRUE) {
+    if (group == "") group <- "/"
+    new("FragmentsH5", path=path, group=group, compressed=compressed)
+}
+
+setMethod("iterate_fragments", "FragmentsH5", function(x) {
+    if (x@compressed)
+        iterate_packed_fragments_hdf5_cpp(path.expand(x@path), x@group)
+    else
+        iterate_unpacked_fragments_hdf5_cpp(path.expand(x@path), x@group)
+})
+setMethod("short_description", "FragmentsH5", function(x) {
+    sprintf("Read %s fragments from %s, group %s", 
+        if(x@compressed) "compressed" else "uncompressed",
+        x@path, 
+        x@group
+    )
+})
+
+
+#### END RAW FRAGMENTS V2 TEST
+
 # Define converters with GRanges if we have the GenomicRanges package available
 if (requireNamespace("GenomicRanges", quietly=TRUE)) {
     setAs("IterableFragments", "GRanges", function(from) {

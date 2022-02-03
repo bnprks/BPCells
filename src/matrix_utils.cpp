@@ -22,7 +22,7 @@ SEXP iterate_csparse_matrix_cpp(SEXP matrix) {
 // [[Rcpp::export]]
 List build_tsparse_matrix_uint32_t_cpp(SEXP matrix) {
     
-    MatrixLoader<uint32_t> *loader = &(*XPtr<MatrixLoader<uint32_t> >(matrix));
+    XPtr<MatrixLoader<uint32_t>> loader(matrix);
     MatrixIterator<uint32_t> iter(*loader);
 
     TSparseMatrixWriter<uint32_t> out;
@@ -37,7 +37,7 @@ List build_tsparse_matrix_uint32_t_cpp(SEXP matrix) {
 
 // [[Rcpp::export]]
 SEXP convert_matrix_uint32_t_double_cpp(SEXP matrix) {
-    MatrixLoader<uint32_t> *input = &(*XPtr<MatrixLoader<uint32_t> >(matrix));
+    XPtr<MatrixLoader<uint32_t>>input(matrix);
 
     return Rcpp::wrap(
         XPtr<MatrixLoader<double>>(new MatrixConverterLoader<uint32_t, double>(*input))
@@ -46,7 +46,7 @@ SEXP convert_matrix_uint32_t_double_cpp(SEXP matrix) {
 
 // [[Rcpp::export]]
 SEXP convert_matrix_double_uint32_t_cpp(SEXP matrix) {
-    MatrixLoader<double> *input = &(*XPtr<MatrixLoader<double> >(matrix));
+    XPtr<MatrixLoader<double>>input(matrix);
 
     return Rcpp::wrap(
         XPtr<MatrixLoader<uint32_t>>(new MatrixConverterLoader<double, uint32_t>(*input))
@@ -55,7 +55,7 @@ SEXP convert_matrix_double_uint32_t_cpp(SEXP matrix) {
 
 // [[Rcpp::export]]
 SEXP build_csparse_matrix_double_cpp(SEXP matrix) {
-    MatrixLoader<double> *input = &(*XPtr<MatrixLoader<double> >(matrix));
+    XPtr<MatrixLoader<double>>input(matrix);
     MatrixIterator<double> iter(*input);
     
     CSparseMatrixWriter writer;
@@ -65,7 +65,7 @@ SEXP build_csparse_matrix_double_cpp(SEXP matrix) {
 
 // [[Rcpp::export]]
 NumericVector scan_matrix_uint32_t_cpp(SEXP matrix) {
-    MatrixLoader<uint32_t> *loader = &(*XPtr<MatrixLoader<uint32_t> >(matrix));
+    XPtr<MatrixLoader<uint32_t>>loader(matrix);
     MatrixIterator<uint32_t> iter(*loader);
     uint64_t entries = 0;
     uint64_t val_sum = 0;
@@ -85,49 +85,49 @@ NumericVector scan_matrix_uint32_t_cpp(SEXP matrix) {
 
 // [[Rcpp::export]]
 Eigen::MatrixXd dense_multiply_right_cpp(SEXP matrix, Eigen::Map<Eigen::MatrixXd> B) {
-    MatrixLoader<double> *loader = &(*XPtr<MatrixLoader<double> >(matrix));
+    XPtr<MatrixLoader<double>>loader(matrix);
     MatrixIterator<double> A(*loader);
     return denseMultiplyRight(A, B);
 }
 
 // [[Rcpp::export]]
 Eigen::MatrixXd dense_multiply_left_cpp(SEXP matrix, Eigen::Map<Eigen::MatrixXd> B) {
-    MatrixLoader<double> *loader = &(*XPtr<MatrixLoader<double> >(matrix));
+    XPtr<MatrixLoader<double>>loader(matrix);
     MatrixIterator<double> A(*loader);
     return denseMultiplyLeft(A, B);
 }
 
 // [[Rcpp::export]]
 Eigen::VectorXd vec_multiply_right_cpp(SEXP matrix, Eigen::Map<Eigen::VectorXd> v) {
-    MatrixLoader<double> *loader = &(*XPtr<MatrixLoader<double> >(matrix));
+    XPtr<MatrixLoader<double>>loader(matrix);
     MatrixIterator<double> A(*loader);
     return vecMultiplyRight(A, v);
 }
 
 // [[Rcpp::export]]
 Eigen::VectorXd vec_multiply_left_cpp(SEXP matrix, Eigen::Map<Eigen::VectorXd> v) {
-    MatrixLoader<double> *loader = &(*XPtr<MatrixLoader<double> >(matrix));
+    XPtr<MatrixLoader<double>>loader(matrix);
     MatrixIterator<double> A(*loader);
     return vecMultiplyLeft(A, v);
 }
 
 // [[Rcpp::export]]
 std::vector<double> row_sums_cpp(SEXP matrix) {
-    MatrixLoader<double> *loader = &(*XPtr<MatrixLoader<double> >(matrix));
+    XPtr<MatrixLoader<double>>loader(matrix);
     MatrixIterator<double> A(*loader);
     return rowSums<double>(A);
 }
 
 // [[Rcpp::export]]
 std::vector<double> col_sums_cpp(SEXP matrix) {
-    MatrixLoader<double> *loader = &(*XPtr<MatrixLoader<double> >(matrix));
+    XPtr<MatrixLoader<double>>loader(matrix);
     MatrixIterator<double> A(*loader);
     return colSums<double>(A);
 }
 
 // [[Rcpp::export]]
 List matrix_stats_cpp(SEXP matrix, int row_stats, int col_stats) {
-    MatrixLoader<double> *loader = &(*XPtr<MatrixLoader<double> >(matrix));
+    XPtr<MatrixLoader<double>>loader(matrix);
     
     StatsResult res = computeMatrixStats(*loader, (Stats) row_stats, (Stats) col_stats, false, 1024, &Rcpp::checkUserInterrupt);
 

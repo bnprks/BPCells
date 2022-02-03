@@ -174,10 +174,10 @@ void InsertionsIterator2::loadInsertions() {
         start_buf.resize(load_count);
 
         // Copy remaing ends into buffer
-        memcpy(&end_sort_scratch.cell[0], &end_buf.cell[next_end], ends_remaining*sizeof(uint32_t));
-        memcpy(&end_sort_scratch.coord[0], &end_buf.coord[next_end], ends_remaining*sizeof(uint32_t));
+        std::memmove(&end_sort_scratch.cell[0], &end_buf.cell[next_end], ends_remaining*sizeof(uint32_t));
+        std::memmove(&end_sort_scratch.coord[0], &end_buf.coord[next_end], ends_remaining*sizeof(uint32_t));
         // Copy loaded cells into buffer
-        memcpy(&end_sort_scratch.cell[ends_remaining], &start_buf.cell[0], load_count * sizeof(uint32_t));
+        std::memmove(&end_sort_scratch.cell[ends_remaining], &start_buf.cell[0], load_count * sizeof(uint32_t));
 
         std::swap(end_sort_scratch, end_buf);
 

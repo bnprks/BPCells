@@ -2,6 +2,7 @@
 
 #include <cstdint>
 #include <stdexcept>
+#include <vector>
 
 namespace BPCells {
 
@@ -35,7 +36,7 @@ struct SparseVector {
 template<typename T>
 class MatrixLoader {
 public:
-    virtual ~MatrixLoader() = default;
+    virtual ~MatrixLoader() {};
 
     // Return the count of rows and columns
     virtual uint32_t rows() const = 0;
@@ -119,7 +120,14 @@ public:
     }
 
     // Return false if there isn't another entry in the current column
-    inline bool nextValue();
+    inline bool nextValue() {
+        idx += 1;
+        if (idx >= chunk_size) {
+            chunk_size = load(chunk_capacity, buf);
+            idx = 0;
+        }
+        return chunk_size > 0;
+    }
     // Access current row, column, and value
     inline uint32_t row() const {return buf.idx[idx]; };
     inline uint32_t col() const {return this->current_col; };
@@ -128,15 +136,6 @@ public:
     int32_t load(uint32_t count, SparseVector<T> buffer) override {return this->loader.load(count, buffer);};
 };
 
-template <typename T>
-inline bool MatrixIterator<T>::nextValue() {
-    idx += 1;
-    if (idx >= chunk_size) {
-        chunk_size = load(chunk_capacity, buf);
-        idx = 0;
-    }
-    return chunk_size > 0;
-}
 
 template<typename T> 
 class MatrixTransposeIterator : public MatrixLoaderWrapper<T> {

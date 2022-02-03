@@ -141,6 +141,214 @@ setMethod("rowMeans", signature(x="IterableMatrix"), function(x) rowSums(x)/ncol
 #' @return * `colMeans()`: vector of col means
 setMethod("colMeans", signature(x="IterableMatrix"), function(x) colSums(x)/nrow(x))
 
+# Packed integer matrix
+setClass("PackedMatrixMem",
+    contains = "mat_uint32_t",
+    slots = c(
+        val_data = "integer",   
+        val_idx = "integer",    
+        row_data = "integer",   
+        row_starts = "integer", 
+        row_idx = "integer",
+        col_ptr = "integer",   
+        row_count = "integer"
+    ),
+    prototype = list(
+        val_data = integer(0),   
+        val_idx = integer(0),    
+        row_data = integer(0),   
+        row_starts = integer(0), 
+        row_idx = integer(0),
+        col_ptr = integer(0),   
+        row_count = integer(0)
+    )
+)
+setMethod("iterate_matrix", "PackedMatrixMem", function(x) {
+    iterate_packed_matrix_cpp(x)
+})
+setMethod("short_description", "PackedMatrixMem", function(x) {
+    "Compressed integer matrix in memory"
+})
+
+setClass("UnpackedMatrixMem",
+    contains = "mat_uint32_t",
+    slots = c(
+        val = "integer",   
+        row = "integer",    
+        col_ptr = "integer",   
+        row_count = "integer"
+    ),
+    prototype = list(
+        val = integer(0),   
+        row = integer(0),   
+        col_ptr = integer(0),   
+        row_count = integer(0)
+    )
+)
+setMethod("iterate_matrix", "UnpackedMatrixMem", function(x) {
+    iterate_unpacked_matrix_cpp(x)
+})
+setMethod("short_description", "UnpackedMatrixMem", function(x) {
+    "Uncompressed integer matrix in memory"
+})
+
+write_matrix_memory <- function(mat, compress=TRUE) {
+    assert_is(mat, c("IterableMatrix", "dgCMatrix"))
+    if (is(mat, "dgCMatrix")) mat <- as(mat, "IterableMatrix")
+    if (is(mat, "mat_double")) mat <- as(mat, "mat_uint32_t")
+    assert_true(mat@transpose == FALSE)
+
+    if (compress) {
+        m <- write_packed_matrix_cpp(iterate_matrix(mat))
+        res <- do.call(new, c("PackedMatrixMem", m))
+        res@dim <- mat@dim
+    } else {
+        m <- write_unpacked_matrix_cpp(iterate_matrix(mat))
+        res <- do.call(new, c("UnpackedMatrixMem", m))
+        res@dim <- mat@dim
+    }
+    res
+}
+
+setClass("MatrixDir",
+    contains = "mat_uint32_t",
+    slots = c(
+        dir = "character",
+        compressed = "logical",
+        buffer_size = "integer"
+    ),
+    prototype = list(
+        dir = character(0),
+        compressed = logical(0),
+        buffer_size = integer(0)
+    )
+)
+setMethod("iterate_matrix", "MatrixDir", function(x) {
+    if (x@compressed)
+        iterate_packed_matrix_file_cpp(x@dir, x@buffer_size)
+    else
+        iterate_unpacked_matrix_file_cpp(x@dir, x@buffer_size)
+})
+setMethod("short_description", "MatrixDir", function(x) {
+    sprintf("%s integer matrix in directory %s", 
+        if(x@compressed) "compressed" else "uncompressed",
+        x@dir    
+    )
+})
+write_matrix_dir <- function(mat, dir, compress=TRUE, buffer_size=8192L) {
+    assert_is(mat, c("IterableMatrix", "dgCMatrix"))
+    if (is(mat, "dgCMatrix")) mat <- as(mat, "IterableMatrix")
+    if (is(mat, "mat_double")) mat <- as(mat, "mat_uint32_t")
+    assert_true(mat@transpose == FALSE)
+    assert_is(dir, "character")
+    assert_is(compress, "logical")
+    assert_is(buffer_size, "integer")
+    
+    dir <- path.expand(dir)
+
+    if (compress)
+        write_packed_matrix_file_cpp(iterate_matrix(mat), dir, buffer_size)
+    else 
+        write_unpacked_matrix_file_cpp(iterate_matrix(mat), dir, buffer_size)
+    
+    open_matrix_dir(dir, compress, buffer_size)
+}
+open_matrix_dir <- function(dir, compress=TRUE, buffer_size=8192L) {
+    assert_is_file(dir)
+    assert_is(compress, "logical")
+    assert_is(buffer_size, "integer")
+    
+    dir <- path.expand(dir)
+    info <- dims_matrix_file_cpp(dir, buffer_size)
+    new("MatrixDir", dir=dir, dim=info$dims, compressed=info$compressed, buffer_size=buffer_size)
+}
+
+setClass("MatrixH5",
+    contains = "mat_uint32_t",
+    slots = c(
+        path = "character",
+        group = "character",
+        compressed = "logical",
+        buffer_size = "integer"
+    ),
+    prototype = list(
+        path = character(0),
+        group = "",
+        compressed = logical(0),
+        buffer_size = integer(0)
+    )
+)
+setMethod("iterate_matrix", "MatrixH5", function(x) {
+    if (x@compressed)
+        iterate_packed_matrix_hdf5_cpp(x@path, x@group, x@buffer_size)
+    else
+        iterate_unpacked_matrix_hdf5_cpp(x@path, x@group, x@buffer_size)
+})
+setMethod("short_description", "MatrixH5", function(x) {
+    sprintf("%s integer matrix in hdf5 file %s, group %s", 
+        if(x@compressed) "Compressed" else "Uncompressed",
+        x@path, 
+        x@group
+    )
+})
+write_matrix_hdf5 <- function(mat, path, group, compress=TRUE, buffer_size=8192L, chunk_size=1024L) {
+    assert_is(mat, c("IterableMatrix", "dgCMatrix"))
+    if (is(mat, "dgCMatrix")) mat <- as(mat, "IterableMatrix")
+    if (is(mat, "mat_double")) mat <- as(mat, "mat_uint32_t")
+    assert_true(mat@transpose == FALSE)
+    assert_is(path, "character")
+    assert_is(group, "character")
+    assert_is(compress, "logical")
+    assert_is(buffer_size, "integer")
+    assert_is(chunk_size, "integer")
+
+    path <- path.expand(path)
+
+    if (compress)
+        write_packed_matrix_hdf5_cpp(iterate_matrix(mat), path, group, buffer_size, chunk_size)
+    else 
+        write_unpacked_matrix_hdf5_cpp(iterate_matrix(mat), path, group, buffer_size, chunk_size)
+    
+    open_matrix_hdf5(path, group, buffer_size)
+}
+
+open_matrix_hdf5 <- function(path, group, buffer_size=8192L) {
+    assert_is_file(path)
+    assert_is(group, "character")
+    assert_is(buffer_size, "integer")
+
+    info <- dims_matrix_hdf5_cpp(path.expand(path), group, buffer_size)
+    new("MatrixH5", path=path.expand(path), group=group, dim=info$dims, compressed=info$compressed, buffer_size=buffer_size)
+}
+
+setClass("10xMatrixH5",
+    contains = "mat_uint32_t",
+    slots = c(
+        path = "character",
+        buffer_size = "integer"
+    ),
+    prototype = list(
+        path = character(0),
+        buffer_size = integer(0)
+    )
+)
+setMethod("iterate_matrix", "10xMatrixH5", function(x) {
+    iterate_matrix_10x_hdf5_cpp(x@path, x@buffer_size)
+})
+setMethod("short_description", "10xMatrixH5", function(x) {
+    sprintf("10x HDF5 feature matrix in file %s", 
+        x@path
+    )
+})
+
+open_matrix_10x_hdf5 <- function(path, buffer_size=8192L) {
+    assert_is_file(path)
+    assert_is(buffer_size, "integer")
+
+    info <- dims_matrix_10x_hdf5_cpp(path.expand(path), buffer_size)
+    new("10xMatrixH5", path=path.expand(path), dim=info$dims, buffer_size=buffer_size)
+}
+
 
 # Overlap matrix from fragments
 setClass("overlapMatrix",
@@ -170,13 +378,14 @@ setClass("overlapMatrix",
 #' @export
 overlapMatrix <- function(fragments, ranges, tile_width, convert_to_0_based_coords=TRUE, version = 1) {
     assert_is(fragments, "IterableFragments")
-    assert_is(ranges, c("GRanges", "list"))
+    assert_is(ranges, c("GRanges", "list", "data.frame"))
     
     assert_is(convert_to_0_based_coords, "logical")
     
     assert_not_na(fragments@cell_names)
 
     if(is.list(ranges)) {
+        assert_has_names(ranges, c("chr", "start", "end"))
         res <- new("overlapMatrix", fragments=fragments, 
             chr=as.character(ranges$chr),
             start=as.integer(ranges$start) - convert_to_0_based_coords,
