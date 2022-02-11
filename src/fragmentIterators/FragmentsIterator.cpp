@@ -20,7 +20,7 @@ FragmentsIterator::FragmentsIterator(FragmentsLoader &loader, uint32_t buffer_si
     fragments_buf.cell = &cell_buf[0];
 }
 
-int32_t FragmentsIterator::load(uint32_t count, FragmentArray &buffer) {return loader.load(count, buffer);};
+int32_t FragmentsIterator::load(uint32_t count, FragmentArray buffer) {return loader.load(count, buffer);};
 
 FragmentsLoaderWrapper::FragmentsLoaderWrapper(FragmentsLoader &loader) : loader(loader) {};
 

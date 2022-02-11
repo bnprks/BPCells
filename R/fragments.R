@@ -393,6 +393,201 @@ setMethod("short_description", "FragmentsH5", function(x) {
 
 #### END RAW FRAGMENTS V2 TEST
 
+##### RAW FRAGMENTS V3 TEST
+setClass("UnpackedMemFragments",
+    contains = "IterableFragments",
+    slots = c(
+        cell = "integer",
+        start = "integer", 
+        end = "integer", 
+        end_max = "integer", 
+        chr_ptr = "integer",
+        chr_names = "character",
+        cell_names = "character"
+    ),
+    prototype = list(
+        cell = integer(0),
+        start = integer(0),
+        end = integer(0),
+        end_max = integer(0),
+        chr_ptr = integer(0),
+        chr_names = character(0),
+        cell_names = character(0)
+    )
+)
+
+setMethod("iterate_fragments", "UnpackedMemFragments", function(x) {
+    iterate_unpacked_fragments3_cpp(x)
+})
+setMethod("short_description", "UnpackedMemFragments", function(x) {
+    "Read uncompressed fragments from memory"
+})
+
+setClass("PackedMemFragments",
+    contains = "IterableFragments",
+    slots = c(
+        cell_data = "integer",
+        cell_idx = "integer",
+        start_data = "integer",
+        start_idx = "integer",
+        start_starts = "integer",
+        end_data = "integer",
+        end_idx = "integer",
+        end_max = "integer",
+        chr_ptr = "integer",
+        
+        chr_names = "character",
+        cell_names = "character"
+    ),
+    prototype = list(
+        cell_data = integer(0),
+        cell_idx = integer(0),
+        start_data = integer(0),
+        start_idx = integer(0),
+        start_starts = integer(0),
+        end_data = integer(0),
+        end_idx = integer(0),
+        end_max = integer(0),
+        chr_ptr = integer(0),
+
+        chr_names = character(0),
+        cell_names = character(0)
+    )
+)
+
+
+setMethod("iterate_fragments", "PackedMemFragments", function(x) {
+    iterate_packed_fragments3_cpp(x)
+})
+setMethod("short_description", "PackedMemFragments", function(x) {
+    "Read compressed fragments from memory"
+})
+
+#' Make a RawFragments object in memory. 
+#' @param fragments Input fragments object
+#' @return MemFragments object
+#' @export
+write_fragments_memory2 <- function(fragments, compress=TRUE) {
+    assert_is(fragments, "IterableFragments")
+    assert_is(compress, "logical")
+    if (compress) {
+        res <- write_packed_fragments3_cpp(iterate_fragments(fragments))
+        do.call(new, c("PackedMemFragments", res))
+    } else {
+        res <- write_unpacked_fragments3_cpp(iterate_fragments(fragments))
+        do.call(new, c("UnpackedMemFragments", res))
+    }
+}
+
+
+setClass("FragmentsDir2",
+    contains = "IterableFragments",
+    slots = c(
+        dir = "character",
+        compressed = "logical",
+        buffer_size = "integer"
+    ),
+    prototype = list(
+        dir = character(0),
+        compressed = TRUE,
+        buffer_size = 8192L
+    )
+)
+
+#' @export
+write_fragments_dir2 <- function(fragments, dir, compress=TRUE, buffer_size=8192L) {
+    assert_is(fragments, "IterableFragments")
+    assert_is(dir, "character")
+    assert_is(compress, "logical")
+    assert_is(buffer_size, "integer")
+    dir <- path.expand(dir)
+    if (compress)
+        write_packed_fragments_file2_cpp(iterate_fragments(fragments), dir, buffer_size)
+    else
+        write_unpacked_fragments_file2_cpp(iterate_fragments(fragments), dir, buffer_size)
+    open_fragments_dir2(dir, buffer_size)
+}
+
+open_fragments_dir2 <- function(dir, buffer_size=8192L) {
+    assert_is_file(dir)
+    assert_is(buffer_size, "integer")
+    
+    dir <- path.expand(dir)
+    compressed <- is_compressed_fragments_file_cpp(dir, buffer_size)
+    new("FragmentsDir2", dir=path.expand(dir), compressed=compressed, buffer_size=buffer_size)
+}
+
+setMethod("iterate_fragments", "FragmentsDir2", function(x) {
+    if (x@compressed)
+        iterate_packed_fragments_file2_cpp(x@dir, x@buffer_size)
+    else
+        iterate_unpacked_fragments_file2_cpp(x@dir, x@buffer_size)
+})
+setMethod("short_description", "FragmentsDir2", function(x) {
+    sprintf("Read %s fragments from directory %s", 
+        if(x@compressed) "compressed" else "uncompressed",
+        x@dir
+    )
+})
+
+
+
+setClass("FragmentsH52",
+    contains = "IterableFragments",
+    slots = c(
+        path = "character",
+        group = "character",
+        compressed = "logical",
+        buffer_size = "integer"
+    ),
+    prototype = list(
+        path = character(0),
+        group = "",
+        compressed=TRUE,
+        buffer_size = 8192L
+    )
+)
+
+#' @export
+write_fragments_h52 <- function(fragments, path, group="fragments", compress=TRUE, buffer_size=8192L, chunk_size=1024L) {
+    assert_is(path, "character")
+    assert_is(group, "character")
+    assert_is(compress, "logical")
+    assert_is(buffer_size, "integer")
+    assert_is(chunk_size, "integer")
+    path <- path.expand(path)
+    if (compress)
+        write_packed_fragments_hdf52_cpp(iterate_fragments(fragments), path, group, buffer_size, chunk_size)
+    else
+        write_unpacked_fragments_hdf52_cpp(iterate_fragments(fragments), path, group, buffer_size, chunk_size)
+    open_fragments_h52(path, group, buffer_size)
+}
+
+open_fragments_h52 <- function(path, group="fragments", buffer_size=8192L) {
+    assert_is_file(path)
+    assert_is(group, "character")
+    assert_is(buffer_size, "integer")
+    
+    path <- path.expand(path)
+    compressed <- is_compressed_fragments_hdf5_cpp(path, group, buffer_size)
+    new("FragmentsH52", path=path, group=group, compressed=compressed, buffer_size=buffer_size)
+}
+
+setMethod("iterate_fragments", "FragmentsH52", function(x) {
+    if (x@compressed)
+        iterate_packed_fragments_hdf52_cpp(x@path, x@group, x@buffer_size)
+    else
+        iterate_unpacked_fragments_hdf52_cpp(x@path, x@group, x@buffer_size)
+})
+setMethod("short_description", "FragmentsH52", function(x) {
+    sprintf("Read %s fragments from %s, group %s", 
+        if(x@compressed) "compressed" else "uncompressed",
+        x@path, 
+        x@group
+    )
+})
+#### END RAW FRAGMENTS V3 TEST
+
 # Define converters with GRanges if we have the GenomicRanges package available
 if (requireNamespace("GenomicRanges", quietly=TRUE)) {
     setAs("IterableFragments", "GRanges", function(from) {

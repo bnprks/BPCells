@@ -1,5 +1,7 @@
 #pragma once
 #include <stdexcept>
+#include <string>
+#include <vector>
 
 namespace BPCells {
 
@@ -128,6 +130,30 @@ public:
     }
 
     
+};
+
+class StringReader {
+public:
+    virtual ~StringReader() = default;
+    virtual const char* get(uint32_t idx) const = 0;
+    virtual uint32_t size() const = 0;
+};
+
+class StringWriter {
+public:
+    virtual ~StringWriter() = default;
+    virtual void write(const StringReader &reader) = 0;
+};
+
+// Simple generic StringReader designed to allow for transparent reading
+// of std::vector<std::string> 
+class VecStringReader : public StringReader {
+private:
+    std::vector<std::string> data;
+public:
+    VecStringReader(std::vector<std::string> data);
+    const char* get(uint32_t idx) const override;
+    uint32_t size() const override;
 };
 
 

@@ -40,6 +40,14 @@ public:
     bool seek(size_t pos) override;
 };
 
+class VecStringWriter : public StringWriter {
+private:
+    std::vector<std::string> &data;
+public:
+    VecStringWriter(std::vector<std::string> &data);
+    void write(const StringReader &reader) override;
+};
+
 class VecUIntWriter {
 private:
     std::vector<uint32_t> &vec;

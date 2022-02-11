@@ -251,11 +251,10 @@ write_matrix_dir <- function(mat, dir, compress=TRUE, buffer_size=8192L) {
     else 
         write_unpacked_matrix_file_cpp(iterate_matrix(mat), dir, buffer_size)
     
-    open_matrix_dir(dir, compress, buffer_size)
+    open_matrix_dir(dir, buffer_size)
 }
-open_matrix_dir <- function(dir, compress=TRUE, buffer_size=8192L) {
+open_matrix_dir <- function(dir, buffer_size=8192L) {
     assert_is_file(dir)
-    assert_is(compress, "logical")
     assert_is(buffer_size, "integer")
     
     dir <- path.expand(dir)

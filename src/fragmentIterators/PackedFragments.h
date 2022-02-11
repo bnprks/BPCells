@@ -39,7 +39,7 @@ private:
     int32_t current_chr;
     uint32_t current_block;
 
-    int32_t load(uint32_t count, FragmentArray &buffer) override;
+    int32_t load(uint32_t count, FragmentArray buffer) override;
 };
 
 

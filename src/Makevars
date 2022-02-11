@@ -15,6 +15,7 @@ matrix_transform.o \
 profiler.o \
 r_wrapper.o \
 RcppExports.o \
+arrayIO/array_interfaces.o \
 arrayIO/binaryfile.o \
 arrayIO/hdf5.o \
 arrayIO/vector.o \
@@ -29,6 +30,8 @@ fragmentIterators/InsertionsIterator.o \
 fragmentIterators/PackedFragments.o \
 fragmentIterators/ShiftCoords.o \
 fragmentIterators/UnpackedFragments.o \
+fragmentIterators/UnpackedFragments3.o \
+fragmentIterators/PackedFragments3.o \
 matrixIterators/MatrixOps.o \
 matrixIterators/PackedMatrix.o \
 matrixIterators/UnpackedMatrix.o \

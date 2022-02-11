@@ -15,7 +15,7 @@ public:
 
     ~ShiftCoords() = default;
     
-    int32_t load(uint32_t count, FragmentArray &buffer) override;
+    int32_t load(uint32_t count, FragmentArray buffer) override;
 
     // Move loader to just before fragments which end after "base".
     // It's possible that fragments returned after seek will end before "base",

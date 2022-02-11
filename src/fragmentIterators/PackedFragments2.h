@@ -127,7 +127,7 @@ private:
         chr_frags.count.read(&chr_frags_count, 1);
     }
 
-    int32_t load(uint32_t count, FragmentArray &buffer) override {
+    int32_t load(uint32_t count, FragmentArray buffer) override {
         if (current_chunk == end_max_buf.size()) return 0;
         if (count < 128) throw std::runtime_error("Must load >128 fragments at a time from PackedFragments");
         count = count & ~(128-1); // Round count down to nearest 128

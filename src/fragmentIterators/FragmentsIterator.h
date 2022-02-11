@@ -66,7 +66,7 @@ public:
 
     // Return number of items loaded. Should repeatedly return 0 at the end of a chromosome.
     // Return -1 for error
-    virtual int32_t load(uint32_t count, FragmentArray &buffer) = 0;
+    virtual int32_t load(uint32_t count, FragmentArray buffer) = 0;
 };
 
 // Wrapper for a FragmentsLoader, forwarding all methods but load to the
@@ -147,7 +147,7 @@ public:
         idx = chunk_capacity;
     }   
 
-    int32_t load(uint32_t count, FragmentArray &buffer) override;
+    int32_t load(uint32_t count, FragmentArray buffer) override;
 };
 
 class FragmentsWriter {

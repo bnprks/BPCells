@@ -45,7 +45,7 @@ uint32_t ChrIndexSelect::currentChr() const {
     return result - chr_assignments.begin(); 
 };
 
-int32_t ChrIndexSelect::load(uint32_t count, FragmentArray &buffer) {
+int32_t ChrIndexSelect::load(uint32_t count, FragmentArray buffer) {
     return loader.load(count, buffer);
 };
 
@@ -98,7 +98,7 @@ uint32_t ChrNameSelect::currentChr() const {
     return res;
 };
 
-int32_t ChrNameSelect::load(uint32_t count, FragmentArray &buffer) {
+int32_t ChrNameSelect::load(uint32_t count, FragmentArray buffer) {
     return loader.load(count, buffer);
 };
 

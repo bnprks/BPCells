@@ -19,6 +19,6 @@ InsertionsIterator::InsertionsIterator(FragmentsLoader &loader, uint32_t buffer_
     fragments_buf.cell = &cell_buf[0];
 }
 
-int32_t InsertionsIterator::load(uint32_t count, FragmentArray &buffer) {return loader.load(count, buffer);};
+int32_t InsertionsIterator::load(uint32_t count, FragmentArray buffer) {return loader.load(count, buffer);};
 
 } // end namespace BPCells

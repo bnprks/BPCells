@@ -65,7 +65,7 @@ private:
 
     bool validInt(const char* c);
 
-    int32_t load(uint32_t count, FragmentArray &buffer) override;
+    int32_t load(uint32_t count, FragmentArray buffer) override;
 };
 
 

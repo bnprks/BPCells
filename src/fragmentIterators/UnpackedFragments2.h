@@ -82,7 +82,7 @@ public:
 
     // Return number of items loaded. Should repeatedly return 0 at the end of a chromosome.
     // Return -1 for error
-    int32_t load(uint32_t count, FragmentArray &buffer) override {
+    int32_t load(uint32_t count, FragmentArray buffer) override {
         uint32_t ret = chr_frags.start.read(buffer.start, count);
         if (ret != chr_frags.end.read(buffer.end, count))
             return -1;

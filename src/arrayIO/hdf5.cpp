@@ -97,12 +97,14 @@ bool ZH5UIntReader::next() {
     return read_buffer.size > 0;
 }
 bool ZH5UIntReader::seek(size_t new_pos) {
+    // Number of successfully read items in the buffer
     size_t read_count = data() - capacity() - buf.data();
+    // File position corresponding to the start of the buffer
     auto buf_pos = pos - read_count;
-    if (buf_pos < new_pos && buf_pos + read_count > new_pos+128) {
+    if (buf_pos <= new_pos && buf_pos + read_count > new_pos) {
         // Don't seek, just let the next read come from the existing buffer
-        read_buffer.size = read_buffer.size - read_count;
-        read_buffer.data = buf.data() + read_count;
+        read_buffer.data = buf.data() + pos - buf_pos;
+        read_buffer.size = read_count - (pos - buf_pos);
         return true;
     } else {
         pos = new_pos;
@@ -110,7 +112,32 @@ bool ZH5UIntReader::seek(size_t new_pos) {
     }
 }
 
-std::string loadVersionMatrixH5(std::string file_path, std::string group_path) {
+H5StringReader::H5StringReader(const MovableDataSet &dataset) {
+    dataset.read(data);
+}
+const char* H5StringReader::get(uint32_t idx) const {
+    if (idx < data.size()) return data[idx].c_str();
+    return NULL;
+}
+uint32_t H5StringReader::size() const {return data.size();}
+
+H5StringWriter::H5StringWriter(std::string file, std::string group) : file(file), group(group) {}
+void H5StringWriter::write(const StringReader &reader) {
+    std::vector<std::string> data;
+    uint32_t i = 0;
+    while (true) {
+        const char* s = reader.get(i);
+        if (s == NULL) break;
+        data.push_back(s);
+        i++;
+    }
+    HighFive::SilenceHDF5 s;
+    HighFive::File f(file, HighFive::File::ReadWrite);
+    HighFive::DataSet ds = f.createDataSet<std::string>(group, HighFive::DataSpace::From(data));
+    ds.write(data);
+}
+
+std::string loadVersionH5(std::string file_path, std::string group_path) {
     HighFive::SilenceHDF5 s;
     if (group_path == "") group_path = "/";
     
@@ -149,8 +176,8 @@ UnpackedMatrix openUnpackedMatrixH5(std::string file_path, std::string group_pat
 
     std::string version;
     group.getAttribute("version").read(version);
-    if (version != "v1-unpacked")
-        throw std::runtime_error("HDF5 group does not have correct version attribute (v1-unpacked)");
+    if (version != "v1-unpacked-matrix")
+        throw std::runtime_error("HDF5 group does not have correct version attribute (v1-unpacked-matrix)");
 
     return UnpackedMatrix(
         std::make_unique<ZH5UIntReader>(group, "val", buffer_size), 
@@ -169,18 +196,9 @@ UnpackedMatrixWriter createUnpackedMatrixH5(std::string file_path, std::string g
         std::filesystem::create_directories(path.parent_path());
     }
     
-    HighFive::File file(file_path, HighFive::File::OpenOrCreate);
-    MovableGroup group;
-    try {
-        group = file.getGroup(group_path);
-        if (group.getNumberObjects() != 0) {
-            throw std::runtime_error("Requested hdf5 group is not empty");
-        }
-    } catch (const HighFive::GroupException &e) {
-        group = file.createGroup(group_path);
-    }
+    MovableGroup group = constructH5Group(file_path, group_path);
 
-    std::string version("v1-unpacked");
+    std::string version("v1-unpacked-matrix");
     group.createAttribute<std::string>("version", HighFive::DataSpace::From(version)).write(version);
 
     return UnpackedMatrixWriter(
@@ -202,8 +220,8 @@ PackedMatrix openPackedMatrixH5(std::string file_path, std::string group_path, u
 
     std::string version;
     group.getAttribute("version").read(version);
-    if (version != "v1-packed")
-        throw std::runtime_error("HDF5 group does not have correct version attribute (v1-packed)");
+    if (version != "v1-packed-matrix")
+        throw std::runtime_error("HDF5 group does not have correct version attribute (v1-packed-matrix)");
 
     return PackedMatrix(
         std::make_unique<ZH5UIntReader>(group, "val_data", buffer_size), 
@@ -225,18 +243,9 @@ PackedMatrixWriter createPackedMatrixH5(std::string file_path, std::string group
         std::filesystem::create_directories(path.parent_path());
     }
     
-    HighFive::File file(file_path, HighFive::File::OpenOrCreate);
-    MovableGroup group;
-    try {
-        group = file.getGroup(group_path);
-        if (group.getNumberObjects() != 0) {
-            throw std::runtime_error("Requested hdf5 group is not empty");
-        }
-    } catch (const HighFive::GroupException &e) {
-        group = file.createGroup(group_path);
-    }
-
-    std::string version("v1-packed");
+    MovableGroup group = constructH5Group(file_path, group_path);
+    
+    std::string version("v1-packed-matrix");
     group.createAttribute<std::string>("version", HighFive::DataSpace::From(version)).write(version);
 
     return PackedMatrixWriter(
@@ -249,6 +258,116 @@ PackedMatrixWriter createPackedMatrixH5(std::string file_path, std::string group
         std::make_unique<ZH5UIntWriter>(group, "row_count", buffer_size)
     );
 }
+
+
+UnpackedFragments3 openUnpackedFragmentsH5(std::string file_path, std::string group_path, uint32_t buffer_size) {
+    HighFive::SilenceHDF5 s;
+    if (group_path == "") group_path = "/";
+    
+    // Load with ReadWrite permissions so that if we open an HDF5 then later want to write
+    // back to it, we aren't locked out from having originally opened the file ReadOnly
+    HighFive::Group group(HighFive::File(file_path, HighFive::File::ReadWrite).getGroup(group_path));
+
+    std::string version;
+    group.getAttribute("version").read(version);
+    if (version != "v1-unpacked-fragments")
+        throw std::runtime_error("HDF5 group does not have correct version attribute (v1-unpacked-fragments)");
+
+    return UnpackedFragments3(
+        std::make_unique<ZH5UIntReader>(group, "cell", buffer_size), 
+        std::make_unique<ZH5UIntReader>(group, "start", buffer_size), 
+        std::make_unique<ZH5UIntReader>(group, "end", buffer_size), 
+        std::make_unique<ZH5UIntReader>(group, "end_max", buffer_size), 
+        std::make_unique<ZH5UIntReader>(group, "chr_ptr", buffer_size), 
+        std::make_unique<H5StringReader>(openH5DataSet(group, "chr_names")), 
+        std::make_unique<H5StringReader>(openH5DataSet(group, "cell_names"))
+    );
+}
+
+UnpackedFragmentsWriter3 createUnpackedFragmentsH5(std::string file_path, std::string group_path, uint32_t buffer_size, uint32_t chunk_size) {
+    HighFive::SilenceHDF5 s;
+    if (group_path == "") group_path = "/";
+    
+    std::filesystem::path path(file_path);
+    if (path.has_parent_path() && !std::filesystem::exists(path.parent_path())) {
+        std::filesystem::create_directories(path.parent_path());
+    }
+    
+    MovableGroup group = constructH5Group(file_path, group_path);
+
+    std::string version("v1-unpacked-fragments");
+    group.createAttribute<std::string>("version", HighFive::DataSpace::From(version)).write(version);
+
+    return UnpackedFragmentsWriter3(
+        std::make_unique<ZH5UIntWriter>(group, "cell", buffer_size), 
+        std::make_unique<ZH5UIntWriter>(group, "start", buffer_size), 
+        std::make_unique<ZH5UIntWriter>(group, "end", buffer_size), 
+        std::make_unique<ZH5UIntWriter>(group, "end_max", buffer_size), 
+        std::make_unique<ZH5UIntWriter>(group, "chr_ptr", buffer_size), 
+        std::make_unique<H5StringWriter>(file_path, group.getPath() + "/chr_names"), 
+        std::make_unique<H5StringWriter>(file_path, group.getPath() + "/cell_names")
+    );
+}
+
+PackedFragments3 openPackedFragmentsH5(std::string file_path, std::string group_path, uint32_t buffer_size) {
+    HighFive::SilenceHDF5 s;
+    if (group_path == "") group_path = "/";
+    
+    // Load with ReadWrite permissions so that if we open an HDF5 then later want to write
+    // back to it, we aren't locked out from having originally opened the file ReadOnly
+    HighFive::Group group(HighFive::File(file_path, HighFive::File::ReadWrite).getGroup(group_path));
+
+    std::string version;
+    group.getAttribute("version").read(version);
+    if (version != "v1-packed-fragments")
+        throw std::runtime_error("HDF5 group does not have correct version attribute (v1-packed-fragments)");
+
+    return PackedFragments3(
+        std::make_unique<ZH5UIntReader>(group, "cell_data", buffer_size),
+        std::make_unique<ZH5UIntReader>(group, "cell_idx", buffer_size),
+        std::make_unique<ZH5UIntReader>(group, "start_data", buffer_size),
+        std::make_unique<ZH5UIntReader>(group, "start_idx", buffer_size),
+        std::make_unique<ZH5UIntReader>(group, "start_starts", buffer_size),
+        std::make_unique<ZH5UIntReader>(group, "end_data", buffer_size),
+        std::make_unique<ZH5UIntReader>(group, "end_idx", buffer_size),
+        std::make_unique<ZH5UIntReader>(group, "end_max", buffer_size),
+        std::make_unique<ZH5UIntReader>(group, "chr_ptr", buffer_size),
+
+        std::make_unique<H5StringReader>(openH5DataSet(group, "chr_names")), 
+        std::make_unique<H5StringReader>(openH5DataSet(group, "cell_names"))
+    );
+}
+
+PackedFragmentsWriter3 createPackedFragmentsH5(std::string file_path, std::string group_path, uint32_t buffer_size, uint32_t chunk_size) {
+    HighFive::SilenceHDF5 s;
+    if (group_path == "") group_path = "/";
+    
+    std::filesystem::path path(file_path);
+    if (path.has_parent_path() && !std::filesystem::exists(path.parent_path())) {
+        std::filesystem::create_directories(path.parent_path());
+    }
+    
+    MovableGroup group = constructH5Group(file_path, group_path);
+
+    std::string version("v1-packed-fragments");
+    group.createAttribute<std::string>("version", HighFive::DataSpace::From(version)).write(version);
+
+    return PackedFragmentsWriter3(
+        std::make_unique<ZH5UIntWriter>(group, "cell_data", buffer_size),
+        std::make_unique<ZH5UIntWriter>(group, "cell_idx", buffer_size),
+        std::make_unique<ZH5UIntWriter>(group, "start_data", buffer_size),
+        std::make_unique<ZH5UIntWriter>(group, "start_idx", buffer_size),
+        std::make_unique<ZH5UIntWriter>(group, "start_starts", buffer_size),
+        std::make_unique<ZH5UIntWriter>(group, "end_data", buffer_size),
+        std::make_unique<ZH5UIntWriter>(group, "end_idx", buffer_size),
+        std::make_unique<ZH5UIntWriter>(group, "end_max", buffer_size),
+        std::make_unique<ZH5UIntWriter>(group, "chr_ptr", buffer_size),
+
+        std::make_unique<H5StringWriter>(file_path, group.getPath() + "/chr_names"), 
+        std::make_unique<H5StringWriter>(file_path, group.getPath() + "/cell_names")
+    );
+}
+
 
 
 H5UIntWriter::H5UIntWriter(std::string file_path, std::string group_path, uint32_t chunk_size) :
@@ -342,14 +461,14 @@ uint32_t H5UIntReader::size() {return dataset.getDimensions()[0];};
 void H5UIntReader::seek(const size_t pos) {this->pos = pos;};
 
 H5FragmentsSaver::H5FragmentsSaver(std::string file_path, std::string group_path, uint32_t chunk_size) :
-    group(openH5Group(file_path, group_path)),
+    group(constructH5Group(file_path, group_path)),
     chunk_size(chunk_size) {
     
     std::string version("v1");
     group.createAttribute<std::string>("version", HighFive::DataSpace::From(version)).write(version);
 }
 
-MovableGroup H5FragmentsSaver::openH5Group(std::string file_path, std::string group_path) {
+MovableGroup constructH5Group(std::string file_path, std::string group_path) {
     HighFive::SilenceHDF5 s;
     if (group_path == "") group_path = "/";
     HighFive::File file(file_path, HighFive::File::OpenOrCreate);
@@ -437,7 +556,7 @@ H5FragmentsLoader::H5FragmentsLoader(std::string file_path, std::string group_pa
     }
 }
 
-MovableGroup H5FragmentsLoader::openH5Group(std::string file_path, std::string group_path) {
+MovableGroup openH5Group(std::string file_path, std::string group_path) {
     HighFive::SilenceHDF5 s;
     if (group_path == "") group_path = "/";
     return HighFive::File(file_path, HighFive::File::ReadWrite).getGroup(group_path);

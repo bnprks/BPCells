@@ -16,6 +16,13 @@ the new UIntReader and UIntWriter interfaces
 
 The data types are a little complicated right now since I'm erring on the side of templating rather than explicit inheritance with virtual function calls
 
+#### Data representation v2
+
+- UnpackedFragments have the following main data fields
+  - `cell`, `start`, `end` - cell, start, and end values concatenated between all the chromosomes, ordered to be sorted by `start` within each chromosme
+  - `chr_ptr` - indices into the `cell`,`start`, and `end` arrays that define the start/end of each chromosome. Chromosome `i` goes from `chr_ptr[i]` to `chr_ptr[i+1]`. Length is number of chromosomes + 1
+  - `end_max` - running maximum of the end values within each chromosome, stored for every 128 values to enable seeking. `end_max[i]` is the maximum of `end[chr_start_idx:i*128]`. Note that because it's possble a chromosome ends at not a perfect multiple of 128, `end_max` will default to be maximum of `end` for the whole chunk of 128, rather than the maximum of `end` in the start of the new chromosome
+
 #### Data representation
 
 - `UnpackedFrags<T>` and `PackedFrags<T>`: Flexible struct representing fragment data for a single chromosome. `T` can be any kind of class -- `vector` `UIntWriter`, `UIntReader` depending on what is needed for the occasion.

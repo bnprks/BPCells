@@ -9,7 +9,7 @@ ShiftCoords::ShiftCoords(FragmentsLoader &loader, int32_t shift_start, int32_t s
 
 
 
-int32_t ShiftCoords::load(uint32_t count, FragmentArray &buffer) {
+int32_t ShiftCoords::load(uint32_t count, FragmentArray buffer) {
     int32_t res = loader.load(count, buffer);
     if (res <= 0) return res;
     vec start = splat(shift_start);

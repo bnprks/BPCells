@@ -62,7 +62,7 @@ bool UnpackedFragments::nextChr() {
 uint32_t UnpackedFragments::currentChr() const {return current_chr;}
 
 
-int32_t UnpackedFragments::load(uint32_t count, FragmentArray &buf) {
+int32_t UnpackedFragments::load(uint32_t count, FragmentArray buf) {
     size_t output = 0;
     while(output < count && current_fragment < start[current_chr].size) {
         buf.start[output] = start[current_chr][current_fragment];

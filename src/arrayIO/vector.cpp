@@ -55,6 +55,17 @@ bool ZVecUIntReader::seek(size_t pos) {
     return true;
 };
 
+VecStringWriter::VecStringWriter(std::vector<std::string> &data) : data(data) {}
+void VecStringWriter::write(const StringReader &reader) {
+    uint32_t i = 0;
+    data.resize(0);
+    while (true) {
+        const char* s = reader.get(i);
+        if (s == NULL) break;
+        data.push_back(s);
+        i++;
+    }
+}
 
 
 void VecUIntWriter::write(const uint32_t *buffer, uint32_t count) {

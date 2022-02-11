@@ -103,7 +103,7 @@ public:
         reset_internals();
     }
 
-    int32_t load(uint32_t count, FragmentArray &buffer) override {
+    int32_t load(uint32_t count, FragmentArray buffer) override {
         return loader.load(count, buffer);
     };
 };

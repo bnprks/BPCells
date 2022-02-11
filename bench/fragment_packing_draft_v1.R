@@ -1,6 +1,32 @@
 
 devtools::load_all("~/Dropbox/greenleaf/playground/fragment_io/BPCells/")
 
+input <- open_10x_fragments("~/Dropbox/greenleaf/playground/fragment_io/BPCells/tests/data/mini_fragments.tsv.gz")
+
+d_u <- open_fragments_dir2("~/Downloads/test_mini_fragments/")
+m_u <- write_fragments_memory(input, compressed = FALSE)
+d_u <- write_fragments_dir2(input, "~/Downloads/test_mini_fragments", compress=FALSE)
+as(d_u, "GRanges")
+all.equal(as(input, "GRanges"), as(d_u, "GRanges"))
+
+h_u <- write_fragments_h52(d_u, "~/Downloads/test_mini_fragments.h5", compress = FALSE)
+all.equal(as(input, "GRanges"), as(h_u, "GRanges"))
+
+all.equal(as(input, "GRanges"), as(m_u, "GRanges"))
+
+
+
+# get dir array
+gda <- function(s) {
+  readBin(file.path(d_u@dir, s), integer(), n=15000, endian="big")[c(-1,-2)]
+}
+gda("start") %>% tail()
+gda("end_max") %>% tail()
+
+m <- gda("end_max")
+
+gr <- as(input, "GRanges")
+table(gr@seqnames)
 
 system.time({
   open_10x_fragments("~/Downloads/pbmc_granulocyte_sorted_10k_atac_fragments.tsv.gz") %>%

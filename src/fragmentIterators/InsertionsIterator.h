@@ -190,7 +190,7 @@ public:
         buf.clear();
     }
 
-    int32_t load(uint32_t count, FragmentArray &buffer) override;
+    int32_t load(uint32_t count, FragmentArray buffer) override;
 };
 
 } // end namespace BPCells

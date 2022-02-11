@@ -96,6 +96,7 @@ size_t ZFileUIntReader::readPos(uint32_t *out, uint32_t capacity) {
     for (uint32_t i = 0; i < read_size; i++) {
         out[i] = ntohl(out[i]);
     }
+    buf_end_pos += read_size;
     return read_size;
 }
 
@@ -106,20 +107,48 @@ bool ZFileUIntReader::next() {
 }
 
 bool ZFileUIntReader::seek(size_t pos) {
-    size_t read_count = data() - capacity() - buf.data();
-    size_t buf_pos = (size_t) file.tellg() - read_count;
-    if (buf_pos < pos && buf_pos + read_count > pos+128) {
+    if (data() == NULL) return next();
+    // Number of successfully read items in the buffer
+    size_t read_count = data() + capacity() - buf.data();
+    // File position corresponding to the start of the buffer
+    size_t buf_pos = buf_end_pos - read_count;
+    if (buf_pos <= pos && buf_pos + read_count > pos) {
         // Don't seek, just let the next read come from the existing buffer
-        read_buffer.size = read_buffer.size - read_count;
-        read_buffer.data = buf.data() + read_count;
+        read_buffer.data = buf.data() + pos - buf_pos;
+        read_buffer.size = read_count - (pos - buf_pos);
         return true;
     } else {
         file.seekg(8 + pos * sizeof(uint32_t));
+        buf_end_pos = pos;
         return next();
     }
 }
 
-std::string loadVersionMatrixDir(std::string dir) {
+FileStringReader::FileStringReader(std::filesystem::path path) : data(readLines(path)) {}
+const char* FileStringReader::get(uint32_t idx) const {
+    if (idx < data.size()) return data[idx].c_str();
+    return NULL;
+}
+
+uint32_t FileStringReader::size() const {return data.size();}
+
+FileStringWriter::FileStringWriter(std::filesystem::path path) : path(path) {}
+void FileStringWriter::write(const StringReader &reader) {
+    std::ofstream f(path.c_str());
+    uint32_t i = 0;
+    while (true) {
+        const char* s = reader.get(i);
+        if (s == NULL) break;
+        while(*s != '\0') {
+            f.put(*s);
+            s++;
+        }
+        f.put('\n');
+        i += 1;
+    }
+}
+
+std::string loadVersionDir(std::string dir) {
     std::filesystem::path path(dir);
 
     if (!std::filesystem::exists(path)) {
@@ -127,7 +156,7 @@ std::string loadVersionMatrixDir(std::string dir) {
     }
     std::vector<std::string> version = readLines(path / "version");
     if (version.size() != 1)
-        throw std::runtime_error("Matrix version file does not have exactly one line");
+        throw std::runtime_error("Version file does not have exactly one line");
     
     return version[0];
 }
@@ -141,8 +170,8 @@ UnpackedMatrix openUnpackedMatrixDir(std::string dir, uint32_t buffer_size) {
 
     // Check version info tag
     std::vector<std::string> version = readLines(path / "version");
-    if (version.size() != 1 || version[0] != "v1-unpacked")
-        throw std::runtime_error("version file has incompatible version (not v1-unpacked)");
+    if (version.size() != 1 || version[0] != "v1-unpacked-matrix")
+        throw std::runtime_error("version file has incompatible version (not v1-unpacked-matrix)");
 
     return UnpackedMatrix(
         std::make_unique<ZFileUIntReader>((path / "val").c_str(), buffer_size), 
@@ -161,7 +190,7 @@ UnpackedMatrixWriter createUnpackedMatrixDir(std::string dir, uint32_t buffer_si
     std::filesystem::create_directories(path);
 
     std::ofstream f((path / "version").c_str());
-    f << "v1-unpacked\n";
+    f << "v1-unpacked-matrix\n";
 
     return UnpackedMatrixWriter(
         std::make_unique<ZFileUIntWriter>((path / "val").c_str(), buffer_size), 
@@ -180,7 +209,7 @@ PackedMatrix openPackedMatrixDir(std::string dir, uint32_t buffer_size) {
 
     // Check version info tag
     std::vector<std::string> version = readLines(path / "version");
-    if (version.size() != 1 || version[0] != "v1-packed")
+    if (version.size() != 1 || version[0] != "v1-packed-matrix")
         throw std::runtime_error("version file has incompatible version (not v1-packed)");
 
     return PackedMatrix(
@@ -203,7 +232,7 @@ PackedMatrixWriter createPackedMatrixDir(std::string dir, uint32_t buffer_size) 
     std::filesystem::create_directories(path);
 
     std::ofstream f((path / "version").c_str());
-    f << "v1-packed\n";
+    f << "v1-packed-matrix\n";
 
     return PackedMatrixWriter(
         std::make_unique<ZFileUIntWriter>((path / "val_data").c_str(), buffer_size), 
@@ -216,6 +245,105 @@ PackedMatrixWriter createPackedMatrixDir(std::string dir, uint32_t buffer_size) 
     );
 }
 
+UnpackedFragments3 openUnpackedFragmentsDir(std::string dir, uint32_t buffer_size) {
+    std::filesystem::path path(dir);
+
+    if (!std::filesystem::exists(path)) {
+        throw std::runtime_error(std::string("Missing directory: ") + dir);
+    }
+
+    // Check version info tag
+    std::vector<std::string> version = readLines(path / "version");
+    if (version.size() != 1 || version[0] != "v1-unpacked-fragments")
+        throw std::runtime_error("version file has incompatible version (not v1-unpacked-fragments)");
+
+    return UnpackedFragments3(
+        std::make_unique<ZFileUIntReader>((path / "cell").c_str(), buffer_size), 
+        std::make_unique<ZFileUIntReader>((path / "start").c_str(), buffer_size), 
+        std::make_unique<ZFileUIntReader>((path / "end").c_str(), buffer_size), 
+        std::make_unique<ZFileUIntReader>((path / "end_max").c_str(), buffer_size), 
+        std::make_unique<ZFileUIntReader>((path / "chr_ptr").c_str(), buffer_size),
+        std::make_unique<FileStringReader>(path / "chr_names.txt"),
+        std::make_unique<FileStringReader>(path / "cell_names.txt")
+    );
+}
+
+UnpackedFragmentsWriter3 createUnpackedFragmentsDir(std::string dir, uint32_t buffer_size) {
+    std::filesystem::path path(dir);
+    if (std::filesystem::exists(path)) {
+        throw std::runtime_error(std::string("Path already exists: ") + dir);
+    }
+
+    std::filesystem::create_directories(path);
+
+    std::ofstream f((path / "version").c_str());
+    f << "v1-unpacked-fragments\n";
+
+    return UnpackedFragmentsWriter3(
+        std::make_unique<ZFileUIntWriter>((path / "cell").c_str(), buffer_size), 
+        std::make_unique<ZFileUIntWriter>((path / "start").c_str(), buffer_size), 
+        std::make_unique<ZFileUIntWriter>((path / "end").c_str(), buffer_size), 
+        std::make_unique<ZFileUIntWriter>((path / "end_max").c_str(), buffer_size), 
+        std::make_unique<ZFileUIntWriter>((path / "chr_ptr").c_str(), buffer_size),
+        std::make_unique<FileStringWriter>(path / "chr_names.txt"),
+        std::make_unique<FileStringWriter>(path / "cell_names.txt")
+    );
+}
+
+PackedFragments3 openPackedFragmentsDir(std::string dir, uint32_t buffer_size) {
+    std::filesystem::path path(dir);
+
+    if (!std::filesystem::exists(path)) {
+        throw std::runtime_error(std::string("Missing directory: ") + dir);
+    }
+
+    // Check version info tag
+    std::vector<std::string> version = readLines(path / "version");
+    if (version.size() != 1 || version[0] != "v1-packed-fragments")
+        throw std::runtime_error("version file has incompatible version (not v1-packed-fragments)");
+
+    return PackedFragments3(
+        std::make_unique<ZFileUIntReader>((path / "cell_data").c_str(), buffer_size),
+        std::make_unique<ZFileUIntReader>((path / "cell_idx").c_str(), buffer_size),
+        std::make_unique<ZFileUIntReader>((path / "start_data").c_str(), buffer_size),
+        std::make_unique<ZFileUIntReader>((path / "start_idx").c_str(), buffer_size),
+        std::make_unique<ZFileUIntReader>((path / "start_starts").c_str(), buffer_size),
+        std::make_unique<ZFileUIntReader>((path / "end_data").c_str(), buffer_size),
+        std::make_unique<ZFileUIntReader>((path / "end_idx").c_str(), buffer_size),
+        std::make_unique<ZFileUIntReader>((path / "end_max").c_str(), buffer_size),
+        std::make_unique<ZFileUIntReader>((path / "chr_ptr").c_str(), buffer_size),
+        
+        std::make_unique<FileStringReader>(path / "chr_names.txt"),
+        std::make_unique<FileStringReader>(path / "cell_names.txt")
+    );
+}
+
+PackedFragmentsWriter3 createPackedFragmentsDir(std::string dir, uint32_t buffer_size) {
+    std::filesystem::path path(dir);
+    if (std::filesystem::exists(path)) {
+        throw std::runtime_error(std::string("Path already exists: ") + dir);
+    }
+
+    std::filesystem::create_directories(path);
+
+    std::ofstream f((path / "version").c_str());
+    f << "v1-packed-fragments\n";
+
+    return PackedFragmentsWriter3(
+        std::make_unique<ZFileUIntWriter>((path / "cell_data").c_str(), buffer_size),
+        std::make_unique<ZFileUIntWriter>((path / "cell_idx").c_str(), buffer_size),
+        std::make_unique<ZFileUIntWriter>((path / "start_data").c_str(), buffer_size),
+        std::make_unique<ZFileUIntWriter>((path / "start_idx").c_str(), buffer_size),
+        std::make_unique<ZFileUIntWriter>((path / "start_starts").c_str(), buffer_size),
+        std::make_unique<ZFileUIntWriter>((path / "end_data").c_str(), buffer_size),
+        std::make_unique<ZFileUIntWriter>((path / "end_idx").c_str(), buffer_size),
+        std::make_unique<ZFileUIntWriter>((path / "end_max").c_str(), buffer_size),
+        std::make_unique<ZFileUIntWriter>((path / "chr_ptr").c_str(), buffer_size),
+        
+        std::make_unique<FileStringWriter>(path / "chr_names.txt"),
+        std::make_unique<FileStringWriter>(path / "cell_names.txt")
+    );
+}
 
 
 

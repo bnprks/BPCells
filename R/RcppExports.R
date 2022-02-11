@@ -73,6 +73,66 @@ write_packed_fragments_hdf5_cpp <- function(fragments, file, group, chunk_size) 
     invisible(.Call(`_BPCells_write_packed_fragments_hdf5_cpp`, fragments, file, group, chunk_size))
 }
 
+iterate_unpacked_fragments3_cpp <- function(s4) {
+    .Call(`_BPCells_iterate_unpacked_fragments3_cpp`, s4)
+}
+
+write_unpacked_fragments3_cpp <- function(fragments) {
+    .Call(`_BPCells_write_unpacked_fragments3_cpp`, fragments)
+}
+
+iterate_packed_fragments3_cpp <- function(s4) {
+    .Call(`_BPCells_iterate_packed_fragments3_cpp`, s4)
+}
+
+write_packed_fragments3_cpp <- function(fragments) {
+    .Call(`_BPCells_write_packed_fragments3_cpp`, fragments)
+}
+
+is_compressed_fragments_file_cpp <- function(dir, buffer_size) {
+    .Call(`_BPCells_is_compressed_fragments_file_cpp`, dir, buffer_size)
+}
+
+iterate_unpacked_fragments_file2_cpp <- function(dir, buffer_size) {
+    .Call(`_BPCells_iterate_unpacked_fragments_file2_cpp`, dir, buffer_size)
+}
+
+write_unpacked_fragments_file2_cpp <- function(fragments, dir, buffer_size) {
+    invisible(.Call(`_BPCells_write_unpacked_fragments_file2_cpp`, fragments, dir, buffer_size))
+}
+
+iterate_packed_fragments_file2_cpp <- function(dir, buffer_size) {
+    .Call(`_BPCells_iterate_packed_fragments_file2_cpp`, dir, buffer_size)
+}
+
+write_packed_fragments_file2_cpp <- function(fragments, dir, buffer_size) {
+    invisible(.Call(`_BPCells_write_packed_fragments_file2_cpp`, fragments, dir, buffer_size))
+}
+
+is_compressed_fragments_hdf5_cpp <- function(file, group, buffer_size) {
+    .Call(`_BPCells_is_compressed_fragments_hdf5_cpp`, file, group, buffer_size)
+}
+
+iterate_unpacked_fragments_hdf52_cpp <- function(file, group, buffer_size) {
+    .Call(`_BPCells_iterate_unpacked_fragments_hdf52_cpp`, file, group, buffer_size)
+}
+
+write_unpacked_fragments_hdf52_cpp <- function(fragments, file, group, buffer_size, chunk_size) {
+    invisible(.Call(`_BPCells_write_unpacked_fragments_hdf52_cpp`, fragments, file, group, buffer_size, chunk_size))
+}
+
+iterate_packed_fragments_hdf52_cpp <- function(file, group, buffer_size) {
+    .Call(`_BPCells_iterate_packed_fragments_hdf52_cpp`, file, group, buffer_size)
+}
+
+write_packed_fragments_hdf52_cpp <- function(fragments, file, group, buffer_size, chunk_size) {
+    invisible(.Call(`_BPCells_write_packed_fragments_hdf52_cpp`, fragments, file, group, buffer_size, chunk_size))
+}
+
+get_bp128_version_cpp <- function() {
+    .Call(`_BPCells_get_bp128_version_cpp`)
+}
+
 scan_fragments_cpp <- function(fragments) {
     .Call(`_BPCells_scan_fragments_cpp`, fragments)
 }

@@ -45,7 +45,7 @@ bool PackedFragments::nextChr() {
 
 uint32_t PackedFragments::currentChr() const {return current_chr;}
 
-int32_t PackedFragments::load(uint32_t count, FragmentArray &buf) {
+int32_t PackedFragments::load(uint32_t count, FragmentArray buf) {
     if (current_block >= frags[current_chr].n_chunks()) return 0;
     if (count < 128) return -1;
     count = count & ~(128-1); // Round count to nearest 128

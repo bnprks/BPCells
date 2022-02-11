@@ -60,20 +60,20 @@ SEXP iterate_packed_matrix_cpp(const S4 s4) {
 
 // [[Rcpp::export]]
 List dims_matrix_file_cpp(std::string dir, uint32_t buffer_size) {
-    std::string version(loadVersionMatrixDir(dir));
+    std::string version(loadVersionDir(dir));
     IntegerVector dims(2);
     bool compressed = false;
-    if (version == "v1-unpacked") {
+    if (version == "v1-unpacked-matrix") {
         UnpackedMatrix mat(openUnpackedMatrixDir(dir, buffer_size));
         dims[0] = mat.rows();
         dims[1] = mat.cols();
-    } else if (version == "v1-packed") {
+    } else if (version == "v1-packed-matrix") {
         PackedMatrix mat(openPackedMatrixDir(dir, buffer_size));
         dims[0] = mat.rows();
         dims[1] = mat.cols();
         compressed = true;
     } else {
-        throw std::runtime_error(std::string("Packed matrix directory has unrecognized version ") + version);
+        throw std::runtime_error(std::string("Matrix directory has unrecognized version ") + version);
     }
     
     return List::create(
@@ -101,20 +101,20 @@ void write_packed_matrix_file_cpp(SEXP mat, std::string dir, uint32_t buffer_siz
 
 // [[Rcpp::export]]
 List dims_matrix_hdf5_cpp(std::string file, std::string group, uint32_t buffer_size) {
-    std::string version(loadVersionMatrixH5(file, group));
+    std::string version(loadVersionH5(file, group));
     IntegerVector dims(2);
     bool compressed = false;
-    if (version == "v1-unpacked") {
+    if (version == "v1-unpacked-matrix") {
         UnpackedMatrix mat(openUnpackedMatrixH5(file, group, buffer_size));
         dims[0] = mat.rows();
         dims[1] = mat.cols();
-    } else if (version == "v1-packed") {
+    } else if (version == "v1-packed-matrix") {
         PackedMatrix mat(openPackedMatrixH5(file, group, buffer_size));
         dims[0] = mat.rows();
         dims[1] = mat.cols();
         compressed = true;
     } else {
-        throw std::runtime_error(std::string("Packed matrix hdf5 has unrecognized version ") + version);
+        throw std::runtime_error(std::string("Matrix hdf5 has unrecognized version ") + version);
     }
     
     return List::create(

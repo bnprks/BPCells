@@ -28,7 +28,7 @@ public:
 
     // Return number of items loaded. Should repeatedly return 0 at the end of a chromosome.
     // Return -1 for error
-    int32_t load(uint32_t count, FragmentArray &buffer) override;
+    int32_t load(uint32_t count, FragmentArray buffer) override;
 
     // Move loader to just before fragments which end after "base".
     // It's possible that fragments returned after seek will end before "base",
@@ -62,7 +62,7 @@ public:
 
     uint32_t currentChr() const override;
 
-    int32_t load(uint32_t count, FragmentArray &buffer) override;
+    int32_t load(uint32_t count, FragmentArray buffer) override;
 
     void seek(uint32_t chr_id, uint32_t base) override;
 };

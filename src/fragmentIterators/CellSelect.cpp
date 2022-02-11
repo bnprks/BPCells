@@ -26,7 +26,7 @@ const char* CellIndexSelect::cellNames(uint32_t cell_id) const {
 
 // Return number of items loaded. Should repeatedly return 0 at the end of a chromosome.
 // Return -1 for error
-int32_t CellIndexSelect::load(uint32_t count, FragmentArray &buffer) {
+int32_t CellIndexSelect::load(uint32_t count, FragmentArray buffer) {
     // load and filter until we load without filtering out everything
     while (true) {
         int32_t ret = loader.load(count, buffer);
@@ -80,7 +80,7 @@ const char* CellNameSelect::cellNames(uint32_t cell_id) const {
     return cell_names[cell_id].c_str(); 
 };
 
-int32_t CellNameSelect::load(uint32_t count, FragmentArray &buffer) {
+int32_t CellNameSelect::load(uint32_t count, FragmentArray buffer) {
     // load and filter until we load without filtering out everything
     while (true) {
         int32_t ret = loader.load(count, buffer);

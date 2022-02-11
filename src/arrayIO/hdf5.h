@@ -6,6 +6,8 @@
 #include "frags.h"
 #include "../matrixIterators/PackedMatrix.h"
 #include "../matrixIterators/UnpackedMatrix.h"
+#include "../fragmentIterators/UnpackedFragments3.h"
+#include "../fragmentIterators/PackedFragments3.h"
 
 #include "../lib/highfive/H5DataSet.hpp"
 #include "../lib/highfive/H5DataSpace.hpp"
@@ -45,6 +47,9 @@ public:
     MovableDataType& operator= (const MovableDataType&) = delete;
 };
 
+MovableGroup constructH5Group(std::string file_path, std::string group_path);
+MovableGroup openH5Group(std::string file_path, std::string group_path);
+
 MovableDataSet constructH5DataSet(std::string file_path, std::string group_path, uint32_t chunk_size);
 MovableDataSet constructH5DataSet(HighFive::Group group, std::string group_path, uint32_t chunk_size);
 
@@ -52,11 +57,18 @@ MovableDataSet openH5DataSet(std::string file_path, std::string group_path);
 MovableDataSet openH5DataSet(HighFive::Group group, std::string path);
 
 UnpackedMatrix open10xFeatureMatrix(std::string file_path, std::string group_path = "matrix", uint32_t buffer_size = 8192);
-std::string loadVersionMatrixH5(std::string file_path, std::string group_path);
+std::string loadVersionH5(std::string file_path, std::string group_path);
 UnpackedMatrix openUnpackedMatrixH5(std::string file_path, std::string group_path, uint32_t buffer_size = 8192);
 UnpackedMatrixWriter createUnpackedMatrixH5(std::string file_path, std::string group_path, uint32_t buffer_size = 8192, uint32_t chunk_size = 1024);
 PackedMatrix openPackedMatrixH5(std::string file_path, std::string group_path, uint32_t buffer_size = 8192);
 PackedMatrixWriter createPackedMatrixH5(std::string file_path, std::string group_path, uint32_t buffer_size = 8192, uint32_t chunk_size = 1024);
+
+UnpackedFragments3 openUnpackedFragmentsH5(std::string file_path, std::string group_path, uint32_t buffer_size);
+UnpackedFragmentsWriter3 createUnpackedFragmentsH5(std::string file_path, std::string group_path, uint32_t buffer_size, uint32_t chunk_size = 1024);
+
+PackedFragments3 openPackedFragmentsH5(std::string file_path, std::string group_path, uint32_t buffer_size);
+PackedFragmentsWriter3 createPackedFragmentsH5(std::string file_path, std::string group_path, uint32_t buffer_size, uint32_t chunk_size = 1024);
+
 
 class ZH5UIntWriter : public UIntWriter {
 private:
@@ -97,6 +109,24 @@ public:
     bool next() override;
     bool seek(size_t pos) override;
 };
+
+class H5StringReader : public StringReader {
+private:
+    std::vector<std::string> data;
+public:
+    H5StringReader(const MovableDataSet &dataset);
+    const char* get(uint32_t idx) const override;
+    uint32_t size() const override;
+};
+
+class H5StringWriter : public StringWriter {
+private:
+    std::string file, group;
+public:
+    H5StringWriter(std::string file, std::string group);
+    void write(const StringReader &reader) override;
+};
+
 
 class H5UIntWriter {
 private:
@@ -175,7 +205,6 @@ public:
     std::vector<std::string> readChrNames();
 
 private:
-    static MovableGroup openH5Group(std::string file_path, std::string group_path);
     MovableGroup group;
 };
 

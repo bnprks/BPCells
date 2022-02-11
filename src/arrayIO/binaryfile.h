@@ -11,14 +11,23 @@
 #include "../fragmentIterators/UnpackedFragments2.h"
 #include "../matrixIterators/PackedMatrix.h"
 #include "../matrixIterators/UnpackedMatrix.h"
+#include "../fragmentIterators/UnpackedFragments3.h"
+#include "../fragmentIterators/PackedFragments3.h"
 
 namespace BPCells {
 
-std::string loadVersionMatrixDir(std::string dir);
+std::string loadVersionDir(std::string dir);
 UnpackedMatrix openUnpackedMatrixDir(std::string dir, uint32_t buffer_size);
 UnpackedMatrixWriter createUnpackedMatrixDir(std::string dir, uint32_t buffer_size);
 PackedMatrix openPackedMatrixDir(std::string dir, uint32_t buffer_size);
 PackedMatrixWriter createPackedMatrixDir(std::string dir, uint32_t buffer_size);
+
+UnpackedFragments3 openUnpackedFragmentsDir(std::string dir, uint32_t buffer_size);
+UnpackedFragmentsWriter3 createUnpackedFragmentsDir(std::string dir, uint32_t buffer_size);
+
+PackedFragments3 openPackedFragmentsDir(std::string dir, uint32_t buffer_size);
+PackedFragmentsWriter3 createPackedFragmentsDir(std::string dir, uint32_t buffer_size);
+
 
 class ZFileUIntWriter : public UIntWriter {
 private:
@@ -41,6 +50,7 @@ class ZFileUIntReader : public UIntReader {
 protected:
     std::ifstream file;
     std::vector<uint32_t> buf;
+    uint32_t buf_end_pos = 0; // Logical file position of the integer at data() + capacity()
     void _ensureCapacity(size_t capacity) override;
     size_t readPos(uint32_t* out, uint32_t capacity);
 public:
@@ -55,6 +65,23 @@ public:
 };
 
 std::vector<std::string> readLines(std::filesystem::path path);
+
+class FileStringReader : public StringReader {
+private:
+    std::vector<std::string> data;
+public:
+    FileStringReader(std::filesystem::path path);
+    const char* get(uint32_t idx) const override;
+    uint32_t size() const override;
+};
+
+class FileStringWriter : public StringWriter {
+private:
+    std::filesystem::path path;
+public:
+    FileStringWriter(std::filesystem::path path);
+    void write(const StringReader &reader) override;
+};
 
 class FileUIntWriter {
 private:

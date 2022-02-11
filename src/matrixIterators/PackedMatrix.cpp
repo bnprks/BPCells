@@ -13,9 +13,10 @@ PackedMatrix::PackedMatrix(ReaderPtr &&val_data, ReaderPtr &&val_idx, ReaderPtr 
 }
 
 void PackedMatrix::load128(uint32_t *row_out, uint32_t *val_out) {
-        uint32_t next_val_idx = val_idx->read_one(), 
-                 next_row_idx = row_idx->read_one(),
-                 row_start = row_starts->read_one();
+    uint32_t next_val_idx = val_idx->read_one();
+    uint32_t next_row_idx = row_idx->read_one();
+    uint32_t row_start = row_starts->read_one();
+
     // Unpack start
     uint32_t bits_row = (next_row_idx - prev_row_idx) / 4;
     row_data->ensureCapacity(bits_row * 4);
@@ -65,6 +66,10 @@ bool PackedMatrix::nextCol() {
 
         val_data->seek(prev_val_idx);
         row_data->seek(prev_row_idx);
+
+        if (next_col_ptr % 128 != 0) {
+            load128(row_buf, val_buf);
+        }
     }
     
     next_col_ptr = col_ptr->read_one();

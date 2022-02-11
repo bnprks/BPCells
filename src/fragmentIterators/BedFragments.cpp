@@ -167,7 +167,7 @@ bool BedFragments::nextChr() {
     return true;
 }
 
-int32_t BedFragments::load(uint32_t count, FragmentArray &buffer) {
+int32_t BedFragments::load(uint32_t count, FragmentArray buffer) {
     std::string chr;
 
     for (size_t i = 0; i < count; i++) {

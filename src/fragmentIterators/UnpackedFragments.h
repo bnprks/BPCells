@@ -43,7 +43,7 @@ public:
 
     // Return number of items loaded. Should repeatedly return 0 at the end of a chromosome.
     // Return -1 for error
-    int32_t load(uint32_t count, FragmentArray &buffer) override;
+    int32_t load(uint32_t count, FragmentArray buffer) override;
 private:
     const std::vector<vec_uint32_t> start;
     const std::vector<vec_uint32_t> end;
