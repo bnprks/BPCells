@@ -111,12 +111,4 @@ void simdpackFOR(uint32_t initvalue, const uint32_t *in, uint32_t *out,
 void simdunpackFOR(uint32_t initvalue, const uint32_t *in, uint32_t *out,
                     const uint32_t bit);
 
-/************* TESTING FUNCTIONS FOR BITPACKING *************/
-
-uint32_t random_uint32_t();
-void fill_buf(uint32_t *buf, int bits);
-bool equal_buf(uint32_t *buf1, uint32_t *buf2);
-
-bool test_bitpacking();
-
 } // end namespace BPCells
