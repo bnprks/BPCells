@@ -1,4 +1,5 @@
 #include <gtest/gtest.h>
+#include <gmock/gmock.h>
 #include <bitpacking/bp128.h>
 
 using namespace BPCells;
@@ -22,6 +23,38 @@ TEST(Bitpacking, ExpectedArchitechture) {
     ASSERT_EQ(my_argv[2][0] - '0', _SIMDBP128_MODE_);
 }
 
+TEST(Bitpacking, SimdOps) {
+    using ::testing::ElementsAreArray;
+    uint32_t a[4] = {16909060, 84281096, 151653132, 219025168};
+    uint32_t out[4];
+
+    vec av = load((vec *) a);
+
+    store((vec *) out, move_l_1(av));
+    EXPECT_THAT(out, ElementsAreArray({84281096, 151653132, 219025168, 0}));
+    store((vec *) out, move_l_2(av));
+    EXPECT_THAT(out, ElementsAreArray({151653132, 219025168, 0, 0}));
+    store((vec *) out, move_l_3(av));
+    EXPECT_THAT(out, ElementsAreArray({219025168, 0, 0, 0}));
+
+    store((vec *) out, move_r_1(av));
+    EXPECT_THAT(out, ElementsAreArray({0, 16909060, 84281096, 151653132}));
+    store((vec *) out, move_r_2(av));
+    EXPECT_THAT(out, ElementsAreArray({0, 0, 16909060, 84281096}));
+    store((vec *) out, move_r_3(av));
+    EXPECT_THAT(out, ElementsAreArray({0, 0, 0, 16909060}));
+
+    uint32_t b[4] = {12, 16, 21, 39};
+    uint32_t c[4] = {3, 4, 5, 6};
+    vec bv = load((vec *) b);
+    vec cv = load((vec *) c);
+
+    store((vec *) out, delta(bv, cv));
+    EXPECT_THAT(out, ElementsAreArray({6, 4, 5, 18}));
+    store((vec *) out, prefixSum(bv, cv));
+    EXPECT_THAT(out, ElementsAreArray({18, 34, 55, 94}));
+}
+
 uint32_t random_uint32_t() {
     return (
         (uint32_t) (rand() & 255) +
@@ -43,11 +76,11 @@ bool equal_buf(uint32_t *buf1, uint32_t *buf2) {
     }
     return true;
 }
-void print_buf(uint32_t *buf) {
-    for (int i = 0; i < 128; i++) {
-        printf("%d,\t", buf[i]);
-    }
-}
+// void print_buf(uint32_t *buf) {
+//     for (int i = 0; i < 128; i++) {
+//         printf("%d,\t", buf[i]);
+//     }
+// }
 
 TEST(Bitpacking, BP128) {
     uint32_t input_buf[128];

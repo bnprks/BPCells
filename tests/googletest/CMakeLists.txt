@@ -35,7 +35,7 @@ if(TARGET_ARM)
         bitpacking_test_fallback
         test-bitpacking.cpp
     )
-    target_link_libraries(bitpacking_test_fallback bitpacking gtest)
+    target_link_libraries(bitpacking_test_fallback bitpacking gtest gmock)
     target_compile_options(bitpacking_test_fallback PUBLIC -march=armv8-a+nofp)
     gtest_discover_tests(bitpacking_test_fallback EXTRA_ARGS --arch 0)
 
@@ -43,7 +43,7 @@ if(TARGET_ARM)
         bitpacking_test_neon
         test-bitpacking.cpp
     )
-    target_link_libraries(bitpacking_test_neon bitpacking gtest)
+    target_link_libraries(bitpacking_test_neon bitpacking gtest gmock)
     target_compile_options(bitpacking_test_neon PUBLIC -march=native)
     gtest_discover_tests(bitpacking_test_neon EXTRA_ARGS --arch 3)
 else()
@@ -51,7 +51,7 @@ else()
         bitpacking_test_x86_full
         test-bitpacking.cpp
     )
-    target_link_libraries(bitpacking_test_x86_full bitpacking gtest)
+    target_link_libraries(bitpacking_test_x86_full bitpacking gtest gmock)
     target_compile_options(bitpacking_test_x86_full PUBLIC -march=native)
     gtest_discover_tests(bitpacking_test_x86_full EXTRA_ARGS --arch 1)
 
@@ -59,7 +59,7 @@ else()
         bitpacking_test_x86
         test-bitpacking.cpp
     )
-    target_link_libraries(bitpacking_test_x86 bitpacking gtest)
+    target_link_libraries(bitpacking_test_x86 bitpacking gtest gmock)
     target_compile_options(bitpacking_test_x86 PUBLIC -mno-sse4)
     gtest_discover_tests(bitpacking_test_x86 EXTRA_ARGS --arch 2)
 
@@ -67,7 +67,7 @@ else()
         bitpacking_test_fallback
         test-bitpacking.cpp
     )
-    target_link_libraries(bitpacking_test_fallback bitpacking gtest)
+    target_link_libraries(bitpacking_test_fallback bitpacking gtest gmock)
     target_compile_options(bitpacking_test_fallback PUBLIC -mno-sse2)
     gtest_discover_tests(bitpacking_test_fallback EXTRA_ARGS --arch 0)
 endif()
