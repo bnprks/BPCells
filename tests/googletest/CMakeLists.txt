@@ -31,7 +31,21 @@ enable_testing()
 
 # Build bitpacking tests for all available SIMD modes
 if(TARGET_ARM)
-    message(SEND_ERROR "Arm architecture build not supported yet")
+    add_executable(
+        bitpacking_test_fallback
+        test-bitpacking.cpp
+    )
+    target_link_libraries(bitpacking_test_fallback bitpacking gtest)
+    target_compile_options(bitpacking_test_fallback PUBLIC -march=armv8-a+nofp)
+    gtest_discover_tests(bitpacking_test_fallback EXTRA_ARGS --arch 0)
+
+    add_executable(
+        bitpacking_test_neon
+        test-bitpacking.cpp
+    )
+    target_link_libraries(bitpacking_test_neon bitpacking gtest)
+    target_compile_options(bitpacking_test_neon PUBLIC -march=native)
+    gtest_discover_tests(bitpacking_test_neon EXTRA_ARGS --arch 3)
 else()
     add_executable(
         bitpacking_test_x86_full
