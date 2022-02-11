@@ -5,6 +5,7 @@
 #' - For HDF5 at least, increasing the buffer size somewhat appears to be highly beneficial. 65536
 #'   seems to be about where diminishing returns start to really kick in
 #' - With HDF5 properly buffered, it's within a factor of two from the dir speed
+#' This testing was done on a laptop from git commit ae33353915
 
 devtools::load_all("~/Dropbox/greenleaf/playground/fragment_io/BPCells/")
 
