@@ -6,18 +6,16 @@
 
 namespace BPCells {
 
-struct FragmentArray {
-    uint32_t *start, *end, *cell;
-    uint32_t capacity;
-};
-
 // Interface for loading sorted fragments from files or memory.
-// Main workhorse is the load function, which copies fragments into a buffer.
+// Main workhorse is the `load` function, which will load data into an internal buffer
+// that users can access through `cellData()`, `startData()`, and `endData()`. There will be
+// `capacity()` elements loaded starting at each of those pointers, and the loaded
+// data can be modified by the caller as desired.
 // Users will call load repeatedly, until it hits the end of a chromosome or the end
 // of a file. 
-// Optionally, a FragmentsLoader can support seeking, which skips the current
+// Optionally, a FragmentLoader can support seeking, which skips the current
 // reading position to a given genomic coordinate.
-// Requirements for building a FragmentsLoader:
+// Requirements for building a FragmentLoader:
 // 1. Coordinates are assumed to be 0-based and half-open, same as the bed file format. 
 //    This means the first base in a chromosome is at position 0, and the end coordinate
 //    of a fragment is one basepair after the last mapped base.
@@ -29,21 +27,21 @@ struct FragmentArray {
 //    seekable FragmentIterators, along with their corresponding names
 // 4. Fragments are grouped by chromosme, although they need not be covered in
 //    order of chromosome ID.
-// 5. Implement load function, which will always load >= 1 fragment unless there is
-//    an error or we have reached the end of a chromosome. (return negative for error,
-//    return 0 repeatedly at the end of a chromosome)
+// 5. Implement load function, which will always load >= 1 fragment, returning false 
+//    if there are no more fragments in the current chromosome.
 // 6. Implement nextChr function, which will skip the rest of the fragments on the  
 //    current chromosome (if any remain), and go to the next chromosome if it exists
 // 7. chrNames and cellNames should return NULL if either the chromosome/cell ID doesn't
 //    exist, (or perhaps it hasn't been read from disk yet for 10x fragments)
-class FragmentsLoader {
+class FragmentLoader {
 public:
-    virtual ~FragmentsLoader() = default;
+    virtual ~FragmentLoader() = default;
 
     virtual bool isSeekable() const = 0;
-    // Move loader to just before fragments which end after "base".
-    // It's possible that fragments returned after seek will end before "base",
-    // but it's guaranteed that it won't skip over any fragments ending before "base"
+    // Skip the read location to fragments which overlap a coord >= `base`, without
+    // loading any actual data.
+    // Note that seek does not guarantee the next loaded fragment will have an end > base,
+    // it's just a performance optimization that will get close without overshooting
     virtual void seek(uint32_t chr_id, uint32_t base) = 0;
     
     // Reset the loader to start from the beginning
@@ -64,19 +62,28 @@ public:
     // Return chromosome ID of current fragment
     virtual uint32_t currentChr() const = 0;
 
-    // Return number of items loaded. Should repeatedly return 0 at the end of a chromosome.
-    // Return -1 for error
-    virtual int32_t load(uint32_t count, FragmentArray buffer) = 0;
+    // Return false if there are no more fragments to load on the current chromosome
+    virtual bool load() = 0;
+
+    // Number of loaded fragments available in the cell, start, and end pointers
+    virtual uint32_t capacity() const = 0;
+    
+    // Pointers to the loaded data
+    virtual uint32_t* cellData() = 0;
+    virtual uint32_t* startData() = 0;
+    virtual uint32_t* endData() = 0;
 };
 
-// Wrapper for a FragmentsLoader, forwarding all methods but load to the
-// inner loader object. Designed to allow easier writing of
+// Wrapper for a FragmentLoader, forwarding all to the inner loader object.
+// Typically, a child class will override load and/or other methods
+// Designed to allow easier writing of
 // loaders that perform transformations and filters on other loaders
-class FragmentsLoaderWrapper : public FragmentsLoader {
+class FragmentLoaderWrapper : public FragmentLoader {
 protected:
-    FragmentsLoader &loader;
+    FragmentLoader &loader;
+
 public:
-    FragmentsLoaderWrapper(FragmentsLoader &loader);
+    FragmentLoaderWrapper(FragmentLoader &loader);
     bool isSeekable() const override;
     void seek(uint32_t chr_id, uint32_t base) override;
     
@@ -91,71 +98,73 @@ public:
     bool nextChr() override;
     uint32_t currentChr() const override;
 
+    bool load() override;
+    uint32_t capacity() const override;
+    
+    uint32_t* cellData() override;
+    uint32_t* startData() override;
+    uint32_t* endData() override;
 };
 
 
-// Class to conveniently iterate over fragments from a FragmentsLoader
-class FragmentsIterator : public FragmentsLoaderWrapper {
+// Class to conveniently iterate over fragments from a FragmentLoader
+class FragmentIterator : public FragmentLoaderWrapper {
 private:
-    const uint32_t chunk_capacity;
-    int32_t chunk_size;
-    uint32_t idx;
+    uint32_t idx = UINT32_MAX;
     uint32_t current_chr;
-    std::vector<uint32_t> start_buf, end_buf, cell_buf;
-    FragmentArray fragments_buf;
+    uint32_t current_capacity = 0;
+    uint32_t *current_cell, *current_start, *current_end;
 public:
-    // Construct iterator with a given internal buffer size (must be a power of 2 >= 128)
-    FragmentsIterator(FragmentsLoader &loader, uint32_t buffer_size = 1024);
-
-    virtual ~FragmentsIterator() = default;
+    FragmentIterator(FragmentLoader &loader);
+    virtual ~FragmentIterator() = default;
     
     inline void restart() override {
         loader.restart();
-        idx = chunk_capacity;
+        idx = UINT32_MAX;
+        current_capacity = 0;
     }
 
     // Return false if there isn't a nextFragment in the current chromosome
     inline bool nextFrag() {
-        //printf("Calling nextFrag, idx = %d, buffer_size = %d ", idx, chunk_size);
         idx += 1;
-        if (idx >= chunk_size) {
-            chunk_size = loader.load(chunk_capacity, fragments_buf);
-            idx = 0;
+        if (idx >= current_capacity) {
+            return load();
         }
-        //printf("chunksize = %d\n", chunk_size);
-        return chunk_size > 0;
+        return true;
     }
     // Advance the iterator to the next chromosome. Return false if there are no more chromosomes
     inline bool nextChr() override {
         bool res = loader.nextChr();
         if (res) current_chr = loader.currentChr();
+        idx = UINT32_MAX;
+        current_capacity = 0;
         return res;
     }
     // Access chr, start, end, cell from current fragment
     inline uint32_t chr() const {return current_chr; };
-    inline uint32_t start() const {return fragments_buf.start[idx]; };
-    inline uint32_t end() const {return fragments_buf.end[idx]; };
-    inline uint32_t cell() const {return fragments_buf.cell[idx]; };   
+    inline uint32_t start() const {return current_start[idx]; };
+    inline uint32_t end() const {return current_end[idx]; };
+    inline uint32_t cell() const {return current_cell[idx]; };   
     
-    inline uint32_t get_chunk_capacity() {return chunk_capacity;}; 
-
     // Move iterator to just before fragments which end after "base".
     // It's possible that fragments returned after seek will end before "base",
     // but it's guaranteed that it won't skip over any fragments ending before "base"
     inline void seek(uint32_t chr_id, uint32_t base) override {
         loader.seek(chr_id, base);
-        idx = chunk_capacity;
+        idx = UINT32_MAX;
+        current_capacity = 0;
     }   
 
-    int32_t load(uint32_t count, FragmentArray buffer) override;
+    bool load() override;
+    uint32_t capacity() const override;
 };
 
-class FragmentsWriter {
+class FragmentWriter {
 public:
     // Return false on failure, true on success. 
     // During progress, call checkInterrupt which will raise an exception if there's 
     // a user-requested interrupt
-    virtual bool write(FragmentsIterator &fragments, void (*checkInterrupt)(void) = NULL) = 0;
+    virtual bool write(FragmentIterator &fragments, void (*checkInterrupt)(void) = NULL) = 0;
 };
 
 } // end namespace BPCells

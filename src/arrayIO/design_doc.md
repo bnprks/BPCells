@@ -8,55 +8,40 @@ data across 3 different storage formats:
 
 Because the data can mostly be represented by arrays of unsigned 32-bit integers, a lot of the logic for reading/writing is shared
 
-NOTE: The interface API definitions are out-of-date right now since I just changed how things
-work to simplify and make more efficient. Hopefully I'll come back to update this with
-the new UIntReader and UIntWriter interfaces
-
 ## Data types
 
 The data types are a little complicated right now since I'm erring on the side of templating rather than explicit inheritance with virtual function calls
 
-#### Data representation v2
+#### High-level datatype representations
 
-- UnpackedFragments have the following main data fields
+Fragments have the following main data fields:
   - `cell`, `start`, `end` - cell, start, and end values concatenated between all the chromosomes, ordered to be sorted by `start` within each chromosme
-  - `chr_ptr` - indices into the `cell`,`start`, and `end` arrays that define the start/end of each chromosome. Chromosome `i` goes from `chr_ptr[i]` to `chr_ptr[i+1]`. Length is number of chromosomes + 1
+  - `chr_ptr` - indices into the `cell`,`start`, and `end` arrays that define the start/end of each chromosome. Chromosome `i` goes from `chr_ptr[2*i]` to `chr_ptr[2*i+1]`. Length is twice the number of chromosomes. `chr_ptr` is organized
+  in this way because fragments.tsv.gz files can't always be seeked efficiently, 
+  yet we also want to allow re-ordering chromosome IDs efficiently. 
+  This means there are cases when fragments will seem to be loaded not in order by chromosome ID, so we need
+  to be able to store data in the order it comes in, while being able to later load chromosomes in the correct order.
+  This is not an issue for matrices, since all our input matrix formats are required to allow skipping arbitrarily 
+  between columns.
   - `end_max` - running maximum of the end values within each chromosome, stored for every 128 values to enable seeking. `end_max[i]` is the maximum of `end[chr_start_idx:i*128]`. Note that because it's possble a chromosome ends at not a perfect multiple of 128, `end_max` will default to be maximum of `end` for the whole chunk of 128, rather than the maximum of `end` in the start of the new chromosome
 
-#### Data representation
+Matrices have the following main data fields:
+  - `val`, `row` - list of the value and row for each non-zero entry
+  - `col_ptr` - Values in column `i` of the matrix go from index `col_ptr[i]` to `col_ptr[i+1]`.
+    `col_ptr` is length number of columns + 1
+  - `row_count` is a single integer listing the number of rows in the matrix
+  
 
-- `UnpackedFrags<T>` and `PackedFrags<T>`: Flexible struct representing fragment data for a single chromosome. `T` can be any kind of class -- `vector` `UIntWriter`, `UIntReader` depending on what is needed for the occasion.
-  - `UnpackedFrags` includes start, end, cell_id arrays, as well as an end_max array where `end_max[i]` = `max(end[0:(i+1)*128])` [this is used to enable seeking]
-  - `PackedFrags` is a bit more complicated due to the bitpacking
-    - `start_data`, `end_data`, and `cell_data` store the main bitpacked data arrays. Starts are stored with the BP128 D1 encoding, ends are stored as BP128 of (end-start), and cells are a vanilla BP128 compression
-    - `start_idx`, `end_idx`, and `cell_idx` contain offsets for each chunk of 128 integers within the `*_data` arrays. So entries `n*128 -> (n+1)*128` of `start` are read starting at `start_data[start_idx[n]]` and end at `start_data[start_idx[n+1]] `. Note that these arrays are length nchunks + 1
-    - `start_starts` contains the beginning value of each chunk of 128 start values, needed for the difference encoding
-    - `end_max` is defined the same as for `UnpackedFrags`
-    - `count` stores the total number of fragments as a single integer, required so we can represent fragment lists that don't have an even multiple of 128 fragments
+#### Data Loading classes
+The main datatypes we want to represent are lists of integers, while also having support for
+storing lists of strings (cell IDs, column/row names, etc.). Documentation for these classes is 
+provided in the `array_interfaces.h` header file, but this is the high-level summary:
 
-#### Headline classes
-
-- `UnpackedFragmentsReader<Loader>` - Unpacked fragments reader object that relies on a given `FragmentsLoader` class responsible for interfacing with the underlying storage.
-  - `PackedFragmentsReader<Loader>` - Same idea, but for packed fragments
-- `UnpackedFragmentsWriter<Saver>` - Fragments writer object that relies on a given `FragmentsSaver` class responsible for interfacing with the underlying storage
-  - `UnpackedFragmentsReader<Loader>` - Same idea, but for packed fragments
-
-#### Helper classes
-
-- `*UIntWriter` - writable stream of unsigned 32-bit integers
-  - `void write(const uint32_t *buffer, uint32_t count)` - appends `count` integers read from `buffer` to the end of the stream.
-  - `void finalize()` - Finalizes the stream (e.g. flushing any remaining data)
-  - This class should support cheap move-assignment and move-constructors, but need-not support cheap copies
-- `*UIntReader` - readable stream of unsigned 32-bit integers
-  - `uint32_t read(uint32_t *buffer, uint32_t count)` - reads the up to `count` integers from the stream and writes to `buffer`. Returns how many are read, repeatedly returning 0 after stream is empty. 
-  - `uint32_t size()` - Return the total number of integers in the array.
-  - `void seek(const size_t pos)` - Change the stream to read the next integer from index `pos` (index 0 is first integer in the stream)
-  - This class should support cheap move-assignment and move-constructors, but need-not support cheap copies
-- `*FragmentsSaver` - Object that manages saving fragments data for each chromosome into the corresponding `*UIntWriter` objects. This can be split into separate objects for Packed and Unpacked fragments, or combined into one that implements all the methods
-  - `UnpackedFrags<*UIntWriter> chrWriterUnpacked(uint32_t chr_id)` Initialize + return all the required arrays for writing unpacked fragments for a new chromosome
-  - `PackedFrags<*UIntWriter> chrWriterPacked(uint32_t chr_id)` Initialize + return all the required arrays for writing packed fragments for a new chromosome
-  - `void writeCellNames(std::vector<std::string> cell_names)`, and  `void writeChrNames(std::vector<std::string> chr_names)` - save the cell_names and chr_names, pretty self-explanatory
-- `*FragmentsLoader` - Object that manages loading fragments data for each chromosome from `*UIntReader` objects.
-  - `UnpackedFrags<*UIntWriter> chrReaderUnpacked(uint32_t chr_id)` Initialize + return all the required arrays for reading unpacked fragments for a new chromosome
-  - `PackedFrags<*UIntWriter> chrReaderPacked(uint32_t chr_id)` Initialize + return all the required arrays for reading packed fragments for a new chromosome
-  - `std::vector<std::string> readCellNames()`, and  `std::vector<std::string> readChrNames()` - read the cell_names and chr_names, pretty self-explanatory
+- `UIntBulkReader` and `UIntBulkWriter` are the low-level interfaces for loading data from disk, memory, etc.
+- `UIntReader` and `UIntWriter` provide zero-copy, buffered interfaces for reading/writing data. This means
+  that rather than copying data to/from a client array, they give clients a pointer to where data can be read/written
+- `StringReader` and `StringWriter` provide (potentially inefficient) ways to persist lists of strings to disk.
+  Most implementations will have an intermediate step where all IDs are stored in memory
+- `ReaderBuilder` and `WriterBuilder` are interfaces to handle reading+writing a set of related UInt and String arrays.
+  So e.g. for fragments stored in an hdf5 file, the ReaderBuilder and WriterBuilder would be responsible for opening
+  the correct HDF5 DataSet for reading/writing.

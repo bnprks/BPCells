@@ -11,3 +11,7 @@ settings.json
 .Rproj.user
 BPCells.Rproj
 CHECKLIST.md
+build/
+cmake-build-debug/
+.vscode/
+.snakemake/

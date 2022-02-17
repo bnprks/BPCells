@@ -2,7 +2,7 @@
 #include <algorithm>
 #include <cassert>
 
-#include "FragmentsIterator.h"
+#include "FragmentIterator.h"
 #include "../matrixIterators/MatrixIterator.h"
 
 namespace BPCells {

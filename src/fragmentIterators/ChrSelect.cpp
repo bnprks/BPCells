@@ -5,8 +5,8 @@ namespace BPCells {
 // chr_assignments -- vector with length <= the number of chromosomes in the input
 //     FragmentsIterator. The output chromosome `i` will come from input chromosome
 //     `chr_assignments[i]`. The entries of chr_assignments must be unique
-ChrIndexSelect::ChrIndexSelect(FragmentsLoader &loader, const std::vector<uint32_t> chr_assignments) :
-    FragmentsLoaderWrapper(loader), 
+ChrIndexSelect::ChrIndexSelect(FragmentLoader &loader, const std::vector<uint32_t> chr_assignments) :
+    FragmentLoaderWrapper(loader), 
     chr_assignments(chr_assignments) {
     
     std::vector<uint32_t> seen_id;
@@ -45,17 +45,14 @@ uint32_t ChrIndexSelect::currentChr() const {
     return result - chr_assignments.begin(); 
 };
 
-int32_t ChrIndexSelect::load(uint32_t count, FragmentArray buffer) {
-    return loader.load(count, buffer);
-};
 
 void ChrIndexSelect::seek(uint32_t chr_id, uint32_t base) {
     loader.seek(chr_assignments[chr_id], base);
 };
 
 
-ChrNameSelect::ChrNameSelect(FragmentsLoader &loader, const std::vector<std::string> chr_names) :
-    FragmentsLoaderWrapper(loader), 
+ChrNameSelect::ChrNameSelect(FragmentLoader &loader, const std::vector<std::string> chr_names) :
+    FragmentLoaderWrapper(loader), 
     chr_names(chr_names) {
     for (int i = 0; i < chr_names.size(); i++) {    
         if(output_index.find(chr_names[i]) != output_index.end())
@@ -98,9 +95,6 @@ uint32_t ChrNameSelect::currentChr() const {
     return res;
 };
 
-int32_t ChrNameSelect::load(uint32_t count, FragmentArray buffer) {
-    return loader.load(count, buffer);
-};
 
 void ChrNameSelect::seek(uint32_t chr_id, uint32_t base) {
     loader.seek(input_index[chr_id], base);

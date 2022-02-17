@@ -2,33 +2,35 @@
 
 namespace BPCells {
 
-ShiftCoords::ShiftCoords(FragmentsLoader &loader, int32_t shift_start, int32_t shift_end) :
-    FragmentsLoaderWrapper(loader), 
+ShiftCoords::ShiftCoords(FragmentLoader &loader, int32_t shift_start, int32_t shift_end) :
+    FragmentLoaderWrapper(loader), 
     shift_start(shift_start), shift_end(shift_end)
         {} 
 
 
+bool ShiftCoords::load() {
+    if (!loader.load()) return false;
+    uint32_t *start = loader.startData();
+    uint32_t *end = loader.endData();
+    uint32_t capacity = loader.capacity();
 
-int32_t ShiftCoords::load(uint32_t count, FragmentArray buffer) {
-    int32_t res = loader.load(count, buffer);
-    if (res <= 0) return res;
-    vec start = splat(shift_start);
-    vec end = splat(shift_end);
+    vec start_vec = splat(shift_start);
+    vec end_vec = splat(shift_end);
     // Use SIMD ops to shift values 4 at a time, followed by
     // a cleanup loop
     int i;
-    for (i = 0; i + 4 < res; i += 4) {
-        vec in_start = BPCells::load((vec *) &buffer.start[i]);
-        BPCells::store((vec *) &buffer.start[i], add(start, in_start));
+    for (i = 0; i + 4 <= capacity; i += 4) {
+        vec in_start = BPCells::load((vec *) &start[i]);
+        store((vec *) &start[i], add(start_vec, in_start));
 
-        vec in_end = BPCells::load((vec *) &buffer.end[i]);
-        BPCells::store((vec *) &buffer.end[i], add(end, in_end));
+        vec in_end = BPCells::load((vec *) &end[i]);
+        store((vec *) &end[i], add(end_vec, in_end));
     }
-    for(; i < res; i++) {
-        buffer.start[i] += shift_start;
-        buffer.end[i] += shift_end;
+    for(; i < capacity; i++) {
+        start[i] += shift_start;
+        end[i] += shift_end;
     }
-    return res;
+    return true;
 };
 
 // Move loader to just before fragments which end after "base".

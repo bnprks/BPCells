@@ -1,0 +1,91 @@
+#pragma once
+
+#include <cstdint>
+#include <cstring>
+#include <memory>
+#include <stdexcept>
+
+#include "FragmentIterator.h"
+#include "../arrayIO/array_interfaces.h"
+#include "../arrayIO/bp128.h"
+
+namespace BPCells {
+
+class StoredFragments: public FragmentLoader {
+private:
+    // cell, start, end = concatenated fragment data across chromosomes
+    // end_max[i] = max(ends[chr_start:i*128])
+    // chr_ptr[2*i] = start index of chr i in data arrays
+    // chr_ptr[2*i + 1] = end index of chr i in data arrays
+    UIntReader cell, start, end, end_max, chr_ptr;
+    std::unique_ptr<StringReader> chr_names, cell_names;
+
+    // end_max_buf holds the end_max values for the current chromosome, but to 
+    // deal with possible overhang from high end values in the previous chromosomes we 
+    // ensure end_max_buf[0] <= end_max_buf[1]
+    std::vector<uint32_t> end_max_buf;
+    uint32_t current_chr = UINT32_MAX;
+    uint32_t current_idx = UINT32_MAX;
+    uint32_t current_capacity = 0;
+    uint32_t chr_start_ptr, chr_end_ptr;
+
+    // Read end_max_buf from end_max iterator, making it equal to the values between
+    // start_idx and end_idx
+    void readEndMaxBuf(uint32_t start_idx, uint32_t end_idx);
+
+    
+public:
+    StoredFragments(UIntReader &&cell, UIntReader &&start, UIntReader &&end, 
+        UIntReader &&end_max, UIntReader && chr_ptr, 
+        std::unique_ptr<StringReader> &&chr_names,
+        std::unique_ptr<StringReader> &&cell_names);
+    static StoredFragments openUnpacked(ReaderBuilder &rb);
+                
+    bool isSeekable() const override;
+    void seek(uint32_t chr_id, uint32_t base) override;
+
+    void restart() override;
+
+    int chrCount() const override;
+    int cellCount() const override;
+    const char* chrNames(uint32_t chr_id) const override;
+    const char* cellNames(uint32_t cell_id) const override;
+
+    bool nextChr() override;
+    uint32_t currentChr() const override;
+    
+    bool load() override;
+    uint32_t capacity() const override;
+    
+    uint32_t* cellData() override;
+    uint32_t* startData() override;
+    uint32_t* endData() override;
+};
+
+class StoredFragmentsPacked: public StoredFragments {
+public:
+    using StoredFragments::StoredFragments;
+    static StoredFragmentsPacked openPacked(ReaderBuilder &rb, uint32_t load_size = 1024);
+    // Just override the methods that load data so we can insert a step to add start+end
+    bool load() override;
+};
+
+class StoredFragmentsWriter: public FragmentWriter {
+private: 
+    UIntWriter cell, start, end, end_max, chr_ptr;
+    std::unique_ptr<StringWriter> chr_names, cell_names;
+
+    bool subtract_start_from_end; //Set to true if writing packed
+    void subStartEnd();
+public:
+    static StoredFragmentsWriter createUnpacked(WriterBuilder &wb);
+    static StoredFragmentsWriter createPacked(WriterBuilder &wb, uint32_t buffer_size=1024);
+    StoredFragmentsWriter(UIntWriter &&cell, UIntWriter &&start, UIntWriter &&end, 
+        UIntWriter &&end_max, UIntWriter && chr_ptr,
+        std::unique_ptr<StringWriter> &&chr_names, std::unique_ptr<StringWriter> &&cell_names,
+        bool subtract_start_from_end);
+    
+    bool write(FragmentIterator &fragments, void (*checkInterrupt)(void) = NULL) override;
+};
+
+} // end namespace BPCells

@@ -167,233 +167,7 @@ write_10x_fragments <- function(fragments, path, append_5th_column=FALSE) {
     )
 }
 
-# Read/write in-memory PackedFragments objects
-setClass("PackedFragments",
-    contains = "IterableFragments",
-    slots = c(
-        fragments = "list"
-    ),
-    prototype = list(
-        fragments = NULL
-    )
-)
-#' Make a packed_fragments object in memory.
-#' @details Memory usage should be about half of the size of a gzip-compressed 10x fragments
-#' file holding the same data.
-#' @param fragments Input fragments object
-#' @return Packed fragments object
-#' @export
-write_packed_fragments <- function(fragments){
-    assert_is(fragments, "IterableFragments")
-    packed <- write_packed_fragments_cpp(iterate_fragments(fragments))
-    new("PackedFragments", cell_names=packed$cell_names, chr_names=packed$chr_names, fragments=packed$packed_frags)
-}
-setMethod("iterate_fragments", "PackedFragments", function(x) load_packed_fragments_cpp(x))
-setMethod("short_description", "PackedFragments", function(x) {
-    "Read packed fragments from memory"
-})
 
-# Read/write in-memory RawFragments objects
-setClass("RawFragments",
-    contains = "IterableFragments",
-    slots = c(
-        fragments = "list"
-    ),
-    prototype = list(
-        fragments = NULL
-    )
-)
-#' Make a RawFragments object in memory. 
-#' @param fragments Input fragments object
-#' @return Raw fragments object
-#' @export
-write_raw_fragments <- function(fragments) {
-    assert_is(fragments, "IterableFragments")
-    res <- write_unpacked_fragments_cpp(iterate_fragments(fragments))
-    
-    new("RawFragments", cell_names=res$cell_names, chr_names=res$chr_names, fragments=res$fragments)
-}
-setMethod("iterate_fragments", "RawFragments", function(x) iterate_unpacked_fragments_cpp(x))
-setMethod("short_description", "RawFragments", function(x) {
-    "Read raw fragments from memory"
-})
-#' Build a RawFragments object from an R data frame or GRanges
-#' @param x An input GRanges, list or data frame. Lists and dataframes 
-#'    must have chr, start, end, cell_id. GRanges must have a metadata column
-#'    for cell_id
-#' @param convert_to_0_based_coords Whether to convert the ranges from a 1-based
-#'    coordinate system to a 0-based coordinate system. 
-#'    (see http://genome.ucsc.edu/blog/the-ucsc-genome-browser-coordinate-counting-systems/)
-#' @return RawFragments object representing the given fragments
-RawFragments <- function(x, convert_to_0_based_coords=TRUE) {
-    assert_is(x, c("list", "data.frame", "GRanges"))
-    assert_is(convert_to_0_based_coords, "logical")
-    assert_not_null(x$cell_id)
-    if(!is(x, "GRanges")) {
-        assert_has_names(x, c("chr", "start", "end", "cell_id"))
-        x <- GenomicRanges::GRanges(
-            seqnames = as.factor(x$chr),
-            ranges = IRanges::IRanges(start = x$start, end=x$end),
-            cell_id = as.factor(x$cell_id)
-        )
-    }
-    x <- sort(x)
-    x$cell_id <- as.factor(x$cell_id)
-    xl <- split(x, GenomicRanges::seqnames(x))
-    fragments <- lapply(xl, function(granges) {
-        list(
-            start = GenomicRanges::start(granges) - 1,
-            end = GenomicRanges::end(granges),
-            cell_id = as.integer(granges$cell_id) - 1
-        )
-    })
-    names(fragments) <- NULL
-    new("RawFragments", cell_names=levels(x$cell_id), chr_names=levels(GenomicRanges::seqnames(x)), fragments=fragments)
-}
-
-
-##### RAW FRAGMENTS V2 TEST
-setClass("MemFragments",
-    contains = "IterableFragments",
-    slots = c(
-        fragments = "list",
-        compressed = "logical",
-        cell_names = "character",
-        chr_names = "character"
-    ),
-    prototype = list(
-        fragments = NULL,
-        compressed = TRUE
-    )
-)
-#' Make a RawFragments object in memory. 
-#' @param fragments Input fragments object
-#' @return MemFragments object
-#' @export
-write_fragments_memory <- function(fragments, compressed=TRUE) {
-    assert_is(fragments, "IterableFragments")
-    assert_is(compressed, "logical")
-    if (compressed)
-        res <- write_packed_fragments2_cpp(iterate_fragments(fragments))
-    else
-        res <- write_unpacked_fragments2_cpp(iterate_fragments(fragments))
-    
-    new("MemFragments", cell_names=res$cell_names, chr_names=res$chr_names, 
-                        fragments=res$fragments, compressed=compressed)
-}
-
-setMethod("iterate_fragments", "MemFragments", function(x) {
-    if (x@compressed) iterate_packed_fragments2_cpp(x)
-    else iterate_unpacked_fragments2_cpp(x)
-})
-setMethod("short_description", "MemFragments", function(x) {
-    sprintf("Read %s fragments from memory", if(x@compressed) "compressed" else "uncompressed")
-})
-#' Build a RawFragments object from an R data frame or GRanges
-#' @param x An input GRanges, list or data frame. Lists and dataframes 
-#'    must have chr, start, end, cell_id. GRanges must have a metadata column
-#'    for cell_id
-#' @param convert_to_0_based_coords Whether to convert the ranges from a 1-based
-#'    coordinate system to a 0-based coordinate system. 
-#'    (see http://genome.ucsc.edu/blog/the-ucsc-genome-browser-coordinate-counting-systems/)
-#' @return RawFragments object representing the given fragments
-RawFragments2 <- function(x, convert_to_0_based_coords=TRUE) {
-    write_raw_fragments2(RawFragments(x, convert_to_0_based_coords))
-}
-
-setClass("FragmentsDir",
-    contains = "IterableFragments",
-    slots = c(
-        dir = "character",
-        compressed = "logical"
-    ),
-    prototype = list(
-        dir = character(0),
-        compressed = TRUE
-    )
-)
-
-#' @export
-write_fragments_dir <- function(fragments, dir, compressed=TRUE) {
-    assert_is(fragments, "IterableFragments")
-    assert_is(dir, "character")
-    assert_is(compressed, "logical")
-    if (compressed)
-        write_packed_fragments_file_cpp(iterate_fragments(fragments), path.expand(dir))
-    else
-        write_unpacked_fragments_file_cpp(iterate_fragments(fragments), path.expand(dir))
-}
-
-open_fragments_dir <- function(dir, compressed=TRUE) {
-    new("FragmentsDir", dir=path.expand(dir), compressed=compressed)
-}
-
-setMethod("iterate_fragments", "FragmentsDir", function(x) {
-    if (x@compressed)
-        iterate_packed_fragments_file_cpp(x@dir)
-    else
-        iterate_unpacked_fragments_file_cpp(x@dir)
-})
-setMethod("short_description", "FragmentsDir", function(x) {
-    sprintf("Read %s fragments from %s", 
-        if(x@compressed) "compressed" else "uncompressed",
-        x@dir
-    )
-})
-
-
-
-setClass("FragmentsH5",
-    contains = "IterableFragments",
-    slots = c(
-        path = "character",
-        group = "character",
-        compressed = "logical"
-    ),
-    prototype = list(
-        path = character(0),
-        group = "",
-        compressed=TRUE
-    )
-)
-
-#' @export
-write_fragments_h5 <- function(fragments, path, group, chunk_size=250000L, compressed=TRUE) {
-    assert_is(fragments, "IterableFragments")
-    assert_is(path, "character")
-    assert_is(group, "character")
-    assert_is(compressed, "logical")
-    assert_wholenumber(chunk_size)
-
-    if (compressed)
-        write_packed_fragments_hdf5_cpp(iterate_fragments(fragments), path.expand(path), group, as.integer(chunk_size))
-    else
-        write_unpacked_fragments_hdf5_cpp(iterate_fragments(fragments), path.expand(path), group, as.integer(chunk_size))
-}
-
-open_fragments_h5 <- function(path, group="/", compressed=TRUE) {
-    if (group == "") group <- "/"
-    new("FragmentsH5", path=path, group=group, compressed=compressed)
-}
-
-setMethod("iterate_fragments", "FragmentsH5", function(x) {
-    if (x@compressed)
-        iterate_packed_fragments_hdf5_cpp(path.expand(x@path), x@group)
-    else
-        iterate_unpacked_fragments_hdf5_cpp(path.expand(x@path), x@group)
-})
-setMethod("short_description", "FragmentsH5", function(x) {
-    sprintf("Read %s fragments from %s, group %s", 
-        if(x@compressed) "compressed" else "uncompressed",
-        x@path, 
-        x@group
-    )
-})
-
-
-#### END RAW FRAGMENTS V2 TEST
-
-##### RAW FRAGMENTS V3 TEST
 setClass("UnpackedMemFragments",
     contains = "IterableFragments",
     slots = c(
@@ -403,7 +177,8 @@ setClass("UnpackedMemFragments",
         end_max = "integer", 
         chr_ptr = "integer",
         chr_names = "character",
-        cell_names = "character"
+        cell_names = "character",
+        version = "character"
     ),
     prototype = list(
         cell = integer(0),
@@ -412,12 +187,13 @@ setClass("UnpackedMemFragments",
         end_max = integer(0),
         chr_ptr = integer(0),
         chr_names = character(0),
-        cell_names = character(0)
+        cell_names = character(0),
+        version = character(0)
     )
 )
 
 setMethod("iterate_fragments", "UnpackedMemFragments", function(x) {
-    iterate_unpacked_fragments3_cpp(x)
+    iterate_unpacked_fragments_cpp(x)
 })
 setMethod("short_description", "UnpackedMemFragments", function(x) {
     "Read uncompressed fragments from memory"
@@ -437,7 +213,8 @@ setClass("PackedMemFragments",
         chr_ptr = "integer",
         
         chr_names = "character",
-        cell_names = "character"
+        cell_names = "character",
+        version = "character"
     ),
     prototype = list(
         cell_data = integer(0),
@@ -451,36 +228,39 @@ setClass("PackedMemFragments",
         chr_ptr = integer(0),
 
         chr_names = character(0),
-        cell_names = character(0)
+        cell_names = character(0),
+        version = character(0)
     )
 )
 
 
 setMethod("iterate_fragments", "PackedMemFragments", function(x) {
-    iterate_packed_fragments3_cpp(x)
+    iterate_packed_fragments_cpp(x)
 })
 setMethod("short_description", "PackedMemFragments", function(x) {
     "Read compressed fragments from memory"
 })
 
-#' Make a RawFragments object in memory. 
+#' Make a fragments object in memory. 
 #' @param fragments Input fragments object
+#' @param compress Whether or not to compress the data. With compression, memory usage should
+#' be about half the size of a gzip-compressed 10x fragments file holding the same data. 
+#' Without compression memory usage can be 10-20% larger.
 #' @return MemFragments object
 #' @export
-write_fragments_memory2 <- function(fragments, compress=TRUE) {
+write_fragments_memory <- function(fragments, compress=TRUE) {
     assert_is(fragments, "IterableFragments")
     assert_is(compress, "logical")
     if (compress) {
-        res <- write_packed_fragments3_cpp(iterate_fragments(fragments))
+        res <- write_packed_fragments_cpp(iterate_fragments(fragments))
         do.call(new, c("PackedMemFragments", res))
     } else {
-        res <- write_unpacked_fragments3_cpp(iterate_fragments(fragments))
+        res <- write_unpacked_fragments_cpp(iterate_fragments(fragments))
         do.call(new, c("UnpackedMemFragments", res))
     }
 }
 
-
-setClass("FragmentsDir2",
+setClass("FragmentsDir",
     contains = "IterableFragments",
     slots = c(
         dir = "character",
@@ -490,49 +270,59 @@ setClass("FragmentsDir2",
     prototype = list(
         dir = character(0),
         compressed = TRUE,
-        buffer_size = 8192L
+        buffer_size = 1024L
     )
 )
 
+#' Make a fragments object in binary files within a directory. 
+#' @inheritParams write_fragments_memory
+#' @param dir Directory to save the data into
+#' @param buffer_size For performance tuning only. The number of items to be bufferred
+#' in memory before calling writes to disk.
+#' @return FragmentsDir object
 #' @export
-write_fragments_dir2 <- function(fragments, dir, compress=TRUE, buffer_size=8192L) {
+write_fragments_dir <- function(fragments, dir, compress=TRUE, buffer_size=1024L) {
     assert_is(fragments, "IterableFragments")
     assert_is(dir, "character")
     assert_is(compress, "logical")
     assert_is(buffer_size, "integer")
     dir <- path.expand(dir)
     if (compress)
-        write_packed_fragments_file2_cpp(iterate_fragments(fragments), dir, buffer_size)
+        write_packed_fragments_file_cpp(iterate_fragments(fragments), dir, buffer_size)
     else
-        write_unpacked_fragments_file2_cpp(iterate_fragments(fragments), dir, buffer_size)
-    open_fragments_dir2(dir, buffer_size)
+        write_unpacked_fragments_file_cpp(iterate_fragments(fragments), dir, buffer_size)
+    open_fragments_dir(dir, buffer_size)
 }
 
-open_fragments_dir2 <- function(dir, buffer_size=8192L) {
+#' Open an existing fragments object written with [write_fragments_dir]
+#' @inheritParams write_fragments_memory
+#' @param buffer_size For performance tuning only. The number of fragments to be buffered
+#' in memory for each read
+#' @return FragmentsDir object
+#' @export
+open_fragments_dir <- function(dir, buffer_size=1024L) {
     assert_is_file(dir)
     assert_is(buffer_size, "integer")
     
     dir <- path.expand(dir)
     compressed <- is_compressed_fragments_file_cpp(dir, buffer_size)
-    new("FragmentsDir2", dir=path.expand(dir), compressed=compressed, buffer_size=buffer_size)
+    new("FragmentsDir", dir=path.expand(dir), compressed=compressed, buffer_size=buffer_size)
 }
 
-setMethod("iterate_fragments", "FragmentsDir2", function(x) {
+setMethod("iterate_fragments", "FragmentsDir", function(x) {
     if (x@compressed)
-        iterate_packed_fragments_file2_cpp(x@dir, x@buffer_size)
+        iterate_packed_fragments_file_cpp(x@dir, x@buffer_size)
     else
-        iterate_unpacked_fragments_file2_cpp(x@dir, x@buffer_size)
+        iterate_unpacked_fragments_file_cpp(x@dir, x@buffer_size)
 })
-setMethod("short_description", "FragmentsDir2", function(x) {
+setMethod("short_description", "FragmentsDir", function(x) {
     sprintf("Read %s fragments from directory %s", 
         if(x@compressed) "compressed" else "uncompressed",
         x@dir
     )
 })
 
-
-
-setClass("FragmentsH52",
+setClass("FragmentsHDF5",
     contains = "IterableFragments",
     slots = c(
         path = "character",
@@ -548,8 +338,17 @@ setClass("FragmentsH52",
     )
 )
 
+
+#' Write a fragments object in an hdf5 file
+#' @inheritParams write_fragments_dir
+#' @param path Path to the hdf5 file on disk
+#' @param group The group within the hdf5 file to write the data to. If writing
+#' to an existing hdf5 file this group must not already be in use
+#' @param chunk_size For performance tuning only. The chunk size used for the HDF5 array storage.
+#' @return FragmentsHDF5 object
 #' @export
-write_fragments_h52 <- function(fragments, path, group="fragments", compress=TRUE, buffer_size=8192L, chunk_size=1024L) {
+write_fragments_hdf5 <- function(fragments, path, group="fragments", compress=TRUE, buffer_size=8192L, chunk_size=1024L) {
+    assert_is(fragments, "IterableFragments")
     assert_is(path, "character")
     assert_is(group, "character")
     assert_is(compress, "logical")
@@ -557,55 +356,108 @@ write_fragments_h52 <- function(fragments, path, group="fragments", compress=TRU
     assert_is(chunk_size, "integer")
     path <- path.expand(path)
     if (compress)
-        write_packed_fragments_hdf52_cpp(iterate_fragments(fragments), path, group, buffer_size, chunk_size)
+        write_packed_fragments_hdf5_cpp(iterate_fragments(fragments), path, group, buffer_size, chunk_size)
     else
-        write_unpacked_fragments_hdf52_cpp(iterate_fragments(fragments), path, group, buffer_size, chunk_size)
-    open_fragments_h52(path, group, buffer_size)
+        write_unpacked_fragments_hdf5_cpp(iterate_fragments(fragments), path, group, buffer_size, chunk_size)
+    open_fragments_hdf5(path, group, buffer_size)
 }
 
-open_fragments_h52 <- function(path, group="fragments", buffer_size=8192L) {
+#' Read a fragments object from an hdf5 file
+#' @inheritParams write_fragments_hdf5
+#' @param buffer_size For performance tuning only. The number of items to be bufferred
+#' in memory before calling reads from disk.
+#' @return FragmentsHDF5 object
+#' @export
+open_fragments_hdf5 <- function(path, group="fragments", buffer_size=16384L) {
     assert_is_file(path)
     assert_is(group, "character")
     assert_is(buffer_size, "integer")
     
     path <- path.expand(path)
     compressed <- is_compressed_fragments_hdf5_cpp(path, group, buffer_size)
-    new("FragmentsH52", path=path, group=group, compressed=compressed, buffer_size=buffer_size)
+    new("FragmentsHDF5", path=path, group=group, compressed=compressed, buffer_size=buffer_size)
 }
 
-setMethod("iterate_fragments", "FragmentsH52", function(x) {
+setMethod("iterate_fragments", "FragmentsHDF5", function(x) {
     if (x@compressed)
-        iterate_packed_fragments_hdf52_cpp(x@path, x@group, x@buffer_size)
+        iterate_packed_fragments_hdf5_cpp(x@path, x@group, x@buffer_size)
     else
-        iterate_unpacked_fragments_hdf52_cpp(x@path, x@group, x@buffer_size)
+        iterate_unpacked_fragments_hdf5_cpp(x@path, x@group, x@buffer_size)
 })
-setMethod("short_description", "FragmentsH52", function(x) {
+setMethod("short_description", "FragmentsHDF5", function(x) {
     sprintf("Read %s fragments from %s, group %s", 
         if(x@compressed) "compressed" else "uncompressed",
         x@path, 
         x@group
     )
 })
-#### END RAW FRAGMENTS V3 TEST
+
+
+#' Build a Fragments object from an R data frame or GRanges object
+#' @param x An input GRanges, list or data frame. Lists and dataframes 
+#'    must have chr, start, end, cell_id. GRanges must have a metadata column
+#'    for cell_id
+#' @param zero_based_coords Whether to convert the ranges from a 1-based end-inclusive
+#'    coordinate system to a 0-based end-exclusive coordinate system. Defaults to true
+#'    for GRanges and false for other formats
+#'    (see http://genome.ucsc.edu/blog/the-ucsc-genome-browser-coordinate-counting-systems/)
+#' @return RawFragments object representing the given fragments
+convert_to_fragments <- function(x, zero_based_coords=is(x, "GRanges")) {
+    assert_is(x, c("list", "data.frame", "GRanges"))
+    assert_is(zero_based_coords, "logical")
+    assert_not_null(x$cell_id)
+    if(is(x, "GRanges")) {
+        assert_has_names(GenomicRanges::mcols(x), c("cell_id"))
+        x <- as.data.frame(x)
+        x$chr <- x$seqnames
+    } else {
+        assert_has_names(x, c("chr", "start", "end", "cell_id"))
+    }
+    x <- x[order(x$chr, x$start),]
+    if(!zero_based_coords) {
+        x$start <- x$start - 1
+    }
+    x$cell_id <- as.factor(x$cell_id)
+    x$chr <- as.factor(x$chr)
+
+    chr_ptr <- rep(cumsum(as.integer(x$chr)), each=2)
+    chr_ptr <- c(0, chr_ptr[-length(chr_ptr)])
+
+    end_max <- calculate_end_max_cpp(as.integer(x$end), chr_ptr)
+    new("UnpackedMemFragments", 
+        cell=as.integer(x$cell_id), 
+        start=as.integer(x$start),
+        end=as.integer(x$end),
+        end_max=end_max,
+        chr_ptr=chr_ptr,
+        cell_names = levels(x$cell_id),
+        chr_names = levels(x$chr)
+    )
+}
+
 
 # Define converters with GRanges if we have the GenomicRanges package available
 if (requireNamespace("GenomicRanges", quietly=TRUE)) {
     setAs("IterableFragments", "GRanges", function(from) {
-        frags <- write_raw_fragments(from)
-        l <- lapply(seq_along(frags@fragments), function(i) {
-            if (length(frags@fragments[[i]]$start) == 0) {
-                return(GenomicRanges::GRanges())
-            }
-            GenomicRanges::GRanges(
-                seqnames=frags@chr_names[i],
-                ranges=IRanges::IRanges(
-                    start = frags@fragments[[i]]$start + 1,
-                    end = frags@fragments[[i]]$end,
-                ),
-                cell_id = factor(frags@cell_names[frags@fragments[[i]]$cell_id + 1], frags@cell_names)
-            )
-        })
-        unlist(GenomicRanges::GRangesList(l))
+        if (is(from("UnpackedMemFragments"))) {
+            frags <- from
+        } else {
+            frags <- write_fragments_memory(from, compress=FALSE)
+        }
+        # Get the differences between adjacent elements on the chr_ptr list
+        # to calculate how many values are in each chromosome
+        chr_counts <- frags@chr_ptr[c(FALSE,TRUE)] - frags@chr_ptr[c(TRUE,FALSE)]
+        # order by where this chromosome range starts
+        chr_order <- order(frags@chr_ptr[c(TRUE,FALSE)])
+        
+        GenomicRanges::GRanges(
+            seqnames=S4Vectors::Rle(values=chrNames(frags)[order(chr_order)], lengths=chr_counts),
+            ranges = IRanges::IRanges(
+                start = frags@start + 1,
+                end = frags@end
+            ),
+            cell_id = factor(frags@cell_names[frags@cell + 1], frags@cell_names)
+        )
     })
 }
 
@@ -803,6 +655,15 @@ select_cells <- function(fragments, cell_selection) {
     }
 }
 
+#' Check if two fragments objects are identical
+#' @param fragments1 First IterableFragments to compare
+#' @param fragments2 Second IterableFragments to compare
+#' @return boolean for whether the fragments objects are identical
+fragments_identical <- function(fragments1, fragments2) {
+    assert_is(fragments1, "IterableFragments")
+    assert_is(fragments2, "IterableFragments")
+    fragments_identical_cpp(iterate_fragments(fragments1), iterate_fragments(fragments2))
+}
 
 #' Scan through fragments without performing any operations (used for benchmarking)
 #' @param fragments Fragments object to scan

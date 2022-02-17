@@ -3,7 +3,7 @@
 #include <algorithm>
 #include <functional>
 
-#include "FragmentsIterator.h"
+#include "FragmentIterator.h"
 #include "InsertionsIterator.h"
 #include "../lib/dary_heap.hpp"
 

@@ -4,69 +4,42 @@
 #include <fstream>
 #include <vector>
 #include <filesystem>
-#include <arpa/inet.h>
 
 #include "array_interfaces.h"
-#include "frags.h"
-#include "../fragmentIterators/UnpackedFragments2.h"
-#include "../matrixIterators/PackedMatrix.h"
-#include "../matrixIterators/UnpackedMatrix.h"
-#include "../fragmentIterators/UnpackedFragments3.h"
-#include "../fragmentIterators/PackedFragments3.h"
 
 namespace BPCells {
 
-std::string loadVersionDir(std::string dir);
-UnpackedMatrix openUnpackedMatrixDir(std::string dir, uint32_t buffer_size);
-UnpackedMatrixWriter createUnpackedMatrixDir(std::string dir, uint32_t buffer_size);
-PackedMatrix openPackedMatrixDir(std::string dir, uint32_t buffer_size);
-PackedMatrixWriter createPackedMatrixDir(std::string dir, uint32_t buffer_size);
-
-UnpackedFragments3 openUnpackedFragmentsDir(std::string dir, uint32_t buffer_size);
-UnpackedFragmentsWriter3 createUnpackedFragmentsDir(std::string dir, uint32_t buffer_size);
-
-PackedFragments3 openPackedFragmentsDir(std::string dir, uint32_t buffer_size);
-PackedFragmentsWriter3 createPackedFragmentsDir(std::string dir, uint32_t buffer_size);
-
-
-class ZFileUIntWriter : public UIntWriter {
+class FileUIntWriter final : public UIntBulkWriter {
 private:
     std::ofstream file;
-    std::vector<uint32_t> buf;
-    void flush();
-    void _ensureCapacity(size_t capacity) override;
 public:
-    ~ZFileUIntWriter();
-    ZFileUIntWriter(const char* path, uint32_t buffer_size = 8192);
-    ZFileUIntWriter(const ZFileUIntWriter&) = delete;
-    ZFileUIntWriter& operator= (const ZFileUIntWriter&) = delete;
-    ZFileUIntWriter& operator= (ZFileUIntWriter&&) = default;
-
-    void next() override;
+    FileUIntWriter(const char* path);
+    uint32_t write(uint32_t *in, uint32_t count) override;
 };
 
 
-class ZFileUIntReader : public UIntReader {
+class FileUIntReader final : public UIntBulkReader {
 protected:
     std::ifstream file;
-    std::vector<uint32_t> buf;
-    uint32_t buf_end_pos = 0; // Logical file position of the integer at data() + capacity()
-    void _ensureCapacity(size_t capacity) override;
-    size_t readPos(uint32_t* out, uint32_t capacity);
+    uint32_t total_size;
+    bool byte_swap;
 public:
-    ZFileUIntReader() = default;
-    ZFileUIntReader(const char* path, uint32_t buffer_size = 8192);
-    ZFileUIntReader(const ZFileUIntReader&) = delete;
-    ZFileUIntReader& operator= (const ZFileUIntReader&) = delete;
-    ZFileUIntReader& operator= (ZFileUIntReader&&) = default;
+    FileUIntReader(const char* path);
+    
+    // Return total number of integers in the reader
+    uint32_t size() const override;
 
-    bool next() override;
-    bool seek(size_t pos) override;
+    // Change the next load to start at index pos
+    void seek(uint32_t pos) override;
+
+    // Copy up to `count` integers into `out`, returning the actual number copied.
+    // Will always load >0 unless there is no more input
+    uint32_t load(uint32_t *out, uint32_t count) override;
 };
 
 std::vector<std::string> readLines(std::filesystem::path path);
 
-class FileStringReader : public StringReader {
+class FileStringReader final : public StringReader {
 private:
     std::vector<std::string> data;
 public:
@@ -75,7 +48,7 @@ public:
     uint32_t size() const override;
 };
 
-class FileStringWriter : public StringWriter {
+class FileStringWriter final : public StringWriter {
 private:
     std::filesystem::path path;
 public:
@@ -83,84 +56,27 @@ public:
     void write(const StringReader &reader) override;
 };
 
-class FileUIntWriter {
-private:
-    std::ofstream file;
-    uint32_t order_buf[128];
-public:
-    FileUIntWriter(const char* path);
-    FileUIntWriter(const FileUIntWriter&) = delete;
-    FileUIntWriter& operator= (const FileUIntWriter&) = delete;
-    FileUIntWriter& operator= (FileUIntWriter&&) = default;
-
-    void write(const uint32_t *buffer, uint32_t count);
-    void finalize();
-};
-
-class FileUIntReader {
-private:
-    std::ifstream file;
-public:
-    FileUIntReader() = default;
-    FileUIntReader(const char* path);
-    FileUIntReader(const FileUIntReader&) = delete;
-    FileUIntReader& operator= (const FileUIntReader&) = delete;
-    FileUIntReader& operator= (FileUIntReader&&) = default;
-
-    uint32_t read(uint32_t *buffer, uint32_t count);
-    uint32_t size();
-    void seek(const size_t pos);
-};
-
-// Handles both packed and unpacked fragment saving. For consistency,
-// users should call only one of chrWriterUnpacked or chrWriterPacked according
-// to the desired ouptut format
-class FileFragmentsSaver {
-private:
+class FileWriterBuilder final : public WriterBuilder {
+protected:
     std::filesystem::path dir;
+    uint32_t buffer_size;
 public:
-    using UIntWriter = FileUIntWriter;
-    FileFragmentsSaver() = delete;
-    FileFragmentsSaver(std::string dir);
-    UnpackedFrags<UIntWriter> chrWriterUnpacked(uint32_t chr_id);
-    PackedFrags<UIntWriter> chrWriterPacked(uint32_t chr_id);
-    void writeCellNames(std::vector<std::string> cell_names);
-    void writeChrNames(std::vector<std::string> chr_names);
+    FileWriterBuilder(std::string dir, uint32_t buffer_size);
+    UIntWriter createUIntWriter(std::string name) override;
+    std::unique_ptr<StringWriter> createStringWriter(std::string name) override;
+    void writeVersion(std::string version) override;
 };
 
-// Handles both packed and unpacked fragment loading. For consistency,
-// users should call only one of chrReaderUnpacked or chrReaderPacked according
-// to the input format
-class FileFragmentsLoader {
-private:
+class FileReaderBuilder final : public ReaderBuilder {
     std::filesystem::path dir;
+    uint32_t buffer_size;
+    uint32_t read_size;
 public:
-    using UIntReader = FileUIntReader;
-    FileFragmentsLoader() = default;
-    FileFragmentsLoader(std::string dir, bool is_packed);
-
-    UnpackedFrags<UIntReader> chrReaderUnpacked(uint32_t chr_id);
-    PackedFrags<UIntReader> chrReaderPacked(uint32_t chr_id);
-
-    std::vector<std::string> readCellNames() {return readLines(dir / "cell_names.txt");}
-    std::vector<std::string> readChrNames() {return readLines(dir / "chr_names.txt");}
+    FileReaderBuilder(std::string dir, uint32_t buffer_size, uint32_t read_size=1024);
+    UIntReader openUIntReader(std::string name) override;
+    std::unique_ptr<StringReader> openStringReader(std::string name) override;
+    std::string readVersion() override;
 };
-
-// UnpackedFragments2(std::vector<UnpackedFrags<Reader> > frags,
-//         const std::vector<std::string> cell_names, const std::vector<std::string> chr_names)
-
-class FilePackedFragsBuilder {
-private:
-    std::filesystem::path dir;
-public:
-    FilePackedFragsBuilder() = delete;
-    FilePackedFragsBuilder(std::string dir);
-    PackedFrags<FileUIntWriter> chrWriter(uint32_t chr_id);
-    void writeCellNames(std::vector<std::string> cell_names);
-    void writeChrNames(std::vector<std::string> chr_names);
-};
-
-
 
 
 } // end namespace BPCells

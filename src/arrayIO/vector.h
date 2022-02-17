@@ -1,43 +1,41 @@
 #pragma once
 
 #include <stdint.h>
+#include <map>
 #include <vector>
 #include <string>
 
-#include "frags.h"
 #include "array_interfaces.h"
 
 namespace BPCells {
     
 
-class ZVecUIntWriter : public UIntWriter {
+class VecUIntWriter final : public UIntBulkWriter {
 private:
     std::vector<uint32_t> &vec;
-    const uint32_t chunk_size = 8192;
-    void _ensureCapacity(size_t capacity) override;
 public:
-    ~ZVecUIntWriter();
-    ZVecUIntWriter() = delete;
-    ZVecUIntWriter(std::vector<uint32_t> &vec);
-    ZVecUIntWriter(std::vector<uint32_t> &vec, uint32_t chunk_size);
+    VecUIntWriter(std::vector<uint32_t> &vec);
     
-    void next() override;
+    uint32_t write(uint32_t *in, uint32_t count) override;
 };
 
-class ZVecUIntReader : public UIntReader {
+class VecUIntReader : public UIntBulkReader {
 private:
     const uint32_t *vec;
-    void _ensureCapacity(size_t capacity) override;
+    uint32_t capacity;
+    uint32_t pos = 0;
 public:
-    ZVecUIntReader(const uint32_t *vec, std::size_t capacity);
+    VecUIntReader(const uint32_t *vec, std::size_t capacity);
 
-    // Return a buffer pointing to data available to read.
-    // Pointers are only valid until `next` or `seek` gets called.
-    // buffer size will always be 0 once there is no data left.
-    bool next() override;
+    // Return total number of integers in the reader
+    uint32_t size() const override;
 
-    // Seek to a different position in the stream (first integer is position 0)
-    bool seek(size_t pos) override;
+    // Change the next load to start at index pos
+    void seek(uint32_t pos) override;
+
+    // Copy up to `count` integers into `out`, returning the actual number copied.
+    // Will always load >0 unless there is no more input
+    uint32_t load(uint32_t *out, uint32_t count) override;
 };
 
 class VecStringWriter : public StringWriter {
@@ -48,132 +46,23 @@ public:
     void write(const StringReader &reader) override;
 };
 
-class VecUIntWriter {
-private:
-    std::vector<uint32_t> &vec;
+class VecReaderWriterBuilder final : public WriterBuilder, public ReaderBuilder {
+protected:
+    std::map<std::string, std::vector<uint32_t>> int_vecs;
+    std::map<std::string, std::vector<std::string>> string_vecs;
+    std::string version;
+    uint32_t chunk_size;
 public:
-    VecUIntWriter() = delete;
-    VecUIntWriter(std::vector<uint32_t> &vec) : vec(vec) {}
-    VecUIntWriter(const VecUIntWriter&) = default;
-    VecUIntWriter& operator= (const VecUIntWriter&) = delete;
+    VecReaderWriterBuilder(uint32_t chunk_size = 1024);
+    UIntWriter createUIntWriter(std::string name) override;
+    std::unique_ptr<StringWriter> createStringWriter(std::string name) override;
+    void writeVersion(std::string version) override;
+    UIntReader openUIntReader(std::string name) override;
+    std::unique_ptr<StringReader> openStringReader(std::string name) override;
+    std::string readVersion() override;
 
-    void write(const uint32_t *buffer, uint32_t count);
-    void finalize();
+    std::vector<uint32_t>& getIntVec(std::string name);
+    std::vector<std::string>& getStringVec(std::string name);
 };
-
-
-
-
-class VecUIntReader {
-private:
-    const uint32_t *vec;
-    std::size_t capacity;
-    std::size_t idx = 0;
-public:
-    VecUIntReader() = default;
-    VecUIntReader(const uint32_t *vec, std::size_t capacity);
-
-    uint32_t read(uint32_t *buffer, uint32_t count);
-    uint32_t size();
-    void seek(const std::size_t pos);
-};
-
-
-class VecUnpackedFragmentsSaver {
-public:
-    using UIntWriter = VecUIntWriter;
-    class Storage {
-    public:
-        std::vector<UnpackedFrags<std::vector<uint32_t>>> fragments;
-        std::vector<std::string> cell_names, chr_names;
-    };
-
-    VecUnpackedFragmentsSaver() = delete;
-    VecUnpackedFragmentsSaver(Storage &storage) : storage(storage) {};
-    UnpackedFrags<UIntWriter> chrWriterUnpacked(uint32_t chr_id);
-
-    void writeCellNames(std::vector<std::string> cell_names);
-    void writeChrNames(std::vector<std::string> chr_names);
-private:
-    Storage &storage;
-};
-
-class VecPackedFragmentsSaver {
-public:
-    using UIntWriter = VecUIntWriter;
-    class Storage {
-    public:
-        std::vector<PackedFrags<std::vector<uint32_t>>> fragments;
-        std::vector<std::string> cell_names, chr_names;
-    };
-
-    VecPackedFragmentsSaver() = delete;
-    VecPackedFragmentsSaver(Storage &storage) : storage(storage) {};
-    PackedFrags<UIntWriter> chrWriterPacked(uint32_t chr_id);
-    void writeCellNames(std::vector<std::string> cell_names);
-    void writeChrNames(std::vector<std::string> chr_names);
-private:
-    Storage &storage;
-};
-
-class VecUnpackedFragmentsLoader {
-public:
-    using UIntReader = VecUIntReader;
-    class Storage {
-    public:
-        std::vector<UnpackedFrags<UIntReader>> fragments;
-        std::vector<std::string> cell_names, chr_names;
-    };
-
-    VecUnpackedFragmentsLoader() = delete;
-    VecUnpackedFragmentsLoader(Storage storage) : storage(storage) {};
-
-    UnpackedFrags<UIntReader> chrReaderUnpacked(uint32_t chr_id) {
-        return UnpackedFrags<UIntReader> {
-            storage.fragments[chr_id].start,
-            storage.fragments[chr_id].end,
-            storage.fragments[chr_id].cell,
-            storage.fragments[chr_id].end_max
-        };
-    }
-
-    std::vector<std::string> readCellNames() {return storage.cell_names;}
-    std::vector<std::string> readChrNames() {return storage.chr_names;}
-private:
-    const Storage storage;
-};
-
-
-class VecPackedFragmentsLoader {
-public:
-    using UIntReader = VecUIntReader;
-    class Storage {
-    public:
-        std::vector<PackedFrags<UIntReader>> fragments;
-        std::vector<std::string> cell_names, chr_names;
-    };
-
-    VecPackedFragmentsLoader() = delete;
-    VecPackedFragmentsLoader(Storage storage) : storage(storage) {};
-    PackedFrags<UIntReader> chrReaderPacked(uint32_t chr_id) {
-        return PackedFrags<UIntReader> {
-            storage.fragments[chr_id].start_data,
-            storage.fragments[chr_id].start_idx,
-            storage.fragments[chr_id].start_starts,
-            storage.fragments[chr_id].end_data,
-            storage.fragments[chr_id].end_idx,
-            storage.fragments[chr_id].end_max,
-            storage.fragments[chr_id].cell_data,
-            storage.fragments[chr_id].cell_idx,
-            storage.fragments[chr_id].count
-        };
-    }
-
-    std::vector<std::string> readCellNames() {return storage.cell_names;}
-    std::vector<std::string> readChrNames() {return storage.chr_names;}
-private:
-    const Storage storage;
-};
-
 
 } // end namespace BPCells

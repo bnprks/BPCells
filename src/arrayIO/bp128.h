@@ -1,113 +1,159 @@
+#pragma once
+#include "array_interfaces.h"
 #include "../bitpacking/bp128.h"
 #include <cstring>
 
 namespace BPCells {
 
-// Note: For now I'm not using these, since it's seeming easier
-// to just write a dedicated PackedFragments and PackedMatrix class
-// that are able to result in some slightly bigger efficiencies.
+// Base class for BP128 readers. Derived classes are
+// just responsible for defining load128 and seek appropriately
+class BP128UIntReaderBase : public UIntBulkReader {
+protected:
+    uint32_t pos = 0;
+    uint32_t count;
+    std::unique_ptr<uint32_t[]> buf = std::make_unique<uint32_t[]>(128);
 
-template<class UIntWriter>
-class BP128UIntWriter {
-private:
-    uint32_t [128]in_buf;
-    size_t total_written = 0;
-    size_t total_compressed = 0;
-
-    UIntWriter data, idx, len;
-
-    inline void write128(uint32_t *compress_buf) {
-        uint32_t bits = simdmaxbits(in_buf);
-        simdpack(in_buf, compress_buf, bits);
-        data.write(compress_buf, bits * 4);
-        idx.write(&total_compresed, 1);
-        total_compressed += bits*4;
-    }
+    // Load 128 values into out pointer
+    virtual void load128(uint32_t *out) = 0;
+    // Seek to the position of the pos variable
+    virtual void _seek() = 0;
 public:
-    BP128UIntWriter(UIntWriter&& data, UIntWriter&& idx, UIntWriter&& len) : data(data), idx(idx), len(len) {}
-    BP128UIntWriter(const BP128UIntWriter&) = delete;
-    BP128UIntWriter& operator= (const BP128UIntWriter&) = delete;
+    BP128UIntReaderBase(uint32_t count);
+    virtual ~BP128UIntReaderBase() = default;
+    // Return total number of integers in the reader
+    uint32_t size() const final override;
 
-    // Append integers to output stream; Throws exception on failure
-    void write(const uint32_t *buffer, uint32_t count) {
-        uint32_t [128]compress_buf;
-        uint32_t written = 0;
+    // Change the next load to start at index pos
+    void seek(uint32_t pos) final override;
 
-        while (written < count) {
-            uint32_t items = std::min(128 - total_written%128, count-written);
-            std::memmove(&in_buf[total_written % 128], &buffer[written], items*sizeof(uint32_t));
-            written += items;
-            total_written += items;
-            if (total_written % 128 == 0) write128(compress_buf);
-        }
-    }
-
-    void finalize() {
-        len.write(&total_written, 1);
-        while(total_written % 128 != 0) {
-            in_buf[total_written % 128] = in_buf[(total_written % 128) - 1];
-            total_written += 1;
-        }
-        write128();
-    }
+    // Copy up to `count` integers into `out`, returning the actual number copied.
+    // Will always load >0 if count is >0
+    // Note: It is the caller's responsibility to ensure there is no data overflow, i.e.
+    // that a load does not try to read past size() total elements
+    uint32_t load(uint32_t *out, uint32_t count) final override;
 };
 
-template<class UIntReader>
-class BP128UIntReader {
-private:
-    uint32_t [128]out_buf;
-    UIntReader data, idx, len;
-    size_t pos = 0;
-    uint32_t idx_prev;
+// Base class for BP128 writers.
+// WARNING: Constructor should propbably write first 0 index pointer, don't forget!
+class BP128UIntWriterBase : public UIntBulkWriter {
+protected:
+    std::unique_ptr<uint32_t[]> buf = std::make_unique<uint32_t[]>(128);
+    uint32_t buf_pos = 0;
 
-    inline void read128(uint32_t *data_buf) {
-        uint32_t idx_new;
-        if (idx.read(&idx_new, 1) != 1) 
-            throw std::runtime_error("Failed to read next idx value");
-        if (data.read(data_buf, idx_new-idx_prev) != idx_new-idx_prev)
-            throw std::runtime_error("Failed to read compressed data chunk");
-        
-        uint32_t bits = (idx_new - idx_prev)/4;
-        simdunpack(data_buf, out_buf, bits);
-        
-        idx_prev = idx_new;
-    }
+    // Pack 128 values from in pointer
+    virtual void pack128(uint32_t *in) = 0;
+    // Finalize all the underlying writer objects, after all data has been written
+    virtual void finalizeWriters() = 0;
 public:
-    BP128UIntReader() = default;
-    BP128UIntReader(UIntReader&& data, UIntReader&& idx, UIntReader&& len) : data(data), idx(idx), len(len) {
-        if (idx.read(&idx_prev, 1) != 1) 
-            throw std::runtime_error("Failed to read next idx value");
-    }
-    
-    BP128UIntReader(const BP128UIntReader&) = delete;
-    BP128UIntReader& operator= (const BP128UIntReader&) = delete;
+    virtual ~BP128UIntWriterBase() = default;
 
-    uint32_t read(uint32_t *buffer, uint32_t count) {
-        uint32_t [128]data_buf;
-        uint32_t read = 0;
-        while (read < count) {
-            if (pos % 128 == 0) read128(data_buf);
-            uint32_t items = std::min(128 - pos%128, count-read);
-            std::memmove(buffer, &out_buf[pos%128], items*sizeof(uint32_t));
-            read += items;
-            pos += items;
-        }
-        return read;
-    }
-    uint32_t size() {
-        uint32_t s;
-        len.read(&s, 1);
-        return s;
-    }
-    void seek(const std::size_t pos) {
-        this->pos = pos;
-        idx.seek(pos / 128);
-        if (idx.read(&idx_prev, 1) != 1) 
-            throw std::runtime_error("Failed to read next idx value");
-        data.seek(idx_prev);
-    };
+    // Write up to `count` integers from `in`, returning the actual number written.
+    // Will always write >0, otherwise throwing an exception for an error
+    // Note: The writer is allowed to modify the input data, so it might be 
+    // modified after calling write()
+    uint32_t write(uint32_t *in, uint32_t count) override;
+
+    void finalize() final override;
 };
 
 
+//################### BP128 (Vanilla) #########################################
+
+
+class BP128UIntReader final : public BP128UIntReaderBase {
+protected:
+    UIntReader data, idx;
+    uint32_t prev_idx;
+
+    void load128(uint32_t *out) override;
+    void _seek() override;
+public:
+    BP128UIntReader(UIntReader &&data, UIntReader &&idx, uint32_t count);
+};
+
+class BP128UIntWriter final : public BP128UIntWriterBase {
+protected:
+    UIntWriter data, idx;
+    uint32_t cur_idx = 0;
+
+    void pack128(uint32_t *in) override;
+    void finalizeWriters() override;
+public:
+    BP128UIntWriter(UIntWriter &&data, UIntWriter &&idx);
+};
+
+
+//######################## BP128 (D1) #########################################
+
+class BP128_D1_UIntReader final : public BP128UIntReaderBase {
+protected:
+    UIntReader data, idx, starts;
+    uint32_t prev_idx;
+
+    void load128(uint32_t *out) override;
+    void _seek() override;
+public:
+    BP128_D1_UIntReader(UIntReader &&data, UIntReader &&idx, UIntReader &&starts, uint32_t count);
+};
+
+class BP128_D1_UIntWriter final : public BP128UIntWriterBase {
+protected:
+    UIntWriter data, idx, starts;
+    uint32_t cur_idx = 0;
+
+    void pack128(uint32_t *in) override;
+    void finalizeWriters() override;
+public:
+    BP128_D1_UIntWriter(UIntWriter &&data, UIntWriter &&idx, UIntWriter &&starts);
+};
+
+//######################## BP128 (D1Z) #########################################
+
+class BP128_D1Z_UIntReader final : public BP128UIntReaderBase {
+protected:
+    UIntReader data, idx, starts;
+    uint32_t prev_idx;
+
+    void load128(uint32_t *out) override;
+    void _seek() override;
+public:
+    BP128_D1Z_UIntReader(UIntReader &&idx, UIntReader &&data, UIntReader &&starts, uint32_t count);
+};
+
+class BP128_D1Z_UIntWriter final : public BP128UIntWriterBase {
+protected:
+    UIntWriter data, idx, starts;
+    uint32_t cur_idx = 0;
+
+    void pack128(uint32_t *in) override;
+    void finalizeWriters() override;
+public:
+    BP128_D1Z_UIntWriter(UIntWriter &&data, UIntWriter &&idx, UIntWriter &&starts);
+};
+
+//######################## BP128 (FOR) #########################################
+// This is just FOR encoding using a constant 1 as the frame of reference.
+// (i.e. to encode values of an integer sparse matrix)
+class BP128_FOR_UIntReader final : public BP128UIntReaderBase {
+protected:
+    UIntReader data, idx;
+    uint32_t prev_idx;
+
+    void load128(uint32_t *out) override;
+    void _seek() override;
+public:
+    BP128_FOR_UIntReader(UIntReader &&data, UIntReader &&idx, uint32_t count);
+};
+
+class BP128_FOR_UIntWriter final : public BP128UIntWriterBase {
+protected:
+    UIntWriter data, idx;
+    uint32_t cur_idx = 0;
+
+    void pack128(uint32_t *in) override;
+    void finalizeWriters() override;
+public:
+    BP128_FOR_UIntWriter(UIntWriter &&data, UIntWriter &&idx);
+};
 
 } // end namespace BPCells

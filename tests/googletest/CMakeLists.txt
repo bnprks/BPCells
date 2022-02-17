@@ -1,9 +1,13 @@
 cmake_minimum_required(VERSION 3.14)
-project(my_project)
+project(BPCells)
+
+find_package(HDF5 REQUIRED)
+find_package(ZLIB REQUIRED)
 
 option(TARGET_ARM "Whether to build SIMD tests for ARM architectures (rather than x86)")
 
 set(CMAKE_CXX_STANDARD 17)
+
 
 set(SRC ../../src)
 add_library(
@@ -14,6 +18,48 @@ add_library(
 target_include_directories(
     bitpacking
     PUBLIC
+    ${SRC}
+)
+
+add_library(
+    arrayIO
+    ${SRC}/arrayIO/array_interfaces.cpp
+    ${SRC}/arrayIO/binaryfile.cpp
+    ${SRC}/arrayIO/hdf5.cpp
+    ${SRC}/arrayIO/vector.cpp
+    ${SRC}/arrayIO/bp128.cpp
+)
+
+target_link_libraries(
+    arrayIO 
+    ${HDF5_LIBRARIES}
+    bitpacking
+)
+target_include_directories(
+    arrayIO 
+    PUBLIC 
+    ${HDF5_INCLUDE_DIRS}
+    ${SRC}
+)
+
+add_library(
+    fragmentIterators
+    ${SRC}/fragmentIterators/BedFragments.cpp
+    ${SRC}/fragmentIterators/CellSelect.cpp
+    ${SRC}/fragmentIterators/ChrSelect.cpp
+    ${SRC}/fragmentIterators/FragmentIterator.cpp
+    ${SRC}/fragmentIterators/ShiftCoords.cpp
+    ${SRC}/fragmentIterators/StoredFragments.cpp
+)
+target_link_libraries(
+    fragmentIterators 
+    arrayIO
+    ${ZLIB_LIBRARIES}
+)
+target_include_directories(
+    fragmentIterators 
+    PUBLIC 
+    ${ZLIB_INCLUDE_DIRS}
     ${SRC}
 )
 
@@ -71,3 +117,17 @@ else()
     target_compile_options(bitpacking_test_fallback PUBLIC -mno-sse2)
     gtest_discover_tests(bitpacking_test_fallback EXTRA_ARGS --arch 0)
 endif()
+
+add_executable(
+    array_io_test
+    test-arrayIO.cpp
+)
+target_link_libraries(array_io_test arrayIO gtest_main)
+gtest_discover_tests(array_io_test)
+
+add_executable(
+    fragment_io_test
+    test-fragmentIO.cpp
+)
+target_link_libraries(fragment_io_test fragmentIterators gtest gmock)
+gtest_discover_tests(fragment_io_test EXTRA_ARGS ../data/mini_fragments.tsv.gz)

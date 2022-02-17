@@ -6,13 +6,13 @@
 
 #include <zlib.h>
 
-#include "FragmentsIterator.h"
+#include "FragmentIterator.h"
 
 namespace BPCells {
 
 // Read a fragment TSV with columns chr, start, end, cell_id [optional others] in that order.
 // cell and chromosme IDs are assigned in sequential order from the order they're seen
-class BedFragments : public FragmentsLoader {
+class BedFragments : public FragmentLoader {
 public:
     BedFragments(const char *path, const char *comment_prefix = "");
 
@@ -39,17 +39,25 @@ public:
     bool isSeekable() const override;
     void seek(uint32_t chr_id, uint32_t base) override;
 
+    bool load() override;
+    uint32_t capacity() const override;
+
+    uint32_t* cellData() override;
+    uint32_t* startData() override;
+    uint32_t* endData() override;
+
 private:
-    std::string(path);
+    std::string path;
     gzFile f;
-    std::array<char, 1<<20 > line_buf;
+    std::array<char, 1<<10 > line_buf;
     std::vector<std::string> chr_names, cell_names;
     std::unordered_map<std::string, uint32_t> chr_lookup, cell_id_lookup;
     uint32_t next_chr_id, next_cell_id;
     bool eof = false;
     std::string current_chr;
     std::string comment;
-    uint32_t last_start;
+    uint32_t last_start = 0;
+    std::vector<uint32_t> cell, start, end;
 
     const char* nextField(const char * c) ;
 
@@ -61,20 +69,19 @@ private:
     // return value, with output parameters for start, end, cell_id.
     // Will assign a cell_id if it sees a new cell name.
     // Returns empty string at eof
-    std::string parse_line(uint32_t &start, uint32_t &end, uint32_t &cell_id);
+    std::string_view parse_line(uint32_t &start, uint32_t &end, uint32_t &cell_id);
 
     bool validInt(const char* c);
 
-    int32_t load(uint32_t count, FragmentArray buffer) override;
 };
 
 
-class BedFragmentsWriter : public FragmentsWriter {
+class BedFragmentsWriter : public FragmentWriter {
 public:
     BedFragmentsWriter(const char *path, bool append_5th_column=false,
                     uint32_t buffer_size = 1 << 20);
     ~BedFragmentsWriter();
-    bool write(FragmentsIterator &fragments, void (*checkInterrupt)(void) = NULL) override;
+    bool write(FragmentIterator &fragments, void (*checkInterrupt)(void) = NULL) override;
 private:
     gzFile f;
     bool append_5th_column;

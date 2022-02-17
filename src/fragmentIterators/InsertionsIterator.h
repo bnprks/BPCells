@@ -4,7 +4,7 @@
 #include <cassert>
 #include <functional>
 
-#include "FragmentsIterator.h"
+#include "FragmentIterator.h"
 #include "../lib/dary_heap.hpp"
 
 namespace BPCells {

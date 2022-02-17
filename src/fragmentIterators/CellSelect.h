@@ -1,21 +1,22 @@
 #pragma once
 #include <unordered_map>
-#include "FragmentsIterator.h"
+#include "FragmentIterator.h"
 
 namespace BPCells {
 
 // Transform a fragments iterator by renaming or filtering cell IDs 
-class CellIndexSelect : public FragmentsLoaderWrapper {
+class CellIndexSelect : public FragmentLoaderWrapper {
 private:
+    uint32_t loaded = 0;
     const std::vector<uint32_t> cell_indices;
     // Reverse lookup for cell indices -- reverse_indices[i] gives the output cell_id
     // for input cell_id i
     std::vector<uint32_t> reverse_indices;
 public:
     // cell_indices -- vector with length <= the number of chromosomes in the input
-    //     FragmentsIterator. The output cell `i` will come from input cell
+    //     FragmentIterator. The output cell `i` will come from input cell
     //     `chr_assignments[i]`. The entries of cell_indices must be unique
-    CellIndexSelect(FragmentsLoader &loader, const std::vector<uint32_t> cell_indices);
+    CellIndexSelect(FragmentLoader &loader, const std::vector<uint32_t> cell_indices);
 
     ~CellIndexSelect() = default;
 
@@ -25,15 +26,17 @@ public:
 
     const char* cellNames(uint32_t cell_id) const override;
 
-    // Return number of items loaded. Should repeatedly return 0 at the end of a chromosome.
-    // Return -1 for error
-    int32_t load(uint32_t count, FragmentArray buffer) override;
+    bool load() override;
+    uint32_t capacity() const override;
+
+
 };
 
 
 // Transform a fragments iterator by renaming or filtering cell IDs 
-class CellNameSelect : public FragmentsLoaderWrapper {
+class CellNameSelect : public FragmentLoaderWrapper {
 private:
+    uint32_t loaded;
     const std::vector<std::string> cell_names;
     std::unordered_map<std::string, uint32_t> output_index;
     // Reverse lookup for cell indices -- reverse_indices[i] gives the output cell_id
@@ -45,19 +48,18 @@ private:
     uint32_t getOutputCellID(uint32_t input_cell_id); 
 public:
     // cell_names -- vector with length <= the number of chromosomes in the input
-    //     FragmentsLoader. The output cell `i` will come from input cell
+    //     FragmentLoader. The output cell `i` will come from input cell
     //     `chr_assignments[i]`. The entries of cell_names must be unique
-    CellNameSelect(FragmentsLoader &loader, const std::vector<std::string> cell_names);
+    CellNameSelect(FragmentLoader &loader, const std::vector<std::string> cell_names);
 
     ~CellNameSelect() = default;
     
     int cellCount() const override;
 
     const char* cellNames(uint32_t cell_id) const override;
-    
-    // Return number of items loaded. Should repeatedly return 0 at the end of a chromosome.
-    // Return -1 for error
-    int32_t load(uint32_t count, FragmentArray buffer) override;
+
+    bool load() override;
+    uint32_t capacity() const override;
 };
 
 

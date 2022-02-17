@@ -3,8 +3,7 @@
 namespace BPCells {
 
 BedFragments::BedFragments(const char *path, const char *comment_prefix) :
-    path(path), f(NULL), next_chr_id(0), next_cell_id(0),
-        comment(comment_prefix), last_start(0) {
+    path(path), f(NULL), comment(comment_prefix) {
     restart();
 }
 
@@ -64,12 +63,12 @@ bool BedFragments::read_line() {
 // return value, with output parameters for start, end, cell_id.
 // Will assign a cell_id if it sees a new cell name.
 // Returns empty string at eof
-std::string BedFragments::parse_line(uint32_t &start, uint32_t &end, uint32_t &cell_id) {
+std::string_view BedFragments::parse_line(uint32_t &start, uint32_t &end, uint32_t &cell_id) {
     const char *cur_field, *next_field;
 
     cur_field = &line_buf[0];
     next_field = nextField(cur_field);
-    std::string chr(cur_field, next_field - cur_field);
+    std::string_view chr(cur_field, next_field - cur_field);
 
     if (next_field == cur_field) return chr;
     if (*next_field != '\t') throw std::runtime_error("Invalid TSV file");
@@ -108,7 +107,6 @@ bool BedFragments::validInt(const char* c) {
 }
 
 
-
 void BedFragments::restart() {
     gzclose(f); // closing is fine if f is NULL
     f = gzopen(path.c_str(), "rb");
@@ -116,8 +114,18 @@ void BedFragments::restart() {
         throw std::invalid_argument("Could not open file");
     gzbuffer(f, 1 << 20);
 
+    // Reset the instance variables
+    last_start = 0;
+    current_chr = "";
+    chr_lookup.clear();
+    chr_names.clear();
+    cell.resize(0);
+    start.resize(0);
+    end.resize(0);
+    eof = false;
+    next_chr_id = 0;
+    
     read_line();
-
     if (comment.size() == 0) return;
 
     // Loop through comment lines
@@ -133,7 +141,6 @@ void BedFragments::restart() {
         if(!matches_comment) break;
         read_line();
     }
-    current_chr = "";
 }
 
 bool BedFragments::nextChr() {
@@ -143,7 +150,7 @@ bool BedFragments::nextChr() {
     // Keep reading fragments until we get to the next chromosome
     uint32_t dummy_start, dummy_end, dummy_cell;
     while(true) {
-        std::string chr = parse_line(dummy_start, dummy_end, dummy_cell);
+        std::string_view chr = parse_line(dummy_start, dummy_end, dummy_cell);
         if (chr == "" || chr != current_chr) {
             current_chr = chr;
             break;
@@ -167,27 +174,37 @@ bool BedFragments::nextChr() {
     return true;
 }
 
-int32_t BedFragments::load(uint32_t count, FragmentArray buffer) {
-    std::string chr;
+bool BedFragments::load() {
+    std::string_view chr;
+    uint32_t i;
 
-    for (size_t i = 0; i < count; i++) {
+    cell.resize(1024);
+    start.resize(1024);
+    end.resize(1024);
+    for (i = 0; i < 1024; i++) {
         // line_buf will contain the next line in file before start of loop 
-        chr = parse_line(buffer.start[i], buffer.end[i], buffer.cell[i]);
+        chr = parse_line(start[i], end[i], cell[i]);
         if (chr == "" || chr != current_chr) {
-            return i;
+            break;
         }
-        if (buffer.start[i] < last_start) throw std::runtime_error("TSV not in sorted order by chr, start");
-        last_start = buffer.start[i];
+        if (start[i] < last_start) throw std::runtime_error("TSV not in sorted order by chr, start");
+        last_start = start[i];
 
-        if (!read_line()) return i;
+        if (!read_line()) break;
     }
-
-    return count;
+    cell.resize(i);
+    start.resize(i);
+    end.resize(i);
+    return i;
 };
 
+uint32_t BedFragments::capacity() const {
+    return cell.size();
+};
 
-
-
+uint32_t* BedFragments::cellData() {return cell.data(); }
+uint32_t* BedFragments::startData() {return start.data(); }
+uint32_t* BedFragments::endData() {return end.data(); }
 
 
 BedFragmentsWriter::BedFragmentsWriter(const char *path, bool append_5th_column,
@@ -207,11 +224,11 @@ BedFragmentsWriter::BedFragmentsWriter(const char *path, bool append_5th_column,
 }
 
 BedFragmentsWriter::~BedFragmentsWriter() {
-    gzclose(f);
+    if (f != NULL) gzclose(f);
 }
 
 
-bool BedFragmentsWriter::write(FragmentsIterator &fragments, void (*checkInterrupt)(void)) {
+bool BedFragmentsWriter::write(FragmentIterator &fragments, void (*checkInterrupt)(void)) {
     uint32_t bytes_written;
     
     size_t total_fragments = 0;
@@ -223,6 +240,7 @@ bool BedFragmentsWriter::write(FragmentsIterator &fragments, void (*checkInterru
         output_format = "%s\t%d\t%d\t%s\n";
     }
     
+    fragments.restart();
     while (fragments.nextChr()) {
         const char* chr_name = fragments.chrNames(fragments.currentChr());
         while (fragments.nextFrag()) {
@@ -240,6 +258,8 @@ bool BedFragmentsWriter::write(FragmentsIterator &fragments, void (*checkInterru
             if (checkInterrupt != NULL && total_fragments++ % 1024 == 0) checkInterrupt();
         }
     }
+    gzclose(f);
+    f = NULL;
     return true;
 };
 

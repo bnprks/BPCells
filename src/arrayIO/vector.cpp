@@ -3,56 +3,26 @@
 namespace BPCells {
 
 
-ZVecUIntWriter::ZVecUIntWriter(std::vector<uint32_t> &vec): vec(vec) {}
-ZVecUIntWriter::ZVecUIntWriter(std::vector<uint32_t> &vec, uint32_t chunk_size) : vec(vec), chunk_size(chunk_size) {}
+VecUIntWriter::VecUIntWriter(std::vector<uint32_t> &vec): vec(vec) {}
 
-ZVecUIntWriter::~ZVecUIntWriter() {
-    vec.resize(data() - vec.data());
+uint32_t VecUIntWriter::write(uint32_t *in, uint32_t count) {
+    size_t initial_size = vec.size();
+    vec.resize(vec.size() + count);
+    std::memmove(vec.data() + initial_size, in, sizeof(uint32_t) * count);
+    return count;
 }
 
-void ZVecUIntWriter::_ensureCapacity(size_t new_capacity) {
-    new_capacity = std::min((size_t) chunk_size, new_capacity);
-    uint32_t num_written = write_buffer.data - vec.data();
-    vec.resize(new_capacity + num_written);
-    write_buffer.data = vec.data() + num_written;
-    write_buffer.size = vec.size() - num_written;
-}
+VecUIntReader::VecUIntReader(const uint32_t *vec, std::size_t capacity) :
+    vec(vec), capacity(capacity) {}
 
-void ZVecUIntWriter::next() {
-    size_t initial_size = data() + capacity() - vec.data();
-    vec.resize(initial_size + chunk_size);
-    write_buffer.data = vec.data() + initial_size;
-    write_buffer.size = chunk_size;
-}
+uint32_t VecUIntReader::size() const {return capacity;}
 
-ZVecUIntReader::ZVecUIntReader(const uint32_t *vec, std::size_t capacity) :
-    vec(vec) {
-    total_size = capacity;
-}
+void VecUIntReader::seek(uint32_t new_pos) {pos = new_pos;}
 
-void ZVecUIntReader::_ensureCapacity(size_t new_capacity) {
-    // An invariant of this reader is data()+capcity() == vec + total_size,
-    // So if _ensureCapacity is called, that means there is no space for new_capacity
-    throw std::runtime_error("Requested read capacity larger than buffer size");
-};
-
-bool ZVecUIntReader::next() {
-    if (data() == NULL) {
-        read_buffer.data = vec;
-        read_buffer.size = total_size;
-        return true;
-    } else {
-        return false;
-    }
-}
-
-// Seek to a different position in the stream (first integer is position 0)
-bool ZVecUIntReader::seek(size_t pos) {
-    if (pos > capacity()) return false;
-    // invariant: data() + capacity() == vec + total_size
-    read_buffer.data = vec + pos;
-    read_buffer.size = total_size - pos;
-    return true;
+uint32_t VecUIntReader::load(uint32_t *out, uint32_t count) {
+    std::memmove(out, vec+pos, sizeof(uint32_t)*count);
+    pos += count;
+    return count;
 };
 
 VecStringWriter::VecStringWriter(std::vector<std::string> &data) : data(data) {}
@@ -67,76 +37,32 @@ void VecStringWriter::write(const StringReader &reader) {
     }
 }
 
+VecReaderWriterBuilder::VecReaderWriterBuilder(uint32_t chunk_size) : chunk_size(chunk_size) {}
 
-void VecUIntWriter::write(const uint32_t *buffer, uint32_t count) {
-    for (std::size_t i = 0; i < count; i++) {
-        vec.push_back(buffer[i]);
-    }
+UIntWriter VecReaderWriterBuilder::createUIntWriter(std::string name) {
+    int_vecs[name] = std::vector<uint32_t>();
+    return UIntWriter(
+        std::make_unique<VecUIntWriter>(int_vecs.at(name)),
+        chunk_size
+    );
+}
+std::unique_ptr<StringWriter> VecReaderWriterBuilder::createStringWriter(std::string name) {
+    string_vecs.emplace(name, std::vector<std::string>());
+    return std::make_unique<VecStringWriter>(string_vecs.at(name));
+}
+void VecReaderWriterBuilder::writeVersion(std::string version) {this->version = version;} // Don't store version information
+
+UIntReader VecReaderWriterBuilder::openUIntReader(std::string name) {
+    std::vector<uint32_t> &v = int_vecs.at(name);
+    return UIntReader(std::make_unique<VecUIntReader>(v.data(), v.size()), 1024, 1024);
 }
 
-void VecUIntWriter::finalize() {return;} // no-op since vectors are always written
-
-VecUIntReader::VecUIntReader(const uint32_t *vec, std::size_t capacity) : vec(vec), capacity(capacity) {}
-
-uint32_t VecUIntReader::read(uint32_t *buffer, uint32_t count) {
-    uint32_t n = std::min(count, (uint32_t) (capacity - idx));
-    std::memmove(buffer, &vec[idx], n * sizeof(uint32_t));
-    idx += n;
-    return n;
+std::unique_ptr<StringReader> VecReaderWriterBuilder::openStringReader(std::string name) {
+    std::vector<std::string> &v = string_vecs.at(name);
+    return std::make_unique<VecStringReader>(v);
 }
-uint32_t VecUIntReader::size() {
-    return capacity;
-}
-void VecUIntReader::seek(const std::size_t pos) {
-    idx = pos;
-}
+std::string VecReaderWriterBuilder::readVersion() {return version;}
 
-
-
-UnpackedFrags<VecUIntWriter> VecUnpackedFragmentsSaver::chrWriterUnpacked(uint32_t chr_id) {
-    if (storage.fragments.size() <= chr_id) {
-        storage.fragments.resize(chr_id + 1);
-    }
-    return UnpackedFrags<VecUIntWriter> {
-        VecUIntWriter(storage.fragments[chr_id].start),
-        VecUIntWriter(storage.fragments[chr_id].end),
-        VecUIntWriter(storage.fragments[chr_id].cell),
-        VecUIntWriter(storage.fragments[chr_id].end_max)
-    };
-}
-void VecUnpackedFragmentsSaver::writeCellNames(std::vector<std::string> cell_names) {
-    storage.cell_names = cell_names;
-}
-void VecUnpackedFragmentsSaver::writeChrNames(std::vector<std::string> chr_names) {
-    storage.chr_names = chr_names;
-}
-
-PackedFrags<VecUIntWriter> VecPackedFragmentsSaver::chrWriterPacked(uint32_t chr_id) {
-    if (storage.fragments.size() <= chr_id) {
-        storage.fragments.resize(chr_id + 1);
-    }
-    //T start_data, start_idx, start_starts,
-    //    end_data, end_idx, end_max,
-    //   cell_data, cell_idx, count;
-    return PackedFrags<VecUIntWriter> {
-        VecUIntWriter(storage.fragments[chr_id].start_data),
-        VecUIntWriter(storage.fragments[chr_id].start_idx),
-        VecUIntWriter(storage.fragments[chr_id].start_starts),
-        VecUIntWriter(storage.fragments[chr_id].end_data),
-        VecUIntWriter(storage.fragments[chr_id].end_idx),
-        VecUIntWriter(storage.fragments[chr_id].end_max),
-        VecUIntWriter(storage.fragments[chr_id].cell_data),
-        VecUIntWriter(storage.fragments[chr_id].cell_idx),
-        VecUIntWriter(storage.fragments[chr_id].count)
-    };
-}
-void VecPackedFragmentsSaver::writeCellNames(std::vector<std::string> cell_names) {
-    storage.cell_names = cell_names;
-}
-void VecPackedFragmentsSaver::writeChrNames(std::vector<std::string> chr_names) {
-    storage.chr_names = chr_names;
-}
-
-
-
+std::vector<uint32_t>& VecReaderWriterBuilder::getIntVec(std::string name) {return int_vecs.at(name);}
+std::vector<std::string>& VecReaderWriterBuilder::getStringVec(std::string name) {return string_vecs.at(name);}
 } // end namespace BPCells

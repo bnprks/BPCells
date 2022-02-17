@@ -2,19 +2,19 @@
 
 #include <algorithm>
 #include <unordered_map>
-#include "FragmentsIterator.h"
+#include "FragmentIterator.h"
 
 namespace BPCells {
 
 // Transform a fragments loader by renaming or filtering chromosome IDs 
-class ChrIndexSelect : public FragmentsLoaderWrapper {
+class ChrIndexSelect : public FragmentLoaderWrapper {
 private:
     const std::vector<uint32_t> chr_assignments;
 public:
     // chr_assignments -- vector with length <= the number of chromosomes in the input
-    //     FragmentsLoader. The output chromosome `i` will come from input chromosome
+    //     FragmentLoader. The output chromosome `i` will come from input chromosome
     //     `chr_assignments[i]`. The entries of chr_assignments must be unique
-    ChrIndexSelect(FragmentsLoader &loader, const std::vector<uint32_t> chr_assignments);
+    ChrIndexSelect(FragmentLoader &loader, const std::vector<uint32_t> chr_assignments);
 
     ~ChrIndexSelect() = default;
 
@@ -26,10 +26,6 @@ public:
 
     uint32_t currentChr() const override;
 
-    // Return number of items loaded. Should repeatedly return 0 at the end of a chromosome.
-    // Return -1 for error
-    int32_t load(uint32_t count, FragmentArray buffer) override;
-
     // Move loader to just before fragments which end after "base".
     // It's possible that fragments returned after seek will end before "base",
     // but it's guaranteed that it won't skip over any fragments ending before "base"
@@ -39,7 +35,7 @@ public:
 
 
 // Transform a fragments loader by renaming or filtering chromosome IDs 
-class ChrNameSelect : public FragmentsLoaderWrapper {
+class ChrNameSelect : public FragmentLoaderWrapper {
 private:
     const std::vector<std::string> chr_names;
     std::unordered_map<std::string, uint32_t> output_index;
@@ -50,7 +46,7 @@ public:
     // chr_names -- vector with length <= the number of chromosomes in the input
     //     FragmentsIterator. The output chromosome `i` will come from input chromosome with name
     //     `chr_names[i]`. The entries of chr_names must be unique
-    ChrNameSelect(FragmentsLoader &loader, const std::vector<std::string> chr_names);
+    ChrNameSelect(FragmentLoader &loader, const std::vector<std::string> chr_names);
 
     ~ChrNameSelect() = default;
     
@@ -61,8 +57,6 @@ public:
     bool nextChr() override;
 
     uint32_t currentChr() const override;
-
-    int32_t load(uint32_t count, FragmentArray buffer) override;
 
     void seek(uint32_t chr_id, uint32_t base) override;
 };

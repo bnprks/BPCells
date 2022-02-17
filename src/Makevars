@@ -9,30 +9,31 @@ PKG_LIBS = -lz -lhdf5
 OBJECTS=\
 fragment_io.o \
 fragment_utils.o \
-matrix_io.o \
-matrix_utils.o \
-matrix_transform.o \
-profiler.o \
-r_wrapper.o \
 RcppExports.o \
 arrayIO/array_interfaces.o \
 arrayIO/binaryfile.o \
+arrayIO/bp128.o \
 arrayIO/hdf5.o \
 arrayIO/vector.o \
 bitpacking/bp128.o \
 bitpacking/simd_vec.o \
-bitpacking/packing_utils.o \
 fragmentIterators/BedFragments.o \
 fragmentIterators/CellSelect.o \
 fragmentIterators/ChrSelect.o \
-fragmentIterators/FragmentsIterator.o \
-fragmentIterators/InsertionsIterator.o \
-fragmentIterators/PackedFragments.o \
+fragmentIterators/FragmentIterator.o \
 fragmentIterators/ShiftCoords.o \
-fragmentIterators/UnpackedFragments.o \
-fragmentIterators/UnpackedFragments3.o \
-fragmentIterators/PackedFragments3.o \
-matrixIterators/MatrixOps.o \
-matrixIterators/PackedMatrix.o \
-matrixIterators/UnpackedMatrix.o \
-matrixTransforms/MatrixStats.o 
+fragmentIterators/StoredFragments.o
+
+# r_wrapper.o \
+# profiler.o \
+# matrix_io.o \
+# matrix_utils.o \
+# matrix_transform.o \
+# fragmentIterators/InsertionsIterator.o \
+# fragmentIterators/ShiftCoords.o \
+# fragmentIterators/UnpackedFragments3.o \
+# fragmentIterators/PackedFragments3.o \
+# matrixIterators/MatrixOps.o \
+# matrixIterators/PackedMatrix.o \
+# matrixIterators/UnpackedMatrix.o \
+# matrixTransforms/MatrixStats.o 

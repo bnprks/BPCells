@@ -67,8 +67,3 @@ packed_frags R_to_packed_frags(List R_frags) {
 
     return frags;
 }
-
-// [[Rcpp::export]]
-bool test_bitpacking_cpp() {
-    return test_bitpacking();
-}

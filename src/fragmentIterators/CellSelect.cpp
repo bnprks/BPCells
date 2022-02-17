@@ -3,10 +3,10 @@
 namespace BPCells {
 
 // cell_indices -- vector with length <= the number of chromosomes in the input
-//     FragmentsLoader. The output cell `i` will come from input cell
+//     FragmentLoader. The output cell `i` will come from input cell
 //     `chr_assignments[i]`. The entries of cell_indices must be unique
-CellIndexSelect::CellIndexSelect(FragmentsLoader &loader, const std::vector<uint32_t> cell_indices) : 
-    FragmentsLoaderWrapper(loader),
+CellIndexSelect::CellIndexSelect(FragmentLoader &loader, const std::vector<uint32_t> cell_indices) : 
+    FragmentLoaderWrapper(loader),
     cell_indices(cell_indices) {
     for (int i = 0; i < cell_indices.size(); i++) {
         if (reverse_indices.size() <= cell_indices[i]) 
@@ -24,26 +24,28 @@ const char* CellIndexSelect::cellNames(uint32_t cell_id) const {
     return loader.cellNames(cell_indices[cell_id]); 
 };
 
-// Return number of items loaded. Should repeatedly return 0 at the end of a chromosome.
-// Return -1 for error
-int32_t CellIndexSelect::load(uint32_t count, FragmentArray buffer) {
+
+bool CellIndexSelect::load() {
+    loaded = 0;
     // load and filter until we load without filtering out everything
-    while (true) {
-        int32_t ret = loader.load(count, buffer);
-        if (ret <= 0) return ret;
-        uint32_t in, out;
-        for (in = 0, out=0; in < ret; in++) {
-            if (reverse_indices[buffer.cell[in]] != UINT32_MAX) {
-                buffer.cell[out] = reverse_indices[buffer.cell[in]];
-                buffer.start[out] = buffer.start[in];
-                buffer.end[out] = buffer.end[in];
-                out++;
-            }
+    while (loaded == 0) {
+        if (!loader.load()) return false;
+        
+        uint32_t *cell = loader.cellData();
+        uint32_t *start = loader.startData();
+        uint32_t *end = loader.endData();
+        uint32_t capacity = loader.capacity();
+        for (uint32_t i = 0; i < capacity; i++) {
+            cell[loaded] = reverse_indices[cell[i]];
+            start[loaded] = start[i];
+            end[loaded] = end[i];
+            loaded += reverse_indices[cell[i]] != UINT32_MAX;
         }
-        if (out > 0) return out;
     }
+    return true;
 };
 
+uint32_t CellIndexSelect::capacity() const {return loaded;}
 
 uint32_t CellNameSelect::getOutputCellID(uint32_t input_cell_id) {
     // Update the reverse_indices map up to input_cell_id
@@ -61,10 +63,10 @@ uint32_t CellNameSelect::getOutputCellID(uint32_t input_cell_id) {
 }
 
 // cell_names -- vector with length <= the number of chromosomes in the input
-//     FragmentsLoader. The output cell `i` will come from input cell
+//     FragmentLoader. The output cell `i` will come from input cell
 //     `chr_assignments[i]`. The entries of cell_names must be unique
-CellNameSelect::CellNameSelect(FragmentsLoader &loader, const std::vector<std::string> cell_names) :
-    FragmentsLoaderWrapper(loader),
+CellNameSelect::CellNameSelect(FragmentLoader &loader, const std::vector<std::string> cell_names) :
+    FragmentLoaderWrapper(loader),
     cell_names(cell_names) {
     for (int i = 0; i < cell_names.size(); i++) {    
         if(output_index.find(cell_names[i]) != output_index.end())
@@ -80,25 +82,27 @@ const char* CellNameSelect::cellNames(uint32_t cell_id) const {
     return cell_names[cell_id].c_str(); 
 };
 
-int32_t CellNameSelect::load(uint32_t count, FragmentArray buffer) {
+bool CellNameSelect::load() {
+    uint32_t loaded = 0;
     // load and filter until we load without filtering out everything
-    while (true) {
-        int32_t ret = loader.load(count, buffer);
-        if (ret <= 0) return ret;
-        uint32_t in, out;
-        for (in = 0, out=0; in < ret; in++) {
-            uint32_t new_cell_id = getOutputCellID(buffer.cell[in]);
-            if (new_cell_id != UINT32_MAX) {
-                buffer.cell[out] = new_cell_id;
-                buffer.start[out] = buffer.start[in];
-                buffer.end[out] = buffer.end[in];
-                out++;
-            }
-        }
-        if (out > 0) {
-            return out;
+    while (loaded == 0) {
+        if (!loader.load()) return false;
+        
+        uint32_t *cell = loader.cellData();
+        uint32_t *start = loader.startData();
+        uint32_t *end = loader.endData();
+        uint32_t capacity = loader.capacity();
+        for (uint32_t i = 0; i < capacity; i++) {
+            uint32_t new_cell_id = getOutputCellID(cell[i]);
+            cell[loaded] = new_cell_id;
+            start[loaded] = start[i];
+            end[loaded] = end[i];
+            loaded += new_cell_id != UINT32_MAX;
         }
     }
+    return true;
 };
+
+uint32_t CellNameSelect::capacity() const {return loaded;}
 
 } // end namespace BPCells
