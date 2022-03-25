@@ -15,7 +15,7 @@ using namespace BPCells;
 
 
 // [[Rcpp::export]]
-SEXP load_10x_fragments_cpp(std::string path, std::string comment) {
+SEXP iterate_10x_fragments_cpp(std::string path, std::string comment) {
     return Rcpp::wrap(
         XPtr<FragmentLoader>(new BedFragments(path.c_str(), comment.c_str()))
     );
@@ -93,20 +93,48 @@ List write_unpacked_fragments_cpp(SEXP fragments) {
     return wb.getList();
 }
 
-// [[Rcpp::export]]
-bool is_compressed_fragments_file_cpp(std::string dir, uint32_t buffer_size) {
-    FileReaderBuilder rb(dir, buffer_size);
+List fragments_get_names(const StoredFragments &frags) {
+    uint32_t chr_count = frags.chrCount();
+    uint32_t cell_count = frags.cellCount();
+    StringVector chr_names(chr_count);
+    StringVector cell_names(cell_count);
+    for (uint32_t i = 0; i < chr_count; i++) {
+        if (frags.chrNames(i) == NULL) {
+            throw std::runtime_error("Error retrieving chrNames from stored fragments");
+        }
+        chr_names[i] = frags.chrNames(i);
+    }
+    for (uint32_t i = 0; i < cell_count; i++) {
+        if (frags.cellNames(i) == NULL) {
+            throw std::runtime_error("Error retrieving cellNames from stored fragments");
+        }
+        cell_names[i] = frags.cellNames(i);
+    }
+    return List::create(
+        Named("chr_names") = chr_names,
+        Named("cell_names") = cell_names
+    );
+}
+
+List info_fragments_reader_builder(ReaderBuilder &rb) {
     std::string version = rb.readVersion();
-    bool compressed = false;
     if (version == "unpacked-fragments-v1") {
-        StoredFragments::openUnpacked(rb);
+        List l = fragments_get_names(StoredFragments::openUnpacked(rb));
+        l["compressed"] = false;
+        return l;
     } else if (version == "packed-fragments-v1") {
-        StoredFragmentsPacked::openPacked(rb);
-        compressed = true;
+        List l = fragments_get_names(StoredFragmentsPacked::openPacked(rb));
+        l["compressed"] = true;
+        return l;
     } else {
         throw std::runtime_error(std::string("Fragments directory has unrecognized version ") + version);
     }
-    return compressed;
+}
+
+// [[Rcpp::export]]
+List info_fragments_file_cpp(std::string dir, uint32_t buffer_size) {
+    FileReaderBuilder rb(dir, buffer_size);
+    return info_fragments_reader_builder(rb);
 }
 
 // [[Rcpp::export]]
@@ -142,19 +170,9 @@ void write_packed_fragments_file_cpp(SEXP fragments, std::string dir, uint32_t b
 }
 
 // [[Rcpp::export]]
-bool is_compressed_fragments_hdf5_cpp(std::string file, std::string group, uint32_t buffer_size) {
+List info_fragments_hdf5_cpp(std::string file, std::string group, uint32_t buffer_size) {
     H5ReaderBuilder rb(file, group, buffer_size);
-    std::string version = rb.readVersion();
-    bool compressed = false;
-    if (version == "unpacked-fragments-v1") {
-        StoredFragments::openUnpacked(rb);
-    } else if (version == "packed-fragments-v1") {
-        StoredFragmentsPacked::openPacked(rb);
-        compressed = true;
-    } else {
-        throw std::runtime_error(std::string("Fragments hdf5 has unrecognized version ") + version);
-    }
-    return compressed;
+   return info_fragments_reader_builder(rb);
 }
 
 // [[Rcpp::export]]
@@ -207,32 +225,57 @@ bool fragments_identical_cpp(SEXP fragments1, SEXP fragments2) {
     while(true) {
         bool res1 = i1.nextChr();
         bool res2 = i2.nextChr();
-        if(res1 != res2) return false;
+        if(res1 != res2) {
+            Rcerr << "Different number of remaining chromosomes." << std::endl;
+            return false;
+        }
         if (!res1) break;
-        if(i1.currentChr() != i2.currentChr()) return false;
+        if(i1.currentChr() != i2.currentChr()) {
+            Rcerr << "Different chromosome ID loaded" << std::endl;
+            return false;
+        }
         while(true) {
             bool res1 = i1.nextFrag();
             bool res2 = i2.nextFrag();
-            if (res1 != res2) return false;
+            if (res1 != res2) {
+                Rcerr << "Different number of fragments in chromosome." << std::endl;
+                return false;
+            }
             if (!res1) break;
-            if (i1.cell() != i2.cell()) return false;
-            if (i1.start() != i2.start()) return false;
-            if (i1.end() != i2.end()) return false;
+            if (i1.cell() != i2.cell() || i1.start() != i2.start() || i1.end() != i2.end()) {
+                REprintf("Mismatched fragments: %s(id=%d):%d-%d vs. %s(id=%d):%d-%d\n",
+                    i1.cellNames(i1.cell()), i1.cell(), i1.start(), i1.end(),
+                    i2.cellNames(i2.cell()), i2.cell(), i2.start(), i2.end()
+                );
+                return false;
+            }
         }
     }
     for (uint32_t i = 0; ;i++) {
         const char* n1 = i1.cellNames(i);
         const char* n2 = i2.cellNames(i);
-        if ((n1 == NULL) != (n2 == NULL)) return false;
+        if ((n1 == NULL) != (n2 == NULL)) {
+            Rcerr << "Mismatched number of cell names" << std::endl;
+            return false;
+        }
         if (n1 == NULL) break;
-        if (strcmp(n1, n2) != 0) return false;
+        if (strcmp(n1, n2) != 0) {
+            Rcerr << "Mismatched cell names" << std::endl;
+            return false;
+        }
     }
     for (uint32_t i = 0; ;i++) {
         const char* n1 = i1.chrNames(i);
         const char* n2 = i2.chrNames(i);
-        if ((n1 == NULL) != (n2 == NULL)) return false;
+        if ((n1 == NULL) != (n2 == NULL)) {
+            Rcerr << "Mismatched number of chr names" << std::endl;
+            return false;
+        }
         if (n1 == NULL) break;
-        if (strcmp(n1, n2) != 0) return false;
+        if (strcmp(n1, n2) != 0) {
+            Rcerr << "Mismatched  chr names" << std::endl;
+            return false;
+        }
     }
     return true;
 }

@@ -6,14 +6,6 @@
 
 namespace BPCells {
 
-template<typename T>
-struct SparseVector {
-    uint32_t *idx;
-    T *val;
-    uint32_t capacity;
-};
-
-
 // Base class to load entries from (sparse) matrices
 // Subclasses implement reading from various in-memory and disk formats,
 // calculation of matrices from fragments, as well as transformations like
@@ -42,8 +34,16 @@ public:
     virtual uint32_t rows() const = 0;
     virtual uint32_t cols() const = 0;
 
+    // Return name for a given row or column.
+    // If a matrix doesn't have assigned names this will return NULL
+    virtual const char* rowNames(uint32_t row) const = 0;
+    virtual const char* colNames(uint32_t col) const = 0;
+
     // Reset the iterator to start from the beginning
     virtual void restart() = 0;
+
+    // Seek to a specific column without reading data
+    virtual void seekCol(uint32_t col) = 0;
 
     // Advance to the next column, or return false if there
     // are no more columns
@@ -52,24 +52,33 @@ public:
     // Return the index of the current column
     virtual uint32_t currentCol() const = 0;
     
-    // Return number of matrix entries loaded. Should repeatedly return 0 
-    // at the end of a column, until nextCol is called
-    // Return -1 for error
-    virtual int32_t load(uint32_t count, SparseVector<T> buffer) = 0;
+    // Return false if there are no more entries to load
+    virtual bool load() = 0;
+
+    // Number of loaded entries available
+    virtual uint32_t capacity() const = 0;
+
+    // Pointers to the loaded entries
+    virtual uint32_t* rowData() = 0;
+    virtual T* valData() = 0;
 };
 
 template<typename T>
 class MatrixLoaderWrapper : public MatrixLoader<T> {
 protected:
     MatrixLoader<T> &loader;
-    uint32_t current_col;
+    uint32_t current_col = UINT32_MAX - 1;
 public:
-    MatrixLoaderWrapper(MatrixLoader<T> &loader) : loader(loader), current_col(UINT32_MAX-1) {};
+    MatrixLoaderWrapper(MatrixLoader<T> &loader) : loader(loader) {};
 
     uint32_t rows() const override {return loader.rows(); }
     uint32_t cols() const override {return loader.cols(); }
 
+    const char* rowNames(uint32_t row) const override {return loader.rowNames(row);} 
+    const char* colNames(uint32_t col) const override {return loader.colNames(col);} 
+
     void restart() override {loader.restart(); }
+    void seekCol(uint32_t col) override {loader.seekCol(col);}
 
     bool nextCol() override {
         if (!this->loader.nextCol()) return false;
@@ -78,136 +87,87 @@ public:
     }
     
     uint32_t currentCol() const override {return loader.currentCol();}
+
+    bool load() override {return loader.load();}
+    
+    uint32_t capacity() const override {return loader.capacity();}
+
+    uint32_t* rowData() override {return loader.rowData();}
+    T* valData() override {return loader.valData();}
 };
 
 template<typename T> 
 class MatrixIterator : public MatrixLoaderWrapper<T> {
 private:
-    const uint32_t chunk_capacity;
-    int32_t chunk_size;
-    uint32_t idx;
-    std::vector<uint32_t> row_buf;
-    std::vector<T> val_buf;
-    SparseVector<T> buf;
+    uint32_t idx = UINT32_MAX;
+    uint32_t current_col;
+    uint32_t current_capacity = 0;
+    uint32_t *current_row;
+    T *current_val;
 public:
-    // Construct iterator with a given internal buffer size (must be a power of 2 >= 128)
-    MatrixIterator(MatrixLoader<T> &loader, uint32_t buffer_size = 1024) : 
-        MatrixLoaderWrapper<T>(loader),
-        chunk_capacity(buffer_size), chunk_size(buffer_size), idx(buffer_size), 
-        row_buf(buffer_size), val_buf(buffer_size) {
-
-        if (buffer_size < 128)
-            throw std::invalid_argument("buffer_size must be >= 128");
-        else if (buffer_size & (buffer_size - 1)) 
-            throw std::invalid_argument("buffer_size must be a power of 2");
-
-        buf.idx = &row_buf[0];
-        buf.val = &val_buf[0];
-        buf.capacity = buffer_size;
-    }
+    MatrixIterator(MatrixLoader<T> &loader) : MatrixLoaderWrapper<T>(loader) {}
 
     // Reset the iterator to start from the beginning
     void restart() override {
-        idx = chunk_capacity;
         this->loader.restart();
+        idx = UINT32_MAX;
+        current_capacity = 0;
+    }
+
+    void seekCol(uint32_t col) override {
+        this->loader.seekCol(col);
+        idx = UINT32_MAX;
+        current_capacity = 0;
     }
     
     // Return false if there isn't another column to access
     bool nextCol() override {
-        if (!this->loader.nextCol()) return false;
-        this->current_col = this->loader.currentCol();
-        return true;
+        bool res = this->loader.nextCol();
+        if (res) current_col = this->loader.currentCol();
+        idx = UINT32_MAX;
+        current_capacity = 0;
+        return res;
     }
 
     // Return false if there isn't another entry in the current column
     inline bool nextValue() {
         idx += 1;
-        if (idx >= chunk_size) {
-            chunk_size = load(chunk_capacity, buf);
-            idx = 0;
+        if (idx >= current_capacity) {
+            return load();
         }
-        return chunk_size > 0;
-    }
-    // Access current row, column, and value
-    inline uint32_t row() const {return buf.idx[idx]; };
-    inline uint32_t col() const {return this->current_col; };
-    inline T val() const {return buf.val[idx]; };
-
-    int32_t load(uint32_t count, SparseVector<T> buffer) override {return this->loader.load(count, buffer);};
-};
-
-
-template<typename T> 
-class MatrixTransposeIterator : public MatrixLoaderWrapper<T> {
-private:
-    const uint32_t chunk_capacity;
-    int32_t chunk_size;
-    uint32_t idx;
-    std::vector<uint32_t> row_buf;
-    std::vector<T> val_buf;
-    SparseVector<T> buf;
-public:
-    // Construct iterator with a given internal buffer size (must be a power of 2 >= 128)
-    MatrixTransposeIterator(MatrixLoader<T> &loader, uint32_t buffer_size = 1024) : 
-        MatrixLoaderWrapper<T>(loader),
-        chunk_capacity(buffer_size), chunk_size(buffer_size), idx(buffer_size), 
-        row_buf(buffer_size), val_buf(buffer_size) {
-
-        if (buffer_size < 128)
-            throw std::invalid_argument("buffer_size must be >= 128");
-        else if (buffer_size & (buffer_size - 1)) 
-            throw std::invalid_argument("buffer_size must be a power of 2");
-
-        buf.idx = &row_buf[0];
-        buf.val = &val_buf[0];
-        buf.capacity = buffer_size;
-    }
-
-    // Reset the iterator to start from the beginning
-    void restart() override {
-        idx = chunk_capacity;
-        this->loader.restart();
-    }
-    
-    // Return false if there isn't another column to access
-    bool nextCol() override {
-        if (!this->loader.nextCol()) return false;
-        this->current_col = this->loader.currentCol();
         return true;
     }
-
-    // Return false if there isn't another entry in the current column
-    inline bool nextValue();
     // Access current row, column, and value
-    inline uint32_t col() const {return buf.idx[idx]; };
-    inline uint32_t row() const {return this->current_col; };
-    inline T val() const {return buf.val[idx]; };
+    inline uint32_t row() const {return current_row[idx]; };
+    inline uint32_t col() const {return current_col; };
+    inline T val() const {return current_val[idx]; };
 
-    int32_t load(uint32_t count, SparseVector<T> buffer) override {return this->loader.load(count, buffer);};
+    bool load() override {
+        if (!this->loader.load()) {
+            current_capacity = 0;
+            return false;
+        }
+        idx = 0;
+        current_capacity = this->loader.capacity();
+        current_row = this->loader.rowData();
+        current_val = this->loader.valData();
+        return true;
+    };
+    uint32_t capacity() const override {return current_capacity;}
 };
 
-template <typename T>
-inline bool MatrixTransposeIterator<T>::nextValue() {
-    idx += 1;
-    if (idx >= chunk_size) {
-        chunk_size = load(chunk_capacity, buf);
-        idx = 0;
-    }
-    return chunk_size > 0;
-}
 
 template<typename T> 
 class MatrixWriter {
 public:
-    // Return false on failure, true on success
-    virtual bool write(MatrixLoader<T> &mat, void (*checkInterrupt)(void) = NULL) = 0;
+    virtual void write(MatrixIterator<T> &mat, void (*checkInterrupt)(void) = NULL) = 0;
 };
 
 template<typename Tin, typename Tout>
 class MatrixConverterLoader : public MatrixLoader<Tout> {
 private:
     MatrixLoader<Tin> &loader;
-    std::vector<Tin> vals;
+    std::vector<Tout> vals;
 public:
     MatrixConverterLoader(MatrixLoader<Tin> &loader) : 
         loader(loader) {}
@@ -215,25 +175,34 @@ public:
     uint32_t rows() const override {return loader.rows(); }
     uint32_t cols() const override {return loader.cols(); }
 
+    const char* rowNames(uint32_t row) const override {return loader.rowNames(row);}
+    const char* colNames(uint32_t col) const override {return loader.colNames(col);}
+
     void restart() override {loader.restart(); }
+    void seekCol(uint32_t col) override {loader.seekCol(col);}
 
     bool nextCol() override {return loader.nextCol(); }
     uint32_t currentCol() const override {return loader.currentCol();}
 
-    int32_t load(uint32_t count, SparseVector<Tout> buffer) override {
-        SparseVector<Tin> inner_buffer;
-        if (buffer.capacity > vals.size()) vals.resize(buffer.capacity);
-        inner_buffer.capacity = buffer.capacity;
-        inner_buffer.idx = buffer.idx;
-        inner_buffer.val = &vals[0];
+    bool load() override {
+        if(!loader.load()) return false;
+        
+        uint32_t capacity = loader.capacity();
+        vals.resize(std::max(vals.size(), (size_t) capacity));
 
-        int32_t ret = loader.load(count, inner_buffer);
+        Tin *val_in = loader.valData();
 
-        for (int i = 0; i < ret; i++) {
-            buffer.val[i] = inner_buffer.val[i];
+        for (uint32_t i = 0; i < capacity; i++) {
+            vals[i] = val_in[i];
         }
-        return ret;
+        return true;
     };
+
+    uint32_t capacity() const override {
+        return loader.capacity();
+    }
+    uint32_t* rowData() override {return loader.rowData();}
+    Tout* valData() override {return vals.data();}
 };
 
 } // end namespace BPCells

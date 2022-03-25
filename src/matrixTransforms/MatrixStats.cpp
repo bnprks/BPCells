@@ -53,7 +53,7 @@ Eigen::ArrayXXd StatsResult::colVariance() {
 // 3. Mean
 // 4. Variance
 // Each of the later statistics is always calculated simultaneously to the earlier statistics 
-StatsResult computeMatrixStats(MatrixLoader<double> &mat, Stats row_stats, Stats col_stats,
+StatsResult computeMatrixStats(MatrixIterator<double> &mat, Stats row_stats, Stats col_stats,
                         bool transpose, uint32_t buffer_size, void (*checkInterrupt)(void)) {
     if (transpose) {
         StatsResult res = computeMatrixStats(mat, col_stats, row_stats, false, buffer_size);
@@ -71,21 +71,16 @@ StatsResult computeMatrixStats(MatrixLoader<double> &mat, Stats row_stats, Stats
     res.row_stats.setZero();
     res.col_stats.setZero();
 
-    std::vector<uint32_t> row_buf(buffer_size);
-    std::vector<double> val_buf(buffer_size);
-
-    SparseVector<double> buf;
-    buf.idx = &row_buf[0];
-    buf.val = &val_buf[0];
-    buf.capacity = buffer_size;
-
     uint32_t current_col;
-    uint32_t num_loaded;
     while (mat.nextCol()) {
         current_col = mat.currentCol();
         if (checkInterrupt != NULL && current_col % 128 == 0) checkInterrupt();
 
-        while ( (num_loaded = mat.load(buffer_size, buf)) ) {
+        while (mat.load()) {
+            uint32_t num_loaded = mat.capacity();
+            uint32_t *row_buf = mat.rowData();
+            double *val_buf = mat.valData();
+            
             // Update row stats if needed
             if (row_stats == Stats::NonZeroCount) {
                 for (size_t i = 0; i < num_loaded; i++) {

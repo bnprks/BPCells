@@ -2,69 +2,6 @@
 
 namespace BPCells {
 
-// This should equal UINT32v1 when printed on a little endian system
-const static uint32_t FileHeader[2] = {0x544e4955, 0x31763233};
-
-FileUIntWriter::FileUIntWriter(const char* path) {
-    // Make sure we get exceptions when things fail
-    file.exceptions(std::ofstream::failbit | std::ofstream::badbit);
-    
-    // Turn off I/O buffering (Removed because I can't get it to match reasonable performance when I do the buffering manually)
-    // file.rdbuf()->pubsetbuf(NULL, 0); 
-    
-    file.open(path, std::ios_base::binary);
-    file.write((char*) FileHeader, 8);
-}
-
-uint32_t FileUIntWriter::write(uint32_t *in, uint32_t count) {
-    file.write((char *) in, count*sizeof(uint32_t));
-    return count;
-}
-
-FileUIntReader::FileUIntReader(const char* path) {
-    // Turn off I/O buffering (Removed because I can't get it to match reasonable performance when I do the buffering manually)
-    // file.rdbuf()->pubsetbuf(NULL, 0); 
-
-    file.open(path, std::ios_base::binary);
-    if (!file) {
-        throw std::runtime_error(std::string("Error opening file: ") + path);
-    }
-    
-    uint32_t header[2];
-    file.read((char *) header, 8);
-    if (header[0] == FileHeader[0] && header[1] == FileHeader[1]) {
-        byte_swap = false;
-    } else if (__builtin_bswap32(header[0]) == FileHeader[0] &&
-               __builtin_bswap32(header[1]) == FileHeader[1] ) {
-        byte_swap = true;
-    } else {
-        throw std::invalid_argument(std::string("File header doesn't match magic number (UINT32v1 or byteswapped TNIU1v23): ") + path);
-    }
-
-    // Detect the file size & cache it
-    uint32_t cur = file.tellg();
-    file.seekg(0, file.end);
-    total_size = (file.tellg() / sizeof(uint32_t)) - 2;
-    file.seekg(cur);
-}
-
-uint32_t FileUIntReader::size() const {return total_size;}
-
-void FileUIntReader::seek(uint32_t pos) {
-    file.seekg(8 + pos * sizeof(uint32_t));
-}
-
-uint32_t FileUIntReader::load(uint32_t *out, uint32_t count) {
-    file.read((char *) out, sizeof(uint32_t)*count);
-    uint32_t read_count = file.gcount() / sizeof(uint32_t);
-    if (byte_swap) {
-        for (uint32_t i = 0; i < read_count; i++) {
-            out[i] = __builtin_bswap32(out[i]);
-        }
-    }
-    return read_count;
-}
-
 FileStringReader::FileStringReader(std::filesystem::path path) : data(readLines(path)) {}
 const char* FileStringReader::get(uint32_t idx) const {
     if (idx < data.size()) return data[idx].c_str();
@@ -100,10 +37,18 @@ FileWriterBuilder::FileWriterBuilder(std::string _dir, uint32_t buffer_size) :
 }
 
 UIntWriter FileWriterBuilder::createUIntWriter(std::string name) {
-    return UIntWriter(
-        std::make_unique<FileUIntWriter>((dir / name).c_str()), 
-        buffer_size
-    );
+    return UIntWriter(std::make_unique<FileNumWriter<uint32_t>>((dir / name).c_str()), buffer_size);
+}
+
+FloatWriter FileWriterBuilder::createFloatWriter(std::string name) {
+    return FloatWriter(std::make_unique<FileNumWriter<float>>((dir / name).c_str()), buffer_size);
+}
+
+ULongWriter FileWriterBuilder::createULongWriter(std::string name) {
+    return ULongWriter(std::make_unique<FileNumWriter<uint64_t>>((dir / name).c_str()), buffer_size);
+}
+DoubleWriter FileWriterBuilder::createDoubleWriter(std::string name) {
+    return DoubleWriter(std::make_unique<FileNumWriter<double>>((dir / name).c_str()), buffer_size);
 }
 
 std::unique_ptr<StringWriter> FileWriterBuilder::createStringWriter(std::string name) {
@@ -124,10 +69,18 @@ FileReaderBuilder::FileReaderBuilder(std::string _dir, uint32_t buffer_size, uin
 }
 
 UIntReader FileReaderBuilder::openUIntReader(std::string name) {
-    return UIntReader(
-        std::make_unique<FileUIntReader>((dir / name).c_str()),
-        buffer_size, read_size
-    );
+    return UIntReader(std::make_unique<FileNumReader<uint32_t>>((dir / name).c_str()), buffer_size, read_size);
+}
+
+FloatReader FileReaderBuilder::openFloatReader(std::string name) {
+    return FloatReader(std::make_unique<FileNumReader<float>>((dir / name).c_str()), buffer_size, read_size);
+}
+
+ULongReader FileReaderBuilder::openULongReader(std::string name) {
+    return ULongReader(std::make_unique<FileNumReader<uint64_t>>((dir / name).c_str()), buffer_size, read_size);
+}
+DoubleReader FileReaderBuilder::openDoubleReader(std::string name) {
+    return DoubleReader(std::make_unique<FileNumReader<double>>((dir / name).c_str()), buffer_size, read_size);
 }
 
 std::unique_ptr<StringReader> FileReaderBuilder::openStringReader(std::string name) {

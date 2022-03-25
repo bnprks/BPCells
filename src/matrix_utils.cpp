@@ -3,7 +3,9 @@
 
 #include "matrixIterators/MatrixIterator.h"
 #include "matrixIterators/TSparseMatrixWriter.h"
+#define RCPP_EIGEN
 #include "matrixIterators/CSparseMatrix.h"
+#include "matrixIterators/MatrixIndexSelect.h"
 #include "matrixIterators/MatrixOps.h"
 
 #include "matrixTransforms/MatrixStats.h"
@@ -16,22 +18,6 @@ SEXP iterate_csparse_matrix_cpp(SEXP matrix) {
     auto eigen_mat = Rcpp::as<Eigen::Map<Eigen::SparseMatrix<double>>>(matrix);
     return Rcpp::wrap(
         XPtr<MatrixLoader<double>>(new CSparseMatrix(eigen_mat))
-    );
-}
-
-// [[Rcpp::export]]
-List build_tsparse_matrix_uint32_t_cpp(SEXP matrix) {
-    
-    XPtr<MatrixLoader<uint32_t>> loader(matrix);
-    MatrixIterator<uint32_t> iter(*loader);
-
-    TSparseMatrixWriter<uint32_t> out;
-    out.write(iter, &Rcpp::checkUserInterrupt);
-    
-    return List::create(
-        Named("row") = Rcpp::IntegerVector((int32_t *) &out.rows[0], (int32_t *) &out.rows[out.rows.size()]),
-        Named("col") = Rcpp::IntegerVector((int32_t *) &out.cols[0], (int32_t *) &out.cols[out.cols.size()]),
-        Named("val") = Rcpp::IntegerVector((int32_t *) &out.vals[0], (int32_t *) &out.vals[out.vals.size()])
     );
 }
 
@@ -61,6 +47,38 @@ SEXP build_csparse_matrix_double_cpp(SEXP matrix) {
     CSparseMatrixWriter writer;
     writer.write(iter, &Rcpp::checkUserInterrupt);
     return Rcpp::wrap(writer.getMat());
+}
+
+// [[Rcpp::export]]
+SEXP iterate_matrix_col_select_double_cpp(SEXP matrix, std::vector<uint32_t> col_selection) {
+    XPtr<MatrixLoader<double>> loader(matrix);
+    return Rcpp::wrap(
+        XPtr<MatrixLoader<double>>(new MatrixColSelect(*loader, col_selection))
+    );
+}
+
+// [[Rcpp::export]]
+SEXP iterate_matrix_col_select_uint32_t_cpp(SEXP matrix, std::vector<uint32_t> col_selection) {
+    XPtr<MatrixLoader<uint32_t>> loader(matrix);
+    return Rcpp::wrap(
+        XPtr<MatrixLoader<uint32_t>>(new MatrixColSelect(*loader, col_selection))
+    );
+}
+
+// [[Rcpp::export]]
+SEXP iterate_matrix_row_select_double_cpp(SEXP matrix, std::vector<uint32_t> row_selection) {
+    XPtr<MatrixLoader<double>> loader(matrix);
+    return Rcpp::wrap(
+        XPtr<MatrixLoader<double>>(new MatrixRowSelect(*loader, row_selection))
+    );
+}
+
+// [[Rcpp::export]]
+SEXP iterate_matrix_row_select_uint32_t_cpp(SEXP matrix, std::vector<uint32_t> row_selection) {
+    XPtr<MatrixLoader<uint32_t>> loader(matrix);
+    return Rcpp::wrap(
+        XPtr<MatrixLoader<uint32_t>>(new MatrixRowSelect(*loader, row_selection))
+    );
 }
 
 // [[Rcpp::export]]
@@ -128,11 +146,52 @@ std::vector<double> col_sums_cpp(SEXP matrix) {
 // [[Rcpp::export]]
 List matrix_stats_cpp(SEXP matrix, int row_stats, int col_stats) {
     XPtr<MatrixLoader<double>>loader(matrix);
-    
-    StatsResult res = computeMatrixStats(*loader, (Stats) row_stats, (Stats) col_stats, false, 1024, &Rcpp::checkUserInterrupt);
+    MatrixIterator<double> mat(*loader);
+    StatsResult res = computeMatrixStats(mat, (Stats) row_stats, (Stats) col_stats, false, 1024, &Rcpp::checkUserInterrupt);
 
     return List::create(
         Named("row_stats") = res.row_stats,
         Named("col_stats") = res.col_stats
     );
+}
+
+// [[Rcpp::export]]
+bool matrix_identical_uint32_t_cpp(SEXP mat1, SEXP mat2) {
+    XPtr<MatrixLoader<uint32_t>> l1(mat1);
+    XPtr<MatrixLoader<uint32_t>> l2(mat2);
+    l1->restart(); l2->restart();
+    MatrixIterator<uint32_t> i1(*l1);
+    MatrixIterator<uint32_t> i2(*l2);
+
+    while(true) {
+        bool res1 = i1.nextCol();
+        bool res2 = i2.nextCol();
+        if(res1 != res2) {
+            Rcerr << "Different number of columns." << std::endl;
+            return false;
+        }
+        if (!res1) break;
+        if(i1.currentCol() != i2.currentCol()) {
+            Rcerr << "Different columnloaded" << std::endl;
+            return false;
+        }
+        while(true) {
+            bool res1 = i1.nextValue();
+            bool res2 = i2.nextValue();
+            if (res1 != res2) {
+                Rcerr << "Different number of entries in column." << std::endl;
+                return false;
+            }
+            if (!res1) break;
+            if (i1.row() != i2.row() || i1.col() != i2.col() || i1.val() != i2.val()) {
+                REprintf("Mismatched entries: (%d,%d=%d) vs. (%d,%d=%d)\n",
+                    i1.row(), i1.col(), i1.val(),
+                    i2.row(), i2.col(), i2.val()
+                );
+                return false;
+            }
+        }
+    }
+    // TODO: Check row/col names
+    return true;
 }

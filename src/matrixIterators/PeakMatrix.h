@@ -1,266 +1,181 @@
 #pragma once
-#include <algorithm>
-#include <cassert>
 
-#include "../fragmentIterators/FragmentsIterator.h"
+#include <algorithm>
+
 #include "MatrixIterator.h"
+#include "../fragmentIterators/FragmentIterator.h"
+#include "../radix_sort.h"
+#include "../arrayIO/array_interfaces.h"
+#include "../bitpacking/simd_vec.h"
 
 namespace BPCells {
 
-// Output cell x peak matrix (rows = cell_id, col = peak_id)
-// Regions are given as half-open format
-class PeakMatrix : public MatrixLoader<uint32_t> {
+class Peak {
 public:
-    PeakMatrix(FragmentsLoader &frags, 
-            std::vector<uint32_t> &chr, std::vector<uint32_t> &start, std::vector<uint32_t> &end, 
-            std::vector<std::string>  &chr_levels);
-    
-    // Reset the loader to start from the beginning
-    void restart() override;
-
-    // Return the count of rows and columns
-    uint32_t rows() const override { return frags.cellCount(); }
-    uint32_t cols() const override { 
-        uint32_t count = 0;
-        for (auto peakVec : sorted_peaks)
-            count += peakVec.size();
-        return count;
-    }
-
-    bool nextCol() override;
-    uint32_t currentCol() const override;
-
-    int32_t load(uint32_t count, SparseVector<uint32_t> buffer) override;
-private:
-    bool loadPeak();
-    
-    class Peak {
-    public:
-        uint32_t start, end, index;
-        friend bool operator<(const Peak &p1, const Peak &p2) {
-            return p1.start < p2.start;
-        }
-    };
-
-    class PeakBuffer {
-        
-        // counts_buffer [i] = number counts seen so far for cell i
-        // cell_buffer = list of cells with non-zero counts so far
-        std::vector<uint32_t> counts_buffer, cell_buffer;
-        bool active = false;
-        bool completed = false;
-    public:
-        Peak peak;
-        // Anticipated usage:
-        // 0. Check that isActive returns false, otherwise the buffer is being used for another peak
-        // 1. Repeatedly call add_count giving a cell index and count
-        // 2. Call finalize once there are no more reads that will overlap the peak
-        // 3. Repeatedly call get_count until it returns false
-        friend bool operator<(const PeakBuffer &b1, const PeakBuffer &b2) {
-            return b1.peak.end < b2.peak.end;
-        }
-
-        void reset() {
-            assert(!active && completed);
-            active = false;
-            completed = false;
-        }
-
-        void begin() {
-            assert(!active && !completed);
-            active = true;
-            completed = false;
-        }
-
-        inline void add_count(uint32_t cell_index, uint32_t count) {
-            assert(active);
-            if (count == 0) return;
-            if (cell_index >= counts_buffer.size()) {
-                counts_buffer.resize(cell_index+1, 0);
-            }
-            if (counts_buffer[cell_index] == 0)
-                cell_buffer.push_back(cell_index);
-            counts_buffer[cell_index] += count;            
-        }
-        
-        void finalize() {
-            assert(active);
-            //Profiling says this sort takes 2/3 of computational time on my all-cells benchmark
-            //std::sort(cell_buffer.begin(), cell_buffer.end(), std::greater<uint32_t>());
-            active = false;
-            completed = true;
-        }
-
-        inline bool has_count() {
-            assert(completed);
-            return cell_buffer.size() > 0; 
-        }
-
-        inline void get_count(uint32_t &cell_out, uint32_t &count_out) {
-            assert(has_count());
-            cell_out = cell_buffer.back();
-            cell_buffer.pop_back();
-            count_out = counts_buffer[cell_out];
-            counts_buffer[cell_out] = 0;
-        }
-
-        bool isActive() {return active; } 
-        bool isCompleted() {return completed; }
-    };
-
-    FragmentsIterator frags;
-    const std::vector<std::string> chr_levels;
-
-    std::vector<std::vector<Peak> > sorted_peaks;
-    uint32_t current_chr, next_peak; 
-
-    std::vector<PeakBuffer> active_peaks;
-    uint32_t n_active_peaks, n_completed_peaks;
+    uint32_t chr, start, end;
 };
 
+template<typename T>
+class MatrixAccumulator {
+private:
+    std::vector<uint32_t> row_data, col_data, row_buf, col_buf;
+    std::vector<T> val_data, val_buf;
 
-PeakMatrix::PeakMatrix(FragmentsLoader &frags, 
-        std::vector<uint32_t> &chr, std::vector<uint32_t> &start, std::vector<uint32_t> &end, 
-        std::vector<std::string>  &chr_levels) :
-        frags(frags), chr_levels(chr_levels),
-        current_chr(0), next_peak(UINT32_MAX), 
-        n_active_peaks(0), n_completed_peaks(0) {
+    uint32_t entries_stored = 0;
+    uint32_t output_idx = UINT32_MAX;
+    uint32_t load_capacity = 0;
 
-    if (frags.cellCount() < 0)
-        throw std::invalid_argument("frags must have a known cell count. Consider using a cell selection to define the number of cells.");
+    void compactData() {
+        // Sort by (col, row) by sorting stably first by row then by col
+        lsdRadixSortArrays<uint32_t, T>(
+            entries_stored, 
+            row_data, col_data, val_data,
+            row_buf, col_buf, val_buf
+        );
+        lsdRadixSortArrays<uint32_t, T>(
+            entries_stored, 
+            col_data, row_data, val_data,
+            col_buf, row_buf, val_buf
+        );
+        // Add together elements belonging to the same matrix index
+        uint32_t out_idx = 0;
+        for (uint32_t i = 1; i < entries_stored; i++) {
+            bool match = row_data[i] == row_data[out_idx] && 
+                         col_data[i] == col_data[out_idx];
+            out_idx += !match;
+            row_data[out_idx] = row_data[i];
+            col_data[out_idx] = col_data[i];
+            val_data[out_idx] = match ? val_data[out_idx] + val_data[i] : val_data[i];
+        }
+        // If we compacted less than 50% of the data, then grow our buffer size
+        if ((out_idx + 1) * 2 > entries_stored) {
+            uint32_t new_size = 1 + entries_stored + entries_stored/2;
+            row_data.resize(new_size);
+            val_data.resize(new_size);
+            col_data.resize(new_size);
+            row_buf.resize(new_size);
+            val_buf.resize(new_size);
+            col_buf.resize(new_size);
+        }
+        if (entries_stored != 0) entries_stored = out_idx + 1;
+    }
+public:
+
+    void clear() {
+        entries_stored = 0;
+        output_idx = UINT32_MAX;
+        load_capacity = 0;
+    }
+
+    // Add an item to the accumulator, or no-op if val == 0
+    inline void add_one(uint32_t col, uint32_t row, T val) {
+        if (output_idx != UINT32_MAX) {
+            std::memmove(row_data.data(), row_data.data() + output_idx, sizeof(uint32_t) * (entries_stored - output_idx));
+            std::memmove(col_data.data(), col_data.data() + output_idx, sizeof(uint32_t) * (entries_stored - output_idx));
+            std::memmove(val_data.data(), val_data.data() + output_idx, sizeof(T) * (entries_stored - output_idx));
+            entries_stored = entries_stored - output_idx;
+        }
+        if (entries_stored >= row_data.size()) {
+            compactData();
+        }
+        row_data[entries_stored] = row;
+        col_data[entries_stored] = col;
+        val_data[entries_stored] = val;
+        entries_stored += (val != 0);
+        output_idx = UINT32_MAX;
+        load_capacity = 0;
+    }
+
+    // Say whether the buffer is full enough to be ready for loading
+    bool ready_for_loading() const {
+        // Ready for loading if we have under 50% capacity for additional entries
+        // The idea is to prevents repeated compactions for many small, overlapping outputs.
+        // I'm not sure how important this really is in practical use cases
+        return entries_stored*2 >= row_data.size();
+    }
+
+    // Discard entries until `col`, and return whether or not the next available entry
+    // is at least column `col` (or greater)
+    bool discard_until(uint32_t min_col) {
+        if (output_idx == UINT32_MAX) {
+            compactData();
+            output_idx = 0;
+        } else {
+            output_idx += load_capacity;
+            if (output_idx == entries_stored) return false;
+        }
+        while(output_idx < entries_stored && col_data[output_idx] < min_col) output_idx += 1;
+        load_capacity = 0;
+        return output_idx < entries_stored && col_data[output_idx] >= min_col;
+    }
+
+    // Load accumulated entries up to max_col. 
+    bool load(uint32_t max_col, uint32_t max_entries) {
+        if (output_idx == UINT32_MAX) {
+            compactData();
+            output_idx = 0;
+        } else {
+            output_idx += load_capacity;
+            load_capacity = 0;
+            if (output_idx == entries_stored) return false;
+            if (col_data[output_idx] > max_col) return false;
+        }
+        load_capacity = std::min(max_entries, entries_stored - output_idx);
+        while (col_data[output_idx] != col_data[output_idx + load_capacity - 1]) load_capacity -= 1;
+        return true;
+    }
     
-    if (chr.size() != start.size() || chr.size() != end.size())
-        throw std::invalid_argument("chr, start, and end must all be same length");
+    // Functions to access the loaded values
+    uint32_t capacity() const {return load_capacity;}
+    uint32_t currentCol() const {return col_data[output_idx];}
+    uint32_t* rowData() {return row_data.data() + output_idx;}
+    T* valData() {return val_data.data() + output_idx;}
+};
+
+// Output cell x peak matrix (rows = cell_id, col = peak_id)
+// Regions are given as half-open format
+// Peaks can overlap, and columns are ordered by (end, start) coordinate
+class PeakMatrix : public MatrixLoader<uint32_t> {
+private:
+    FragmentLoader &frags;
+    std::unique_ptr<StringReader> chr_levels;
+    MatrixAccumulator<uint32_t> accumulator;
+    std::vector<uint32_t> end_sorted_lookup; // end_sorted_lookup[i] gives the index of end-sorted peak i in the start-sorted list
+    std::vector<Peak> sorted_peaks;
+    std::vector<Peak> active_peaks;
+    uint32_t next_completed_peak = 0;
+    uint32_t current_output_peak = UINT32_MAX;
+    uint32_t next_active_peak = 0;
+    uint32_t n_peaks;
+
+    void loadFragments();
+public:
+    // Note: It's the caller's responsibility to make sure that
+    // the FragmentLoader will not be deleted while this PeakMatrix is still alive
+    PeakMatrix(FragmentLoader &frags, 
+        const std::vector<uint32_t> &chr, const std::vector<uint32_t> &start,
+        const std::vector<uint32_t> &end, std::unique_ptr<StringReader> &&chr_levels);
     
-    sorted_peaks.resize(chr_levels.size());
-    for (size_t i = 0; i < chr.size(); i++) {
-        if (chr[i] >= chr_levels.size())
-            throw std::invalid_argument("chr has values higher than length of chr_levels");
-        Peak p;
-        p.start = start[i];
-        p.end = end[i];
-        p.index = i;
-        sorted_peaks[chr[i]].push_back(p);
-    }
-    for (size_t i = 0; i < sorted_peaks.size(); i++) {
-        std::sort(sorted_peaks[i].begin(), sorted_peaks[i].end());
-    }
-}
+    uint32_t rows() const override;
+    uint32_t cols() const override;
 
-void PeakMatrix::restart() {
-    current_chr = 0;
-    next_peak = UINT32_MAX;
+    const char* rowNames(uint32_t row) const override;
+    const char* colNames(uint32_t col) const override;
 
-    // Clear out the active peak buffers
-    uint32_t cell_out, count_out;
-    for (int i = 0; i < n_active_peaks; i++) {
-        if (active_peaks[i].isActive()) active_peaks[i].finalize();
-        while(active_peaks[i].has_count()) {
-            active_peaks[i].get_count(cell_out, count_out);
-        }
-        active_peaks[i].reset();
-    }
-    n_active_peaks = 0;
-    n_completed_peaks = 0;
-}
+    void restart() override;
+    void seekCol(uint32_t col) override;
 
-bool PeakMatrix::nextCol() {
-    // Clean up the last active peak
-    if (n_active_peaks > 0) {
-        active_peaks[0].reset();
-        assert(n_active_peaks > 0 && n_completed_peaks > 0);
-        // Swap so that the just finished peak goes to the end of the active_peaks vector,
-        // and if there are more completed peaks we will have another completed peak at the
-        // front of the vector as well
-        std::swap(active_peaks[0], active_peaks[n_active_peaks - 1]);
-        if (n_active_peaks > n_completed_peaks)
-            std::swap(active_peaks[0], active_peaks[n_completed_peaks - 1]);
-        n_completed_peaks -= 1;
-        n_active_peaks -= 1;
-    }
+    bool nextCol() override;
+    
+    uint32_t currentCol() const override;
 
-    if (!loadPeak()) return false;
-    return true;
-}
+    bool load() override;
+    
+    uint32_t capacity() const override;
 
-uint32_t PeakMatrix::currentCol() const {
-    return active_peaks[0].peak.index;
-}
+    uint32_t* rowData() override;
+    uint32_t* valData() override;
 
-int32_t PeakMatrix::load(uint32_t count, SparseVector<uint32_t> buffer) {
-    if (n_active_peaks == 0) {return 0;} 
-    for (int i = 0; i < count; i++) {
-        if (!active_peaks[0].has_count()) {
-            return i;
-        }
-        active_peaks[0].get_count(buffer.idx[i], buffer.val[i]);
-    }
-    return count;
-}
-
-
-// After loadPeak
-// - active_peaks[0:n_completed_peaks] are finalized and ready to iterate
-bool PeakMatrix::loadPeak() {
-    if(n_completed_peaks > 0) return true;
-
-    if (n_active_peaks == 0 && next_peak >= sorted_peaks[current_chr].size()) {
-        // Continue to the next chromosome for which we have peaks.
-        // Match based on chromosome name rather than chromosome ID.
-        while(true) {
-            if (!frags.nextChr()) return false;
-            std::string chr_name = frags.chrNames(frags.currentChr());
-            auto idx = std::find(chr_levels.begin(), chr_levels.end(), chr_name);
-            if (idx != chr_levels.end()) {
-                current_chr = idx - chr_levels.begin();
-                if (sorted_peaks[current_chr].size() > 0)
-                    break;
-            }
-        }
-        next_peak = 0;
-    }
-
-    // If there are no active peaks, try to seek to just before the next peek begins
-    if (n_active_peaks == 0 && frags.isSeekable()) {
-        frags.seek(frags.currentChr(), sorted_peaks[current_chr][next_peak].start);
-    }
-
-    while (frags.nextFrag()) {
-        // Check for any new peaks we've hit
-        while (next_peak < sorted_peaks[current_chr].size() &&
-                (frags.end() >= sorted_peaks[current_chr][next_peak].start ||
-                frags.start() >= sorted_peaks[current_chr][next_peak].start)) {
-            n_active_peaks += 1;
-            if (n_active_peaks > active_peaks.size()) active_peaks.resize(n_active_peaks);
-            active_peaks[n_active_peaks - 1].peak = sorted_peaks[current_chr][next_peak];
-            active_peaks[n_active_peaks - 1].begin();
-            next_peak += 1;
-        }
-
-        for (uint32_t i = 0; i < n_active_peaks; i++) {
-            if (frags.start() >= active_peaks[i].peak.end) {
-                active_peaks[i].finalize();
-                std::swap(active_peaks[n_completed_peaks], active_peaks[i]);
-                n_completed_peaks += 1;
-                continue;
-            }
-            uint32_t overlap_count = 
-                (frags.start() >= active_peaks[i].peak.start && frags.start() < active_peaks[i].peak.end) +
-                (frags.end() > active_peaks[i].peak.start && frags.end() <= active_peaks[i].peak.end);
-            active_peaks[i].add_count(frags.cell(), overlap_count);
-        }
-        // We've completed an active peak, so we're ready to return
-        if (n_completed_peaks) return true;
-    }
-
-    //We've hit the end of a chromosome, so finalize all active peaks, and mark ready for next chromosome
-    for (uint32_t i = 0; i < n_active_peaks; i++) {
-        active_peaks[i].finalize();
-        n_completed_peaks += 1;
-    }
-
-    next_peak = UINT32_MAX;
-    return true;
-}
+};
 
 } // end namespace BPCells

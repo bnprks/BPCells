@@ -1,6 +1,7 @@
 #include <Rcpp.h>
 #include <RcppEigen.h>
 
+#include "R_array_io.h"
 
 #include "fragmentIterators/FragmentIterator.h"
 #include "fragmentIterators/ShiftCoords.h"
@@ -8,7 +9,7 @@
 #include "fragmentIterators/CellSelect.h"
 // #include "fragmentIterators/InsertionsIterator2.h"
 
-// #include "matrixIterators/PeakMatrix.h"
+#include "matrixIterators/PeakMatrix.h"
 // #include "matrixIterators/PeakMatrix2.h"
 // #include "matrixIterators/PeakMatrix3.h"
 // #include "matrixIterators/PeakMatrix4.h"
@@ -40,6 +41,18 @@ NumericVector scan_fragments_cpp(SEXP fragments) {
     }
     return {(double) len, (double) start_sum, (double) end_sum, (double) (((start_sum % 104729) + (end_sum % 104729)) % 104729)};
 }
+
+// [[Rcpp::export]]
+SEXP iterate_peak_matrix_cpp(SEXP fragments,
+        std::vector<uint32_t> chr, std::vector<uint32_t> start, std::vector<uint32_t> end,
+        StringVector chr_levels) {
+    XPtr<FragmentLoader> loader(fragments);
+    return Rcpp::wrap(
+        XPtr<PeakMatrix>(new PeakMatrix(*loader, chr, start, end, 
+            std::make_unique<RcppStringReader>(chr_levels)))
+    );
+}
+
 /*
 
 // [[Rcpp::export]]
@@ -133,9 +146,9 @@ List nucleosome_counts_cpp(SEXP fragments,
     FragmentLoader *loader = &(*XPtr<FragmentLoader>(fragments));
     FragmentIterator iter(*loader);
 
-    std::vector<int> subNuc;
-    std::vector<int> monoNuc;
-    std::vector<int> multiNuc;
+    std::vector<int> subNuc(0);
+    std::vector<int> monoNuc(0);
+    std::vector<int> multiNuc(0);
 
     if (iter.cellCount() != -1) {
         subNuc.resize(iter.cellCount(),0);

@@ -3,6 +3,7 @@
 #include <array>
 #include <string>
 #include <unordered_map>
+#include <filesystem>
 
 #include <zlib.h>
 
@@ -81,7 +82,7 @@ public:
     BedFragmentsWriter(const char *path, bool append_5th_column=false,
                     uint32_t buffer_size = 1 << 20);
     ~BedFragmentsWriter();
-    bool write(FragmentIterator &fragments, void (*checkInterrupt)(void) = NULL) override;
+    void write(FragmentIterator &fragments, void (*checkInterrupt)(void) = NULL) override;
 private:
     gzFile f;
     bool append_5th_column;

@@ -1,14 +1,16 @@
 # CXX_STD = CXX17
 
-PKG_CXXFLAGS = -march=native -std=c++17 -DEIGEN_PERMANENTLY_DISABLE_STUPID_WARNINGS -Wno-ignored-attributes
-PKG_LIBS = -lz -lhdf5
+# PKG_CXXFLAGS = -march=native -std=c++17 -DEIGEN_PERMANENTLY_DISABLE_STUPID_WARNINGS -Wno-ignored-attributes
+# PKG_LIBS = -lz -lhdf5
 
-#PKG_CXXFLAGS = -fsanitize=undefined -march=native -std=c++17 -DEIGEN_PERMANENTLY_DISABLE_STUPID_WARNINGS -Wno-ignored-attributes
-#PKG_LIBS = -lz -lhdf5 -fsanitize=undefined
+PKG_CXXFLAGS = -fsanitize=undefined -march=native -std=c++17 -DEIGEN_PERMANENTLY_DISABLE_STUPID_WARNINGS -Wno-ignored-attributes
+PKG_LIBS = -lz -lhdf5 -fsanitize=undefined
 
 OBJECTS=\
 fragment_io.o \
 fragment_utils.o \
+matrix_io.o \
+matrix_utils.o \
 RcppExports.o \
 arrayIO/array_interfaces.o \
 arrayIO/binaryfile.o \
@@ -22,12 +24,15 @@ fragmentIterators/CellSelect.o \
 fragmentIterators/ChrSelect.o \
 fragmentIterators/FragmentIterator.o \
 fragmentIterators/ShiftCoords.o \
-fragmentIterators/StoredFragments.o
+fragmentIterators/StoredFragments.o \
+matrixIterators/ImportMatrixHDF5.o \
+matrixIterators/MatrixOps.o \
+matrixIterators/StoredMatrix.o \
+matrixIterators/PeakMatrix.o \
+matrixTransforms/MatrixStats.o 
 
 # r_wrapper.o \
 # profiler.o \
-# matrix_io.o \
-# matrix_utils.o \
 # matrix_transform.o \
 # fragmentIterators/InsertionsIterator.o \
 # fragmentIterators/ShiftCoords.o \
@@ -36,4 +41,3 @@ fragmentIterators/StoredFragments.o
 # matrixIterators/MatrixOps.o \
 # matrixIterators/PackedMatrix.o \
 # matrixIterators/UnpackedMatrix.o \
-# matrixTransforms/MatrixStats.o 

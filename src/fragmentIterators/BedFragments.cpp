@@ -119,11 +119,16 @@ void BedFragments::restart() {
     current_chr = "";
     chr_lookup.clear();
     chr_names.clear();
+    next_chr_id = 0;
+
+    cell_id_lookup.clear();
+    cell_names.clear();
+    next_cell_id = 0;
+
     cell.resize(0);
     start.resize(0);
     end.resize(0);
     eof = false;
-    next_chr_id = 0;
     
     read_line();
     if (comment.size() == 0) return;
@@ -211,6 +216,13 @@ BedFragmentsWriter::BedFragmentsWriter(const char *path, bool append_5th_column,
                     uint32_t buffer_size) : append_5th_column(append_5th_column) {
     
     std::string str_path(path);
+
+    // Create directory if it doesn't already exist
+    std::filesystem::path fpath(path);
+    if (fpath.has_parent_path() && !std::filesystem::exists(fpath.parent_path())) {
+        std::filesystem::create_directories(fpath.parent_path());
+    }
+
     size_t extension_idx = str_path.rfind(".");
     if (extension_idx != std::string::npos &&
         str_path.substr(extension_idx) == ".gz") {
@@ -228,7 +240,7 @@ BedFragmentsWriter::~BedFragmentsWriter() {
 }
 
 
-bool BedFragmentsWriter::write(FragmentIterator &fragments, void (*checkInterrupt)(void)) {
+void BedFragmentsWriter::write(FragmentIterator &fragments, void (*checkInterrupt)(void)) {
     uint32_t bytes_written;
     
     size_t total_fragments = 0;
@@ -252,7 +264,7 @@ bool BedFragmentsWriter::write(FragmentIterator &fragments, void (*checkInterrup
             );
             
             if (bytes_written <= 0) {
-                return false;
+                throw std::runtime_error("Failed to write data in BedFragmentsWriter");
             }
 
             if (checkInterrupt != NULL && total_fragments++ % 1024 == 0) checkInterrupt();
@@ -260,7 +272,6 @@ bool BedFragmentsWriter::write(FragmentIterator &fragments, void (*checkInterrup
     }
     gzclose(f);
     f = NULL;
-    return true;
 };
 
 

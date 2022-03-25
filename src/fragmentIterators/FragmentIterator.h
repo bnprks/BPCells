@@ -161,10 +161,10 @@ public:
 
 class FragmentWriter {
 public:
-    // Return false on failure, true on success. 
+    // Write fragments
     // During progress, call checkInterrupt which will raise an exception if there's 
     // a user-requested interrupt
-    virtual bool write(FragmentIterator &fragments, void (*checkInterrupt)(void) = NULL) = 0;
+    virtual void write(FragmentIterator &fragments, void (*checkInterrupt)(void) = NULL) = 0;
 };
 
 } // end namespace BPCells

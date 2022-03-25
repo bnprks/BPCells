@@ -137,16 +137,22 @@ setClass("FragmentsTsv",
 #' @details Note: no disk operations will take place until the fragments are used in a function
 #' @param path Path of 10x fragments file
 #' @param comment Skip lines at start of file starting with comment
+#' @param end_inclusive Whether the end coordinate of the bed is inclusive -- i.e. there was an
+#'     insertion at the end coordinate rather than the base before the end coordinate. This is the
+#'     10x default, though it's not quite standard for the bed file format.
 #' @return 10x fragments file object
 #' @export
-open_10x_fragments <- function(path, comment="#") {
+open_fragments_10x <- function(path, comment="#", end_inclusive=TRUE) {
     assert_is_file(path, extension=c(".tsv", ".tsv.gz"))
     assert_is_character(comment)
     assert_len(comment, 1)
-    
-    new("FragmentsTsv", path=path, comment=comment)
+    path <- normalizePath(path)
+    res <- new("FragmentsTsv", path=path, comment=comment)
+    if (end_inclusive)
+        res <- shift_fragments(res, shift_end=1)
+    res
 }
-setMethod("iterate_fragments", "FragmentsTsv", function(x) load_10x_fragments_cpp(normalizePath(x@path), x@comment))
+setMethod("iterate_fragments", "FragmentsTsv", function(x) iterate_10x_fragments_cpp(normalizePath(x@path), x@comment))
 setMethod("short_description", "FragmentsTsv", function(x) {
     sprintf("Load 10x fragments file from %s", x@path)
 })
@@ -157,7 +163,7 @@ setMethod("short_description", "FragmentsTsv", function(x) {
 #' @param append_5th_column Whether to include 5th column of all 0 for compatibility
 #'        with 10x fragment file outputs (defaults to 4 columns chr,start,end,cell)
 #' @export
-write_10x_fragments <- function(fragments, path, append_5th_column=FALSE) {
+write_fragments_10x <- function(fragments, path, append_5th_column=FALSE) {
     assert_is_file(path, must_exist=FALSE, extension=c(".tsv", ".tsv.gz"))
 
     write_10x_fragments_cpp(
@@ -165,6 +171,8 @@ write_10x_fragments <- function(fragments, path, append_5th_column=FALSE) {
         iterate_fragments(fragments),
         append_5th_column
     )
+
+    open_fragments_10x(path, comment="")
 }
 
 
@@ -295,7 +303,7 @@ write_fragments_dir <- function(fragments, dir, compress=TRUE, buffer_size=1024L
 }
 
 #' Open an existing fragments object written with [write_fragments_dir]
-#' @inheritParams write_fragments_memory
+#' @param dir Directory to read the data from
 #' @param buffer_size For performance tuning only. The number of fragments to be buffered
 #' in memory for each read
 #' @return FragmentsDir object
@@ -305,8 +313,8 @@ open_fragments_dir <- function(dir, buffer_size=1024L) {
     assert_is(buffer_size, "integer")
     
     dir <- path.expand(dir)
-    compressed <- is_compressed_fragments_file_cpp(dir, buffer_size)
-    new("FragmentsDir", dir=path.expand(dir), compressed=compressed, buffer_size=buffer_size)
+    info <- info_fragments_file_cpp(dir, buffer_size)
+    new("FragmentsDir", dir=path.expand(dir), compressed=info$compressed, buffer_size=buffer_size, cell_names=info$cell_names, chr_names=info$chr_names)
 }
 
 setMethod("iterate_fragments", "FragmentsDir", function(x) {
@@ -374,8 +382,8 @@ open_fragments_hdf5 <- function(path, group="fragments", buffer_size=16384L) {
     assert_is(buffer_size, "integer")
     
     path <- path.expand(path)
-    compressed <- is_compressed_fragments_hdf5_cpp(path, group, buffer_size)
-    new("FragmentsHDF5", path=path, group=group, compressed=compressed, buffer_size=buffer_size)
+    info <- info_fragments_hdf5_cpp(path, group, buffer_size)
+    new("FragmentsHDF5", path=path, group=group, compressed=info$compressed, buffer_size=buffer_size, cell_names=info$cell_names, chr_names=info$chr_names)
 }
 
 setMethod("iterate_fragments", "FragmentsHDF5", function(x) {
@@ -402,7 +410,7 @@ setMethod("short_description", "FragmentsHDF5", function(x) {
 #'    for GRanges and false for other formats
 #'    (see http://genome.ucsc.edu/blog/the-ucsc-genome-browser-coordinate-counting-systems/)
 #' @return RawFragments object representing the given fragments
-convert_to_fragments <- function(x, zero_based_coords=is(x, "GRanges")) {
+convert_to_fragments <- function(x, zero_based_coords=!is(x, "GRanges")) {
     assert_is(x, c("list", "data.frame", "GRanges"))
     assert_is(zero_based_coords, "logical")
     assert_not_null(x$cell_id)
@@ -420,18 +428,19 @@ convert_to_fragments <- function(x, zero_based_coords=is(x, "GRanges")) {
     x$cell_id <- as.factor(x$cell_id)
     x$chr <- as.factor(x$chr)
 
-    chr_ptr <- rep(cumsum(as.integer(x$chr)), each=2)
+    chr_ptr <- rep(cumsum(rle(as.integer(x$chr))$lengths), each=2)
     chr_ptr <- c(0, chr_ptr[-length(chr_ptr)])
 
     end_max <- calculate_end_max_cpp(as.integer(x$end), chr_ptr)
     new("UnpackedMemFragments", 
-        cell=as.integer(x$cell_id), 
+        cell=as.integer(x$cell_id) - 1L, 
         start=as.integer(x$start),
         end=as.integer(x$end),
         end_max=end_max,
-        chr_ptr=chr_ptr,
+        chr_ptr=as.integer(chr_ptr),
         cell_names = levels(x$cell_id),
-        chr_names = levels(x$chr)
+        chr_names = levels(x$chr), 
+        version = "unpacked-fragments-v1"
     )
 }
 
@@ -439,7 +448,7 @@ convert_to_fragments <- function(x, zero_based_coords=is(x, "GRanges")) {
 # Define converters with GRanges if we have the GenomicRanges package available
 if (requireNamespace("GenomicRanges", quietly=TRUE)) {
     setAs("IterableFragments", "GRanges", function(from) {
-        if (is(from("UnpackedMemFragments"))) {
+        if (is(from, "UnpackedMemFragments")) {
             frags <- from
         } else {
             frags <- write_fragments_memory(from, compress=FALSE)

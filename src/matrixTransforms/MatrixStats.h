@@ -44,7 +44,7 @@ public:
 // 3. Mean
 // 4. Variance
 // Each of the later statistics is always calculated simultaneously to the earlier statistics 
-StatsResult computeMatrixStats(MatrixLoader<double> &mat, Stats row_stats, Stats col_stats,
+StatsResult computeMatrixStats(MatrixIterator<double> &mat, Stats row_stats, Stats col_stats,
                         bool transpose = false, uint32_t buffer_size = 1024, void (*checkInterrupt)(void) = NULL);
 
 } // end namespace BPCells

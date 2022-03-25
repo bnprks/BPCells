@@ -2,7 +2,7 @@
 #include <algorithm>
 #include <cassert>
 
-#include "../fragmentIterators/FragmentsIterator.h"
+#include "../fragmentIterators/FragmentIterator.h"
 #include "../fragmentIterators/InsertionsIterator2.h"
 #include "MatrixIterator.h"
 
@@ -10,11 +10,10 @@ namespace BPCells {
 
 // Output cell x peak matrix (rows = cell_id, col = peak_id)
 // Regions are given as half-open format
-class TileMatrix2 : public MatrixLoader<uint32_t> {
+class PeakMatrix6 : public MatrixLoader<uint32_t> {
 public:
-    TileMatrix2(FragmentsLoader &frags, 
+    PeakMatrix6(FragmentsLoader &frags, 
             std::vector<uint32_t> &chr, std::vector<uint32_t> &start, std::vector<uint32_t> &end, 
-            std::vector<uint32_t> &tile_widths,
             std::vector<std::string>  &chr_levels);
     
     // Reset the loader to start from the beginning
@@ -23,7 +22,10 @@ public:
     // Return the count of rows and columns
     uint32_t rows() const override { return insertions.cellCount(); }
     uint32_t cols() const override { 
-        return total_tiles;
+        uint32_t count = 0;
+        for (auto peakVec : sorted_peaks)
+            count += peakVec.size();
+        return count;
     }
 
     bool nextCol() override;
@@ -35,7 +37,7 @@ private:
     
     class Peak {
     public:
-        uint32_t start, end, index, tile_width;
+        uint32_t start, end, index;
         friend bool operator<(const Peak &p1, const Peak &p2) {
             return p1.start < p2.start;
         }
@@ -66,8 +68,8 @@ private:
     std::vector<uint32_t> output_counts; // Length cells, with counts to output
     std::vector<uint32_t> output_cells; // List of non-zero indices in output_counts
 
-    uint32_t total_tiles;
-    // size_t max_buffer_capacity = 0;
+
+    size_t max_buffer_capacity = 0;
     void printBuffers() {
         printf("# inactive=%zu, active=", inactive_bufs.size());
         for (auto b : active_bufs) {
@@ -79,8 +81,8 @@ private:
         }
         printf("\n");
     }
-    // Add a PeakBuffer for the tile of p overlapping coord to the active_bufs
-    void beginTileBuffer(Peak p, uint32_t coord) {
+    // Add a PeakBuffer for the peak p to active_bufs
+    void beginPeakBuffer(Peak p) {
         //printf("Creating new peak buffer on peak %d ", p.index);
         //printBuffers();
         if (inactive_bufs.empty()) {
@@ -90,11 +92,7 @@ private:
             active_bufs.push_back(std::move(inactive_bufs.back()));
             inactive_bufs.pop_back();
         }
-        uint32_t tile = (coord - p.start) / p.tile_width;
-        p.index += tile;
-        p.start += tile * p.tile_width;
         active_bufs.back().peak = p;
-        
         //printBuffers();
     }
     // Move a buffer from active_bufs to finished_bufs
@@ -129,9 +127,8 @@ private:
 };
 
 
-TileMatrix2::TileMatrix2(FragmentsLoader &frags, 
+PeakMatrix6::PeakMatrix6(FragmentsLoader &frags, 
         std::vector<uint32_t> &chr, std::vector<uint32_t> &start, std::vector<uint32_t> &end, 
-        std::vector<uint32_t> &tile_widths,
         std::vector<std::string>  &chr_levels) :
         insertions(frags), chr_levels(chr_levels),
         current_chr(0), next_peak(UINT32_MAX) {
@@ -145,17 +142,14 @@ TileMatrix2::TileMatrix2(FragmentsLoader &frags,
         throw std::invalid_argument("chr, start, and end must all be same length");
     
     sorted_peaks.resize(chr_levels.size());
-    total_tiles = 0;
     for (size_t i = 0; i < chr.size(); i++) {
         if (chr[i] >= chr_levels.size())
             throw std::invalid_argument("chr has values higher than length of chr_levels");
         Peak p;
         p.start = start[i];
         p.end = end[i];
-        p.tile_width = std::min(tile_widths[i], p.end - p.start);
-        p.index = total_tiles;
+        p.index = i;
         sorted_peaks[chr[i]].push_back(p);
-        total_tiles += (p.end - p.start + p.tile_width - 1)/p.tile_width;
     }
     for (size_t i = 0; i < sorted_peaks.size(); i++) {
         std::sort(sorted_peaks[i].begin(), sorted_peaks[i].end());
@@ -163,7 +157,7 @@ TileMatrix2::TileMatrix2(FragmentsLoader &frags,
     }
 }
 
-void TileMatrix2::restart() {
+void PeakMatrix6::restart() {
     current_chr = 0;
     next_peak = UINT32_MAX;
 
@@ -178,23 +172,25 @@ void TileMatrix2::restart() {
         output_counts[i] = 0;
 }
 
-bool TileMatrix2::nextCol() {
+bool PeakMatrix6::nextCol() {
     while (!output_cells.empty()) {
         output_counts[output_cells.back()] = 0;
         output_cells.pop_back();
     }
     if (!loadPeak()) return false;
 
-    //if (output_peak % 10000 == 0) printf("nextCol output_peak = %d", output_peak);
     tallyPeakBuffer();
+
+    //if (output_peak % 10000 == 0) printf("nextCol output_peak = %d", output_peak);
+
     return true;
 }
 
-uint32_t TileMatrix2::currentCol() const {
+uint32_t PeakMatrix6::currentCol() const {
     return output_peak;
 }
 
-int32_t TileMatrix2::load(uint32_t count, SparseVector<uint32_t> buffer) {
+int32_t PeakMatrix6::load(uint32_t count, SparseVector<uint32_t> buffer) {
     for (int i = 0; i < count; i++) {
         if (output_cells.empty()) return i;
         buffer.idx[i] = output_cells.back();
@@ -208,22 +204,22 @@ int32_t TileMatrix2::load(uint32_t count, SparseVector<uint32_t> buffer) {
 
 // After loadPeak
 // - The last n_completed_peaks entries of active_peaks are reeady to be tallied
-bool TileMatrix2::loadPeak() {
+bool PeakMatrix6::loadPeak() {
     //printf("Load Peak 1\n");
-//    size_t buffer_capacity = 0;
-//    for (auto b : inactive_bufs) {
-//        buffer_capacity += b.cell_buffer.capacity();
-//    }
-//    for (auto b : active_bufs) {
-//        buffer_capacity += b.cell_buffer.capacity();
-//    }
-//    for (auto b : finished_bufs) {
-//        buffer_capacity += b.cell_buffer.capacity();
-//    }
-//    if (buffer_capacity > max_buffer_capacity) {
-//        max_buffer_capacity = buffer_capacity;
-//        printf("New max capacity: %zu\n", buffer_capacity);
-//    }
+    size_t buffer_capacity = 0;
+    for (auto b : inactive_bufs) {
+        buffer_capacity += b.cell_buffer.capacity();
+    }
+    for (auto b : active_bufs) {
+        buffer_capacity += b.cell_buffer.capacity();
+    }
+    for (auto b : finished_bufs) {
+        buffer_capacity += b.cell_buffer.capacity();
+    }
+    if (buffer_capacity > max_buffer_capacity) {
+        max_buffer_capacity = buffer_capacity;
+        printf("New max capacity: %zu\n", buffer_capacity);
+    }
 
     if (!finished_bufs.empty()) {
         return true;
@@ -258,20 +254,15 @@ bool TileMatrix2::loadPeak() {
     while (insertions.nextInsertion()) {
         while (insertions.coord() >= sorted_peaks[current_chr][next_peak].start) {
             if (insertions.coord() < sorted_peaks[current_chr][next_peak].end) {
-                beginTileBuffer(sorted_peaks[current_chr][next_peak], insertions.coord());
+                beginPeakBuffer(sorted_peaks[current_chr][next_peak]);
             }
             next_peak += 1;
         }
 
         size_t i = 0;
         while (i < active_bufs.size()) {
-            // TODO: if we're past the first tile, start a new buffer for the
-            // next tile
-            if (insertions.coord() >= active_bufs[i].peak.start + active_bufs[i].peak.tile_width) {
+            if (insertions.coord() >= active_bufs[i].peak.end) {
                 finalizePeakBuffer(active_bufs[i]);
-                if (insertions.coord() < active_bufs[i].peak.end) {
-                    beginTileBuffer(active_bufs[i].peak, insertions.coord());
-                }
                 continue;
             }
             if (insertions.coord() >= active_bufs[i].peak.start) {

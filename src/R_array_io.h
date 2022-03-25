@@ -2,6 +2,7 @@
 
 #include <Rcpp.h>
 #include "arrayIO/array_interfaces.h"
+#include "arrayIO/vector.h"
 
 using namespace Rcpp;
 using namespace BPCells;
@@ -34,6 +35,19 @@ public:
             load_size
         );
     }
+    inline ULongReader openULongReader(std::string name) override {
+        throw std::logic_error("S4Reader doesn't implement ULong type");
+    }
+    inline FloatReader openFloatReader(std::string name) override {
+        throw std::logic_error("S4Reader doesn't implement Float type");
+    }
+    inline DoubleReader openDoubleReader(std::string name) override {
+        NumericVector v = s4.slot(name);
+        return DoubleReader(
+            std::make_unique<VecNumReader<double>>((double *) &v[0], v.size()),
+            load_size
+        );
+    }
     inline std::unique_ptr<StringReader> openStringReader(std::string name) override {
         return std::make_unique<RcppStringReader>(s4.slot(name));
     }
@@ -42,33 +56,30 @@ public:
     }
 };
 
-class ListWriterBuilder final : public WriterBuilder {
-protected:
-    std::map<std::string, std::vector<uint32_t>> int_vecs;
-    std::map<std::string, std::vector<std::string>> string_vecs;
-    std::string version;
-    uint32_t chunk_size;
+class ListWriterBuilder final : public VecReaderWriterBuilder {
 public:
-    ListWriterBuilder(uint32_t chunk_size = 1024) : chunk_size(chunk_size) {}
-
-    UIntWriter createUIntWriter(std::string name) override {
-        int_vecs[name] = std::vector<uint32_t>();
-        return UIntWriter(
-            std::make_unique<VecUIntWriter>(int_vecs.at(name)),
-            chunk_size
-        );
-    }
-    std::unique_ptr<StringWriter> createStringWriter(std::string name) override {
-        string_vecs.emplace(name, std::vector<std::string>());
-        return std::make_unique<VecStringWriter>(string_vecs.at(name));
-    }
-    void writeVersion(std::string v) override {version = v;}
+    ListWriterBuilder(uint32_t chunk_size = 1024) : VecReaderWriterBuilder(chunk_size) {}
     
     List getList() {
         List l;
         // Clear out the maps while constructing the list
         for(auto it = int_vecs.begin(); it != int_vecs.end(); it = int_vecs.erase(it)) {
             l[it->first] = IntegerVector((int *) it->second.data(), (int *) it->second.data() + it->second.size());
+        }
+
+        // Floats
+        for(auto it = float_vecs.begin(); it != float_vecs.end(); it = float_vecs.erase(it)) {
+            l[it->first] = NumericVector(it->second.begin(), it->second.end());
+        }
+
+        // Longs
+        for(auto it = long_vecs.begin(); it != long_vecs.end(); it = long_vecs.erase(it)) {
+            l[it->first] = NumericVector(it->second.begin(), it->second.end());
+        }
+
+        // Doubles
+        for(auto it = double_vecs.begin(); it != double_vecs.end(); it = double_vecs.erase(it)) {
+            l[it->first] = NumericVector(it->second.begin(), it->second.end());
         }
 
         for(auto it = string_vecs.begin(); it != string_vecs.end(); it = string_vecs.erase(it)) {

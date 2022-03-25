@@ -35,9 +35,10 @@ public:
 };
 
 
-class UIntBulkReader {
+template<class T>
+class BulkNumReader {
 public:
-    virtual ~UIntBulkReader() = default;
+    virtual ~BulkNumReader() = default;
 
     // Return total number of integers in the reader
     virtual uint32_t size() const = 0;
@@ -49,27 +50,73 @@ public:
     // Will always load >0 if count is >0
     // Note: It is the caller's responsibility to ensure there is no data overflow, i.e.
     // that a load does not try to read past size() total elements
-    virtual uint32_t load(uint32_t *out, uint32_t count) = 0;
+    virtual uint32_t load(T *out, uint32_t count) = 0;
 };
 
-class UIntBulkWriter {
+
+template<class From, class To>
+class BulkNumReaderConverter : public BulkNumReader<To> {
+private:
+    std::unique_ptr<BulkNumReader<From>> reader;
+    std::vector<From> buffer;
 public:
-    virtual ~UIntBulkWriter() = default;
+    BulkNumReaderConverter(std::unique_ptr<BulkNumReader<From>> &&reader) :
+        reader(std::move(reader)) {}
+    uint32_t size() const override {return reader->size();}
+    void seek(uint32_t pos) override {return reader->seek(pos);}
+    uint32_t load(To *out, uint32_t count) override {
+        if (buffer.size() < count) buffer.resize(count);
+        uint32_t loaded = reader->load(buffer.data(), count);
+        for (uint32_t i = 0; i < loaded; i++) {
+            out[i] = (To) buffer[i];
+        }
+        return loaded;
+    }
+};
+
+using UIntBulkReader = BulkNumReader<uint32_t>;
+
+template<class T>
+class BulkNumWriter {
+public:
+    virtual ~BulkNumWriter() = default;
 
     // Write up to `count` integers from `in`, returning the actual number written.
     // Will always write >0, otherwise throwing an exception for an error
     // Note: The writer is allowed to modify the input data, so it might be 
     // modified after calling write()
-    virtual uint32_t write(uint32_t *in, uint32_t count) = 0;
+    virtual uint32_t write(T *in, uint32_t count) = 0;
     
     // Flush any remaining data to disk. No more write calls will be made after
     // calling fiinalize. By default a no-op.
     virtual void finalize() {}
 };
 
+template<class From, class To>
+class BulkNumWriterConverter : public BulkNumWriter<To> {
+private:
+    std::unique_ptr<BulkNumWriter<From>> writer;
+    std::vector<From> buffer;
+public:
+    BulkNumWriterConverter(std::unique_ptr<BulkNumWriter<From>> writer) :
+        writer(std::move(writer)) {}
+    
+    void write(To *in, uint32_t count) override {
+        if (count > buffer.size()) buffer.resize(count);
+        for (uint32_t i = 0; i < count; i++) {
+            buffer[i] = (From) in[i];
+        }
+        writer->write(buffer.data(), count);
+    }
 
-// UIntReader -- Read a stream 32-bit unsigned integers, providing a conveinient
-// interface to a UIntBulkReader.
+    void finalize() override {writer->finalize();}
+};
+
+using UIntBulkWriter = BulkNumWriter<uint32_t>;
+
+
+// NumReader -- Read a stream of numbers, providing a conveinient
+// interface to a BulkReader.
 // Usage:
 // 1. At construction time, specify the input data source, how much data should be
 //    buffered internally, and the maximum data to provide in 1 chunk to downstream users.
@@ -79,24 +126,37 @@ public:
 //    the first few elements as consumed.
 // Note: Users of the class are free to modify the memory between data() and capacity() as needed.
 // This is to support zero-copy transformers, where the loaded data is transformed or filtered in-place.
-class UIntReader {
+template<class T>
+class NumReader {
 protected:
-    std::vector<uint32_t> buffer;
+    std::vector<T> buffer;
     uint32_t idx = 0; // Index of read data in buffer
     uint32_t available = 0; // Amount of read data in buffer
     uint32_t loaded = 0; // Amount of data loaded currently in buffer (note idx + available <= loaded as an invariant)
     uint32_t pos = 0; // Position of next integer that would be read
 
-    std::unique_ptr<UIntBulkReader> reader;
+    std::unique_ptr<BulkNumReader<T>> reader;
     uint32_t total_size; // total size of reader
 
     uint32_t read_size; // Amount to provide users by default
 
 public:
-    UIntReader(std::unique_ptr<UIntBulkReader> &&reader, uint32_t buffer_size, uint32_t read_size=1024);
+    NumReader() = default;
+    NumReader(std::unique_ptr<BulkNumReader<T>> &&reader, uint32_t buffer_size, uint32_t read_size=1024) :
+        buffer(buffer_size), reader(std::move(reader)), total_size(this->reader->size()), read_size(read_size) {}
+
+    // Convert to a different output type, after which the current reader should
+    // not be used
+    template <class To>
+    NumReader<To> convert() {
+        return NumReader<To>(
+            std::make_unique<BulkNumReaderConverter<T, To>>(std::move(reader)),
+            buffer.size()
+        );
+    }
 
     // Pointer to data in buffer start
-    inline uint32_t* data() {return buffer.data() + idx;}
+    inline T* data() {return buffer.data() + idx;}
     // Number of available entries in data() buffer
     inline uint32_t capacity() const {return available;};
 
@@ -171,9 +231,9 @@ public:
     
     // Read one element of the input stream, throwing an exception if there are
     // no more entries to read
-    inline uint32_t read_one() {
+    inline T read_one() {
         ensureCapacity(1);
-        uint32_t val = *data();
+        T val = *data();
         advance(1);
         return val;
     }
@@ -185,9 +245,13 @@ public:
     }
 };
 
+using UIntReader = NumReader<uint32_t>;
+using ULongReader = NumReader<uint64_t>;
+using FloatReader = NumReader<float>;
+using DoubleReader = NumReader<double>;
 
-// Writer -- Write a stream 32-bit unsigned integers, providing a conveinient
-// interface to a UIntBulkWriter.
+// Writer -- Write a stream of numbers, providing a conveinient
+// interface to a BulkWriter.
 // Usage:
 // 1. At construction time, specify the input data source, how much data should be
 //    buffered internally, and the maximum data to provide in 1 chunk to downstream users.
@@ -196,12 +260,12 @@ public:
 //    capacity() elements. If the data is being written piece-by-piece, call advance() to mark
 //    the first few elements as consumed.
 // 4. Call finalize() after all data is done writing to flush any remainig data in the internal buffer
-class UIntWriter {
+template <class T>
+class NumWriter {
 protected:
-    std::vector<uint32_t> buffer;
+    std::vector<T> buffer;
     uint32_t idx = 0; // Index of buffer for next write
-    std::unique_ptr<UIntBulkWriter> writer;
-
+    std::unique_ptr<BulkNumWriter<T>> writer;
 private:
     // Write all data up to idx+available, and copy any stragglers to the beginning
     inline void flush() {
@@ -211,16 +275,27 @@ private:
         idx = idx - written;
         if (idx != 0) {
             // Copy leftover data to the front of the buffer
-            std::memmove(buffer.data(), buffer.data() + written, sizeof(uint32_t) * idx);
+            std::memmove(buffer.data(), buffer.data() + written, sizeof(T) * idx);
         }
     }
 
 public:
-    UIntWriter(std::unique_ptr<UIntBulkWriter> &&writer, uint32_t buffer_size);
-    UIntWriter(UIntWriter &&other) = default;
+    NumWriter(std::unique_ptr<BulkNumWriter<T>> &&writer, uint32_t buffer_size) :
+        buffer(buffer_size), writer(std::move(writer)) {}
+    NumWriter(NumWriter<T> &&other) = default;
     
+    // Convert to a different output type, after which the current writer should
+    // not be used
+    template <class To>
+    NumWriter<To> convert() {
+        return NumWriter<To>(
+            std::make_unique<BulkNumWriterConverter<T, To>>(std::move(writer)),
+            buffer.size()
+        );
+    }
+
     // Pointer to data in buffer start
-    inline uint32_t* data() {return buffer.data() + idx;}
+    inline T* data() {return buffer.data() + idx;}
     // Number of available entries in data() buffer
     inline uint32_t capacity() const {return buffer.size() - idx;};
 
@@ -241,7 +316,7 @@ public:
     
     // Read one element of the input stream, throwing an exception if there are
     // no more entries to read
-    inline void write_one(uint32_t val) {
+    inline void write_one(T val) {
         ensureCapacity(1);
         *data() = val;
         advance(1);
@@ -255,14 +330,31 @@ public:
     inline void finalize() {
         while (idx != 0) flush();
         writer->finalize();
+        writer.reset();
     }
 };
 
+using UIntWriter = NumWriter<uint32_t>;
+using ULongWriter = NumWriter<uint64_t>;
+using FloatWriter = NumWriter<float>;
+using DoubleWriter = NumWriter<double>;
 
 class WriterBuilder {
 public:
     virtual ~WriterBuilder() = default;
     virtual UIntWriter createUIntWriter(std::string name) = 0;
+    virtual ULongWriter createULongWriter(std::string name) = 0;
+    virtual FloatWriter createFloatWriter(std::string name) = 0;
+    virtual DoubleWriter createDoubleWriter(std::string name) = 0;
+
+    template<class T>
+    NumWriter<T> create(std::string name) {
+        if constexpr (std::is_same_v<T, uint32_t>) {return createUIntWriter(name);}
+        if constexpr (std::is_same_v<T, uint64_t>) {return createULongWriter(name);}
+        if constexpr (std::is_same_v<T, float>) {return createFloatWriter(name);}
+        if constexpr (std::is_same_v<T, double>) {return createDoubleWriter(name);}
+    }
+
     virtual std::unique_ptr<StringWriter> createStringWriter(std::string name) = 0;
     virtual void writeVersion(std::string version) = 0;
 };
@@ -271,6 +363,18 @@ class ReaderBuilder {
 public:
     virtual ~ReaderBuilder() = default;
     virtual UIntReader openUIntReader(std::string name) = 0;
+    virtual ULongReader openULongReader(std::string name) = 0;
+    virtual FloatReader openFloatReader(std::string name) = 0;
+    virtual DoubleReader openDoubleReader(std::string name) = 0;
+
+    template<class T>
+    NumReader<T> open(std::string name) {
+        if constexpr (std::is_same_v<T, uint32_t>) {return openUIntReader(name);}
+        if constexpr (std::is_same_v<T, uint64_t>) {return openULongReader(name);}
+        if constexpr (std::is_same_v<T, float>) {return openFloatReader(name);}
+        if constexpr (std::is_same_v<T, double>) {return openDoubleReader(name);}
+    }
+
     virtual std::unique_ptr<StringReader> openStringReader(std::string name) = 0;
     virtual std::string readVersion() = 0;
 };

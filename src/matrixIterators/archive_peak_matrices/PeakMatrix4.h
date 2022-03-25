@@ -2,7 +2,7 @@
 #include <algorithm>
 #include <cassert>
 
-#include "../fragmentIterators/FragmentsIterator.h"
+#include "../fragmentIterators/FragmentIterator.h"
 #include "../fragmentIterators/OverlapIterator.h"
 #include "MatrixIterator.h"
 

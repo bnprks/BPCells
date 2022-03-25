@@ -3,6 +3,7 @@ project(BPCells)
 
 find_package(HDF5 REQUIRED)
 find_package(ZLIB REQUIRED)
+find_package(EIGEN3 REQUIRED NO_MODULE)
 
 option(TARGET_ARM "Whether to build SIMD tests for ARM architectures (rather than x86)")
 
@@ -60,6 +61,21 @@ target_include_directories(
     fragmentIterators 
     PUBLIC 
     ${ZLIB_INCLUDE_DIRS}
+    ${SRC}
+)
+
+add_library(
+    matrixIterators
+    ${SRC}/matrixIterators/StoredMatrix.cpp
+)
+target_link_libraries(
+    matrixIterators
+    arrayIO
+    Eigen3::Eigen
+)
+target_include_directories(
+    matrixIterators
+    PUBLIC
     ${SRC}
 )
 
@@ -131,3 +147,20 @@ add_executable(
 )
 target_link_libraries(fragment_io_test fragmentIterators gtest gmock)
 gtest_discover_tests(fragment_io_test EXTRA_ARGS ../data/mini_fragments.tsv.gz)
+
+add_executable(
+    matrix_io_test
+    test-matrixIO.cpp
+)
+target_link_libraries(matrix_io_test matrixIterators gtest_main gmock)
+gtest_discover_tests(matrix_io_test)
+
+add_executable(
+    peak_matrix_test
+    test-peakMatrix.cpp
+    ${SRC}/matrixIterators/PeakMatrix.cpp
+)
+target_link_libraries(peak_matrix_test 
+    matrixIterators
+    fragmentIterators 
+    gtest_main)

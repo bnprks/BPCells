@@ -260,7 +260,7 @@ StoredFragmentsWriter StoredFragmentsWriter::createPacked(WriterBuilder &wb, uin
     );
 }
 
-bool StoredFragmentsWriter::write(FragmentIterator &fragments, void (*checkInterrupt)(void)) {
+void StoredFragmentsWriter::write(FragmentIterator &fragments, void (*checkInterrupt)(void)) {
     uint32_t cur_end_max = 0;
     uint32_t prev_end_max = 0;
     uint32_t idx = 0;
@@ -366,7 +366,6 @@ bool StoredFragmentsWriter::write(FragmentIterator &fragments, void (*checkInter
         chr_names.push_back(std::string(chr_name));
     }
     this->chr_names->write(VecStringReader(chr_names));
-    return true;
 }
 
 } // end namespace BPCells

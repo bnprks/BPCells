@@ -3,49 +3,23 @@
 namespace BPCells {
 
 
-H5UIntWriter::H5UIntWriter(const HighFive::Group &group, std::string path, uint32_t chunk_size) : 
-    dataset(createH5DataSet(group, path, chunk_size)) {}
-
-HighFive::DataSet H5UIntWriter::createH5DataSet(HighFive::Group group, std::string group_path, uint32_t chunk_size) {
-    HighFive::SilenceHDF5 s;
-    // Create a dataspace with initial shape and max shape
-    HighFive::DataSpace dataspace({0}, {HighFive::DataSpace::UNLIMITED});
-
-    // Use chunking
-    HighFive::DataSetCreateProps props;
-    props.add(HighFive::Chunking(std::vector<hsize_t>{chunk_size}));
-    
-    // At one point I considered using more aggressive chunk caching, but I
-    // don't think it's necessary anymore
-    // HighFive::DataSetAccessProps a_props;
-    // a_props.add(HighFive::Caching(521, 50<<20));// 50MB cache for overkill
-
-    // Create the dataset
-    return group.createDataSet<uint32_t>(group_path, dataspace, props);
-}
-
-uint32_t H5UIntWriter::write(uint32_t *in, uint32_t count) {
-    uint32_t cur_size = dataset.getDimensions()[0];
-    dataset.resize({cur_size + count});
-    dataset.select({cur_size}, {count}).write_raw(in, datatype);
-    return count;
-}
-
-H5UIntReader::H5UIntReader(const HighFive::Group &group, std::string path) :
-    dataset(group.getDataSet(path)) {}
-
-uint32_t H5UIntReader::size() const {return dataset.getDimensions()[0];}
-
-void H5UIntReader::seek(uint32_t new_pos) {pos = new_pos;}
-
-uint32_t H5UIntReader::load(uint32_t *out, uint32_t count) {
-    dataset.select({pos}, {count}).read(out, datatype);
-    pos += count;
-    return count;
-}
-
 H5StringReader::H5StringReader(const HighFive::Group &group, std::string path) {
-    group.getDataSet(path).read(data);
+    HighFive::SilenceHDF5 s;
+
+    HighFive::DataSet d(group.getDataSet(path));
+    HighFive::DataType type = d.getDataType();
+    if (type.isVariableStr()) {
+        d.read(data);
+    } else {
+        uint32_t bytes = type.getSize();
+        uint32_t elements = d.getDimensions()[0];
+        std::vector<char> char_data(bytes * elements);
+        d.read(char_data.data(), type);
+        data.resize(elements);
+        for (uint32_t i = 0; i < elements; i++) {
+            data[i] = std::string(char_data.data() + bytes*i, char_data.data() + bytes*(i+1));
+        }
+    }
 }
 const char* H5StringReader::get(uint32_t idx) const {
     if (idx < data.size()) return data[idx].c_str();
@@ -95,11 +69,21 @@ H5WriterBuilder::H5WriterBuilder(std::string file, std::string group, uint32_t b
     group(createH5Group(file, group)), buffer_size(buffer_size), chunk_size(chunk_size) {}
 
 UIntWriter H5WriterBuilder::createUIntWriter(std::string name) {
-    return UIntWriter(
-        std::make_unique<H5UIntWriter>(group, name, chunk_size),
-        buffer_size
-    );
+    return UIntWriter(std::make_unique<H5NumWriter<uint32_t>>(group, name, chunk_size), buffer_size);
 }
+
+ULongWriter H5WriterBuilder::createULongWriter(std::string name) {
+    return ULongWriter(std::make_unique<H5NumWriter<uint64_t>>(group, name, chunk_size), buffer_size);
+}
+
+FloatWriter H5WriterBuilder::createFloatWriter(std::string name) {
+    return FloatWriter(std::make_unique<H5NumWriter<float>>(group, name, chunk_size), buffer_size);
+}
+
+DoubleWriter H5WriterBuilder::createDoubleWriter(std::string name) {
+    return DoubleWriter(std::make_unique<H5NumWriter<double>>(group, name, chunk_size), buffer_size);
+}
+
 std::unique_ptr<StringWriter> H5WriterBuilder::createStringWriter(std::string name) {
     return std::make_unique<H5StringWriter>(group, name);
 }
@@ -116,11 +100,19 @@ H5ReaderBuilder::H5ReaderBuilder(std::string file, std::string group, uint32_t b
     buffer_size(buffer_size), read_size(read_size) {}
 
 UIntReader H5ReaderBuilder::openUIntReader(std::string name) {
-    return UIntReader(
-        std::make_unique<H5UIntReader>(group, name),
-        buffer_size,
-        read_size
-    );
+    return UIntReader(std::make_unique<H5NumReader<uint32_t>>(group, name), buffer_size, read_size);
+}
+
+ULongReader H5ReaderBuilder::openULongReader(std::string name) {
+    return ULongReader(std::make_unique<H5NumReader<uint64_t>>(group, name), buffer_size, read_size);
+}
+
+FloatReader H5ReaderBuilder::openFloatReader(std::string name) {
+    return FloatReader(std::make_unique<H5NumReader<float>>(group, name), buffer_size, read_size);
+}
+
+DoubleReader H5ReaderBuilder::openDoubleReader(std::string name) {
+    return DoubleReader(std::make_unique<H5NumReader<double>>(group, name), buffer_size, read_size);
 }
 
 std::unique_ptr<StringReader> H5ReaderBuilder::openStringReader(std::string name) {
@@ -132,5 +124,7 @@ std::string H5ReaderBuilder::readVersion() {
     group.getAttribute("version").read(version);
     return version;
 }
+
+HighFive::Group& H5ReaderBuilder::getGroup() {return group;}
 
 }; // end namespace BPCells

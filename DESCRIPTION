@@ -23,7 +23,8 @@ Imports:
     methods,
     Rcpp,
     Matrix,
-    rlang
+    rlang,
+    vctrs
 Suggests:
     IRanges,
     GenomicRanges
