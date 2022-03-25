@@ -133,7 +133,7 @@ void PeakMatrix::loadFragments() {
     //   3. iterate through the available fragments, tallying overlaps
     //      - Iterate peak outside & fragments inside
     //   4. break if we're ready to accumulate and have next_completed_peak >= current_output_peak
-    if (next_active_peak == sorted_peaks.size() - 1) return;
+    if (next_active_peak == sorted_peaks.size()) return;
 
     if (active_peaks.size() == 0 && frags.isSeekable()) {
         frags.seek(sorted_peaks[next_active_peak].chr, sorted_peaks[next_active_peak].start);
@@ -143,6 +143,7 @@ void PeakMatrix::loadFragments() {
         // Load fragments, and check for end of chromosomes
         while (!frags.load()) {
             uint32_t prev_chr_id = frags.currentChr();
+
             if (!frags.nextChr()) {
                 next_completed_peak = sorted_peaks.size() - 1;
                 active_peaks.clear();
@@ -172,52 +173,76 @@ void PeakMatrix::loadFragments() {
         uint32_t *start_data = frags.startData();
         uint32_t *end_data = frags.endData();
         uint32_t *cell_data = frags.cellData();
-
-        // Activate new peaks if relevant, using end_max to check
-        uint32_t i;
-        uint32_t end_max = 0;
-        for (i = 0; i + 128 <= capacity; i += 128) 
-            end_max = std::max(simdmax(end_data + i), end_max);
-        for (; i < capacity; i++)
-            end_max = std::max(end_max, end_data[i]);
         
-        while (sorted_peaks[next_active_peak].chr == frags.currentChr() &&
+        uint32_t i = 0;
+        uint32_t end_max = 0;
+        // Loop through reads in blocks of 128 at a time
+        while (i < capacity) {
+            uint32_t items = std::min(128U, capacity-i);
+            if (items == 128) end_max = std::max(simdmax(end_data + i), end_max);
+            else {
+                for (uint32_t k = i; k < capacity; k++) end_max = std::max(end_max, end_data[k]);
+            }
+
+            // Check for new peaks to activate
+            while (sorted_peaks[next_active_peak].chr == frags.currentChr() &&
                sorted_peaks[next_active_peak].start < end_max) {
 
-            active_peaks.push_back(sorted_peaks[next_active_peak]);
-            active_peaks.back().chr = next_active_peak; // Sloppy, but overload active_peaks chr field to be output index
-            next_active_peak += 1;
-        }
-        
-        // iterate through the available fragments, tallying overlaps
-        for (uint32_t j = 0; j < active_peaks.size(); j++) {
-            Peak p = active_peaks[j];
-            
-            for (i = 0; i < capacity && start_data[i] < p.end; i++) {
-                uint32_t overlap_count = (start_data[i] >= p.start && start_data[i] < p.end) +
-                    (end_data[i] > p.start && end_data[i] <= p.end);
-                if (overlap_count != 0) {
-                    accumulator.add_one(
-                        p.chr, // Sloppy, but overload active_peaks chr field to be output index
-                        cell_data[i],
-                        overlap_count
+                active_peaks.push_back(sorted_peaks[next_active_peak]);
+                active_peaks.back().chr = next_active_peak; // Sloppy, but overload active_peaks chr field to be output index
+                next_active_peak += 1;
+            }
+
+            // For each active peak, iterate through the fragments & tally overlaps
+            for (uint32_t j = 0; j < active_peaks.size(); j++) {
+                Peak p = active_peaks[j];
+                vec p_start = splat(p.start);
+                vec p_end = splat(p.end);
+                vec mask = splat(1U);
+
+                uint32_t k;
+                // Calculate all comparisons using SIMD if necessary, then add accumulator
+                uint32_t overlap_counts[128];
+                for (k = 0; k + 4 <= items && start_data[i+k] < p.end; k += 4) {
+                    vec start = BPCells::load((vec *) &start_data[i+k]);
+                    vec end = BPCells::load((vec *) &end_data[i+k]);
+                    //overlap = (start_data[k] >= p.start && start_data[k] < p.end) + (end_data[k] > p.start && end_data[k] <= p.end)
+                    vec overlap = add(
+                        bitwise_and(mask, bitwise_and(bitwise_xor(mask, cmp_lt_signed(start, p_start)),     cmp_lt_signed(start, p_end))),
+                        bitwise_and(mask, bitwise_and(cmp_gt_signed(end, p_start),      bitwise_xor(mask, cmp_gt_signed(end, p_end))))
                     );
+                    BPCells::store((vec *) &overlap_counts[k], overlap);
                 }
+                for (; k < items && start_data[i+k] < p.end; k++) {
+                    overlap_counts[k] = (start_data[i+k] >= p.start && start_data[i+k] < p.end) + (end_data[i+k] > p.start && end_data[i+k] <= p.end);
+                }
+                // Now k is the las
                 
-            }
-            // Remove the peak from active_peaks if we're done, and mark the
-            // next completed peak on our list
-            if (i < capacity && start_data[i] >= p.end) {
-                while (sorted_peaks[next_completed_peak].chr == frags.currentChr() &&
-                       sorted_peaks[next_completed_peak].end <= p.end &&
-                       sorted_peaks[next_completed_peak].start <= p.start) {
-                    next_completed_peak += 1;
+                for (uint32_t l = 0; l < k; l++) {
+                    if (overlap_counts[l] != 0) {
+                        accumulator.add_one(
+                            p.chr, // Sloppy, but overload active_peaks chr field to be output index
+                            cell_data[i+l],
+                            overlap_counts[l]
+                        );
+                    }
                 }
-                std::swap(active_peaks.back(), active_peaks[j]);
-                active_peaks.pop_back();
-                j -= 1;
+
+                // Remove the peak from active_peaks if we're done, and mark the
+                // next completed peak on our list
+                if (k < items) {
+                    while (sorted_peaks[next_completed_peak].chr == frags.currentChr() &&
+                        sorted_peaks[next_completed_peak].end <= p.end &&
+                        sorted_peaks[next_completed_peak].start <= p.start) {
+                        next_completed_peak += 1;
+                    }
+                    std::swap(active_peaks.back(), active_peaks[j]);
+                    active_peaks.pop_back();
+                    j -= 1;
+                }
             }
-        }
+            i += items;
+        }       
 
         // break if we're ready to accumulate and have next_completed_peak >current_output_peak
         if (accumulator.ready_for_loading() && next_completed_peak > current_output_peak) {

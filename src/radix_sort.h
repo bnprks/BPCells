@@ -38,9 +38,10 @@ void lsdRadixSortArrays(uint32_t size, std::vector<uint32_t> &key, std::vector<V
 
     // Count up how many we see of each byte combination in 1 pass of the data
     for (uint32_t i = 0; i < size; i++) {
-        for (uint32_t j = 0; j < 4; j++) {
-            radix_counts[j][255 & ((uint32_t) key[i] >> (j*8))]++;
-        }
+        radix_counts[0][255 & ((uint32_t) key[i] >> (0*8))]++;
+        radix_counts[1][255 & ((uint32_t) key[i] >> (1*8))]++;
+        radix_counts[2][255 & ((uint32_t) key[i] >> (2*8))]++;
+        radix_counts[3][255 & ((uint32_t) key[i] >> (3*8))]++;
     }
 
     // Tally up which output index each byte combination should start at

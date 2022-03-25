@@ -98,6 +98,10 @@ inline vec bitwise_xor(const vec &v1, const vec &v2) { return _mm_xor_si128(v1, 
 inline vec add(const vec &v1, const vec &v2) { return _mm_add_epi32(v1, v2); }
 inline vec sub(const vec &v1, const vec &v2) { return _mm_sub_epi32(v1, v2); }
 
+// Signed comparisons -- if true all 1 bits, if false all 0 bits
+inline vec cmp_lt_signed(const vec &v1, const vec &v2) {return _mm_cmplt_epi32(v1, v2); }
+inline vec cmp_gt_signed(const vec &v1, const vec &v2) {return _mm_cmpgt_epi32(v1, v2); }
+
 // Input: [a,b,c,d]; [?,?,?,h]; Output [a+h, a+b+h, a+b+c+h, a+b+c+d+h]
 inline vec prefixSum(const vec&v, const vec& initOffset) {
     const vec _tmp1 = add(move_r_2(v), v);
@@ -177,6 +181,10 @@ inline vec bitwise_xor(const vec &v1, const vec &v2) { return veorq_u32(v1, v2);
 inline vec add(const vec &v1, const vec &v2) { return vaddq_u32(v1, v2); }
 inline vec sub(const vec &v1, const vec &v2) { return vsubq_u32(v1, v2); }
 
+// Signed comparisons -- if true all 1 bits, if false all 0 bits
+inline vec cmp_lt_signed(const vec &v1, const vec &v2) {return vcltq_s32((int32x4_t) v1, (int32x4_t) v2); }
+inline vec cmp_gt_signed(const vec &v1, const vec &v2) {return vcgtq_s32((int32x4_t) v1, (int32x4_t) v2); }
+
 // Input: [a,b,c,d]; [?,?,?,h]; Output [a+h, a+b+h, a+b+c+h, a+b+c+d+h]
 inline vec prefixSum(const vec&v, const vec& initOffset) {
     const vec _tmp1 = add(move_r_2(v), v);
@@ -235,6 +243,24 @@ inline vec bitwise_xor(const vec &v1, const vec &v2) { return {v1.x0 ^ v2.x0, v1
 
 inline vec add(const vec &v1, const vec &v2) { return {v1.x0 + v2.x0, v1.x1 + v2.x1, v1.x2 + v2.x2, v1.x3 + v2.x3}; }
 inline vec sub(const vec &v1, const vec &v2) { return {v1.x0 - v2.x0, v1.x1 - v2.x1, v1.x2 - v2.x2, v1.x3 - v2.x3}; }
+
+// Signed comparisons -- if true all 1 bits, if false all 0 bits
+inline vec cmp_lt_signed(const vec &v1, const vec &v2) {
+  return {
+    (int32_t) v1.x0 < (int32_t) v2.x0 ? 0xFFFFFFFF : 0,
+    (int32_t) v1.x1 < (int32_t) v2.x1 ? 0xFFFFFFFF : 0,
+    (int32_t) v1.x2 < (int32_t) v2.x2 ? 0xFFFFFFFF : 0,
+    (int32_t) v1.x3 < (int32_t) v2.x3 ? 0xFFFFFFFF : 0
+  }; 
+}
+inline vec cmp_gt_signed(const vec &v1, const vec &v2) {
+  return {
+    (int32_t) v1.x0 > (int32_t) v2.x0 ? 0xFFFFFFFF : 0,
+    (int32_t) v1.x1 > (int32_t) v2.x1 ? 0xFFFFFFFF : 0,
+    (int32_t) v1.x2 > (int32_t) v2.x2 ? 0xFFFFFFFF : 0,
+    (int32_t) v1.x3 > (int32_t) v2.x3 ? 0xFFFFFFFF : 0
+  }; 
+}
 
 // Input: [a,b,c,d]; [?,?,?,h]; Output [a+h, a+b+h, a+b+c+h, a+b+c+d+h]
 inline vec prefixSum(const vec&v, const vec& initOffset) {

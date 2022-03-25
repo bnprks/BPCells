@@ -53,6 +53,17 @@ TEST(Bitpacking, SimdOps) {
     EXPECT_THAT(out, ElementsAreArray({6, 4, 5, 18}));
     store((vec *) out, prefixSum(bv, cv));
     EXPECT_THAT(out, ElementsAreArray({18, 34, 55, 94}));
+
+
+    uint32_t d[4] = {12, 16, 5, UINT32_MAX};
+    uint32_t e[4] = {12, 4, 21, 6};
+    vec dv = load((vec *) d);
+    vec ev = load((vec *) e);
+
+    store((vec *) out, cmp_gt_signed(dv, ev));
+    EXPECT_THAT(out, ElementsAreArray({0U, UINT32_MAX, 0U, 0U}));
+    store((vec *) out, cmp_lt_signed(dv, ev));
+    EXPECT_THAT(out, ElementsAreArray({0U, 0U, UINT32_MAX, UINT32_MAX}));
 }
 
 uint32_t random_uint32_t() {
