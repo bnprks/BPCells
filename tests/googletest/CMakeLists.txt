@@ -3,7 +3,7 @@ project(BPCells)
 
 find_package(HDF5 REQUIRED)
 find_package(ZLIB REQUIRED)
-find_package(EIGEN3 REQUIRED NO_MODULE)
+find_package(Eigen3 REQUIRED NO_MODULE)
 
 option(TARGET_ARM "Whether to build SIMD tests for ARM architectures (rather than x86)")
 

@@ -200,7 +200,7 @@ void PeakMatrix::loadFragments() {
                 vec p_end = splat(p.end);
                 vec mask = splat(1U);
 
-                uint32_t k;
+                uint32_t k = 0;
                 // Calculate all comparisons using SIMD if necessary, then add accumulator
                 uint32_t overlap_counts[128];
                 for (k = 0; k + 4 <= items && start_data[i+k] < p.end; k += 4) {
@@ -216,7 +216,7 @@ void PeakMatrix::loadFragments() {
                 for (; k < items && start_data[i+k] < p.end; k++) {
                     overlap_counts[k] = (start_data[i+k] >= p.start && start_data[i+k] < p.end) + (end_data[i+k] > p.start && end_data[i+k] <= p.end);
                 }
-                // Now k is the las
+                // Now k is the last item that's beyond the end of the peak
                 
                 for (uint32_t l = 0; l < k; l++) {
                     if (overlap_counts[l] != 0) {

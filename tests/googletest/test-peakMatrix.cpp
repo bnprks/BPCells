@@ -124,12 +124,12 @@ bool matrix_identical_cpp(MatrixLoader<uint32_t> &mat1, MatrixLoader<uint32_t> &
             bool res1 = i1.nextValue();
             bool res2 = i2.nextValue();
             if (res1 != res2) {
-                std::cerr << "Different number of fragments in chromosome." << std::endl;
+                std::cerr << "Different number of entries in column." << std::endl;
                 return false;
             }
             if (!res1) break;
             if (i1.row() != i2.row() || i1.col() != i2.col() || i1.val() != i2.val()) {
-                printf("Mismatched fragments: (%d,%d=%d) vs. (%d,%d=%d)\n",
+                printf("Mismatched entries: (%d,%d=%d) vs. (%d,%d=%d)\n",
                     i1.row(), i1.col(), i1.val(),
                     i2.row(), i2.col(), i2.val()
                 );

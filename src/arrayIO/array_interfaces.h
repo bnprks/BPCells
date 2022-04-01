@@ -313,6 +313,8 @@ public:
     }
 
     inline void ensureCapacity() {ensureCapacity(1);}
+
+    inline uint32_t maxCapacity() const {return buffer.size();}
     
     // Read one element of the input stream, throwing an exception if there are
     // no more entries to read

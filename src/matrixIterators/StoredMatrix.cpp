@@ -47,6 +47,8 @@ void StoredMatrixWriter::write(MatrixIterator<uint32_t> &mat, void (*checkInterr
     uint32_t col = 0;
     uint32_t idx = 0; // Index of for col_ptr array
 
+    uint32_t max_capacity = std::max(row.maxCapacity(), val.maxCapacity());
+
     col_ptr.write_one(idx);
 
     while (mat.nextCol()) {
@@ -58,16 +60,22 @@ void StoredMatrixWriter::write(MatrixIterator<uint32_t> &mat, void (*checkInterr
             col += 1;
         }
         while(mat.load()) {
-            uint32_t capacity = mat.capacity();
-            row.ensureCapacity(capacity);
-            val.ensureCapacity(capacity);
+            uint32_t load_remaining = mat.capacity();
+            while (load_remaining > 0) {
+                uint32_t capacity = std::min(max_capacity, load_remaining);
 
-            std::memmove(row.data(), mat.rowData(), capacity*sizeof(uint32_t));
-            std::memmove(val.data(), mat.valData(), capacity*sizeof(uint32_t));
+                row.ensureCapacity(capacity);
+                val.ensureCapacity(capacity);
 
-            row.advance(capacity);
-            val.advance(capacity);
-            idx += capacity;
+                std::memmove(row.data(), mat.rowData(), capacity*sizeof(uint32_t));
+                std::memmove(val.data(), mat.valData(), capacity*sizeof(uint32_t));
+
+                row.advance(capacity);
+                val.advance(capacity);
+                idx += capacity;
+
+                load_remaining -= capacity;
+            }            
 
             if(checkInterrupt != NULL) checkInterrupt();
         }
