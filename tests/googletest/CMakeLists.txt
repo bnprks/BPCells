@@ -159,6 +159,7 @@ add_executable(
     peak_matrix_test
     test-peakMatrix.cpp
     ${SRC}/matrixIterators/PeakMatrix.cpp
+    ${SRC}/matrixIterators/TileMatrix.cpp
 )
 target_link_libraries(peak_matrix_test 
     matrixIterators

@@ -10,16 +10,17 @@
 
 namespace BPCells {
 
-class Peak {
-public:
-    uint32_t chr, start, end;
-};
 
 // Output cell x peak matrix (rows = cell_id, col = peak_id)
 // Regions are given as half-open format
 // Peaks can overlap, and columns are ordered by (end, start) coordinate
 class PeakMatrix : public MatrixLoader<uint32_t> {
 private:
+    class Peak {
+    public:
+        uint32_t chr, start, end;
+    };
+
     FragmentLoader &frags;
     std::unique_ptr<StringReader> chr_levels;
     MatrixAccumulator<uint32_t> accumulator;

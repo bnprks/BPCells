@@ -85,6 +85,10 @@ iterate_peak_matrix_cpp <- function(fragments, chr, start, end, chr_levels) {
     .Call(`_BPCells_iterate_peak_matrix_cpp`, fragments, chr, start, end, chr_levels)
 }
 
+iterate_tile_matrix_cpp <- function(fragments, chr, start, end, width, chr_levels) {
+    .Call(`_BPCells_iterate_tile_matrix_cpp`, fragments, chr, start, end, width, chr_levels)
+}
+
 nucleosome_counts_cpp <- function(fragments, nuc_width = 147L) {
     .Call(`_BPCells_nucleosome_counts_cpp`, fragments, nuc_width)
 }

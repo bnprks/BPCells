@@ -118,19 +118,6 @@ assert_not_null <- function(x, n=1) {
 }
 
 
-normalize_ranges <- function(x, n = 1) {
-    assert_is(x, c("GRanges", "list"), n + 1)
-    if (is(x, "GRanges")) {
-        x <- list(
-            start = GenomicRanges::start(x),
-            end = GenomicRanges::end(x),
-            chr = as.character(GenomicRanges::seqnames(x))
-        )
-    }
-    assert_has_names(x, c("chr", "start", "end"), n+1)
-    return(x)
-}
-
 normalize_length <- function(x, len, n=1) {
     if (length(x) == 1)
         return(rep(x, len))

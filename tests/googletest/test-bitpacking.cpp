@@ -66,6 +66,18 @@ TEST(Bitpacking, SimdOps) {
     EXPECT_THAT(out, ElementsAreArray({0U, 0U, UINT32_MAX, UINT32_MAX}));
 }
 
+TEST(Bitpacking, SimdLibdivide) {
+    using ::testing::ElementsAreArray;
+
+    uint32_t e[4] = {12, 4, 21, 6};
+    vec ev = load((vec *) e);
+    uint32_t out[4];
+
+    struct libdivide::libdivide_u32_t fast_d = libdivide::libdivide_u32_gen(3);
+    store((vec *) out, libdivide_vec(ev, &fast_d));
+    EXPECT_THAT(out, ElementsAreArray({4U,1U,7U,2U}));
+}
+
 uint32_t random_uint32_t() {
     return (
         (uint32_t) (rand() & 255) +

@@ -172,7 +172,7 @@ bool matrix_identical_uint32_t_cpp(SEXP mat1, SEXP mat2) {
         }
         if (!res1) break;
         if(i1.currentCol() != i2.currentCol()) {
-            Rcerr << "Different columnloaded" << std::endl;
+            Rcerr << "Different column loaded" << std::endl;
             return false;
         }
         while(true) {

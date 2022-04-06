@@ -96,15 +96,18 @@ void PeakMatrix::seekCol(uint32_t col) {
         throw std::runtime_error("Can't seek a PeakMatrix if the fragments aren't seekable");
     next_active_peak = end_sorted_lookup[col];
     next_completed_peak = 0;
+    active_peaks.clear();
     frags.seek(sorted_peaks[next_active_peak].chr, sorted_peaks[next_active_peak].start);
 }
 
 bool PeakMatrix::nextCol() {
     current_output_peak += 1;
-    if (current_output_peak >= next_completed_peak) {
-        if (current_output_peak >= n_peaks) return false;
-        loadFragments();
-    }  
+    while (current_output_peak < next_completed_peak && current_output_peak < n_peaks) {
+        if (accumulator.discard_until(current_output_peak)) return true;
+        current_output_peak += 1;
+    }
+    if (current_output_peak >= n_peaks) {current_output_peak -= 1; return false;}
+    loadFragments();
     return accumulator.discard_until(current_output_peak);
 }
 
@@ -132,7 +135,7 @@ void PeakMatrix::loadFragments() {
     //   2. activate new peaks if relevant
     //   3. iterate through the available fragments, tallying overlaps
     //      - Iterate peak outside & fragments inside
-    //   4. break if we're ready to accumulate and have next_completed_peak >= current_output_peak
+    //   4. break if we're ready to accumulate and have next_completed_peak > current_output_peak
     if (next_active_peak == sorted_peaks.size()) return;
 
     if (active_peaks.size() == 0 && frags.isSeekable()) {

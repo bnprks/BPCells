@@ -3,6 +3,8 @@
 // This provides a basic set of SIMD operations on vectors of 4 x uint32_t
 // for ARM NEON, x86, and non-simd fallback implementations in standard C
 
+// One small twist is the inclusion of SIMD division by a constant via libdivide
+
 #include <cstdint>
 
 #define _SIMDBP128_X86_FULL 1
@@ -14,18 +16,23 @@
   // x86 with full SSE4.1 support
   #include <smmintrin.h>
   #define _SIMDBP128_MODE_ _SIMDBP128_X86_FULL
+  #define LIBDIVIDE_SSE2
 #elif defined(__SSE2__)
   // x86 with SSE2 but no SSE4.1
   #include <emmintrin.h>
   #define _SIMDBP128_MODE_ _SIMDBP128_X86
+  #define LIBDIVIDE_SSE2
 #elif defined(__ARM_NEON)
   // ARM NEON
   #include <arm_neon.h>
   #define _SIMDBP128_MODE_ _SIMDBP128_ARM_NEON
+  #define LIBDIVIDE_NEON
 #else
   // Fallback portable C (non-simd)
   #define _SIMDBP128_MODE_ _SIMDBP128_C_FALLBACK
 #endif
+
+#include "../lib/libdivide.h"
 
 namespace BPCells {
 
@@ -98,6 +105,9 @@ inline vec bitwise_xor(const vec &v1, const vec &v2) { return _mm_xor_si128(v1, 
 inline vec add(const vec &v1, const vec &v2) { return _mm_add_epi32(v1, v2); }
 inline vec sub(const vec &v1, const vec &v2) { return _mm_sub_epi32(v1, v2); }
 
+// Fast division by a constant with libdivide
+inline vec libdivide_vec(const vec &v, const struct libdivide::libdivide_u32_t * divisor) {return libdivide::libdivide_u32_do_vec128(v, divisor);}
+
 // Signed comparisons -- if true all 1 bits, if false all 0 bits
 inline vec cmp_lt_signed(const vec &v1, const vec &v2) {return _mm_cmplt_epi32(v1, v2); }
 inline vec cmp_gt_signed(const vec &v1, const vec &v2) {return _mm_cmpgt_epi32(v1, v2); }
@@ -108,6 +118,7 @@ inline vec prefixSum(const vec&v, const vec& initOffset) {
     const vec _tmp2 = add(move_r_1(_tmp1), _tmp1);
     return add(_tmp2, _mm_shuffle_epi32(initOffset, 0xff));
 }
+
 
 #endif
 
@@ -181,6 +192,9 @@ inline vec bitwise_xor(const vec &v1, const vec &v2) { return veorq_u32(v1, v2);
 inline vec add(const vec &v1, const vec &v2) { return vaddq_u32(v1, v2); }
 inline vec sub(const vec &v1, const vec &v2) { return vsubq_u32(v1, v2); }
 
+// Fast division by a constant with libdivide
+inline vec libdivide_vec(const vec &v, const struct libdivide::libdivide_u32_t * divisor) {return libdivide::libdivide_u32_do_vec128(v, divisor);}
+
 // Signed comparisons -- if true all 1 bits, if false all 0 bits
 inline vec cmp_lt_signed(const vec &v1, const vec &v2) {return vcltq_s32((int32x4_t) v1, (int32x4_t) v2); }
 inline vec cmp_gt_signed(const vec &v1, const vec &v2) {return vcgtq_s32((int32x4_t) v1, (int32x4_t) v2); }
@@ -243,6 +257,17 @@ inline vec bitwise_xor(const vec &v1, const vec &v2) { return {v1.x0 ^ v2.x0, v1
 
 inline vec add(const vec &v1, const vec &v2) { return {v1.x0 + v2.x0, v1.x1 + v2.x1, v1.x2 + v2.x2, v1.x3 + v2.x3}; }
 inline vec sub(const vec &v1, const vec &v2) { return {v1.x0 - v2.x0, v1.x1 - v2.x1, v1.x2 - v2.x2, v1.x3 - v2.x3}; }
+
+// Fast division by a constant with libdivide
+inline vec libdivide_vec(const vec &v, const struct libdivide::libdivide_u32_t * divisor) {
+  return {
+    libdivide::libdivide_u32_do(v.x0, divisor),
+    libdivide::libdivide_u32_do(v.x1, divisor),
+    libdivide::libdivide_u32_do(v.x2, divisor),
+    libdivide::libdivide_u32_do(v.x3, divisor)
+  };
+  
+}
 
 // Signed comparisons -- if true all 1 bits, if false all 0 bits
 inline vec cmp_lt_signed(const vec &v1, const vec &v2) {
