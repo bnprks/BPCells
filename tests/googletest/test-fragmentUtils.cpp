@@ -5,13 +5,14 @@
 #include <fragmentIterators/FragmentIterator.h>
 #include <fragmentIterators/StoredFragments.h>
 #include <fragmentIterators/RegionSelect.h>
+#include <fragmentIterators/MergeFragments.h>
 #include <arrayIO/vector.h>
 
 using namespace BPCells;
 
 
 
-TEST(FragmentSeeking, SeekStoredFrags) {
+TEST(FragmentUtils, SeekStoredFrags) {
     using namespace Testing;
     std::vector<Frag> frags_vec;
     // Write chr1 test data, zig-zag up+down
@@ -64,7 +65,7 @@ TEST(FragmentSeeking, SeekStoredFrags) {
     EXPECT_EQ(frags.startData()[0], 10);
 }
 
-TEST(FragmentSeeking, RegionSelect) {
+TEST(FragmentUtils, RegionSelect) {
     using namespace Testing;
 
     // Strategy -- cell 0 has no overlaps, cell 1 has all overlaps. 
@@ -121,4 +122,62 @@ TEST(FragmentSeeking, RegionSelect) {
     EXPECT_TRUE(fragments_identical(frags_c1, inclusive));
     frags_both.restart();
     EXPECT_TRUE(fragments_identical(frags_c0, exclusive));
+}
+
+TEST(FragmentUtils, MergeFragments) {
+    uint32_t max_cell = 50;
+    auto v1 = Testing::generateFrags(1000, 3, 200, max_cell-1, 25, 1336);
+    auto v2 = Testing::generateFrags(1000, 3, 200, max_cell-1, 25, 1334);
+    auto v3 = Testing::generateFrags(1000, 3, 200, max_cell-1, 25, 1227);
+    
+    std::sort(v1.begin(), v1.end(), [](const Testing::Frag &a, const Testing::Frag &b) {
+        if (a.chr != b.chr) return a.chr < b.chr;
+        return a.start < b.start;
+    });
+    std::sort(v2.begin(), v2.end(), [](const Testing::Frag &a, const Testing::Frag &b) {
+        if (a.chr != b.chr) return a.chr < b.chr;
+        return a.start < b.start;
+    });
+    std::sort(v3.begin(), v3.end(), [](const Testing::Frag &a, const Testing::Frag &b) {
+        if (a.chr != b.chr) return a.chr < b.chr;
+        return a.start < b.start;
+    });
+
+    std::vector<Testing::Frag> v;
+    v.insert(v.end(), v1.begin(), v1.end());
+    v.insert(v.end(), v2.begin(), v2.end());
+    v.insert(v.end(), v3.begin(), v3.end());
+    uint32_t idx = 0;
+    for (int i = 0; i < v.size(); i++) {
+        v[i].cell += max_cell * (i/1000);
+    }
+    std::stable_sort(v.begin(), v.end(), [](const Testing::Frag &a, const Testing::Frag &b) {
+        if (a.chr != b.chr) return a.chr < b.chr;
+        return a.start < b.start;
+    });
+
+    std::unique_ptr<VecReaderWriterBuilder> v_expect = writeFragmentTuple(v, max_cell, true);
+    StoredFragments expected = StoredFragments::openUnpacked(*v_expect);
+
+    std::unique_ptr<VecReaderWriterBuilder> v1_data = writeFragmentTuple(v1, max_cell, true);
+    StoredFragments v1_frags = StoredFragments::openUnpacked(*v1_data);
+
+    std::unique_ptr<VecReaderWriterBuilder> v2_data = writeFragmentTuple(v2, max_cell, true);
+    std::vector<std::string> &names_v2 = v2_data->getStringVecs().at("cell_names");
+    for (uint32_t i = 0; i < max_cell; i++) {
+        names_v2[i] = std::string("c") + std::to_string(i + max_cell);
+    }
+    StoredFragments v2_frags = StoredFragments::openUnpacked(*v2_data);
+
+    std::unique_ptr<VecReaderWriterBuilder> v3_data = writeFragmentTuple(v3, max_cell, true);
+    std::vector<std::string> &names_v3 = v3_data->getStringVecs().at("cell_names");
+    for (uint32_t i = 0; i < max_cell; i++) {
+        names_v3[i] = std::string("c") + std::to_string(i + 2*max_cell);
+    }
+    StoredFragments v3_frags = StoredFragments::openUnpacked(*v3_data);
+
+    MergeFragments merge({v1_frags, v2_frags, v3_frags});
+    
+
+    EXPECT_TRUE(Testing::fragments_identical(expected, merge));
 }

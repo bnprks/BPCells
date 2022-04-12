@@ -78,9 +78,9 @@ std::unique_ptr<StringReader> VecReaderWriterBuilder::openStringReader(std::stri
 }
 std::string VecReaderWriterBuilder::readVersion() {return version;}
 
-std::map<std::string, std::vector<uint32_t>>& VecReaderWriterBuilder::getIntVecs(std::string name) {return int_vecs;}
-std::map<std::string, std::vector<float>>& VecReaderWriterBuilder::getFloatVecs(std::string name) {return float_vecs;}
-std::map<std::string, std::vector<uint64_t>>& VecReaderWriterBuilder::getLongVecs(std::string name) {return long_vecs;}
-std::map<std::string, std::vector<double>>& VecReaderWriterBuilder::getDoubleVecs(std::string name) {return double_vecs;}
-std::map<std::string, std::vector<std::string>>& VecReaderWriterBuilder::getStringVec(std::string name) {return string_vecs;}
+std::map<std::string, std::vector<uint32_t>>& VecReaderWriterBuilder::getIntVecs() {return int_vecs;}
+std::map<std::string, std::vector<float>>& VecReaderWriterBuilder::getFloatVecs() {return float_vecs;}
+std::map<std::string, std::vector<uint64_t>>& VecReaderWriterBuilder::getLongVecs() {return long_vecs;}
+std::map<std::string, std::vector<double>>& VecReaderWriterBuilder::getDoubleVecs() {return double_vecs;}
+std::map<std::string, std::vector<std::string>>& VecReaderWriterBuilder::getStringVecs() {return string_vecs;}
 } // end namespace BPCells

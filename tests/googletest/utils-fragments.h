@@ -14,7 +14,7 @@ public:
 };
 
 // Create a Fragment object from a vector of fragments (sorting not required)
-std::unique_ptr<BPCells::VecReaderWriterBuilder> writeFragmentTuple(std::vector<Frag> frag_vec, uint32_t min_cell_count=0) {
+std::unique_ptr<BPCells::VecReaderWriterBuilder> writeFragmentTuple(std::vector<Frag> frag_vec, uint32_t min_cell_count=0, bool skip_sort = false) {
     using namespace BPCells;
 
     VecReaderWriterBuilder v;
@@ -29,12 +29,14 @@ std::unique_ptr<BPCells::VecReaderWriterBuilder> writeFragmentTuple(std::vector<
     std::unique_ptr<StringWriter> w_cell_names = v.createStringWriter("cell_names");
 
     // Sort by (chr, start, end, cell) to ensure consistent ordering
-    std::sort(frag_vec.begin(), frag_vec.end(), [](const Frag &a, const Frag &b) {
-        if (a.chr != b.chr) return a.chr < b.chr;
-        if (a.start != b.start) return a.start < b.start;
-        if (a.end != b.end) return a.end < b.end;
-        return a.cell < b.cell;
-    });
+    if(!skip_sort) {
+        std::sort(frag_vec.begin(), frag_vec.end(), [](const Frag &a, const Frag &b) {
+            if (a.chr != b.chr) return a.chr < b.chr;
+            if (a.start != b.start) return a.start < b.start;
+            if (a.end != b.end) return a.end < b.end;
+            return a.cell < b.cell;
+        });
+    }
 
     uint32_t current_chr = 0;
     w_chr_ptr.write_one(0);
@@ -60,7 +62,7 @@ std::unique_ptr<BPCells::VecReaderWriterBuilder> writeFragmentTuple(std::vector<
 
     for (auto f : frag_vec) min_cell_count = std::max(min_cell_count, f.cell + 1);
     std::vector<std::string> cell_names;
-    for (int i = 0; i <= min_cell_count; i++) {
+    for (int i = 0; i < min_cell_count; i++) {
         cell_names.push_back("c" + std::to_string(i));
     }
 

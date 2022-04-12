@@ -87,11 +87,11 @@ public:
     std::unique_ptr<StringReader> openStringReader(std::string name) override;
     std::string readVersion() override;
 
-    std::map<std::string, std::vector<uint32_t>>& getIntVecs(std::string name);
-    std::map<std::string, std::vector<float>>& getFloatVecs(std::string name);
-    std::map<std::string, std::vector<uint64_t>>& getLongVecs(std::string name);
-    std::map<std::string, std::vector<double>>& getDoubleVecs(std::string name);
-    std::map<std::string, std::vector<std::string>>& getStringVec(std::string name);
+    std::map<std::string, std::vector<uint32_t>>& getIntVecs();
+    std::map<std::string, std::vector<float>>& getFloatVecs();
+    std::map<std::string, std::vector<uint64_t>>& getLongVecs();
+    std::map<std::string, std::vector<double>>& getDoubleVecs();
+    std::map<std::string, std::vector<std::string>>& getStringVecs();
 };
 
 } // end namespace BPCells

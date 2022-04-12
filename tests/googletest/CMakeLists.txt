@@ -49,6 +49,7 @@ add_library(
     ${SRC}/fragmentIterators/CellSelect.cpp
     ${SRC}/fragmentIterators/ChrSelect.cpp
     ${SRC}/fragmentIterators/FragmentIterator.cpp
+    ${SRC}/fragmentIterators/MergeFragments.cpp
     ${SRC}/fragmentIterators/ShiftCoords.cpp
     ${SRC}/fragmentIterators/StoredFragments.cpp
     ${SRC}/fragmentIterators/RegionSelect.cpp
@@ -151,11 +152,11 @@ gtest_discover_tests(fragment_io_test EXTRA_ARGS ../data/mini_fragments.tsv.gz)
 
 
 add_executable(
-    fragment_seeking_test
-    test-fragmentSeeking.cpp
+    fragment_utils_test
+    test-fragmentUtils.cpp
 )
-target_link_libraries(fragment_seeking_test fragmentIterators gtest_main)
-gtest_discover_tests(fragment_seeking_test)
+target_link_libraries(fragment_utils_test fragmentIterators gtest_main)
+gtest_discover_tests(fragment_utils_test)
 
 add_executable(
     matrix_io_test
