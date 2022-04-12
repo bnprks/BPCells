@@ -4,7 +4,7 @@
 #include <map>
 #include <vector>
 
-#include "../radix_sort.h"
+#include "../utils/radix_sort.h"
 
 // Summary:
 // These accumulator classes help during construction of a sparse matrix e.g. in PeakMatrix.
@@ -79,6 +79,14 @@ public:
         entries_stored = 0;
         output_idx = UINT32_MAX;
         load_capacity = 0;
+
+        // Reset capacity down to some low but manageable size
+        row_data.resize(64);
+        val_data.resize(64);
+        col_data.resize(64);
+        row_buf.resize(64);
+        val_buf.resize(64);
+        col_buf.resize(64);
     }
 
     // Add an item to the accumulator, or no-op if val == 0
@@ -102,10 +110,10 @@ public:
 
     // Say whether the buffer is full enough to be ready for loading
     bool ready_for_loading() const {
-        // Ready for loading if we have under 50% capacity for additional entries
+        // Ready for loading if we have under 25% capacity for additional entries
         // The idea is to prevents repeated compactions for many small, overlapping outputs.
         // I'm not sure how important this really is in practical use cases
-        return entries_stored*2 >= row_data.size();
+        return entries_stored*4 >= row_data.size();
     }
 
     // Discard entries until `col`, and return whether or not the next available entry

@@ -12,6 +12,20 @@ TileMatrix::TileMatrix(FragmentLoader &frags,
     if (chr.size() != start.size() || chr.size() != end.size() || chr.size() != width.size())
         throw std::invalid_argument("chr, start, end, and width must all be same length");
     
+    // Check that chr name matches for all the available chrNames in frags 
+    for (uint32_t i = 0; i < this->chr_levels->size(); i++) {
+        const char* chr_name_frag = frags.chrNames(i);
+        const char* chr_name_args = this->chr_levels->get(i);
+        if (chr_name_frag != NULL &&
+            (chr_name_args == NULL || strcmp(chr_name_frag, chr_name_args) != 0)) {
+            throw std::runtime_error(
+                std::string("PeakMatrix encountered fragment with incorrect chrLevel: ") +
+                std::string(chr_name_frag) +
+                std::string(" expected: ") +
+                std::string(chr_name_args));
+        }
+    }
+    
     Tile prev;
     for (size_t i = 0; i < chr.size(); i++) {
         if (chr[i] >= this->chr_levels->size())
@@ -73,27 +87,25 @@ void TileMatrix::restart() {
     accumulator.clear();
     active_tiles.clear();
     next_completed_tile = 0;
+    current_output_tile = UINT32_MAX;
     next_active_tile = 0;
 }
 void TileMatrix::seekCol(uint32_t col) {
     if (!frags.isSeekable())
         throw std::runtime_error("Can't seek a TileMatrix if the fragments aren't seekable");
-    // Binary search for the requested tile, 
-    // end condition: sorted_tiles[lo - 1] contains last tile where output_idx <= col
-    uint32_t lo = 0;
-    uint32_t hi = sorted_tiles.size() - 1;
-    while (lo <= hi) {
-        uint32_t mid = lo + (hi - lo) / 2;
-        if (sorted_tiles[mid].output_idx > col) hi = mid - 1;
-        else lo = mid + 1;
-    }
+    
+    // Binary search for the requested tile
+    auto next_tile = std::upper_bound(sorted_tiles.begin(), sorted_tiles.end(), col, [](uint32_t value, Tile t) {
+        return value < t.output_idx;
+    });
 
-    next_active_tile = lo - 1; // We know lo > 0 because tile 0 has output_idx = 0
+    next_active_tile = (next_tile - sorted_tiles.begin()) - 1; // We know lo > 0 because tile 0 has output_idx = 0
     next_completed_tile = 0;
+    current_output_tile = col - 1;
     active_tiles.clear();
-    uint32_t seek_bp = sorted_tiles[next_active_tile].start + 
-        (col - sorted_tiles[next_active_tile].output_idx) * libdivide::libdivide_u32_recover(&sorted_tiles[next_active_tile].width);
-    frags.seek(sorted_tiles[next_active_tile].chr, seek_bp);
+    accumulator.clear();
+    // LoadFragments will handle calling frags.seek appropriately
+    nextCol();
 }
 
 bool TileMatrix::nextCol() {
@@ -136,7 +148,16 @@ void TileMatrix::loadFragments() {
     if (next_active_tile == sorted_tiles.size()) return;
 
     if (active_tiles.size() == 0 && frags.isSeekable()) {
-        frags.seek(sorted_tiles[next_active_tile].chr, sorted_tiles[next_active_tile].start);
+        uint32_t seek_bp = sorted_tiles[next_active_tile].start;
+        if (current_output_tile > sorted_tiles[next_active_tile].output_idx &&
+            current_output_tile < sorted_tiles[next_active_tile + 1].output_idx) {
+            // If we've just called seekCol(), then we might want to seek to the middle of a tile region rather than
+            // the beginning
+            seek_bp = sorted_tiles[next_active_tile].start + 
+                (current_output_tile - sorted_tiles[next_active_tile].output_idx) * libdivide::libdivide_u32_recover(&sorted_tiles[next_active_tile].width);
+        }
+        
+        frags.seek(sorted_tiles[next_active_tile].chr, seek_bp);
     }
 
     while (true) {
@@ -247,31 +268,22 @@ void TileMatrix::loadFragments() {
         // Update next_completed_tile according to the start of the last fragment considered
         if (capacity > 0) {
             // Binary search for the tile containing current bp, 
-            // end condition: sorted_tiles[lo-1] contains the last tile where tile.start <= last fragment start considered
-            uint32_t lo = 0;
-            uint32_t hi = sorted_tiles.size() - 1;
-            while (lo <= hi) {
-                uint32_t mid = lo + (hi - lo) / 2;
-                
-                bool greater;
-                if (sorted_tiles[mid].chr != frags.currentChr()) 
-                    greater = sorted_tiles[mid].chr > frags.currentChr();
-                else 
-                    greater = sorted_tiles[mid].start > start_data[capacity-1];
+            auto max_region = std::upper_bound(sorted_tiles.begin(), sorted_tiles.end(), 
+                std::pair{frags.currentChr(), start_data[capacity-1]}, [](std::pair<uint32_t, uint32_t> value, Tile t) {
+                if (value.first != t.chr) return value.first < t.chr;
+                return value.second < t.start;
+            });
 
-                if (greater) hi = mid - 1;
-                else lo = mid + 1;
-            }
-            if (lo > 0) {
+            if (max_region != sorted_tiles.begin()) {
                 uint32_t new_completed_tile;
-                Tile t = sorted_tiles[lo-1];
+                Tile t = *(max_region - 1);
                 if (t.chr == frags.currentChr() && 
                     t.start <= start_data[capacity-1] &&
                     t.end > start_data[capacity-1]) {
                     // We overlap, so calculate the tile we're currently on
                     new_completed_tile = t.output_idx + libdivide::libdivide_u32_do(start_data[capacity-1] - t.start, &t.width); 
                 } else {
-                    new_completed_tile = sorted_tiles[lo].output_idx;
+                    new_completed_tile = max_region->output_idx;
                 }
                 next_completed_tile = std::max(next_completed_tile, new_completed_tile);
             }

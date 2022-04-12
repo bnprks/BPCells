@@ -578,11 +578,14 @@ setClass("PeakMatrix",
     )
 )
 #' Calculate cell x ranges overlap matrix
-#' @param fragments Input fragments object
-#' @param ranges GRanges object with the ranges to overlap, or list/data frame with columns chr, start, & end
+#' @param fragments Input fragments object. Must have cell names and chromosome names defined
+#' @param ranges GRanges object with the ranges to overlap, or list/data frame with columns chr, start, & end.
+#'     Must be sorted in order (chr, end, start) where chromosomes are ordered according to the chromosome names of `fragments`.
 #' @param zero_based_coords Boolean for whether the input ranges are in a 0-based 
 #'        or a 1-based coordinate system. (1-based will be converted to 0-based)
 #'        (see http://genome.ucsc.edu/blog/the-ucsc-genome-browser-coordinate-counting-systems/)
+#' @note When calculating the matrix directly from a fragments tsv, it's necessary to first call `select_chromosomes` in order to 
+#'     provide the ordering of chromosomes to expect while reading the tsv.
 #' @return Iterable matrix object with dimension cell x ranges
 #' @export
 peakMatrix <- function(fragments, ranges, zero_based_coords=TRUE) {
@@ -644,10 +647,13 @@ setClass("TileMatrix",
 #' Calculate cell x ranges tile overlap matrix
 #' @param fragments Input fragments object
 #' @param ranges GRanges object with the ranges to overlap including a metadata column tile_width, 
-#'  or a list/data frame with columns chr, start, end, and tile_width
+#'  or a list/data frame with columns chr, start, end, and tile_width. Must be non-overlapping and sorted by
+#'  (chr, start), with chromosomes ordered according to the chromosome names of `fragments`
 #' @param zero_based_coords Boolean for whether the input ranges are in a 0-based 
 #'        or a 1-based coordinate system. (1-based will be converted to 0-based)
 #'        (see http://genome.ucsc.edu/blog/the-ucsc-genome-browser-coordinate-counting-systems/)
+#' @note When calculating the matrix directly from a fragments tsv, it's necessary to first call `select_chromosomes` in order to 
+#'     provide the ordering of chromosomes to expect while reading the tsv.
 #' @return Iterable matrix object with dimension cell x ranges
 #' @export
 tileMatrix <- function(fragments, ranges, zero_based_coords=TRUE) {

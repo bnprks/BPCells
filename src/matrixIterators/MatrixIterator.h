@@ -43,6 +43,7 @@ public:
     virtual void restart() = 0;
 
     // Seek to a specific column without reading data
+    // Next call should be to load(). col must be < cols()
     virtual void seekCol(uint32_t col) = 0;
 
     // Advance to the next column, or return false if there

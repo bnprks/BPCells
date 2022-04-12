@@ -36,6 +36,12 @@ private:
 public:
     // Note: It's the caller's responsibility to make sure that
     // the FragmentLoader will not be deleted while this PeakMatrix is still alive
+    // Arguments:
+    // frags - fragments loader with the input fragments for the peak matrix
+    // chr - list of chrIDs (following the chrIDs in frags)
+    // start, end - list of start + end coordinates for the peaks (start inclusive, end exclusive)
+    // chr_levels - list of expected chr levels, for safety checking that peaks are coming from the
+    //    correct chromosomes
     PeakMatrix(FragmentLoader &frags, 
         const std::vector<uint32_t> &chr, const std::vector<uint32_t> &start,
         const std::vector<uint32_t> &end, std::unique_ptr<StringReader> &&chr_levels);

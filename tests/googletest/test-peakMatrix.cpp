@@ -12,6 +12,7 @@
 
 #include <Eigen/SparseCore>
 
+#include "utils-fragments.h"
 
 using namespace BPCells;
 using namespace Eigen;
@@ -101,6 +102,59 @@ TEST(PeakMatrix, PeakMatrix) {
     EXPECT_TRUE(matrix_identical_cpp(expected_int, m));
 }
 
+TEST(PeakMatrix, PeakMatrixSeek) {
+    uint32_t chrs = 5;
+    uint32_t max_coord = 1000;
+    auto v = Testing::writeFragmentTuple(Testing::generateFrags(50000, chrs, max_coord, 50, 125));
+    StoredFragments frags = StoredFragments::openUnpacked(*v);
+
+    std::vector<uint32_t> v_chr, v_start, v_end;
+    std::vector<std::string> chr_levels;
+    for (uint32_t chr = 0; chr <= chrs; chr++) {
+        chr_levels.push_back(std::string("chr") + std::to_string(chr));
+        for (uint32_t start = 100; start < max_coord; start += 100) {
+            v_chr.push_back(chr); v_start.push_back(start); v_end.push_back(start + 25);
+        }
+    }
+
+    PeakMatrix peak_mat(frags, v_chr, v_start, v_end, std::make_unique<VecStringReader>(chr_levels));
+    MatrixConverterLoader<uint32_t, double> peak_mat_double(peak_mat);
+    MatrixIterator peak_mat_it(peak_mat_double);
+    CSparseMatrixWriter mat_writer;
+
+    mat_writer.write(peak_mat_it);
+    Eigen::SparseMatrix<double> eigen_mat = mat_writer.getMat();
+
+    peak_mat_it.restart();
+    // Check that the first column upon restart matches the sparse matrix first column
+    ASSERT_TRUE(peak_mat_it.nextCol());
+    bool has_nonzero = false;
+    for (SparseMatrix<double>::InnerIterator it(eigen_mat, 0); it; ++it) {
+        has_nonzero = true;
+        ASSERT_TRUE(peak_mat_it.nextValue());
+        ASSERT_EQ(peak_mat_it.row(), it.row());
+        ASSERT_EQ(peak_mat_it.val(), it.value());
+    }
+    EXPECT_FALSE(peak_mat_it.nextValue());
+    EXPECT_TRUE(has_nonzero);
+
+    std::mt19937 gen(1337); 
+    std::uniform_int_distribution col(0, (int) v_chr.size() - 1);
+    // Check that 50 random col seeks all work
+    for (int i = 0; i < 50; i++) {
+        uint32_t c = col(gen);
+        bool has_nonzero = false;
+        peak_mat_it.seekCol(c);
+        for (SparseMatrix<double>::InnerIterator it(eigen_mat, c); it; ++it) {
+            has_nonzero = true;
+            ASSERT_TRUE(peak_mat_it.nextValue());
+            ASSERT_EQ(peak_mat_it.row(), it.row());
+            ASSERT_EQ(peak_mat_it.val(), it.value());
+        }
+        EXPECT_FALSE(peak_mat_it.nextValue());
+        ASSERT_TRUE(has_nonzero);
+    }
+}
 
 TEST(PeakMatrix, TileMatrix) {
 
@@ -196,6 +250,61 @@ TEST(PeakMatrix, TileMatrix) {
     MatrixConverterLoader<double, uint32_t> expected_int(expected_csparse);
 
     EXPECT_TRUE(matrix_identical_cpp(expected_int, m));
+}
+
+
+TEST(PeakMatrix, TileMatrixSeek) {
+    uint32_t chrs = 5;
+    uint32_t max_coord = 1000;
+    auto v = Testing::writeFragmentTuple(Testing::generateFrags(50000, chrs, max_coord, 50, 125));
+    StoredFragments frags = StoredFragments::openUnpacked(*v);
+
+    std::vector<uint32_t> v_chr, v_start, v_end, v_width;
+    std::vector<std::string> chr_levels;
+    // Use some slightly variable tile choices, 1 tile per chromosome
+    for (uint32_t chr = 0; chr <= chrs; chr++) {
+        v_chr.push_back(chr); v_start.push_back(chr); v_end.push_back(max_coord-chr); v_width.push_back(25*(chr+1));
+        chr_levels.push_back(std::string("chr") + std::to_string(chr));
+    }
+
+    TileMatrix tile_mat(frags, v_chr, v_start, v_end, v_width, std::make_unique<VecStringReader>(chr_levels));
+    MatrixConverterLoader<uint32_t, double> tile_mat_double(tile_mat);
+    MatrixIterator tile_mat_it(tile_mat_double);
+    CSparseMatrixWriter mat_writer;
+
+    mat_writer.write(tile_mat_it);
+    Eigen::SparseMatrix<double> eigen_mat = mat_writer.getMat();
+
+    tile_mat_it.restart();
+    // Check that the first column upon restart matches the sparse matrix first column
+    ASSERT_TRUE(tile_mat_it.nextCol());
+    bool has_nonzero = false;
+    for (SparseMatrix<double>::InnerIterator it(eigen_mat, 0); it; ++it) {
+        has_nonzero = true;
+        ASSERT_TRUE(tile_mat_it.nextValue());
+        ASSERT_EQ(tile_mat_it.row(), it.row());
+        ASSERT_EQ(tile_mat_it.val(), it.value());
+    }
+    EXPECT_FALSE(tile_mat_it.nextValue());
+    EXPECT_TRUE(has_nonzero);
+
+    std::mt19937 gen(1337); 
+    std::uniform_int_distribution col(0, (int) tile_mat_it.cols() - 1);
+    
+    // Check that 50 random col seeks all work
+    for (int i = 0; i < 50; i++) {
+        uint32_t c = col(gen);
+        bool has_nonzero = false;
+        tile_mat_it.seekCol(c);
+        for (SparseMatrix<double>::InnerIterator it(eigen_mat, c); it; ++it) {
+            has_nonzero = true;
+            ASSERT_TRUE(tile_mat_it.nextValue());
+            ASSERT_EQ(tile_mat_it.row(), it.row());
+            ASSERT_EQ(tile_mat_it.val(), it.value());
+        }
+        EXPECT_FALSE(tile_mat_it.nextValue());
+        ASSERT_TRUE(has_nonzero);
+    }
 }
 
 

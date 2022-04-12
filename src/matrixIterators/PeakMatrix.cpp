@@ -13,6 +13,20 @@ PeakMatrix::PeakMatrix(FragmentLoader &frags,
     if (chr.size() != start.size() || chr.size() != end.size())
         throw std::invalid_argument("chr, start, and end must all be same length");
     
+    // Check that chr name matches for all the available chrNames in frags 
+    for (uint32_t i = 0; i < this->chr_levels->size(); i++) {
+        const char* chr_name_frag = frags.chrNames(i);
+        const char* chr_name_args = this->chr_levels->get(i);
+        if (chr_name_frag != NULL &&
+            (chr_name_args == NULL || strcmp(chr_name_frag, chr_name_args) != 0)) {
+            throw std::runtime_error(
+                std::string("PeakMatrix encountered fragment with incorrect chrLevel: ") +
+                std::string(chr_name_frag) +
+                std::string(" expected: ") +
+                std::string(chr_name_args));
+        }
+    }
+
     Peak prev;
     for (size_t i = 0; i < chr.size(); i++) {
         if (chr[i] >= this->chr_levels->size())
@@ -90,14 +104,18 @@ void PeakMatrix::restart() {
     active_peaks.clear();
     next_completed_peak = 0;
     next_active_peak = 0;
+    current_output_peak = UINT32_MAX;
 }
 void PeakMatrix::seekCol(uint32_t col) {
     if (!frags.isSeekable())
         throw std::runtime_error("Can't seek a PeakMatrix if the fragments aren't seekable");
     next_active_peak = end_sorted_lookup[col];
     next_completed_peak = 0;
+    current_output_peak = col - 1;
     active_peaks.clear();
-    frags.seek(sorted_peaks[next_active_peak].chr, sorted_peaks[next_active_peak].start);
+    accumulator.clear();
+    // Don't need to do any frags.seek call here since loadFragments will do it
+    nextCol();
 }
 
 bool PeakMatrix::nextCol() {

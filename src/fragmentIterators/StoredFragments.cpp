@@ -51,6 +51,15 @@ void StoredFragments::readEndMaxBuf(uint32_t start_idx, uint32_t end_idx) {
 bool StoredFragments::isSeekable() const {return true;}
 void StoredFragments::seek(uint32_t chr_id, uint32_t base) {
     if (chr_id != current_chr) {
+        if (chr_id >= chrCount()) {
+            // Seeking to a chromosome larger than exists in the fragments.
+            // Make it so next load and nextChr calls will return false
+            current_chr = chr_id;
+            current_idx = UINT32_MAX;
+            chr_start_ptr = 0;
+            chr_end_ptr = 0;
+            return;
+        }
         current_chr = chr_id;
         chr_ptr.seek(chr_id*2);
         chr_start_ptr = chr_ptr.read_one();
@@ -61,7 +70,7 @@ void StoredFragments::seek(uint32_t chr_id, uint32_t base) {
 
     // Binary search for base in end_max
     uint32_t current_block = chr_start_ptr/128 + 
-        std::lower_bound(end_max_buf.begin(), end_max_buf.end(), base) - 
+        std::upper_bound(end_max_buf.begin(), end_max_buf.end(), base) - 
         end_max_buf.begin();
 
     // Add this max in case we're seeking to the first block in a chromosome that
@@ -77,6 +86,7 @@ void StoredFragments::seek(uint32_t chr_id, uint32_t base) {
 void StoredFragments::restart() {
     current_chr = UINT32_MAX;
     current_idx = UINT32_MAX;
+    chr_ptr.seek(0);
 }
 
 int StoredFragments::chrCount() const {return chr_names->size();}
