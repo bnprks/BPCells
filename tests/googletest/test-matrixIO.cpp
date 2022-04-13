@@ -6,6 +6,7 @@
 #include <gmock/gmock.h>
 
 #include <matrixIterators/MatrixIterator.h>
+#include <matrixIterators/ConcatenateMatrix.h>
 #include <matrixIterators/CSparseMatrix.h>
 #include <matrixIterators/StoredMatrix.h>
 #include <matrixIterators/MatrixIndexSelect.h>
@@ -18,9 +19,8 @@ using namespace BPCells;
 using namespace ::testing;
 using namespace Eigen;
 
-SparseMatrix<double> generate_mat(uint32_t n_row, uint32_t n_col) {
-    std::random_device rd;
-    std::mt19937 gen(rd()); //Standard mersenne_twister_engine seeded with rd()
+SparseMatrix<double> generate_mat(uint32_t n_row, uint32_t n_col, uint32_t seed=125124) {
+    std::mt19937 gen(seed); //Standard mersenne_twister_engine
     std::uniform_int_distribution<> distrib(1, 20);
     std::uniform_int_distribution<> nonzero(0, 4); // 1/5 chance of being non-zero
  
@@ -215,3 +215,58 @@ TEST(MatrixIO, RowSelectCSparse) {
 
     EXPECT_EQ(MatrixXd(writer2.getMat()), MatrixXd(mat)({0,2,4}, all));
 }
+
+TEST(MatrixIO, ConcatRows) {
+    SparseMatrix<double> m1 = generate_mat(3000,10, 12512);
+    SparseMatrix<double> m2 = generate_mat(1,   10, 7345); // Very few rows to try getting 0-entry columns
+    SparseMatrix<double> m3 = generate_mat(256, 10, 3864);
+    SparseMatrix<double> mx = generate_mat(8,   5, 92568);
+
+    MatrixXd concat_dense(m1.rows() + m2.rows() + m3.rows(), m1.cols());
+    concat_dense << MatrixXd(m1), MatrixXd(m2), MatrixXd(m3);
+    SparseMatrix<double> concat = concat_dense.sparseView();
+    
+    CSparseMatrix mat_1(get_map(m1));
+    CSparseMatrix mat_2(get_map(m2));
+    CSparseMatrix mat_3(get_map(m3));
+    CSparseMatrix mat_x(get_map(mx));
+
+    EXPECT_ANY_THROW(ConcatRows<double>({&mat_1, &mat_x}));
+    
+    CSparseMatrixWriter res;
+    ConcatRows<double> my_concat({
+        &mat_1, &mat_2, &mat_3
+    });
+    MatrixIterator<double> my_concat_it(my_concat);
+    res.write(my_concat_it);
+
+    EXPECT_TRUE(res.getMat().isApprox(concat));
+} 
+
+
+TEST(MatrixIO, ConcatCols) {
+    SparseMatrix<double> m1 = generate_mat(10, 3000, 12512);
+    SparseMatrix<double> m2 = generate_mat(10, 1,    7345); // Very few rows to try getting 0-entry columns
+    SparseMatrix<double> m3 = generate_mat(10, 256,  3864);
+    SparseMatrix<double> mx = generate_mat(5,  8,    92568);
+
+    MatrixXd concat_dense(m1.rows(), m1.cols() + m2.cols() + m3.cols());
+    concat_dense << MatrixXd(m1), MatrixXd(m2), MatrixXd(m3);
+    SparseMatrix<double> concat = concat_dense.sparseView();
+    
+    CSparseMatrix mat_1(get_map(m1));
+    CSparseMatrix mat_2(get_map(m2));
+    CSparseMatrix mat_3(get_map(m3));
+    CSparseMatrix mat_x(get_map(mx));
+
+    EXPECT_ANY_THROW(ConcatCols<double>({&mat_1, &mat_x}));
+    
+    CSparseMatrixWriter res;
+    ConcatCols<double> my_concat({
+        &mat_1, &mat_2, &mat_3
+    });
+    MatrixIterator<double> my_concat_it(my_concat);
+    res.write(my_concat_it);
+
+    EXPECT_TRUE(res.getMat().isApprox(concat));
+} 
