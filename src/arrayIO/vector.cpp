@@ -53,22 +53,22 @@ void VecReaderWriterBuilder::writeVersion(std::string version) {this->version = 
 
 UIntReader VecReaderWriterBuilder::openUIntReader(std::string name) {
     std::vector<uint32_t> &v = int_vecs.at(name);
-    return UIntReader(std::make_unique<VecUIntReader>(v.data(), v.size()), 1024, 1024);
+    return UIntReader(std::make_unique<VecUIntReader>(v.data(), v.size()), chunk_size, chunk_size);
 }
 
 FloatReader VecReaderWriterBuilder::openFloatReader(std::string name) {
     std::vector<float> &v = float_vecs.at(name);
-    return FloatReader(std::make_unique<VecNumReader<float>>(v.data(), v.size()), 1024, 1024);
+    return FloatReader(std::make_unique<VecNumReader<float>>(v.data(), v.size()), chunk_size, chunk_size);
 }
 
 ULongReader VecReaderWriterBuilder::openULongReader(std::string name) {
     std::vector<uint64_t> &v = long_vecs.at(name);
-    return ULongReader(std::make_unique<VecNumReader<uint64_t>>(v.data(), v.size()), 1024, 1024);
+    return ULongReader(std::make_unique<VecNumReader<uint64_t>>(v.data(), v.size()), chunk_size, chunk_size);
 }
 
 DoubleReader VecReaderWriterBuilder::openDoubleReader(std::string name) {
     std::vector<double> &v = double_vecs.at(name);
-    return DoubleReader(std::make_unique<VecNumReader<double>>(v.data(), v.size()), 1024, 1024);
+    return DoubleReader(std::make_unique<VecNumReader<double>>(v.data(), v.size()), chunk_size, chunk_size);
 }
 
 

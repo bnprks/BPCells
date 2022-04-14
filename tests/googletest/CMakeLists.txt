@@ -49,11 +49,11 @@ add_library(
     ${SRC}/fragmentIterators/CellSelect.cpp
     ${SRC}/fragmentIterators/ChrSelect.cpp
     ${SRC}/fragmentIterators/FragmentIterator.cpp
-    ${SRC}/fragmentIterators/InsertionIterator.cpp
     ${SRC}/fragmentIterators/MergeFragments.cpp
     ${SRC}/fragmentIterators/RegionSelect.cpp
     ${SRC}/fragmentIterators/ShiftCoords.cpp
     ${SRC}/fragmentIterators/StoredFragments.cpp
+    ${SRC}/fragmentUtils/InsertionIterator.cpp
 )
 target_link_libraries(
     fragmentIterators 

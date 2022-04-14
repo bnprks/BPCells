@@ -3,10 +3,10 @@
 #include "utils-fragments.h"
 
 #include <fragmentIterators/FragmentIterator.h>
-#include <fragmentIterators/InsertionIterator.h>
 #include <fragmentIterators/MergeFragments.h>
 #include <fragmentIterators/RegionSelect.h>
 #include <fragmentIterators/StoredFragments.h>
+#include <fragmentUtils/InsertionIterator.h>
 #include <arrayIO/vector.h>
 
 using namespace BPCells;
