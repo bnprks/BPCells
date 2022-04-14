@@ -3,9 +3,10 @@
 #include "utils-fragments.h"
 
 #include <fragmentIterators/FragmentIterator.h>
-#include <fragmentIterators/StoredFragments.h>
-#include <fragmentIterators/RegionSelect.h>
+#include <fragmentIterators/InsertionIterator.h>
 #include <fragmentIterators/MergeFragments.h>
+#include <fragmentIterators/RegionSelect.h>
+#include <fragmentIterators/StoredFragments.h>
 #include <arrayIO/vector.h>
 
 using namespace BPCells;
@@ -180,4 +181,45 @@ TEST(FragmentUtils, MergeFragments) {
     
 
     EXPECT_TRUE(Testing::fragments_identical(expected, merge));
+}
+
+TEST(FragmentUtils, InsertionIterator) {
+    uint32_t max_cell = 50;
+    auto v = Testing::generateFrags(2000, 3, 400, max_cell-1, 100, 1336);
+    std::sort(v.begin(), v.end(), [](const Testing::Frag &a, const Testing::Frag &b) {
+        if (a.chr != b.chr) return a.chr < b.chr;
+        return a.start < b.start;
+    });
+    std::unique_ptr<VecReaderWriterBuilder> d = writeFragmentTuple(v, max_cell, true, 50);
+    StoredFragments frags = StoredFragments::openUnpacked(*d);
+
+    InsertionIterator it(frags);
+    
+    std::vector<std::array<uint32_t, 3>> insert;
+    
+    for (auto f : v) insert.push_back({f.chr, f.start, f.cell});
+    for (auto f : v) insert.push_back({f.chr, f.end - 1, f.cell});
+
+    std::stable_sort(insert.begin(), insert.end(), [](const std::array<uint32_t, 3> &a, const std::array<uint32_t, 3> &b) {
+        if (a[0] != b[0]) return a[0] < b [0];
+        return a[1] < b[1];
+    });
+
+    uint32_t current_chr = 0;
+    ASSERT_TRUE(it.nextChr());
+    for (int i = 0; i < insert.size(); i++) {
+        if (insert[i][0] != current_chr) {
+            ASSERT_FALSE(it.nextInsertion());
+            ASSERT_FALSE(it.nextInsertion());
+            ASSERT_TRUE(it.nextChr());
+            current_chr = insert[i][0];
+        }
+        ASSERT_TRUE(it.nextInsertion());
+        ASSERT_EQ(it.chr(), current_chr);
+        ASSERT_EQ(it.coord(), insert[i][1]);
+        ASSERT_EQ(it.cell(), insert[i][2]);
+    }
+    ASSERT_FALSE(it.nextInsertion());
+    ASSERT_FALSE(it.nextChr());
+    ASSERT_FALSE(it.nextChr());
 }

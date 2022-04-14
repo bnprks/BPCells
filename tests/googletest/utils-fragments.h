@@ -14,7 +14,7 @@ public:
 };
 
 // Create a Fragment object from a vector of fragments (sorting not required)
-std::unique_ptr<BPCells::VecReaderWriterBuilder> writeFragmentTuple(std::vector<Frag> frag_vec, uint32_t min_cell_count=0, bool skip_sort = false) {
+std::unique_ptr<BPCells::VecReaderWriterBuilder> writeFragmentTuple(std::vector<Frag> frag_vec, uint32_t min_cell_count=0, bool skip_sort = false, uint32_t chunk_size=1024) {
     using namespace BPCells;
 
     VecReaderWriterBuilder v;
@@ -69,10 +69,9 @@ std::unique_ptr<BPCells::VecReaderWriterBuilder> writeFragmentTuple(std::vector<
     w_chr_names->write(VecStringReader(chr_names));
     w_cell_names->write(VecStringReader(cell_names));
     w_cell.finalize(); w_start.finalize(); w_end.finalize(); w_end_max.finalize(); w_chr_ptr.finalize();
-    StoredFragments stored_manual = StoredFragments::openUnpacked(v);
-    FragmentIterator manual_frags(stored_manual);
+    StoredFragments manual_frags = StoredFragments::openUnpacked(v);
 
-    auto ret = std::make_unique<VecReaderWriterBuilder>(1204);
+    auto ret = std::make_unique<VecReaderWriterBuilder>(chunk_size);
     StoredFragmentsWriter::createUnpacked(*ret).write(manual_frags);
 
     return ret;
@@ -94,7 +93,6 @@ std::vector<Frag> generateFrags(uint32_t n, uint32_t max_chr, uint32_t max_coord
 }
 
 
-// [[Rcpp::export]]
 bool fragments_identical(BPCells::FragmentLoader &fragments1, BPCells::FragmentLoader &fragments2) {
     using namespace BPCells;
 

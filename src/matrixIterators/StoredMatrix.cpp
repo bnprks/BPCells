@@ -43,7 +43,7 @@ StoredMatrixWriter StoredMatrixWriter::createPacked(WriterBuilder &wb, uint32_t 
         wb.createStringWriter("col_names")
     );
 }
-void StoredMatrixWriter::write(MatrixIterator<uint32_t> &mat, void (*checkInterrupt)(void)) {
+void StoredMatrixWriter::write(MatrixLoader<uint32_t> &mat, void (*checkInterrupt)(void)) {
     uint32_t col = 0;
     uint32_t idx = 0; // Index of for col_ptr array
 

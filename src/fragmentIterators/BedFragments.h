@@ -82,7 +82,7 @@ public:
     BedFragmentsWriter(const char *path, bool append_5th_column=false,
                     uint32_t buffer_size = 1 << 20);
     ~BedFragmentsWriter();
-    void write(FragmentIterator &fragments, void (*checkInterrupt)(void) = NULL) override;
+    void write(FragmentLoader &fragments, void (*checkInterrupt)(void) = NULL) override;
 private:
     gzFile f;
     bool append_5th_column;

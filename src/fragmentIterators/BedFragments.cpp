@@ -240,7 +240,8 @@ BedFragmentsWriter::~BedFragmentsWriter() {
 }
 
 
-void BedFragmentsWriter::write(FragmentIterator &fragments, void (*checkInterrupt)(void)) {
+void BedFragmentsWriter::write(FragmentLoader &loader, void (*checkInterrupt)(void)) {
+    FragmentIterator fragments(loader);
     uint32_t bytes_written;
     
     size_t total_fragments = 0;

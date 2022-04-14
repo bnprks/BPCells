@@ -270,12 +270,14 @@ StoredFragmentsWriter StoredFragmentsWriter::createPacked(WriterBuilder &wb, uin
     );
 }
 
-void StoredFragmentsWriter::write(FragmentIterator &fragments, void (*checkInterrupt)(void)) {
+void StoredFragmentsWriter::write(FragmentLoader &fragments, void (*checkInterrupt)(void)) {
     uint32_t cur_end_max = 0;
     uint32_t prev_end_max = 0;
     uint32_t idx = 0;
 
     std::vector<uint32_t> chr_ptr_buf;
+
+    uint32_t write_capacity = std::min({cell.maxCapacity(), start.maxCapacity(), end.maxCapacity()});
 
     fragments.restart();
     while (fragments.nextChr()) {
@@ -291,13 +293,10 @@ void StoredFragmentsWriter::write(FragmentIterator &fragments, void (*checkInter
         cur_end_max = 0;
         while (fragments.load()) {
             uint32_t capacity = fragments.capacity();
-            cell.ensureCapacity(capacity);
-            start.ensureCapacity(capacity);
-            end.ensureCapacity(capacity);
-            
-            std::memmove(cell.data(), fragments.cellData(), capacity*sizeof(uint32_t));
-            std::memmove(start.data(), fragments.startData(), capacity*sizeof(uint32_t));
-            std::memmove(end.data(), fragments.endData(), capacity*sizeof(uint32_t));
+
+            const uint32_t *in_cell_data = fragments.cellData();
+            const uint32_t *in_start_data = fragments.startData();
+            uint32_t *in_end_data = fragments.endData();
             
             uint32_t i = 0;
             
@@ -305,10 +304,10 @@ void StoredFragmentsWriter::write(FragmentIterator &fragments, void (*checkInter
             if (idx % 128 != 0) {
                 const uint32_t batch = std::min(capacity, 128 - idx % 128);
                 for (; i < batch; i++) {
-                    cur_end_max = std::max(cur_end_max, end.data()[i]);
+                    cur_end_max = std::max(cur_end_max, in_end_data[i]);
                 }
                 if ((idx + i) % 128 == 0) {
-                            end_max.write_one(std::max(cur_end_max, prev_end_max));
+                    end_max.write_one(std::max(cur_end_max, prev_end_max));
                     prev_end_max = 0;
                 }
             }
@@ -316,29 +315,45 @@ void StoredFragmentsWriter::write(FragmentIterator &fragments, void (*checkInter
             for (; i + 128 <= capacity; i += 128) {
                 cur_end_max = std::max(
                     cur_end_max,
-                    simdmax(end.data() + i)
+                    simdmax(in_end_data + i)
                 );
                 end_max.write_one(std::max(cur_end_max, prev_end_max));
                 prev_end_max = 0;
             }
             // Calculate end_max for trailing partial chunk
             for (; i < capacity; i++) {
-                cur_end_max = std::max(cur_end_max, end.data()[i]);
+                cur_end_max = std::max(cur_end_max, in_end_data[i]);
             }
 
             if (subtract_start_from_end) {
                 for (i = 0; i + 128 <= capacity; i += 128) {
-                    simdsubtract(end.data() + i, start.data() + i);
+                    simdsubtract(in_end_data + i, in_start_data + i);
                 }
                 for (; i < capacity; i++) {
-                    end.data()[i] -= start.data()[i];
+                    in_end_data[i] -= in_start_data[i];
                 }
                 i = 0;
             }
+
+            // Write data in chunks in case our output read capacity is less than our
+            // input read amount
+            for (uint32_t written = 0; written < capacity; ) {
+                uint32_t write_amount = std::min(write_capacity, capacity - written);
+                cell.ensureCapacity(write_amount);
+                start.ensureCapacity(write_amount);
+                end.ensureCapacity(write_amount);
+                
+                std::memmove(cell.data(), in_cell_data + written, write_amount*sizeof(uint32_t));
+                std::memmove(start.data(), in_start_data + written, write_amount*sizeof(uint32_t));
+                std::memmove(end.data(), in_end_data + written, write_amount*sizeof(uint32_t));
+
+                cell.advance(write_amount);
+                start.advance(write_amount);
+                end.advance(write_amount);
+                written += write_amount;
+            }
             
-            cell.advance(capacity);
-            start.advance(capacity);
-            end.advance(capacity);
+            
             idx += capacity;
 
             if(checkInterrupt != NULL) checkInterrupt();

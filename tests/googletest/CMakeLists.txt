@@ -49,10 +49,11 @@ add_library(
     ${SRC}/fragmentIterators/CellSelect.cpp
     ${SRC}/fragmentIterators/ChrSelect.cpp
     ${SRC}/fragmentIterators/FragmentIterator.cpp
+    ${SRC}/fragmentIterators/InsertionIterator.cpp
     ${SRC}/fragmentIterators/MergeFragments.cpp
+    ${SRC}/fragmentIterators/RegionSelect.cpp
     ${SRC}/fragmentIterators/ShiftCoords.cpp
     ${SRC}/fragmentIterators/StoredFragments.cpp
-    ${SRC}/fragmentIterators/RegionSelect.cpp
 )
 target_link_libraries(
     fragmentIterators 
@@ -147,8 +148,8 @@ add_executable(
     fragment_io_test
     test-fragmentIO.cpp
 )
-target_link_libraries(fragment_io_test fragmentIterators gtest gmock)
-gtest_discover_tests(fragment_io_test EXTRA_ARGS ../data/mini_fragments.tsv.gz)
+target_link_libraries(fragment_io_test fragmentIterators gtest_main)
+gtest_discover_tests(fragment_io_test)
 
 
 add_executable(

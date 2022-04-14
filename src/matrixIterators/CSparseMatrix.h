@@ -87,7 +87,8 @@ class CSparseMatrixWriter : public MatrixWriter<double> {
 private:
     Eigen::SparseMatrix<double> eigen_mat;
 public:
-    void write(MatrixIterator<double> &mat, void (*checkInterrupt)(void) = NULL) override {
+    void write(MatrixLoader<double> &loader, void (*checkInterrupt)(void) = NULL) override {
+        MatrixIterator<double> mat(loader);
         uint32_t count = 0;
         std::vector<Eigen::Triplet<double>> triplets;
         

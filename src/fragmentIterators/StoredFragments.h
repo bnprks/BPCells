@@ -85,7 +85,7 @@ public:
         std::unique_ptr<StringWriter> &&chr_names, std::unique_ptr<StringWriter> &&cell_names,
         bool subtract_start_from_end);
     
-    void write(FragmentIterator &fragments, void (*checkInterrupt)(void) = NULL) override;
+    void write(FragmentLoader &fragments, void (*checkInterrupt)(void) = NULL) override;
 };
 
 } // end namespace BPCells

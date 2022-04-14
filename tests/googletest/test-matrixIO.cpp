@@ -55,18 +55,17 @@ TEST(MatrixIO, UnpackedVec) {
     CSparseMatrix mat_d (get_map(orig_mat));
 
     MatrixConverterLoader<double, uint32_t> mat_i(mat_d);
-    MatrixIterator it1(mat_i);
 
     VecReaderWriterBuilder vb1(1024);
     auto w1 = StoredMatrixWriter::createUnpacked(vb1);
-    w1.write(it1);
+    w1.write(mat_i);
 
     auto loader = StoredMatrix<uint32_t>::openUnpacked(vb1);
     auto loader_double = MatrixConverterLoader<uint32_t, double>(loader);
     
     CSparseMatrixWriter w2;
-    MatrixIterator it2(loader_double);
-    w2.write(it2);
+    w2.write(loader_double);
+
     EXPECT_TRUE(w2.getMat().isApprox(orig_mat));
 }
 
@@ -75,18 +74,16 @@ TEST(MatrixIO, PackedVec) {
     CSparseMatrix mat_d (get_map(orig_mat));
 
     MatrixConverterLoader<double, uint32_t> mat_i(mat_d);
-    MatrixIterator it1(mat_i);
 
     VecReaderWriterBuilder vb1(1024);
     auto w1 = StoredMatrixWriter::createPacked(vb1);
-    w1.write(it1);
+    w1.write(mat_i);
 
     auto loader = StoredMatrix<uint32_t>::openPacked(vb1, 1024);
     auto loader_double = MatrixConverterLoader<uint32_t, double>(loader);
     
     CSparseMatrixWriter w2;
-    MatrixIterator it2(loader_double);
-    w2.write(it2);
+    w2.write(loader_double);
     EXPECT_TRUE(w2.getMat().isApprox(orig_mat));
 }
 
@@ -130,11 +127,10 @@ TEST(MatrixIO, SeekStoredVec) {
 
     CSparseMatrix mat_double(get_map(mat));
     MatrixConverterLoader<double, uint32_t> mat_int(mat_double);
-    MatrixIterator it1(mat_int);
 
     VecReaderWriterBuilder vb(1024);
     auto w = StoredMatrixWriter::createUnpacked(vb);
-    w.write(it1);
+    w.write(mat_int);
 
     auto loader = StoredMatrix<uint32_t>::openUnpacked(vb);
     auto loader_double = MatrixConverterLoader<uint32_t, double>(loader);
@@ -166,14 +162,14 @@ TEST(MatrixIO, ColSelectCSparse) {
     
     CSparseMatrix mat_l(get_map(mat));
     MatrixColSelect<double> mat_col_select(mat_l, {0,4,2});
-    MatrixIterator it(mat_col_select);
 
     CSparseMatrixWriter writer;
-    writer.write(it);
+    writer.write(mat_col_select);
 
     // Test that the matrix is the same
     EXPECT_EQ(MatrixXd(writer.getMat()), MatrixXd(mat)(all, {0,4,2}));
 
+    MatrixIterator it(mat_col_select);
     // Check that seeking columns works
     for (auto j : {2,0,1}) {
         it.seekCol(j);
@@ -199,19 +195,17 @@ TEST(MatrixIO, RowSelectCSparse) {
     
     CSparseMatrix mat_l(get_map(mat));
     MatrixRowSelect<double> select_1(mat_l, {0,4,2});
-    MatrixIterator it(select_1);
 
     CSparseMatrixWriter writer1;
-    writer1.write(it);
+    writer1.write(select_1);
 
     EXPECT_EQ(MatrixXd(writer1.getMat()), MatrixXd(mat)({0,4,2}, all));
 
     CSparseMatrix mat_l_2(get_map(mat));
     MatrixRowSelect<double> select_2(mat_l_2, {0,2,4});
-    MatrixIterator it2(select_2);
 
     CSparseMatrixWriter writer2;
-    writer2.write(it2);
+    writer2.write(select_2);
 
     EXPECT_EQ(MatrixXd(writer2.getMat()), MatrixXd(mat)({0,2,4}, all));
 }
@@ -237,8 +231,7 @@ TEST(MatrixIO, ConcatRows) {
     ConcatRows<double> my_concat({
         &mat_1, &mat_2, &mat_3
     });
-    MatrixIterator<double> my_concat_it(my_concat);
-    res.write(my_concat_it);
+    res.write(my_concat);
 
     EXPECT_TRUE(res.getMat().isApprox(concat));
 } 
@@ -265,8 +258,7 @@ TEST(MatrixIO, ConcatCols) {
     ConcatCols<double> my_concat({
         &mat_1, &mat_2, &mat_3
     });
-    MatrixIterator<double> my_concat_it(my_concat);
-    res.write(my_concat_it);
+    res.write(my_concat);
 
     EXPECT_TRUE(res.getMat().isApprox(concat));
 } 

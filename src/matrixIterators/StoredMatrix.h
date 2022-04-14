@@ -180,7 +180,7 @@ public:
     StoredMatrixWriter(UIntWriter &&row, UIntWriter &&val, UIntWriter &&col_ptr, 
         UIntWriter &&row_count, 
         std::unique_ptr<StringWriter> &&row_names, std::unique_ptr<StringWriter> &&col_names);  
-    void write(MatrixIterator<uint32_t> &mat, void (*checkInterrupt)(void) = NULL) override;
+    void write(MatrixLoader<uint32_t> &loader, void (*checkInterrupt)(void) = NULL) override;
 };
 
 } // end namespace BPCells

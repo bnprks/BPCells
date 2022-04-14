@@ -119,12 +119,12 @@ TEST(PeakMatrix, PeakMatrixSeek) {
 
     PeakMatrix peak_mat(frags, v_chr, v_start, v_end, std::make_unique<VecStringReader>(chr_levels));
     MatrixConverterLoader<uint32_t, double> peak_mat_double(peak_mat);
-    MatrixIterator peak_mat_it(peak_mat_double);
     CSparseMatrixWriter mat_writer;
+    mat_writer.write(peak_mat_double);
 
-    mat_writer.write(peak_mat_it);
     Eigen::SparseMatrix<double> eigen_mat = mat_writer.getMat();
 
+    MatrixIterator peak_mat_it(peak_mat_double);
     peak_mat_it.restart();
     // Check that the first column upon restart matches the sparse matrix first column
     ASSERT_TRUE(peak_mat_it.nextCol());
@@ -269,12 +269,12 @@ TEST(PeakMatrix, TileMatrixSeek) {
 
     TileMatrix tile_mat(frags, v_chr, v_start, v_end, v_width, std::make_unique<VecStringReader>(chr_levels));
     MatrixConverterLoader<uint32_t, double> tile_mat_double(tile_mat);
-    MatrixIterator tile_mat_it(tile_mat_double);
     CSparseMatrixWriter mat_writer;
 
-    mat_writer.write(tile_mat_it);
+    mat_writer.write(tile_mat_double);
     Eigen::SparseMatrix<double> eigen_mat = mat_writer.getMat();
 
+    MatrixIterator tile_mat_it(tile_mat_double);
     tile_mat_it.restart();
     // Check that the first column upon restart matches the sparse matrix first column
     ASSERT_TRUE(tile_mat_it.nextCol());
