@@ -4,7 +4,7 @@ namespace BPCells {
 
 // cell_indices -- vector with length <= the number of chromosomes in the input
 //     FragmentLoader. The output cell `i` will come from input cell
-//     `chr_assignments[i]`. The entries of cell_indices must be unique
+//     `cell_indices[i]`. The entries of cell_indices must be unique
 CellIndexSelect::CellIndexSelect(FragmentLoader &loader, const std::vector<uint32_t> cell_indices) : 
     FragmentLoaderWrapper(loader),
     cell_indices(cell_indices) {
@@ -36,10 +36,10 @@ bool CellIndexSelect::load() {
         uint32_t *end = loader.endData();
         uint32_t capacity = loader.capacity();
         for (uint32_t i = 0; i < capacity; i++) {
-            cell[loaded] = reverse_indices[cell[i]];
+            cell[loaded] = cell[i] < reverse_indices.size() ? reverse_indices[cell[i]] : UINT32_MAX;
             start[loaded] = start[i];
             end[loaded] = end[i];
-            loaded += reverse_indices[cell[i]] != UINT32_MAX;
+            loaded += cell[loaded] != UINT32_MAX;
         }
     }
     return true;
@@ -64,7 +64,7 @@ uint32_t CellNameSelect::getOutputCellID(uint32_t input_cell_id) {
 
 // cell_names -- vector with length <= the number of chromosomes in the input
 //     FragmentLoader. The output cell `i` will come from input cell
-//     `chr_assignments[i]`. The entries of cell_names must be unique
+//     `cell_names[i]`. The entries of cell_names must be unique
 CellNameSelect::CellNameSelect(FragmentLoader &loader, const std::vector<std::string> cell_names) :
     FragmentLoaderWrapper(loader),
     cell_names(cell_names) {
@@ -83,7 +83,7 @@ const char* CellNameSelect::cellNames(uint32_t cell_id) const {
 };
 
 bool CellNameSelect::load() {
-    uint32_t loaded = 0;
+    loaded = 0;
     // load and filter until we load without filtering out everything
     while (loaded == 0) {
         if (!loader.load()) return false;

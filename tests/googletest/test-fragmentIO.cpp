@@ -6,6 +6,7 @@
 #include <fragmentIterators/FragmentIterator.h>
 #include <fragmentIterators/BedFragments.h>
 #include <fragmentIterators/StoredFragments.h>
+#include <fragmentIterators/ChrSelect.h>
 #include <arrayIO/vector.h>
 
 #include "utils-fragments.h"
@@ -106,4 +107,21 @@ TEST(FragmentIO, ReducedCapacityWrite) {
     auto loader2 = StoredFragmentsPacked::openPacked(vb2);
     in.restart();
     ASSERT_TRUE(Testing::fragments_identical(loader2, in));
+}
+
+TEST(FragmentIO, ChrSelectRoundTrip) {
+    // Failing thing
+    BedFragments in("/Users/ben/Downloads/BPCells_data/tile_test.tsv.gz");
+    ChrNameSelect l1(in, {"chr1", "chr2", "chr3", "chrX", "chrY"});
+
+    VecReaderWriterBuilder v;
+    StoredFragmentsWriter::createPacked(v).write(in);
+    StoredFragmentsPacked l2 = StoredFragmentsPacked::openPacked(v);
+
+    VecReaderWriterBuilder v2;
+    StoredFragmentsWriter::createPacked(v2).write(l2);
+    StoredFragmentsPacked l3 = StoredFragmentsPacked::openPacked(v2);
+
+    in.restart();
+    ASSERT_TRUE(Testing::fragments_identical(in, l3));
 }

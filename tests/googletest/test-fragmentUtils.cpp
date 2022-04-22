@@ -2,6 +2,7 @@
 
 #include "utils-fragments.h"
 
+#include <fragmentIterators/CellSelect.h>
 #include <fragmentIterators/FragmentIterator.h>
 #include <fragmentIterators/MergeFragments.h>
 #include <fragmentIterators/RegionSelect.h>
@@ -222,4 +223,39 @@ TEST(FragmentUtils, InsertionIterator) {
     ASSERT_FALSE(it.nextInsertion());
     ASSERT_FALSE(it.nextChr());
     ASSERT_FALSE(it.nextChr());
+}
+
+TEST(FragmentUtils, CellSelect) {
+    uint32_t max_cell = 50;
+    auto v = Testing::generateFrags(200, 3, 400, max_cell-1, 100, 1336);
+    std::sort(v.begin(), v.end(), [](const Testing::Frag &a, const Testing::Frag &b) {
+        if (a.chr != b.chr) return a.chr < b.chr;
+        return a.start < b.start;
+    });
+
+    std::vector<Testing::Frag> v2;
+    for (auto f : v) {
+        if (f.cell > 15 || f.cell < 10) continue;
+        f.cell = 15 - f.cell;
+        v2.push_back(f);
+    }
+
+    std::unique_ptr<VecReaderWriterBuilder> d1 = writeFragmentTuple(v, max_cell, true);
+    std::unique_ptr<VecReaderWriterBuilder> d2 = writeFragmentTuple(v2, max_cell, true);
+    std::vector<std::string> &names_d2 = d2->getStringVecs().at("cell_names");
+    for (uint32_t i = 0; i <= 5; i++) {
+        names_d2[i] = std::string("c") + std::to_string(15 - i);
+    }
+    names_d2.resize(6);
+
+
+    StoredFragments in1 = StoredFragments::openUnpacked(*d1);
+    StoredFragments in2 = StoredFragments::openUnpacked(*d1);
+    StoredFragments out = StoredFragments::openUnpacked(*d2);
+    CellNameSelect select1(in1, {"c15", "c14", "c13", "c12", "c11", "c10"});
+
+    ASSERT_TRUE(Testing::fragments_identical(select1, out));
+    CellIndexSelect select2(in2, {15, 14, 13, 12, 11, 10});
+    out.restart();
+    ASSERT_TRUE(Testing::fragments_identical(select2, out));
 }
