@@ -93,7 +93,7 @@ List write_unpacked_fragments_cpp(SEXP fragments) {
     return wb.getList();
 }
 
-List fragments_get_names(const StoredFragments &frags) {
+List fragments_get_names(const StoredFragmentsBase &frags) {
     uint32_t chr_count = frags.chrCount();
     uint32_t cell_count = frags.cellCount();
     StringVector chr_names(chr_count);
