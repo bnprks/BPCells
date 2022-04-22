@@ -11,8 +11,8 @@
 
 namespace BPCells {
 
-class StoredFragments: public FragmentLoader {
-private:
+class StoredFragmentsBase: public FragmentLoader {
+protected:
     // cell, start, end = concatenated fragment data across chromosomes
     // end_max[i] = max(ends[chr_start:i*128])
     // chr_ptr[2*i] = start index of chr i in data arrays
@@ -35,11 +35,10 @@ private:
 
     
 public:
-    StoredFragments(UIntReader &&cell, UIntReader &&start, UIntReader &&end, 
+    StoredFragmentsBase(UIntReader &&cell, UIntReader &&start, UIntReader &&end, 
         UIntReader &&end_max, UIntReader && chr_ptr, 
         std::unique_ptr<StringReader> &&chr_names,
         std::unique_ptr<StringReader> &&cell_names);
-    static StoredFragments openUnpacked(ReaderBuilder &rb);
                 
     bool isSeekable() const override;
     void seek(uint32_t chr_id, uint32_t base) override;
@@ -62,9 +61,18 @@ public:
     uint32_t* endData() override;
 };
 
-class StoredFragmentsPacked: public StoredFragments {
+
+class StoredFragments: public StoredFragmentsBase {
 public:
-    using StoredFragments::StoredFragments;
+    using StoredFragmentsBase::StoredFragmentsBase;
+    static StoredFragments openUnpacked(ReaderBuilder &rb);
+    // Just override the methods that load data so we can insert a step to add start+end
+    
+};
+
+class StoredFragmentsPacked: public StoredFragmentsBase {
+public:
+    using StoredFragmentsBase::StoredFragmentsBase;
     static StoredFragmentsPacked openPacked(ReaderBuilder &rb, uint32_t load_size = 1024);
     // Just override the methods that load data so we can insert a step to add start+end
     bool load() override;

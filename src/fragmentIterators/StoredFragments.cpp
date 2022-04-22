@@ -2,7 +2,7 @@
 
 namespace BPCells {
 
-StoredFragments::StoredFragments(UIntReader &&cell, UIntReader &&start, UIntReader &&end, 
+StoredFragmentsBase::StoredFragmentsBase(UIntReader &&cell, UIntReader &&start, UIntReader &&end, 
         UIntReader &&end_max, UIntReader && chr_ptr, 
         std::unique_ptr<StringReader> &&chr_names,
         std::unique_ptr<StringReader> &&cell_names) :
@@ -27,7 +27,11 @@ StoredFragments StoredFragments::openUnpacked(ReaderBuilder &rb) {
 
 // Read end_max_buf from end_max iterator, making it equal to the values between
 // start_idx and end_idx
-void StoredFragments::readEndMaxBuf(uint32_t start_idx, uint32_t end_idx) {
+void StoredFragmentsBase::readEndMaxBuf(uint32_t start_idx, uint32_t end_idx) {
+    if (start_idx == end_idx) {
+        end_max_buf.resize(0);
+        return;
+    }
     // Read the end_max buffer
     end_max_buf.resize(end_idx/128 - start_idx/128 + 1);
     end_max.seek(start_idx/128);
@@ -48,8 +52,8 @@ void StoredFragments::readEndMaxBuf(uint32_t start_idx, uint32_t end_idx) {
     }
 }
 
-bool StoredFragments::isSeekable() const {return true;}
-void StoredFragments::seek(uint32_t chr_id, uint32_t base) {
+bool StoredFragmentsBase::isSeekable() const {return true;}
+void StoredFragmentsBase::seek(uint32_t chr_id, uint32_t base) {
     if (chr_id != current_chr) {
         if (chr_id >= chrCount()) {
             // Seeking to a chromosome larger than exists in the fragments.
@@ -83,26 +87,27 @@ void StoredFragments::seek(uint32_t chr_id, uint32_t base) {
     current_capacity = 0;
 }
 
-void StoredFragments::restart() {
+void StoredFragmentsBase::restart() {
     current_chr = UINT32_MAX;
     current_idx = UINT32_MAX;
     chr_ptr.seek(0);
 }
 
-int StoredFragments::chrCount() const {return chr_names->size();}
-int StoredFragments::cellCount() const {return cell_names->size();}
+int StoredFragmentsBase::chrCount() const {return chr_names->size();}
+int StoredFragmentsBase::cellCount() const {return cell_names->size();}
 
-const char* StoredFragments::chrNames(uint32_t chr_id) const {
+const char* StoredFragmentsBase::chrNames(uint32_t chr_id) const {
     return chr_names->get(chr_id);
 }
-const char* StoredFragments::cellNames(uint32_t cell_id) const {
+const char* StoredFragmentsBase::cellNames(uint32_t cell_id) const {
     return cell_names->get(cell_id); 
 }
 
-bool StoredFragments::nextChr() {
+bool StoredFragmentsBase::nextChr() {
     current_chr += 1;
     if (current_chr >= chrCount()) {
         current_chr -= 1;
+        current_idx = UINT32_MAX;
         return false;
     }
 
@@ -120,11 +125,12 @@ bool StoredFragments::nextChr() {
     }
     current_idx = chr_start_ptr;
     readEndMaxBuf(chr_start_ptr, chr_end_ptr);
+
     return true;
 }
-uint32_t StoredFragments::currentChr() const {return current_chr;}
+uint32_t StoredFragmentsBase::currentChr() const {return current_chr;}
 
-bool StoredFragments::load() {
+bool StoredFragmentsBase::load() {
     if (current_idx >= chr_end_ptr) {
         return false;
     }
@@ -144,13 +150,13 @@ bool StoredFragments::load() {
 }
 
 
-uint32_t StoredFragments::capacity() const {
+uint32_t StoredFragmentsBase::capacity() const {
     return current_capacity;
 }
     
-uint32_t* StoredFragments::cellData() {return cell.data();}
-uint32_t* StoredFragments::startData() {return start.data();}
-uint32_t* StoredFragments::endData() {return end.data();}
+uint32_t* StoredFragmentsBase::cellData() {return cell.data();}
+uint32_t* StoredFragmentsBase::startData() {return start.data();}
+uint32_t* StoredFragmentsBase::endData() {return end.data();}
 
 
 StoredFragmentsPacked StoredFragmentsPacked::openPacked(ReaderBuilder &rb, uint32_t load_size) {
@@ -197,7 +203,7 @@ StoredFragmentsPacked StoredFragmentsPacked::openPacked(ReaderBuilder &rb, uint3
 }
 
 bool StoredFragmentsPacked::load() {
-    if (!StoredFragments::load()) return false;
+    if (!StoredFragmentsBase::load()) return false;
     uint32_t capacity = this->capacity();
     uint32_t *start = startData();
     uint32_t *end = endData();
@@ -282,6 +288,7 @@ void StoredFragmentsWriter::write(FragmentLoader &fragments, void (*checkInterru
     fragments.restart();
     while (fragments.nextChr()) {
         uint32_t chr_id = fragments.currentChr();
+
         if (chr_id*2 + 2 >= chr_ptr_buf.size()) {
             chr_ptr_buf.resize(chr_id*2 + 2);
         }
@@ -326,13 +333,13 @@ void StoredFragmentsWriter::write(FragmentLoader &fragments, void (*checkInterru
             }
 
             if (subtract_start_from_end) {
-                for (i = 0; i + 128 <= capacity; i += 128) {
-                    simdsubtract(in_end_data + i, in_start_data + i);
+                uint32_t j;
+                for (j = 0; j + 128 <= capacity; j += 128) {
+                    simdsubtract(in_end_data + j, in_start_data + j);
                 }
-                for (; i < capacity; i++) {
-                    in_end_data[i] -= in_start_data[i];
+                for (; j < capacity; j++) {
+                    in_end_data[j] -= in_start_data[j];
                 }
-                i = 0;
             }
 
             // Write data in chunks in case our output read capacity is less than our
@@ -362,6 +369,10 @@ void StoredFragmentsWriter::write(FragmentLoader &fragments, void (*checkInterru
     }
     if (idx % 128 != 0) {
         end_max.write_one(std::max(cur_end_max, prev_end_max));
+    }
+
+    if (fragments.chrCount() * 2 > (int64_t) chr_ptr_buf.size()) {
+        chr_ptr_buf.resize(fragments.chrCount() * 2, idx);
     }
 
     chr_ptr.ensureCapacity(chr_ptr_buf.size());
