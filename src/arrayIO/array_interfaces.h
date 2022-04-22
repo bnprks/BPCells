@@ -213,20 +213,16 @@ public:
     // Seek to a different position in the stream (first integer is position 0),
     // resetting data() and capacity() pointers to have 0 capacity.
     inline void seek(uint32_t new_pos) {
-        uint32_t buf_start_pos = pos - loaded;
-
-        if (buf_start_pos <= new_pos && pos > new_pos) {
-            // Don't seek, just let the next read come from the existing buffer
-            idx = new_pos - buf_start_pos;
-            available = 0;
-        } else {
-            new_pos = std::min(new_pos, total_size);
-            reader->seek(new_pos);
-            pos = new_pos;
-            loaded = 0;
-            idx = 0;
-            available = 0;
-        }
+        // Note: previous code allowed for re-using the existing loaded data buffer 
+        // upon seek, but this could cause bugs when downstream code had already modified
+        // the data buffer but expected clean data after seek+load. Look at file 
+        // history to see the old version
+        new_pos = std::min(new_pos, total_size);
+        reader->seek(new_pos);
+        pos = new_pos;
+        loaded = 0;
+        idx = 0;
+        available = 0;  
     }
     
     // Read one element of the input stream, throwing an exception if there are

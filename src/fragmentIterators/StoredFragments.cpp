@@ -9,21 +9,6 @@ StoredFragmentsBase::StoredFragmentsBase(UIntReader &&cell, UIntReader &&start, 
     cell(std::move(cell)), start(std::move(start)), end(std::move(end)), end_max(std::move(end_max)),
     chr_ptr(std::move(chr_ptr)), chr_names(std::move(chr_names)), cell_names(std::move(cell_names)) {}
 
-StoredFragments StoredFragments::openUnpacked(ReaderBuilder &rb) {
-    if (rb.readVersion() != "unpacked-fragments-v1") {
-        throw std::runtime_error(std::string("Version does not match unpacked-fragments-v1: ") + rb.readVersion());
-    }
-
-    return StoredFragments(
-        rb.openUIntReader("cell"),
-        rb.openUIntReader("start"),
-        rb.openUIntReader("end"),
-        rb.openUIntReader("end_max"),
-        rb.openUIntReader("chr_ptr"),
-        rb.openStringReader("chr_names"),
-        rb.openStringReader("cell_names")
-    );
-}
 
 // Read end_max_buf from end_max iterator, making it equal to the values between
 // start_idx and end_idx
@@ -130,7 +115,35 @@ bool StoredFragmentsBase::nextChr() {
 }
 uint32_t StoredFragmentsBase::currentChr() const {return current_chr;}
 
-bool StoredFragmentsBase::load() {
+
+
+uint32_t StoredFragmentsBase::capacity() const {
+    return current_capacity;
+}
+    
+uint32_t* StoredFragmentsBase::cellData() {return cell.data();}
+uint32_t* StoredFragmentsBase::startData() {return start.data();}
+uint32_t* StoredFragmentsBase::endData() {return end.data();}
+
+
+StoredFragments StoredFragments::openUnpacked(ReaderBuilder &rb) {
+    if (rb.readVersion() != "unpacked-fragments-v1") {
+        throw std::runtime_error(std::string("Version does not match unpacked-fragments-v1: ") + rb.readVersion());
+    }
+
+    return StoredFragments(
+        rb.openUIntReader("cell"),
+        rb.openUIntReader("start"),
+        rb.openUIntReader("end"),
+        rb.openUIntReader("end_max"),
+        rb.openUIntReader("chr_ptr"),
+        rb.openStringReader("chr_names"),
+        rb.openStringReader("cell_names")
+    );
+}
+
+
+bool StoredFragments::load() {
     if (current_idx >= chr_end_ptr) {
         return false;
     }
@@ -148,16 +161,6 @@ bool StoredFragmentsBase::load() {
     current_idx += current_capacity;
     return true;
 }
-
-
-uint32_t StoredFragmentsBase::capacity() const {
-    return current_capacity;
-}
-    
-uint32_t* StoredFragmentsBase::cellData() {return cell.data();}
-uint32_t* StoredFragmentsBase::startData() {return start.data();}
-uint32_t* StoredFragmentsBase::endData() {return end.data();}
-
 
 StoredFragmentsPacked StoredFragmentsPacked::openPacked(ReaderBuilder &rb, uint32_t load_size) {
     if (rb.readVersion() != "packed-fragments-v1") {
@@ -203,15 +206,29 @@ StoredFragmentsPacked StoredFragmentsPacked::openPacked(ReaderBuilder &rb, uint3
 }
 
 bool StoredFragmentsPacked::load() {
-    if (!StoredFragmentsBase::load()) return false;
-    uint32_t capacity = this->capacity();
+    if (current_idx >= chr_end_ptr) {
+        return false;
+    }
+    
+    cell.advance(current_capacity);
+    start.advance(current_capacity);
+    end.advance(current_capacity);
+
+    // Load cell, start, or end if necessary
+    if (cell.capacity() == 0) cell.ensureCapacity(1);
+    if (start.capacity() == 0) start.ensureCapacity(1);
+    if (end.capacity() == 0) end.ensureCapacity(1);
+    
+    current_capacity = std::min({cell.capacity(), start.capacity(), end.capacity(), chr_end_ptr - current_idx});
+    current_idx += current_capacity;
+
     uint32_t *start = startData();
     uint32_t *end = endData();
     uint32_t i;
-    for (i = 0; i + 128 <= capacity; i += 128) {
+    for (i = 0; i + 128 <= current_capacity; i += 128) {
         simdadd(end + i, start + i);
     }
-    for (; i < capacity; i++) {
+    for (; i < current_capacity; i++) {
         end[i] += start[i];
     }
     return true;

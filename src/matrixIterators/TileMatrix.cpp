@@ -111,13 +111,11 @@ void TileMatrix::seekCol(uint32_t col) {
 bool TileMatrix::nextCol() {
     current_output_tile += 1;
 
-    while (current_output_tile < next_completed_tile && current_output_tile < n_tiles) {
-        if (accumulator.discard_until(current_output_tile)) return true;
-        current_output_tile += 1;
-    }
     if (current_output_tile >= n_tiles) {current_output_tile -= 1; return false;}
-    loadFragments();
-    return accumulator.discard_until(current_output_tile);
+    if (current_output_tile >= next_completed_tile)
+        loadFragments();
+    accumulator.discard_until(current_output_tile);
+    return true;
 }
 
 uint32_t TileMatrix::currentCol() const {return current_output_tile;}

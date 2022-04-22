@@ -47,6 +47,21 @@ PeakMatrix::PeakMatrix(FragmentLoader &frags,
         }
         prev = p;
     }
+
+    // Make a lookup so that end_sorted_lookup[i] gives the end-sorted index of start-sorted index i 
+    // This lets us translate from the order we see new peaks into the order we'll output them
+    for (size_t i = 0; i < chr.size(); i++) {
+        end_sorted_lookup[i] = i;
+    }
+
+    const std::vector<Peak> &peaks_ref = sorted_peaks;
+    std::sort(end_sorted_lookup.begin(), end_sorted_lookup.end(), [&peaks_ref](uint32_t a, uint32_t b) {
+        Peak pa = peaks_ref[a];
+        Peak pb = peaks_ref[b];
+        if (pa.chr != pb.chr) return pa.chr < pb.chr;
+        else if (pa.start != pb.start) return pa.start < pb.start;
+        else return pa.end < pb.end;
+    });
     
     // Sort peaks by start coord since that's the order we'll see them
     std::sort(sorted_peaks.begin(), sorted_peaks.end(), [](Peak a, Peak b) {
@@ -58,17 +73,8 @@ PeakMatrix::PeakMatrix(FragmentLoader &frags,
     // Sentinel value at end of sorted_peaks
     sorted_peaks.push_back({UINT32_MAX, UINT32_MAX, UINT32_MAX});
 
-    for (size_t i = 0; i < chr.size(); i++) {
-        end_sorted_lookup[i] = i;
-    }
-    const std::vector<Peak> &peaks_ref = sorted_peaks;
-    std::sort(end_sorted_lookup.begin(), end_sorted_lookup.end(), [&peaks_ref](uint32_t a, uint32_t b) {
-        Peak pa = peaks_ref[a];
-        Peak pb = peaks_ref[b];
-        if (pa.chr != pb.chr) return pa.chr < pb.chr;
-        else if (pa.end != pb.end) return pa.end < pb.end;
-        else return pa.start < pb.start;
-    });
+   
+    
 
     // Call nextChr to start fragments (analagous to what's done in loadFragments)
     if (!frags.nextChr()) {
@@ -91,6 +97,7 @@ PeakMatrix::PeakMatrix(FragmentLoader &frags,
     while (sorted_peaks[next_completed_peak].chr < frags.currentChr()) {
         next_completed_peak++;
     }
+    next_active_peak = next_completed_peak;
 }
     
 uint32_t PeakMatrix::rows() const {return frags.cellCount();}
@@ -120,13 +127,15 @@ void PeakMatrix::seekCol(uint32_t col) {
 
 bool PeakMatrix::nextCol() {
     current_output_peak += 1;
-    while (current_output_peak < next_completed_peak && current_output_peak < n_peaks) {
-        if (accumulator.discard_until(current_output_peak)) return true;
-        current_output_peak += 1;
+
+    if (current_output_peak >= n_peaks) {
+        current_output_peak -= 1; 
+        return false;
     }
-    if (current_output_peak >= n_peaks) {current_output_peak -= 1; return false;}
-    loadFragments();
-    return accumulator.discard_until(current_output_peak);
+    if (current_output_peak >= next_completed_peak)
+        loadFragments();
+    accumulator.discard_until(current_output_peak);
+    return true;
 }
 
 uint32_t PeakMatrix::currentCol() const {return current_output_peak;}
@@ -154,6 +163,8 @@ void PeakMatrix::loadFragments() {
     //   3. iterate through the available fragments, tallying overlaps
     //      - Iterate peak outside & fragments inside
     //   4. break if we're ready to accumulate and have next_completed_peak > current_output_peak
+    if (accumulator.ready_for_loading() && next_completed_peak > current_output_peak) return;
+    
     if (next_active_peak == sorted_peaks.size()) return;
 
     if (active_peaks.size() == 0 && frags.isSeekable()) {
@@ -164,7 +175,6 @@ void PeakMatrix::loadFragments() {
         // Load fragments, and check for end of chromosomes
         while (!frags.load()) {
             uint32_t prev_chr_id = frags.currentChr();
-
             if (!frags.nextChr()) {
                 next_completed_peak = sorted_peaks.size() - 1;
                 active_peaks.clear();
@@ -188,13 +198,14 @@ void PeakMatrix::loadFragments() {
             while (sorted_peaks[next_completed_peak].chr < frags.currentChr()) {
                 next_completed_peak++;
             }
+            next_active_peak = next_completed_peak;
             active_peaks.clear();
         }
         uint32_t capacity = frags.capacity();
-        uint32_t *start_data = frags.startData();
-        uint32_t *end_data = frags.endData();
-        uint32_t *cell_data = frags.cellData();
-        
+        const uint32_t *start_data = frags.startData();
+        const uint32_t *end_data = frags.endData();
+        const uint32_t *cell_data = frags.cellData();
+
         uint32_t i = 0;
         uint32_t end_max = 0;
         // Loop through reads in blocks of 128 at a time
@@ -210,7 +221,7 @@ void PeakMatrix::loadFragments() {
                sorted_peaks[next_active_peak].start < end_max) {
 
                 active_peaks.push_back(sorted_peaks[next_active_peak]);
-                active_peaks.back().chr = next_active_peak; // Sloppy, but overload active_peaks chr field to be output index
+                active_peaks.back().chr = end_sorted_lookup[next_active_peak]; // Sloppy, but overload active_peaks chr field to be output index
                 next_active_peak += 1;
             }
 

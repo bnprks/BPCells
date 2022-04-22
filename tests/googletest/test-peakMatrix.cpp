@@ -72,9 +72,10 @@ TEST(PeakMatrix, PeakMatrix) {
     w_cell.finalize(); w_start.finalize(); w_end.finalize(); w_end_max.finalize(); w_chr_ptr.finalize();
     StoredFragments frags = StoredFragments::openUnpacked(v);
 
-    std::vector<uint32_t> chr = {0,0,0,1};
-    std::vector<uint32_t> start = {2, 1002, 1004, 10};
-    std::vector<uint32_t> end = {4, 1005, 1006, 20};
+    
+    std::vector<uint32_t> chr = {0,0,0,0,0,1};
+    std::vector<uint32_t> start = {2, 1002, 1004, 1000, 2000, 10};
+    std::vector<uint32_t> end = {4, 1005, 1006, 1008, 2010, 20};
     PeakMatrix m(
         frags, chr, start, end, 
         std::make_unique<VecStringReader>(std::vector<std::string>{"chr1", "chr2"})
@@ -91,9 +92,10 @@ TEST(PeakMatrix, PeakMatrix) {
         {0,0,2}, {1,0,4}, {2,0,6}, {3,0,4}, //Peak 1
         {1,1,8}, {2,1,9}, {3,1,8}, // Peak 2
         {3,2,8}, {4,2,5}, // Peak 3
-        {1,3,1}, {2,3,1}, {3,3,2} // Peak 4
+        {0,3,5}, {1,3,8}, {2,3,9}, {3,3,8}, {4,3,5}, //Peak 4
+        {1,5,1}, {2,5,1}, {3,5,2} // Peak 6
     };
-    Eigen::SparseMatrix<double> eigen_mat(5,4);
+    Eigen::SparseMatrix<double> eigen_mat(5,6);
     eigen_mat.setFromTriplets(expected_triplets.begin(), expected_triplets.end());
     
     CSparseMatrix expected_csparse(get_map(eigen_mat));

@@ -1,5 +1,3 @@
-
-
 #' IterableFragments methods
 #'
 #' Methods for IterableFragments objects
@@ -683,20 +681,6 @@ scan_fragments <- function(fragments) {
     scan_fragments_cpp(iterate_fragments(fragments))
 }
 
-#' Count fragments by nucleosomal size
-#' @param fragments Fragments object
-#' @param nucleosome_width Integer cutoff to use as nucleosome width
-#' @return List with names subNucleosomal, monoNucleosomal, multiNucleosomal containing the 
-#'         count vectors of fragments in each class per cell.
-#' @export
-nucleosome_counts <- function(fragments, nucleosome_width=147) {
-    assert_is(fragments, "IterableFragments")
-    assert_wholenumber(nucleosome_width)
-    assert_len(nucleosome_width, 1)
-
-    iter <- iterate_fragments(fragments)
-    nucleosome_counts_cpp(iter, nucleosome_width)
-}
 
 
 pretty_print_vector <- function(x, max_len=3, sep=", ", prefix="", empty="") {

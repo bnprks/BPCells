@@ -615,7 +615,6 @@ peakMatrix <- function(fragments, ranges, zero_based_coords=TRUE) {
     res@chr_levels <-chrNames(fragments)
     res@dim <- c(length(fragments@cell_names), length(res@chr_id))
     res@dimnames[[1]] <- fragments@cell_names
-    res@version <- as.integer(version)
     return(res)
 }
 

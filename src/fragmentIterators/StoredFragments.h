@@ -53,7 +53,7 @@ public:
     bool nextChr() override;
     uint32_t currentChr() const override;
     
-    bool load() override;
+    
     uint32_t capacity() const override;
     
     uint32_t* cellData() override;
@@ -66,7 +66,8 @@ class StoredFragments: public StoredFragmentsBase {
 public:
     using StoredFragmentsBase::StoredFragmentsBase;
     static StoredFragments openUnpacked(ReaderBuilder &rb);
-    // Just override the methods that load data so we can insert a step to add start+end
+    
+    bool load() override;
     
 };
 
