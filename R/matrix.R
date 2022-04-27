@@ -127,9 +127,10 @@ setMethod("%*%", signature(x="numeric", y="IterableMatrix"), function(x, y) {
 setMethod("rowSums", signature(x="IterableMatrix"), function(x) {
     iter <- iterate_matrix(as(x, "mat_double"))
     if (x@transpose) 
-        col_sums_cpp(iter)
+        res <- col_sums_double_cpp(iter)
     else
-        row_sums_cpp(iter)
+        res <- row_sums_double_cpp(iter)
+    names(res) <- rownames(x)
 })
 
 #' @param x IterableMatrix object
@@ -138,9 +139,10 @@ setMethod("rowSums", signature(x="IterableMatrix"), function(x) {
 setMethod("colSums", signature(x="IterableMatrix"), function(x) {
     iter <- iterate_matrix(as(x, "mat_double"))
     if (x@transpose) 
-        row_sums_cpp(iter)
+        res <- row_sums_double_cpp(iter)
     else
-        col_sums_cpp(iter)
+        res <- col_sums_double_cpp(iter)
+    names(res) <- colnames(x)
 })
 
 #' @param x IterableMatrix object
@@ -838,6 +840,9 @@ matrixStats <- function(matrix,
     res <- matrix_stats_cpp(iterate_matrix(matrix), row_stats_number, col_stats_number)
     rownames(res$row_stats) <- stat_options[seq_len(row_stats_number) + 1]
     rownames(res$col_stats) <- stat_options[seq_len(col_stats_number) + 1]
+
+    colnames(res$row_stats) <- rownames(matrix)
+    colnames(res$col_stats) <- colnames(matrix)
     
     if (matrix@transpose) {
         res <- list(

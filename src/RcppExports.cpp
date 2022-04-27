@@ -727,25 +727,25 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// row_sums_cpp
-std::vector<double> row_sums_cpp(SEXP matrix);
-RcppExport SEXP _BPCells_row_sums_cpp(SEXP matrixSEXP) {
+// row_sums_double_cpp
+std::vector<double> row_sums_double_cpp(SEXP matrix);
+RcppExport SEXP _BPCells_row_sums_double_cpp(SEXP matrixSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< SEXP >::type matrix(matrixSEXP);
-    rcpp_result_gen = Rcpp::wrap(row_sums_cpp(matrix));
+    rcpp_result_gen = Rcpp::wrap(row_sums_double_cpp(matrix));
     return rcpp_result_gen;
 END_RCPP
 }
-// col_sums_cpp
-std::vector<double> col_sums_cpp(SEXP matrix);
-RcppExport SEXP _BPCells_col_sums_cpp(SEXP matrixSEXP) {
+// col_sums_double_cpp
+std::vector<double> col_sums_double_cpp(SEXP matrix);
+RcppExport SEXP _BPCells_col_sums_double_cpp(SEXP matrixSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< SEXP >::type matrix(matrixSEXP);
-    rcpp_result_gen = Rcpp::wrap(col_sums_cpp(matrix));
+    rcpp_result_gen = Rcpp::wrap(col_sums_double_cpp(matrix));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -834,8 +834,8 @@ static const R_CallMethodDef CallEntries[] = {
     {"_BPCells_dense_multiply_left_cpp", (DL_FUNC) &_BPCells_dense_multiply_left_cpp, 2},
     {"_BPCells_vec_multiply_right_cpp", (DL_FUNC) &_BPCells_vec_multiply_right_cpp, 2},
     {"_BPCells_vec_multiply_left_cpp", (DL_FUNC) &_BPCells_vec_multiply_left_cpp, 2},
-    {"_BPCells_row_sums_cpp", (DL_FUNC) &_BPCells_row_sums_cpp, 1},
-    {"_BPCells_col_sums_cpp", (DL_FUNC) &_BPCells_col_sums_cpp, 1},
+    {"_BPCells_row_sums_double_cpp", (DL_FUNC) &_BPCells_row_sums_double_cpp, 1},
+    {"_BPCells_col_sums_double_cpp", (DL_FUNC) &_BPCells_col_sums_double_cpp, 1},
     {"_BPCells_matrix_stats_cpp", (DL_FUNC) &_BPCells_matrix_stats_cpp, 3},
     {"_BPCells_matrix_identical_uint32_t_cpp", (DL_FUNC) &_BPCells_matrix_identical_uint32_t_cpp, 2},
     {NULL, NULL, 0}

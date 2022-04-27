@@ -4,6 +4,15 @@
 #include <stdexcept>
 #include <vector>
 
+#ifndef RCPP_EIGEN
+#include <Eigen/SparseCore>
+#else
+#include <RcppEigen.h>
+#endif
+// [[Rcpp::depends(RcppEigen)]]
+
+#include "MatrixStats.h"
+
 namespace BPCells {
 
 // Base class to load entries from (sparse) matrices
@@ -62,6 +71,33 @@ public:
     // Pointers to the loaded entries
     virtual uint32_t* rowData() = 0;
     virtual T* valData() = 0;
+
+
+    // Matrix math operations (implemented in MatrixOps.cpp and MatrixStats.cpp)
+    // These operations can be overloaded by matrix transform operations
+
+    // Calculate matrix-matrix product A*B where A (this) is sparse and B is a dense matrix.
+    virtual Eigen::MatrixXd denseMultiplyRight(const Eigen::Map<Eigen::MatrixXd> B, void (*checkInterrupt)(void) = NULL); 
+    virtual Eigen::MatrixXd denseMultiplyLeft(const Eigen::Map<Eigen::MatrixXd> B, void (*checkInterrupt)(void) = NULL);
+    // Calculate matrix-vector product A*v where A (this) is sparse and B is a dense matrix.
+    virtual Eigen::VectorXd vecMultiplyRight(const Eigen::Map<Eigen::VectorXd> v, void (*checkInterrupt)(void) = NULL);
+    virtual Eigen::VectorXd vecMultiplyLeft(const Eigen::Map<Eigen::VectorXd> v, void (*checkInterrupt)(void) = NULL);
+
+    // Calculate row/column sums of the matrix
+    virtual std::vector<T> colSums(void (*checkInterrupt)(void) = NULL);
+    virtual std::vector<T> rowSums(void (*checkInterrupt)(void) = NULL);
+
+    // Calculate stats on the rows or columns of a matrix in a single pass.
+    // For each of rows and columns, the user can choose to from the following
+    // Available statistics:
+    // 1. None
+    // 2. NonZeroCount
+    // 3. Mean
+    // 4. Variance
+    // Each of the later statistics is always calculated simultaneously to the earlier statistics 
+    // Outputs results to matrices row_output and col_output, which are col-major matrices,
+    // with one column per # rows or # columns as appropriate, and one row per output statistic
+    virtual StatsResult computeMatrixStats(Stats row_stats, Stats col_stats, void (*checkInterrupt)(void) = NULL);
 };
 
 template<typename T>
@@ -207,3 +243,5 @@ public:
 };
 
 } // end namespace BPCells
+
+#include "MatrixOps.h"

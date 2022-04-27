@@ -26,11 +26,10 @@ fragmentIterators/FragmentIterator.o \
 fragmentIterators/ShiftCoords.o \
 fragmentIterators/StoredFragments.o \
 matrixIterators/ImportMatrixHDF5.o \
-matrixIterators/MatrixOps.o \
 matrixIterators/StoredMatrix.o \
 matrixIterators/PeakMatrix.o \
 matrixIterators/TileMatrix.o \
-matrixTransforms/MatrixStats.o 
+MatrixIterators/MatrixStats.o 
 
 # r_wrapper.o \
 # profiler.o \

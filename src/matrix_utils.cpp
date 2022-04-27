@@ -7,8 +7,8 @@
 #include "matrixIterators/CSparseMatrix.h"
 #include "matrixIterators/MatrixIndexSelect.h"
 #include "matrixIterators/MatrixOps.h"
+#include "matrixIterators/MatrixStats.h"
 
-#include "matrixTransforms/MatrixStats.h"
 
 using namespace BPCells;
 using namespace Rcpp;
@@ -104,50 +104,43 @@ NumericVector scan_matrix_uint32_t_cpp(SEXP matrix) {
 // [[Rcpp::export]]
 Eigen::MatrixXd dense_multiply_right_cpp(SEXP matrix, Eigen::Map<Eigen::MatrixXd> B) {
     XPtr<MatrixLoader<double>>loader(matrix);
-    MatrixIterator<double> A(*loader);
-    return denseMultiplyRight(A, B);
+    return loader->denseMultiplyRight(B, &Rcpp::checkUserInterrupt);
 }
 
 // [[Rcpp::export]]
 Eigen::MatrixXd dense_multiply_left_cpp(SEXP matrix, Eigen::Map<Eigen::MatrixXd> B) {
     XPtr<MatrixLoader<double>>loader(matrix);
-    MatrixIterator<double> A(*loader);
-    return denseMultiplyLeft(A, B);
+    return loader->denseMultiplyLeft(B, &Rcpp::checkUserInterrupt);
 }
 
 // [[Rcpp::export]]
 Eigen::VectorXd vec_multiply_right_cpp(SEXP matrix, Eigen::Map<Eigen::VectorXd> v) {
     XPtr<MatrixLoader<double>>loader(matrix);
-    MatrixIterator<double> A(*loader);
-    return vecMultiplyRight(A, v);
+    return loader->vecMultiplyRight(v, &Rcpp::checkUserInterrupt);
 }
 
 // [[Rcpp::export]]
 Eigen::VectorXd vec_multiply_left_cpp(SEXP matrix, Eigen::Map<Eigen::VectorXd> v) {
     XPtr<MatrixLoader<double>>loader(matrix);
-    MatrixIterator<double> A(*loader);
-    return vecMultiplyLeft(A, v);
+    return loader->vecMultiplyLeft(v, &Rcpp::checkUserInterrupt);
 }
 
 // [[Rcpp::export]]
-std::vector<double> row_sums_cpp(SEXP matrix) {
+std::vector<double> row_sums_double_cpp(SEXP matrix) {
     XPtr<MatrixLoader<double>>loader(matrix);
-    MatrixIterator<double> A(*loader);
-    return rowSums<double>(A);
+    return loader->rowSums(&Rcpp::checkUserInterrupt);
 }
 
 // [[Rcpp::export]]
-std::vector<double> col_sums_cpp(SEXP matrix) {
+std::vector<double> col_sums_double_cpp(SEXP matrix) {
     XPtr<MatrixLoader<double>>loader(matrix);
-    MatrixIterator<double> A(*loader);
-    return colSums<double>(A);
+    return loader->colSums(&Rcpp::checkUserInterrupt);
 }
 
 // [[Rcpp::export]]
 List matrix_stats_cpp(SEXP matrix, int row_stats, int col_stats) {
     XPtr<MatrixLoader<double>>loader(matrix);
-    MatrixIterator<double> mat(*loader);
-    StatsResult res = computeMatrixStats(mat, (Stats) row_stats, (Stats) col_stats, false, 1024, &Rcpp::checkUserInterrupt);
+    StatsResult res = loader->computeMatrixStats((Stats) row_stats, (Stats) col_stats, &Rcpp::checkUserInterrupt);
 
     return List::create(
         Named("row_stats") = res.row_stats,

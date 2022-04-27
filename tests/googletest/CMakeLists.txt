@@ -167,6 +167,13 @@ target_link_libraries(matrix_io_test matrixIterators gtest_main gmock)
 gtest_discover_tests(matrix_io_test)
 
 add_executable(
+    matrix_math_test
+    test-matrixMath.cpp
+)
+target_link_libraries(matrix_math_test matrixIterators gtest_main gmock)
+gtest_discover_tests(matrix_math_test)
+
+add_executable(
     peak_matrix_test
     test-peakMatrix.cpp
     ${SRC}/matrixIterators/PeakMatrix.cpp

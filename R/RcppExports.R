@@ -233,12 +233,12 @@ vec_multiply_left_cpp <- function(matrix, v) {
     .Call(`_BPCells_vec_multiply_left_cpp`, matrix, v)
 }
 
-row_sums_cpp <- function(matrix) {
-    .Call(`_BPCells_row_sums_cpp`, matrix)
+row_sums_double_cpp <- function(matrix) {
+    .Call(`_BPCells_row_sums_double_cpp`, matrix)
 }
 
-col_sums_cpp <- function(matrix) {
-    .Call(`_BPCells_col_sums_cpp`, matrix)
+col_sums_double_cpp <- function(matrix) {
+    .Call(`_BPCells_col_sums_double_cpp`, matrix)
 }
 
 matrix_stats_cpp <- function(matrix, row_stats, col_stats) {
