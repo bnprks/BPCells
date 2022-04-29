@@ -82,6 +82,24 @@ target_include_directories(
     ${SRC}
 )
 
+add_library(
+    matrixTransforms
+    ${SRC}/matrixTransforms/MatrixTransform.cpp
+    ${SRC}/matrixTransforms/Log1p.cpp
+    ${SRC}/matrixTransforms/Scale.cpp
+    ${SRC}/matrixTransforms/Shift.cpp
+)
+target_link_libraries(
+    matrixTransforms
+    matrixIterators
+    Eigen3::Eigen
+)
+target_include_directories(
+    matrixTransforms
+    PUBLIC
+    ${SRC}
+)
+
 ### TESTING ###
 include(FetchContent)
 FetchContent_Declare(
@@ -170,7 +188,7 @@ add_executable(
     matrix_math_test
     test-matrixMath.cpp
 )
-target_link_libraries(matrix_math_test matrixIterators gtest_main gmock)
+target_link_libraries(matrix_math_test matrixIterators matrixTransforms gtest_main gmock)
 gtest_discover_tests(matrix_math_test)
 
 add_executable(

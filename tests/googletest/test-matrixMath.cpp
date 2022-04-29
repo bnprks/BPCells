@@ -12,6 +12,10 @@
 #include <matrixIterators/MatrixIndexSelect.h>
 #include <arrayIO/vector.h>
 
+#include <matrixTransforms/Log1p.h>
+#include <matrixTransforms/Scale.h>
+#include <matrixTransforms/Shift.h>
+
 #include <Eigen/Core>
 
 namespace fs = std::filesystem;
@@ -142,4 +146,102 @@ TEST(MatrixMath, Stats) {
         EXPECT_TRUE(r.row_stats.isApprox(row_stats.topRows(i)));
         EXPECT_TRUE(r.col_stats.isApprox(col_stats.topRows(i)));
     }
+}
+
+
+TEST(MatrixMath, Log1p) {
+    SparseMatrix<double> m1 = generate_mat(100, 50, 125123);
+    MatrixXd ans = MatrixXd(m1).array().log1p();
+
+    CSparseMatrix mat_1(get_map(m1));
+    Log1p mat_1_trans(mat_1);
+
+    CSparseMatrixWriter res;
+    res.write(mat_1_trans);
+
+    EXPECT_TRUE(MatrixXd(res.getMat()).isApprox(ans));
+}
+
+void checkMultiplyOps(MatrixLoader<double> &mat, MatrixXd res) {
+    MatrixXd mat_right = generate_dense_mat(mat.cols(), 4, 125412);
+    MatrixXd mat_left = generate_dense_mat(4, mat.rows(), 8432);
+
+    VectorXd vec_right = mat_right.col(0);
+    VectorXd vec_left = mat_left.row(0).transpose();
+
+    EXPECT_TRUE((res * mat_right).isApprox(mat.denseMultiplyRight(get_map_dense(mat_right))));
+    EXPECT_TRUE((res * vec_right).isApprox(mat.vecMultiplyRight(get_map_vec(vec_right))));
+
+    EXPECT_TRUE((mat_left * res).isApprox(mat.denseMultiplyLeft(get_map_dense(mat_left))));
+    EXPECT_TRUE((vec_left.transpose() * res).transpose().isApprox(mat.vecMultiplyLeft(get_map_vec(vec_left))));
+}
+
+TEST(MatrixMath, Scale) {
+    SparseMatrix<double> m1 = generate_mat(100, 50, 125123);
+    CSparseMatrix mat_1(get_map(m1));
+    
+    VectorXd scale_row = generate_dense_vec(m1.rows(), 1513);
+    VectorXd scale_col = generate_dense_vec(m1.cols(), 14582);
+    
+    // Scale row + col
+    MatrixXd ans1 = (MatrixXd(m1).array().rowwise() * scale_col.array().transpose()).colwise() * scale_row.array();
+    Scale s1(mat_1, TransformFit{scale_row.transpose(), scale_col.transpose(), {}});
+    checkMultiplyOps(s1, ans1);
+
+    CSparseMatrixWriter r1;
+    s1.restart();
+    r1.write(s1);
+    EXPECT_TRUE(MatrixXd(r1.getMat()).isApprox(ans1));
+
+    // Scale just row
+    MatrixXd ans2 = MatrixXd(m1).array().colwise() * scale_row.array();
+    Scale s2(mat_1, TransformFit{scale_row.transpose(), {}, {}});
+    checkMultiplyOps(s2, ans2);
+
+    CSparseMatrixWriter r2;
+    s2.restart();
+    r2.write(s2);
+    EXPECT_TRUE(MatrixXd(r2.getMat()).isApprox(ans2));
+
+    // Scale just col
+    MatrixXd ans3 = MatrixXd(m1).array().rowwise() * scale_col.array().transpose();
+    Scale s3(mat_1, TransformFit{{}, scale_col.transpose(), {}});
+    checkMultiplyOps(s3, ans3);
+
+    CSparseMatrixWriter r3;
+    s3.restart();
+    r3.write(s3);
+    EXPECT_TRUE(MatrixXd(r3.getMat()).isApprox(ans3));
+}
+
+TEST(MatrixMath, Shift) {
+    SparseMatrix<double> m1 = generate_mat(100, 50, 125123);
+    CSparseMatrix mat_1(get_map(m1));
+    
+    VectorXd shift_row = generate_dense_vec(m1.rows(), 1513);
+    VectorXd shift_col = generate_dense_vec(m1.cols(), 1242);
+    
+    // Shift row
+    MatrixXd ans1 = MatrixXd(m1).array().colwise() + shift_row.array();
+    ShiftRows s1(mat_1, TransformFit{shift_row.transpose(), {}, {}});
+    
+    checkMultiplyOps(s1, ans1);
+    
+    CSparseMatrixWriter r1;
+    s1.restart();
+    r1.write(s1);
+    
+    EXPECT_TRUE(MatrixXd(r1.getMat()).isApprox(ans1));
+
+    // Shift col
+    MatrixXd ans2 = MatrixXd(m1).array().rowwise() + shift_col.transpose().array();
+    ShiftCols s2(mat_1, TransformFit{{}, shift_col.transpose(), {}});
+    
+    checkMultiplyOps(s2, ans2);
+    
+    CSparseMatrixWriter r2;
+    s2.restart();
+    r2.write(s2);
+    
+    EXPECT_TRUE(MatrixXd(r2.getMat()).isApprox(ans2));
 }

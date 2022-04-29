@@ -1,11 +1,8 @@
 #pragma once
 
-#include <RcppEigen.h>
+#include <vector>
 
 #include "../matrixIterators/MatrixIterator.h"
-#include "../matrixIterators/MatrixOps.h"
-
-#include "MatrixStats.h"
 
 namespace BPCells {
     
@@ -16,14 +13,18 @@ public:
     Eigen::ArrayXd global_params;
 };
 
-
-class MatrixTransform {
+class MatrixTransform : public MatrixLoaderWrapper<double> {
+protected:
+    TransformFit fit;
 public:    
     enum class RecalculateFit {
         None,
         Rows,
         Cols
     };
+
+    MatrixTransform(MatrixLoader<double> &loader);
+    MatrixTransform(MatrixLoader<double> &loader, TransformFit fit);
     // Constructor argument conventions:
     // MatrixTransform(MatrixLoader<double> &mat): Fit a transform, then iterate over mat
     // MatrixTransform(MatrixLoader<double> &mat, TransformFit fit, RecalculateFit recalculate = RecalculateFit::None)
@@ -32,153 +33,81 @@ public:
     //     be useful for re-projecting matrices to match a given normalization)
     virtual ~MatrixTransform() = default;
 
-    // Multiply the transformed matrix by a dense matrix
-    virtual Eigen::MatrixXd denseMultiplyRight(Eigen::Map<Eigen::MatrixXd> B) = 0;
-    virtual Eigen::MatrixXd denseMultiplyLeft(Eigen::Map<Eigen::MatrixXd> B) = 0;
-
-    // Multiply the transformed matrix by a dense vector
-    virtual Eigen::VectorXd vecMultiplyRight(const Eigen::Map<Eigen::VectorXd> v) = 0;
-    virtual Eigen::VectorXd vecMultiplyLeft(const Eigen::Map<Eigen::VectorXd> v) = 0;
-
     // Return the fit object calculated at construction time
-    virtual TransformFit getFit() = 0;
-
-    // Return mean + variance of either rows or columns.
-    // This is used to make PCA easier to implement.
-    // The return value will be a 2-row matrix with 1st containing means and
-    // second containing variance
-    using StatsResultMatrix = Eigen::Matrix<double, 2, Eigen::Dynamic>;
-    virtual StatsResultMatrix rowStats(uint32_t buffer_size) = 0;
-    virtual StatsResultMatrix colStats(uint32_t buffer_size) = 0;
+    TransformFit getFit();
 };
 
-// A CRTP base class designed to make for very succinct implementations
-// of sparse matrix transformations.
+// Framework for implementing dense matrix transformations. (i.e. at least some
+// zero values are transformed into non-zero values)
 //
-// Child classes should implement the following methods:
-// - static TransformFit fit(MatrixLoader<double> &mat, const Eigen::ArrayXd &global_params)
-//       Fit all row+col parameters on a given matrix, returning the result.
-//       Global parameters are listed in the input if required, and will be copied
-//       to the TransformFit object automatically
-//
-// - double transform(double val, const double *row_params, const double *col_params, const double *global_params)
-//       Transform a single value, given the relevant parameters for its row and column
-//
-// There are just two minor caveats:
-// - Some work will be wasted in fitting transforms for re-projection
-// - The global parameters must not be calculated and are passed in by the user
-//   then saved exactly
-//
-// See the LSI imlementation for an example of how to implement a sparse transform
-template<typename ConcreteTransform>
-class SparseTransform : public MatrixTransform, public MatrixLoaderWrapper<double> {
+// This class implements the basic loading primitives while inserting the newly
+// non-zero values into the data stream. Note that these primitives will likely have much
+// worse performance on dense matrices, but are provided for ease-of-use.
+// 
+// To provide efficient implementations of both loading and matrix/vector products,
+// Child classes must implement both loadZero and loadZeroSubtracted. These functions
+// involve calculating transformed values as if the underlying sparse matrix was all zeros.
+class MatrixTransformDense : public MatrixTransform {
 private:
-    TransformFit fit;
-    bool transpose;
-    // Transform a value given the row and column indices
-    inline double transform(double val, uint32_t row, uint32_t col) {
-        double *row_params = &fit.row_params(0, row);
-        double *col_params = &fit.col_params(0, col);
-        return static_cast<ConcreteTransform*>(this)->transform(
-            val, row_params, col_params, &fit.global_params(0)
-        );
-    }
-public:    
-    // Must provide at least a matrix to construct
-    SparseTransform() = delete;
+    static inline const uint32_t buf_size = 1024;
+    std::array<double, buf_size> val_data;
+    std::array<uint32_t, buf_size> row_data;
+    uint32_t loader_idx = UINT32_MAX; // Index of loader data for this->load() output
+    uint32_t loader_capacity = 0; // Capacity of loader data. loader_capacity==0 signals no more data for this column
+    uint32_t loader_col = UINT32_MAX;
+    uint32_t current_row = UINT32_MAX;
+    uint32_t current_col = UINT32_MAX;
+public:
+    MatrixTransformDense(MatrixLoader<double> &mat, TransformFit fit);
     
-    // Fit a new transform to the matrix
-    SparseTransform(MatrixLoader<double> &mat, const Eigen::ArrayXd &params, bool transpose=false) : 
-        MatrixLoaderWrapper(mat), fit(ConcreteTransform::fit(mat, params, transpose)), transpose(transpose) {};
+    // Reset the iterator to start from the beginning
+    void restart() override;
 
-    SparseTransform(MatrixLoader<double> &mat,
-                    TransformFit fit, MatrixTransform::RecalculateFit recalculate,
-                    bool transpose) :
-        MatrixLoaderWrapper(mat), transpose(transpose) {
-        this->fit = fit;
-        if (recalculate != MatrixTransform::RecalculateFit::None) {
-            TransformFit new_fit = ConcreteTransform::fit(mat, fit.global_params, transpose);
-            if(recalculate == MatrixTransform::RecalculateFit::Rows) {
-                this->fit.row_params = new_fit.row_params;
-            }
-            if (recalculate == MatrixTransform::RecalculateFit::Cols) {
-                this->fit.col_params = new_fit.col_params;
-            }
-        }
-        if (!transpose) {
-            assert(this->fit.row_params.cols() == loader.rows());
-            assert(this->fit.col_params.cols() == loader.cols());
-        } else {
-            assert(this->fit.row_params.cols() == loader.cols());
-            assert(this->fit.col_params.cols() == loader.rows());
-        }
-    }
+    // Seek to a specific column without reading data
+    // Next call should be to load(). col must be < cols()
+    void seekCol(uint32_t col) override;
 
-    // Multiply the transformed matrix by a dense matrix
-    Eigen::MatrixXd denseMultiplyRight(Eigen::Map<Eigen::MatrixXd> B) override {
-        loader.restart();
-        MatrixIterator<double> A(*this);
-        return BPCells::denseMultiplyRight(A, B, transpose);
-    };
-    Eigen::MatrixXd denseMultiplyLeft(Eigen::Map<Eigen::MatrixXd> B) override {
-        loader.restart();
-        MatrixIterator<double> A(*this);
-        return BPCells::denseMultiplyLeft(A, B, transpose);
-    };
+    // Advance to the next column, or return false if there
+    // are no more columns
+    bool nextCol() override;
 
-    // Multiply the transformed matrix by a dense vector
-    Eigen::VectorXd vecMultiplyRight(const Eigen::Map<Eigen::VectorXd> v) override {
-        loader.restart();
-        MatrixIterator<double> A(*this);
-        if (transpose) 
-            return BPCells::vecMultiplyLeft(A, v);
-        else
-            return BPCells::vecMultiplyRight(A, v);
-    };
-    Eigen::VectorXd vecMultiplyLeft(const Eigen::Map<Eigen::VectorXd> v) override {
-        loader.restart();
-        MatrixIterator<double> A(*this);
-        if (transpose) 
-            return BPCells::vecMultiplyRight(A, v);
-        else
-            return BPCells::vecMultiplyLeft(A, v);
-    };
+    // Return the index of the current column
+    uint32_t currentCol() const override;
 
-    // Return the fit object calculated at construction time
-    TransformFit getFit() override {return fit;};
+    bool load() override;
+    // Number of loaded entries available
+    uint32_t capacity() const override;
 
-    int32_t load(uint32_t count, SparseVector<double> buffer) override {
-        int32_t ret = loader.load(count, buffer);
-        if (transpose) {
-            for (int i = 0; i < ret; i++) {
-                buffer.val[i] = transform(buffer.val[i], current_col, buffer.idx[i]);
-            }
-        } else {
-            for (int i = 0; i < ret; i++) {
-                buffer.val[i] = transform(buffer.val[i], buffer.idx[i], current_col);
-            }
-        }
-        return ret;
-    };
+    // Pointers to the loaded entries
+    uint32_t* rowData() override;
+    double* valData() override;
 
-    // Return mean + variance of either rows or columns.
-    // This is used to make PCA easier to implement
-    MatrixTransform::StatsResultMatrix rowStats(uint32_t buffer_size = 1024) override {
-        loader.restart();
-        
-        StatsResult stats = computeMatrixStats(*this, Stats::Variance, Stats::None, transpose, buffer_size);
-        
-        return stats.row_stats.bottomRows<2>();
-    };
-    MatrixTransform::StatsResultMatrix colStats(uint32_t buffer_size = 1024) override {
-        loader.restart();
 
-        StatsResult stats = computeMatrixStats(*this, Stats::None, Stats::Variance, transpose, buffer_size);
+    Eigen::MatrixXd denseMultiplyRight(const Eigen::Map<Eigen::MatrixXd> B, void (*checkInterrupt)(void) = NULL) override;
+    Eigen::MatrixXd denseMultiplyLeft(const Eigen::Map<Eigen::MatrixXd> B, void (*checkInterrupt)(void) = NULL) override;
+    // Calculate matrix-vector product A*v where A (this) is sparse and B is a dense matrix.
+    Eigen::VectorXd vecMultiplyRight(const Eigen::Map<Eigen::VectorXd> v, void (*checkInterrupt)(void) = NULL) override;
+    Eigen::VectorXd vecMultiplyLeft(const Eigen::Map<Eigen::VectorXd> v, void (*checkInterrupt)(void) = NULL) override;
 
-        return stats.col_stats.bottomRows<2>();
-    };
+protected:
+    // Perform a normal load from the underlying matrix, then subtract transform(0) 
+    // from each entry and return false if there are no more non-zero values to load
+    // from the underlying matrix
+    virtual bool loadZeroSubtracted() = 0;
+    // Load a range of transform(0) values into an output vector. 
+    // The output values should represent rows `start_row` to `start_row + count`,
+    // and come from column `col`
+    virtual void loadZero(double *values, uint32_t count, uint32_t start_row, uint32_t col) = 0;
+
+
+    // Perform matrix-matrix or matrix-vector products as if all 
+    // entries in the underlying matrix were 0, adding the results into
+    // an existing allocated dense matrix
+    virtual void denseMultiplyRightZero(Eigen::MatrixXd &out, const Eigen::Map<Eigen::MatrixXd> B, void (*checkInterrupt)(void) = NULL);
+    virtual void denseMultiplyLeftZero(Eigen::MatrixXd &out, const Eigen::Map<Eigen::MatrixXd> B, void (*checkInterrupt)(void) = NULL);
+
+    virtual void vecMultiplyRightZero(Eigen::VectorXd &out, const Eigen::Map<Eigen::VectorXd> v, void (*checkInterrupt)(void) = NULL);
+    virtual void vecMultiplyLeftZero(Eigen::VectorXd &out, const Eigen::Map<Eigen::VectorXd> v, void (*checkInterrupt)(void) = NULL);
 };
-
-
 
 } // end namespace BPCells

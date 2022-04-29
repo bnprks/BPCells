@@ -1,0 +1,26 @@
+#pragma once
+
+#include "MatrixTransform.h"
+
+
+namespace BPCells {
+
+// Shift rows a matrix
+// out[i,j] = in[i,j] + row_params[0,i]
+class ShiftRows : public MatrixTransformDense {
+public:
+    ShiftRows(MatrixLoader<double> &mat, TransformFit fit);
+
+    bool loadZeroSubtracted() override;
+    void loadZero(double *values, uint32_t count, uint32_t start_row, uint32_t col) override;
+};
+
+class ShiftCols : public MatrixTransformDense {
+public:
+    ShiftCols(MatrixLoader<double> &mat, TransformFit fit);
+
+    bool loadZeroSubtracted() override;
+    void loadZero(double *values, uint32_t count, uint32_t start_row, uint32_t col) override;
+};
+
+} // end namespace BPCells
