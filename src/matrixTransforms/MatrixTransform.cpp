@@ -197,6 +197,7 @@ void MatrixTransformDense::denseMultiplyRightZero(Eigen::MatrixXd &out, const Ei
     uint32_t ncols = cols();
 
     for (uint32_t col = 0; col < ncols; col++) {
+        if (checkInterrupt != NULL && col % 128 == 0) checkInterrupt();
         uint32_t row;
         for (row = 0; row + buf_size <= nrows; row += buf_size) {
             loadZero(values.data(), buf_size, row, col);
@@ -216,6 +217,7 @@ void MatrixTransformDense::denseMultiplyLeftZero(Eigen::MatrixXd &out, const Eig
     uint32_t ncols = cols();
 
     for (uint32_t col = 0; col < ncols; col++) {
+        if (checkInterrupt != NULL && col % 128 == 0) checkInterrupt();
         uint32_t row;
         for (row = 0; row + buf_size <= nrows; row += buf_size) {
             loadZero(values.data(), buf_size, row, col);
@@ -235,6 +237,7 @@ void MatrixTransformDense::vecMultiplyRightZero(Eigen::VectorXd &out, const Eige
     uint32_t ncols = cols();
 
     for (uint32_t col = 0; col < ncols; col++) {
+        if (checkInterrupt != NULL && col % 128 == 0) checkInterrupt();
         uint32_t row;
         for (row = 0; row + buf_size <= nrows; row += buf_size) {
             loadZero(values.data(), buf_size, row, col);
@@ -253,6 +256,7 @@ void MatrixTransformDense::vecMultiplyLeftZero(Eigen::VectorXd &out, const Eigen
     uint32_t ncols = cols();
 
     for (uint32_t col = 0; col < ncols; col++) {
+        if (checkInterrupt != NULL && col % 128 == 0) checkInterrupt();
         uint32_t row;
         for (row = 0; row + buf_size <= nrows; row += buf_size) {
             loadZero(values.data(), buf_size, row, col);
@@ -263,6 +267,35 @@ void MatrixTransformDense::vecMultiplyLeftZero(Eigen::VectorXd &out, const Eigen
             out(col) += v.middleRows(row, nrows - row).transpose() * values.topRows(nrows - row);
         }
     }
+}
+
+std::vector<double> MatrixTransformDense::colSums(void (*checkInterrupt)(void)) {
+    std::vector<double> out(cols());
+    
+    Eigen::VectorXd v(rows());
+    v.setOnes();
+    Eigen::VectorXd res = vecMultiplyLeft(
+        Eigen::Map<Eigen::VectorXd>(v.data(), v.rows(), v.cols()), 
+        checkInterrupt
+    );
+    for (uint32_t i = 0; i < out.size(); i++) {
+        out[i] = res(i);
+    }
+    return out;
+}
+std::vector<double> MatrixTransformDense::rowSums(void (*checkInterrupt)(void)) {
+    std::vector<double> out(rows());
+    
+    Eigen::VectorXd v(cols());
+    v.setOnes();
+    Eigen::VectorXd res = vecMultiplyRight(
+        Eigen::Map<Eigen::VectorXd>(v.data(), v.rows(), v.cols()), 
+        checkInterrupt
+    );
+    for (uint32_t i = 0; i < out.size(); i++) {
+        out[i] = res(i);
+    }
+    return out;
 }
 
 } // end namespace BPCells

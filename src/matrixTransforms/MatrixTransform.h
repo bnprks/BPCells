@@ -89,6 +89,10 @@ public:
     Eigen::VectorXd vecMultiplyRight(const Eigen::Map<Eigen::VectorXd> v, void (*checkInterrupt)(void) = NULL) override;
     Eigen::VectorXd vecMultiplyLeft(const Eigen::Map<Eigen::VectorXd> v, void (*checkInterrupt)(void) = NULL) override;
 
+    // Calculate row/column sums of the matrix
+    std::vector<double> colSums(void (*checkInterrupt)(void) = NULL) override;
+    std::vector<double> rowSums(void (*checkInterrupt)(void) = NULL) override;
+
 protected:
     // Perform a normal load from the underlying matrix, then subtract transform(0) 
     // from each entry and return false if there are no more non-zero values to load

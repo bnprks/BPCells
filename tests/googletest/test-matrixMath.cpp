@@ -214,6 +214,38 @@ TEST(MatrixMath, Scale) {
     EXPECT_TRUE(MatrixXd(r3.getMat()).isApprox(ans3));
 }
 
+class SimpleRowShift : public MatrixTransformDense {
+public:
+    SimpleRowShift(MatrixLoader<double> &mat, TransformFit fit) : MatrixTransformDense(mat, fit) {}
+
+    bool loadZeroSubtracted() override {return loader.load();}
+    void loadZero(double *values, uint32_t count, uint32_t start_row, uint32_t col) override {
+        for (uint32_t i = 0; i < count; i++) {
+            values[i] = fit.row_params(0, start_row + i);
+        }
+    }
+};
+
+TEST(MatrixMath, TransformDense) {
+    SparseMatrix<double> m1 = generate_mat(100, 50, 125123);
+    CSparseMatrix mat_1(get_map(m1));
+    
+    VectorXd shift_row = generate_dense_vec(m1.rows(), 1513);
+    VectorXd shift_col = generate_dense_vec(m1.cols(), 1242);
+    
+    // Shift row
+    MatrixXd ans1 = MatrixXd(m1).array().colwise() + shift_row.array();
+    SimpleRowShift s1(mat_1, TransformFit{shift_row.transpose(), {}, {}});
+    
+    checkMultiplyOps(s1, ans1);
+    
+    CSparseMatrixWriter r1;
+    s1.restart();
+    r1.write(s1);
+    
+    EXPECT_TRUE(MatrixXd(r1.getMat()).isApprox(ans1));
+}
+
 TEST(MatrixMath, Shift) {
     SparseMatrix<double> m1 = generate_mat(100, 50, 125123);
     CSparseMatrix mat_1(get_map(m1));
