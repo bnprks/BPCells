@@ -1,4 +1,5 @@
 
+
 setClass("NormalizedMatrix",
     slots = c(
         matrix = "IterableMatrix",

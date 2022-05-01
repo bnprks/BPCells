@@ -576,6 +576,54 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// iterate_matrix_log1p_cpp
+SEXP iterate_matrix_log1p_cpp(SEXP matrix);
+RcppExport SEXP _BPCells_iterate_matrix_log1p_cpp(SEXP matrixSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type matrix(matrixSEXP);
+    rcpp_result_gen = Rcpp::wrap(iterate_matrix_log1p_cpp(matrix));
+    return rcpp_result_gen;
+END_RCPP
+}
+// iterate_matrix_scale_cpp
+SEXP iterate_matrix_scale_cpp(SEXP matrix, Eigen::Map<Eigen::ArrayXXd> row_scale, Eigen::Map<Eigen::ArrayXXd> col_scale);
+RcppExport SEXP _BPCells_iterate_matrix_scale_cpp(SEXP matrixSEXP, SEXP row_scaleSEXP, SEXP col_scaleSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type matrix(matrixSEXP);
+    Rcpp::traits::input_parameter< Eigen::Map<Eigen::ArrayXXd> >::type row_scale(row_scaleSEXP);
+    Rcpp::traits::input_parameter< Eigen::Map<Eigen::ArrayXXd> >::type col_scale(col_scaleSEXP);
+    rcpp_result_gen = Rcpp::wrap(iterate_matrix_scale_cpp(matrix, row_scale, col_scale));
+    return rcpp_result_gen;
+END_RCPP
+}
+// iterate_matrix_row_shift_cpp
+SEXP iterate_matrix_row_shift_cpp(SEXP matrix, Eigen::Map<Eigen::ArrayXXd> row_shift);
+RcppExport SEXP _BPCells_iterate_matrix_row_shift_cpp(SEXP matrixSEXP, SEXP row_shiftSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type matrix(matrixSEXP);
+    Rcpp::traits::input_parameter< Eigen::Map<Eigen::ArrayXXd> >::type row_shift(row_shiftSEXP);
+    rcpp_result_gen = Rcpp::wrap(iterate_matrix_row_shift_cpp(matrix, row_shift));
+    return rcpp_result_gen;
+END_RCPP
+}
+// iterate_matrix_col_shift_cpp
+SEXP iterate_matrix_col_shift_cpp(SEXP matrix, Eigen::Map<Eigen::ArrayXXd> col_shift);
+RcppExport SEXP _BPCells_iterate_matrix_col_shift_cpp(SEXP matrixSEXP, SEXP col_shiftSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type matrix(matrixSEXP);
+    Rcpp::traits::input_parameter< Eigen::Map<Eigen::ArrayXXd> >::type col_shift(col_shiftSEXP);
+    rcpp_result_gen = Rcpp::wrap(iterate_matrix_col_shift_cpp(matrix, col_shift));
+    return rcpp_result_gen;
+END_RCPP
+}
 // iterate_csparse_matrix_cpp
 SEXP iterate_csparse_matrix_cpp(SEXP matrix);
 RcppExport SEXP _BPCells_iterate_csparse_matrix_cpp(SEXP matrixSEXP) {
@@ -821,6 +869,10 @@ static const R_CallMethodDef CallEntries[] = {
     {"_BPCells_iterate_matrix_10x_hdf5_cpp", (DL_FUNC) &_BPCells_iterate_matrix_10x_hdf5_cpp, 3},
     {"_BPCells_dims_matrix_anndata_hdf5_cpp", (DL_FUNC) &_BPCells_dims_matrix_anndata_hdf5_cpp, 3},
     {"_BPCells_iterate_matrix_anndata_hdf5_cpp", (DL_FUNC) &_BPCells_iterate_matrix_anndata_hdf5_cpp, 3},
+    {"_BPCells_iterate_matrix_log1p_cpp", (DL_FUNC) &_BPCells_iterate_matrix_log1p_cpp, 1},
+    {"_BPCells_iterate_matrix_scale_cpp", (DL_FUNC) &_BPCells_iterate_matrix_scale_cpp, 3},
+    {"_BPCells_iterate_matrix_row_shift_cpp", (DL_FUNC) &_BPCells_iterate_matrix_row_shift_cpp, 2},
+    {"_BPCells_iterate_matrix_col_shift_cpp", (DL_FUNC) &_BPCells_iterate_matrix_col_shift_cpp, 2},
     {"_BPCells_iterate_csparse_matrix_cpp", (DL_FUNC) &_BPCells_iterate_csparse_matrix_cpp, 1},
     {"_BPCells_convert_matrix_uint32_t_double_cpp", (DL_FUNC) &_BPCells_convert_matrix_uint32_t_double_cpp, 1},
     {"_BPCells_convert_matrix_double_uint32_t_cpp", (DL_FUNC) &_BPCells_convert_matrix_double_uint32_t_cpp, 1},

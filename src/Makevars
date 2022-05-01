@@ -1,15 +1,16 @@
 # CXX_STD = CXX17
 
-PKG_CXXFLAGS = -march=native -std=c++17 -DEIGEN_PERMANENTLY_DISABLE_STUPID_WARNINGS -Wno-ignored-attributes
+PKG_CXXFLAGS = -march=native -std=c++17 -DRCPP_EIGEN -DEIGEN_PERMANENTLY_DISABLE_STUPID_WARNINGS -Wno-ignored-attributes
 PKG_LIBS = -lz -lhdf5
 
-# PKG_CXXFLAGS = -fsanitize=undefined -march=native -std=c++17 -DEIGEN_PERMANENTLY_DISABLE_STUPID_WARNINGS -Wno-ignored-attributes
+# PKG_CXXFLAGS = -fsanitize=undefined -march=native -std=c++17 -DRCPP_EIGEN -DEIGEN_PERMANENTLY_DISABLE_STUPID_WARNINGS -Wno-ignored-attributes
 # PKG_LIBS = -lz -lhdf5 -fsanitize=undefined
 
 OBJECTS=\
 fragment_io.o \
 fragment_utils.o \
 matrix_io.o \
+matrix_transforms.o \
 matrix_utils.o \
 RcppExports.o \
 arrayIO/array_interfaces.o \
@@ -29,7 +30,11 @@ matrixIterators/ImportMatrixHDF5.o \
 matrixIterators/StoredMatrix.o \
 matrixIterators/PeakMatrix.o \
 matrixIterators/TileMatrix.o \
-MatrixIterators/MatrixStats.o 
+matrixIterators/MatrixStats.o \
+matrixTransforms/Log1p.o \
+matrixTransforms/MatrixTransform.o \
+matrixTransforms/Scale.o \
+matrixTransforms/Shift.o 
 
 # r_wrapper.o \
 # profiler.o \

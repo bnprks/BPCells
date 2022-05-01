@@ -1,5 +1,6 @@
 #pragma once
 
+#include <array>
 #include <vector>
 
 #include "../matrixIterators/MatrixIterator.h"
@@ -8,9 +9,9 @@ namespace BPCells {
     
 class TransformFit {
 public:
-    Eigen::ArrayXXd row_params;
-    Eigen::ArrayXXd col_params;
-    Eigen::ArrayXd global_params;
+    Eigen::Map<Eigen::ArrayXXd> row_params = Eigen::Map<Eigen::ArrayXXd>(NULL, 0, 0);
+    Eigen::Map<Eigen::ArrayXXd> col_params = Eigen::Map<Eigen::ArrayXXd>(NULL, 0, 0);
+    Eigen::Map<Eigen::ArrayXd> global_params = Eigen::Map<Eigen::ArrayXd>(NULL, 0, 1);
 };
 
 class MatrixTransform : public MatrixLoaderWrapper<double> {

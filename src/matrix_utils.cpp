@@ -3,7 +3,6 @@
 
 #include "matrixIterators/MatrixIterator.h"
 #include "matrixIterators/TSparseMatrixWriter.h"
-#define RCPP_EIGEN
 #include "matrixIterators/CSparseMatrix.h"
 #include "matrixIterators/MatrixIndexSelect.h"
 #include "matrixIterators/MatrixOps.h"

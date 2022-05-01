@@ -84,7 +84,7 @@ setMethod("matrix_type", signature(x="mat_double"), function(x) "mat_double")
 #' @describeIn IterableMatrix-methods Multiply by a dense matrix
 #' @return * `x %*% y`: dense matrix result
 setMethod("%*%", signature(x="IterableMatrix", y="matrix"), function(x, y) {
-    iter <- iterate_matrix(as(x, "mat_double"))
+    iter <- iterate_matrix(cast_matrix_double(x))
     if(x@transpose) {
         return(t(dense_multiply_left_cpp(iter, t(y))))
     } else {
@@ -93,7 +93,7 @@ setMethod("%*%", signature(x="IterableMatrix", y="matrix"), function(x, y) {
 })
 
 setMethod("%*%", signature(x="matrix", y="IterableMatrix"), function(x, y) {
-    iter <- iterate_matrix(as(y, "mat_double"))
+    iter <- iterate_matrix(cast_matrix_double(y))
     if(y@transpose) {
         return(t(dense_multiply_right_cpp(iter, t(x))))
     } else {
@@ -102,7 +102,7 @@ setMethod("%*%", signature(x="matrix", y="IterableMatrix"), function(x, y) {
 })
 
 setMethod("%*%", signature(x="IterableMatrix", y="numeric"), function(x, y) {
-    iter <- iterate_matrix(as(x, "mat_double"))
+    iter <- iterate_matrix(cast_matrix_double(x))
     if(x@transpose) {
         return(vec_multiply_left_cpp(iter, y))
     } else {
@@ -111,7 +111,7 @@ setMethod("%*%", signature(x="IterableMatrix", y="numeric"), function(x, y) {
 })
 
 setMethod("%*%", signature(x="numeric", y="IterableMatrix"), function(x, y) {
-    iter <- iterate_matrix(as(y, "mat_double"))
+    iter <- iterate_matrix(cast_matrix_double(y))
     if(y@transpose) {
         return(vec_multiply_right_cpp(iter, x))
     } else {
@@ -125,24 +125,26 @@ setMethod("%*%", signature(x="numeric", y="IterableMatrix"), function(x, y) {
 #' @describeIn IterableMatrix-methods Calculate rowSums
 #' @return * `rowSums()`: vector of row sums
 setMethod("rowSums", signature(x="IterableMatrix"), function(x) {
-    iter <- iterate_matrix(as(x, "mat_double"))
+    iter <- iterate_matrix(cast_matrix_double(x))
     if (x@transpose) 
         res <- col_sums_double_cpp(iter)
     else
         res <- row_sums_double_cpp(iter)
     names(res) <- rownames(x)
+    res
 })
 
 #' @param x IterableMatrix object
 #' @describeIn IterableMatrix-methods Calculate colSums
 #' @return * `colSums()`: vector of col sums
 setMethod("colSums", signature(x="IterableMatrix"), function(x) {
-    iter <- iterate_matrix(as(x, "mat_double"))
+    iter <- iterate_matrix(cast_matrix_double(x))
     if (x@transpose) 
         res <- row_sums_double_cpp(iter)
     else
         res <- col_sums_double_cpp(iter)
     names(res) <- colnames(x)
+    res
 })
 
 #' @param x IterableMatrix object
@@ -319,7 +321,7 @@ setMethod("short_description", "UnpackedMatrixMem", function(x) {
 write_matrix_memory <- function(mat, compress=TRUE) {
     assert_is(mat, c("IterableMatrix", "dgCMatrix"))
     if (is(mat, "dgCMatrix")) mat <- as(mat, "IterableMatrix")
-    if (is(mat, "mat_double")) mat <- as(mat, "mat_uint32_t")
+    mat <- cast_matrix_int(mat)
     assert_true(mat@transpose == FALSE)
 
 
@@ -377,7 +379,7 @@ setMethod("short_description", "MatrixDir", function(x) {
 write_matrix_dir <- function(mat, dir, compress=TRUE, buffer_size=8192L) {
     assert_is(mat, c("IterableMatrix", "dgCMatrix"))
     if (is(mat, "dgCMatrix")) mat <- as(mat, "IterableMatrix")
-    if (is(mat, "mat_double")) mat <- as(mat, "mat_uint32_t")
+    mat <- cast_matrix_int(mat)
     assert_true(mat@transpose == FALSE)
     assert_is(dir, "character")
     assert_is(compress, "logical")
@@ -446,7 +448,7 @@ setMethod("short_description", "MatrixH5", function(x) {
 write_matrix_hdf5 <- function(mat, path, group, compress=TRUE, buffer_size=8192L, chunk_size=1024L) {
     assert_is(mat, c("IterableMatrix", "dgCMatrix"))
     if (is(mat, "dgCMatrix")) mat <- as(mat, "IterableMatrix")
-    if (is(mat, "mat_double")) mat <- as(mat, "mat_uint32_t")
+    mat <- cast_matrix_int(mat)
     assert_true(mat@transpose == FALSE)
     assert_is(path, "character")
     assert_is(group, "character")
@@ -735,14 +737,14 @@ setMethod("short_description", "convertMatrixIntDouble", function(x) {
         "Convert integers to doubles"
     )
 })
-setAs("IterableMatrix", "mat_double", function(from) {
+cast_matrix_double <- function(from) {
     if (matrix_type(from) == "mat_double") 
         from
     else if (matrix_type(from) == "mat_uint32_t")
         new("convertMatrixIntDouble", dim=from@dim, dimnames=from@dimnames, transpose=from@transpose, mat=from)
     else
         stop(sprintf("Unrecognized matrix type: %s", matrix_type(from)))
-})
+}
 
 setClass("convertMatrixDoubleInt",
     contains = "mat_uint32_t",
@@ -763,15 +765,14 @@ setMethod("short_description", "convertMatrixDoubleInt", function(x) {
         "Convert doubles to integers"
     )
 })
-setAs("IterableMatrix", "mat_uint32_t", function(from) {
+cast_matrix_int <- function(from) {
     if (matrix_type(from) == "mat_double") 
         new("convertMatrixDoubleInt", dim=from@dim, dimnames=from@dimnames, transpose=from@transpose, mat=from)
     else if (matrix_type(from) == "mat_uint32_t")
         from
     else
         stop(sprintf("Unrecognized matrix type: %s", matrix_type(from)))
-    
-})
+}
 
 # Conversions with dgCMatrix
 setClass("Iterable_dgCMatrix_wrapper",
@@ -789,7 +790,7 @@ setAs("dgCMatrix", "IterableMatrix", function(from) {
 setMethod("iterate_matrix", "Iterable_dgCMatrix_wrapper", function(x) {
     iterate_csparse_matrix_cpp(x@mat)
 })
-setMethod("short_description", "convertMatrixDoubleInt", function(x) {
+setMethod("short_description", "Iterable_dgCMatrix_wrapper", function(x) {
     "Load dgCMatrix from memory"
 })
 

@@ -192,7 +192,7 @@ Eigen::VectorXd MatrixTransformDense::vecMultiplyLeft(const Eigen::Map<Eigen::Ve
 
 void MatrixTransformDense::denseMultiplyRightZero(Eigen::MatrixXd &out, const Eigen::Map<Eigen::MatrixXd> B, void (*checkInterrupt)(void)) {
     // Key invariants for this block processing: for L*R = O: colL=rowR, rowO=rowL, colO=colR
-    Eigen::Vector<double, buf_size> values;
+    Eigen::Matrix<double, buf_size, 1> values;
     uint32_t nrows = rows();
     uint32_t ncols = cols();
 
@@ -212,7 +212,7 @@ void MatrixTransformDense::denseMultiplyRightZero(Eigen::MatrixXd &out, const Ei
 
 void MatrixTransformDense::denseMultiplyLeftZero(Eigen::MatrixXd &out, const Eigen::Map<Eigen::MatrixXd> B, void (*checkInterrupt)(void)) {
     // Key invariants for this block processing: for L*R = O: colL=rowR, rowO=rowL, colO=colR
-    Eigen::Vector<double, buf_size> values;
+    Eigen::Matrix<double, buf_size, 1> values;
     uint32_t nrows = rows();
     uint32_t ncols = cols();
 
@@ -232,7 +232,7 @@ void MatrixTransformDense::denseMultiplyLeftZero(Eigen::MatrixXd &out, const Eig
 
 void MatrixTransformDense::vecMultiplyRightZero(Eigen::VectorXd &out, const Eigen::Map<Eigen::VectorXd> v, void (*checkInterrupt)(void)) {
     // Key invariants for this block processing: for L*R = O: colL=rowR, rowO=rowL, colO=colR
-    Eigen::Vector<double, buf_size> values;
+    Eigen::Matrix<double, buf_size, 1> values;
     uint32_t nrows = rows();
     uint32_t ncols = cols();
 
@@ -251,7 +251,7 @@ void MatrixTransformDense::vecMultiplyRightZero(Eigen::VectorXd &out, const Eige
 }
 
 void MatrixTransformDense::vecMultiplyLeftZero(Eigen::VectorXd &out, const Eigen::Map<Eigen::VectorXd> v, void (*checkInterrupt)(void)) {
-    Eigen::Vector<double, buf_size> values;
+    Eigen::Matrix<double, buf_size, 1> values;
     uint32_t nrows = rows();
     uint32_t ncols = cols();
 

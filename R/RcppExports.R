@@ -181,6 +181,22 @@ iterate_matrix_anndata_hdf5_cpp <- function(file, group, buffer_size) {
     .Call(`_BPCells_iterate_matrix_anndata_hdf5_cpp`, file, group, buffer_size)
 }
 
+iterate_matrix_log1p_cpp <- function(matrix) {
+    .Call(`_BPCells_iterate_matrix_log1p_cpp`, matrix)
+}
+
+iterate_matrix_scale_cpp <- function(matrix, row_scale, col_scale) {
+    .Call(`_BPCells_iterate_matrix_scale_cpp`, matrix, row_scale, col_scale)
+}
+
+iterate_matrix_row_shift_cpp <- function(matrix, row_shift) {
+    .Call(`_BPCells_iterate_matrix_row_shift_cpp`, matrix, row_shift)
+}
+
+iterate_matrix_col_shift_cpp <- function(matrix, col_shift) {
+    .Call(`_BPCells_iterate_matrix_col_shift_cpp`, matrix, col_shift)
+}
+
 iterate_csparse_matrix_cpp <- function(matrix) {
     .Call(`_BPCells_iterate_csparse_matrix_cpp`, matrix)
 }
