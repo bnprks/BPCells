@@ -195,7 +195,8 @@ void MatrixTransformDense::denseMultiplyRightZero(Eigen::MatrixXd &out, const Ei
     Eigen::Matrix<double, buf_size, 1> values;
     uint32_t nrows = rows();
     uint32_t ncols = cols();
-
+    restart();
+    
     for (uint32_t col = 0; col < ncols; col++) {
         if (checkInterrupt != NULL && col % 128 == 0) checkInterrupt();
         uint32_t row;
@@ -215,6 +216,7 @@ void MatrixTransformDense::denseMultiplyLeftZero(Eigen::MatrixXd &out, const Eig
     Eigen::Matrix<double, buf_size, 1> values;
     uint32_t nrows = rows();
     uint32_t ncols = cols();
+    restart();
 
     for (uint32_t col = 0; col < ncols; col++) {
         if (checkInterrupt != NULL && col % 128 == 0) checkInterrupt();
@@ -235,6 +237,7 @@ void MatrixTransformDense::vecMultiplyRightZero(Eigen::VectorXd &out, const Eige
     Eigen::Matrix<double, buf_size, 1> values;
     uint32_t nrows = rows();
     uint32_t ncols = cols();
+    restart();
 
     for (uint32_t col = 0; col < ncols; col++) {
         if (checkInterrupt != NULL && col % 128 == 0) checkInterrupt();
@@ -254,6 +257,7 @@ void MatrixTransformDense::vecMultiplyLeftZero(Eigen::VectorXd &out, const Eigen
     Eigen::Matrix<double, buf_size, 1> values;
     uint32_t nrows = rows();
     uint32_t ncols = cols();
+    restart();
 
     for (uint32_t col = 0; col < ncols; col++) {
         if (checkInterrupt != NULL && col % 128 == 0) checkInterrupt();

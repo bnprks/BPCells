@@ -4,6 +4,7 @@
 #include "fragmentIterators/BedFragments.h"
 #include "fragmentIterators/StoredFragments.h"
 
+
 #include "arrayIO/binaryfile.h"
 #include "arrayIO/hdf5.h"
 #include "arrayIO/vector.h"
@@ -138,11 +139,13 @@ List info_fragments_file_cpp(std::string dir, uint32_t buffer_size) {
 }
 
 // [[Rcpp::export]]
-SEXP iterate_unpacked_fragments_file_cpp(std::string dir, uint32_t buffer_size) {
+SEXP iterate_unpacked_fragments_file_cpp(std::string dir, uint32_t buffer_size, StringVector chr_names, StringVector cell_names) {
     FileReaderBuilder rb(dir, buffer_size);
-    return Rcpp::wrap(
-        XPtr<FragmentLoader>(new StoredFragments(StoredFragments::openUnpacked(rb)))
-    );
+    return Rcpp::wrap(XPtr<FragmentLoader>(new StoredFragments(StoredFragments::openUnpacked(
+        rb,
+        std::make_unique<RcppStringReader>(chr_names),
+        std::make_unique<RcppStringReader>(cell_names)
+    ))));
 }
 
 // [[Rcpp::export]]
@@ -154,11 +157,14 @@ void write_unpacked_fragments_file_cpp(SEXP fragments, std::string dir, uint32_t
 }
 
 // [[Rcpp::export]]
-SEXP iterate_packed_fragments_file_cpp(std::string dir, uint32_t buffer_size) {
+SEXP iterate_packed_fragments_file_cpp(std::string dir, uint32_t buffer_size, StringVector chr_names, StringVector cell_names) {
     FileReaderBuilder rb(dir, buffer_size);
-    return Rcpp::wrap(
-        XPtr<FragmentLoader>(new StoredFragmentsPacked(StoredFragmentsPacked::openPacked(rb)))
-    );
+    return Rcpp::wrap(XPtr<FragmentLoader>(new StoredFragmentsPacked(StoredFragmentsPacked::openPacked(
+        rb,
+        1024,
+        std::make_unique<RcppStringReader>(chr_names),
+        std::make_unique<RcppStringReader>(cell_names)
+    ))));
 }
 
 // [[Rcpp::export]]
@@ -176,11 +182,13 @@ List info_fragments_hdf5_cpp(std::string file, std::string group, uint32_t buffe
 }
 
 // [[Rcpp::export]]
-SEXP iterate_unpacked_fragments_hdf5_cpp(std::string file, std::string group, uint32_t buffer_size) {
+SEXP iterate_unpacked_fragments_hdf5_cpp(std::string file, std::string group, uint32_t buffer_size, StringVector chr_names, StringVector cell_names) {
     H5ReaderBuilder rb(file, group, buffer_size);
-    return Rcpp::wrap(
-        XPtr<FragmentLoader>(new StoredFragments(StoredFragments::openUnpacked(rb)))
-    );
+    return Rcpp::wrap(XPtr<FragmentLoader>(new StoredFragments(StoredFragments::openUnpacked(
+        rb,
+        std::make_unique<RcppStringReader>(chr_names),
+        std::make_unique<RcppStringReader>(cell_names)
+    ))));
 }
 
 // [[Rcpp::export]]
@@ -193,11 +201,14 @@ void write_unpacked_fragments_hdf5_cpp(SEXP fragments, std::string file, std::st
 }
 
 // [[Rcpp::export]]
-SEXP iterate_packed_fragments_hdf5_cpp(std::string file, std::string group, uint32_t buffer_size) {
+SEXP iterate_packed_fragments_hdf5_cpp(std::string file, std::string group, uint32_t buffer_size, StringVector chr_names, StringVector cell_names) {
     H5ReaderBuilder rb(file, group, buffer_size);
-    return Rcpp::wrap(
-        XPtr<FragmentLoader>(new StoredFragmentsPacked(StoredFragmentsPacked::openPacked(rb)))
-    );
+    return Rcpp::wrap(XPtr<FragmentLoader>(new StoredFragmentsPacked(StoredFragmentsPacked::openPacked(
+        rb,
+        1024,
+        std::make_unique<RcppStringReader>(chr_names),
+        std::make_unique<RcppStringReader>(cell_names)
+    ))));
 }
 
 // [[Rcpp::export]]

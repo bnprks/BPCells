@@ -1,3 +1,4 @@
+
 generate_sparse_matrix <- function(nrow, ncol, fraction_nonzero=0.5, max_val=10) {
     m <- matrix(rbinom(nrow*ncol, 1, fraction_nonzero)*sample.int(max_val, nrow*ncol, replace=TRUE), nrow=nrow)
     as(m, "dgCMatrix")
@@ -20,8 +21,8 @@ to_vector <- function(x) {
 
 test_that("MatrixStats basic test", { 
     withr::local_seed(195123)
+    library(Matrix)
     t <- Matrix::t
-
     m1 <- generate_sparse_matrix(5, 1000)
     m2 <- t(m1)
 
@@ -44,15 +45,15 @@ test_that("MatrixStats basic test", {
     expect_equal(stats1$row_stats["variance",], matrixStats::rowVars(as.matrix(m1)))
     expect_equal(stats1$col_stats["nonzero",], colSums(as.matrix(m1 != 0)))
     
-    
     expect_equal(stats1$col_stats["mean",], colMeans(as.matrix(m1)))
     expect_equal(stats1$col_stats["variance",], matrixStats::colVars(as.matrix(m1)))
 })
 
 test_that("MatrixStats comprehensive tests", { 
     withr::local_seed(195123)
+    library(Matrix)
     t <- Matrix::t
-
+    
     m1 <- generate_sparse_matrix(5, 1000)
     m2 <- t(m1)
 

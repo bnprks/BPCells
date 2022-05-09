@@ -65,7 +65,7 @@ public:
 class StoredFragments: public StoredFragmentsBase {
 public:
     using StoredFragmentsBase::StoredFragmentsBase;
-    static StoredFragments openUnpacked(ReaderBuilder &rb);
+    static StoredFragments openUnpacked(ReaderBuilder &rb, std::unique_ptr<StringReader> &&chr_names = nullptr, std::unique_ptr<StringReader> &&cell_names = nullptr);
     
     bool load() override;
     
@@ -74,7 +74,7 @@ public:
 class StoredFragmentsPacked: public StoredFragmentsBase {
 public:
     using StoredFragmentsBase::StoredFragmentsBase;
-    static StoredFragmentsPacked openPacked(ReaderBuilder &rb, uint32_t load_size = 1024);
+    static StoredFragmentsPacked openPacked(ReaderBuilder &rb, uint32_t load_size = 1024, std::unique_ptr<StringReader> &&chr_names = nullptr, std::unique_ptr<StringReader> &&cell_names = nullptr);
     // Just override the methods that load data so we can insert a step to add start+end
     bool load() override;
 };

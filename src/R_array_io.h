@@ -12,9 +12,9 @@ using namespace BPCells;
 
 class RcppStringReader : public StringReader {
 private:
-    StringVector data;
+    const StringVector data;
 public:
-    inline RcppStringReader(StringVector data) : data(data) {}
+    inline RcppStringReader(const StringVector &data) : data(data) {}
     inline const char* get(uint32_t idx) const override {
         if (idx < data.size()) return data[idx];
         return NULL;

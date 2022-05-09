@@ -7,6 +7,7 @@
 #include "fragmentIterators/ShiftCoords.h"
 #include "fragmentIterators/ChrSelect.h"
 #include "fragmentIterators/CellSelect.h"
+#include "fragmentIterators/Rename.h"
 // #include "fragmentIterators/InsertionsIterator2.h"
 
 #include "matrixIterators/PeakMatrix.h"
@@ -150,3 +151,20 @@ SEXP iterate_cell_name_select_cpp(SEXP fragments, std::vector<std::string> cell_
     );
 } 
 
+// [[Rcpp::export]]
+SEXP iterate_chr_rename_cpp(SEXP fragments, const StringVector &chr_names) {
+    XPtr<FragmentLoader> loader(fragments);
+    
+    return Rcpp::wrap(
+        XPtr<FragmentLoader>(new RenameChrs(*loader, std::make_unique<RcppStringReader>(chr_names)))
+    );
+} 
+
+// [[Rcpp::export]]
+SEXP iterate_cell_rename_cpp(SEXP fragments, const StringVector &cell_names) {
+    XPtr<FragmentLoader> loader(fragments);
+    
+    return Rcpp::wrap(
+        XPtr<FragmentLoader>(new RenameCells(*loader, std::make_unique<RcppStringReader>(cell_names)))
+    );
+} 

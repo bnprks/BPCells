@@ -9,7 +9,6 @@ setClass("TransformedMatrix",
         global_params = "numeric"
     ),
     prototype = list(
-        matrix = new("mat_double"),
         row_params = matrix(0,0,0),
         col_params = matrix(0,0,0),
         global_params = numeric(0)
@@ -26,11 +25,9 @@ setMethod("short_description", "TransformLog1p", function(x) {
     )
 })
 setMethod("log1p", "IterableMatrix", function(x) {
-    new("TransformLog1p", matrix=as(x, "mat_double"), transpose=x@transpose, dim=x@dim, dimnames=x@dimnames)
+    wrapMatrix("TransformLog1p", cast_matrix_double(x))
 })
-setMethod("log1p", "mat_double", function(x) {
-    new("TransformLog1p", matrix=x, transpose=x@transpose, dim=x@dim, dimnames=x@dimnames)
-})
+
 
 # Scaling + shifting support (Scale first, then shift)
 # 
@@ -116,19 +113,19 @@ setMethod("short_description", "TransformScaleShift", function(x) {
 
 # Basic dispatch for scaling/shifting (Create TransformScaleShift and then apply function to it)
 setMethod("*", signature(e1="IterableMatrix", e2="numeric"), function(e1, e2) {
-    e1 <- new("TransformScaleShift", matrix=cast_matrix_double(e1), transpose=e1@transpose, dim=e1@dim, dimnames=e1@dimnames)
+    e1 <- wrapMatrix("TransformScaleShift", cast_matrix_double(e1))
     e1 * e2
 })
 setMethod("*", signature(e1="numeric", e2="IterableMatrix"), function(e1, e2) {
-    e2 <- new("TransformScaleShift", matrix=cast_matrix_double(e2), transpose=e2@transpose, dim=e2@dim, dimnames=e2@dimnames)
+    e2 <- wrapMatrix("TransformScaleShift", cast_matrix_double(e2))
     e2 * e1
 })
 setMethod("+", signature(e1="IterableMatrix", e2="numeric"), function(e1, e2) {
-    e1 <- new("TransformScaleShift", matrix=cast_matrix_double(e1), transpose=e1@transpose, dim=e1@dim, dimnames=e1@dimnames)
+    e1 <- wrapMatrix("TransformScaleShift", cast_matrix_double(e1))
     e1 + e2
 })
 setMethod("+", signature(e1="numeric", e2="IterableMatrix"), function(e1, e2) {
-    e2 <- new("TransformScaleShift", matrix=cast_matrix_double(e2), transpose=e2@transpose, dim=e2@dim, dimnames=e2@dimnames)
+    e2 <- wrapMatrix("TransformScaleShift", cast_matrix_double(e2))
     e2 + e1
 })
 setMethod("/", signature(e1="IterableMatrix", e2="numeric"), function(e1, e2) {e1 * (1/e2)})
@@ -157,14 +154,14 @@ setMethod("*", signature(e1="TransformScaleShift", e2="numeric"), function(e1, e
     }
     # 3. Check the transform: if we're trying to scale row/col after having set a shift on col/row, then make new layer
     if (x@transpose && x@active_transforms["row", "shift"]) {
-        res <- new("TransformScaleShift", matrix=x, transpose=x@transpose, dimnames=x@dimnames)
+        res <- wrapMatrix("TransformScaleShift", x)
         res@active_transforms["col", "scale"] <- TRUE
         res@col_params <- matrix(c(1,0), nrow=2, ncol=nrow(x)) # Note since x is transposed ncol has the underlying row count
         res@col_params[1,] <- y
         return(res)
     }
     if (!x@transpose && x@active_transforms["col", "shift"]) {
-        res <- new("TransformScaleShift", matrix=x, transpose=x@transpose, dimnames=x@dimnames)
+        res <- wrapMatrix("TransformScaleShift", x)
         res@active_transforms["col", "scale"] <- TRUE
         res@row_params <- matrix(c(1,0), nrow=2, ncol=nrow(x))
         res@row_params[1,] <- y

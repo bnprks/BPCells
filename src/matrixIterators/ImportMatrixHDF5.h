@@ -27,7 +27,7 @@ public:
 
 // Reader interfaces for 10x and AnnData matrices
 
-StoredMatrix<uint32_t> open10xFeatureMatrix(std::string file, std::string group, uint32_t buffer_size, uint32_t read_size=1024);
+StoredMatrix<uint32_t> open10xFeatureMatrix(std::string file, uint32_t buffer_size, uint32_t read_size=1024);
 
 // Read AnnData sparse matrix, with an implicit transpose to CSC format for
 // any data stored in CSR format

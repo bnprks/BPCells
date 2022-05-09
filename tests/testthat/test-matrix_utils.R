@@ -1,3 +1,5 @@
+library(Matrix)
+
 generate_sparse_matrix <- function(nrow, ncol, fraction_nonzero=0.5, max_val=10) {
     m <- matrix(rbinom(nrow*ncol, 1, fraction_nonzero)*sample.int(max_val, nrow*ncol, replace=TRUE), nrow=nrow)
     as(m, "dgCMatrix")
@@ -18,8 +20,9 @@ to_vector <- function(x) {
 }
 
 test_that("Dense matrix/vector multiply works", { 
-    withr::local_seed(195123)
+    library(Matrix)
     t <- Matrix::t
+    withr::local_seed(195123)
 
     m1 <- generate_sparse_matrix(5, 1000)
     m2 <- t(m1)
@@ -43,8 +46,8 @@ test_that("Dense matrix/vector multiply works", {
     expect_equal(to_vector(y %*% t(m2)) , y %*% t(i2))   
 
     # Check that everything works fine with integers
-    i3 <- as(i1, "mat_uint32_t")
-    i4 <- as(i2, "mat_uint32_t")
+    i3 <- cast_matrix_int(i1)
+    i4 <- cast_matrix_int(i2)
 
     expect_equal(to_matrix(t(b) %*% m1), t(b) %*% i3)
     expect_equal(to_matrix(m2 %*% b), i4 %*% b)
@@ -61,7 +64,8 @@ test_that("Dense matrix/vector multiply works", {
 })
 
 test_that("Row/Col sum/mean works", {
-    t <- Matrix::t 
+    library(Matrix)
+    t <- Matrix::t
     
     m1 <- generate_sparse_matrix(5, 1000)
     m2 <- Matrix::t(m1)
@@ -80,8 +84,8 @@ test_that("Row/Col sum/mean works", {
     expect_equal(colMeans(i2), colMeans(m2))
 
     # Check that everything works fine with integers
-    i3 <- as(i1, "mat_uint32_t")
-    i4 <- as(i2, "mat_uint32_t")
+    i3 <- cast_matrix_int(i1)
+    i4 <- cast_matrix_int(i2)
 
     expect_equal(rowSums(i3), rowSums(m1))
     expect_equal(rowSums(i4), rowSums(m2))

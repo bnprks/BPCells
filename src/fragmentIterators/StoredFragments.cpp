@@ -110,7 +110,6 @@ bool StoredFragmentsBase::nextChr() {
     }
     current_idx = chr_start_ptr;
     readEndMaxBuf(chr_start_ptr, chr_end_ptr);
-
     return true;
 }
 uint32_t StoredFragmentsBase::currentChr() const {return current_chr;}
@@ -126,10 +125,13 @@ uint32_t* StoredFragmentsBase::startData() {return start.data();}
 uint32_t* StoredFragmentsBase::endData() {return end.data();}
 
 
-StoredFragments StoredFragments::openUnpacked(ReaderBuilder &rb) {
+StoredFragments StoredFragments::openUnpacked(ReaderBuilder &rb, std::unique_ptr<StringReader> &&chr_names, std::unique_ptr<StringReader> &&cell_names) {
     if (rb.readVersion() != "unpacked-fragments-v1") {
         throw std::runtime_error(std::string("Version does not match unpacked-fragments-v1: ") + rb.readVersion());
     }
+
+    if (!chr_names) chr_names = std::move(rb.openStringReader("chr_names"));
+    if (!cell_names) cell_names = std::move(rb.openStringReader("cell_names"));
 
     return StoredFragments(
         rb.openUIntReader("cell"),
@@ -137,8 +139,8 @@ StoredFragments StoredFragments::openUnpacked(ReaderBuilder &rb) {
         rb.openUIntReader("end"),
         rb.openUIntReader("end_max"),
         rb.openUIntReader("chr_ptr"),
-        rb.openStringReader("chr_names"),
-        rb.openStringReader("cell_names")
+        std::move(chr_names),
+        std::move(cell_names)
     );
 }
 
@@ -162,7 +164,7 @@ bool StoredFragments::load() {
     return true;
 }
 
-StoredFragmentsPacked StoredFragmentsPacked::openPacked(ReaderBuilder &rb, uint32_t load_size) {
+StoredFragmentsPacked StoredFragmentsPacked::openPacked(ReaderBuilder &rb, uint32_t load_size, std::unique_ptr<StringReader> &&chr_names, std::unique_ptr<StringReader> &&cell_names) {
     if (rb.readVersion() != "packed-fragments-v1") {
         throw std::runtime_error(std::string("Version does not match packed-fragments-v1: ") + rb.readVersion());
     }
@@ -171,6 +173,9 @@ StoredFragmentsPacked StoredFragmentsPacked::openPacked(ReaderBuilder &rb, uint3
     chr_ptr.seek(chr_ptr.size() - 1);
     uint32_t count = chr_ptr.read_one();
     chr_ptr.seek(0);
+
+    if (!chr_names) chr_names = std::move(rb.openStringReader("chr_names"));
+    if (!cell_names) cell_names = std::move(rb.openStringReader("cell_names"));
 
     return StoredFragmentsPacked(
         UIntReader(
@@ -200,8 +205,8 @@ StoredFragmentsPacked StoredFragmentsPacked::openPacked(ReaderBuilder &rb, uint3
         ),
         rb.openUIntReader("end_max"),
         std::move(chr_ptr),
-        rb.openStringReader("chr_names"),
-        rb.openStringReader("cell_names")
+        std::move(chr_names),
+        std::move(cell_names)
     );
 }
 

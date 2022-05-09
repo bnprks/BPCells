@@ -14,7 +14,7 @@ using namespace Rcpp;
 using namespace BPCells;
 
 // [[Rcpp::export]]
-SEXP iterate_packed_matrix_cpp(S4 s4, StringVector row_names, StringVector col_names) {
+SEXP iterate_packed_matrix_cpp(S4 s4, const StringVector row_names, const StringVector col_names) {
     S4ReaderBuilder rb(s4);
     return Rcpp::wrap(XPtr<MatrixLoader<uint32_t>>(new StoredMatrix<uint32_t>(
             StoredMatrix<uint32_t>::openPacked(rb, 1024, 
@@ -35,7 +35,7 @@ SEXP write_packed_matrix_cpp(SEXP matrix) {
 }
 
 // [[Rcpp::export]]
-SEXP iterate_unpacked_matrix_cpp(S4 s4, StringVector row_names, StringVector col_names) {
+SEXP iterate_unpacked_matrix_cpp(S4 s4, const StringVector row_names, const StringVector col_names) {
     S4ReaderBuilder rb(s4);
     return Rcpp::wrap(XPtr<MatrixLoader<uint32_t>>(new StoredMatrix<uint32_t>(
             StoredMatrix<uint32_t>::openUnpacked(rb, 
@@ -94,7 +94,7 @@ List dims_matrix_reader_builder(ReaderBuilder &rb) {
         return l;
     } else if (version == "packed-uint-matrix-v1") {
         // mat = std::make_unique<StoredMatrix<uint32_t>>(StoredMatrix<uint32_t>::openPacked(rb, 1024));
-        List l = dims_matrix(StoredMatrix<uint32_t>::openUnpacked(rb));
+        List l = dims_matrix(StoredMatrix<uint32_t>::openPacked(rb));
         l["compressed"] = true;
         return l;
     } else {
@@ -110,7 +110,7 @@ List dims_matrix_file_cpp(std::string dir, uint32_t buffer_size) {
 
 
 // [[Rcpp::export]]
-SEXP iterate_unpacked_matrix_file_cpp(std::string dir, uint32_t buffer_size, StringVector row_names, StringVector col_names) {
+SEXP iterate_unpacked_matrix_file_cpp(std::string dir, uint32_t buffer_size, const StringVector row_names, const StringVector col_names) {
     FileReaderBuilder rb(dir, buffer_size);
     return Rcpp::wrap(XPtr<MatrixLoader<uint32_t>>(new StoredMatrix<uint32_t>(
             StoredMatrix<uint32_t>::openUnpacked(rb, 
@@ -128,7 +128,7 @@ void write_unpacked_matrix_file_cpp(SEXP matrix, std::string dir, uint32_t buffe
 }
 
 // [[Rcpp::export]]
-SEXP iterate_packed_matrix_file_cpp(std::string dir, uint32_t buffer_size, StringVector row_names, StringVector col_names) {
+SEXP iterate_packed_matrix_file_cpp(std::string dir, uint32_t buffer_size, const StringVector row_names, const StringVector col_names) {
     FileReaderBuilder rb(dir, buffer_size);
     return Rcpp::wrap(XPtr<MatrixLoader<uint32_t>>(new StoredMatrix<uint32_t>(
             StoredMatrix<uint32_t>::openPacked(rb, 1024, 
@@ -154,7 +154,7 @@ List dims_matrix_hdf5_cpp(std::string file, std::string group, uint32_t buffer_s
 
 
 // [[Rcpp::export]]
-SEXP iterate_unpacked_matrix_hdf5_cpp(std::string file, std::string group, uint32_t buffer_size, StringVector row_names, StringVector col_names) {
+SEXP iterate_unpacked_matrix_hdf5_cpp(std::string file, std::string group, uint32_t buffer_size, const StringVector row_names, const StringVector col_names) {
     H5ReaderBuilder rb(file, group, buffer_size);
     return Rcpp::wrap(XPtr<MatrixLoader<uint32_t>>(new StoredMatrix<uint32_t>(
             StoredMatrix<uint32_t>::openUnpacked(rb, 
@@ -173,7 +173,7 @@ void write_unpacked_matrix_hdf5_cpp(SEXP matrix, std::string file, std::string g
 }
 
 // [[Rcpp::export]]
-SEXP iterate_packed_matrix_hdf5_cpp(std::string file, std::string group, uint32_t buffer_size, StringVector row_names, StringVector col_names) {
+SEXP iterate_packed_matrix_hdf5_cpp(std::string file, std::string group, uint32_t buffer_size, const StringVector row_names, const StringVector col_names) {
     H5ReaderBuilder rb(file, group, buffer_size);
     return Rcpp::wrap(XPtr<MatrixLoader<uint32_t>>(new StoredMatrix<uint32_t>(
             StoredMatrix<uint32_t>::openPacked(rb, 1024, 
@@ -183,15 +183,25 @@ SEXP iterate_packed_matrix_hdf5_cpp(std::string file, std::string group, uint32_
 }
 
 // [[Rcpp::export]]
-List dims_matrix_10x_hdf5_cpp(std::string file, std::string group, uint32_t buffer_size) {
-    StoredMatrix<uint32_t> mat = open10xFeatureMatrix(file, group, buffer_size);
+void write_packed_matrix_hdf5_cpp(SEXP matrix, std::string file, std::string group, uint32_t buffer_size, uint32_t chunk_size) {
+    XPtr<MatrixLoader<uint32_t>> loader(matrix);
+    MatrixIterator<uint32_t> iter(*loader);
+
+    H5WriterBuilder wb(file, group, buffer_size, chunk_size);
+    StoredMatrixWriter::createPacked(wb).write(iter, &Rcpp::checkUserInterrupt);
+}
+
+
+// [[Rcpp::export]]
+List dims_matrix_10x_hdf5_cpp(std::string file, uint32_t buffer_size) {
+    StoredMatrix<uint32_t> mat = open10xFeatureMatrix(file, buffer_size);
     return dims_matrix(mat);
 }
 
 // [[Rcpp::export]]
-SEXP iterate_matrix_10x_hdf5_cpp(std::string file, std::string group, uint32_t buffer_size) {
+SEXP iterate_matrix_10x_hdf5_cpp(std::string file, uint32_t buffer_size) {
     return Rcpp::wrap(
-        XPtr<StoredMatrix<uint32_t>>(new StoredMatrix(open10xFeatureMatrix(file, group, buffer_size)))
+        XPtr<StoredMatrix<uint32_t>>(new StoredMatrix(open10xFeatureMatrix(file, buffer_size)))
     );
 }
 

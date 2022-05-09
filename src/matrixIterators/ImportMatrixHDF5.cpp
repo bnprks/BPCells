@@ -4,15 +4,37 @@ namespace BPCells {
     
 // Reader interfaces for 10x and AnnData matrices
 
-StoredMatrix<uint32_t> open10xFeatureMatrix(std::string file, std::string group, uint32_t buffer_size, uint32_t read_size) {
-    H5ReaderBuilder rb(file, group, buffer_size, read_size);
+StoredMatrix<uint32_t> open10xFeatureMatrix(std::string file, uint32_t buffer_size, uint32_t read_size) {
+    HighFive::File f(file, HighFive::File::ReadWrite);
+
+    // Most up-to-date matrix format
+    if (f.exist("matrix")) {
+        H5ReaderBuilder rb(file, "matrix", buffer_size, read_size);
+
+        return StoredMatrix(
+            rb.openULongReader("indices").convert<uint32_t>(),
+            rb.openUIntReader("data"),
+            rb.openULongReader("indptr").convert<uint32_t>(),
+            rb.openUIntReader("shape"),
+            rb.openStringReader("features/id"),
+            rb.openStringReader("barcodes")
+        );
+    }
+
+    // Older-style 10x matrix format
+    std::vector<std::string> genomes = f.listObjectNames();
+    if (genomes.size() != 1) {
+        throw std::runtime_error("Loading multi-genome matrices from old-style 10x hdf5 files is unsupported");
+    }
+
+    H5ReaderBuilder rb(file, genomes[0], buffer_size, read_size);
 
     return StoredMatrix(
         rb.openULongReader("indices").convert<uint32_t>(),
         rb.openUIntReader("data"),
         rb.openULongReader("indptr").convert<uint32_t>(),
         rb.openUIntReader("shape"),
-        rb.openStringReader("features/id"),
+        rb.openStringReader("genes"),
         rb.openStringReader("barcodes")
     );
 }
