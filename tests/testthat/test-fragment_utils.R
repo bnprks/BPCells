@@ -101,9 +101,39 @@ test_that("GRanges conversion round-trips", {
     expect_equal(raw, raw2)
 })
 
+test_that("Region select works", {
+    frags <- open_fragments_10x("../data/mini_fragments.tsv.gz") %>%
+        write_fragments_memory()
+    gfrags <- as(frags, "GRanges")
+
+    # Include some overlapping regions for good measure
+    regions <- tibble::tibble(
+        chr = c("chr1", "chr5", "chr5", "chr2", "chr2"),
+        start = c(1000000, 6373800, 6373699, 224956193, 225551362),
+        end = c(1100000, 6375000, 15144614, 227996287, 230681382)
+    )
+    
+    inclusive <- frags %>% selectRegions(regions, invert_selection=FALSE)
+    exclusive <- frags %>% selectRegions(regions, invert_selection=TRUE)
+
+    gregions <- as(regions, "GRanges")
+    end(gregions) <- regions$end - 1
+
+    ans_inclusive <- subsetByOverlaps(gfrags, gregions)
+    ans_exclusive <- subsetByOverlaps(gfrags, gregions, invert=TRUE)
+
+    expect_equal(as(inclusive, "GRanges"), ans_inclusive)
+    expect_equal(as(exclusive, "GRanges"), ans_exclusive)
+})
+
+
 test_that("Generic methods work", {
     frags <- open_fragments_10x("../data/mini_fragments.tsv.gz") %>%
         write_fragments_memory()
+    
+
+    first_half_cells <- sort(sample.int(length(cellNames(frags)), length(cellNames(frags))/2))
+    second_half_cells <- seq_along(cellNames(frags))[-first_half_cells]
 
     dir <- withr::local_tempdir()
 
@@ -119,7 +149,9 @@ test_that("Generic methods work", {
         cellSelectName = select_cells(frags, cellNames(frags)),
         cellSelectIdx = select_cells(frags, seq_along(cellNames(frags))),
         chrRename = new("ChrRename", fragments=frags, chr_names=chrNames(frags)),
-        cellRename = new("CellRename", fragments=frags, cell_names=cellNames(frags))
+        cellRename = new("CellRename", fragments=frags, cell_names=cellNames(frags)),
+        regionSelect = selectRegions(frags, list(chr=chrNames(frags), start=rep_len(0, length(chrNames(frags))), end=rep_len(1e9, length(chrNames(frags))))),
+        merge = select_cells(c(select_cells(frags, first_half_cells), select_cells(frags, second_half_cells)), cellNames(frags))
     )
 
     for (i in seq_along(ident_transforms)) {

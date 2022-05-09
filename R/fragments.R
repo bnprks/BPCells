@@ -526,7 +526,7 @@ if (requireNamespace("GenomicRanges", quietly=TRUE)) {
         chr_order <- order(frags@chr_ptr[c(TRUE,FALSE)])
         
         GenomicRanges::GRanges(
-            seqnames=S4Vectors::Rle(values=chrNames(frags)[order(chr_order)], lengths=chr_counts),
+            seqnames=S4Vectors::Rle(values=factor(chrNames(frags)[order(chr_order)], chrNames(frags)), lengths=chr_counts),
             ranges = IRanges::IRanges(
                 start = frags@start + 1,
                 end = frags@end
@@ -812,6 +812,145 @@ setMethod("short_description", "CellRename", function(x) {
         sprintf("Rename cells to: %s", pretty_print_vector(x@cell_names, max_len=3))
     )
 })
+
+# Select fragments by chromosome
+setClass("RegionSelect",
+    contains = "IterableFragments",
+    slots = c(
+        fragments = "IterableFragments",
+        chr_id = "integer",
+        start = "integer",
+        end = "integer",
+        chr_levels = "character",
+        invert_selection = "logical"
+    ),
+    prototype = list(
+        fragments = NULL,
+        chr_id = integer(0),
+        start = integer(0),
+        end = integer(0),
+        chr_levels = character(0),
+        invert_selection = FALSE
+    )
+)
+setMethod("iterate_fragments", "RegionSelect", function(x) {
+    iterate_region_select_cpp(iterate_fragments(x@fragments), x@chr_id, x@start, x@end, x@chr_levels, x@invert_selection)
+})
+setMethod("short_description", "RegionSelect", function(x) {
+    # Subset strings first to avoid a very slow string concatenation process
+    indices <- c(head(seq_along(x@chr_id), 3), tail(seq_along(x@chr_id), 1))
+    labels <- paste0(x@chr_levels[1+x@chr_id[indices]], ":", x@start[indices]+1, "-", x@end[indices])
+
+    c(
+        short_description(x@fragments),
+        sprintf("Subset to fragments %soverlapping %d ranges%s", 
+            ifelse(x@invert_selection, "not ", ""),
+            length(x@chr_id), 
+            pretty_print_vector(labels, prefix=": ", max_len=2)
+        )
+    )
+})
+
+#' Select fragments overlapping (or not overlapping) selected regions
+#' @param fragments Input fragments object.
+#' @param invert_selection If TRUE, select fragments *not* overlapping selected regions
+#'  instead of only fragments overlapping the selected regions.
+#' @inheritParams peakMatrix
+#' @return Fragments object filtered according to the selected regions
+#' @export
+selectRegions <- function(fragments, ranges, invert_selection=FALSE, zero_based_coords=TRUE) {
+    assert_is(fragments, "IterableFragments")
+    assert_is(ranges, c("GRanges", "list", "data.frame"))
+    
+    assert_is(zero_based_coords, "logical")
+    
+    if(is.list(ranges)) {
+        assert_has_names(ranges, c("chr", "start", "end"))
+        chr_levels <- as.character(unique(ranges$chr))
+        chr_id <- as.integer(factor(as.character(ranges$chr), chr_levels)) - 1L
+        start <- as.integer(ranges$start) - !zero_based_coords
+        end <- as.integer(ranges$end)
+    } else {
+        chr_levels <- as.characer(unique(GenomicRanges::seqnames(ranges)))
+        chr_id <- as.integer(factor(as.character(GenomicRanges::seqnames(ranges)), chr_levels)) - 1L
+        start <- GenomicRanges::start(ranges) - !zero_based_coords
+        end <- GenomicRanges::end(ranges)
+        
+    }
+    # Check to make sure regions are end-sorted
+    pair_1 <- seq_len(length(chr_id)-1)
+    pair_2 <- pair_1 + 1
+    if (any(chr_id[pair_1] == chr_id[pair_2] & end[pair_1] > end[pair_2])) {
+        stop("Tile regions must be non-overlapping")
+    }
+
+    new("RegionSelect", fragments=fragments, chr_id=chr_id, start=start, end=end, chr_levels=chr_levels, invert_selection=invert_selection)
+}
+
+setClass("MergeFragments",
+    contains = "IterableFragments",
+    slots = c(
+        fragments_list = "list"
+    ),
+    prototype = list(
+        fragments_list = list()
+    )
+)
+setMethod("chrNames", "MergeFragments", function(x) {
+    chrNames(x@fragments_list[[1]])
+})
+setMethod("cellNames", "MergeFragments", function(x) {
+    do.call(c, lapply(x@fragments_list, cellNames))
+})
+
+setMethod("chrNames<-", "MergeFragments", function(x, ..., value) {
+    for (i in seq_along(x@fragments_list)) {
+        chrNames(x@fragments_list[[i]]) <- value
+    }
+    x
+})
+setMethod("cellNames<-", "MergeFragments", function(x, ..., value) {
+    # TODO: Add
+    start_idx <- 1
+    for (i in seq_along(x@fragments_list)) {
+        end_idx <- start_idx - 1 + length(cellNames(x@fragments_list[[i]])) 
+        cellNames(x@fragments_list[[i]]) <- value[start_idx:end_idx]
+        start_idx <- end_idx + 1
+    }
+    x
+})
+
+setMethod("iterate_fragments", "MergeFragments", function(x) {
+    iterate_merge_fragments_cpp(lapply(x@fragments_list, iterate_fragments))
+})
+setMethod("short_description", "MergeFragments", function(x) {
+    # Subset strings first to avoid a very slow string concatenation process
+    sprintf("Merge %d fragments objects of classes%s",
+        length(x@fragments_list),
+        pretty_print_vector(vapply(x@fragments_list, class, character(1)), prefix=": ", max_len=3)
+    )
+})
+
+# Allow merging fragments using standard concatenation method
+setMethod("c", "IterableFragments", function(x, ...) {
+    args <- c(list(x), list(...))
+    chr_names <- chrNames(x)
+    assert_not_null(chr_names)
+    fragments_list <- list()
+    for (i in seq_along(args)) {
+        assert_is(args[[i]], "IterableFragments")
+        assert_not_null(chrNames(args[[i]]))
+        if(!all(chr_names == chrNames(args[[i]])))
+            stop("To concatenate fragments, all chrNames must be identical")
+        if (is(args[[i]], "MergeFragments"))
+            fragments_list <- c(fragments_list, args[[i]]@fragments_list)
+        else
+            fragments_list <- c(fragments_list, args[[i]])
+    }
+    new("MergeFragments", fragments_list=fragments_list)
+    # TODO: check that cellNames are unique
+})
+
 
 #' Check if two fragments objects are identical
 #' @param fragments1 First IterableFragments to compare

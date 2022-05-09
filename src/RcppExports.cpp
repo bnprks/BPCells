@@ -387,6 +387,33 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// iterate_region_select_cpp
+SEXP iterate_region_select_cpp(SEXP fragments, std::vector<uint32_t> chr, std::vector<uint32_t> start, std::vector<uint32_t> end, StringVector chr_levels, bool invert_selection);
+RcppExport SEXP _BPCells_iterate_region_select_cpp(SEXP fragmentsSEXP, SEXP chrSEXP, SEXP startSEXP, SEXP endSEXP, SEXP chr_levelsSEXP, SEXP invert_selectionSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type fragments(fragmentsSEXP);
+    Rcpp::traits::input_parameter< std::vector<uint32_t> >::type chr(chrSEXP);
+    Rcpp::traits::input_parameter< std::vector<uint32_t> >::type start(startSEXP);
+    Rcpp::traits::input_parameter< std::vector<uint32_t> >::type end(endSEXP);
+    Rcpp::traits::input_parameter< StringVector >::type chr_levels(chr_levelsSEXP);
+    Rcpp::traits::input_parameter< bool >::type invert_selection(invert_selectionSEXP);
+    rcpp_result_gen = Rcpp::wrap(iterate_region_select_cpp(fragments, chr, start, end, chr_levels, invert_selection));
+    return rcpp_result_gen;
+END_RCPP
+}
+// iterate_merge_fragments_cpp
+SEXP iterate_merge_fragments_cpp(SEXP fragments_list);
+RcppExport SEXP _BPCells_iterate_merge_fragments_cpp(SEXP fragments_listSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type fragments_list(fragments_listSEXP);
+    rcpp_result_gen = Rcpp::wrap(iterate_merge_fragments_cpp(fragments_list));
+    return rcpp_result_gen;
+END_RCPP
+}
 // iterate_packed_matrix_cpp
 SEXP iterate_packed_matrix_cpp(S4 s4, const StringVector row_names, const StringVector col_names);
 RcppExport SEXP _BPCells_iterate_packed_matrix_cpp(SEXP s4SEXP, SEXP row_namesSEXP, SEXP col_namesSEXP) {
@@ -920,6 +947,8 @@ static const R_CallMethodDef CallEntries[] = {
     {"_BPCells_iterate_cell_name_select_cpp", (DL_FUNC) &_BPCells_iterate_cell_name_select_cpp, 2},
     {"_BPCells_iterate_chr_rename_cpp", (DL_FUNC) &_BPCells_iterate_chr_rename_cpp, 2},
     {"_BPCells_iterate_cell_rename_cpp", (DL_FUNC) &_BPCells_iterate_cell_rename_cpp, 2},
+    {"_BPCells_iterate_region_select_cpp", (DL_FUNC) &_BPCells_iterate_region_select_cpp, 6},
+    {"_BPCells_iterate_merge_fragments_cpp", (DL_FUNC) &_BPCells_iterate_merge_fragments_cpp, 1},
     {"_BPCells_iterate_packed_matrix_cpp", (DL_FUNC) &_BPCells_iterate_packed_matrix_cpp, 3},
     {"_BPCells_write_packed_matrix_cpp", (DL_FUNC) &_BPCells_write_packed_matrix_cpp, 1},
     {"_BPCells_iterate_unpacked_matrix_cpp", (DL_FUNC) &_BPCells_iterate_unpacked_matrix_cpp, 3},

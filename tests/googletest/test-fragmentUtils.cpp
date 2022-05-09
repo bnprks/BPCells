@@ -178,7 +178,7 @@ TEST(FragmentUtils, MergeFragments) {
     }
     StoredFragments v3_frags = StoredFragments::openUnpacked(*v3_data);
 
-    MergeFragments merge({v1_frags, v2_frags, v3_frags});
+    MergeFragments merge(std::vector<FragmentLoader*>{&v1_frags, &v2_frags, &v3_frags});
     
 
     EXPECT_TRUE(Testing::fragments_identical(expected, merge));

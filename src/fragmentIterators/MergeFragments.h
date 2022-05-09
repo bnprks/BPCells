@@ -28,7 +28,7 @@ private:
         return idx1 > idx2;
     }
 public:
-    MergeFragments(const std::vector<std::reference_wrapper<FragmentLoader>> &fragments, uint32_t load_size=1024);
+    MergeFragments(const std::vector<FragmentLoader*> &fragments, uint32_t load_size=1024);
 
     ~MergeFragments() = default;
 

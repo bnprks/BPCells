@@ -7,6 +7,8 @@
 #include "fragmentIterators/ShiftCoords.h"
 #include "fragmentIterators/ChrSelect.h"
 #include "fragmentIterators/CellSelect.h"
+#include "fragmentIterators/MergeFragments.h"
+#include "fragmentIterators/RegionSelect.h"
 #include "fragmentIterators/Rename.h"
 // #include "fragmentIterators/InsertionsIterator2.h"
 
@@ -167,4 +169,27 @@ SEXP iterate_cell_rename_cpp(SEXP fragments, const StringVector &cell_names) {
     return Rcpp::wrap(
         XPtr<FragmentLoader>(new RenameCells(*loader, std::make_unique<RcppStringReader>(cell_names)))
     );
+} 
+
+// [[Rcpp::export]]
+SEXP iterate_region_select_cpp(SEXP fragments,
+        std::vector<uint32_t> chr, std::vector<uint32_t> start, std::vector<uint32_t> end,
+        StringVector chr_levels, bool invert_selection) {
+    XPtr<FragmentLoader> loader(fragments);
+    return Rcpp::wrap(
+        XPtr<FragmentLoader>(new RegionSelect(*loader, chr, start, end, 
+            std::make_unique<RcppStringReader>(chr_levels), invert_selection))
+    );
+} 
+
+// [[Rcpp::export]]
+SEXP iterate_merge_fragments_cpp(SEXP fragments_list) {
+    std::vector<FragmentLoader*> fragments_vec;
+    List l = fragments_list;
+    for (uint32_t i = 0; i < l.size(); i++) {
+        XPtr<FragmentLoader> loader(l[i]);
+        fragments_vec.push_back(&(*loader));
+    }
+    
+    return Rcpp::wrap(XPtr<FragmentLoader>(new MergeFragments(fragments_vec)));
 } 

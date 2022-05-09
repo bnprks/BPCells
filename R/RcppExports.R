@@ -121,6 +121,14 @@ iterate_cell_rename_cpp <- function(fragments, cell_names) {
     .Call(`_BPCells_iterate_cell_rename_cpp`, fragments, cell_names)
 }
 
+iterate_region_select_cpp <- function(fragments, chr, start, end, chr_levels, invert_selection) {
+    .Call(`_BPCells_iterate_region_select_cpp`, fragments, chr, start, end, chr_levels, invert_selection)
+}
+
+iterate_merge_fragments_cpp <- function(fragments_list) {
+    .Call(`_BPCells_iterate_merge_fragments_cpp`, fragments_list)
+}
+
 iterate_packed_matrix_cpp <- function(s4, row_names, col_names) {
     .Call(`_BPCells_iterate_packed_matrix_cpp`, s4, row_names, col_names)
 }

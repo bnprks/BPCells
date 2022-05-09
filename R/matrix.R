@@ -639,13 +639,24 @@ peakMatrix <- function(fragments, ranges, zero_based_coords=TRUE) {
     }
     res <- new("PeakMatrix", fragments=fragments, chr_id=chr_id, start=start, end=end)
     res@chr_levels <-chrNames(fragments)
-    res@dim <- c(length(fragments@cell_names), length(res@chr_id))
-    res@dimnames[[1]] <- fragments@cell_names
+    res@dim <- c(length(cellNames(fragments)), length(res@chr_id))
+    res@dimnames[[1]] <- cellNames(fragments)
     return(res)
 }
 
-setMethod("iterate_matrix", "PeakMatrix", function(x) {iterate_peak_matrix_cpp(
-    iterate_fragments(x@fragments), x@chr_id, x@start, x@end, x@chr_levels)
+setMethod("iterate_matrix", "PeakMatrix", function(x) {
+    iterate_peak_matrix_cpp(iterate_fragments(x@fragments), x@chr_id, x@start, x@end, x@chr_levels)
+})
+setMethod("short_description", "PeakMatrix", function(x) {
+    # Subset strings first to avoid a very slow string concatenation process
+    indices <- c(head(seq_along(x@chr_id), 3), tail(seq_along(x@chr_id), 1))
+    labels <- paste0(x@chr_levels[1+x@chr_id[indices]], ":", x@start[indices]+1, "-", x@end[indices])
+    c(
+        short_description(x@fragments),
+        sprintf("Calculate %d peaks over %d ranges%s", ncol(x), length(x@chr_id), 
+            pretty_print_vector(labels, prefix=": ", max_len=2)
+        )
+    )
 })
 
 
@@ -718,8 +729,8 @@ tileMatrix <- function(fragments, ranges, zero_based_coords=TRUE) {
     res@chr_levels <- chrNames(fragments)
     
     tiles <- as.integer(ceiling((end - start) / tile_width))
-    res@dim <- c(length(fragments@cell_names), sum(tiles))
-    res@dimnames[[1]] <- fragments@cell_names
+    res@dim <- c(length(cellNames(fragments)), sum(tiles))
+    res@dimnames[[1]] <- cellNames(fragments)
     return(res)
 }
 

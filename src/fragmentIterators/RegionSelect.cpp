@@ -34,7 +34,7 @@ RegionSelect::RegionSelect(FragmentLoader &loader, const std::vector<uint32_t> &
         Region &a = sorted_regions[out_idx];
         Region &b = sorted_regions[i];
         if (a.chr == b.chr && a.end >= b.start) {
-            a.end = b.end;
+            a.end = std::max(a.end, b.end);
         } else {
             out_idx += 1;
             sorted_regions[out_idx] = b;
@@ -133,10 +133,12 @@ uint32_t RegionSelect::computeNextActiveRegion(uint32_t chr, uint32_t base) cons
     auto it = std::upper_bound(sorted_regions.begin(), sorted_regions.end(), 
         std::pair{chr, base}, [](std::pair<uint32_t, uint32_t> value, Region r) {
         if (value.first != r.chr) return value.first < r.chr;
-        return value.second < r.start;
+        return value.second < r.end;
     });
     uint32_t pos = it - sorted_regions.begin();
-    return pos == 0 ? 0 : pos-1;
+    // If we're on the wrong chromosme, our search will return sorted_regions.size(), but
+    // we want to be looking at the sentinel region
+    return pos - (pos == sorted_regions.size());
 }
 
 // Return the index in chr_levels of the given chr_name. Return UINT32_MAX if chromosome not found

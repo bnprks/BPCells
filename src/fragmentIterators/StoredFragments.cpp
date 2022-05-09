@@ -130,8 +130,8 @@ StoredFragments StoredFragments::openUnpacked(ReaderBuilder &rb, std::unique_ptr
         throw std::runtime_error(std::string("Version does not match unpacked-fragments-v1: ") + rb.readVersion());
     }
 
-    if (!chr_names) chr_names = std::move(rb.openStringReader("chr_names"));
-    if (!cell_names) cell_names = std::move(rb.openStringReader("cell_names"));
+    if (!chr_names) chr_names = rb.openStringReader("chr_names");
+    if (!cell_names) cell_names = rb.openStringReader("cell_names");
 
     return StoredFragments(
         rb.openUIntReader("cell"),
@@ -174,8 +174,8 @@ StoredFragmentsPacked StoredFragmentsPacked::openPacked(ReaderBuilder &rb, uint3
     uint32_t count = chr_ptr.read_one();
     chr_ptr.seek(0);
 
-    if (!chr_names) chr_names = std::move(rb.openStringReader("chr_names"));
-    if (!cell_names) cell_names = std::move(rb.openStringReader("cell_names"));
+    if (!chr_names) chr_names = rb.openStringReader("chr_names");
+    if (!cell_names) cell_names = rb.openStringReader("cell_names");
 
     return StoredFragmentsPacked(
         UIntReader(
