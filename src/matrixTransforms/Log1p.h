@@ -22,18 +22,4 @@ public:
     bool load() override;
 };
 
-// This class keeps a small cache of the smallest input values in each column,
-// and caches the results of log1p on them in a length-4 array.
-// In common normalization cases, this cache 
-class Log1pCache : public MatrixTransform {
-private:
-    double in[4], out[4];
-
-public:
-    using MatrixTransform::MatrixTransform;
-
-    bool nextCol() override;
-    bool load() override;
-};
-
 } // end namespace BPCells

@@ -15,11 +15,13 @@ setClass("TransformedMatrix",
     )
 )
 
-# log1p method support
+# log1p method support. The SIMD method may be ever so slightly less precise,
+# but it can be substantially faster depending on the CPU SIMD features
+# (Should still provide 32-bit float accuracy)
 setClass("TransformLog1p", contains="TransformedMatrix")
 setMethod("iterate_matrix", "TransformLog1p", function(x) {
     it <- iterate_matrix(x@matrix)
-    wrapMatDouble(iterate_matrix_log1p_cpp(ptr(it)), it)
+    wrapMatDouble(iterate_matrix_log1psimd_cpp(ptr(it)), it)
 })
 setMethod("short_description", "TransformLog1p", function(x) {
     c(
@@ -31,35 +33,21 @@ setMethod("log1p", "IterableMatrix", function(x) {
     wrapMatrix("TransformLog1p", cast_matrix_double(x))
 })
 
-setClass("TransformLog1pCache", contains="TransformedMatrix")
-setMethod("iterate_matrix", "TransformLog1pCache", function(x) {
+setClass("TransformLog1pSlow", contains="TransformedMatrix")
+setMethod("iterate_matrix", "TransformLog1pSlow", function(x) {
     it <- iterate_matrix(x@matrix)
-    wrapMatDouble(iterate_matrix_log1pcache_cpp(ptr(it)), it)
+    wrapMatDouble(iterate_matrix_log1p_cpp(ptr(it)), it)
 })
-setMethod("short_description", "TransformLog1pCache", function(x) {
+setMethod("short_description", "TransformLog1pSlow", function(x) {
     c(
         short_description(x@matrix),
-        "Transform log1p using cache"
+        "Transform log1p (non-SIMD implementation)"
     )
 })
-log1p_cache <- function(x) {
-    wrapMatrix("TransformLog1pCache", cast_matrix_double(x))
+log1p_slow <- function(x) {
+    wrapMatrix("TransformLog1pSlow", cast_matrix_double(x))
 }
 
-setClass("TransformLog1pSIMD", contains="TransformedMatrix")
-setMethod("iterate_matrix", "TransformLog1pSIMD", function(x) {
-    it <- iterate_matrix(x@matrix)
-    wrapMatDouble(iterate_matrix_log1psimd_cpp(ptr(it)), it)
-})
-setMethod("short_description", "TransformLog1pSIMD", function(x) {
-    c(
-        short_description(x@matrix),
-        "Transform log1p"
-    )
-})
-log1p_simd <- function(x) {
-    wrapMatrix("TransformLog1pSIMD", cast_matrix_double(x))
-}
 
 
 # Scaling + shifting support (Scale first, then shift)
