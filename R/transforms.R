@@ -17,7 +17,10 @@ setClass("TransformedMatrix",
 
 # log1p method support
 setClass("TransformLog1p", contains="TransformedMatrix")
-setMethod("iterate_matrix", "TransformLog1p", function(x) {iterate_matrix_log1p_cpp(iterate_matrix(x@matrix))})
+setMethod("iterate_matrix", "TransformLog1p", function(x) {
+    it <- iterate_matrix(x@matrix)
+    wrapMatDouble(iterate_matrix_log1p_cpp(ptr(it)), it)
+})
 setMethod("short_description", "TransformLog1p", function(x) {
     c(
         short_description(x@matrix),
@@ -27,6 +30,36 @@ setMethod("short_description", "TransformLog1p", function(x) {
 setMethod("log1p", "IterableMatrix", function(x) {
     wrapMatrix("TransformLog1p", cast_matrix_double(x))
 })
+
+setClass("TransformLog1pCache", contains="TransformedMatrix")
+setMethod("iterate_matrix", "TransformLog1pCache", function(x) {
+    it <- iterate_matrix(x@matrix)
+    wrapMatDouble(iterate_matrix_log1pcache_cpp(ptr(it)), it)
+})
+setMethod("short_description", "TransformLog1pCache", function(x) {
+    c(
+        short_description(x@matrix),
+        "Transform log1p using cache"
+    )
+})
+log1p_cache <- function(x) {
+    wrapMatrix("TransformLog1pCache", cast_matrix_double(x))
+}
+
+setClass("TransformLog1pSIMD", contains="TransformedMatrix")
+setMethod("iterate_matrix", "TransformLog1pSIMD", function(x) {
+    it <- iterate_matrix(x@matrix)
+    wrapMatDouble(iterate_matrix_log1psimd_cpp(ptr(it)), it)
+})
+setMethod("short_description", "TransformLog1pSIMD", function(x) {
+    c(
+        short_description(x@matrix),
+        "Transform log1p"
+    )
+})
+log1p_simd <- function(x) {
+    wrapMatrix("TransformLog1pSIMD", cast_matrix_double(x))
+}
 
 
 # Scaling + shifting support (Scale first, then shift)
@@ -58,7 +91,7 @@ setMethod("iterate_matrix", "TransformScaleShift", function(x) {
             else if (x@active_transforms["col", "scale"]) scale_col <- scale_col * x@global_params[1]
             else scale_row <- matrix(x@global_params[1], nrow=1, ncol=nrow(x))
         }
-        res <- iterate_matrix_scale_cpp(res, scale_row, scale_col)
+        res <- wrapMatDouble(iterate_matrix_scale_cpp(ptr(res), scale_row, scale_col), res)
     }
     if (any(x@active_transforms[, "shift"])) {
         shift_row <- matrix(0,0,0)
@@ -70,8 +103,8 @@ setMethod("iterate_matrix", "TransformScaleShift", function(x) {
             else if (x@active_transforms["col", "shift"]) shift_col <- shift_col + x@global_params[2]
             else shift_row <- matrix(x@global_params[2], nrow=1, ncol=nrow(x))
         }
-        if (nrow(shift_row) != 0) res <- iterate_matrix_row_shift_cpp(res, shift_row)
-        if (nrow(shift_col) != 0) res <- iterate_matrix_col_shift_cpp(res, shift_col)
+        if (nrow(shift_row) != 0) res <- wrapMatDouble(iterate_matrix_row_shift_cpp(ptr(res), shift_row))
+        if (nrow(shift_col) != 0) res <- wrapMatDouble(iterate_matrix_col_shift_cpp(ptr(res), shift_col))
     }
     res
 })
