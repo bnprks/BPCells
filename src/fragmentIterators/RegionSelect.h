@@ -1,5 +1,7 @@
 #pragma once
 
+#include <algorithm>
+
 #include "FragmentIterator.h"
 #include "../bitpacking/simd_vec.h"
 #include "../arrayIO/array_interfaces.h"

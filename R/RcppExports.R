@@ -257,6 +257,22 @@ iterate_matrix_row_select_uint32_t_cpp <- function(matrix, row_selection) {
     .Call(`_BPCells_iterate_matrix_row_select_uint32_t_cpp`, matrix, row_selection)
 }
 
+iterate_matrix_row_bind_double_cpp <- function(matrix_list) {
+    .Call(`_BPCells_iterate_matrix_row_bind_double_cpp`, matrix_list)
+}
+
+iterate_matrix_row_bind_uint32_t_cpp <- function(matrix_list) {
+    .Call(`_BPCells_iterate_matrix_row_bind_uint32_t_cpp`, matrix_list)
+}
+
+iterate_matrix_col_bind_double_cpp <- function(matrix_list) {
+    .Call(`_BPCells_iterate_matrix_col_bind_double_cpp`, matrix_list)
+}
+
+iterate_matrix_col_bind_uint32_t_cpp <- function(matrix_list) {
+    .Call(`_BPCells_iterate_matrix_col_bind_uint32_t_cpp`, matrix_list)
+}
+
 scan_matrix_uint32_t_cpp <- function(matrix) {
     .Call(`_BPCells_scan_matrix_uint32_t_cpp`, matrix)
 }

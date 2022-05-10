@@ -809,6 +809,50 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// iterate_matrix_row_bind_double_cpp
+SEXP iterate_matrix_row_bind_double_cpp(SEXP matrix_list);
+RcppExport SEXP _BPCells_iterate_matrix_row_bind_double_cpp(SEXP matrix_listSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type matrix_list(matrix_listSEXP);
+    rcpp_result_gen = Rcpp::wrap(iterate_matrix_row_bind_double_cpp(matrix_list));
+    return rcpp_result_gen;
+END_RCPP
+}
+// iterate_matrix_row_bind_uint32_t_cpp
+SEXP iterate_matrix_row_bind_uint32_t_cpp(SEXP matrix_list);
+RcppExport SEXP _BPCells_iterate_matrix_row_bind_uint32_t_cpp(SEXP matrix_listSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type matrix_list(matrix_listSEXP);
+    rcpp_result_gen = Rcpp::wrap(iterate_matrix_row_bind_uint32_t_cpp(matrix_list));
+    return rcpp_result_gen;
+END_RCPP
+}
+// iterate_matrix_col_bind_double_cpp
+SEXP iterate_matrix_col_bind_double_cpp(SEXP matrix_list);
+RcppExport SEXP _BPCells_iterate_matrix_col_bind_double_cpp(SEXP matrix_listSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type matrix_list(matrix_listSEXP);
+    rcpp_result_gen = Rcpp::wrap(iterate_matrix_col_bind_double_cpp(matrix_list));
+    return rcpp_result_gen;
+END_RCPP
+}
+// iterate_matrix_col_bind_uint32_t_cpp
+SEXP iterate_matrix_col_bind_uint32_t_cpp(SEXP matrix_list);
+RcppExport SEXP _BPCells_iterate_matrix_col_bind_uint32_t_cpp(SEXP matrix_listSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type matrix_list(matrix_listSEXP);
+    rcpp_result_gen = Rcpp::wrap(iterate_matrix_col_bind_uint32_t_cpp(matrix_list));
+    return rcpp_result_gen;
+END_RCPP
+}
 // scan_matrix_uint32_t_cpp
 NumericVector scan_matrix_uint32_t_cpp(SEXP matrix);
 RcppExport SEXP _BPCells_scan_matrix_uint32_t_cpp(SEXP matrixSEXP) {
@@ -981,6 +1025,10 @@ static const R_CallMethodDef CallEntries[] = {
     {"_BPCells_iterate_matrix_col_select_uint32_t_cpp", (DL_FUNC) &_BPCells_iterate_matrix_col_select_uint32_t_cpp, 2},
     {"_BPCells_iterate_matrix_row_select_double_cpp", (DL_FUNC) &_BPCells_iterate_matrix_row_select_double_cpp, 2},
     {"_BPCells_iterate_matrix_row_select_uint32_t_cpp", (DL_FUNC) &_BPCells_iterate_matrix_row_select_uint32_t_cpp, 2},
+    {"_BPCells_iterate_matrix_row_bind_double_cpp", (DL_FUNC) &_BPCells_iterate_matrix_row_bind_double_cpp, 1},
+    {"_BPCells_iterate_matrix_row_bind_uint32_t_cpp", (DL_FUNC) &_BPCells_iterate_matrix_row_bind_uint32_t_cpp, 1},
+    {"_BPCells_iterate_matrix_col_bind_double_cpp", (DL_FUNC) &_BPCells_iterate_matrix_col_bind_double_cpp, 1},
+    {"_BPCells_iterate_matrix_col_bind_uint32_t_cpp", (DL_FUNC) &_BPCells_iterate_matrix_col_bind_uint32_t_cpp, 1},
     {"_BPCells_scan_matrix_uint32_t_cpp", (DL_FUNC) &_BPCells_scan_matrix_uint32_t_cpp, 1},
     {"_BPCells_dense_multiply_right_cpp", (DL_FUNC) &_BPCells_dense_multiply_right_cpp, 2},
     {"_BPCells_dense_multiply_left_cpp", (DL_FUNC) &_BPCells_dense_multiply_left_cpp, 2},

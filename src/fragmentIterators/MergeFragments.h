@@ -1,6 +1,7 @@
 #pragma once
 
 #include <vector>
+#include <cstring>
 #include "../lib/dary_heap.hpp"
 
 #include "FragmentIterator.h"

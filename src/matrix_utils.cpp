@@ -3,6 +3,7 @@
 
 #include "matrixIterators/MatrixIterator.h"
 #include "matrixIterators/TSparseMatrixWriter.h"
+#include "matrixIterators/ConcatenateMatrix.h"
 #include "matrixIterators/CSparseMatrix.h"
 #include "matrixIterators/MatrixIndexSelect.h"
 #include "matrixIterators/MatrixOps.h"
@@ -79,6 +80,55 @@ SEXP iterate_matrix_row_select_uint32_t_cpp(SEXP matrix, std::vector<uint32_t> r
         XPtr<MatrixLoader<uint32_t>>(new MatrixRowSelect(*loader, row_selection))
     );
 }
+
+// [[Rcpp::export]]
+SEXP iterate_matrix_row_bind_double_cpp(SEXP matrix_list) {
+    std::vector<MatrixLoader<double>*> matrix_vec;
+    List l = matrix_list;
+    for (uint32_t i = 0; i < l.size(); i++) {
+        XPtr<MatrixLoader<double>> loader(l[i]);
+        matrix_vec.push_back(&(*loader));
+    }
+    
+    return Rcpp::wrap(XPtr<MatrixLoader<double>>(new ConcatRows(matrix_vec)));
+}
+
+// [[Rcpp::export]]
+SEXP iterate_matrix_row_bind_uint32_t_cpp(SEXP matrix_list) {
+    std::vector<MatrixLoader<uint32_t>*> matrix_vec;
+    List l = matrix_list;
+    for (uint32_t i = 0; i < l.size(); i++) {
+        XPtr<MatrixLoader<uint32_t>> loader(l[i]);
+        matrix_vec.push_back(&(*loader));
+    }
+    
+    return Rcpp::wrap(XPtr<MatrixLoader<uint32_t>>(new ConcatRows(matrix_vec)));
+}
+
+// [[Rcpp::export]]
+SEXP iterate_matrix_col_bind_double_cpp(SEXP matrix_list) {
+    std::vector<MatrixLoader<double>*> matrix_vec;
+    List l = matrix_list;
+    for (uint32_t i = 0; i < l.size(); i++) {
+        XPtr<MatrixLoader<double>> loader(l[i]);
+        matrix_vec.push_back(&(*loader));
+    }
+    
+    return Rcpp::wrap(XPtr<MatrixLoader<double>>(new ConcatCols(matrix_vec)));
+}
+
+// [[Rcpp::export]]
+SEXP iterate_matrix_col_bind_uint32_t_cpp(SEXP matrix_list) {
+    std::vector<MatrixLoader<uint32_t>*> matrix_vec;
+    List l = matrix_list;
+    for (uint32_t i = 0; i < l.size(); i++) {
+        XPtr<MatrixLoader<uint32_t>> loader(l[i]);
+        matrix_vec.push_back(&(*loader));
+    }
+    
+    return Rcpp::wrap(XPtr<MatrixLoader<uint32_t>>(new ConcatCols(matrix_vec)));
+}
+
 
 // [[Rcpp::export]]
 NumericVector scan_matrix_uint32_t_cpp(SEXP matrix) {
