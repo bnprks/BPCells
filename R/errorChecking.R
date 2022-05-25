@@ -124,3 +124,14 @@ normalize_length <- function(x, len, n=1) {
     assert_len(x, len, n+1)
     return(x)
 }
+
+# assert_has_package <- function(packages, n=1) {
+#     missing <- c()
+#     for (p in packages) {
+#         if (!requireNamespace(p, quietly = TRUE))
+#             missing <- c(missing, p)
+#     }
+#     if (length(missing) > 0) {
+#         stop(sprintf("Missing required package(s): %s", paste0(missing, collapse=", ")), .call=FALSE)
+#     }
+# }

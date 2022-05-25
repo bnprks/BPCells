@@ -23,7 +23,8 @@ reference:
 - title: "Matrices"
 - contents:
   - IterableMatrix-methods
-  - overlapMatrix
+  - peakMatrix
+  - tileMatrix
 - title: "ATAC Analysis Utilities"
 - contents:
   - getFootprints

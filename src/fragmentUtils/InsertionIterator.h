@@ -30,6 +30,7 @@ private:
     uint32_t next_cell;
     uint32_t next_coord;
     uint32_t current_chr;
+    bool use_start;
 
     // Load new fragments, shift end coordinates, and add to the sorted end_data buf
     // Pre-condition:
@@ -129,7 +130,7 @@ public:
     inline bool nextInsertion() {
         if (start_idx >= start_data.size()) loadFragments();
         if (end_idx >= end_capacity) return false;
-        bool use_start = end_data[end_idx] >= start_data[start_idx];
+        use_start = end_data[end_idx] >= start_data[start_idx];
         next_coord = use_start ? start_data[start_idx] : end_data[end_idx];
         next_cell = use_start ? start_cell[start_idx] : end_cell[end_idx];
         start_idx += use_start;
@@ -149,6 +150,7 @@ public:
     inline uint32_t chr() const {return current_chr; };
     inline uint32_t cell() const {return next_cell; };
     inline uint32_t coord() const {return next_coord; };
+    inline bool isStart() const {return use_start; };
 };
 
 } // end namespace BPCells

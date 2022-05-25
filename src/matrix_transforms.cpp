@@ -26,14 +26,6 @@ SEXP iterate_matrix_log1psimd_cpp(SEXP matrix) {
 }
 
 // [[Rcpp::export]]
-SEXP iterate_matrix_log1pcache_cpp(SEXP matrix) {
-    XPtr<MatrixLoader<double>>input(matrix);
-    return Rcpp::wrap(
-        XPtr<MatrixLoader<double>>(new Log1pCache(*input))
-    );
-}
-
-// [[Rcpp::export]]
 SEXP iterate_matrix_scale_cpp(SEXP matrix, Eigen::Map<Eigen::ArrayXXd> row_scale, Eigen::Map<Eigen::ArrayXXd> col_scale) {
     XPtr<MatrixLoader<double>>input(matrix);
     return Rcpp::wrap(

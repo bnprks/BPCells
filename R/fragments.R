@@ -935,11 +935,10 @@ selectRegions <- function(fragments, ranges, invert_selection=FALSE, zero_based_
         start <- as.integer(ranges$start) - !zero_based_coords
         end <- as.integer(ranges$end)
     } else {
-        chr_levels <- as.characer(unique(GenomicRanges::seqnames(ranges)))
+        chr_levels <- as.character(unique(GenomicRanges::seqnames(ranges)))
         chr_id <- as.integer(factor(as.character(GenomicRanges::seqnames(ranges)), chr_levels)) - 1L
         start <- GenomicRanges::start(ranges) - !zero_based_coords
         end <- GenomicRanges::end(ranges)
-        
     }
     # Check to make sure regions are end-sorted
     pair_1 <- seq_len(length(chr_id)-1)

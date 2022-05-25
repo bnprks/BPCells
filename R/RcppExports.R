@@ -209,10 +209,6 @@ iterate_matrix_log1psimd_cpp <- function(matrix) {
     .Call(`_BPCells_iterate_matrix_log1psimd_cpp`, matrix)
 }
 
-iterate_matrix_log1pcache_cpp <- function(matrix) {
-    .Call(`_BPCells_iterate_matrix_log1pcache_cpp`, matrix)
-}
-
 iterate_matrix_scale_cpp <- function(matrix, row_scale, col_scale) {
     .Call(`_BPCells_iterate_matrix_scale_cpp`, matrix, row_scale, col_scale)
 }

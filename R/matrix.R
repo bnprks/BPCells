@@ -53,6 +53,7 @@ normalized_dimnames <- function(row_names, col_names) {
         if(length(col_names) == 0) NULL else col_names
     )
 }
+
 denormalize_dimnames <- function(dimnames) {
     if (is.null(dimnames[[1]])) dimnames[[1]] <- character(0)
     if (is.null(dimnames[[2]])) dimnames[[2]] <- character(0)
@@ -80,15 +81,15 @@ setMethod("show", "IterableMatrix", function(object) {
 
     cat("\n")
 
-    if(!is.null(rownames(object)))
-        cat(sprintf("Row names: %s\n",
-            pretty_print_vector(rownames(object), empty="unknown names")
-        ))
+    
+    cat(sprintf("Row names: %s\n",
+        pretty_print_vector(rownames(object), empty="unknown names")
+    ))
 
-    if(!is.null(rownames(object)))
-        cat(sprintf("Col names: %s\n",
-            pretty_print_vector(colnames(object), empty="unknown names")
-        ))
+    
+    cat(sprintf("Col names: %s\n",
+        pretty_print_vector(colnames(object), empty="unknown names")
+    ))
 
     cat("\n")
     description <- short_description(object)
@@ -1019,15 +1020,14 @@ matrixStats <- function(matrix,
     res <- matrix_stats_cpp(ptr(it), row_stats_number, col_stats_number)
     rownames(res$row_stats) <- stat_options[seq_len(row_stats_number) + 1]
     rownames(res$col_stats) <- stat_options[seq_len(col_stats_number) + 1]
+    if (matrix@transpose) {
+        tmp <- res$row_stats
+        res$row_stats <- res$col_stats
+        res$col_stats <- tmp
+    }
 
     colnames(res$row_stats) <- rownames(matrix)
     colnames(res$col_stats) <- colnames(matrix)
-    
-    if (matrix@transpose) {
-        res <- list(
-            row_stats = res$col_stats,
-            col_stats = res$row_stats
-        )
-    }
+  
     return(res)
 }

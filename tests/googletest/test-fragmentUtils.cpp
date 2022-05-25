@@ -259,3 +259,14 @@ TEST(FragmentUtils, CellSelect) {
     out.restart();
     ASSERT_TRUE(Testing::fragments_identical(select2, out));
 }
+
+TEST(FragmentUtils, SeekChecks) {
+    // Test that all the seeking does 
+    uint32_t max_cell = 50;
+    auto v = Testing::generateFrags(400, 3, 400, max_cell-1, 100, 1336);
+
+    std::unique_ptr<VecReaderWriterBuilder> d1 = writeFragmentTuple(v, max_cell);
+
+
+    
+}
