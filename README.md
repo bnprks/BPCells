@@ -125,10 +125,13 @@ fragments in memory.
     - Calculation of Cell x Peak matrices
 - Matrices
     - Conversion to/from R sparse matrices
-    - Read-only access to 10x hdf5 feature matrices
+    - Read-only access to 10x and AnnData hdf5 feature matrices
     - Reading/writing of packed sparse matrices in memory or directly from disk
     - Multiplication by dense matrices or vectors
     - Calculation of statistics like rowSums, colSums, rowMeans, and colMeans
+    - Transparent handling of vector `+`, `-`, `*`, `/`, and `log1p` for streaming
+      normalization. This allows implementation of ATAC-seq LSI and Seurat default
+      normalization.
 - Support for 
 
 ### Upcoming additions:
@@ -136,10 +139,8 @@ fragments in memory.
     - Read fragments from bam files
     - Support direct download of files from URLs
 - Support for additional matrix formats:
-    - Read/write hdf5 AnnData matrices
+    - Write hdf5 AnnData matrices
 - Support for additional matrix normalizations:
-    - ATAC-seq LSI
-    - Seurat default normalization
     - sctransform normalization
 
 ### Performance goals/estimates
