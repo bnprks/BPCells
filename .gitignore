@@ -16,3 +16,5 @@ cmake-build-debug/
 .vscode/
 .snakemake/
 bench
+run_test.R
+.Rhistory
