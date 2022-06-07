@@ -85,6 +85,7 @@ setMethod("show", "IterableFragments", function(object) {
 #' @param x an IterableFragments object
 #' @return * `cellNames()` Character vector of cell names, or NULL if none are known
 #' @describeIn IterableFragments-methods Get cell names
+#' @export
 setGeneric("cellNames", function(x) standardGeneric("cellNames"))
 setMethod("cellNames", "IterableFragments", function(x) {
     if (.hasSlot(x, "fragments"))
@@ -97,6 +98,7 @@ setMethod("cellNames", "IterableFragments", function(x) {
 #' @param value Character vector of new names
 #' @details * `cellNames<-` It is only possible to replace names, not add new names.
 #' @describeIn IterableFragments-methods Set cell names
+#' @export
 setGeneric("cellNames<-", function(x, ..., value) standardGeneric("cellNames<-"))
 setMethod("cellNames<-", "IterableFragments", function(x, ..., value) {
     if (is.null(cellNames(x))) {
@@ -115,6 +117,7 @@ setMethod("cellNames<-", "IterableFragments", function(x, ..., value) {
 #' @param x an IterableFragments object
 #' @return * `chrNames()`: Character vector of chromosome names, or NULL if none are known
 #' @describeIn IterableFragments-methods Set chromosome names
+#' @export
 setGeneric("chrNames", function(x) standardGeneric("chrNames"))
 setMethod("chrNames", "IterableFragments", function(x) {
     if (.hasSlot(x, "fragments"))
@@ -127,6 +130,7 @@ setMethod("chrNames", "IterableFragments", function(x) {
 #' @param value Character vector of new names
 #' @details * `chrNames<-` It is only possible to replace names, not add new names.
 #' @describeIn IterableFragments-methods Set chromosome names
+#' @export
 setGeneric("chrNames<-", function(x, ..., value) standardGeneric("chrNames<-"))
 setMethod("chrNames<-", "IterableFragments", function(x, ..., value) {
     assert_is_character(value)
@@ -507,7 +511,8 @@ open_fragments_hdf5 <- function(path, group="fragments", buffer_size=16384L) {
 #'    coordinate system to a 0-based end-exclusive coordinate system. Defaults to true
 #'    for GRanges and false for other formats
 #'    (see http://genome.ucsc.edu/blog/the-ucsc-genome-browser-coordinate-counting-systems/)
-#' @return RawFragments object representing the given fragments
+#' @return UnpackedMemFragments object representing the given fragments
+#' @export
 convert_to_fragments <- function(x, zero_based_coords=!is(x, "GRanges")) {
     assert_is(x, c("list", "data.frame", "GRanges"))
     assert_is(zero_based_coords, "logical")
@@ -1000,7 +1005,11 @@ setMethod("short_description", "MergeFragments", function(x) {
 
 # Allow merging fragments using standard concatenation method
 setMethod("c", "IterableFragments", function(x, ...) {
-    args <- c(list(x), list(...))
+    tail <- list(...)
+    if (length(tail) == 1 && is.null(tail[[1]]))
+        args <- list(x)
+    else
+        args <- c(list(x), list(...))
     chr_names <- chrNames(x)
     assert_not_null(chr_names)
     fragments_list <- list()
@@ -1034,13 +1043,11 @@ fragments_identical <- function(fragments1, fragments2) {
 #' Scan through fragments without performing any operations (used for benchmarking)
 #' @param fragments Fragments object to scan
 #' @return Length 4 vector with fragment count, then sums of chr, starts, and ends
-#' @export
 scan_fragments <- function(fragments) {
     assert_is(fragments, "IterableFragments")
     i <- iterate_fragments(fragments)
     scan_fragments_cpp(ptr(i))
 }
-
 
 
 pretty_print_vector <- function(x, max_len=3, sep=", ", prefix="", empty="") {

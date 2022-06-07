@@ -48,7 +48,7 @@ nucleosome_counts <- function(fragments, nucleosome_width=147) {
 #' as (monoNucleosomal + multiNucleosomal) / subNucleosomal.
 #' 
 #' @export
-qc_stats <- function(fragments, genes, blacklist, zero_based_coords=TRUE) {
+qc_scATAC <- function(fragments, genes, blacklist, zero_based_coords=TRUE) {
     assert_is(fragments, "IterableFragments")
     assert_is(genes, "GenomicRanges")
     assert_is(blacklist, "GenomicRanges")
