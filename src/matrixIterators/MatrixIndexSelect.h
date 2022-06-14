@@ -145,7 +145,7 @@ public:
         return idx < cap;
     }
 
-    uint32_t capacity() const override {return cap-idx;}
+    uint32_t capacity() const override {return std::min(cap-idx, load_size);}
     uint32_t* rowData() override {return needs_reorder ? row_data.data() + idx : this->loader.rowData();}
     T* valData() override {return needs_reorder ? val_data.data() + idx : this->loader.valData();}
 };
