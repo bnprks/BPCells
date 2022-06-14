@@ -237,33 +237,18 @@ setMethod("[", "IterableMatrix", function(x, i, j, ...) {
         if (!is.logical(j)) assert_distinct(j)
         ret@dim[2] <- length(ret@col_selection)
     }
-    ret
-})
 
-# Handle chained subsets by just modifying the selections
-setMethod("[", "MatrixSubset", function(x, i, j, ...) {
-    if (missing(x)) stop("x is missing in matrix selection")
-    ret <- wrapMatrix("MatrixSubset", x@matrix)
-    ret@dim <- dim(x)
+    # Handle chained subsets by collapsing repeated selections
+    if (is(x, "MatrixSubset")) {
+        if (length(x@row_selection) == 0) x@row_selection <- ret@row_selection
+        else if (length(ret@row_selection) != 0) x@row_selection <- x@row_selection[ret@row_selection]
 
-    if(!missing(i)) {
-        indices <- seq_len(nrow(x))
-        names(indices) <- rownames(x)
-        selection <- vctrs::vec_slice(indices, i)
-        ret@row_selection <- x@row_selection[selection]
-        if(!is.null(ret@dimnames[[1]])) ret@dimnames[[1]] <- ret@dimnames[[1]][selection]
-        if (!is.logical(i)) assert_distinct(i)
-        ret@dim[1] <- length(ret@row_selection)
-    }
-    if (!missing(j)) {
-        indices <- seq_len(ncol(x))
-        names(indices) <- colnames(x)
-        selection <- vctrs::vec_slice(indices, j)
-        ret@col_selection <- x@col_selection[selection]
-        if(!is.null(ret@dimnames[[2]])) ret@dimnames[[2]] <- ret@dimnames[[2]][selection]
-        assert_distinct(ret@col_selection)
-        if (!is.logical(j)) assert_distinct(j)
-        ret@dim[2] <- length(ret@col_selection)
+        if (length(x@col_selection) == 0) x@col_selection <- ret@col_selection
+        else if (length(ret@col_selection) != 0) x@col_selection <- x@col_selection[ret@col_selection]
+        
+        x@dim <- ret@dim
+        x@dimnames <- ret@dimnames
+        ret <- x
     }
     ret
 })
