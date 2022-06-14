@@ -91,7 +91,7 @@ public:
         MatrixIterator<double> mat(loader);
         uint32_t count = 0;
         std::vector<Eigen::Triplet<double>> triplets;
-        
+
         while(mat.nextCol()) {
             while (mat.nextValue()) {
                 triplets.push_back(Eigen::Triplet<double> (
@@ -103,7 +103,6 @@ public:
         
         eigen_mat = Eigen::SparseMatrix<double>(mat.rows(), mat.cols());
         eigen_mat.setFromTriplets(triplets.begin(), triplets.end());
-        eigen_mat.makeCompressed();
     };
 
     const Eigen::SparseMatrix<double> getMat() {
@@ -131,7 +130,6 @@ public:
         
         eigen_mat = Eigen::SparseMatrix<double>(mat.cols(), mat.rows());
         eigen_mat.setFromTriplets(triplets.begin(), triplets.end());
-        eigen_mat.makeCompressed();
     };
 
     const Eigen::SparseMatrix<double> getMat() {
