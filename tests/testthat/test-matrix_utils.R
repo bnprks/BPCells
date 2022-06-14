@@ -19,6 +19,31 @@ to_vector <- function(x) {
     x
 }
 
+test_that("Chained subsetting works", {
+    m1 <- generate_dense_matrix(10, 10) %>% as("dgCMatrix")
+
+    m2 <- as(m1, "IterableMatrix")
+
+    # Singleton selections
+    expect_equal(m1[c(2,4,3,5),], m2[c(2,4,3,5),] %>% as("dgCMatrix"))
+    expect_equal(m1[,c(2,4,3,5)], m2[,c(2,4,3,5)] %>% as("dgCMatrix"))
+
+    # Repeated selections on 1 axis
+    expect_equal(m1[c(2,4,3,5),][c(3,1),], m2[c(2,4,3,5),][c(3,1),] %>% as("dgCMatrix"))
+    expect_equal(m1[,c(2,4,3,5)][,c(3,1)], m2[,c(2,4,3,5)][,c(3,1)] %>% as("dgCMatrix"))
+    
+    # Repeated selections on 2 axis
+    expect_equal(m1[c(2,4,3,5),c(5,4,2,3)][c(3,1),c(1,3)], m2[c(2,4,3,5),c(5,4,2,3)][c(3,1),c(1,3)] %>% as("dgCMatrix"))
+
+    # Missing one axis in 2nd selection
+    expect_equal(m1[c(2,4,3,5),c(5,4,2,3)][c(3,1),], m2[c(2,4,3,5),c(5,4,2,3)][c(3,1),] %>% as("dgCMatrix"))
+    expect_equal(m1[c(2,4,3,5),c(5,4,2,3)][,c(1,3)], m2[c(2,4,3,5),c(5,4,2,3)][,c(1,3)] %>% as("dgCMatrix"))
+
+    # Missing one axis in 1st selection
+    expect_equal(m1[,c(5,4,2,3)][c(3,1),c(1,3)], m2[,c(5,4,2,3)][c(3,1),c(1,3)] %>% as("dgCMatrix"))
+    expect_equal(m1[c(2,4,3,5),][c(3,1),c(1,3)], m2[c(2,4,3,5),][c(3,1),c(1,3)] %>% as("dgCMatrix"))
+})
+
 test_that("Dense matrix/vector multiply works", { 
     library(Matrix)
     t <- Matrix::t
