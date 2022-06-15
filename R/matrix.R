@@ -42,7 +42,7 @@ setMethod("dimnames<-", signature(x="IterableMatrix", value="NULL"), function(x,
 #' duplicate storage of dimnames
 wrapMatrix <- function(class, m, ...) {
     dimnames <- dimnames(m)
-    m@dimnames <- list(NULL, NULL)
+    if (matrix_is_transform(m)) m@dimnames <- list(NULL, NULL)
     new(class, matrix=m, transpose=m@transpose, dim=m@dim, dimnames=dimnames, ...)
 }
 
@@ -60,14 +60,25 @@ denormalize_dimnames <- function(dimnames) {
     dimnames
 }
 
+#' Get a wrapped pointer to the iterable matrix, in the form of an XPtrList (see fragments.R)
 setGeneric("iterate_matrix", function(x) standardGeneric("iterate_matrix"))
 setMethod("iterate_matrix", "XPtrList", function(x) {
     stopifnot(x@type == "mat_uint32_t" || x@type == "mat_double")
     x
 })
 
+#' Get the matrix data type (mat_uint32_t or mat_double for now)
 setGeneric("matrix_type", function(x) standardGeneric("matrix_type"))
 setMethod("matrix_type", "XPtrList", function(x) x@type)
+
+#' Return boolean whether the matrix is a transform (i.e. is loading data from another
+#' matrix R object rather than a data source it owns). This is used primarily to know when it is safe
+#' to clear dimnames from intermediate transformed matrices. C++ relies on the base matrices (non-transform) to have
+#' dimnames, while R relies on the outermost matrix (transform) to have dimnames.
+setGeneric("matrix_is_transform", function(x) standardGeneric("matrix_is_transform"))
+setMethod("matrix_is_transform", "XPtrList", function(x) FALSE)
+# As a reasonable default convention, a matrix is a transform if it has a slot named matrix
+setMethod("matrix_is_transform", "IterableMatrix", function(x) {.hasSlot(x, "matrix")})
 
 setMethod("short_description", "IterableMatrix", function(x) {
     character(0)
@@ -321,6 +332,8 @@ setMethod("iterate_matrix", "RowBindMatrices", function(x) {
         wrapMatDouble(iterate_matrix_row_bind_double_cpp(lapply(iterators, ptr)), new("XPtrList", pointers=iterators))
 })
 
+setMethod("matrix_is_transform", "RowBindMatrices", function(x) TRUE)
+
 setMethod("short_description", "RowBindMatrices", function(x) {
     sprintf("Concatenate rows of %d matrix objects with classes%s",
         length(x@matrix_list),
@@ -336,8 +349,8 @@ setMethod("rbind2", signature(x="IterableMatrix", y="IterableMatrix"), function(
     # Handle dimnames
     col_names <- merge_dimnames(colnames(x), colnames(y), "rbind", "column")
     row_names <- concat_dimnames(rownames(x), rownames(y), nrow(x), nrow(y), "rbind", "row")
-    x@dimnames <- list(NULL, NULL)
-    y@dimnames <- list(NULL, NULL)
+    if (matrix_is_transform(x)) x@dimnames <- list(NULL, NULL)
+    if (matrix_is_transform(y)) y@dimnames <- list(NULL, NULL)
 
     matrix_list <- list()
     if (is(x, "RowBindMatrices")) matrix_list <- c(matrix_list, x@matrix_list)
@@ -367,6 +380,8 @@ setMethod("iterate_matrix", "ColBindMatrices", function(x) {
         wrapMatDouble(iterate_matrix_col_bind_double_cpp(lapply(iterators, ptr)), new("XPtrList", pointers=iterators))
 })
 
+setMethod("matrix_is_transform", "ColBindMatrices", function(x) TRUE)
+
 setMethod("short_description", "ColBindMatrices", function(x) {
     sprintf("Concatenate columns of %d matrix objects with classes%s",
         length(x@matrix_list),
@@ -382,8 +397,8 @@ setMethod("cbind2", signature(x="IterableMatrix", y="IterableMatrix"), function(
     # Handle dimnames
     row_names <- merge_dimnames(rownames(x), rownames(y), "cbind", "row")
     col_names <- concat_dimnames(colnames(x), colnames(y), ncol(x), ncol(y), "cbind", "column")
-    dimnames(x) <- NULL
-    dimnames(y) <- NULL
+    if (matrix_is_transform(x)) x@dimnames <- list(NULL, NULL)
+    if (matrix_is_transform(y)) y@dimnames <- list(NULL, NULL)
 
     matrix_list <- list()
     if (is(x, "ColBindMatrices")) matrix_list <- c(matrix_list, x@matrix_list)
@@ -486,6 +501,7 @@ write_matrix_memory <- function(mat, compress=TRUE) {
     m$col_names <- NULL
     res <- do.call(new, c(class, m))
     res@dim <- mat@dim
+    res@dimnames <- m$dimnames
     res
 }
 
