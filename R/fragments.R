@@ -13,18 +13,21 @@ setClass("XPtrList", slots=c("pointers"="list", "type"="character"))
 ptr <- function(x) {x@pointers[[1]]}
 #' Wrap an inner XPtrList with an outer externalptr object (aka Rcpp::XPtr)
 #' We also track the type of the current pointer to provide a little safety when converting
-#' to C++
-wrapFragments <- function(outer, inner=new("XPtrList")) {
+#' to C++.
+#' WARNING: Always make sure to pass the correct inner object, because if it is not passed then
+#' the chain of pointers will be broken and C++ objects could be freed at random by the GC while we're
+#' still using them. ONLY pass inner=new("XPtrList") if the C++ object is not wrapping any other fragments/matrices
+wrapFragments <- function(outer, inner) {
     inner@pointers <- c(outer, inner@pointers)
     inner@type <- "fragments"
     inner
 }
-wrapMatUInt <- function(outer, inner=new("XPtrList")) {
+wrapMatUInt <- function(outer, inner) {
     inner@pointers <- c(outer, inner@pointers)
     inner@type <- "mat_uint32_t"
     inner
 }
-wrapMatDouble <- function(outer, inner=new("XPtrList")) {
+wrapMatDouble <- function(outer, inner) {
     inner@pointers <- c(outer, inner@pointers)
     inner@type <- "mat_double"
     inner
@@ -164,7 +167,7 @@ setMethod("cellNames<-", "FragmentsTsv", function(x, ..., value) {
     new("CellRename", x, cell_names=value)
 })
 
-setMethod("iterate_fragments", "FragmentsTsv", function(x) wrapFragments(iterate_10x_fragments_cpp(normalizePath(x@path), x@comment)))
+setMethod("iterate_fragments", "FragmentsTsv", function(x) wrapFragments(iterate_10x_fragments_cpp(normalizePath(x@path), x@comment), new("XPtrList")))
 setMethod("short_description", "FragmentsTsv", function(x) {
     sprintf("Load 10x fragments file from %s", x@path)
 })
@@ -250,7 +253,7 @@ setMethod("cellNames<-", "UnpackedMemFragments", function(x, ..., value) {
 })
 
 setMethod("iterate_fragments", "UnpackedMemFragments", function(x) {
-    wrapFragments(iterate_unpacked_fragments_cpp(x))
+    wrapFragments(iterate_unpacked_fragments_cpp(x), new("XPtrList"))
 })
 setMethod("short_description", "UnpackedMemFragments", function(x) {
     "Read uncompressed fragments from memory"
@@ -305,7 +308,7 @@ setMethod("cellNames<-", "PackedMemFragments", function(x, ..., value) {
 })
 
 setMethod("iterate_fragments", "PackedMemFragments", function(x) {
-    wrapFragments(iterate_packed_fragments_cpp(x))
+    wrapFragments(iterate_packed_fragments_cpp(x), new("XPtrList"))
 })
 setMethod("short_description", "PackedMemFragments", function(x) {
     "Read compressed fragments from memory"
@@ -366,9 +369,9 @@ setMethod("cellNames<-", "FragmentsDir", function(x, ..., value) {
 })
 setMethod("iterate_fragments", "FragmentsDir", function(x) {
     if (x@compressed)
-        wrapFragments(iterate_packed_fragments_file_cpp(x@dir, x@buffer_size, x@chr_names, x@cell_names))
+        wrapFragments(iterate_packed_fragments_file_cpp(x@dir, x@buffer_size, x@chr_names, x@cell_names), new("XPtrList"))
     else
-        wrapFragments(iterate_unpacked_fragments_file_cpp(x@dir, x@buffer_size, x@chr_names, x@cell_names))
+        wrapFragments(iterate_unpacked_fragments_file_cpp(x@dir, x@buffer_size, x@chr_names, x@cell_names), new("XPtrList"))
 })
 setMethod("short_description", "FragmentsDir", function(x) {
     sprintf("Read %s fragments from directory %s", 
@@ -449,9 +452,9 @@ setMethod("cellNames<-", "FragmentsHDF5", function(x, ..., value) {
 })
 setMethod("iterate_fragments", "FragmentsHDF5", function(x) {
     if (x@compressed)
-        wrapFragments(iterate_packed_fragments_hdf5_cpp(x@path, x@group, x@buffer_size, x@chr_names, x@cell_names))
+        wrapFragments(iterate_packed_fragments_hdf5_cpp(x@path, x@group, x@buffer_size, x@chr_names, x@cell_names), new("XPtrList"))
     else
-        wrapFragments(iterate_unpacked_fragments_hdf5_cpp(x@path, x@group, x@buffer_size, x@chr_names, x@cell_names))
+        wrapFragments(iterate_unpacked_fragments_hdf5_cpp(x@path, x@group, x@buffer_size, x@chr_names, x@cell_names), new("XPtrList"))
 })
 setMethod("short_description", "FragmentsHDF5", function(x) {
     sprintf("Read %s fragments from %s, group %s", 

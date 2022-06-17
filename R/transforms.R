@@ -91,8 +91,8 @@ setMethod("iterate_matrix", "TransformScaleShift", function(x) {
             else if (x@active_transforms["col", "shift"]) shift_col <- shift_col + x@global_params[2]
             else shift_row <- matrix(x@global_params[2], nrow=1, ncol=nrow(x))
         }
-        if (nrow(shift_row) != 0) res <- wrapMatDouble(iterate_matrix_row_shift_cpp(ptr(res), shift_row))
-        if (nrow(shift_col) != 0) res <- wrapMatDouble(iterate_matrix_col_shift_cpp(ptr(res), shift_col))
+        if (nrow(shift_row) != 0) res <- wrapMatDouble(iterate_matrix_row_shift_cpp(ptr(res), shift_row), res)
+        if (nrow(shift_col) != 0) res <- wrapMatDouble(iterate_matrix_col_shift_cpp(ptr(res), shift_col), res)
     }
     res
 })

@@ -437,7 +437,7 @@ setClass("PackedMatrixMem",
 )
 setMethod("iterate_matrix", "PackedMatrixMem", function(x) {
     x@dimnames <- denormalize_dimnames(x@dimnames)
-    wrapMatUInt(iterate_packed_matrix_cpp(x, x@dimnames[[1]], x@dimnames[[2]]))
+    wrapMatUInt(iterate_packed_matrix_cpp(x, x@dimnames[[1]], x@dimnames[[2]]), new("XPtrList"))
 })
 setMethod("short_description", "PackedMatrixMem", function(x) {
     "Compressed integer matrix in memory"
@@ -464,7 +464,7 @@ setClass("UnpackedMatrixMem",
 )
 setMethod("iterate_matrix", "UnpackedMatrixMem", function(x) {
     x@dimnames <- denormalize_dimnames(x@dimnames)
-    wrapMatUInt(iterate_unpacked_matrix_cpp(x, x@dimnames[[1]], x@dimnames[[2]]))
+    wrapMatUInt(iterate_unpacked_matrix_cpp(x, x@dimnames[[1]], x@dimnames[[2]]), new("XPtrList"))
 })
 setMethod("short_description", "UnpackedMatrixMem", function(x) {
     "Uncompressed integer matrix in memory"
@@ -521,9 +521,9 @@ setClass("MatrixDir",
 setMethod("iterate_matrix", "MatrixDir", function(x) {
     x@dimnames <- denormalize_dimnames(x@dimnames)
     if (x@compressed)
-        wrapMatUInt(iterate_packed_matrix_file_cpp(x@dir, x@buffer_size, x@dimnames[[1]], x@dimnames[[2]]))
+        wrapMatUInt(iterate_packed_matrix_file_cpp(x@dir, x@buffer_size, x@dimnames[[1]], x@dimnames[[2]]), new("XPtrList"))
     else
-        wrapMatUInt(iterate_unpacked_matrix_file_cpp(x@dir, x@buffer_size, x@dimnames[[1]], x@dimnames[[2]]))
+        wrapMatUInt(iterate_unpacked_matrix_file_cpp(x@dir, x@buffer_size, x@dimnames[[1]], x@dimnames[[2]]), new("XPtrList"))
 })
 setMethod("short_description", "MatrixDir", function(x) {
     sprintf("%s integer matrix in directory %s", 
@@ -594,9 +594,9 @@ setClass("MatrixH5",
 setMethod("iterate_matrix", "MatrixH5", function(x) {
     x@dimnames <- denormalize_dimnames(x@dimnames)
     if (x@compressed)
-        wrapMatUInt(iterate_packed_matrix_hdf5_cpp(x@path, x@group, x@buffer_size, x@dimnames[[1]], x@dimnames[[2]]))
+        wrapMatUInt(iterate_packed_matrix_hdf5_cpp(x@path, x@group, x@buffer_size, x@dimnames[[1]], x@dimnames[[2]]), new("XPtrList"))
     else
-        wrapMatUInt(iterate_unpacked_matrix_hdf5_cpp(x@path, x@group, x@buffer_size, x@dimnames[[1]], x@dimnames[[2]]))
+        wrapMatUInt(iterate_unpacked_matrix_hdf5_cpp(x@path, x@group, x@buffer_size, x@dimnames[[1]], x@dimnames[[2]]), new("XPtrList"))
 })
 setMethod("short_description", "MatrixH5", function(x) {
     sprintf("%s integer matrix in hdf5 file %s, group %s", 
@@ -661,7 +661,7 @@ setClass("10xMatrixH5",
     )
 )
 setMethod("iterate_matrix", "10xMatrixH5", function(x) {
-    wrapMatUInt(iterate_matrix_10x_hdf5_cpp(x@path, x@buffer_size))
+    wrapMatUInt(iterate_matrix_10x_hdf5_cpp(x@path, x@buffer_size), new("XPtrList"))
 })
 setMethod("short_description", "10xMatrixH5", function(x) {
     sprintf("10x HDF5 feature matrix in file %s", x@path)
@@ -698,7 +698,7 @@ setClass("AnnDataMatrixH5",
     )
 )
 setMethod("iterate_matrix", "AnnDataMatrixH5", function(x) {
-    wrapMatDouble(iterate_matrix_anndata_hdf5_cpp(x@path, x@group, x@buffer_size))
+    wrapMatDouble(iterate_matrix_anndata_hdf5_cpp(x@path, x@group, x@buffer_size), new("XPtrList"))
 })
 setMethod("short_description", "AnnDataMatrixH5", function(x) {
     sprintf("AnnData HDF5 matrix in file %s, group %s", 
@@ -788,7 +788,7 @@ peakMatrix <- function(fragments, ranges, zero_based_coords=TRUE) {
 
 setMethod("iterate_matrix", "PeakMatrix", function(x) {
     it <- iterate_fragments(x@fragments)
-    wrapMatUInt(iterate_peak_matrix_cpp(ptr(it), x@chr_id, x@start, x@end, x@chr_levels))
+    wrapMatUInt(iterate_peak_matrix_cpp(ptr(it), x@chr_id, x@start, x@end, x@chr_levels), it)
 })
 setMethod("short_description", "PeakMatrix", function(x) {
     # Subset strings first to avoid a very slow string concatenation process
@@ -879,7 +879,7 @@ tileMatrix <- function(fragments, ranges, zero_based_coords=TRUE) {
 
 setMethod("iterate_matrix", "TileMatrix", function(x) {
     it <- iterate_fragments(x@fragments)
-    wrapMatUInt(iterate_tile_matrix_cpp(ptr(it), x@chr_id, x@start, x@end, x@tile_width, x@chr_levels))
+    wrapMatUInt(iterate_tile_matrix_cpp(ptr(it), x@chr_id, x@start, x@end, x@tile_width, x@chr_levels), it)
 })
 
 setMethod("short_description", "TileMatrix", function(x) {
@@ -967,14 +967,14 @@ setAs("dgCMatrix", "IterableMatrix", function(from) {
     new("Iterable_dgCMatrix_wrapper", dim=dim(from), dimnames=dimnames(from), transpose=FALSE, mat=from)
 })
 setMethod("iterate_matrix", "Iterable_dgCMatrix_wrapper", function(x) {
-    wrapMatDouble(iterate_csparse_matrix_cpp(x@mat))
+    wrapMatDouble(iterate_csparse_matrix_cpp(x@mat), new("XPtrList"))
 })
 setMethod("short_description", "Iterable_dgCMatrix_wrapper", function(x) {
     "Load dgCMatrix from memory"
 })
 
 setMethod("iterate_matrix", "dgCMatrix", function(x) {
-    wrapMatDouble(iterate_csparse_matrix_cpp(x))
+    wrapMatDouble(iterate_csparse_matrix_cpp(x), new("XPtrList"))
 })
 
 setAs("IterableMatrix", "dgCMatrix", function(from) {
