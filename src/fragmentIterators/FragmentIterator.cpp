@@ -16,11 +16,11 @@ bool FragmentIterator::load() {
     current_start = loader.startData();
     current_end = loader.endData();
     return true;
-};
+}
 
 uint32_t FragmentIterator::capacity() const {return current_capacity;}
 
-FragmentLoaderWrapper::FragmentLoaderWrapper(FragmentLoader &loader) : loader(loader) {};
+FragmentLoaderWrapper::FragmentLoaderWrapper(FragmentLoader &loader) : loader(loader) {}
 
 bool FragmentLoaderWrapper::isSeekable() const {return loader.isSeekable();}
 void FragmentLoaderWrapper::seek(uint32_t chr_id, uint32_t base) {loader.seek(chr_id, base);}

@@ -14,7 +14,7 @@ MergeFragments::MergeFragments(const std::vector<FragmentLoader*> &fragments, ui
         throw std::runtime_error("Must have >= 2 fragments to merge");
     
     cell_id_offset.push_back(0);
-    for (int i = 0; i < fragments.size(); i++) {
+    for (uint32_t i = 0; i < fragments.size(); i++) {
         frags.push_back(FragmentIterator(*fragments[i]));
 
         if (i < fragments.size()-1 && fragments[i]->cellCount() == -1) 
@@ -76,7 +76,7 @@ const char* MergeFragments::chrNames(uint32_t chr_id) const {
         }
     }
     return name;
-};
+}
 const char* MergeFragments::cellNames(uint32_t cell_id) const {
     auto it = std::upper_bound(cell_id_offset.begin(), cell_id_offset.end(), cell_id);
     uint32_t idx = it - cell_id_offset.begin() - 1;
@@ -128,7 +128,7 @@ bool MergeFragments::nextChr() {
 
     // Check that all the chrNames agree
     const char* chr_name = frags.front().chrNames(current_chr);
-    for (int i = 0; i < frags.size(); i++) {
+    for (uint32_t i = 0; i < frags.size(); i++) {
         const char* f_name = frags[i].chrNames(current_chr);
         if (f_name == NULL || chr_name == NULL || strcmp(chr_name, f_name) != 0) {
             throw std::runtime_error(

@@ -22,11 +22,6 @@
 
 namespace BPCells {
 
-
-
-
-
-
 #define BP128_UNROLL_LOOP1(start, counter, body) \
     counter = start;                             \
     body
@@ -77,7 +72,7 @@ void unpack(const vec *in, vec *out) {
 template<>
 void unpack<0>(const vec *in, vec *out) {
     vec reg = splat(0);
-    int i;
+    [[maybe_unused]] int i;
     BP128_UNROLL_LOOP32(i, {
         store(out++, reg);
     })
@@ -86,7 +81,7 @@ void unpack<0>(const vec *in, vec *out) {
 template <>
 void unpack<32>(const vec *in, vec *out) {
     vec Reg;
-    int i;
+    [[maybe_unused]] int i;
     BP128_UNROLL_LOOP32(i, {
         Reg = load(in++);
         store(out++, Reg);
@@ -188,7 +183,7 @@ vec unpackd1(vec initOffset, const vec *in, vec *out) {
 
 template <>
 vec unpackd1<0, false>(vec initOffset, const vec *in, vec *out) {
-    int i;
+    [[maybe_unused]] int i;
     BP128_UNROLL_LOOP32(i, {
         store(out++, initOffset);
     })
@@ -204,7 +199,7 @@ template<>
 vec unpackd1<32, false>(vec initOffset, const vec *in, vec *out) {
     // To save a bit of computation time, we just do straight memory copy
     // on 32-bit packing
-    int i;
+    [[maybe_unused]] int i;
     vec Reg;
     BP128_UNROLL_LOOP32(i, {
         Reg = load(in++);
@@ -322,7 +317,7 @@ void unpackFOR(vec initOffset, const vec *in, vec *out) {
 
 template<>
 void unpackFOR<0>(vec initOffset, const vec *in, vec *out) {
-    int i;
+    [[maybe_unused]] int i;
     BP128_UNROLL_LOOP32(i, {
         store(out++, initOffset);
     })
@@ -330,7 +325,7 @@ void unpackFOR<0>(vec initOffset, const vec *in, vec *out) {
 
 template<>
 void unpackFOR<32>(vec initOffset, const vec *in, vec *out) {
-    int i;
+    [[maybe_unused]] int i;
     vec Reg;
     BP128_UNROLL_LOOP32(i, {
         Reg = load(in++);
@@ -401,7 +396,7 @@ uint32_t simdmaxbits(const uint32_t *in) {
     const vec *_in = (vec *)in;
     vec InReg;
     vec accumulator = splat(0);
-    int i;
+    [[maybe_unused]] int i;
 
     BP128_UNROLL_LOOP32(i, {
         InReg = load(_in++);
@@ -417,7 +412,7 @@ uint32_t simdmaxbitsd1(uint32_t initvalue, const uint32_t *in) {
     vec InReg;
     vec initOffset = splat(initvalue);
     vec accumulator = splat(0);
-    int i;
+    [[maybe_unused]] int i;
 
     BP128_UNROLL_LOOP32(i, {
         InReg = load(_in++);
@@ -434,7 +429,7 @@ uint32_t simdmaxbitsd1z(uint32_t initvalue, const uint32_t *in) {
     vec InReg, tmp;
     vec initOffset = splat(initvalue);
     vec accumulator = splat(0);
-    int i;
+    [[maybe_unused]] int i;
 
     BP128_UNROLL_LOOP32(i, {
         InReg = load(_in++);
@@ -458,7 +453,7 @@ void simdmaxbitsFORwithmin(const uint32_t *in, uint32_t & bits, uint32_t & minva
     vec InReg;
     vec mins = splat(INT32_MAX);
     vec maxs = splat(0);
-    int i;
+    [[maybe_unused]] int i;
 
     BP128_UNROLL_LOOP32(i, {
         InReg = load(_in++);
@@ -475,7 +470,7 @@ uint32_t simdmaxbitsFOR(const uint32_t minvalue, const uint32_t *in) {
     vec InReg;
     vec min = splat(minvalue);
     vec accumulator = splat(0);
-    int i;
+    [[maybe_unused]] int i;
 
     BP128_UNROLL_LOOP32(i, {
         InReg = load(_in++);

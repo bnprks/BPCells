@@ -7,13 +7,14 @@
     #include <cstring>
 
     // This nonsense is to avoid getting -Wunused-function warnings from inside sleef
-    #pragma clang diagnostic push
-    #pragma clang diagnostic ignored "-Wunused-function"
     #pragma GCC diagnostic push
     #pragma GCC diagnostic ignored "-Wunused-function"
+    #pragma GCC diagnostic ignored "-Wpedantic"
+    #pragma clang diagnostic push
+    #pragma clang diagnostic ignored "-Wunused-function"
     #include "sleefinline_avx2.h"
-    #pragma GCC diagnostic pop
     #pragma clang diagnostic pop
+    #pragma GCC diagnostic pop
 
     #define BPCELLS_F32_VEC_SIZE 8
     #define BPCELLS_F64_VEC_SIZE 4
@@ -35,13 +36,14 @@
     #include <cstring>
 
     // This nonsense is to avoid getting -Wunused-function warnings from inside sleef
-    #pragma clang diagnostic push
-    #pragma clang diagnostic ignored "-Wunused-function"
     #pragma GCC diagnostic push
     #pragma GCC diagnostic ignored "-Wunused-function"
+    #pragma GCC diagnostic ignored "-Wpedantic"
+    #pragma clang diagnostic push
+    #pragma clang diagnostic ignored "-Wunused-function"
     #include "sleefinline_avx.h"
-    #pragma GCC diagnostic pop
     #pragma clang diagnostic pop
+    #pragma GCC diagnostic pop
     
 
     #define BPCELLS_F32_VEC_SIZE 8
@@ -63,13 +65,14 @@
     #include <cstring>
 
     // This nonsense is to avoid getting -Wunused-function warnings from inside sleef
-    #pragma clang diagnostic push
-    #pragma clang diagnostic ignored "-Wunused-function"
     #pragma GCC diagnostic push
     #pragma GCC diagnostic ignored "-Wunused-function"
+    #pragma GCC diagnostic ignored "-Wpedantic"
+    #pragma clang diagnostic push
+    #pragma clang diagnostic ignored "-Wunused-function"
     #include "sleefinline_sse2.h"
-    #pragma GCC diagnostic pop
     #pragma clang diagnostic pop
+    #pragma GCC diagnostic pop
     
 
     #define BPCELLS_F32_VEC_SIZE 4
@@ -92,13 +95,14 @@
     #include <cstring>
 
     // This nonsense is to avoid getting -Wunused-function warnings from inside sleef
-    #pragma clang diagnostic push
-    #pragma clang diagnostic ignored "-Wunused-function"
     #pragma GCC diagnostic push
     #pragma GCC diagnostic ignored "-Wunused-function"
+    #pragma GCC diagnostic ignored "-Wpedantic"
+    #pragma clang diagnostic push
+    #pragma clang diagnostic ignored "-Wunused-function"
     #include "sleefinline_advsimd.h"
-    #pragma GCC diagnostic pop
     #pragma clang diagnostic pop
+    #pragma GCC diagnostic pop
     
     
     #define BPCELLS_F32_VEC_SIZE 4

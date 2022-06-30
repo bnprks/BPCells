@@ -40,7 +40,7 @@ void StoredFragmentsBase::readEndMaxBuf(uint32_t start_idx, uint32_t end_idx) {
 bool StoredFragmentsBase::isSeekable() const {return true;}
 void StoredFragmentsBase::seek(uint32_t chr_id, uint32_t base) {
     if (chr_id != current_chr) {
-        if (chr_id >= chrCount()) {
+        if ((int64_t) chr_id >= chrCount()) {
             // Seeking to a chromosome larger than exists in the fragments.
             // Make it so next load and nextChr calls will return false
             current_chr = chr_id;
@@ -90,7 +90,7 @@ const char* StoredFragmentsBase::cellNames(uint32_t cell_id) const {
 
 bool StoredFragmentsBase::nextChr() {
     current_chr += 1;
-    if (current_chr >= chrCount()) {
+    if ((int64_t) current_chr >= chrCount()) {
         current_chr -= 1;
         current_idx = UINT32_MAX;
         return false;

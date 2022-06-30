@@ -61,7 +61,7 @@ void lsdRadixSortArrays(uint32_t size, std::vector<uint32_t> &key, std::vector<V
     for (int i = 0; i < 4; i++) {
         // Skip if this byte is all identical
         if (skip_byte[i]) { continue; }
-        for (int j = 0; j < size; j++) {
+        for (uint32_t j = 0; j < size; j++) {
             uint32_t val = key[j];
             uint32_t bucket = 255 & ((uint32_t) val >> (i * 8));
             key_scratch[radix_counts[i][bucket]] = val;
@@ -90,7 +90,7 @@ inline void lsdRadixSortArrays(uint32_t size, std::vector<uint32_t> &key, std::v
     // So radix_counts[i][j] will turn into the sum of all radix_counts[i][k] where k < j
     for (int i = 0; i < 4; i++) {
         uint32_t running_sum = 0;
-        for (int j = 0; j < 256; j++) {
+        for (uint32_t j = 0; j < 256; j++) {
             if (radix_counts[i][j] == size) skip_byte[i] = true;
             running_sum += radix_counts[i][j];
             radix_counts[i][j] = running_sum - radix_counts[i][j];
@@ -100,7 +100,7 @@ inline void lsdRadixSortArrays(uint32_t size, std::vector<uint32_t> &key, std::v
     for (int i = 0; i < 4; i++) {
         // Skip if this byte is all identical
         if (skip_byte[i]) { continue; }
-        for (int j = 0; j < size; j++) {
+        for (uint32_t j = 0; j < size; j++) {
             uint32_t val = key[j];
             uint32_t bucket = 255 & ((uint32_t) val >> (i * 8));
             key_scratch[radix_counts[i][bucket]] = val;

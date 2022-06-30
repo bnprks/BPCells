@@ -8,21 +8,21 @@ namespace BPCells {
 CellIndexSelect::CellIndexSelect(FragmentLoader &loader, const std::vector<uint32_t> cell_indices) : 
     FragmentLoaderWrapper(loader),
     cell_indices(cell_indices) {
-    for (int i = 0; i < cell_indices.size(); i++) {
+    for (uint32_t i = 0; i < cell_indices.size(); i++) {
         if (reverse_indices.size() <= cell_indices[i]) 
             reverse_indices.resize(cell_indices[i] + 1, UINT32_MAX);
         if (reverse_indices[cell_indices[i]] < UINT32_MAX)
             throw std::invalid_argument("CellSelect maps same input cell to two output IDs");
         reverse_indices[cell_indices[i]] = i;
     }
-};
+}
 
-int CellIndexSelect::cellCount() const { return cell_indices.size(); };
+int CellIndexSelect::cellCount() const { return cell_indices.size(); }
 
 const char* CellIndexSelect::cellNames(uint32_t cell_id) const {
     if (cell_id >= cell_indices.size()) return NULL;
     return loader.cellNames(cell_indices[cell_id]); 
-};
+}
 
 
 bool CellIndexSelect::load() {
@@ -43,7 +43,7 @@ bool CellIndexSelect::load() {
         }
     }
     return true;
-};
+}
 
 uint32_t CellIndexSelect::capacity() const {return loaded;}
 
@@ -68,19 +68,19 @@ uint32_t CellNameSelect::getOutputCellID(uint32_t input_cell_id) {
 CellNameSelect::CellNameSelect(FragmentLoader &loader, const std::vector<std::string> cell_names) :
     FragmentLoaderWrapper(loader),
     cell_names(cell_names) {
-    for (int i = 0; i < cell_names.size(); i++) {    
+    for (uint32_t i = 0; i < cell_names.size(); i++) {    
         if(output_index.find(cell_names[i]) != output_index.end())
             throw std::invalid_argument("CellSelect maps same input cell to two output IDs");
         output_index[cell_names[i]] = i; 
     }
 }
 
-int CellNameSelect::cellCount() const { return cell_names.size(); };
+int CellNameSelect::cellCount() const { return cell_names.size(); }
 
 const char* CellNameSelect::cellNames(uint32_t cell_id) const {
     if (cell_id >= cell_names.size()) return NULL;
     return cell_names[cell_id].c_str(); 
-};
+}
 
 bool CellNameSelect::load() {
     loaded = 0;
@@ -101,7 +101,7 @@ bool CellNameSelect::load() {
         }
     }
     return true;
-};
+}
 
 uint32_t CellNameSelect::capacity() const {return loaded;}
 

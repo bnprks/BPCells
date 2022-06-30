@@ -13,8 +13,8 @@ BedFragments::~BedFragments() {
 
 // Return the number of cells/chromosomes, or return -1 if this number is 
 // not known ahead of time
-int BedFragments::chrCount() const {return -1; };
-int BedFragments::cellCount() const {return -1; };
+int BedFragments::chrCount() const {return -1; }
+int BedFragments::cellCount() const {return -1; }
 
 const char* BedFragments::chrNames(uint32_t chr_id) const {
     if(chr_id >= chr_names.size()) return NULL;
@@ -30,7 +30,7 @@ uint32_t BedFragments::currentChr() const {
     return chr_lookup.at(current_chr); 
 }
 
-bool BedFragments::isSeekable() const {return false; };
+bool BedFragments::isSeekable() const {return false; }
 
 void BedFragments::seek(uint32_t chr_id, uint32_t base) {
     throw std::invalid_argument("Cannot seek BedFragments");
@@ -137,7 +137,7 @@ void BedFragments::restart() {
     while(true) {
         if (line_buf[0] == '\0') break;
         bool matches_comment = true;
-        for (int i = 0; i < comment.size(); i++) {
+        for (uint32_t i = 0; i < comment.size(); i++) {
             if(line_buf[i] != comment[i]) {
                 matches_comment=false;
                 break;
@@ -201,11 +201,11 @@ bool BedFragments::load() {
     start.resize(i);
     end.resize(i);
     return i;
-};
+}
 
 uint32_t BedFragments::capacity() const {
     return cell.size();
-};
+}
 
 uint32_t* BedFragments::cellData() {return cell.data(); }
 uint32_t* BedFragments::startData() {return start.data(); }
@@ -273,7 +273,7 @@ void BedFragmentsWriter::write(FragmentLoader &loader, void (*checkInterrupt)(vo
     }
     gzclose(f);
     f = NULL;
-};
+}
 
 
 } // end namespace BPCells

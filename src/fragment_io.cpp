@@ -51,7 +51,7 @@ IntegerVector calculate_end_max_cpp(IntegerVector end, IntegerVector chr_ptr) {
             end_max.push_back(std::max(current_max, prev_max));
             prev_max = 0;
         }
-        if (chr_ptr[current_chr*2 + 1] >= i) {
+        if ((uint32_t) chr_ptr[current_chr*2 + 1] >= i) {
             prev_max = std::max(prev_max, current_max);
             current_max = 0;
         }

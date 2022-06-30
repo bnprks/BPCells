@@ -18,7 +18,7 @@ bool ShiftCoords::load() {
     vec end_vec = splat(shift_end);
     // Use SIMD ops to shift values 4 at a time, followed by
     // a cleanup loop
-    int i;
+    uint32_t i;
     for (i = 0; i + 4 <= capacity; i += 4) {
         vec in_start = BPCells::load((vec *) &start[i]);
         store((vec *) &start[i], add(start_vec, in_start));
@@ -31,7 +31,7 @@ bool ShiftCoords::load() {
         end[i] += shift_end;
     }
     return true;
-};
+}
 
 // Move loader to just before fragments which end after "base".
 // It's possible that fragments returned after seek will end before "base",
@@ -43,6 +43,6 @@ void ShiftCoords::seek(uint32_t chr_id, uint32_t base) {
     if (m < 0) base2 = std::min(base, base + m);
     else base2 =  base + m;
     loader.seek(chr_id, base2);
-};
+}
 
 } // end namespace BPCells

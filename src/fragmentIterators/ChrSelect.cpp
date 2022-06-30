@@ -16,14 +16,14 @@ ChrIndexSelect::ChrIndexSelect(FragmentLoader &loader, const std::vector<uint32_
             throw std::invalid_argument("ChrSelect maps same input chromosome to two output IDs");
         seen_id[new_id]++;
     }
-} ;
+}
 
-int ChrIndexSelect::chrCount() const { return chr_assignments.size(); };
+int ChrIndexSelect::chrCount() const { return chr_assignments.size(); }
 
 const char* ChrIndexSelect::chrNames(uint32_t chr_id) const {
     if (chr_id >= chr_assignments.size()) return NULL;
     return loader.chrNames(chr_assignments[chr_id]);
-};
+}
 
 bool ChrIndexSelect::nextChr() {
     bool res = loader.nextChr();
@@ -35,7 +35,7 @@ bool ChrIndexSelect::nextChr() {
         res = loader.nextChr();
     }
     return res;
-};
+}
 
 uint32_t ChrIndexSelect::currentChr() const {
     auto result = std::find(chr_assignments.begin(), chr_assignments.end(), loader.currentChr());
@@ -43,18 +43,18 @@ uint32_t ChrIndexSelect::currentChr() const {
         throw std::invalid_argument("ChrSelect does not have a chromosome assigned to requested ID");
     
     return result - chr_assignments.begin(); 
-};
+}
 
 
 void ChrIndexSelect::seek(uint32_t chr_id, uint32_t base) {
     loader.seek(chr_assignments[chr_id], base);
-};
+}
 
 
 ChrNameSelect::ChrNameSelect(FragmentLoader &loader, const std::vector<std::string> chr_names) :
     FragmentLoaderWrapper(loader), 
     chr_names(chr_names) {
-    for (int i = 0; i < chr_names.size(); i++) {    
+    for (uint32_t i = 0; i < chr_names.size(); i++) {    
         if(output_index.find(chr_names[i]) != output_index.end())
             throw std::invalid_argument("ChrSelect maps same input chromosome to two output IDs");
         output_index[chr_names[i]] = i; 
@@ -71,12 +71,12 @@ ChrNameSelect::ChrNameSelect(FragmentLoader &loader, const std::vector<std::stri
     }
 }
 
-int ChrNameSelect::chrCount() const { return chr_names.size(); };
+int ChrNameSelect::chrCount() const { return chr_names.size(); }
 
 const char* ChrNameSelect::chrNames(uint32_t chr_id) const {
     if (chr_id >= chr_names.size()) return NULL;
     return chr_names[chr_id].c_str();
-};
+}
 
 bool ChrNameSelect::nextChr() {
     bool res = loader.nextChr();;
@@ -88,16 +88,16 @@ bool ChrNameSelect::nextChr() {
         res = loader.nextChr();
     }
     return res;
-};
+}
 
 uint32_t ChrNameSelect::currentChr() const {
     auto res = output_index.at(loader.chrNames(loader.currentChr()));
     return res;
-};
+}
 
 
 void ChrNameSelect::seek(uint32_t chr_id, uint32_t base) {
     loader.seek(input_index[chr_id], base);
-};
+}
 
 } // end namespace BPCells

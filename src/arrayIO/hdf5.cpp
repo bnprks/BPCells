@@ -127,4 +127,4 @@ std::string H5ReaderBuilder::readVersion() {
 
 HighFive::Group& H5ReaderBuilder::getGroup() {return group;}
 
-}; // end namespace BPCells
+} // end namespace BPCells

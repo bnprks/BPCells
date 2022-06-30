@@ -28,7 +28,7 @@ void simdsubtract(uint32_t *end, const uint32_t *start) {
     const vec *_start = (vec *) start;
     vec *_end = (vec *) end;
     vec Reg;
-    int i;
+    [[maybe_unused]] int i;
     BP128_UNROLL_LOOP32(i, {
         Reg = sub(load(_end), load(_start++));
         store(_end++, Reg);
@@ -40,7 +40,7 @@ void simdadd(uint32_t *end, const uint32_t *start) {
     const vec *_start = (vec *) start;
     vec *_end = (vec *) end;
     vec Reg;
-    int i;
+    [[maybe_unused]] int i;
     BP128_UNROLL_LOOP32(i, {
         Reg = add(load(_end), load(_start++));
         store(_end++, Reg);
@@ -51,7 +51,7 @@ void simdadd(uint32_t *end, const uint32_t *start) {
 uint32_t simdmax(const uint32_t *in) {
     const vec *_in = (vec *) in;
     vec Reg = splat(0);
-    int i;
+    [[maybe_unused]] int i;
     BP128_UNROLL_LOOP32(i, {
         Reg = max(Reg, load(_in++));
     })
