@@ -61,13 +61,15 @@ Eigen::VectorXd MatrixLoader<T>::vecMultiplyRight(const Eigen::Map<Eigen::Vector
     restart();
     while(nextCol()) {
         const uint32_t col = currentCol();
+        double v_col = v(col);
         if (checkInterrupt != NULL && col % 128 == 0) checkInterrupt();
         while (load()) {
             const T *val_data = valData();
             const uint32_t *row_data = rowData();
             const uint32_t count = capacity();
+            // I considered manual loop unrolling here too, but it was <10% performance gain for the function so I discarded that idea
             for (uint32_t i = 0; i < count; i++) {
-                res(row_data[i]) += ((double) val_data[i]) * v(col);
+                res(row_data[i]) += ((double) val_data[i]) * v_col;
             }
         }
     }
@@ -86,9 +88,19 @@ Eigen::VectorXd MatrixLoader<T>::vecMultiplyLeft(const Eigen::Map<Eigen::VectorX
             const T *val_data = valData();
             const uint32_t *row_data = rowData();
             const uint32_t count = capacity();
-            for (uint32_t i = 0; i < count; i++) {
-                res(col) += ((double) val_data[i]) * v(row_data[i]);
+            // Use unrolling trick from Eigen: https://gitlab.com/libeigen/eigen/-/blob/master/Eigen/src/SparseCore/SparseDenseProduct.h#L66-80
+            // I tried 4x unrolling and the benefit was marginal so here we are
+            uint32_t i;
+            double tmp1 = 0;
+            double tmp2 = 0;
+            for (i = 0; i + 2 <= count; i+=2) {
+                tmp1 += ((double) val_data[i]) * v(row_data[i]);
+                tmp2 += ((double) val_data[i+1]) * v(row_data[i+1]);
             }
+            for (; i < count; i++) {
+                tmp1 += ((double) val_data[i]) * v(row_data[i]);
+            }
+            res(col) += tmp1 + tmp2;
         }
     }
     return res;
