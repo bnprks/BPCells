@@ -18,9 +18,12 @@ private:
     std::vector<double>  val_buf;
     uint32_t idx;
     uint32_t load_size;
+    uint32_t num_loaded = 0;
     uint32_t col;
 public:
     CSparseMatrix(const EigenMat mat, uint32_t load_size = 1024) : mat(mat), load_size(load_size) {
+        row_buf.resize(load_size);
+        val_buf.resize(load_size);
         restart();
     }
     
@@ -40,21 +43,20 @@ public:
     // Reset the iterator to start from the beginning
     void restart() override {
         col = UINT32_MAX;
+        num_loaded = 0;
     };
 
     void seekCol(uint32_t new_col) override {
         col = new_col;
         idx = mat.outerIndexPtr()[col];
-        row_buf.resize(0);
-        val_buf.resize(0);
+        num_loaded = 0;
     }
 
     bool nextCol() override {
         if (col+1 >= mat.cols()) return false;
         col++;
         idx = mat.outerIndexPtr()[col];
-        row_buf.resize(0);
-        val_buf.resize(0);
+        num_loaded = 0;
         return true;
     }
 
@@ -62,20 +64,17 @@ public:
 
     bool load() override {
         idx += capacity();
-        if (idx == mat.outerIndexPtr()[col+1])  {
-            row_buf.resize(0);
-            val_buf.resize(0);
+        if (idx == (uint32_t) mat.outerIndexPtr()[col+1])  {
+            num_loaded = 0;
             return false;
         }
-        uint32_t cap = std::min(load_size, mat.outerIndexPtr()[col+1] - idx);
-        row_buf.resize(cap);
-        val_buf.resize(cap);
-        std::memmove(row_buf.data(), mat.innerIndexPtr() + idx, sizeof(uint32_t)*cap);
-        std::memmove(val_buf.data(), mat.valuePtr() + idx, sizeof(double)*cap);
+        num_loaded = std::min(load_size, mat.outerIndexPtr()[col+1] - idx);
+        std::memmove(row_buf.data(), mat.innerIndexPtr() + idx, sizeof(uint32_t)*num_loaded);
+        std::memmove(val_buf.data(), mat.valuePtr() + idx, sizeof(double)*num_loaded);
         return true;
     };
 
-    uint32_t capacity() const override {return row_buf.size();}
+    uint32_t capacity() const override {return num_loaded;}
 
     uint32_t* rowData() override {return row_buf.data();}
     double* valData() override {return val_buf.data();}
