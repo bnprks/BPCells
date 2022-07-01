@@ -102,7 +102,7 @@ public:
     // Reset the iterator to start from the beginning
     void restart() override {
         current_col = UINT32_MAX;
-        current_idx = 0;
+        // Don't change current_idx so we will correctly seek when nextCol iscalled
         current_capacity = 0;
         col_ptr.seek(0);
         next_col_ptr = col_ptr.read_one();
