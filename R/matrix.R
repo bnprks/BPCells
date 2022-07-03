@@ -173,6 +173,62 @@ setMethod("%*%", signature(x="numeric", y="IterableMatrix"), function(x, y) {
     }
 })
 
+
+
+#' LinearOperator class for performing sparse matrix - dense vector products, e.g.
+#' for downstream matrix solvers. This is to avoid having to call iterate_matrix
+#' repeatedly for a possible efficiency gain
+setClass("LinearOperator",
+    slots = c(
+        dim = "integer",
+        xptrlist = "XPtrList",
+        transpose = "logical"
+    ),
+    prototype = list(
+        dim = integer(2),
+        transpose = FALSE
+    )
+)
+
+#' Construct a C++ matrix object and save the pointer to use for repeated matrix-vector products
+#' A bit experimental still so for internal use
+linear_operator <- function(mat) {
+    assert_is(mat, "IterableMatrix")
+    new("LinearOperator", dim=dim(mat), xptrlist=iterate_matrix(cast_matrix_double(mat)), transpose=mat@transpose)
+}
+
+setMethod("%*%", signature(x="LinearOperator", y="matrix"), function(x, y) {
+    if(x@transpose) {
+        return(Matrix::t(dense_multiply_left_cpp(ptr(x@xptrlist), Matrix::t(y))))
+    } else {
+        return(dense_multiply_right_cpp(ptr(x@xptrlist), y))
+    }
+})
+
+setMethod("%*%", signature(x="matrix", y="LinearOperator"), function(x, y) {
+    if(y@transpose) {
+        return(Matrix::t(dense_multiply_right_cpp(ptr(y@xptrlist), Matrix::t(x))))
+    } else {
+        return(dense_multiply_left_cpp(ptr(y@xptrlist), x))
+    }
+})
+
+setMethod("%*%", signature(x="LinearOperator", y="numeric"), function(x, y) {
+    if(x@transpose) {
+        return(vec_multiply_left_cpp(ptr(x@xptrlist), y))
+    } else {
+        return(vec_multiply_right_cpp(ptr(x@xptrlist), y))
+    }
+})
+
+setMethod("%*%", signature(x="numeric", y="LinearOperator"), function(x, y) {
+    if(y@transpose) {
+        return(vec_multiply_right_cpp(ptr(y@xptrlist), x))
+    } else {
+        return(vec_multiply_left_cpp(ptr(y@xptrlist), x))
+    }
+})
+
 # Row sums and row means
 
 #' @param x IterableMatrix object
