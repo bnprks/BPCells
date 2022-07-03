@@ -45,6 +45,6 @@ SEXP iterate_matrix_row_shift_cpp(SEXP matrix, Eigen::Map<Eigen::ArrayXXd> row_s
 SEXP iterate_matrix_col_shift_cpp(SEXP matrix, Eigen::Map<Eigen::ArrayXXd> col_shift) {
     XPtr<MatrixLoader<double>>input(matrix);
     return Rcpp::wrap(
-        XPtr<MatrixLoader<double>>(new ShiftCols(*input, TransformFit{{NULL, 0, 0}, col_shift}))
+        XPtr<MatrixLoader<double>>(new ShiftCols(*input, TransformFit{Eigen::ArrayXXd(), col_shift}))
     );
 }

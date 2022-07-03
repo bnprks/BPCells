@@ -9,9 +9,9 @@ namespace BPCells {
     
 class TransformFit {
 public:
-    Eigen::Map<Eigen::ArrayXXd> row_params = Eigen::Map<Eigen::ArrayXXd>(NULL, 0, 0);
-    Eigen::Map<Eigen::ArrayXXd> col_params = Eigen::Map<Eigen::ArrayXXd>(NULL, 0, 0);
-    Eigen::Map<Eigen::ArrayXd> global_params = Eigen::Map<Eigen::ArrayXd>(NULL, 0, 1);
+    Eigen::ArrayXXd row_params;
+    Eigen::ArrayXXd col_params;
+    Eigen::ArrayXd global_params;
 };
 
 class MatrixTransform : public MatrixLoaderWrapper<double> {
