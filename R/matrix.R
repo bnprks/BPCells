@@ -818,7 +818,9 @@ peakMatrix <- function(fragments, ranges, zero_based_coords=TRUE) {
     
     assert_is(zero_based_coords, "logical")
     
+    assert_not_null(cellNames(fragments))
     assert_not_na(cellNames(fragments))
+    assert_not_null(chrNames(fragments))
     assert_not_na(chrNames(fragments))
     
     if(is.list(ranges)) {
@@ -897,18 +899,24 @@ tileMatrix <- function(fragments, ranges, zero_based_coords=TRUE) {
     
     assert_is(zero_based_coords, "logical")
     
+    assert_not_null(cellNames(fragments))
     assert_not_na(cellNames(fragments))
+    assert_not_null(chrNames(fragments))
     assert_not_na(chrNames(fragments))
     
     if(is.list(ranges)) {
         assert_has_names(ranges, c("chr", "start", "end", "tile_width"))
+        assert_true(all(as.character(ranges$chr) %in% chrNames(fragments)))
+
         chr_id <- as.integer(factor(as.character(ranges$chr), chrNames(fragments))) - 1L
         start <- as.integer(ranges$start) - !zero_based_coords
         end <- as.integer(ranges$end)
         tile_width <- as.integer(ranges$tile_width)
     } else {
         assert_has_names(mcols(ranges), c("tile_width"))
+        assert_true(all(as.character(GenomicRanges::seqnames(ranges)) %in% chrNames(fragments)))
         chr_id <- as.integer(factor(as.character(GenomicRanges::seqnames(ranges)), chrNames(fragments))) - 1L
+        
         start <- GenomicRanges::start(ranges) - !zero_based_coords
         end <- GenomicRanges::end(ranges)
         tile_width <- mcols(ranges)$tile_width

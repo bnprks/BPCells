@@ -28,8 +28,8 @@ pretty_error <- function(arg, msg, n) {
     trace <- paste0(format(rlang::trace_back(bottom=parent.frame(n))), collapse="\n")
 
     message <- sprintf(
-        "Argument \"%s\" to function \"%s\" %s\n%s",
-        arg_name, fn_name, msg, trace
+        "In function %s: \"%s\" %s\n%s",
+        fn_name, arg_name, msg, trace
     )
 
     stop(message, call.=FALSE)
