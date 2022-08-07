@@ -9,6 +9,8 @@ using namespace BPCells;
 
 // These are interfaces for making R objects play nice with the arrayIO interfaces
 // used for storing matrices & fragments
+// Note that we do some bit reinterpretation: floats represented as ints
+// and longs represented as doubles
 
 class RcppStringReader : public StringReader {
 private:
@@ -39,7 +41,11 @@ public:
         throw std::logic_error("S4Reader doesn't implement ULong type");
     }
     inline FloatReader openFloatReader(std::string name) override {
-        throw std::logic_error("S4Reader doesn't implement Float type");
+        IntegerVector v = s4.slot(name);
+        return FloatReader(
+            std::make_unique<VecNumReader<float>>((float *) &v[0], v.size()),
+            load_size
+        );
     }
     inline DoubleReader openDoubleReader(std::string name) override {
         NumericVector v = s4.slot(name);
@@ -69,17 +75,17 @@ public:
 
         // Floats
         for(auto it = float_vecs.begin(); it != float_vecs.end(); it = float_vecs.erase(it)) {
-            l[it->first] = NumericVector(it->second.begin(), it->second.end());
+            l[it->first] = IntegerVector((int *) it->second.data(), (int *) it->second.data() + it->second.size());
         }
 
         // Longs
         for(auto it = long_vecs.begin(); it != long_vecs.end(); it = long_vecs.erase(it)) {
-            l[it->first] = NumericVector(it->second.begin(), it->second.end());
+            l[it->first] = NumericVector((double *) it->second.data(), (double *) it->second.data() + it->second.size());
         }
 
         // Doubles
         for(auto it = double_vecs.begin(); it != double_vecs.end(); it = double_vecs.erase(it)) {
-            l[it->first] = NumericVector(it->second.begin(), it->second.end());
+            l[it->first] = NumericVector((double *) it->second.data(), (double *) it->second.data() + it->second.size());
         }
 
         for(auto it = string_vecs.begin(); it != string_vecs.end(); it = string_vecs.erase(it)) {

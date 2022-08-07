@@ -8,7 +8,7 @@ BP128UIntReaderBase::BP128UIntReaderBase(uint32_t count) : count(count) {}
 uint32_t BP128UIntReaderBase::size() const {return count;}
 
 void BP128UIntReaderBase::seek(uint32_t new_pos) {
-    if (pos % 128 != 0 && new_pos % 128 == pos % 128) {
+    if (pos % 128 != 0 && new_pos / 128 == pos / 128) {
         pos = new_pos;
     } else {
         pos = new_pos;

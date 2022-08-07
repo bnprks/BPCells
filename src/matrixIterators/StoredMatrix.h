@@ -8,6 +8,7 @@ namespace BPCells {
 
 // Main class for accessing matrices stored on disk.
 // Templated to help with compatibility reading 10x and AnnData matrix formats.
+// Supports uint, ulong, float, and double types. Only uint supports bitpacking compression of values.
 template<class T>
 class StoredMatrix: public MatrixLoader<T> {
 private:
@@ -21,7 +22,6 @@ private:
     uint32_t current_idx = 0;
     uint32_t next_col_ptr;
     uint32_t current_capacity = 0;
-
 public:
     StoredMatrix() = default;
     StoredMatrix(StoredMatrix &&other) = default;
@@ -35,34 +35,68 @@ public:
         n_rows(row_count.read_one()), n_cols(this->col_ptr.size() - 1),
         next_col_ptr(this->col_ptr.read_one()) {}
 
-    static StoredMatrix<uint32_t> openUnpacked(ReaderBuilder &rb, std::unique_ptr<StringReader> &&row_names, std::unique_ptr<StringReader> &&col_names) {
-        if (rb.readVersion() != "unpacked-uint-matrix-v1") {
-            throw std::runtime_error(std::string("Version does not match unpacked-uint-matrix-v1: ") + rb.readVersion());
+    static std::string versionString(bool packed) {
+        std::string ret = packed ? "packed-" : "unpacked-";
+        // Static check that our type is one we expect
+        static_assert(
+            std::disjunction_v<
+                std::is_same<T, uint32_t>,
+                std::is_same<T, uint64_t>,
+                std::is_same<T, double>,
+                std::is_same<T, float>
+            >, 
+            "Type must be one of uint32_t, uint64_t, double, or float"    
+        );
+        if constexpr(std::is_same_v<T, uint32_t>) ret += "uint-";
+        if constexpr(std::is_same_v<T, uint64_t>) ret +=  "ulong-";
+        if constexpr(std::is_same_v<T, double>) ret += "double-";
+        if constexpr(std::is_same_v<T, float>) ret += "float-";
+        ret += "matrix-v1";
+        return ret;
+    }
+
+    static StoredMatrix<T> openUnpacked(ReaderBuilder &rb, std::unique_ptr<StringReader> &&row_names, std::unique_ptr<StringReader> &&col_names) {
+        if (rb.readVersion() != versionString(false)) {
+            throw std::runtime_error(std::string("Version does not match ") + versionString(false) + ": " + rb.readVersion());
         }
 
-        return StoredMatrix<uint32_t>(
+        return StoredMatrix<T>(
             rb.openUIntReader("row"),
-            rb.openUIntReader("val"),
+            rb.open<T>("val"),
             rb.openUIntReader("col_ptr"),
             rb.openUIntReader("row_count"),
             std::move(row_names),
             std::move(col_names)
         );
     }
-    static StoredMatrix<uint32_t> openUnpacked(ReaderBuilder &rb) {
-        return StoredMatrix<uint32_t>::openUnpacked(rb, rb.openStringReader("row_names"), rb.openStringReader("col_names"));
+    static StoredMatrix<T> openUnpacked(ReaderBuilder &rb) {
+        return StoredMatrix<T>::openUnpacked(rb, rb.openStringReader("row_names"), rb.openStringReader("col_names"));
     }
 
 
-    static StoredMatrix<uint32_t> openPacked(ReaderBuilder &rb, uint32_t load_size, std::unique_ptr<StringReader> &&row_names, std::unique_ptr<StringReader> &&col_names) {
-        if (rb.readVersion() != "packed-uint-matrix-v1") {
-            throw std::runtime_error(std::string("Version does not match packed-uint-matrix-v1: ") + rb.readVersion());
+    static StoredMatrix<T> openPacked(ReaderBuilder &rb, uint32_t load_size, std::unique_ptr<StringReader> &&row_names, std::unique_ptr<StringReader> &&col_names) {
+        if (rb.readVersion() != versionString(true)) {
+            throw std::runtime_error(std::string("Version does not match ") + versionString(true) + ": " + rb.readVersion());
         }
 
         UIntReader col_ptr = rb.openUIntReader("col_ptr");
         col_ptr.seek(col_ptr.size() - 1);
         uint32_t count = col_ptr.read_one();
         col_ptr.seek(0);
+
+        NumReader<T> val;
+        if constexpr (std::is_same_v<T, uint32_t>) {
+            val = UIntReader(
+                std::make_unique<BP128_FOR_UIntReader>(
+                    rb.openUIntReader("val_data"),
+                    rb.openUIntReader("val_idx"),
+                    count
+                ),
+                load_size, load_size
+            );
+        } else {
+            val = rb.open<T>("val");
+        }
 
         return StoredMatrix(
             UIntReader(
@@ -74,30 +108,23 @@ public:
                 ),
                 load_size, load_size
             ),
-            UIntReader(
-                std::make_unique<BP128_FOR_UIntReader>(
-                    rb.openUIntReader("val_data"),
-                    rb.openUIntReader("val_idx"),
-                    count
-                ),
-                load_size, load_size
-            ),
+            std::move(val),
             std::move(col_ptr),
             rb.openUIntReader("row_count"),
             std::move(row_names),
             std::move(col_names)
         );
     }
-    static StoredMatrix<uint32_t> openPacked(ReaderBuilder &rb, uint32_t load_size=1024) {
-        return StoredMatrix<uint32_t>::openPacked(rb, load_size, rb.openStringReader("row_names"), rb.openStringReader("col_names"));
+    static StoredMatrix<T> openPacked(ReaderBuilder &rb, uint32_t load_size=1024) {
+        return StoredMatrix<T>::openPacked(rb, load_size, rb.openStringReader("row_names"), rb.openStringReader("col_names"));
     }
 
     // Return the count of rows and columns
     uint32_t rows() const override {return n_rows;}
     uint32_t cols() const override {return n_cols;}
 
-    const char* rowNames(uint32_t row) const override {return row_names->get(row);}
-    const char* colNames(uint32_t col) const override {return col_names->get(col);}
+    const char* rowNames(uint32_t row) override {return row_names->get(row);}
+    const char* colNames(uint32_t col) override {return col_names->get(col);}
 
     // Reset the iterator to start from the beginning
     void restart() override {
@@ -168,19 +195,6 @@ public:
     // Pointers to the loaded entries
     uint32_t* rowData() override {return row.data();}
     T* valData() override {return val.data();}
-};
-
-class StoredMatrixWriter: public MatrixWriter<uint32_t> {
-private:
-    UIntWriter row, val, col_ptr, row_count;
-    std::unique_ptr<StringWriter> row_names, col_names;
-public:
-    static StoredMatrixWriter createUnpacked(WriterBuilder &wb);
-    static StoredMatrixWriter createPacked(WriterBuilder &wb, uint32_t buffer_size=1024);
-    StoredMatrixWriter(UIntWriter &&row, UIntWriter &&val, UIntWriter &&col_ptr, 
-        UIntWriter &&row_count, 
-        std::unique_ptr<StringWriter> &&row_names, std::unique_ptr<StringWriter> &&col_names);  
-    void write(MatrixLoader<uint32_t> &loader, void (*checkInterrupt)(void) = NULL) override;
 };
 
 } // end namespace BPCells

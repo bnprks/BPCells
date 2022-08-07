@@ -40,8 +40,8 @@ public:
     int chrCount() const override;
     int cellCount() const override;
 
-    const char* chrNames(uint32_t chr_id) const override;
-    const char* cellNames(uint32_t cell_id) const override;
+    const char* chrNames(uint32_t chr_id) override;
+    const char* cellNames(uint32_t cell_id) override;
     
     bool nextChr() override;
 

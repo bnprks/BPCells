@@ -20,7 +20,7 @@ public:
 
     int chrCount() const override;
 
-    const char* chrNames(uint32_t chr_id) const override;
+    const char* chrNames(uint32_t chr_id) override;
     
     bool nextChr() override;
 
@@ -52,7 +52,7 @@ public:
     
     int chrCount() const override;
 
-    const char* chrNames(uint32_t chr_id) const override;
+    const char* chrNames(uint32_t chr_id) override;
     
     bool nextChr() override;
 

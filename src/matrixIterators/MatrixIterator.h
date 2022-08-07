@@ -45,8 +45,8 @@ public:
 
     // Return name for a given row or column.
     // If a matrix doesn't have assigned names this will return NULL
-    virtual const char* rowNames(uint32_t row) const = 0;
-    virtual const char* colNames(uint32_t col) const = 0;
+    virtual const char* rowNames(uint32_t row) = 0;
+    virtual const char* colNames(uint32_t col) = 0;
 
     // Reset the iterator to start from the beginning
     virtual void restart() = 0;
@@ -111,8 +111,8 @@ public:
     uint32_t rows() const override {return loader.rows(); }
     uint32_t cols() const override {return loader.cols(); }
 
-    const char* rowNames(uint32_t row) const override {return loader.rowNames(row);} 
-    const char* colNames(uint32_t col) const override {return loader.colNames(col);} 
+    const char* rowNames(uint32_t row) override {return loader.rowNames(row);} 
+    const char* colNames(uint32_t col) override {return loader.colNames(col);} 
 
     void restart() override {loader.restart(); }
     void seekCol(uint32_t col) override {loader.seekCol(col);}
@@ -212,8 +212,8 @@ public:
     uint32_t rows() const override {return loader.rows(); }
     uint32_t cols() const override {return loader.cols(); }
 
-    const char* rowNames(uint32_t row) const override {return loader.rowNames(row);}
-    const char* colNames(uint32_t col) const override {return loader.colNames(col);}
+    const char* rowNames(uint32_t row) override {return loader.rowNames(row);}
+    const char* colNames(uint32_t col) override {return loader.colNames(col);}
 
     void restart() override {loader.restart(); }
     void seekCol(uint32_t col) override {loader.seekCol(col);}

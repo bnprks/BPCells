@@ -31,7 +31,7 @@ public:
     uint32_t rows() const override {return row_offset.back();}
     uint32_t cols() const override {return mats.front()->cols();}
 
-    const char* rowNames(uint32_t row) const override {
+    const char* rowNames(uint32_t row) override {
         auto it = std::upper_bound(row_offset.begin(), row_offset.end(), row);
         uint32_t idx = it - row_offset.begin() - 1;
 
@@ -39,7 +39,7 @@ public:
 
         return mats[idx]->rowNames(row - row_offset[idx]);
     }
-    const char* colNames(uint32_t col) const override {return mats.front()->colNames(col);}
+    const char* colNames(uint32_t col) override {return mats.front()->colNames(col);}
 
     // Reset the iterator to start from the beginning
     void restart() override {
@@ -92,11 +92,8 @@ public:
     // Pointers to the loaded entries
     uint32_t* rowData() override {return mats[cur_mat]->rowData();}
     T* valData() override {return mats[cur_mat]->valData();}
+
 };
-
-
-
-
 
 // Concatenate a list of MatrixLoaders by col.
 // Row names will be taken from the first matrix in the list
@@ -125,9 +122,9 @@ public:
     uint32_t rows() const override {return mats.front()->rows();}
     uint32_t cols() const override {return col_offset.back();}
 
-    const char* rowNames(uint32_t row) const override {return mats.front()->rowNames(row);}
+    const char* rowNames(uint32_t row) override {return mats.front()->rowNames(row);}
         
-    const char* colNames(uint32_t col) const override {
+    const char* colNames(uint32_t col) override {
         auto it = std::upper_bound(col_offset.begin(), col_offset.end(), col);
         uint32_t idx = it - col_offset.begin() - 1;
 

@@ -81,10 +81,10 @@ void StoredFragmentsBase::restart() {
 int StoredFragmentsBase::chrCount() const {return chr_names->size();}
 int StoredFragmentsBase::cellCount() const {return cell_names->size();}
 
-const char* StoredFragmentsBase::chrNames(uint32_t chr_id) const {
+const char* StoredFragmentsBase::chrNames(uint32_t chr_id) {
     return chr_names->get(chr_id);
 }
-const char* StoredFragmentsBase::cellNames(uint32_t cell_id) const {
+const char* StoredFragmentsBase::cellNames(uint32_t cell_id) {
     return cell_names->get(cell_id); 
 }
 

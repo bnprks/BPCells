@@ -19,16 +19,16 @@ public:
     ~MatrixColSelect() = default;
 
     uint32_t cols() const override {return col_indices.size();}
-    const char* colNames(uint32_t col) const override {
+    const char* colNames(uint32_t col) override {
         if (col < col_indices.size()) return this->loader.colNames(col_indices[col]);
         return NULL;
     }
 
-    void restart() override {current_col = 0; this->loader.restart();}
+    void restart() override {current_col = UINT32_MAX; this->loader.restart();}
     void seekCol(uint32_t col) override {
         if (col >= col_indices.size()) throw std::runtime_error("Requested column is greater than number of columns");
         this->loader.seekCol(col_indices[col]);
-        current_col = col_indices[col];
+        current_col = col;
     }
 
     bool nextCol() override {
@@ -93,7 +93,7 @@ public:
     ~MatrixRowSelect() = default;
     
     uint32_t rows() const override {return row_indices.size();}
-    const char* rowNames(uint32_t row) const override {
+    const char* rowNames(uint32_t row) override {
         if (row < row_indices.size()) return this->loader.rowNames(row_indices[row]);
         return NULL;
     }

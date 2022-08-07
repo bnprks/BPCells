@@ -41,7 +41,7 @@ StoredMatrix<uint32_t> open10xFeatureMatrix(std::string file, uint32_t buffer_si
 
 // Read AnnData sparse matrix, with an implicit transpose to CSC format for
 // any data stored in CSR format
-StoredMatrix<double> openAnnDataMatrix(std::string file, std::string group, uint32_t buffer_size, uint32_t read_size) {
+StoredMatrix<float> openAnnDataMatrix(std::string file, std::string group, uint32_t buffer_size, uint32_t read_size) {
     H5ReaderBuilder rb(file, group, buffer_size, read_size);
     
     HighFive::SilenceHDF5 s;
@@ -69,9 +69,9 @@ StoredMatrix<double> openAnnDataMatrix(std::string file, std::string group, uint
     }
     else throw std::runtime_error("Unsupported matrix encoding: " + encoding);
 
-    return StoredMatrix<double>(
+    return StoredMatrix<float>(
         rb.openUIntReader("indices"),
-        rb.openFloatReader("data").convert<double>(),
+        rb.openFloatReader("data"),
         rb.openUIntReader("indptr"),
         UIntReader(std::make_unique<SingletonNumReader<uint32_t>>(rows), 1),
         std::make_unique<H5StringReader>(root, row_ids),

@@ -24,7 +24,7 @@ public:
     // not known ahead of time
     int cellCount() const override;
 
-    const char* cellNames(uint32_t cell_id) const override;
+    const char* cellNames(uint32_t cell_id) override;
 
     bool load() override;
     uint32_t capacity() const override;
@@ -56,7 +56,7 @@ public:
     
     int cellCount() const override;
 
-    const char* cellNames(uint32_t cell_id) const override;
+    const char* cellNames(uint32_t cell_id) override;
 
     bool load() override;
     uint32_t capacity() const override;

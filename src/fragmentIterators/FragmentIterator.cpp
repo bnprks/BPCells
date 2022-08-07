@@ -30,8 +30,8 @@ void FragmentLoaderWrapper::restart() {loader.restart();}
 int FragmentLoaderWrapper::chrCount() const {return loader.chrCount();}
 int FragmentLoaderWrapper::cellCount() const {return loader.cellCount();}
 
-const char* FragmentLoaderWrapper::chrNames(uint32_t chr_id) const {return loader.chrNames(chr_id);}
-const char* FragmentLoaderWrapper::cellNames(uint32_t cell_id) const {return loader.cellNames(cell_id);}
+const char* FragmentLoaderWrapper::chrNames(uint32_t chr_id) {return loader.chrNames(chr_id);}
+const char* FragmentLoaderWrapper::cellNames(uint32_t cell_id) {return loader.cellNames(cell_id);}
 
 bool FragmentLoaderWrapper::nextChr() {return loader.nextChr();}
 uint32_t FragmentLoaderWrapper::currentChr() const {return loader.currentChr();}

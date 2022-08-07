@@ -20,7 +20,7 @@ ChrIndexSelect::ChrIndexSelect(FragmentLoader &loader, const std::vector<uint32_
 
 int ChrIndexSelect::chrCount() const { return chr_assignments.size(); }
 
-const char* ChrIndexSelect::chrNames(uint32_t chr_id) const {
+const char* ChrIndexSelect::chrNames(uint32_t chr_id) {
     if (chr_id >= chr_assignments.size()) return NULL;
     return loader.chrNames(chr_assignments[chr_id]);
 }
@@ -73,7 +73,7 @@ ChrNameSelect::ChrNameSelect(FragmentLoader &loader, const std::vector<std::stri
 
 int ChrNameSelect::chrCount() const { return chr_names.size(); }
 
-const char* ChrNameSelect::chrNames(uint32_t chr_id) const {
+const char* ChrNameSelect::chrNames(uint32_t chr_id) {
     if (chr_id >= chr_names.size()) return NULL;
     return chr_names[chr_id].c_str();
 }

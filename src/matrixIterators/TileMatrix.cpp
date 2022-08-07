@@ -80,8 +80,8 @@ TileMatrix::TileMatrix(FragmentLoader &frags,
 uint32_t TileMatrix::rows() const {return frags.cellCount();}
 uint32_t TileMatrix::cols() const {return n_tiles;}
 
-const char* TileMatrix::rowNames(uint32_t row) const {return frags.cellNames(row);}
-const char* TileMatrix::colNames(uint32_t col) const {return NULL;}
+const char* TileMatrix::rowNames(uint32_t row) {return frags.cellNames(row);}
+const char* TileMatrix::colNames(uint32_t col) {return NULL;}
 
 void TileMatrix::restart() {
     accumulator.clear();

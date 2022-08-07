@@ -19,7 +19,7 @@ public:
     uint32_t write(T *in, uint32_t count) override {
         size_t initial_size = vec.size();
         vec.resize(vec.size() + count);
-        std::memmove(vec.data() + initial_size, in, sizeof(uint32_t) * count);
+        std::memmove(vec.data() + initial_size, in, sizeof(T) * count);
         return count;
     }
 };

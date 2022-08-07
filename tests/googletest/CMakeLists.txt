@@ -51,6 +51,7 @@ add_library(
     ${SRC}/fragmentIterators/FragmentIterator.cpp
     ${SRC}/fragmentIterators/MergeFragments.cpp
     ${SRC}/fragmentIterators/RegionSelect.cpp
+    ${SRC}/fragmentIterators/Rename.cpp
     ${SRC}/fragmentIterators/ShiftCoords.cpp
     ${SRC}/fragmentIterators/StoredFragments.cpp
     ${SRC}/fragmentUtils/InsertionIterator.cpp
@@ -68,21 +69,6 @@ target_include_directories(
 )
 
 add_library(
-    matrixIterators
-    ${SRC}/matrixIterators/StoredMatrix.cpp
-)
-target_link_libraries(
-    matrixIterators
-    arrayIO
-    Eigen3::Eigen
-)
-target_include_directories(
-    matrixIterators
-    PUBLIC
-    ${SRC}
-)
-
-add_library(
     matrixTransforms
     ${SRC}/matrixTransforms/MatrixTransform.cpp
     ${SRC}/matrixTransforms/Log1p.cpp
@@ -91,7 +77,6 @@ add_library(
 )
 target_link_libraries(
     matrixTransforms
-    matrixIterators
     Eigen3::Eigen
 )
 target_include_directories(
@@ -181,14 +166,21 @@ add_executable(
     matrix_io_test
     test-matrixIO.cpp
 )
-target_link_libraries(matrix_io_test matrixIterators gtest_main gmock)
+target_link_libraries(matrix_io_test arrayIO Eigen3::Eigen gtest_main gmock)
 gtest_discover_tests(matrix_io_test)
+
+add_executable(
+    matrix_transpose_test
+    test-matrixTranspose.cpp
+)
+target_link_libraries(matrix_transpose_test arrayIO Eigen3::Eigen gtest_main)
+gtest_discover_tests(matrix_transpose_test)
 
 add_executable(
     matrix_math_test
     test-matrixMath.cpp
 )
-target_link_libraries(matrix_math_test matrixIterators matrixTransforms gtest_main gmock)
+target_link_libraries(matrix_math_test matrixTransforms gtest_main gmock)
 gtest_discover_tests(matrix_math_test)
 
 add_executable(
@@ -198,6 +190,6 @@ add_executable(
     ${SRC}/matrixIterators/TileMatrix.cpp
 )
 target_link_libraries(peak_matrix_test 
-    matrixIterators
+    Eigen3::Eigen
     fragmentIterators 
     gtest_main)

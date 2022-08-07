@@ -61,7 +61,7 @@ int MergeFragments::cellCount() const {
     return cell_id_offset.back();
 }
 
-const char* MergeFragments::chrNames(uint32_t chr_id) const {
+const char* MergeFragments::chrNames(uint32_t chr_id) {
     const char* name = NULL;
     for (auto f: frags) {
         const char* f_name = f.chrNames(chr_id);
@@ -77,7 +77,7 @@ const char* MergeFragments::chrNames(uint32_t chr_id) const {
     }
     return name;
 }
-const char* MergeFragments::cellNames(uint32_t cell_id) const {
+const char* MergeFragments::cellNames(uint32_t cell_id) {
     auto it = std::upper_bound(cell_id_offset.begin(), cell_id_offset.end(), cell_id);
     uint32_t idx = it - cell_id_offset.begin() - 1;
 

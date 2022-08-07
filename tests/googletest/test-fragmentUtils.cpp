@@ -6,6 +6,7 @@
 #include <fragmentIterators/FragmentIterator.h>
 #include <fragmentIterators/MergeFragments.h>
 #include <fragmentIterators/RegionSelect.h>
+#include <fragmentIterators/Rename.h>
 #include <fragmentIterators/StoredFragments.h>
 #include <fragmentUtils/InsertionIterator.h>
 #include <arrayIO/vector.h>
@@ -260,13 +261,26 @@ TEST(FragmentUtils, CellSelect) {
     ASSERT_TRUE(Testing::fragments_identical(select2, out));
 }
 
-TEST(FragmentUtils, SeekChecks) {
-    // Test that all the seeking does 
+TEST(FragmentUtils, CellPrefix) {
     uint32_t max_cell = 50;
-    auto v = Testing::generateFrags(400, 3, 400, max_cell-1, 100, 1336);
+    auto v = Testing::generateFrags(200, 3, 400, max_cell-1, 100, 1336);
 
-    std::unique_ptr<VecReaderWriterBuilder> d1 = writeFragmentTuple(v, max_cell);
+    std::unique_ptr<VecReaderWriterBuilder> d1 = writeFragmentTuple(v, max_cell, true);
+    std::vector<std::string> &names_d1 = d1->getStringVecs().at("cell_names");
+    for (uint32_t i = 0; i <= 5; i++) {
+        names_d1[i] = std::string("c") + std::to_string(15 - i);
+    }
+    names_d1.resize(6);
 
+    StoredFragments in1 = StoredFragments::openUnpacked(*d1);
+    PrefixCells in2(in1, "prefix#");
+    PrefixCells in3(in1, "");
 
-    
+    uint32_t i = 0;
+    while (in1.cellNames(i) != NULL) {
+        ASSERT_EQ(std::string(in1.cellNames(i)), std::string("c") + std::to_string(15 - i));
+        ASSERT_EQ("prefix#" + std::string(in1.cellNames(i)), std::string(in2.cellNames(i)));
+        ASSERT_EQ(std::string(in1.cellNames(i)), std::string(in3.cellNames(i)));
+        i += 1;
+    }
 }

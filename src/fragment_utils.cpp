@@ -85,8 +85,10 @@ List nucleosome_counts_cpp(SEXP fragments,
         multiNuc.resize(iter.cellCount(),0);
     }
 
+    uint32_t count = 0;
     while (iter.nextChr()) {
         while (iter.nextFrag()) {
+            if (count++ % (1 << 14) == 0) Rcpp::checkUserInterrupt();
             uint32_t cell = iter.cell();
             if (cell >= subNuc.size()) {
                 subNuc.resize(cell+1, 0);
@@ -168,6 +170,15 @@ SEXP iterate_cell_rename_cpp(SEXP fragments, const StringVector &cell_names) {
     
     return Rcpp::wrap(
         XPtr<FragmentLoader>(new RenameCells(*loader, std::make_unique<RcppStringReader>(cell_names)))
+    );
+} 
+
+// [[Rcpp::export]]
+SEXP iterate_cell_prefix_cpp(SEXP fragments, std::string &prefix) {
+    XPtr<FragmentLoader> loader(fragments);
+    
+    return Rcpp::wrap(
+        XPtr<FragmentLoader>(new PrefixCells(*loader, prefix))
     );
 } 
 

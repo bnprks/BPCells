@@ -9,6 +9,7 @@
 #include <matrixIterators/ConcatenateMatrix.h>
 #include <matrixIterators/CSparseMatrix.h>
 #include <matrixIterators/StoredMatrix.h>
+#include <matrixIterators/StoredMatrixWriter.h>
 #include <matrixIterators/MatrixIndexSelect.h>
 #include <arrayIO/vector.h>
 
@@ -57,7 +58,7 @@ TEST(MatrixIO, UnpackedVec) {
     MatrixConverterLoader<double, uint32_t> mat_i(mat_d);
 
     VecReaderWriterBuilder vb1(1024);
-    auto w1 = StoredMatrixWriter::createUnpacked(vb1);
+    auto w1 = StoredMatrixWriter<uint32_t>::createUnpacked(vb1);
     w1.write(mat_i);
 
     auto loader = StoredMatrix<uint32_t>::openUnpacked(vb1);
@@ -76,7 +77,7 @@ TEST(MatrixIO, PackedVec) {
     MatrixConverterLoader<double, uint32_t> mat_i(mat_d);
 
     VecReaderWriterBuilder vb1(1024);
-    auto w1 = StoredMatrixWriter::createPacked(vb1);
+    auto w1 = StoredMatrixWriter<uint32_t>::createPacked(vb1);
     w1.write(mat_i);
 
     auto loader = StoredMatrix<uint32_t>::openPacked(vb1, 1024);
@@ -129,7 +130,7 @@ TEST(MatrixIO, SeekStoredVec) {
     MatrixConverterLoader<double, uint32_t> mat_int(mat_double);
 
     VecReaderWriterBuilder vb(1024);
-    auto w = StoredMatrixWriter::createUnpacked(vb);
+    auto w = StoredMatrixWriter<uint32_t>::createUnpacked(vb);
     w.write(mat_int);
 
     auto loader = StoredMatrix<uint32_t>::openUnpacked(vb);

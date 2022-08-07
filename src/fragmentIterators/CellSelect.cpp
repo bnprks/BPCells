@@ -19,7 +19,7 @@ CellIndexSelect::CellIndexSelect(FragmentLoader &loader, const std::vector<uint3
 
 int CellIndexSelect::cellCount() const { return cell_indices.size(); }
 
-const char* CellIndexSelect::cellNames(uint32_t cell_id) const {
+const char* CellIndexSelect::cellNames(uint32_t cell_id) {
     if (cell_id >= cell_indices.size()) return NULL;
     return loader.cellNames(cell_indices[cell_id]); 
 }
@@ -77,7 +77,7 @@ CellNameSelect::CellNameSelect(FragmentLoader &loader, const std::vector<std::st
 
 int CellNameSelect::cellCount() const { return cell_names.size(); }
 
-const char* CellNameSelect::cellNames(uint32_t cell_id) const {
+const char* CellNameSelect::cellNames(uint32_t cell_id) {
     if (cell_id >= cell_names.size()) return NULL;
     return cell_names[cell_id].c_str(); 
 }

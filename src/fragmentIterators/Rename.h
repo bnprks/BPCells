@@ -15,7 +15,7 @@ private:
 public:
     RenameChrs(FragmentLoader &loader, std::unique_ptr<StringReader> &&chr_names);
 
-    const char* chrNames(uint32_t chr_id) const override;
+    const char* chrNames(uint32_t chr_id) override;
 };
 
 
@@ -29,8 +29,20 @@ private:
 public:
     RenameCells(FragmentLoader &loader, std::unique_ptr<StringReader> &&cell_names);
 
-    const char* cellNames(uint32_t cell_id) const override;
+    const char* cellNames(uint32_t cell_id) override;
 };
 
+// Tranform a fragments loader by adding a prefix to all the cell names
+// This is a limited alternative to RenameCells for situations where
+// the cell names are not known ahead-of-time
+class PrefixCells : public FragmentLoaderWrapper {
+private:
+    std::string prefix;
+    std::vector<char> name_buffer;
+public:
+    PrefixCells(FragmentLoader &loader, std::string prefix);
+
+    const char* cellNames(uint32_t cell_id) override;
+};
 
 } // end namespace BPCells

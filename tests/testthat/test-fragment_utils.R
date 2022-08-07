@@ -126,6 +126,15 @@ test_that("Region select works", {
     expect_equal(as(exclusive, "GRanges"), ans_exclusive)
 })
 
+test_that("Name prefix works", {
+    frags1 <- open_fragments_10x("../data/mini_fragments.tsv.gz") %>%
+        write_fragments_memory()
+    prefix <- "MyFancyPrefix##"
+    frags2 <- open_fragments_10x("../data/mini_fragments.tsv.gz") %>%
+        prefix_cell_names(prefix) %>%
+        write_fragments_memory()
+    expect_equal(paste0(prefix, cellNames(frags1)), cellNames(frags2))
+})
 
 test_that("Generic methods work", {
     frags <- open_fragments_10x("../data/mini_fragments.tsv.gz") %>%
@@ -150,6 +159,7 @@ test_that("Generic methods work", {
         cellSelectIdx = select_cells(frags, seq_along(cellNames(frags))),
         chrRename = new("ChrRename", fragments=frags, chr_names=chrNames(frags)),
         cellRename = new("CellRename", fragments=frags, cell_names=cellNames(frags)),
+        cellPrefix = prefix_cell_names(frags, ""),
         regionSelect = selectRegions(frags, list(chr=chrNames(frags), start=rep_len(0, length(chrNames(frags))), end=rep_len(1e9, length(chrNames(frags))))),
         merge = select_cells(c(select_cells(frags, first_half_cells), select_cells(frags, second_half_cells)), cellNames(frags))
     )
@@ -169,5 +179,4 @@ test_that("Generic methods work", {
         expect_equal(chrNames(n), paste0("new-", chrNames(frags)))
         expect_equal(cellNames(n), paste0("new-", cellNames(frags)))
     }
-
 })

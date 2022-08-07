@@ -54,8 +54,8 @@ public:
 
     // Return name for a given chr_id or cell_id. Only valid to call
     // for chromosme or cell_ids that have been actually returned by the loader
-    virtual const char* chrNames(uint32_t chr_id) const = 0;
-    virtual const char* cellNames(uint32_t cell_id) const = 0;
+    virtual const char* chrNames(uint32_t chr_id) = 0;
+    virtual const char* cellNames(uint32_t cell_id) = 0;
     
     // Advance the loader to the next chromosome. Return false if there are no more chromosomes
     virtual bool nextChr() = 0;
@@ -92,8 +92,8 @@ public:
     int chrCount() const override;
     int cellCount() const override;
 
-    const char* chrNames(uint32_t chr_id) const override;
-    const char* cellNames(uint32_t cell_id) const override;
+    const char* chrNames(uint32_t chr_id) override;
+    const char* cellNames(uint32_t cell_id) override;
 
     bool nextChr() override;
     uint32_t currentChr() const override;

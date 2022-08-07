@@ -49,8 +49,8 @@ public:
     uint32_t rows() const override;
     uint32_t cols() const override;
 
-    const char* rowNames(uint32_t row) const override;
-    const char* colNames(uint32_t col) const override;
+    const char* rowNames(uint32_t row) override;
+    const char* colNames(uint32_t col) override;
 
     void restart() override;
     void seekCol(uint32_t col) override;

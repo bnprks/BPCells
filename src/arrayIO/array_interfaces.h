@@ -177,7 +177,7 @@ public:
         } 
 
         if (idx != 0) {
-            std::memmove(buffer.data(), data(), (loaded - idx)*sizeof(uint32_t));
+            std::memmove(buffer.data(), data(), (loaded - idx)*sizeof(T));
             loaded = loaded - idx;
             idx = 0;
         }
@@ -278,7 +278,9 @@ private:
 public:
     NumWriter(std::unique_ptr<BulkNumWriter<T>> &&writer, uint32_t buffer_size) :
         buffer(buffer_size), writer(std::move(writer)) {}
+    NumWriter() = default;
     NumWriter(NumWriter<T> &&other) = default;
+    NumWriter<T>& operator=(NumWriter<T>&& other) = default;
     
     // Convert to a different output type, after which the current writer should
     // not be used

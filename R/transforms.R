@@ -1,9 +1,9 @@
 
 
 setClass("TransformedMatrix",
-    contains = "mat_double",
+    contains = "IterableMatrix",
     slots = c(
-        matrix = "mat_double",
+        matrix = "IterableMatrix",
         row_params = "matrix",
         col_params = "matrix",
         global_params = "numeric"
@@ -14,14 +14,14 @@ setClass("TransformedMatrix",
         global_params = numeric(0)
     )
 )
-
+setMethod("matrix_type", "TransformedMatrix", function(x) "double")
 # log1p method support. The SIMD method may be ever so slightly less precise,
 # but it can be substantially faster depending on the CPU SIMD features
 # (Should still provide 32-bit float accuracy)
 setClass("TransformLog1p", contains="TransformedMatrix")
 setMethod("iterate_matrix", "TransformLog1p", function(x) {
     it <- iterate_matrix(x@matrix)
-    wrapMatDouble(iterate_matrix_log1psimd_cpp(ptr(it)), it)
+    wrapMat_double(iterate_matrix_log1psimd_cpp(ptr(it)), it)
 })
 setMethod("short_description", "TransformLog1p", function(x) {
     c(
@@ -30,13 +30,13 @@ setMethod("short_description", "TransformLog1p", function(x) {
     )
 })
 setMethod("log1p", "IterableMatrix", function(x) {
-    wrapMatrix("TransformLog1p", cast_matrix_double(x))
+    wrapMat_double("TransformLog1p", convert_matrix_type(x, "double"))
 })
 
 setClass("TransformLog1pSlow", contains="TransformedMatrix")
 setMethod("iterate_matrix", "TransformLog1pSlow", function(x) {
     it <- iterate_matrix(x@matrix)
-    wrapMatDouble(iterate_matrix_log1p_cpp(ptr(it)), it)
+    wrapMat_double(iterate_matrix_log1p_cpp(ptr(it)), it)
 })
 setMethod("short_description", "TransformLog1pSlow", function(x) {
     c(
@@ -45,7 +45,7 @@ setMethod("short_description", "TransformLog1pSlow", function(x) {
     )
 })
 log1p_slow <- function(x) {
-    wrapMatrix("TransformLog1pSlow", cast_matrix_double(x))
+    wrapMatrix("TransformLog1pSlow", convert_matrix_type(x, "double"))
 }
 
 
@@ -79,7 +79,7 @@ setMethod("iterate_matrix", "TransformScaleShift", function(x) {
             else if (x@active_transforms["col", "scale"]) scale_col <- scale_col * x@global_params[1]
             else scale_row <- matrix(x@global_params[1], nrow=1, ncol=nrow(x))
         }
-        res <- wrapMatDouble(iterate_matrix_scale_cpp(ptr(res), scale_row, scale_col), res)
+        res <- wrapMat_double(iterate_matrix_scale_cpp(ptr(res), scale_row, scale_col), res)
     }
     if (any(x@active_transforms[, "shift"])) {
         shift_row <- matrix(0,0,0)
@@ -91,8 +91,8 @@ setMethod("iterate_matrix", "TransformScaleShift", function(x) {
             else if (x@active_transforms["col", "shift"]) shift_col <- shift_col + x@global_params[2]
             else shift_row <- matrix(x@global_params[2], nrow=1, ncol=nrow(x))
         }
-        if (nrow(shift_row) != 0) res <- wrapMatDouble(iterate_matrix_row_shift_cpp(ptr(res), shift_row), res)
-        if (nrow(shift_col) != 0) res <- wrapMatDouble(iterate_matrix_col_shift_cpp(ptr(res), shift_col), res)
+        if (nrow(shift_row) != 0) res <- wrapMat_double(iterate_matrix_row_shift_cpp(ptr(res), shift_row), res)
+        if (nrow(shift_col) != 0) res <- wrapMat_double(iterate_matrix_col_shift_cpp(ptr(res), shift_col), res)
     }
     res
 })
@@ -134,25 +134,25 @@ setMethod("short_description", "TransformScaleShift", function(x) {
 
 # Basic dispatch for scaling/shifting (Create TransformScaleShift and then apply function to it)
 setMethod("*", signature(e1="IterableMatrix", e2="numeric"), function(e1, e2) {
-    e1 <- wrapMatrix("TransformScaleShift", cast_matrix_double(e1))
+    e1 <- wrapMatrix("TransformScaleShift", convert_matrix_type(e1, "double"))
     e1 * e2
 })
 setMethod("*", signature(e1="numeric", e2="IterableMatrix"), function(e1, e2) {
-    e2 <- wrapMatrix("TransformScaleShift", cast_matrix_double(e2))
+    e2 <- wrapMatrix("TransformScaleShift", convert_matrix_type(e2, "double"))
     e2 * e1
 })
 setMethod("+", signature(e1="IterableMatrix", e2="numeric"), function(e1, e2) {
-    e1 <- wrapMatrix("TransformScaleShift", cast_matrix_double(e1))
+    e1 <- wrapMatrix("TransformScaleShift", convert_matrix_type(e1, "double"))
     e1 + e2
 })
 setMethod("+", signature(e1="numeric", e2="IterableMatrix"), function(e1, e2) {
-    e2 <- wrapMatrix("TransformScaleShift", cast_matrix_double(e2))
+    e2 <- wrapMatrix("TransformScaleShift", convert_matrix_type(e2, "double"))
     e2 + e1
 })
+# Note: we skip numeric / IterableMatrix as it would result in a lot of infinities for dividing by 0.
 setMethod("/", signature(e1="IterableMatrix", e2="numeric"), function(e1, e2) {e1 * (1/e2)})
-setMethod("/", signature(e1="numeric", e2="IterableMatrix"), function(e1, e2) {e2 * (1/e1)})
 setMethod("-", signature(e1="IterableMatrix", e2="numeric"), function(e1, e2) {e1 + (-e2)})
-setMethod("-", signature(e1="numeric", e2="IterableMatrix"), function(e1, e2) {e2 + (-e1)})
+setMethod("-", signature(e1="numeric", e2="IterableMatrix"), function(e1, e2) {e2 * -1 + e1})
 
 # Full dispatch for scaling/shifting
 setMethod("*", signature(e1="TransformScaleShift", e2="numeric"), function(e1, e2) {
@@ -251,20 +251,3 @@ setMethod("+", signature(e1="TransformScaleShift", e2="numeric"), function(e1, e
 # Just take advantadge of commutative property to only implement half
 setMethod("*", signature(e1="numeric", e2="TransformScaleShift"), function(e1, e2) {e2 * e1})
 setMethod("+", signature(e1="numeric", e2="TransformScaleShift"), function(e1, e2) {e2 + e1})
-
-#' TFIDF normalization
-#' @param mat IterableMatrix to transform
-#' @param scaleTo Value to scale to
-#' @return NormalizedMatrix object
-#' @details Transforms values of matrix according to the formula
-#'     log(1 + scaleTo * x / (colSum * rowMean))
-#' @export
-normalize_TFIDF <- function(mat, scaleTo=1e4) {
-    assert_is(mat, "IterableMatrix")
-    assert_is(scaleTo, "numeric")
-
-    ret <- new("TFIDF", matrix=mat, scaleTo=scaleTo)
-    ret <- assign_fit(ret)
-
-    return(ret)
-}

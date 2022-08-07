@@ -7,37 +7,47 @@
 #include "matrixIterators/CSparseMatrix.h"
 #include "matrixIterators/MatrixIndexSelect.h"
 #include "matrixIterators/MatrixOps.h"
+#include "matrixIterators/MatrixMultiply.h"
 #include "matrixIterators/MatrixStats.h"
 
+#include "R_array_io.h"
 
 using namespace BPCells;
 using namespace Rcpp;
 
 // [[Rcpp::export]]
-SEXP iterate_csparse_matrix_cpp(SEXP matrix) {
+SEXP iterate_csparse_matrix_cpp(SEXP matrix, const StringVector row_names, const StringVector col_names) {
     auto eigen_mat = Rcpp::as<Eigen::Map<Eigen::SparseMatrix<double>>>(matrix);
     return Rcpp::wrap(
-        XPtr<MatrixLoader<double>>(new CSparseMatrix(eigen_mat))
+        XPtr<MatrixLoader<double>>(new CSparseMatrix(
+            eigen_mat,
+            std::make_unique<RcppStringReader>(row_names), 
+            std::make_unique<RcppStringReader>(col_names))
+        )
     );
 }
 
-// [[Rcpp::export]]
-SEXP convert_matrix_uint32_t_double_cpp(SEXP matrix) {
-    XPtr<MatrixLoader<uint32_t>>input(matrix);
+
+template<typename From, typename To>
+SEXP convert_matrix_cpp(SEXP matrix) {
+    XPtr<MatrixLoader<From>>input(matrix);
 
     return Rcpp::wrap(
-        XPtr<MatrixLoader<double>>(new MatrixConverterLoader<uint32_t, double>(*input))
+        XPtr<MatrixLoader<To>>(new MatrixConverterLoader<From, To>(*input))
     );
 }
-
 // [[Rcpp::export]]
-SEXP convert_matrix_double_uint32_t_cpp(SEXP matrix) {
-    XPtr<MatrixLoader<double>>input(matrix);
-
-    return Rcpp::wrap(
-        XPtr<MatrixLoader<uint32_t>>(new MatrixConverterLoader<double, uint32_t>(*input))
-    );
-}
+SEXP convert_matrix_uint32_t_double_cpp(SEXP matrix) {return convert_matrix_cpp<uint32_t, double>(matrix);}
+// [[Rcpp::export]]
+SEXP convert_matrix_uint32_t_float_cpp(SEXP matrix) {return convert_matrix_cpp<uint32_t, float>(matrix);}
+// [[Rcpp::export]]
+SEXP convert_matrix_double_uint32_t_cpp(SEXP matrix) {return convert_matrix_cpp<double, uint32_t>(matrix);}
+// [[Rcpp::export]]
+SEXP convert_matrix_double_float_cpp(SEXP matrix) {return convert_matrix_cpp<double, float>(matrix);}
+// [[Rcpp::export]]
+SEXP convert_matrix_float_uint32_t_cpp(SEXP matrix) {return convert_matrix_cpp<float, uint32_t>(matrix);}
+// [[Rcpp::export]]
+SEXP convert_matrix_float_double_cpp(SEXP matrix) {return convert_matrix_cpp<float, double>(matrix);}
 
 // [[Rcpp::export]]
 SEXP build_csparse_matrix_double_cpp(SEXP matrix) {
@@ -129,9 +139,27 @@ SEXP iterate_matrix_col_bind_uint32_t_cpp(SEXP matrix_list) {
     return Rcpp::wrap(XPtr<MatrixLoader<uint32_t>>(new ConcatCols(matrix_vec)));
 }
 
+// [[Rcpp::export]]
+SEXP iterate_matrix_multiply_uint32_t_cpp(SEXP s_left, SEXP s_right) {
+    XPtr<MatrixLoader<uint32_t>> left(s_left);
+    XPtr<MatrixLoader<uint32_t>> right(s_right);
+    return Rcpp::wrap(
+        XPtr<MatrixLoader<uint32_t>>(new SparseMultiply<uint32_t>(*left, *right))
+    );
+}
 
 // [[Rcpp::export]]
-NumericVector scan_matrix_uint32_t_cpp(SEXP matrix) {
+SEXP iterate_matrix_multiply_double_cpp(SEXP s_left, SEXP s_right) {
+    XPtr<MatrixLoader<double>> left(s_left);
+    XPtr<MatrixLoader<double>> right(s_right);
+    return Rcpp::wrap(
+        XPtr<MatrixLoader<double>>(new SparseMultiply<double>(*left, *right))
+    );
+}
+
+
+// [[Rcpp::export]]
+NumericVector scan_matrix_double_cpp(SEXP matrix) {
     XPtr<MatrixLoader<uint32_t>>loader(matrix);
     MatrixIterator<uint32_t> iter(*loader);
     uint64_t entries = 0;

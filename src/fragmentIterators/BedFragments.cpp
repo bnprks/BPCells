@@ -16,12 +16,12 @@ BedFragments::~BedFragments() {
 int BedFragments::chrCount() const {return -1; }
 int BedFragments::cellCount() const {return -1; }
 
-const char* BedFragments::chrNames(uint32_t chr_id) const {
+const char* BedFragments::chrNames(uint32_t chr_id) {
     if(chr_id >= chr_names.size()) return NULL;
     return chr_names[chr_id].c_str(); 
 } 
 
-const char* BedFragments::cellNames(uint32_t cell_id) const {
+const char* BedFragments::cellNames(uint32_t cell_id) {
     if(cell_id >= cell_names.size()) return NULL;
     return cell_names[cell_id].c_str(); 
 } 

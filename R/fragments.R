@@ -22,14 +22,19 @@ wrapFragments <- function(outer, inner) {
     inner@type <- "fragments"
     inner
 }
-wrapMatUInt <- function(outer, inner) {
+wrapMat_uint32_t <- function(outer, inner) {
     inner@pointers <- c(outer, inner@pointers)
     inner@type <- "mat_uint32_t"
     inner
 }
-wrapMatDouble <- function(outer, inner) {
+wrapMat_double <- function(outer, inner) {
     inner@pointers <- c(outer, inner@pointers)
     inner@type <- "mat_double"
+    inner
+}
+wrapMat_float <- function(outer, inner) {
+    inner@pointers <- c(outer, inner@pointers)
+    inner@type <- "mat_float"
     inner
 }
 setMethod("show", "XPtrList", function(object) {
@@ -848,7 +853,7 @@ setMethod("short_description", "ChrRename", function(x) {
     )
 })
 
-# Select fragments by chromosome
+# Rename chr/cell names for cases where names are not all known ahead-of-time
 setClass("CellRename",
     contains = "IterableFragments",
     slots = c(
@@ -880,6 +885,43 @@ setMethod("short_description", "CellRename", function(x) {
         sprintf("Rename cells to: %s", pretty_print_vector(x@cell_names, max_len=3))
     )
 })
+
+setClass("CellPrefix",
+    contains = "IterableFragments",
+    slots = c(
+        fragments = "IterableFragments",
+        prefix = "character"
+    ),
+    prototype = list(
+        fragments = NULL,
+        prefix = ""
+    )
+)
+setMethod("iterate_fragments", "CellPrefix", function(x) {
+    inner <- iterate_fragments(x@fragments)
+    wrapFragments(
+        iterate_cell_prefix_cpp(ptr(inner), x@prefix),
+        inner
+    )
+})
+setMethod("short_description", "CellPrefix", function(x) {
+    c(
+        short_description(x@fragments),
+        sprintf("Prefix cells names with: %s", x@prefix)
+    )
+})
+
+#' Rename cells by adding a prefix to the names (e.g. sample name)
+#' @param fragments Input fragments object.
+#' @param prefix String to add as the prefix
+#' @return Fragments object with prefixed names
+#' @export
+prefix_cell_names <- function(fragments, prefix, invert_selection=FALSE, zero_based_coords=TRUE) {
+    assert_is(fragments, "IterableFragments")
+    assert_is(prefix, "character")
+    assert_len(prefix, 1)
+    new("CellPrefix", fragments=fragments, prefix=prefix)
+}
 
 # Select fragments by chromosome
 setClass("RegionSelect",

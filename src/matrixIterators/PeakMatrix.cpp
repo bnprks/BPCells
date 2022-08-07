@@ -103,8 +103,8 @@ PeakMatrix::PeakMatrix(FragmentLoader &frags,
 uint32_t PeakMatrix::rows() const {return frags.cellCount();}
 uint32_t PeakMatrix::cols() const {return n_peaks;}
 
-const char* PeakMatrix::rowNames(uint32_t row) const {return frags.cellNames(row);}
-const char* PeakMatrix::colNames(uint32_t col) const {return NULL;}
+const char* PeakMatrix::rowNames(uint32_t row) {return frags.cellNames(row);}
+const char* PeakMatrix::colNames(uint32_t col) {return NULL;}
 
 void PeakMatrix::restart() {
     accumulator.clear();

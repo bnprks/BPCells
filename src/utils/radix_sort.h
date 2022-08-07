@@ -1,5 +1,4 @@
 #pragma once
-#include <tuple>
 
 // Provide a templated radix_sort method that works on 
 namespace BPCells {
@@ -110,5 +109,42 @@ inline void lsdRadixSortArrays(uint32_t size, std::vector<uint32_t> &key, std::v
     }
 }
 
+
+// // Variants for sorting based on floats
+
+// // Encode float->uint32_t for radix sorting (flip all bits for negative, or just sign bit for positive)
+// inline uint32_t float_encode_radix(float f) {
+//     uint32_t u = *(uint32_t *)&f;
+//     int32_t i = *(int32_t *)&f;
+//     uint32_t mask = (i >> 31) | (1 << 31);
+//     return mask ^ u;
+// }
+// inline vec float_encode_radix_vec(vec v) {
+//     bitwise_xor(v, bitwise_or(shift_r_arith(v, 31), splat(1 << 31)));
+// }
+// // Invert the decode operation
+// inline float float_decode_radix(uint32_t u) {
+//     int32_t i = *(int32_t *)&u;
+//     uint32_t mask = (~i >> 31) | (1 << 31);
+//     u ^= mask;
+//     return *(float *)&u;
+// }
+// inline vec float_decode_radix_vec(vec v) {
+//     vec not_v = bitwise_xor(v, splat(0xFFFFFFFF));
+//     bitwise_xor(v, bitwise_or(shift_r_arith(not_v, 31), splat(1<<31)));
+// }
+
+// template<typename ...Vals>
+// void lsdRadixSortArrays(uint32_t size, std::vector<float> &key, std::vector<Vals>&... vals, 
+//                                    std::vector<float> &key_scratch, std::vector<Vals>&... vals_scratch) {
+//     size_t i = 0;
+//     for (; i + 4 <= size; i += 4) {
+//         store(&key[i], float_encode_radix_vec(load(&key[i])));
+//     }
+//     for (; i < size; i++) {
+//         key[i] = float_encode_radix(key[i]);
+//     }
+//     lsdRadixSortArrays(size, )
+// }
 
 } // end namespace BPCells

@@ -185,7 +185,7 @@ TEST(MatrixMath, Scale) {
     
     // Scale row + col
     MatrixXd ans1 = (MatrixXd(m1).array().rowwise() * scale_col.row(0)).colwise() * scale_row.row(0).transpose();
-    Scale s1(mat_1, TransformFit{get_map<ArrayXXd>(scale_row), get_map<ArrayXXd>(scale_col)});
+    Scale s1(mat_1, TransformFit{scale_row, scale_col});
     checkMultiplyOps(s1, ans1);
 
     CSparseMatrixWriter r1;
@@ -195,7 +195,7 @@ TEST(MatrixMath, Scale) {
 
     // Scale just row
     MatrixXd ans2 = MatrixXd(m1).array().colwise() * scale_row.row(0).transpose();
-    Scale s2(mat_1, TransformFit{get_map<ArrayXXd>(scale_row), {NULL,0,0}});
+    Scale s2(mat_1, TransformFit{scale_row, {}});
     checkMultiplyOps(s2, ans2);
 
     CSparseMatrixWriter r2;
@@ -205,7 +205,7 @@ TEST(MatrixMath, Scale) {
 
     // Scale just col
     MatrixXd ans3 = MatrixXd(m1).array().rowwise() * scale_col.row(0);
-    Scale s3(mat_1, TransformFit{{NULL,0,0}, get_map<ArrayXXd>(scale_col)});
+    Scale s3(mat_1, TransformFit{{}, get_map<ArrayXXd>(scale_col)});
     checkMultiplyOps(s3, ans3);
 
     CSparseMatrixWriter r3;
@@ -234,7 +234,7 @@ TEST(MatrixMath, TransformDense) {
     
     // Shift row
     MatrixXd ans1 = MatrixXd(m1).array().colwise() + shift_row.row(0).transpose();
-    SimpleRowShift s1(mat_1, TransformFit{get_map<ArrayXXd>(shift_row), {NULL,0,0}});
+    SimpleRowShift s1(mat_1, TransformFit{get_map<ArrayXXd>(shift_row), {}});
     
     checkMultiplyOps(s1, ans1);
     
@@ -254,7 +254,7 @@ TEST(MatrixMath, Shift) {
     
     // Shift row
     MatrixXd ans1 = MatrixXd(m1).array().colwise() + shift_row.row(0).transpose();
-    ShiftRows s1(mat_1, TransformFit{get_map<ArrayXXd>(shift_row), {NULL,0,0}});
+    ShiftRows s1(mat_1, TransformFit{shift_row, {}});
     
     checkMultiplyOps(s1, ans1);
     
@@ -266,7 +266,7 @@ TEST(MatrixMath, Shift) {
 
     // Shift col
     MatrixXd ans2 = MatrixXd(m1).array().rowwise() + shift_col.row(0);
-    ShiftCols s2(mat_1, TransformFit{{NULL,0,0}, get_map<ArrayXXd>(shift_col)});
+    ShiftCols s2(mat_1, TransformFit{{}, shift_col});
     
     checkMultiplyOps(s2, ans2);
     

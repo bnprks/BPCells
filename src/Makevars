@@ -7,6 +7,7 @@ PKG_LIBS = -lz -lhdf5
 # PKG_LIBS = -lz -lhdf5 -fsanitize=undefined
 
 OBJECTS=\
+bitpacking_io.o \
 fragment_io.o \
 fragment_utils.o \
 matrix_io.o \
@@ -30,7 +31,6 @@ fragmentIterators/Rename.o \
 fragmentIterators/ShiftCoords.o \
 fragmentIterators/StoredFragments.o \
 matrixIterators/ImportMatrixHDF5.o \
-matrixIterators/StoredMatrix.o \
 matrixIterators/PeakMatrix.o \
 matrixIterators/TileMatrix.o \
 matrixIterators/MatrixStats.o \
