@@ -170,8 +170,10 @@ StoredFragmentsPacked StoredFragmentsPacked::openPacked(ReaderBuilder &rb, uint3
     }
 
     UIntReader chr_ptr = rb.openUIntReader("chr_ptr");
-    chr_ptr.seek(chr_ptr.size() - 1);
-    uint32_t count = chr_ptr.read_one();
+    uint32_t count = 0;
+    for (uint32_t i = 0; i < chr_ptr.size(); i++) {
+        count = std::max(count, chr_ptr.read_one());
+    }
     chr_ptr.seek(0);
 
     if (!chr_names) chr_names = rb.openStringReader("chr_names");
