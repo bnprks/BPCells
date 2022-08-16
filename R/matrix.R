@@ -695,7 +695,7 @@ write_matrix_memory <- function(mat, compress=TRUE, transpose_tmpdir=tempdir()) 
 
     if (mat@transpose) {
         tmp_path <- tempfile(pattern="transpose")
-        it <- write_matrix_transpose(mat, tmp_path, load_bytes=4194304L, sort_bytes=1073741824L)
+        it <- write_matrix_transpose(t(mat), tmp_path, load_bytes=4194304L, sort_bytes=1073741824L)
     }
     else it <- iterate_matrix(mat)
     
@@ -766,7 +766,7 @@ write_matrix_dir <- function(mat, dir, compress=TRUE, buffer_size=8192L) {
     
     if (mat@transpose) {
         tmp_path <- tempfile(pattern="transpose")
-        it <- write_matrix_transpose(mat, tmp_path, load_bytes=4194304L, sort_bytes=1073741824L)
+        it <- write_matrix_transpose(t(mat), tmp_path, load_bytes=4194304L, sort_bytes=1073741824L)
     }
     else it <- iterate_matrix(mat)
     
@@ -774,7 +774,7 @@ write_matrix_dir <- function(mat, dir, compress=TRUE, buffer_size=8192L) {
     write_function(ptr(it), dir, buffer_size)
     
     if (mat@transpose) unlink(tmp_path, recursive=TRUE, expand=FALSE)    
-    
+
     open_matrix_dir(dir, buffer_size)
 }
 
@@ -849,7 +849,7 @@ write_matrix_hdf5 <- function(mat, path, group, compress=TRUE, buffer_size=8192L
 
     if (mat@transpose) {
         tmp_path <- tempfile(pattern="transpose")
-        it <- write_matrix_transpose(mat, tmp_path, load_bytes=4194304L, sort_bytes=1073741824L)
+        it <- write_matrix_transpose(t(mat), tmp_path, load_bytes=4194304L, sort_bytes=1073741824L)
     }
     else it <- iterate_matrix(mat)
     

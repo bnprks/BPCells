@@ -278,7 +278,7 @@ public:
         // but it shouldn't matter since writing the actual matrix should dominate cost
         std::vector<std::string> col_names(0);
         for (int i = 0; ; i++) {
-            const char* col_name = mat.colNames(i);
+            const char* col_name = mat.rowNames(i);
             if (col_name == NULL) break;
             col_names.push_back(std::string(col_name));
         }
@@ -286,7 +286,7 @@ public:
                 
         std::vector<std::string> row_names(0);
         for (int i = 0; ; i++) {
-            const char* row_name = mat.rowNames(i);
+            const char* row_name = mat.colNames(i);
             if (row_name == NULL) break;
             row_names.push_back(std::string(row_name));
         }
