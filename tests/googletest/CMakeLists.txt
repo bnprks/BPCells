@@ -86,6 +86,8 @@ target_include_directories(
 )
 
 ### TESTING ###
+enable_testing()
+
 include(FetchContent)
 FetchContent_Declare(
   googletest
@@ -94,7 +96,6 @@ FetchContent_Declare(
 
 FetchContent_MakeAvailable(googletest)
 include(GoogleTest)
-enable_testing()
 
 
 # Build bitpacking tests for all available SIMD modes
@@ -193,3 +194,4 @@ target_link_libraries(peak_matrix_test
     Eigen3::Eigen
     fragmentIterators 
     gtest_main)
+gtest_discover_tests(peak_matrix_test)
