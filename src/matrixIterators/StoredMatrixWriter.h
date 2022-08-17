@@ -2,6 +2,7 @@
 
 #include "MatrixIterator.h"
 #include "StoredMatrix.h"
+#include "OrderRows.h"
 #include "../arrayIO/array_interfaces.h"
 #include "../arrayIO/bp128.h"
 
@@ -66,7 +67,9 @@ public:
     }
     
 
-    void write(MatrixLoader<T> &mat, void (*checkInterrupt)(void) = NULL) override {
+    void write(MatrixLoader<T> &mat_in, void (*checkInterrupt)(void) = NULL) override {
+        // Ensure that we write matrices sorted by row
+        OrderRows<T> mat(mat_in);
         uint32_t col = 0;
         uint32_t idx = 0; // Index of for col_ptr array
 

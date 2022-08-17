@@ -127,10 +127,8 @@ public:
                             row_data[elems + i] = current_col;
                         read += (row_data.size()-elems);
                         elems = row_data.size();
-                        // Sort by (col, row). Remember though that since the input 
-                        // is column-sorted, our output is already row-sorted and 
-                        // therefore just needs to be column-sorted
-                        // lsdRadixSortArrays<uint32_t, T>(elems, row_data, col_data, val_data, row_buf, col_buf, val_buf);
+                        
+                        lsdRadixSortArrays<uint32_t, T>(elems, row_data, col_data, val_data, row_buf, col_buf, val_buf);
                         lsdRadixSortArrays<uint32_t, T>(elems, col_data, row_data, val_data, col_buf, row_buf, val_buf);
                         // Output to tmpStorage
                         flushToNumWriter(row_data.data(), elems, writers.row);
@@ -152,7 +150,7 @@ public:
             if (elems > 0) {
                 if (checkInterrupt != NULL) checkInterrupt();
                 // Sort by (col, row)
-                // lsdRadixSortArrays<uint32_t, T>(elems, row_data, col_data, val_data, row_buf, col_buf, val_buf);
+                lsdRadixSortArrays<uint32_t, T>(elems, row_data, col_data, val_data, row_buf, col_buf, val_buf);
                 lsdRadixSortArrays<uint32_t, T>(elems, col_data, row_data, val_data, col_buf, row_buf, val_buf);
                 // Output to tmpStorage
                 flushToNumWriter(row_data.data(), elems, writers.row);

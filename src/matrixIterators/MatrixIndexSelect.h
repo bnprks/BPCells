@@ -51,42 +51,24 @@ public:
 // only filtering and/or reordering
 template<class T>
 class MatrixRowSelect : public MatrixLoaderWrapper<T> {
-private:
-    std::vector<uint32_t> row_data, row_buf;
-    std::vector<T> val_data, val_buf;
-    
-    uint32_t idx = 0;
-    uint32_t cap = 0;
-    uint32_t load_size;
+private:    
+    uint32_t loaded = 0;
     
     // Reverse lookup for row indices -- reverse_indices[i] gives the output row_id
     // for input row_id i
     std::vector<uint32_t> reverse_indices;
     const std::vector<uint32_t> row_indices;
-    bool needs_reorder = false;
 
 public:
     // cell_names -- vector with length <= the number of chromosomes in the input
     //     FragmentLoader. The output cell `i` will come from input cell
     //     `chr_assignments[i]`. The entries of cell_names must be unique
-    MatrixRowSelect(MatrixLoader<T> &loader, const std::vector<uint32_t> row_indices, uint32_t load_size=1024) :
-        MatrixLoaderWrapper<T>(loader), load_size(load_size), reverse_indices(loader.rows(), UINT32_MAX), row_indices(row_indices) {
+    MatrixRowSelect(MatrixLoader<T> &loader, const std::vector<uint32_t> row_indices) :
+        MatrixLoaderWrapper<T>(loader), reverse_indices(loader.rows(), UINT32_MAX), row_indices(row_indices) {
         for (uint32_t i = 0; i < row_indices.size(); i++) {
             if (reverse_indices[row_indices[i]] != UINT32_MAX)
                 throw std::runtime_error("Cannot duplicate rows using MatrixRowSelect");
             reverse_indices[row_indices[i]] = i;
-        }
-        for (uint32_t i = 1; i < row_indices.size(); i++) {
-            if (row_indices[i] < row_indices[i-1]) {
-                needs_reorder = true;
-                break;
-            }
-        }
-        if (needs_reorder) {
-            row_data.resize(this->loader.rows());
-            row_buf.resize(this->loader.rows());
-            val_data.resize(this->loader.rows());
-            val_buf.resize(this->loader.rows());
         }
     }
 
@@ -98,56 +80,34 @@ public:
         return NULL;
     }
 
-    void restart() override {idx=0; cap=0; this->loader.restart();}
-    void seekCol(uint32_t col) override {idx=0; cap=0; this->loader.seekCol(col);}
+    void restart() override {loaded=0; this->loader.restart();}
+    void seekCol(uint32_t col) override {loaded=0; this->loader.seekCol(col);}
 
-    bool nextCol() override {idx = 0; cap = 0; return this->loader.nextCol();}
+    bool nextCol() override {loaded=0; return this->loader.nextCol();}
 
     bool load() override {
-        if (!needs_reorder) {
-            // Just perform a straight filter and load incrementally
-            uint32_t loaded = 0;
-            while (loaded == 0) {
-                if (!this->loader.load()) return false;
-                
-                cap = this->loader.capacity();
-                uint32_t *row_ptr = this->loader.rowData();
-                T *val_ptr = this->loader.valData();
-                
-                for (uint32_t i = 0; i < cap; i++) {
-                    uint32_t new_row = reverse_indices[row_ptr[i]];
-                    row_ptr[loaded] = new_row;
-                    val_ptr[loaded] = val_ptr[i];
-                    loaded += new_row != UINT32_MAX;
-                }
+        // Just perform a straight filter and load incrementally
+        loaded = 0;
+        while (loaded == 0) {
+            if (!this->loader.load()) return false;
+            
+            uint32_t cap = this->loader.capacity();
+            uint32_t *row_ptr = this->loader.rowData();
+            T *val_ptr = this->loader.valData();
+            
+            for (uint32_t i = 0; i < cap; i++) {
+                uint32_t new_row = reverse_indices[row_ptr[i]];
+                row_ptr[loaded] = new_row;
+                val_ptr[loaded] = val_ptr[i];
+                loaded += new_row != UINT32_MAX;
             }
-            cap = loaded;
-            return true;
-        } else if (idx == 0 && cap == 0) {
-            // Load all the values for the column and sort
-            while (this->loader.load()) {
-                uint32_t loaded = this->loader.capacity();
-                
-                uint32_t *row_ptr = this->loader.rowData();
-                T *val_ptr = this->loader.valData();
-                
-                for (uint32_t i = 0; i < loaded; i++) {
-                    row_data[cap] = reverse_indices[row_ptr[i]];
-                    val_data[cap] = val_ptr[i];
-                    cap += reverse_indices[row_ptr[i]] != UINT32_MAX;
-                }
-            }
-            // Sort the entries by increasing row ID
-            lsdRadixSortArrays<T>(cap, row_data, val_data, row_buf, val_buf);
-        } else {
-            idx += std::min(cap - idx, load_size);
         }
-        return idx < cap;
+        return true;
     }
 
-    uint32_t capacity() const override {return std::min(cap-idx, load_size);}
-    uint32_t* rowData() override {return needs_reorder ? row_data.data() + idx : this->loader.rowData();}
-    T* valData() override {return needs_reorder ? val_data.data() + idx : this->loader.valData();}
+    uint32_t capacity() const override {return loaded;}
+    uint32_t* rowData() override {return this->loader.rowData();}
+    T* valData() override {return this->loader.valData();}
 };
 
 
