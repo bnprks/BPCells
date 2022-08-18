@@ -20,9 +20,10 @@ LinkingTo:
     Rcpp,
     RcppEigen
 Imports: 
+    magrittr,
+    Matrix,
     methods,
     Rcpp,
-    Matrix,
     rlang,
     vctrs
 Suggests:

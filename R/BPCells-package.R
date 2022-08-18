@@ -3,4 +3,5 @@
 #' @importClassesFrom Matrix dgCMatrix
 #' @importMethodsFrom Matrix rowSums colSums rowMeans colMeans %*%
 #' @importFrom methods is new as
+#' @importFrom magrittr %>%
 NULL
