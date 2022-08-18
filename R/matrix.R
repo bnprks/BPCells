@@ -689,6 +689,12 @@ write_matrix_memory <- function(mat, compress=TRUE, transpose_tmpdir=tempdir()) 
     if (is(mat, "dgCMatrix")) mat <- as(mat, "IterableMatrix")
 
     assert_true(matrix_type(mat) %in% c("uint32_t", "float", "double"))
+    if (compress && matrix_type(mat) != "uint32_t") {
+        rlang::inform(c(
+            "Warning: Matrix compression performs poorly with non-integers.",
+            "Consider calling convert_matrix_type if a compressed integer matrix is intended."
+        ), .frequency="regularly", .frequency_id="matrix_compress_non_integer")
+    }
 
     write_function <- get(sprintf("write_%s_matrix_mem_%s_cpp", ifelse(compress, "packed", "unpacked"), matrix_type(mat)))
     class <- sprintf("%sMatrixMem_%s", ifelse(compress, "Packed", "Unpacked"), matrix_type(mat))
@@ -761,6 +767,14 @@ write_matrix_dir <- function(mat, dir, compress=TRUE, buffer_size=8192L) {
     assert_is(dir, "character")
     assert_is(compress, "logical")
     assert_is(buffer_size, "integer")
+
+    assert_true(matrix_type(mat) %in% c("uint32_t", "float", "double"))
+    if (compress && matrix_type(mat) != "uint32_t") {
+        rlang::inform(c(
+            "Warning: Matrix compression performs poorly with non-integers.",
+            "Consider calling convert_matrix_type if a compressed integer matrix is intended."
+        ), .frequency="regularly", .frequency_id="matrix_compress_non_integer")
+    }
     
     dir <- path.expand(dir)
     
@@ -844,6 +858,14 @@ write_matrix_hdf5 <- function(mat, path, group, compress=TRUE, buffer_size=8192L
     assert_is(compress, "logical")
     assert_is(buffer_size, "integer")
     assert_is(chunk_size, "integer")
+
+    assert_true(matrix_type(mat) %in% c("uint32_t", "float", "double"))
+    if (compress && matrix_type(mat) != "uint32_t") {
+        rlang::inform(c(
+            "Warning: Matrix compression performs poorly with non-integers.",
+            "Consider calling convert_matrix_type if a compressed integer matrix is intended."
+        ), .frequency="regularly", .frequency_id="matrix_compress_non_integer")
+    }
 
     path <- path.expand(path)
 
@@ -937,7 +959,7 @@ setMethod("short_description", "AnnDataMatrixH5", function(x) {
 
 #' Read a sparse integer matrix from an anndata matrix in an hdf5 file
 #' @inheritParams open_matrix_hdf5
-#' @return 10xMatrixH5 object
+#' @return 10xMatrixH5 object, with cells as the columns.
 #' @export
 open_matrix_anndata_hdf5 <- function(path, group="X", buffer_size=16384L) {
     assert_is_file(path)
@@ -947,10 +969,13 @@ open_matrix_anndata_hdf5 <- function(path, group="X", buffer_size=16384L) {
     res <- new("AnnDataMatrixH5", path=path.expand(path), dim=info$dims, buffer_size=buffer_size,
         group=group, dimnames=normalized_dimnames(info$row_names, info$col_names))
     
+    # We do the reverse of what transpose says, because anndata files are usually
+    # stored row-major with cells as rows, whereas BPCells will work best with
+    # col-major with cells as cols.
     if (info[["transpose"]]) {
-        return(Matrix::t(res))
-    } else {
         return(res)
+    } else {
+        return(t(res))
     }
 }
 
