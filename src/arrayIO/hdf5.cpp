@@ -92,6 +92,10 @@ void H5WriterBuilder::writeVersion(std::string version) {
     group.createAttribute<std::string>("version", HighFive::DataSpace::From(version)).write(version);
 }
 
+void H5WriterBuilder::deleteWriter(std::string name) {
+    throw std::logic_error("deleteWriter: HDF5 files don't support deletion");
+}
+
 H5ReaderBuilder::H5ReaderBuilder(std::string file, std::string group, uint32_t buffer_size, uint32_t read_size) :
     group(HighFive::File(
             file,

@@ -49,7 +49,15 @@ std::unique_ptr<StringWriter> VecReaderWriterBuilder::createStringWriter(std::st
     string_vecs.emplace(name, std::vector<std::string>());
     return std::make_unique<VecStringWriter>(string_vecs.at(name));
 }
-void VecReaderWriterBuilder::writeVersion(std::string version) {this->version = version;} // Don't store version information
+void VecReaderWriterBuilder::writeVersion(std::string version) {this->version = version;}
+
+void VecReaderWriterBuilder::deleteWriter(std::string name) {
+    this->int_vecs.erase(name);
+    this->float_vecs.erase(name);
+    this->long_vecs.erase(name);
+    this->double_vecs.erase(name);
+    this->string_vecs.erase(name);
+}
 
 UIntReader VecReaderWriterBuilder::openUIntReader(std::string name) {
     std::vector<uint32_t> &v = int_vecs.at(name);

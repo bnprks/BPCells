@@ -700,7 +700,7 @@ write_matrix_memory <- function(mat, compress=TRUE, transpose_tmpdir=tempdir()) 
     class <- sprintf("%sMatrixMem_%s", ifelse(compress, "Packed", "Unpacked"), matrix_type(mat))
 
     if (mat@transpose) {
-        tmp_path <- tempfile(pattern="transpose")
+        tmp_path <- tempfile(pattern="transpose", tmpdir=transpose_tmpdir)
         it <- write_matrix_transpose(t(mat), tmp_path, load_bytes=4194304L, sort_bytes=1073741824L)
     }
     else it <- iterate_matrix(mat)

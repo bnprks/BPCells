@@ -78,6 +78,8 @@ public:
 
     std::unique_ptr<StringWriter> createStringWriter(std::string name) override;
     void writeVersion(std::string version) override;
+    // Delete all writers with a given name
+    void deleteWriter(std::string name) override;
 
     UIntReader openUIntReader(std::string name) override;
     ULongReader openULongReader(std::string name) override;

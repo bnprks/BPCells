@@ -132,6 +132,7 @@ public:
     DoubleWriter createDoubleWriter(std::string name) override;
     std::unique_ptr<StringWriter> createStringWriter(std::string name) override;
     void writeVersion(std::string version) override;
+    void deleteWriter(std::string name) override;
 };
 
 class FileReaderBuilder final : public ReaderBuilder {

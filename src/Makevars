@@ -1,6 +1,6 @@
 # CXX_STD = CXX17
 
-PKG_CXXFLAGS = -march=native -std=c++17 -DRCPP_EIGEN -DEIGEN_PERMANENTLY_DISABLE_STUPID_WARNINGS -Wno-ignored-attributes
+PKG_CXXFLAGS = -march=native -std=c++17 -DRCPP_EIGEN -DEIGEN_PERMANENTLY_DISABLE_STUPID_WARNINGS -Wno-ignored-attributes # -Wall -Wextra -Wpedantic
 PKG_LIBS = -lz -lhdf5
 
 # PKG_CXXFLAGS = -fsanitize=undefined -march=native -std=c++17 -DRCPP_EIGEN -DEIGEN_PERMANENTLY_DISABLE_STUPID_WARNINGS -Wno-ignored-attributes

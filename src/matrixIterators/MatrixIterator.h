@@ -197,6 +197,7 @@ public:
 template<typename T> 
 class MatrixWriter {
 public:
+    virtual ~MatrixWriter() {};
     virtual void write(MatrixLoader<T> &mat, void (*checkInterrupt)(void) = NULL) = 0;
 };
 

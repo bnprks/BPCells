@@ -357,6 +357,10 @@ public:
 
     virtual std::unique_ptr<StringWriter> createStringWriter(std::string name) = 0;
     virtual void writeVersion(std::string version) = 0;
+
+    // Delete all writers with the given name, throwing an exception if this
+    // implementation does not support deletion
+    virtual void deleteWriter(std::string name) = 0;
 };
 
 class ReaderBuilder {

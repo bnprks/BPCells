@@ -173,6 +173,7 @@ gtest_discover_tests(matrix_io_test)
 add_executable(
     matrix_transpose_test
     test-matrixTranspose.cpp
+    ${SRC}/matrixIterators/ImportMatrixHDF5.cpp
 )
 target_link_libraries(matrix_transpose_test arrayIO Eigen3::Eigen gtest_main)
 gtest_discover_tests(matrix_transpose_test)

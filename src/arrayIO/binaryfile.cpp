@@ -60,6 +60,10 @@ void FileWriterBuilder::writeVersion(std::string version) {
     f << version << std::endl;
 }
 
+void FileWriterBuilder::deleteWriter(std::string name) {
+    std::filesystem::remove(dir / name);
+}
+
 FileReaderBuilder::FileReaderBuilder(std::string _dir, uint32_t buffer_size, uint32_t read_size) :
     dir(_dir), buffer_size(buffer_size), read_size(read_size) {
     

@@ -4,7 +4,9 @@
 #include <gtest/gtest.h>
 
 #include <matrixIterators/StoredMatrixTransposeWriter.h>
+#include <matrixIterators/StoredMatrixWriter.h>
 #include <matrixIterators/CSparseMatrix.h>
+#include <matrixIterators/ImportMatrixHDF5.h>
 #include <arrayIO/vector.h>
 
 #include <Eigen/Core>
@@ -80,3 +82,13 @@ TEST(MatrixTranspose, SmallIntMatrix) {
     test_transpose(generate_mat(100000, 3));
     test_transpose(generate_mat(2000, 100));
 }
+
+// TEST(MatrixTranspose, MatFile) {
+//     auto mat = open10xFeatureMatrix("/Users/ben/Downloads/20k_PBMC_3p_HT_nextgem_Chromium_X_filtered_feature_bc_matrix.h5", 16384);
+//     std::filesystem::remove_all(std::filesystem::path("test-dir-deleteme"));
+//     StoredMatrixTransposeWriter<uint32_t> mat_t("test-dir-deleteme", 4194304, 1073741824);
+//     mat_t.write(mat);
+//     auto mat_t_read = mat_t.read();
+//     VecReaderWriterBuilder data;
+//     StoredMatrixWriter<uint32_t>::createPacked(data).write(mat_t_read);
+// }
