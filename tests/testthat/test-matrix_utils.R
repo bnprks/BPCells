@@ -162,19 +162,19 @@ test_that("Generic methods work", {
     )
 
     for (i in names(ident_transforms)) {
-        t <- ident_transforms[[i]]
-        short_description(t)
-        expect_equal(dim(t), dim(m))
-        expect_equal(dimnames(t), dimnames(m))
-        expect_true(matrix_type(t) %in% c("uint32_t", "float", "double"))
-        matrix_is_transform(t)
+        trans <- ident_transforms[[i]]
+        short_description(trans)
+        expect_equal(dim(trans), dim(m))
+        expect_equal(dimnames(trans), dimnames(m))
+        expect_true(matrix_type(trans) %in% c("uint32_t", "float", "double"))
+        matrix_is_transform(trans)
         
-        expect_equal(rowSums(t), rowSums(m))
-        expect_equal(colSums(t), colSums(m))
+        expect_equal(rowSums(trans), rowSums(m))
+        expect_equal(colSums(trans), colSums(m))
         
         if (i %in% c("shift_scale_1", "shift_scale_2"))
-            expect_equal(as.matrix(as(t, "dgCMatrix")), as.matrix(m))
+            expect_equal(as.matrix(as(trans, "dgCMatrix")), as.matrix(m))
         else
-            expect_equal(as(t, "dgCMatrix"), m)
+            expect_equal(as(trans, "dgCMatrix"), m)
     }
 })

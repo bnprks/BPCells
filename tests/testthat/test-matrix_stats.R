@@ -21,8 +21,7 @@ to_vector <- function(x) {
 
 test_that("MatrixStats basic test", { 
     withr::local_seed(195123)
-    library(Matrix)
-    t <- Matrix::t
+
     m1 <- generate_sparse_matrix(5, 1000)
     m2 <- t(m1)
 
@@ -51,8 +50,6 @@ test_that("MatrixStats basic test", {
 
 test_that("MatrixStats comprehensive tests", { 
     withr::local_seed(195123)
-    library(Matrix)
-    t <- Matrix::t
     
     m1 <- generate_sparse_matrix(5, 1000)
     m2 <- t(m1)
