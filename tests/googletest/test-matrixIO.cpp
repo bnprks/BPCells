@@ -308,7 +308,7 @@ void test_order_rows(SparseMatrix<double> m, uint32_t load_size) {
         UIntReader(std::make_unique<VecUIntReader>(row.data(), row.size()), 16),
         DoubleReader(std::make_unique<VecNumReader<double>>(val.data(), val.size()), 16),
         UIntReader(std::make_unique<VecUIntReader>(col.data(), col.size()), 16),
-        UIntReader(std::make_unique<VecUIntReader>(&row_count, 1), 16),
+        row_count,
         std::make_unique<VecStringReader>(std::vector<std::string>()),
         std::make_unique<VecStringReader>(std::vector<std::string>())
     );
@@ -319,7 +319,7 @@ void test_order_rows(SparseMatrix<double> m, uint32_t load_size) {
         UIntReader(std::make_unique<VecUIntReader>(row_orig.data(), row_orig.size()), 16),
         DoubleReader(std::make_unique<VecNumReader<double>>(val_orig.data(), val_orig.size()), 16),
         UIntReader(std::make_unique<VecUIntReader>(col.data(), col.size()), 16),
-        UIntReader(std::make_unique<VecUIntReader>(&row_count, 1), 16),
+        row_count,
         std::make_unique<VecStringReader>(std::vector<std::string>()),
         std::make_unique<VecStringReader>(std::vector<std::string>())
     );

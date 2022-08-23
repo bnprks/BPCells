@@ -10,12 +10,12 @@ StoredMatrix<uint32_t> open10xFeatureMatrix(std::string file, uint32_t buffer_si
     // Most up-to-date matrix format
     if (f.exist("matrix")) {
         H5ReaderBuilder rb(file, "matrix", buffer_size, read_size);
-
+        uint32_t rows = rb.openUIntReader("shape").read_one();
         return StoredMatrix(
             rb.openULongReader("indices").convert<uint32_t>(),
             rb.openUIntReader("data"),
             rb.openULongReader("indptr").convert<uint32_t>(),
-            rb.openUIntReader("shape"),
+            rows,
             rb.openStringReader("features/id"),
             rb.openStringReader("barcodes")
         );
@@ -28,12 +28,12 @@ StoredMatrix<uint32_t> open10xFeatureMatrix(std::string file, uint32_t buffer_si
     }
 
     H5ReaderBuilder rb(file, genomes[0], buffer_size, read_size);
-
+    uint32_t rows = rb.openUIntReader("shape").read_one();
     return StoredMatrix(
         rb.openULongReader("indices").convert<uint32_t>(),
         rb.openUIntReader("data"),
         rb.openULongReader("indptr").convert<uint32_t>(),
-        rb.openUIntReader("shape"),
+        rows,
         rb.openStringReader("genes"),
         rb.openStringReader("barcodes")
     );
@@ -73,7 +73,7 @@ StoredMatrix<float> openAnnDataMatrix(std::string file, std::string group, uint3
         rb.openUIntReader("indices"),
         rb.openFloatReader("data"),
         rb.openUIntReader("indptr"),
-        UIntReader(std::make_unique<SingletonNumReader<uint32_t>>(rows), 1),
+        rows,
         std::make_unique<H5StringReader>(root, row_ids),
         std::make_unique<H5StringReader>(root, col_ids)
     );

@@ -53,21 +53,22 @@ void test_transpose(const Eigen::SparseMatrix<double> orig_mat) {
     MatrixConverterLoader<double, uint32_t> mat_i(mat_d);
 
     VecReaderWriterBuilder vb1(1024);
+    VecReaderWriterBuilder vb2(1024);
 
     fs::remove_all(fs::temp_directory_path() / "tmp_storage_uint");
     fs::remove_all(fs::temp_directory_path() / "tmp_storage_double");
     // Use small load sizes to help boost the number of rounds used for merging
-    StoredMatrixTransposeWriter<uint32_t> w_uint((fs::temp_directory_path() / "tmp_storage_uint").c_str(), 512, 16384);
-    StoredMatrixTransposeWriter<double> w_double((fs::temp_directory_path() / "tmp_storage_double").c_str(), 512, 16384);
+    StoredMatrixTransposeWriter<uint32_t> w_uint(vb1, (fs::temp_directory_path() / "tmp_storage_uint").c_str(), 512, 16384);
+    StoredMatrixTransposeWriter<double> w_double(vb2, (fs::temp_directory_path() / "tmp_storage_double").c_str(), 512, 16384);
 
     w_double.write(mat_d);
     mat_d.restart();
     w_uint.write(mat_i);
 
-    StoredMatrix<uint32_t> trans_i = w_uint.read();
+    StoredMatrix<uint32_t> trans_i = StoredMatrix<uint32_t>::openPacked(vb1);
     auto loader1 = MatrixConverterLoader<uint32_t, double>(trans_i);
 
-    StoredMatrix<double> loader2 = w_double.read();
+    StoredMatrix<double> loader2 = StoredMatrix<double>::openPacked(vb2);
     
     CSparseMatrixWriter mem1, mem2;
     mem1.write(loader1);

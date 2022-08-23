@@ -490,188 +490,206 @@ BEGIN_RCPP
 END_RCPP
 }
 // write_matrix_transpose_uint32_t_cpp
-SEXP write_matrix_transpose_uint32_t_cpp(SEXP matrix, std::string tmpdir, size_t load_bytes, size_t sort_buffer_bytes);
-RcppExport SEXP _BPCells_write_matrix_transpose_uint32_t_cpp(SEXP matrixSEXP, SEXP tmpdirSEXP, SEXP load_bytesSEXP, SEXP sort_buffer_bytesSEXP) {
+SEXP write_matrix_transpose_uint32_t_cpp(SEXP matrix, std::string outdir, std::string tmpdir, uint64_t load_bytes, uint64_t sort_buffer_bytes, bool row_major);
+RcppExport SEXP _BPCells_write_matrix_transpose_uint32_t_cpp(SEXP matrixSEXP, SEXP outdirSEXP, SEXP tmpdirSEXP, SEXP load_bytesSEXP, SEXP sort_buffer_bytesSEXP, SEXP row_majorSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< SEXP >::type matrix(matrixSEXP);
+    Rcpp::traits::input_parameter< std::string >::type outdir(outdirSEXP);
     Rcpp::traits::input_parameter< std::string >::type tmpdir(tmpdirSEXP);
-    Rcpp::traits::input_parameter< size_t >::type load_bytes(load_bytesSEXP);
-    Rcpp::traits::input_parameter< size_t >::type sort_buffer_bytes(sort_buffer_bytesSEXP);
-    rcpp_result_gen = Rcpp::wrap(write_matrix_transpose_uint32_t_cpp(matrix, tmpdir, load_bytes, sort_buffer_bytes));
+    Rcpp::traits::input_parameter< uint64_t >::type load_bytes(load_bytesSEXP);
+    Rcpp::traits::input_parameter< uint64_t >::type sort_buffer_bytes(sort_buffer_bytesSEXP);
+    Rcpp::traits::input_parameter< bool >::type row_major(row_majorSEXP);
+    rcpp_result_gen = Rcpp::wrap(write_matrix_transpose_uint32_t_cpp(matrix, outdir, tmpdir, load_bytes, sort_buffer_bytes, row_major));
     return rcpp_result_gen;
 END_RCPP
 }
 // write_matrix_transpose_float_cpp
-SEXP write_matrix_transpose_float_cpp(SEXP matrix, std::string tmpdir, size_t load_bytes, size_t sort_buffer_bytes);
-RcppExport SEXP _BPCells_write_matrix_transpose_float_cpp(SEXP matrixSEXP, SEXP tmpdirSEXP, SEXP load_bytesSEXP, SEXP sort_buffer_bytesSEXP) {
+SEXP write_matrix_transpose_float_cpp(SEXP matrix, std::string outdir, std::string tmpdir, uint64_t load_bytes, uint64_t sort_buffer_bytes, bool row_major);
+RcppExport SEXP _BPCells_write_matrix_transpose_float_cpp(SEXP matrixSEXP, SEXP outdirSEXP, SEXP tmpdirSEXP, SEXP load_bytesSEXP, SEXP sort_buffer_bytesSEXP, SEXP row_majorSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< SEXP >::type matrix(matrixSEXP);
+    Rcpp::traits::input_parameter< std::string >::type outdir(outdirSEXP);
     Rcpp::traits::input_parameter< std::string >::type tmpdir(tmpdirSEXP);
-    Rcpp::traits::input_parameter< size_t >::type load_bytes(load_bytesSEXP);
-    Rcpp::traits::input_parameter< size_t >::type sort_buffer_bytes(sort_buffer_bytesSEXP);
-    rcpp_result_gen = Rcpp::wrap(write_matrix_transpose_float_cpp(matrix, tmpdir, load_bytes, sort_buffer_bytes));
+    Rcpp::traits::input_parameter< uint64_t >::type load_bytes(load_bytesSEXP);
+    Rcpp::traits::input_parameter< uint64_t >::type sort_buffer_bytes(sort_buffer_bytesSEXP);
+    Rcpp::traits::input_parameter< bool >::type row_major(row_majorSEXP);
+    rcpp_result_gen = Rcpp::wrap(write_matrix_transpose_float_cpp(matrix, outdir, tmpdir, load_bytes, sort_buffer_bytes, row_major));
     return rcpp_result_gen;
 END_RCPP
 }
 // write_matrix_transpose_double_cpp
-SEXP write_matrix_transpose_double_cpp(SEXP matrix, std::string tmpdir, size_t load_bytes, size_t sort_buffer_bytes);
-RcppExport SEXP _BPCells_write_matrix_transpose_double_cpp(SEXP matrixSEXP, SEXP tmpdirSEXP, SEXP load_bytesSEXP, SEXP sort_buffer_bytesSEXP) {
+SEXP write_matrix_transpose_double_cpp(SEXP matrix, std::string outdir, std::string tmpdir, uint64_t load_bytes, uint64_t sort_buffer_bytes, bool row_major);
+RcppExport SEXP _BPCells_write_matrix_transpose_double_cpp(SEXP matrixSEXP, SEXP outdirSEXP, SEXP tmpdirSEXP, SEXP load_bytesSEXP, SEXP sort_buffer_bytesSEXP, SEXP row_majorSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< SEXP >::type matrix(matrixSEXP);
+    Rcpp::traits::input_parameter< std::string >::type outdir(outdirSEXP);
     Rcpp::traits::input_parameter< std::string >::type tmpdir(tmpdirSEXP);
-    Rcpp::traits::input_parameter< size_t >::type load_bytes(load_bytesSEXP);
-    Rcpp::traits::input_parameter< size_t >::type sort_buffer_bytes(sort_buffer_bytesSEXP);
-    rcpp_result_gen = Rcpp::wrap(write_matrix_transpose_double_cpp(matrix, tmpdir, load_bytes, sort_buffer_bytes));
+    Rcpp::traits::input_parameter< uint64_t >::type load_bytes(load_bytesSEXP);
+    Rcpp::traits::input_parameter< uint64_t >::type sort_buffer_bytes(sort_buffer_bytesSEXP);
+    Rcpp::traits::input_parameter< bool >::type row_major(row_majorSEXP);
+    rcpp_result_gen = Rcpp::wrap(write_matrix_transpose_double_cpp(matrix, outdir, tmpdir, load_bytes, sort_buffer_bytes, row_major));
     return rcpp_result_gen;
 END_RCPP
 }
 // iterate_packed_matrix_mem_uint32_t_cpp
-SEXP iterate_packed_matrix_mem_uint32_t_cpp(S4 s4, const StringVector row_names, const StringVector col_names);
-RcppExport SEXP _BPCells_iterate_packed_matrix_mem_uint32_t_cpp(SEXP s4SEXP, SEXP row_namesSEXP, SEXP col_namesSEXP) {
+SEXP iterate_packed_matrix_mem_uint32_t_cpp(S4 s4, const StringVector row_names, const StringVector col_names, uint32_t row_count);
+RcppExport SEXP _BPCells_iterate_packed_matrix_mem_uint32_t_cpp(SEXP s4SEXP, SEXP row_namesSEXP, SEXP col_namesSEXP, SEXP row_countSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< S4 >::type s4(s4SEXP);
     Rcpp::traits::input_parameter< const StringVector >::type row_names(row_namesSEXP);
     Rcpp::traits::input_parameter< const StringVector >::type col_names(col_namesSEXP);
-    rcpp_result_gen = Rcpp::wrap(iterate_packed_matrix_mem_uint32_t_cpp(s4, row_names, col_names));
+    Rcpp::traits::input_parameter< uint32_t >::type row_count(row_countSEXP);
+    rcpp_result_gen = Rcpp::wrap(iterate_packed_matrix_mem_uint32_t_cpp(s4, row_names, col_names, row_count));
     return rcpp_result_gen;
 END_RCPP
 }
 // iterate_unpacked_matrix_mem_uint32_t_cpp
-SEXP iterate_unpacked_matrix_mem_uint32_t_cpp(S4 s4, const StringVector row_names, const StringVector col_names);
-RcppExport SEXP _BPCells_iterate_unpacked_matrix_mem_uint32_t_cpp(SEXP s4SEXP, SEXP row_namesSEXP, SEXP col_namesSEXP) {
+SEXP iterate_unpacked_matrix_mem_uint32_t_cpp(S4 s4, const StringVector row_names, const StringVector col_names, uint32_t row_count);
+RcppExport SEXP _BPCells_iterate_unpacked_matrix_mem_uint32_t_cpp(SEXP s4SEXP, SEXP row_namesSEXP, SEXP col_namesSEXP, SEXP row_countSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< S4 >::type s4(s4SEXP);
     Rcpp::traits::input_parameter< const StringVector >::type row_names(row_namesSEXP);
     Rcpp::traits::input_parameter< const StringVector >::type col_names(col_namesSEXP);
-    rcpp_result_gen = Rcpp::wrap(iterate_unpacked_matrix_mem_uint32_t_cpp(s4, row_names, col_names));
+    Rcpp::traits::input_parameter< uint32_t >::type row_count(row_countSEXP);
+    rcpp_result_gen = Rcpp::wrap(iterate_unpacked_matrix_mem_uint32_t_cpp(s4, row_names, col_names, row_count));
     return rcpp_result_gen;
 END_RCPP
 }
 // iterate_packed_matrix_mem_float_cpp
-SEXP iterate_packed_matrix_mem_float_cpp(S4 s4, const StringVector row_names, const StringVector col_names);
-RcppExport SEXP _BPCells_iterate_packed_matrix_mem_float_cpp(SEXP s4SEXP, SEXP row_namesSEXP, SEXP col_namesSEXP) {
+SEXP iterate_packed_matrix_mem_float_cpp(S4 s4, const StringVector row_names, const StringVector col_names, uint32_t row_count);
+RcppExport SEXP _BPCells_iterate_packed_matrix_mem_float_cpp(SEXP s4SEXP, SEXP row_namesSEXP, SEXP col_namesSEXP, SEXP row_countSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< S4 >::type s4(s4SEXP);
     Rcpp::traits::input_parameter< const StringVector >::type row_names(row_namesSEXP);
     Rcpp::traits::input_parameter< const StringVector >::type col_names(col_namesSEXP);
-    rcpp_result_gen = Rcpp::wrap(iterate_packed_matrix_mem_float_cpp(s4, row_names, col_names));
+    Rcpp::traits::input_parameter< uint32_t >::type row_count(row_countSEXP);
+    rcpp_result_gen = Rcpp::wrap(iterate_packed_matrix_mem_float_cpp(s4, row_names, col_names, row_count));
     return rcpp_result_gen;
 END_RCPP
 }
 // iterate_unpacked_matrix_mem_float_cpp
-SEXP iterate_unpacked_matrix_mem_float_cpp(S4 s4, const StringVector row_names, const StringVector col_names);
-RcppExport SEXP _BPCells_iterate_unpacked_matrix_mem_float_cpp(SEXP s4SEXP, SEXP row_namesSEXP, SEXP col_namesSEXP) {
+SEXP iterate_unpacked_matrix_mem_float_cpp(S4 s4, const StringVector row_names, const StringVector col_names, uint32_t row_count);
+RcppExport SEXP _BPCells_iterate_unpacked_matrix_mem_float_cpp(SEXP s4SEXP, SEXP row_namesSEXP, SEXP col_namesSEXP, SEXP row_countSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< S4 >::type s4(s4SEXP);
     Rcpp::traits::input_parameter< const StringVector >::type row_names(row_namesSEXP);
     Rcpp::traits::input_parameter< const StringVector >::type col_names(col_namesSEXP);
-    rcpp_result_gen = Rcpp::wrap(iterate_unpacked_matrix_mem_float_cpp(s4, row_names, col_names));
+    Rcpp::traits::input_parameter< uint32_t >::type row_count(row_countSEXP);
+    rcpp_result_gen = Rcpp::wrap(iterate_unpacked_matrix_mem_float_cpp(s4, row_names, col_names, row_count));
     return rcpp_result_gen;
 END_RCPP
 }
 // iterate_packed_matrix_mem_double_cpp
-SEXP iterate_packed_matrix_mem_double_cpp(S4 s4, const StringVector row_names, const StringVector col_names);
-RcppExport SEXP _BPCells_iterate_packed_matrix_mem_double_cpp(SEXP s4SEXP, SEXP row_namesSEXP, SEXP col_namesSEXP) {
+SEXP iterate_packed_matrix_mem_double_cpp(S4 s4, const StringVector row_names, const StringVector col_names, uint32_t row_count);
+RcppExport SEXP _BPCells_iterate_packed_matrix_mem_double_cpp(SEXP s4SEXP, SEXP row_namesSEXP, SEXP col_namesSEXP, SEXP row_countSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< S4 >::type s4(s4SEXP);
     Rcpp::traits::input_parameter< const StringVector >::type row_names(row_namesSEXP);
     Rcpp::traits::input_parameter< const StringVector >::type col_names(col_namesSEXP);
-    rcpp_result_gen = Rcpp::wrap(iterate_packed_matrix_mem_double_cpp(s4, row_names, col_names));
+    Rcpp::traits::input_parameter< uint32_t >::type row_count(row_countSEXP);
+    rcpp_result_gen = Rcpp::wrap(iterate_packed_matrix_mem_double_cpp(s4, row_names, col_names, row_count));
     return rcpp_result_gen;
 END_RCPP
 }
 // iterate_unpacked_matrix_mem_double_cpp
-SEXP iterate_unpacked_matrix_mem_double_cpp(S4 s4, const StringVector row_names, const StringVector col_names);
-RcppExport SEXP _BPCells_iterate_unpacked_matrix_mem_double_cpp(SEXP s4SEXP, SEXP row_namesSEXP, SEXP col_namesSEXP) {
+SEXP iterate_unpacked_matrix_mem_double_cpp(S4 s4, const StringVector row_names, const StringVector col_names, uint32_t row_count);
+RcppExport SEXP _BPCells_iterate_unpacked_matrix_mem_double_cpp(SEXP s4SEXP, SEXP row_namesSEXP, SEXP col_namesSEXP, SEXP row_countSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< S4 >::type s4(s4SEXP);
     Rcpp::traits::input_parameter< const StringVector >::type row_names(row_namesSEXP);
     Rcpp::traits::input_parameter< const StringVector >::type col_names(col_namesSEXP);
-    rcpp_result_gen = Rcpp::wrap(iterate_unpacked_matrix_mem_double_cpp(s4, row_names, col_names));
+    Rcpp::traits::input_parameter< uint32_t >::type row_count(row_countSEXP);
+    rcpp_result_gen = Rcpp::wrap(iterate_unpacked_matrix_mem_double_cpp(s4, row_names, col_names, row_count));
     return rcpp_result_gen;
 END_RCPP
 }
 // write_packed_matrix_mem_uint32_t_cpp
-SEXP write_packed_matrix_mem_uint32_t_cpp(SEXP matrix);
-RcppExport SEXP _BPCells_write_packed_matrix_mem_uint32_t_cpp(SEXP matrixSEXP) {
+SEXP write_packed_matrix_mem_uint32_t_cpp(SEXP matrix, bool row_major);
+RcppExport SEXP _BPCells_write_packed_matrix_mem_uint32_t_cpp(SEXP matrixSEXP, SEXP row_majorSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< SEXP >::type matrix(matrixSEXP);
-    rcpp_result_gen = Rcpp::wrap(write_packed_matrix_mem_uint32_t_cpp(matrix));
+    Rcpp::traits::input_parameter< bool >::type row_major(row_majorSEXP);
+    rcpp_result_gen = Rcpp::wrap(write_packed_matrix_mem_uint32_t_cpp(matrix, row_major));
     return rcpp_result_gen;
 END_RCPP
 }
 // write_unpacked_matrix_mem_uint32_t_cpp
-SEXP write_unpacked_matrix_mem_uint32_t_cpp(SEXP matrix);
-RcppExport SEXP _BPCells_write_unpacked_matrix_mem_uint32_t_cpp(SEXP matrixSEXP) {
+SEXP write_unpacked_matrix_mem_uint32_t_cpp(SEXP matrix, bool row_major);
+RcppExport SEXP _BPCells_write_unpacked_matrix_mem_uint32_t_cpp(SEXP matrixSEXP, SEXP row_majorSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< SEXP >::type matrix(matrixSEXP);
-    rcpp_result_gen = Rcpp::wrap(write_unpacked_matrix_mem_uint32_t_cpp(matrix));
+    Rcpp::traits::input_parameter< bool >::type row_major(row_majorSEXP);
+    rcpp_result_gen = Rcpp::wrap(write_unpacked_matrix_mem_uint32_t_cpp(matrix, row_major));
     return rcpp_result_gen;
 END_RCPP
 }
 // write_packed_matrix_mem_float_cpp
-SEXP write_packed_matrix_mem_float_cpp(SEXP matrix);
-RcppExport SEXP _BPCells_write_packed_matrix_mem_float_cpp(SEXP matrixSEXP) {
+SEXP write_packed_matrix_mem_float_cpp(SEXP matrix, bool row_major);
+RcppExport SEXP _BPCells_write_packed_matrix_mem_float_cpp(SEXP matrixSEXP, SEXP row_majorSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< SEXP >::type matrix(matrixSEXP);
-    rcpp_result_gen = Rcpp::wrap(write_packed_matrix_mem_float_cpp(matrix));
+    Rcpp::traits::input_parameter< bool >::type row_major(row_majorSEXP);
+    rcpp_result_gen = Rcpp::wrap(write_packed_matrix_mem_float_cpp(matrix, row_major));
     return rcpp_result_gen;
 END_RCPP
 }
 // write_unpacked_matrix_mem_float_cpp
-SEXP write_unpacked_matrix_mem_float_cpp(SEXP matrix);
-RcppExport SEXP _BPCells_write_unpacked_matrix_mem_float_cpp(SEXP matrixSEXP) {
+SEXP write_unpacked_matrix_mem_float_cpp(SEXP matrix, bool row_major);
+RcppExport SEXP _BPCells_write_unpacked_matrix_mem_float_cpp(SEXP matrixSEXP, SEXP row_majorSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< SEXP >::type matrix(matrixSEXP);
-    rcpp_result_gen = Rcpp::wrap(write_unpacked_matrix_mem_float_cpp(matrix));
+    Rcpp::traits::input_parameter< bool >::type row_major(row_majorSEXP);
+    rcpp_result_gen = Rcpp::wrap(write_unpacked_matrix_mem_float_cpp(matrix, row_major));
     return rcpp_result_gen;
 END_RCPP
 }
 // write_packed_matrix_mem_double_cpp
-SEXP write_packed_matrix_mem_double_cpp(SEXP matrix);
-RcppExport SEXP _BPCells_write_packed_matrix_mem_double_cpp(SEXP matrixSEXP) {
+SEXP write_packed_matrix_mem_double_cpp(SEXP matrix, bool row_major);
+RcppExport SEXP _BPCells_write_packed_matrix_mem_double_cpp(SEXP matrixSEXP, SEXP row_majorSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< SEXP >::type matrix(matrixSEXP);
-    rcpp_result_gen = Rcpp::wrap(write_packed_matrix_mem_double_cpp(matrix));
+    Rcpp::traits::input_parameter< bool >::type row_major(row_majorSEXP);
+    rcpp_result_gen = Rcpp::wrap(write_packed_matrix_mem_double_cpp(matrix, row_major));
     return rcpp_result_gen;
 END_RCPP
 }
 // write_unpacked_matrix_mem_double_cpp
-SEXP write_unpacked_matrix_mem_double_cpp(SEXP matrix);
-RcppExport SEXP _BPCells_write_unpacked_matrix_mem_double_cpp(SEXP matrixSEXP) {
+SEXP write_unpacked_matrix_mem_double_cpp(SEXP matrix, bool row_major);
+RcppExport SEXP _BPCells_write_unpacked_matrix_mem_double_cpp(SEXP matrixSEXP, SEXP row_majorSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< SEXP >::type matrix(matrixSEXP);
-    rcpp_result_gen = Rcpp::wrap(write_unpacked_matrix_mem_double_cpp(matrix));
+    Rcpp::traits::input_parameter< bool >::type row_major(row_majorSEXP);
+    rcpp_result_gen = Rcpp::wrap(write_unpacked_matrix_mem_double_cpp(matrix, row_major));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -688,8 +706,8 @@ BEGIN_RCPP
 END_RCPP
 }
 // iterate_unpacked_matrix_file_uint32_t_cpp
-SEXP iterate_unpacked_matrix_file_uint32_t_cpp(std::string dir, uint32_t buffer_size, const StringVector row_names, const StringVector col_names);
-RcppExport SEXP _BPCells_iterate_unpacked_matrix_file_uint32_t_cpp(SEXP dirSEXP, SEXP buffer_sizeSEXP, SEXP row_namesSEXP, SEXP col_namesSEXP) {
+SEXP iterate_unpacked_matrix_file_uint32_t_cpp(std::string dir, uint32_t buffer_size, const StringVector row_names, const StringVector col_names, uint32_t row_count);
+RcppExport SEXP _BPCells_iterate_unpacked_matrix_file_uint32_t_cpp(SEXP dirSEXP, SEXP buffer_sizeSEXP, SEXP row_namesSEXP, SEXP col_namesSEXP, SEXP row_countSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -697,13 +715,14 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< uint32_t >::type buffer_size(buffer_sizeSEXP);
     Rcpp::traits::input_parameter< const StringVector >::type row_names(row_namesSEXP);
     Rcpp::traits::input_parameter< const StringVector >::type col_names(col_namesSEXP);
-    rcpp_result_gen = Rcpp::wrap(iterate_unpacked_matrix_file_uint32_t_cpp(dir, buffer_size, row_names, col_names));
+    Rcpp::traits::input_parameter< uint32_t >::type row_count(row_countSEXP);
+    rcpp_result_gen = Rcpp::wrap(iterate_unpacked_matrix_file_uint32_t_cpp(dir, buffer_size, row_names, col_names, row_count));
     return rcpp_result_gen;
 END_RCPP
 }
 // iterate_packed_matrix_file_uint32_t_cpp
-SEXP iterate_packed_matrix_file_uint32_t_cpp(std::string dir, uint32_t buffer_size, const StringVector row_names, const StringVector col_names);
-RcppExport SEXP _BPCells_iterate_packed_matrix_file_uint32_t_cpp(SEXP dirSEXP, SEXP buffer_sizeSEXP, SEXP row_namesSEXP, SEXP col_namesSEXP) {
+SEXP iterate_packed_matrix_file_uint32_t_cpp(std::string dir, uint32_t buffer_size, const StringVector row_names, const StringVector col_names, uint32_t row_count);
+RcppExport SEXP _BPCells_iterate_packed_matrix_file_uint32_t_cpp(SEXP dirSEXP, SEXP buffer_sizeSEXP, SEXP row_namesSEXP, SEXP col_namesSEXP, SEXP row_countSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -711,13 +730,14 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< uint32_t >::type buffer_size(buffer_sizeSEXP);
     Rcpp::traits::input_parameter< const StringVector >::type row_names(row_namesSEXP);
     Rcpp::traits::input_parameter< const StringVector >::type col_names(col_namesSEXP);
-    rcpp_result_gen = Rcpp::wrap(iterate_packed_matrix_file_uint32_t_cpp(dir, buffer_size, row_names, col_names));
+    Rcpp::traits::input_parameter< uint32_t >::type row_count(row_countSEXP);
+    rcpp_result_gen = Rcpp::wrap(iterate_packed_matrix_file_uint32_t_cpp(dir, buffer_size, row_names, col_names, row_count));
     return rcpp_result_gen;
 END_RCPP
 }
 // iterate_unpacked_matrix_file_float_cpp
-SEXP iterate_unpacked_matrix_file_float_cpp(std::string dir, uint32_t buffer_size, const StringVector row_names, const StringVector col_names);
-RcppExport SEXP _BPCells_iterate_unpacked_matrix_file_float_cpp(SEXP dirSEXP, SEXP buffer_sizeSEXP, SEXP row_namesSEXP, SEXP col_namesSEXP) {
+SEXP iterate_unpacked_matrix_file_float_cpp(std::string dir, uint32_t buffer_size, const StringVector row_names, const StringVector col_names, uint32_t row_count);
+RcppExport SEXP _BPCells_iterate_unpacked_matrix_file_float_cpp(SEXP dirSEXP, SEXP buffer_sizeSEXP, SEXP row_namesSEXP, SEXP col_namesSEXP, SEXP row_countSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -725,13 +745,14 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< uint32_t >::type buffer_size(buffer_sizeSEXP);
     Rcpp::traits::input_parameter< const StringVector >::type row_names(row_namesSEXP);
     Rcpp::traits::input_parameter< const StringVector >::type col_names(col_namesSEXP);
-    rcpp_result_gen = Rcpp::wrap(iterate_unpacked_matrix_file_float_cpp(dir, buffer_size, row_names, col_names));
+    Rcpp::traits::input_parameter< uint32_t >::type row_count(row_countSEXP);
+    rcpp_result_gen = Rcpp::wrap(iterate_unpacked_matrix_file_float_cpp(dir, buffer_size, row_names, col_names, row_count));
     return rcpp_result_gen;
 END_RCPP
 }
 // iterate_packed_matrix_file_float_cpp
-SEXP iterate_packed_matrix_file_float_cpp(std::string dir, uint32_t buffer_size, const StringVector row_names, const StringVector col_names);
-RcppExport SEXP _BPCells_iterate_packed_matrix_file_float_cpp(SEXP dirSEXP, SEXP buffer_sizeSEXP, SEXP row_namesSEXP, SEXP col_namesSEXP) {
+SEXP iterate_packed_matrix_file_float_cpp(std::string dir, uint32_t buffer_size, const StringVector row_names, const StringVector col_names, uint32_t row_count);
+RcppExport SEXP _BPCells_iterate_packed_matrix_file_float_cpp(SEXP dirSEXP, SEXP buffer_sizeSEXP, SEXP row_namesSEXP, SEXP col_namesSEXP, SEXP row_countSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -739,13 +760,14 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< uint32_t >::type buffer_size(buffer_sizeSEXP);
     Rcpp::traits::input_parameter< const StringVector >::type row_names(row_namesSEXP);
     Rcpp::traits::input_parameter< const StringVector >::type col_names(col_namesSEXP);
-    rcpp_result_gen = Rcpp::wrap(iterate_packed_matrix_file_float_cpp(dir, buffer_size, row_names, col_names));
+    Rcpp::traits::input_parameter< uint32_t >::type row_count(row_countSEXP);
+    rcpp_result_gen = Rcpp::wrap(iterate_packed_matrix_file_float_cpp(dir, buffer_size, row_names, col_names, row_count));
     return rcpp_result_gen;
 END_RCPP
 }
 // iterate_unpacked_matrix_file_double_cpp
-SEXP iterate_unpacked_matrix_file_double_cpp(std::string dir, uint32_t buffer_size, const StringVector row_names, const StringVector col_names);
-RcppExport SEXP _BPCells_iterate_unpacked_matrix_file_double_cpp(SEXP dirSEXP, SEXP buffer_sizeSEXP, SEXP row_namesSEXP, SEXP col_namesSEXP) {
+SEXP iterate_unpacked_matrix_file_double_cpp(std::string dir, uint32_t buffer_size, const StringVector row_names, const StringVector col_names, uint32_t row_count);
+RcppExport SEXP _BPCells_iterate_unpacked_matrix_file_double_cpp(SEXP dirSEXP, SEXP buffer_sizeSEXP, SEXP row_namesSEXP, SEXP col_namesSEXP, SEXP row_countSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -753,13 +775,14 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< uint32_t >::type buffer_size(buffer_sizeSEXP);
     Rcpp::traits::input_parameter< const StringVector >::type row_names(row_namesSEXP);
     Rcpp::traits::input_parameter< const StringVector >::type col_names(col_namesSEXP);
-    rcpp_result_gen = Rcpp::wrap(iterate_unpacked_matrix_file_double_cpp(dir, buffer_size, row_names, col_names));
+    Rcpp::traits::input_parameter< uint32_t >::type row_count(row_countSEXP);
+    rcpp_result_gen = Rcpp::wrap(iterate_unpacked_matrix_file_double_cpp(dir, buffer_size, row_names, col_names, row_count));
     return rcpp_result_gen;
 END_RCPP
 }
 // iterate_packed_matrix_file_double_cpp
-SEXP iterate_packed_matrix_file_double_cpp(std::string dir, uint32_t buffer_size, const StringVector row_names, const StringVector col_names);
-RcppExport SEXP _BPCells_iterate_packed_matrix_file_double_cpp(SEXP dirSEXP, SEXP buffer_sizeSEXP, SEXP row_namesSEXP, SEXP col_namesSEXP) {
+SEXP iterate_packed_matrix_file_double_cpp(std::string dir, uint32_t buffer_size, const StringVector row_names, const StringVector col_names, uint32_t row_count);
+RcppExport SEXP _BPCells_iterate_packed_matrix_file_double_cpp(SEXP dirSEXP, SEXP buffer_sizeSEXP, SEXP row_namesSEXP, SEXP col_namesSEXP, SEXP row_countSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -767,79 +790,86 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< uint32_t >::type buffer_size(buffer_sizeSEXP);
     Rcpp::traits::input_parameter< const StringVector >::type row_names(row_namesSEXP);
     Rcpp::traits::input_parameter< const StringVector >::type col_names(col_namesSEXP);
-    rcpp_result_gen = Rcpp::wrap(iterate_packed_matrix_file_double_cpp(dir, buffer_size, row_names, col_names));
+    Rcpp::traits::input_parameter< uint32_t >::type row_count(row_countSEXP);
+    rcpp_result_gen = Rcpp::wrap(iterate_packed_matrix_file_double_cpp(dir, buffer_size, row_names, col_names, row_count));
     return rcpp_result_gen;
 END_RCPP
 }
 // write_unpacked_matrix_file_uint32_t_cpp
-void write_unpacked_matrix_file_uint32_t_cpp(SEXP matrix, std::string dir, uint32_t buffer_size);
-RcppExport SEXP _BPCells_write_unpacked_matrix_file_uint32_t_cpp(SEXP matrixSEXP, SEXP dirSEXP, SEXP buffer_sizeSEXP) {
+void write_unpacked_matrix_file_uint32_t_cpp(SEXP matrix, std::string dir, uint32_t buffer_size, bool row_major);
+RcppExport SEXP _BPCells_write_unpacked_matrix_file_uint32_t_cpp(SEXP matrixSEXP, SEXP dirSEXP, SEXP buffer_sizeSEXP, SEXP row_majorSEXP) {
 BEGIN_RCPP
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< SEXP >::type matrix(matrixSEXP);
     Rcpp::traits::input_parameter< std::string >::type dir(dirSEXP);
     Rcpp::traits::input_parameter< uint32_t >::type buffer_size(buffer_sizeSEXP);
-    write_unpacked_matrix_file_uint32_t_cpp(matrix, dir, buffer_size);
+    Rcpp::traits::input_parameter< bool >::type row_major(row_majorSEXP);
+    write_unpacked_matrix_file_uint32_t_cpp(matrix, dir, buffer_size, row_major);
     return R_NilValue;
 END_RCPP
 }
 // write_packed_matrix_file_uint32_t_cpp
-void write_packed_matrix_file_uint32_t_cpp(SEXP matrix, std::string dir, uint32_t buffer_size);
-RcppExport SEXP _BPCells_write_packed_matrix_file_uint32_t_cpp(SEXP matrixSEXP, SEXP dirSEXP, SEXP buffer_sizeSEXP) {
+void write_packed_matrix_file_uint32_t_cpp(SEXP matrix, std::string dir, uint32_t buffer_size, bool row_major);
+RcppExport SEXP _BPCells_write_packed_matrix_file_uint32_t_cpp(SEXP matrixSEXP, SEXP dirSEXP, SEXP buffer_sizeSEXP, SEXP row_majorSEXP) {
 BEGIN_RCPP
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< SEXP >::type matrix(matrixSEXP);
     Rcpp::traits::input_parameter< std::string >::type dir(dirSEXP);
     Rcpp::traits::input_parameter< uint32_t >::type buffer_size(buffer_sizeSEXP);
-    write_packed_matrix_file_uint32_t_cpp(matrix, dir, buffer_size);
+    Rcpp::traits::input_parameter< bool >::type row_major(row_majorSEXP);
+    write_packed_matrix_file_uint32_t_cpp(matrix, dir, buffer_size, row_major);
     return R_NilValue;
 END_RCPP
 }
 // write_unpacked_matrix_file_float_cpp
-void write_unpacked_matrix_file_float_cpp(SEXP matrix, std::string dir, uint32_t buffer_size);
-RcppExport SEXP _BPCells_write_unpacked_matrix_file_float_cpp(SEXP matrixSEXP, SEXP dirSEXP, SEXP buffer_sizeSEXP) {
+void write_unpacked_matrix_file_float_cpp(SEXP matrix, std::string dir, uint32_t buffer_size, bool row_major);
+RcppExport SEXP _BPCells_write_unpacked_matrix_file_float_cpp(SEXP matrixSEXP, SEXP dirSEXP, SEXP buffer_sizeSEXP, SEXP row_majorSEXP) {
 BEGIN_RCPP
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< SEXP >::type matrix(matrixSEXP);
     Rcpp::traits::input_parameter< std::string >::type dir(dirSEXP);
     Rcpp::traits::input_parameter< uint32_t >::type buffer_size(buffer_sizeSEXP);
-    write_unpacked_matrix_file_float_cpp(matrix, dir, buffer_size);
+    Rcpp::traits::input_parameter< bool >::type row_major(row_majorSEXP);
+    write_unpacked_matrix_file_float_cpp(matrix, dir, buffer_size, row_major);
     return R_NilValue;
 END_RCPP
 }
 // write_packed_matrix_file_float_cpp
-void write_packed_matrix_file_float_cpp(SEXP matrix, std::string dir, uint32_t buffer_size);
-RcppExport SEXP _BPCells_write_packed_matrix_file_float_cpp(SEXP matrixSEXP, SEXP dirSEXP, SEXP buffer_sizeSEXP) {
+void write_packed_matrix_file_float_cpp(SEXP matrix, std::string dir, uint32_t buffer_size, bool row_major);
+RcppExport SEXP _BPCells_write_packed_matrix_file_float_cpp(SEXP matrixSEXP, SEXP dirSEXP, SEXP buffer_sizeSEXP, SEXP row_majorSEXP) {
 BEGIN_RCPP
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< SEXP >::type matrix(matrixSEXP);
     Rcpp::traits::input_parameter< std::string >::type dir(dirSEXP);
     Rcpp::traits::input_parameter< uint32_t >::type buffer_size(buffer_sizeSEXP);
-    write_packed_matrix_file_float_cpp(matrix, dir, buffer_size);
+    Rcpp::traits::input_parameter< bool >::type row_major(row_majorSEXP);
+    write_packed_matrix_file_float_cpp(matrix, dir, buffer_size, row_major);
     return R_NilValue;
 END_RCPP
 }
 // write_unpacked_matrix_file_double_cpp
-void write_unpacked_matrix_file_double_cpp(SEXP matrix, std::string dir, uint32_t buffer_size);
-RcppExport SEXP _BPCells_write_unpacked_matrix_file_double_cpp(SEXP matrixSEXP, SEXP dirSEXP, SEXP buffer_sizeSEXP) {
+void write_unpacked_matrix_file_double_cpp(SEXP matrix, std::string dir, uint32_t buffer_size, bool row_major);
+RcppExport SEXP _BPCells_write_unpacked_matrix_file_double_cpp(SEXP matrixSEXP, SEXP dirSEXP, SEXP buffer_sizeSEXP, SEXP row_majorSEXP) {
 BEGIN_RCPP
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< SEXP >::type matrix(matrixSEXP);
     Rcpp::traits::input_parameter< std::string >::type dir(dirSEXP);
     Rcpp::traits::input_parameter< uint32_t >::type buffer_size(buffer_sizeSEXP);
-    write_unpacked_matrix_file_double_cpp(matrix, dir, buffer_size);
+    Rcpp::traits::input_parameter< bool >::type row_major(row_majorSEXP);
+    write_unpacked_matrix_file_double_cpp(matrix, dir, buffer_size, row_major);
     return R_NilValue;
 END_RCPP
 }
 // write_packed_matrix_file_double_cpp
-void write_packed_matrix_file_double_cpp(SEXP matrix, std::string dir, uint32_t buffer_size);
-RcppExport SEXP _BPCells_write_packed_matrix_file_double_cpp(SEXP matrixSEXP, SEXP dirSEXP, SEXP buffer_sizeSEXP) {
+void write_packed_matrix_file_double_cpp(SEXP matrix, std::string dir, uint32_t buffer_size, bool row_major);
+RcppExport SEXP _BPCells_write_packed_matrix_file_double_cpp(SEXP matrixSEXP, SEXP dirSEXP, SEXP buffer_sizeSEXP, SEXP row_majorSEXP) {
 BEGIN_RCPP
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< SEXP >::type matrix(matrixSEXP);
     Rcpp::traits::input_parameter< std::string >::type dir(dirSEXP);
     Rcpp::traits::input_parameter< uint32_t >::type buffer_size(buffer_sizeSEXP);
-    write_packed_matrix_file_double_cpp(matrix, dir, buffer_size);
+    Rcpp::traits::input_parameter< bool >::type row_major(row_majorSEXP);
+    write_packed_matrix_file_double_cpp(matrix, dir, buffer_size, row_major);
     return R_NilValue;
 END_RCPP
 }
@@ -857,8 +887,8 @@ BEGIN_RCPP
 END_RCPP
 }
 // iterate_unpacked_matrix_hdf5_uint32_t_cpp
-SEXP iterate_unpacked_matrix_hdf5_uint32_t_cpp(std::string file, std::string group, uint32_t buffer_size, const StringVector row_names, const StringVector col_names);
-RcppExport SEXP _BPCells_iterate_unpacked_matrix_hdf5_uint32_t_cpp(SEXP fileSEXP, SEXP groupSEXP, SEXP buffer_sizeSEXP, SEXP row_namesSEXP, SEXP col_namesSEXP) {
+SEXP iterate_unpacked_matrix_hdf5_uint32_t_cpp(std::string file, std::string group, uint32_t buffer_size, const StringVector row_names, const StringVector col_names, uint32_t row_count);
+RcppExport SEXP _BPCells_iterate_unpacked_matrix_hdf5_uint32_t_cpp(SEXP fileSEXP, SEXP groupSEXP, SEXP buffer_sizeSEXP, SEXP row_namesSEXP, SEXP col_namesSEXP, SEXP row_countSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -867,13 +897,14 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< uint32_t >::type buffer_size(buffer_sizeSEXP);
     Rcpp::traits::input_parameter< const StringVector >::type row_names(row_namesSEXP);
     Rcpp::traits::input_parameter< const StringVector >::type col_names(col_namesSEXP);
-    rcpp_result_gen = Rcpp::wrap(iterate_unpacked_matrix_hdf5_uint32_t_cpp(file, group, buffer_size, row_names, col_names));
+    Rcpp::traits::input_parameter< uint32_t >::type row_count(row_countSEXP);
+    rcpp_result_gen = Rcpp::wrap(iterate_unpacked_matrix_hdf5_uint32_t_cpp(file, group, buffer_size, row_names, col_names, row_count));
     return rcpp_result_gen;
 END_RCPP
 }
 // iterate_packed_matrix_hdf5_uint32_t_cpp
-SEXP iterate_packed_matrix_hdf5_uint32_t_cpp(std::string file, std::string group, uint32_t buffer_size, const StringVector row_names, const StringVector col_names);
-RcppExport SEXP _BPCells_iterate_packed_matrix_hdf5_uint32_t_cpp(SEXP fileSEXP, SEXP groupSEXP, SEXP buffer_sizeSEXP, SEXP row_namesSEXP, SEXP col_namesSEXP) {
+SEXP iterate_packed_matrix_hdf5_uint32_t_cpp(std::string file, std::string group, uint32_t buffer_size, const StringVector row_names, const StringVector col_names, uint32_t row_count);
+RcppExport SEXP _BPCells_iterate_packed_matrix_hdf5_uint32_t_cpp(SEXP fileSEXP, SEXP groupSEXP, SEXP buffer_sizeSEXP, SEXP row_namesSEXP, SEXP col_namesSEXP, SEXP row_countSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -882,13 +913,14 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< uint32_t >::type buffer_size(buffer_sizeSEXP);
     Rcpp::traits::input_parameter< const StringVector >::type row_names(row_namesSEXP);
     Rcpp::traits::input_parameter< const StringVector >::type col_names(col_namesSEXP);
-    rcpp_result_gen = Rcpp::wrap(iterate_packed_matrix_hdf5_uint32_t_cpp(file, group, buffer_size, row_names, col_names));
+    Rcpp::traits::input_parameter< uint32_t >::type row_count(row_countSEXP);
+    rcpp_result_gen = Rcpp::wrap(iterate_packed_matrix_hdf5_uint32_t_cpp(file, group, buffer_size, row_names, col_names, row_count));
     return rcpp_result_gen;
 END_RCPP
 }
 // iterate_unpacked_matrix_hdf5_float_cpp
-SEXP iterate_unpacked_matrix_hdf5_float_cpp(std::string file, std::string group, uint32_t buffer_size, const StringVector row_names, const StringVector col_names);
-RcppExport SEXP _BPCells_iterate_unpacked_matrix_hdf5_float_cpp(SEXP fileSEXP, SEXP groupSEXP, SEXP buffer_sizeSEXP, SEXP row_namesSEXP, SEXP col_namesSEXP) {
+SEXP iterate_unpacked_matrix_hdf5_float_cpp(std::string file, std::string group, uint32_t buffer_size, const StringVector row_names, const StringVector col_names, uint32_t row_count);
+RcppExport SEXP _BPCells_iterate_unpacked_matrix_hdf5_float_cpp(SEXP fileSEXP, SEXP groupSEXP, SEXP buffer_sizeSEXP, SEXP row_namesSEXP, SEXP col_namesSEXP, SEXP row_countSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -897,13 +929,14 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< uint32_t >::type buffer_size(buffer_sizeSEXP);
     Rcpp::traits::input_parameter< const StringVector >::type row_names(row_namesSEXP);
     Rcpp::traits::input_parameter< const StringVector >::type col_names(col_namesSEXP);
-    rcpp_result_gen = Rcpp::wrap(iterate_unpacked_matrix_hdf5_float_cpp(file, group, buffer_size, row_names, col_names));
+    Rcpp::traits::input_parameter< uint32_t >::type row_count(row_countSEXP);
+    rcpp_result_gen = Rcpp::wrap(iterate_unpacked_matrix_hdf5_float_cpp(file, group, buffer_size, row_names, col_names, row_count));
     return rcpp_result_gen;
 END_RCPP
 }
 // iterate_packed_matrix_hdf5_float_cpp
-SEXP iterate_packed_matrix_hdf5_float_cpp(std::string file, std::string group, uint32_t buffer_size, const StringVector row_names, const StringVector col_names);
-RcppExport SEXP _BPCells_iterate_packed_matrix_hdf5_float_cpp(SEXP fileSEXP, SEXP groupSEXP, SEXP buffer_sizeSEXP, SEXP row_namesSEXP, SEXP col_namesSEXP) {
+SEXP iterate_packed_matrix_hdf5_float_cpp(std::string file, std::string group, uint32_t buffer_size, const StringVector row_names, const StringVector col_names, uint32_t row_count);
+RcppExport SEXP _BPCells_iterate_packed_matrix_hdf5_float_cpp(SEXP fileSEXP, SEXP groupSEXP, SEXP buffer_sizeSEXP, SEXP row_namesSEXP, SEXP col_namesSEXP, SEXP row_countSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -912,13 +945,14 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< uint32_t >::type buffer_size(buffer_sizeSEXP);
     Rcpp::traits::input_parameter< const StringVector >::type row_names(row_namesSEXP);
     Rcpp::traits::input_parameter< const StringVector >::type col_names(col_namesSEXP);
-    rcpp_result_gen = Rcpp::wrap(iterate_packed_matrix_hdf5_float_cpp(file, group, buffer_size, row_names, col_names));
+    Rcpp::traits::input_parameter< uint32_t >::type row_count(row_countSEXP);
+    rcpp_result_gen = Rcpp::wrap(iterate_packed_matrix_hdf5_float_cpp(file, group, buffer_size, row_names, col_names, row_count));
     return rcpp_result_gen;
 END_RCPP
 }
 // iterate_unpacked_matrix_hdf5_double_cpp
-SEXP iterate_unpacked_matrix_hdf5_double_cpp(std::string file, std::string group, uint32_t buffer_size, const StringVector row_names, const StringVector col_names);
-RcppExport SEXP _BPCells_iterate_unpacked_matrix_hdf5_double_cpp(SEXP fileSEXP, SEXP groupSEXP, SEXP buffer_sizeSEXP, SEXP row_namesSEXP, SEXP col_namesSEXP) {
+SEXP iterate_unpacked_matrix_hdf5_double_cpp(std::string file, std::string group, uint32_t buffer_size, const StringVector row_names, const StringVector col_names, uint32_t row_count);
+RcppExport SEXP _BPCells_iterate_unpacked_matrix_hdf5_double_cpp(SEXP fileSEXP, SEXP groupSEXP, SEXP buffer_sizeSEXP, SEXP row_namesSEXP, SEXP col_namesSEXP, SEXP row_countSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -927,13 +961,14 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< uint32_t >::type buffer_size(buffer_sizeSEXP);
     Rcpp::traits::input_parameter< const StringVector >::type row_names(row_namesSEXP);
     Rcpp::traits::input_parameter< const StringVector >::type col_names(col_namesSEXP);
-    rcpp_result_gen = Rcpp::wrap(iterate_unpacked_matrix_hdf5_double_cpp(file, group, buffer_size, row_names, col_names));
+    Rcpp::traits::input_parameter< uint32_t >::type row_count(row_countSEXP);
+    rcpp_result_gen = Rcpp::wrap(iterate_unpacked_matrix_hdf5_double_cpp(file, group, buffer_size, row_names, col_names, row_count));
     return rcpp_result_gen;
 END_RCPP
 }
 // iterate_packed_matrix_hdf5_double_cpp
-SEXP iterate_packed_matrix_hdf5_double_cpp(std::string file, std::string group, uint32_t buffer_size, const StringVector row_names, const StringVector col_names);
-RcppExport SEXP _BPCells_iterate_packed_matrix_hdf5_double_cpp(SEXP fileSEXP, SEXP groupSEXP, SEXP buffer_sizeSEXP, SEXP row_namesSEXP, SEXP col_namesSEXP) {
+SEXP iterate_packed_matrix_hdf5_double_cpp(std::string file, std::string group, uint32_t buffer_size, const StringVector row_names, const StringVector col_names, uint32_t row_count);
+RcppExport SEXP _BPCells_iterate_packed_matrix_hdf5_double_cpp(SEXP fileSEXP, SEXP groupSEXP, SEXP buffer_sizeSEXP, SEXP row_namesSEXP, SEXP col_namesSEXP, SEXP row_countSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -942,13 +977,14 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< uint32_t >::type buffer_size(buffer_sizeSEXP);
     Rcpp::traits::input_parameter< const StringVector >::type row_names(row_namesSEXP);
     Rcpp::traits::input_parameter< const StringVector >::type col_names(col_namesSEXP);
-    rcpp_result_gen = Rcpp::wrap(iterate_packed_matrix_hdf5_double_cpp(file, group, buffer_size, row_names, col_names));
+    Rcpp::traits::input_parameter< uint32_t >::type row_count(row_countSEXP);
+    rcpp_result_gen = Rcpp::wrap(iterate_packed_matrix_hdf5_double_cpp(file, group, buffer_size, row_names, col_names, row_count));
     return rcpp_result_gen;
 END_RCPP
 }
 // write_unpacked_matrix_hdf5_uint32_t_cpp
-void write_unpacked_matrix_hdf5_uint32_t_cpp(SEXP matrix, std::string file, std::string group, uint32_t buffer_size, uint32_t chunk_size);
-RcppExport SEXP _BPCells_write_unpacked_matrix_hdf5_uint32_t_cpp(SEXP matrixSEXP, SEXP fileSEXP, SEXP groupSEXP, SEXP buffer_sizeSEXP, SEXP chunk_sizeSEXP) {
+void write_unpacked_matrix_hdf5_uint32_t_cpp(SEXP matrix, std::string file, std::string group, uint32_t buffer_size, uint32_t chunk_size, bool row_major);
+RcppExport SEXP _BPCells_write_unpacked_matrix_hdf5_uint32_t_cpp(SEXP matrixSEXP, SEXP fileSEXP, SEXP groupSEXP, SEXP buffer_sizeSEXP, SEXP chunk_sizeSEXP, SEXP row_majorSEXP) {
 BEGIN_RCPP
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< SEXP >::type matrix(matrixSEXP);
@@ -956,13 +992,14 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< std::string >::type group(groupSEXP);
     Rcpp::traits::input_parameter< uint32_t >::type buffer_size(buffer_sizeSEXP);
     Rcpp::traits::input_parameter< uint32_t >::type chunk_size(chunk_sizeSEXP);
-    write_unpacked_matrix_hdf5_uint32_t_cpp(matrix, file, group, buffer_size, chunk_size);
+    Rcpp::traits::input_parameter< bool >::type row_major(row_majorSEXP);
+    write_unpacked_matrix_hdf5_uint32_t_cpp(matrix, file, group, buffer_size, chunk_size, row_major);
     return R_NilValue;
 END_RCPP
 }
 // write_packed_matrix_hdf5_uint32_t_cpp
-void write_packed_matrix_hdf5_uint32_t_cpp(SEXP matrix, std::string file, std::string group, uint32_t buffer_size, uint32_t chunk_size);
-RcppExport SEXP _BPCells_write_packed_matrix_hdf5_uint32_t_cpp(SEXP matrixSEXP, SEXP fileSEXP, SEXP groupSEXP, SEXP buffer_sizeSEXP, SEXP chunk_sizeSEXP) {
+void write_packed_matrix_hdf5_uint32_t_cpp(SEXP matrix, std::string file, std::string group, uint32_t buffer_size, uint32_t chunk_size, bool row_major);
+RcppExport SEXP _BPCells_write_packed_matrix_hdf5_uint32_t_cpp(SEXP matrixSEXP, SEXP fileSEXP, SEXP groupSEXP, SEXP buffer_sizeSEXP, SEXP chunk_sizeSEXP, SEXP row_majorSEXP) {
 BEGIN_RCPP
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< SEXP >::type matrix(matrixSEXP);
@@ -970,13 +1007,14 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< std::string >::type group(groupSEXP);
     Rcpp::traits::input_parameter< uint32_t >::type buffer_size(buffer_sizeSEXP);
     Rcpp::traits::input_parameter< uint32_t >::type chunk_size(chunk_sizeSEXP);
-    write_packed_matrix_hdf5_uint32_t_cpp(matrix, file, group, buffer_size, chunk_size);
+    Rcpp::traits::input_parameter< bool >::type row_major(row_majorSEXP);
+    write_packed_matrix_hdf5_uint32_t_cpp(matrix, file, group, buffer_size, chunk_size, row_major);
     return R_NilValue;
 END_RCPP
 }
 // write_unpacked_matrix_hdf5_float_cpp
-void write_unpacked_matrix_hdf5_float_cpp(SEXP matrix, std::string file, std::string group, uint32_t buffer_size, uint32_t chunk_size);
-RcppExport SEXP _BPCells_write_unpacked_matrix_hdf5_float_cpp(SEXP matrixSEXP, SEXP fileSEXP, SEXP groupSEXP, SEXP buffer_sizeSEXP, SEXP chunk_sizeSEXP) {
+void write_unpacked_matrix_hdf5_float_cpp(SEXP matrix, std::string file, std::string group, uint32_t buffer_size, uint32_t chunk_size, bool row_major);
+RcppExport SEXP _BPCells_write_unpacked_matrix_hdf5_float_cpp(SEXP matrixSEXP, SEXP fileSEXP, SEXP groupSEXP, SEXP buffer_sizeSEXP, SEXP chunk_sizeSEXP, SEXP row_majorSEXP) {
 BEGIN_RCPP
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< SEXP >::type matrix(matrixSEXP);
@@ -984,13 +1022,14 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< std::string >::type group(groupSEXP);
     Rcpp::traits::input_parameter< uint32_t >::type buffer_size(buffer_sizeSEXP);
     Rcpp::traits::input_parameter< uint32_t >::type chunk_size(chunk_sizeSEXP);
-    write_unpacked_matrix_hdf5_float_cpp(matrix, file, group, buffer_size, chunk_size);
+    Rcpp::traits::input_parameter< bool >::type row_major(row_majorSEXP);
+    write_unpacked_matrix_hdf5_float_cpp(matrix, file, group, buffer_size, chunk_size, row_major);
     return R_NilValue;
 END_RCPP
 }
 // write_packed_matrix_hdf5_float_cpp
-void write_packed_matrix_hdf5_float_cpp(SEXP matrix, std::string file, std::string group, uint32_t buffer_size, uint32_t chunk_size);
-RcppExport SEXP _BPCells_write_packed_matrix_hdf5_float_cpp(SEXP matrixSEXP, SEXP fileSEXP, SEXP groupSEXP, SEXP buffer_sizeSEXP, SEXP chunk_sizeSEXP) {
+void write_packed_matrix_hdf5_float_cpp(SEXP matrix, std::string file, std::string group, uint32_t buffer_size, uint32_t chunk_size, bool row_major);
+RcppExport SEXP _BPCells_write_packed_matrix_hdf5_float_cpp(SEXP matrixSEXP, SEXP fileSEXP, SEXP groupSEXP, SEXP buffer_sizeSEXP, SEXP chunk_sizeSEXP, SEXP row_majorSEXP) {
 BEGIN_RCPP
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< SEXP >::type matrix(matrixSEXP);
@@ -998,13 +1037,14 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< std::string >::type group(groupSEXP);
     Rcpp::traits::input_parameter< uint32_t >::type buffer_size(buffer_sizeSEXP);
     Rcpp::traits::input_parameter< uint32_t >::type chunk_size(chunk_sizeSEXP);
-    write_packed_matrix_hdf5_float_cpp(matrix, file, group, buffer_size, chunk_size);
+    Rcpp::traits::input_parameter< bool >::type row_major(row_majorSEXP);
+    write_packed_matrix_hdf5_float_cpp(matrix, file, group, buffer_size, chunk_size, row_major);
     return R_NilValue;
 END_RCPP
 }
 // write_unpacked_matrix_hdf5_double_cpp
-void write_unpacked_matrix_hdf5_double_cpp(SEXP matrix, std::string file, std::string group, uint32_t buffer_size, uint32_t chunk_size);
-RcppExport SEXP _BPCells_write_unpacked_matrix_hdf5_double_cpp(SEXP matrixSEXP, SEXP fileSEXP, SEXP groupSEXP, SEXP buffer_sizeSEXP, SEXP chunk_sizeSEXP) {
+void write_unpacked_matrix_hdf5_double_cpp(SEXP matrix, std::string file, std::string group, uint32_t buffer_size, uint32_t chunk_size, bool row_major);
+RcppExport SEXP _BPCells_write_unpacked_matrix_hdf5_double_cpp(SEXP matrixSEXP, SEXP fileSEXP, SEXP groupSEXP, SEXP buffer_sizeSEXP, SEXP chunk_sizeSEXP, SEXP row_majorSEXP) {
 BEGIN_RCPP
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< SEXP >::type matrix(matrixSEXP);
@@ -1012,13 +1052,14 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< std::string >::type group(groupSEXP);
     Rcpp::traits::input_parameter< uint32_t >::type buffer_size(buffer_sizeSEXP);
     Rcpp::traits::input_parameter< uint32_t >::type chunk_size(chunk_sizeSEXP);
-    write_unpacked_matrix_hdf5_double_cpp(matrix, file, group, buffer_size, chunk_size);
+    Rcpp::traits::input_parameter< bool >::type row_major(row_majorSEXP);
+    write_unpacked_matrix_hdf5_double_cpp(matrix, file, group, buffer_size, chunk_size, row_major);
     return R_NilValue;
 END_RCPP
 }
 // write_packed_matrix_hdf5_double_cpp
-void write_packed_matrix_hdf5_double_cpp(SEXP matrix, std::string file, std::string group, uint32_t buffer_size, uint32_t chunk_size);
-RcppExport SEXP _BPCells_write_packed_matrix_hdf5_double_cpp(SEXP matrixSEXP, SEXP fileSEXP, SEXP groupSEXP, SEXP buffer_sizeSEXP, SEXP chunk_sizeSEXP) {
+void write_packed_matrix_hdf5_double_cpp(SEXP matrix, std::string file, std::string group, uint32_t buffer_size, uint32_t chunk_size, bool row_major);
+RcppExport SEXP _BPCells_write_packed_matrix_hdf5_double_cpp(SEXP matrixSEXP, SEXP fileSEXP, SEXP groupSEXP, SEXP buffer_sizeSEXP, SEXP chunk_sizeSEXP, SEXP row_majorSEXP) {
 BEGIN_RCPP
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< SEXP >::type matrix(matrixSEXP);
@@ -1026,7 +1067,8 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< std::string >::type group(groupSEXP);
     Rcpp::traits::input_parameter< uint32_t >::type buffer_size(buffer_sizeSEXP);
     Rcpp::traits::input_parameter< uint32_t >::type chunk_size(chunk_sizeSEXP);
-    write_packed_matrix_hdf5_double_cpp(matrix, file, group, buffer_size, chunk_size);
+    Rcpp::traits::input_parameter< bool >::type row_major(row_majorSEXP);
+    write_packed_matrix_hdf5_double_cpp(matrix, file, group, buffer_size, chunk_size, row_major);
     return R_NilValue;
 END_RCPP
 }
@@ -1491,47 +1533,47 @@ static const R_CallMethodDef CallEntries[] = {
     {"_BPCells_iterate_cell_prefix_cpp", (DL_FUNC) &_BPCells_iterate_cell_prefix_cpp, 2},
     {"_BPCells_iterate_region_select_cpp", (DL_FUNC) &_BPCells_iterate_region_select_cpp, 6},
     {"_BPCells_iterate_merge_fragments_cpp", (DL_FUNC) &_BPCells_iterate_merge_fragments_cpp, 1},
-    {"_BPCells_write_matrix_transpose_uint32_t_cpp", (DL_FUNC) &_BPCells_write_matrix_transpose_uint32_t_cpp, 4},
-    {"_BPCells_write_matrix_transpose_float_cpp", (DL_FUNC) &_BPCells_write_matrix_transpose_float_cpp, 4},
-    {"_BPCells_write_matrix_transpose_double_cpp", (DL_FUNC) &_BPCells_write_matrix_transpose_double_cpp, 4},
-    {"_BPCells_iterate_packed_matrix_mem_uint32_t_cpp", (DL_FUNC) &_BPCells_iterate_packed_matrix_mem_uint32_t_cpp, 3},
-    {"_BPCells_iterate_unpacked_matrix_mem_uint32_t_cpp", (DL_FUNC) &_BPCells_iterate_unpacked_matrix_mem_uint32_t_cpp, 3},
-    {"_BPCells_iterate_packed_matrix_mem_float_cpp", (DL_FUNC) &_BPCells_iterate_packed_matrix_mem_float_cpp, 3},
-    {"_BPCells_iterate_unpacked_matrix_mem_float_cpp", (DL_FUNC) &_BPCells_iterate_unpacked_matrix_mem_float_cpp, 3},
-    {"_BPCells_iterate_packed_matrix_mem_double_cpp", (DL_FUNC) &_BPCells_iterate_packed_matrix_mem_double_cpp, 3},
-    {"_BPCells_iterate_unpacked_matrix_mem_double_cpp", (DL_FUNC) &_BPCells_iterate_unpacked_matrix_mem_double_cpp, 3},
-    {"_BPCells_write_packed_matrix_mem_uint32_t_cpp", (DL_FUNC) &_BPCells_write_packed_matrix_mem_uint32_t_cpp, 1},
-    {"_BPCells_write_unpacked_matrix_mem_uint32_t_cpp", (DL_FUNC) &_BPCells_write_unpacked_matrix_mem_uint32_t_cpp, 1},
-    {"_BPCells_write_packed_matrix_mem_float_cpp", (DL_FUNC) &_BPCells_write_packed_matrix_mem_float_cpp, 1},
-    {"_BPCells_write_unpacked_matrix_mem_float_cpp", (DL_FUNC) &_BPCells_write_unpacked_matrix_mem_float_cpp, 1},
-    {"_BPCells_write_packed_matrix_mem_double_cpp", (DL_FUNC) &_BPCells_write_packed_matrix_mem_double_cpp, 1},
-    {"_BPCells_write_unpacked_matrix_mem_double_cpp", (DL_FUNC) &_BPCells_write_unpacked_matrix_mem_double_cpp, 1},
+    {"_BPCells_write_matrix_transpose_uint32_t_cpp", (DL_FUNC) &_BPCells_write_matrix_transpose_uint32_t_cpp, 6},
+    {"_BPCells_write_matrix_transpose_float_cpp", (DL_FUNC) &_BPCells_write_matrix_transpose_float_cpp, 6},
+    {"_BPCells_write_matrix_transpose_double_cpp", (DL_FUNC) &_BPCells_write_matrix_transpose_double_cpp, 6},
+    {"_BPCells_iterate_packed_matrix_mem_uint32_t_cpp", (DL_FUNC) &_BPCells_iterate_packed_matrix_mem_uint32_t_cpp, 4},
+    {"_BPCells_iterate_unpacked_matrix_mem_uint32_t_cpp", (DL_FUNC) &_BPCells_iterate_unpacked_matrix_mem_uint32_t_cpp, 4},
+    {"_BPCells_iterate_packed_matrix_mem_float_cpp", (DL_FUNC) &_BPCells_iterate_packed_matrix_mem_float_cpp, 4},
+    {"_BPCells_iterate_unpacked_matrix_mem_float_cpp", (DL_FUNC) &_BPCells_iterate_unpacked_matrix_mem_float_cpp, 4},
+    {"_BPCells_iterate_packed_matrix_mem_double_cpp", (DL_FUNC) &_BPCells_iterate_packed_matrix_mem_double_cpp, 4},
+    {"_BPCells_iterate_unpacked_matrix_mem_double_cpp", (DL_FUNC) &_BPCells_iterate_unpacked_matrix_mem_double_cpp, 4},
+    {"_BPCells_write_packed_matrix_mem_uint32_t_cpp", (DL_FUNC) &_BPCells_write_packed_matrix_mem_uint32_t_cpp, 2},
+    {"_BPCells_write_unpacked_matrix_mem_uint32_t_cpp", (DL_FUNC) &_BPCells_write_unpacked_matrix_mem_uint32_t_cpp, 2},
+    {"_BPCells_write_packed_matrix_mem_float_cpp", (DL_FUNC) &_BPCells_write_packed_matrix_mem_float_cpp, 2},
+    {"_BPCells_write_unpacked_matrix_mem_float_cpp", (DL_FUNC) &_BPCells_write_unpacked_matrix_mem_float_cpp, 2},
+    {"_BPCells_write_packed_matrix_mem_double_cpp", (DL_FUNC) &_BPCells_write_packed_matrix_mem_double_cpp, 2},
+    {"_BPCells_write_unpacked_matrix_mem_double_cpp", (DL_FUNC) &_BPCells_write_unpacked_matrix_mem_double_cpp, 2},
     {"_BPCells_dims_matrix_file_cpp", (DL_FUNC) &_BPCells_dims_matrix_file_cpp, 2},
-    {"_BPCells_iterate_unpacked_matrix_file_uint32_t_cpp", (DL_FUNC) &_BPCells_iterate_unpacked_matrix_file_uint32_t_cpp, 4},
-    {"_BPCells_iterate_packed_matrix_file_uint32_t_cpp", (DL_FUNC) &_BPCells_iterate_packed_matrix_file_uint32_t_cpp, 4},
-    {"_BPCells_iterate_unpacked_matrix_file_float_cpp", (DL_FUNC) &_BPCells_iterate_unpacked_matrix_file_float_cpp, 4},
-    {"_BPCells_iterate_packed_matrix_file_float_cpp", (DL_FUNC) &_BPCells_iterate_packed_matrix_file_float_cpp, 4},
-    {"_BPCells_iterate_unpacked_matrix_file_double_cpp", (DL_FUNC) &_BPCells_iterate_unpacked_matrix_file_double_cpp, 4},
-    {"_BPCells_iterate_packed_matrix_file_double_cpp", (DL_FUNC) &_BPCells_iterate_packed_matrix_file_double_cpp, 4},
-    {"_BPCells_write_unpacked_matrix_file_uint32_t_cpp", (DL_FUNC) &_BPCells_write_unpacked_matrix_file_uint32_t_cpp, 3},
-    {"_BPCells_write_packed_matrix_file_uint32_t_cpp", (DL_FUNC) &_BPCells_write_packed_matrix_file_uint32_t_cpp, 3},
-    {"_BPCells_write_unpacked_matrix_file_float_cpp", (DL_FUNC) &_BPCells_write_unpacked_matrix_file_float_cpp, 3},
-    {"_BPCells_write_packed_matrix_file_float_cpp", (DL_FUNC) &_BPCells_write_packed_matrix_file_float_cpp, 3},
-    {"_BPCells_write_unpacked_matrix_file_double_cpp", (DL_FUNC) &_BPCells_write_unpacked_matrix_file_double_cpp, 3},
-    {"_BPCells_write_packed_matrix_file_double_cpp", (DL_FUNC) &_BPCells_write_packed_matrix_file_double_cpp, 3},
+    {"_BPCells_iterate_unpacked_matrix_file_uint32_t_cpp", (DL_FUNC) &_BPCells_iterate_unpacked_matrix_file_uint32_t_cpp, 5},
+    {"_BPCells_iterate_packed_matrix_file_uint32_t_cpp", (DL_FUNC) &_BPCells_iterate_packed_matrix_file_uint32_t_cpp, 5},
+    {"_BPCells_iterate_unpacked_matrix_file_float_cpp", (DL_FUNC) &_BPCells_iterate_unpacked_matrix_file_float_cpp, 5},
+    {"_BPCells_iterate_packed_matrix_file_float_cpp", (DL_FUNC) &_BPCells_iterate_packed_matrix_file_float_cpp, 5},
+    {"_BPCells_iterate_unpacked_matrix_file_double_cpp", (DL_FUNC) &_BPCells_iterate_unpacked_matrix_file_double_cpp, 5},
+    {"_BPCells_iterate_packed_matrix_file_double_cpp", (DL_FUNC) &_BPCells_iterate_packed_matrix_file_double_cpp, 5},
+    {"_BPCells_write_unpacked_matrix_file_uint32_t_cpp", (DL_FUNC) &_BPCells_write_unpacked_matrix_file_uint32_t_cpp, 4},
+    {"_BPCells_write_packed_matrix_file_uint32_t_cpp", (DL_FUNC) &_BPCells_write_packed_matrix_file_uint32_t_cpp, 4},
+    {"_BPCells_write_unpacked_matrix_file_float_cpp", (DL_FUNC) &_BPCells_write_unpacked_matrix_file_float_cpp, 4},
+    {"_BPCells_write_packed_matrix_file_float_cpp", (DL_FUNC) &_BPCells_write_packed_matrix_file_float_cpp, 4},
+    {"_BPCells_write_unpacked_matrix_file_double_cpp", (DL_FUNC) &_BPCells_write_unpacked_matrix_file_double_cpp, 4},
+    {"_BPCells_write_packed_matrix_file_double_cpp", (DL_FUNC) &_BPCells_write_packed_matrix_file_double_cpp, 4},
     {"_BPCells_dims_matrix_hdf5_cpp", (DL_FUNC) &_BPCells_dims_matrix_hdf5_cpp, 3},
-    {"_BPCells_iterate_unpacked_matrix_hdf5_uint32_t_cpp", (DL_FUNC) &_BPCells_iterate_unpacked_matrix_hdf5_uint32_t_cpp, 5},
-    {"_BPCells_iterate_packed_matrix_hdf5_uint32_t_cpp", (DL_FUNC) &_BPCells_iterate_packed_matrix_hdf5_uint32_t_cpp, 5},
-    {"_BPCells_iterate_unpacked_matrix_hdf5_float_cpp", (DL_FUNC) &_BPCells_iterate_unpacked_matrix_hdf5_float_cpp, 5},
-    {"_BPCells_iterate_packed_matrix_hdf5_float_cpp", (DL_FUNC) &_BPCells_iterate_packed_matrix_hdf5_float_cpp, 5},
-    {"_BPCells_iterate_unpacked_matrix_hdf5_double_cpp", (DL_FUNC) &_BPCells_iterate_unpacked_matrix_hdf5_double_cpp, 5},
-    {"_BPCells_iterate_packed_matrix_hdf5_double_cpp", (DL_FUNC) &_BPCells_iterate_packed_matrix_hdf5_double_cpp, 5},
-    {"_BPCells_write_unpacked_matrix_hdf5_uint32_t_cpp", (DL_FUNC) &_BPCells_write_unpacked_matrix_hdf5_uint32_t_cpp, 5},
-    {"_BPCells_write_packed_matrix_hdf5_uint32_t_cpp", (DL_FUNC) &_BPCells_write_packed_matrix_hdf5_uint32_t_cpp, 5},
-    {"_BPCells_write_unpacked_matrix_hdf5_float_cpp", (DL_FUNC) &_BPCells_write_unpacked_matrix_hdf5_float_cpp, 5},
-    {"_BPCells_write_packed_matrix_hdf5_float_cpp", (DL_FUNC) &_BPCells_write_packed_matrix_hdf5_float_cpp, 5},
-    {"_BPCells_write_unpacked_matrix_hdf5_double_cpp", (DL_FUNC) &_BPCells_write_unpacked_matrix_hdf5_double_cpp, 5},
-    {"_BPCells_write_packed_matrix_hdf5_double_cpp", (DL_FUNC) &_BPCells_write_packed_matrix_hdf5_double_cpp, 5},
+    {"_BPCells_iterate_unpacked_matrix_hdf5_uint32_t_cpp", (DL_FUNC) &_BPCells_iterate_unpacked_matrix_hdf5_uint32_t_cpp, 6},
+    {"_BPCells_iterate_packed_matrix_hdf5_uint32_t_cpp", (DL_FUNC) &_BPCells_iterate_packed_matrix_hdf5_uint32_t_cpp, 6},
+    {"_BPCells_iterate_unpacked_matrix_hdf5_float_cpp", (DL_FUNC) &_BPCells_iterate_unpacked_matrix_hdf5_float_cpp, 6},
+    {"_BPCells_iterate_packed_matrix_hdf5_float_cpp", (DL_FUNC) &_BPCells_iterate_packed_matrix_hdf5_float_cpp, 6},
+    {"_BPCells_iterate_unpacked_matrix_hdf5_double_cpp", (DL_FUNC) &_BPCells_iterate_unpacked_matrix_hdf5_double_cpp, 6},
+    {"_BPCells_iterate_packed_matrix_hdf5_double_cpp", (DL_FUNC) &_BPCells_iterate_packed_matrix_hdf5_double_cpp, 6},
+    {"_BPCells_write_unpacked_matrix_hdf5_uint32_t_cpp", (DL_FUNC) &_BPCells_write_unpacked_matrix_hdf5_uint32_t_cpp, 6},
+    {"_BPCells_write_packed_matrix_hdf5_uint32_t_cpp", (DL_FUNC) &_BPCells_write_packed_matrix_hdf5_uint32_t_cpp, 6},
+    {"_BPCells_write_unpacked_matrix_hdf5_float_cpp", (DL_FUNC) &_BPCells_write_unpacked_matrix_hdf5_float_cpp, 6},
+    {"_BPCells_write_packed_matrix_hdf5_float_cpp", (DL_FUNC) &_BPCells_write_packed_matrix_hdf5_float_cpp, 6},
+    {"_BPCells_write_unpacked_matrix_hdf5_double_cpp", (DL_FUNC) &_BPCells_write_unpacked_matrix_hdf5_double_cpp, 6},
+    {"_BPCells_write_packed_matrix_hdf5_double_cpp", (DL_FUNC) &_BPCells_write_packed_matrix_hdf5_double_cpp, 6},
     {"_BPCells_dims_matrix_10x_hdf5_cpp", (DL_FUNC) &_BPCells_dims_matrix_10x_hdf5_cpp, 2},
     {"_BPCells_iterate_matrix_10x_hdf5_cpp", (DL_FUNC) &_BPCells_iterate_matrix_10x_hdf5_cpp, 2},
     {"_BPCells_dims_matrix_anndata_hdf5_cpp", (DL_FUNC) &_BPCells_dims_matrix_anndata_hdf5_cpp, 3},

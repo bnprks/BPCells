@@ -9,6 +9,7 @@ namespace BPCells {
 // Main class for accessing matrices stored on disk.
 // Templated to help with compatibility reading 10x and AnnData matrix formats.
 // Supports uint, ulong, float, and double types. Only uint supports bitpacking compression of values.
+// Row-major matrices will be loaded as their column-major transpose
 template<class T>
 class StoredMatrix: public MatrixLoader<T> {
 private:
@@ -27,12 +28,12 @@ public:
     StoredMatrix(StoredMatrix &&other) = default;
     StoredMatrix& operator=(StoredMatrix &&other) = default;
     StoredMatrix(NumReader<uint32_t> &&row, NumReader<T> &&val, NumReader<uint32_t> &&col_ptr, 
-        NumReader<uint32_t> &&row_count, 
+        uint32_t row_count, 
         std::unique_ptr<StringReader> &&row_names,
         std::unique_ptr<StringReader> &&col_names) :
         row(std::move(row)), val(std::move(val)), col_ptr(std::move(col_ptr)), 
         row_names(std::move(row_names)), col_names(std::move(col_names)),
-        n_rows(row_count.read_one()), n_cols(this->col_ptr.size() - 1),
+        n_rows(row_count), n_cols(this->col_ptr.size() - 1),
         next_col_ptr(this->col_ptr.read_one()) {}
 
     static std::string versionString(bool packed) {
@@ -55,31 +56,52 @@ public:
         return ret;
     }
 
-    static StoredMatrix<T> openUnpacked(ReaderBuilder &rb, std::unique_ptr<StringReader> &&row_names, std::unique_ptr<StringReader> &&col_names) {
+    // Open an unpacked StoredMatrix from a ReaderBuilder in a column-major orientation
+    static StoredMatrix<T> openUnpacked(ReaderBuilder &rb, std::unique_ptr<StringReader> &&row_names, std::unique_ptr<StringReader> &&col_names, uint32_t row_count) {
         if (rb.readVersion() != versionString(false)) {
             throw std::runtime_error(std::string("Version does not match ") + versionString(false) + ": " + rb.readVersion());
         }
 
         return StoredMatrix<T>(
-            rb.openUIntReader("row"),
+            rb.openUIntReader("index"),
             rb.open<T>("val"),
-            rb.openUIntReader("col_ptr"),
-            rb.openUIntReader("row_count"),
+            rb.openUIntReader("idxptr"),
+            row_count,
             std::move(row_names),
             std::move(col_names)
         );
     }
+
+    // Open an unpacked StoredMatrix from a ReaderBuilder, converting row-major orientation to column-major as needed
     static StoredMatrix<T> openUnpacked(ReaderBuilder &rb) {
-        return StoredMatrix<T>::openUnpacked(rb, rb.openStringReader("row_names"), rb.openStringReader("col_names"));
+        auto storage_order_reader = rb.openStringReader("storage_order");
+        auto storage_order = storage_order_reader->get(0);
+
+        bool row_major = false;
+        if (std::string_view("row") == storage_order) row_major = true;
+        else if (std::string("col") == storage_order) row_major = false;
+        else throw std::runtime_error(std::string("storage_order must be either \"row\" or \"col\", found: \"") + storage_order + "\"");
+
+        auto row_names = rb.openStringReader("row_names");
+        auto col_names = rb.openStringReader("col_names");
+
+        auto shape = rb.openUIntReader("shape");
+        uint32_t row_count = shape.read_one();
+        if (row_major) {
+            row_count = shape.read_one();
+            std::swap(row_names, col_names);
+        }
+
+        return StoredMatrix<T>::openUnpacked(rb, std::move(row_names), std::move(col_names), row_count);
     }
 
-
-    static StoredMatrix<T> openPacked(ReaderBuilder &rb, uint32_t load_size, std::unique_ptr<StringReader> &&row_names, std::unique_ptr<StringReader> &&col_names) {
+    // Open a packed StoredMatrix from a ReaderBuilder in a column-major orientation
+    static StoredMatrix<T> openPacked(ReaderBuilder &rb, uint32_t load_size, std::unique_ptr<StringReader> &&row_names, std::unique_ptr<StringReader> &&col_names, uint32_t row_count) {
         if (rb.readVersion() != versionString(true)) {
             throw std::runtime_error(std::string("Version does not match ") + versionString(true) + ": " + rb.readVersion());
         }
 
-        UIntReader col_ptr = rb.openUIntReader("col_ptr");
+        UIntReader col_ptr = rb.openUIntReader("idxptr");
         col_ptr.seek(col_ptr.size() - 1);
         uint32_t count = col_ptr.read_one();
         col_ptr.seek(0);
@@ -101,22 +123,42 @@ public:
         return StoredMatrix(
             UIntReader(
                 std::make_unique<BP128_D1Z_UIntReader>(
-                    rb.openUIntReader("row_data"),
-                    rb.openUIntReader("row_idx"),
-                    rb.openUIntReader("row_starts"),
+                    rb.openUIntReader("index_data"),
+                    rb.openUIntReader("index_idx"),
+                    rb.openUIntReader("index_starts"),
                     count
                 ),
                 load_size, load_size
             ),
             std::move(val),
             std::move(col_ptr),
-            rb.openUIntReader("row_count"),
+            row_count,
             std::move(row_names),
             std::move(col_names)
         );
     }
+
+    // Open a packed StoredMatrix from a ReaderBuilder, converting row-major orientation to column-major as needed
     static StoredMatrix<T> openPacked(ReaderBuilder &rb, uint32_t load_size=1024) {
-        return StoredMatrix<T>::openPacked(rb, load_size, rb.openStringReader("row_names"), rb.openStringReader("col_names"));
+        auto storage_order_reader = rb.openStringReader("storage_order");
+        auto storage_order = storage_order_reader->get(0);
+
+        bool row_major = false;
+        if (std::string_view("row") == storage_order) row_major = true;
+        else if (std::string("col") == storage_order) row_major = false;
+        else throw std::runtime_error(std::string("storage_order must be either \"row\" or \"col\", found: \"") + storage_order + "\"");
+
+        auto row_names = rb.openStringReader("row_names");
+        auto col_names = rb.openStringReader("col_names");
+
+        auto shape = rb.openUIntReader("shape");
+        uint32_t row_count = shape.read_one();
+        if (row_major) {
+            row_count = shape.read_one();
+            std::swap(row_names, col_names);
+        }
+
+        return StoredMatrix<T>::openPacked(rb, load_size, std::move(row_names), std::move(col_names), row_count);
     }
 
     // Return the count of rows and columns

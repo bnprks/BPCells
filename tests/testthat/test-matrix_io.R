@@ -1,14 +1,16 @@
 generate_sparse_matrix <- function(nrow, ncol, fraction_nonzero=0.5, max_val=10) {
     m <- matrix(rbinom(nrow*ncol, 1, fraction_nonzero)*sample.int(max_val, nrow*ncol, replace=TRUE), nrow=nrow)
+    rownames(m) <- paste0("row", seq_len(nrow(m)))
+    colnames(m) <- paste0("col", seq_len(ncol(m)))
     as(m, "dgCMatrix")
 }
 
 
 test_that("Memory Matrix round-trips", {
     args <- list(
-        list(nrow=10, ncol=10, fraction_nonzero=0.2, max_val=10),
-        list(nrow=100, ncol=100, fraction_nonzero=0.2, max_val=100),
-        list(nrow=1000, ncol=1000, fraction_nonzero=0.1, max_val=1000)
+        list(nrow=10, ncol=9, fraction_nonzero=0.2, max_val=10),
+        list(nrow=100, ncol=99, fraction_nonzero=0.2, max_val=100),
+        list(nrow=1000, ncol=999, fraction_nonzero=0.1, max_val=1000)
     )
     for (a in args) {
         m <- do.call(generate_sparse_matrix, a)
@@ -16,10 +18,19 @@ test_that("Memory Matrix round-trips", {
             m2 <- m %>% as("IterableMatrix") %>% convert_matrix_type(type)
             mp <- write_matrix_memory(m2, compress = TRUE)
             mu <- write_matrix_memory(m2, compress = FALSE)
+
+            mp_t <- write_matrix_memory(t(m2), compress = TRUE)
+            mu_t <- write_matrix_memory(t(m2), compress = FALSE)
+
             expect_equal(m, as(mp, "dgCMatrix"))
             expect_equal(m, as(mu, "dgCMatrix"))
             expect_equal(matrix_type(mp), type)
             expect_equal(matrix_type(mu), type)
+            
+            expect_equal(t(m), as(mp_t, "dgCMatrix"))
+            expect_equal(t(m), as(mu_t, "dgCMatrix"))
+            expect_equal(matrix_type(mp_t), type)
+            expect_equal(matrix_type(mu_t), type)
             expect_equal(mu, write_matrix_memory(mp, compress=FALSE))
         }
     }
@@ -28,9 +39,9 @@ test_that("Memory Matrix round-trips", {
 test_that("DirPacked Matrix round-trips", {
     dir <- withr::local_tempdir()
     args <- list(
-        list(nrow=10, ncol=10, fraction_nonzero=0.2, max_val=10),
-        list(nrow=100, ncol=100, fraction_nonzero=0.2, max_val=100),
-        list(nrow=1000, ncol=1000, fraction_nonzero=0.1, max_val=1000)
+        list(nrow=10, ncol=9, fraction_nonzero=0.2, max_val=10),
+        list(nrow=100, ncol=99, fraction_nonzero=0.2, max_val=100),
+        list(nrow=1000, ncol=999, fraction_nonzero=0.1, max_val=1000)
     )
     for (a in args) {
         m <- do.call(generate_sparse_matrix, a)
@@ -45,6 +56,13 @@ test_that("DirPacked Matrix round-trips", {
             expect_equal(matrix_type(mu), type)
             expect_equal(mem, write_matrix_memory(mp, compress = FALSE))
             expect_equal(mem, write_matrix_memory(mu, compress = FALSE))
+
+            mp_t <- write_matrix_dir(t(m2), file.path(dir, "t_packed", type, a[["nrow"]]), compress = TRUE)
+            mu_t <- write_matrix_dir(t(m2), file.path(dir, "t_unpacked", type, a[["nrow"]]), compress = FALSE)
+            expect_equal(t(m), as(mp_t, "dgCMatrix"))
+            expect_equal(t(m), as(mu_t, "dgCMatrix"))
+            expect_equal(matrix_type(mp_t), type)
+            expect_equal(matrix_type(mu_t), type)
         }
     }
 })
@@ -53,9 +71,9 @@ test_that("DirPacked Matrix round-trips", {
 test_that("H5Packed Matrix round-trips", {
     dir <- withr::local_tempdir()
     args <- list(
-        list(nrow=10, ncol=10, fraction_nonzero=0.2, max_val=10),
-        list(nrow=100, ncol=100, fraction_nonzero=0.2, max_val=100),
-        list(nrow=1000, ncol=1000, fraction_nonzero=0.1, max_val=1000)
+        list(nrow=10, ncol=9, fraction_nonzero=0.2, max_val=10),
+        list(nrow=100, ncol=99, fraction_nonzero=0.2, max_val=100),
+        list(nrow=1000, ncol=999, fraction_nonzero=0.1, max_val=1000)
     )
     for (a in args) {
         m <- do.call(generate_sparse_matrix, a) 
@@ -71,6 +89,13 @@ test_that("H5Packed Matrix round-trips", {
             expect_equal(matrix_type(mu), type)
             expect_equal(mem, write_matrix_memory(mp, compress = FALSE))
             expect_equal(mem, write_matrix_memory(mu, compress = FALSE))
+
+            mu_t <- write_matrix_hdf5(t(m2), file.path(dir, "subdir", type, "file.h5"), paste0("t_packed/", as.character(a[["nrow"]])), compress=FALSE)
+            mp_t <- write_matrix_hdf5(t(m2), file.path(dir, "subdir", type, "file.h5"), paste0("t_unpacked/", as.character(a[["nrow"]])), compress=TRUE)
+            expect_equal(t(m), as(mp_t, "dgCMatrix"))
+            expect_equal(t(m), as(mu_t, "dgCMatrix"))
+            expect_equal(matrix_type(mp_t), type)
+            expect_equal(matrix_type(mu_t), type)
         }
     }
 })
@@ -109,27 +134,25 @@ test_that("Packed Matrix works on all bit widths", {
     expect_equal(m, as(mp, "dgCMatrix"))
 })
 
-test_that("Saving matrix tranpose works", {
+test_that("Transpose storage order works", {
     dir <- withr::local_tempdir()
     args <- list(
-        list(nrow=10, ncol=10, fraction_nonzero=0.2, max_val=10),
-        list(nrow=100, ncol=100, fraction_nonzero=0.2, max_val=100),
-        list(nrow=1000, ncol=1000, fraction_nonzero=0.1, max_val=1000)
+        list(nrow=10, ncol=9, fraction_nonzero=0.2, max_val=10),
+        list(nrow=100, ncol=99, fraction_nonzero=0.2, max_val=100),
+        list(nrow=1000, ncol=999, fraction_nonzero=0.1, max_val=1000)
     )
     for (a in args) {
         m <- do.call(generate_sparse_matrix, a) 
         for (type in c("uint32_t", "float", "double")) {
             m2 <- m %>% as("IterableMatrix") %>% convert_matrix_type(type)
-            t_mem <- t(m2) %>% write_matrix_memory()
-            t_dir <- t(m2) %>% write_matrix_dir(file.path(dir, "packed", type, a[["nrow"]]), compress = TRUE)
-            t_hdf5 <- t(m2) %>% write_matrix_hdf5(file.path(dir, "subdir", type, "file.h5"), paste0("unpacked/", as.character(a[["nrow"]])), compress=TRUE)
 
-            t_m <- t(m)
+            out <- transpose_storage_order(m2)
+            out_t <- transpose_storage_order(t(m2))
             
-            expect_equal(t_m, as(t_mem, "dgCMatrix"))
-            expect_equal(t_m, as(t_dir, "dgCMatrix"))
-            expect_equal(t_m, as(t_hdf5, "dgCMatrix"))
+            expect_equal(out@transpose, TRUE)
+            expect_equal(out_t@transpose, FALSE)
+            expect_equal(m, as(out, "dgCMatrix"))
+            expect_equal(t(m), as(out_t, "dgCMatrix"))
         }
     }
-
 })

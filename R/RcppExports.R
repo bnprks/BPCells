@@ -153,168 +153,168 @@ iterate_merge_fragments_cpp <- function(fragments_list) {
     .Call(`_BPCells_iterate_merge_fragments_cpp`, fragments_list)
 }
 
-write_matrix_transpose_uint32_t_cpp <- function(matrix, tmpdir, load_bytes, sort_buffer_bytes) {
-    .Call(`_BPCells_write_matrix_transpose_uint32_t_cpp`, matrix, tmpdir, load_bytes, sort_buffer_bytes)
+write_matrix_transpose_uint32_t_cpp <- function(matrix, outdir, tmpdir, load_bytes, sort_buffer_bytes, row_major) {
+    .Call(`_BPCells_write_matrix_transpose_uint32_t_cpp`, matrix, outdir, tmpdir, load_bytes, sort_buffer_bytes, row_major)
 }
 
-write_matrix_transpose_float_cpp <- function(matrix, tmpdir, load_bytes, sort_buffer_bytes) {
-    .Call(`_BPCells_write_matrix_transpose_float_cpp`, matrix, tmpdir, load_bytes, sort_buffer_bytes)
+write_matrix_transpose_float_cpp <- function(matrix, outdir, tmpdir, load_bytes, sort_buffer_bytes, row_major) {
+    .Call(`_BPCells_write_matrix_transpose_float_cpp`, matrix, outdir, tmpdir, load_bytes, sort_buffer_bytes, row_major)
 }
 
-write_matrix_transpose_double_cpp <- function(matrix, tmpdir, load_bytes, sort_buffer_bytes) {
-    .Call(`_BPCells_write_matrix_transpose_double_cpp`, matrix, tmpdir, load_bytes, sort_buffer_bytes)
+write_matrix_transpose_double_cpp <- function(matrix, outdir, tmpdir, load_bytes, sort_buffer_bytes, row_major) {
+    .Call(`_BPCells_write_matrix_transpose_double_cpp`, matrix, outdir, tmpdir, load_bytes, sort_buffer_bytes, row_major)
 }
 
-iterate_packed_matrix_mem_uint32_t_cpp <- function(s4, row_names, col_names) {
-    .Call(`_BPCells_iterate_packed_matrix_mem_uint32_t_cpp`, s4, row_names, col_names)
+iterate_packed_matrix_mem_uint32_t_cpp <- function(s4, row_names, col_names, row_count) {
+    .Call(`_BPCells_iterate_packed_matrix_mem_uint32_t_cpp`, s4, row_names, col_names, row_count)
 }
 
-iterate_unpacked_matrix_mem_uint32_t_cpp <- function(s4, row_names, col_names) {
-    .Call(`_BPCells_iterate_unpacked_matrix_mem_uint32_t_cpp`, s4, row_names, col_names)
+iterate_unpacked_matrix_mem_uint32_t_cpp <- function(s4, row_names, col_names, row_count) {
+    .Call(`_BPCells_iterate_unpacked_matrix_mem_uint32_t_cpp`, s4, row_names, col_names, row_count)
 }
 
-iterate_packed_matrix_mem_float_cpp <- function(s4, row_names, col_names) {
-    .Call(`_BPCells_iterate_packed_matrix_mem_float_cpp`, s4, row_names, col_names)
+iterate_packed_matrix_mem_float_cpp <- function(s4, row_names, col_names, row_count) {
+    .Call(`_BPCells_iterate_packed_matrix_mem_float_cpp`, s4, row_names, col_names, row_count)
 }
 
-iterate_unpacked_matrix_mem_float_cpp <- function(s4, row_names, col_names) {
-    .Call(`_BPCells_iterate_unpacked_matrix_mem_float_cpp`, s4, row_names, col_names)
+iterate_unpacked_matrix_mem_float_cpp <- function(s4, row_names, col_names, row_count) {
+    .Call(`_BPCells_iterate_unpacked_matrix_mem_float_cpp`, s4, row_names, col_names, row_count)
 }
 
-iterate_packed_matrix_mem_double_cpp <- function(s4, row_names, col_names) {
-    .Call(`_BPCells_iterate_packed_matrix_mem_double_cpp`, s4, row_names, col_names)
+iterate_packed_matrix_mem_double_cpp <- function(s4, row_names, col_names, row_count) {
+    .Call(`_BPCells_iterate_packed_matrix_mem_double_cpp`, s4, row_names, col_names, row_count)
 }
 
-iterate_unpacked_matrix_mem_double_cpp <- function(s4, row_names, col_names) {
-    .Call(`_BPCells_iterate_unpacked_matrix_mem_double_cpp`, s4, row_names, col_names)
+iterate_unpacked_matrix_mem_double_cpp <- function(s4, row_names, col_names, row_count) {
+    .Call(`_BPCells_iterate_unpacked_matrix_mem_double_cpp`, s4, row_names, col_names, row_count)
 }
 
-write_packed_matrix_mem_uint32_t_cpp <- function(matrix) {
-    .Call(`_BPCells_write_packed_matrix_mem_uint32_t_cpp`, matrix)
+write_packed_matrix_mem_uint32_t_cpp <- function(matrix, row_major) {
+    .Call(`_BPCells_write_packed_matrix_mem_uint32_t_cpp`, matrix, row_major)
 }
 
-write_unpacked_matrix_mem_uint32_t_cpp <- function(matrix) {
-    .Call(`_BPCells_write_unpacked_matrix_mem_uint32_t_cpp`, matrix)
+write_unpacked_matrix_mem_uint32_t_cpp <- function(matrix, row_major) {
+    .Call(`_BPCells_write_unpacked_matrix_mem_uint32_t_cpp`, matrix, row_major)
 }
 
-write_packed_matrix_mem_float_cpp <- function(matrix) {
-    .Call(`_BPCells_write_packed_matrix_mem_float_cpp`, matrix)
+write_packed_matrix_mem_float_cpp <- function(matrix, row_major) {
+    .Call(`_BPCells_write_packed_matrix_mem_float_cpp`, matrix, row_major)
 }
 
-write_unpacked_matrix_mem_float_cpp <- function(matrix) {
-    .Call(`_BPCells_write_unpacked_matrix_mem_float_cpp`, matrix)
+write_unpacked_matrix_mem_float_cpp <- function(matrix, row_major) {
+    .Call(`_BPCells_write_unpacked_matrix_mem_float_cpp`, matrix, row_major)
 }
 
-write_packed_matrix_mem_double_cpp <- function(matrix) {
-    .Call(`_BPCells_write_packed_matrix_mem_double_cpp`, matrix)
+write_packed_matrix_mem_double_cpp <- function(matrix, row_major) {
+    .Call(`_BPCells_write_packed_matrix_mem_double_cpp`, matrix, row_major)
 }
 
-write_unpacked_matrix_mem_double_cpp <- function(matrix) {
-    .Call(`_BPCells_write_unpacked_matrix_mem_double_cpp`, matrix)
+write_unpacked_matrix_mem_double_cpp <- function(matrix, row_major) {
+    .Call(`_BPCells_write_unpacked_matrix_mem_double_cpp`, matrix, row_major)
 }
 
 dims_matrix_file_cpp <- function(dir, buffer_size) {
     .Call(`_BPCells_dims_matrix_file_cpp`, dir, buffer_size)
 }
 
-iterate_unpacked_matrix_file_uint32_t_cpp <- function(dir, buffer_size, row_names, col_names) {
-    .Call(`_BPCells_iterate_unpacked_matrix_file_uint32_t_cpp`, dir, buffer_size, row_names, col_names)
+iterate_unpacked_matrix_file_uint32_t_cpp <- function(dir, buffer_size, row_names, col_names, row_count) {
+    .Call(`_BPCells_iterate_unpacked_matrix_file_uint32_t_cpp`, dir, buffer_size, row_names, col_names, row_count)
 }
 
-iterate_packed_matrix_file_uint32_t_cpp <- function(dir, buffer_size, row_names, col_names) {
-    .Call(`_BPCells_iterate_packed_matrix_file_uint32_t_cpp`, dir, buffer_size, row_names, col_names)
+iterate_packed_matrix_file_uint32_t_cpp <- function(dir, buffer_size, row_names, col_names, row_count) {
+    .Call(`_BPCells_iterate_packed_matrix_file_uint32_t_cpp`, dir, buffer_size, row_names, col_names, row_count)
 }
 
-iterate_unpacked_matrix_file_float_cpp <- function(dir, buffer_size, row_names, col_names) {
-    .Call(`_BPCells_iterate_unpacked_matrix_file_float_cpp`, dir, buffer_size, row_names, col_names)
+iterate_unpacked_matrix_file_float_cpp <- function(dir, buffer_size, row_names, col_names, row_count) {
+    .Call(`_BPCells_iterate_unpacked_matrix_file_float_cpp`, dir, buffer_size, row_names, col_names, row_count)
 }
 
-iterate_packed_matrix_file_float_cpp <- function(dir, buffer_size, row_names, col_names) {
-    .Call(`_BPCells_iterate_packed_matrix_file_float_cpp`, dir, buffer_size, row_names, col_names)
+iterate_packed_matrix_file_float_cpp <- function(dir, buffer_size, row_names, col_names, row_count) {
+    .Call(`_BPCells_iterate_packed_matrix_file_float_cpp`, dir, buffer_size, row_names, col_names, row_count)
 }
 
-iterate_unpacked_matrix_file_double_cpp <- function(dir, buffer_size, row_names, col_names) {
-    .Call(`_BPCells_iterate_unpacked_matrix_file_double_cpp`, dir, buffer_size, row_names, col_names)
+iterate_unpacked_matrix_file_double_cpp <- function(dir, buffer_size, row_names, col_names, row_count) {
+    .Call(`_BPCells_iterate_unpacked_matrix_file_double_cpp`, dir, buffer_size, row_names, col_names, row_count)
 }
 
-iterate_packed_matrix_file_double_cpp <- function(dir, buffer_size, row_names, col_names) {
-    .Call(`_BPCells_iterate_packed_matrix_file_double_cpp`, dir, buffer_size, row_names, col_names)
+iterate_packed_matrix_file_double_cpp <- function(dir, buffer_size, row_names, col_names, row_count) {
+    .Call(`_BPCells_iterate_packed_matrix_file_double_cpp`, dir, buffer_size, row_names, col_names, row_count)
 }
 
-write_unpacked_matrix_file_uint32_t_cpp <- function(matrix, dir, buffer_size) {
-    invisible(.Call(`_BPCells_write_unpacked_matrix_file_uint32_t_cpp`, matrix, dir, buffer_size))
+write_unpacked_matrix_file_uint32_t_cpp <- function(matrix, dir, buffer_size, row_major) {
+    invisible(.Call(`_BPCells_write_unpacked_matrix_file_uint32_t_cpp`, matrix, dir, buffer_size, row_major))
 }
 
-write_packed_matrix_file_uint32_t_cpp <- function(matrix, dir, buffer_size) {
-    invisible(.Call(`_BPCells_write_packed_matrix_file_uint32_t_cpp`, matrix, dir, buffer_size))
+write_packed_matrix_file_uint32_t_cpp <- function(matrix, dir, buffer_size, row_major) {
+    invisible(.Call(`_BPCells_write_packed_matrix_file_uint32_t_cpp`, matrix, dir, buffer_size, row_major))
 }
 
-write_unpacked_matrix_file_float_cpp <- function(matrix, dir, buffer_size) {
-    invisible(.Call(`_BPCells_write_unpacked_matrix_file_float_cpp`, matrix, dir, buffer_size))
+write_unpacked_matrix_file_float_cpp <- function(matrix, dir, buffer_size, row_major) {
+    invisible(.Call(`_BPCells_write_unpacked_matrix_file_float_cpp`, matrix, dir, buffer_size, row_major))
 }
 
-write_packed_matrix_file_float_cpp <- function(matrix, dir, buffer_size) {
-    invisible(.Call(`_BPCells_write_packed_matrix_file_float_cpp`, matrix, dir, buffer_size))
+write_packed_matrix_file_float_cpp <- function(matrix, dir, buffer_size, row_major) {
+    invisible(.Call(`_BPCells_write_packed_matrix_file_float_cpp`, matrix, dir, buffer_size, row_major))
 }
 
-write_unpacked_matrix_file_double_cpp <- function(matrix, dir, buffer_size) {
-    invisible(.Call(`_BPCells_write_unpacked_matrix_file_double_cpp`, matrix, dir, buffer_size))
+write_unpacked_matrix_file_double_cpp <- function(matrix, dir, buffer_size, row_major) {
+    invisible(.Call(`_BPCells_write_unpacked_matrix_file_double_cpp`, matrix, dir, buffer_size, row_major))
 }
 
-write_packed_matrix_file_double_cpp <- function(matrix, dir, buffer_size) {
-    invisible(.Call(`_BPCells_write_packed_matrix_file_double_cpp`, matrix, dir, buffer_size))
+write_packed_matrix_file_double_cpp <- function(matrix, dir, buffer_size, row_major) {
+    invisible(.Call(`_BPCells_write_packed_matrix_file_double_cpp`, matrix, dir, buffer_size, row_major))
 }
 
 dims_matrix_hdf5_cpp <- function(file, group, buffer_size) {
     .Call(`_BPCells_dims_matrix_hdf5_cpp`, file, group, buffer_size)
 }
 
-iterate_unpacked_matrix_hdf5_uint32_t_cpp <- function(file, group, buffer_size, row_names, col_names) {
-    .Call(`_BPCells_iterate_unpacked_matrix_hdf5_uint32_t_cpp`, file, group, buffer_size, row_names, col_names)
+iterate_unpacked_matrix_hdf5_uint32_t_cpp <- function(file, group, buffer_size, row_names, col_names, row_count) {
+    .Call(`_BPCells_iterate_unpacked_matrix_hdf5_uint32_t_cpp`, file, group, buffer_size, row_names, col_names, row_count)
 }
 
-iterate_packed_matrix_hdf5_uint32_t_cpp <- function(file, group, buffer_size, row_names, col_names) {
-    .Call(`_BPCells_iterate_packed_matrix_hdf5_uint32_t_cpp`, file, group, buffer_size, row_names, col_names)
+iterate_packed_matrix_hdf5_uint32_t_cpp <- function(file, group, buffer_size, row_names, col_names, row_count) {
+    .Call(`_BPCells_iterate_packed_matrix_hdf5_uint32_t_cpp`, file, group, buffer_size, row_names, col_names, row_count)
 }
 
-iterate_unpacked_matrix_hdf5_float_cpp <- function(file, group, buffer_size, row_names, col_names) {
-    .Call(`_BPCells_iterate_unpacked_matrix_hdf5_float_cpp`, file, group, buffer_size, row_names, col_names)
+iterate_unpacked_matrix_hdf5_float_cpp <- function(file, group, buffer_size, row_names, col_names, row_count) {
+    .Call(`_BPCells_iterate_unpacked_matrix_hdf5_float_cpp`, file, group, buffer_size, row_names, col_names, row_count)
 }
 
-iterate_packed_matrix_hdf5_float_cpp <- function(file, group, buffer_size, row_names, col_names) {
-    .Call(`_BPCells_iterate_packed_matrix_hdf5_float_cpp`, file, group, buffer_size, row_names, col_names)
+iterate_packed_matrix_hdf5_float_cpp <- function(file, group, buffer_size, row_names, col_names, row_count) {
+    .Call(`_BPCells_iterate_packed_matrix_hdf5_float_cpp`, file, group, buffer_size, row_names, col_names, row_count)
 }
 
-iterate_unpacked_matrix_hdf5_double_cpp <- function(file, group, buffer_size, row_names, col_names) {
-    .Call(`_BPCells_iterate_unpacked_matrix_hdf5_double_cpp`, file, group, buffer_size, row_names, col_names)
+iterate_unpacked_matrix_hdf5_double_cpp <- function(file, group, buffer_size, row_names, col_names, row_count) {
+    .Call(`_BPCells_iterate_unpacked_matrix_hdf5_double_cpp`, file, group, buffer_size, row_names, col_names, row_count)
 }
 
-iterate_packed_matrix_hdf5_double_cpp <- function(file, group, buffer_size, row_names, col_names) {
-    .Call(`_BPCells_iterate_packed_matrix_hdf5_double_cpp`, file, group, buffer_size, row_names, col_names)
+iterate_packed_matrix_hdf5_double_cpp <- function(file, group, buffer_size, row_names, col_names, row_count) {
+    .Call(`_BPCells_iterate_packed_matrix_hdf5_double_cpp`, file, group, buffer_size, row_names, col_names, row_count)
 }
 
-write_unpacked_matrix_hdf5_uint32_t_cpp <- function(matrix, file, group, buffer_size, chunk_size) {
-    invisible(.Call(`_BPCells_write_unpacked_matrix_hdf5_uint32_t_cpp`, matrix, file, group, buffer_size, chunk_size))
+write_unpacked_matrix_hdf5_uint32_t_cpp <- function(matrix, file, group, buffer_size, chunk_size, row_major) {
+    invisible(.Call(`_BPCells_write_unpacked_matrix_hdf5_uint32_t_cpp`, matrix, file, group, buffer_size, chunk_size, row_major))
 }
 
-write_packed_matrix_hdf5_uint32_t_cpp <- function(matrix, file, group, buffer_size, chunk_size) {
-    invisible(.Call(`_BPCells_write_packed_matrix_hdf5_uint32_t_cpp`, matrix, file, group, buffer_size, chunk_size))
+write_packed_matrix_hdf5_uint32_t_cpp <- function(matrix, file, group, buffer_size, chunk_size, row_major) {
+    invisible(.Call(`_BPCells_write_packed_matrix_hdf5_uint32_t_cpp`, matrix, file, group, buffer_size, chunk_size, row_major))
 }
 
-write_unpacked_matrix_hdf5_float_cpp <- function(matrix, file, group, buffer_size, chunk_size) {
-    invisible(.Call(`_BPCells_write_unpacked_matrix_hdf5_float_cpp`, matrix, file, group, buffer_size, chunk_size))
+write_unpacked_matrix_hdf5_float_cpp <- function(matrix, file, group, buffer_size, chunk_size, row_major) {
+    invisible(.Call(`_BPCells_write_unpacked_matrix_hdf5_float_cpp`, matrix, file, group, buffer_size, chunk_size, row_major))
 }
 
-write_packed_matrix_hdf5_float_cpp <- function(matrix, file, group, buffer_size, chunk_size) {
-    invisible(.Call(`_BPCells_write_packed_matrix_hdf5_float_cpp`, matrix, file, group, buffer_size, chunk_size))
+write_packed_matrix_hdf5_float_cpp <- function(matrix, file, group, buffer_size, chunk_size, row_major) {
+    invisible(.Call(`_BPCells_write_packed_matrix_hdf5_float_cpp`, matrix, file, group, buffer_size, chunk_size, row_major))
 }
 
-write_unpacked_matrix_hdf5_double_cpp <- function(matrix, file, group, buffer_size, chunk_size) {
-    invisible(.Call(`_BPCells_write_unpacked_matrix_hdf5_double_cpp`, matrix, file, group, buffer_size, chunk_size))
+write_unpacked_matrix_hdf5_double_cpp <- function(matrix, file, group, buffer_size, chunk_size, row_major) {
+    invisible(.Call(`_BPCells_write_unpacked_matrix_hdf5_double_cpp`, matrix, file, group, buffer_size, chunk_size, row_major))
 }
 
-write_packed_matrix_hdf5_double_cpp <- function(matrix, file, group, buffer_size, chunk_size) {
-    invisible(.Call(`_BPCells_write_packed_matrix_hdf5_double_cpp`, matrix, file, group, buffer_size, chunk_size))
+write_packed_matrix_hdf5_double_cpp <- function(matrix, file, group, buffer_size, chunk_size, row_major) {
+    invisible(.Call(`_BPCells_write_packed_matrix_hdf5_double_cpp`, matrix, file, group, buffer_size, chunk_size, row_major))
 }
 
 dims_matrix_10x_hdf5_cpp <- function(file, buffer_size) {

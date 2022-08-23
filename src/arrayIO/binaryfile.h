@@ -124,7 +124,7 @@ protected:
     uint32_t buffer_size;
 public:
     FileWriterBuilder() = default;
-    FileWriterBuilder(std::string dir, uint32_t buffer_size);
+    FileWriterBuilder(std::string dir, uint32_t buffer_size = 8192);
     FileWriterBuilder& operator=(FileWriterBuilder&& other) = default;
     UIntWriter createUIntWriter(std::string name) override;
     ULongWriter createULongWriter(std::string name) override;
@@ -141,7 +141,7 @@ class FileReaderBuilder final : public ReaderBuilder {
     uint32_t read_size;
 public:
     FileReaderBuilder() = default;
-    FileReaderBuilder(std::string dir, uint32_t buffer_size, uint32_t read_size=1024);
+    FileReaderBuilder(std::string dir, uint32_t buffer_size = 8192, uint32_t read_size=1024);
     FileReaderBuilder& operator=(FileReaderBuilder&& other) = default;
     UIntReader openUIntReader(std::string name) override;
     ULongReader openULongReader(std::string name) override;

@@ -22,15 +22,15 @@ setClass("IterableMatrix",
 setMethod("dimnames<-", signature(x="IterableMatrix", value="list"), function(x, value) {
     d <- dim(x)
     has_error <- FALSE
-    if (!is.list(value) || length(value != 2)) has_error <- TRUE
+    if (!is.list(value) || length(value) != 2) has_error <- TRUE
     if (!is.null(value[[1]]) && length(value[[1]]) != d[1]) has_error <- TRUE
     if (!is.null(value[[2]]) && length(value[[2]]) != d[2]) has_error <- TRUE
     if (has_error) stop("Invalid dimnames supplied")
 
     if (!is.null(value[[1]])) x@dimnames[[1]] <- as.character(value[[1]])
-    else x@dimnames[[1]] <- NULL
+    else x@dimnames[1] <- list(NULL)
     if (!is.null(value[[2]])) x@dimnames[[2]] <- as.character(value[[2]])
-    else x@dimnames[[2]] <- NULL
+    else x@dimnames[2] <- list(NULL)
     x
 })
 setMethod("dimnames<-", signature(x="IterableMatrix", value="NULL"), function(x, value) {
@@ -136,7 +136,7 @@ setMethod("t", signature(x = "IterableMatrix"), function(x) {
 setMethod("%*%", signature(x="IterableMatrix", y="matrix"), function(x, y) {
     iter <- iterate_matrix(convert_matrix_type(x, "double"))
     if(x@transpose) {
-        return(Matrix::t(dense_multiply_left_cpp(ptr(iter), Matrix::t(y))))
+        return(t(dense_multiply_left_cpp(ptr(iter), t(y))))
     } else {
         return(dense_multiply_right_cpp(ptr(iter), y))
     }
@@ -145,7 +145,7 @@ setMethod("%*%", signature(x="IterableMatrix", y="matrix"), function(x, y) {
 setMethod("%*%", signature(x="matrix", y="IterableMatrix"), function(x, y) {
     iter <- iterate_matrix(convert_matrix_type(y, "double"))
     if(y@transpose) {
-        return(Matrix::t(dense_multiply_right_cpp(ptr(iter), Matrix::t(x))))
+        return(t(dense_multiply_right_cpp(ptr(iter), t(x))))
     } else {
         return(dense_multiply_left_cpp(ptr(iter), x))
     }
@@ -193,7 +193,7 @@ linear_operator <- function(mat) {
 
 setMethod("%*%", signature(x="LinearOperator", y="matrix"), function(x, y) {
     if(x@transpose) {
-        return(Matrix::t(dense_multiply_left_cpp(ptr(x@xptrlist), Matrix::t(y))))
+        return(t(dense_multiply_left_cpp(ptr(x@xptrlist), t(y))))
     } else {
         return(dense_multiply_right_cpp(ptr(x@xptrlist), y))
     }
@@ -201,7 +201,7 @@ setMethod("%*%", signature(x="LinearOperator", y="matrix"), function(x, y) {
 
 setMethod("%*%", signature(x="matrix", y="LinearOperator"), function(x, y) {
     if(y@transpose) {
-        return(Matrix::t(dense_multiply_right_cpp(ptr(y@xptrlist), Matrix::t(x))))
+        return(t(dense_multiply_right_cpp(ptr(y@xptrlist), t(x))))
     } else {
         return(dense_multiply_left_cpp(ptr(y@xptrlist), x))
     }
@@ -258,7 +258,7 @@ setMethod("short_description", "MatrixMultiply", function(x) {
 
 setMethod("%*%", signature(x="IterableMatrix", y="IterableMatrix"), function(x, y) {
     if (x@transpose != y@transpose) stop("Cannot multiply matrices with different interal transpose states.\nPlease convert one matrix to dgCMatrix, transpose, then re-convert to IterableMatrix.")
-    if (x@transpose) return(Matrix::t(Matrix::t(y) %*% Matrix::t(x)))
+    if (x@transpose) return(t(t(y) %*% t(x)))
 
     assert_true(ncol(x) == nrow(y))
 
@@ -458,7 +458,7 @@ setMethod("short_description", "RowBindMatrices", function(x) {
 
 setMethod("rbind2", signature(x="IterableMatrix", y="IterableMatrix"), function(x, y, ...) {
     if (x@transpose != y@transpose) stop("Cannot merge matrices with different interal transpose states.\nPlease convert one matrix to dgCMatrix, transpose, then re-convert to IterableMatrix.")
-    if (x@transpose) return(Matrix::t(cbind2(Matrix::t(x), Matrix::t(y))))
+    if (x@transpose) return(t(cbind2(t(x), t(y))))
 
     if (ncol(x) != ncol(y)) stop("Error in rbind: matrices must have equal number of columns")
     # Handle dimnames
@@ -507,7 +507,7 @@ setMethod("short_description", "ColBindMatrices", function(x) {
 
 setMethod("cbind2", signature(x="IterableMatrix", y="IterableMatrix"), function(x, y, ...) {
     if (x@transpose != y@transpose) stop("Cannot merge matrices with different interal transpose states.\nPlease convert one matrix to dgCMatrix, transpose, then re-convert to IterableMatrix.")
-    if (x@transpose) return(Matrix::t(rbind2(Matrix::t(x), Matrix::t(y))))
+    if (x@transpose) return(t(rbind2(t(x), t(y))))
 
     if (nrow(x) != nrow(y)) stop("Error in cbind: matrices must have equal number of columns")
     # Handle dimnames
@@ -530,22 +530,18 @@ setClass("PackedMatrixMemBase",
     contains = "IterableMatrix",
     slots = c(
         # Leave out val storage since it's datatype-dependent
-        row_data = "integer",   
-        row_starts = "integer", 
-        row_idx = "integer",
-        col_ptr = "integer",   
-        row_count = "integer",
-
+        index_data = "integer",   
+        index_starts = "integer", 
+        index_idx = "integer",
+        idxptr = "integer",   
         version = "character"
     ),
     prototype = list(
         # Leave out val storage since it's datatype-dependent
-        row_data = integer(0),   
-        row_starts = integer(0), 
-        row_idx = integer(0),
-        col_ptr = integer(0),   
-        row_count = integer(0),
-
+        index_data = integer(0),   
+        index_starts = integer(0), 
+        index_idx = integer(0),
+        idxptr = integer(0),   
         version = character(0)
     )
 )
@@ -566,8 +562,9 @@ setClass("PackedMatrixMem_uint32_t",
 )
 setMethod("matrix_type", "PackedMatrixMem_uint32_t", function(x) "uint32_t")
 setMethod("iterate_matrix", "PackedMatrixMem_uint32_t", function(x) {
+    if (x@transpose) x <- t(x)
     x@dimnames <- denormalize_dimnames(x@dimnames)
-    wrapMat_uint32_t(iterate_packed_matrix_mem_uint32_t_cpp(x, x@dimnames[[1]], x@dimnames[[2]]), new("XPtrList"))
+    wrapMat_uint32_t(iterate_packed_matrix_mem_uint32_t_cpp(x, x@dimnames[[1]], x@dimnames[[2]], nrow(x)), new("XPtrList"))
 })
 
 setClass("PackedMatrixMem_float",
@@ -577,8 +574,9 @@ setClass("PackedMatrixMem_float",
 )
 setMethod("matrix_type", "PackedMatrixMem_float", function(x) "float")
 setMethod("iterate_matrix", "PackedMatrixMem_float", function(x) {
+    if (x@transpose) x <- t(x)
     x@dimnames <- denormalize_dimnames(x@dimnames)
-    wrapMat_float(iterate_packed_matrix_mem_float_cpp(x, x@dimnames[[1]], x@dimnames[[2]]), new("XPtrList"))
+    wrapMat_float(iterate_packed_matrix_mem_float_cpp(x, x@dimnames[[1]], x@dimnames[[2]], nrow(x)), new("XPtrList"))
 })
 
 setClass("PackedMatrixMem_double",
@@ -588,25 +586,22 @@ setClass("PackedMatrixMem_double",
 )
 setMethod("matrix_type", "PackedMatrixMem_double", function(x) "double")
 setMethod("iterate_matrix", "PackedMatrixMem_double", function(x) {
+    if (x@transpose) x <- t(x)
     x@dimnames <- denormalize_dimnames(x@dimnames)
-    wrapMat_double(iterate_packed_matrix_mem_double_cpp(x, x@dimnames[[1]], x@dimnames[[2]]), new("XPtrList"))
+    wrapMat_double(iterate_packed_matrix_mem_double_cpp(x, x@dimnames[[1]], x@dimnames[[2]], nrow(x)), new("XPtrList"))
 })
 
 setClass("UnpackedMatrixMemBase",
     contains = "IterableMatrix",
     slots = c(
         # Leave out val storage since it's data-type dependent
-        row = "integer",    
-        col_ptr = "integer",   
-        row_count = "integer",
-
+        index = "integer",    
+        idxptr = "integer",   
         version="character"
     ),
     prototype = list(
-        row = integer(0),   
-        col_ptr = integer(0),   
-        row_count = integer(0),
-
+        index = integer(0),   
+        idxptr = integer(0),   
         version=character(0)
     )
 )
@@ -621,8 +616,9 @@ setClass("UnpackedMatrixMem_uint32_t",
 )
 setMethod("matrix_type", "UnpackedMatrixMem_uint32_t", function(x) "uint32_t")
 setMethod("iterate_matrix", "UnpackedMatrixMem_uint32_t", function(x) {
+    if (x@transpose) x <- t(x)
     x@dimnames <- denormalize_dimnames(x@dimnames)
-    wrapMat_uint32_t(iterate_unpacked_matrix_mem_uint32_t_cpp(x, x@dimnames[[1]], x@dimnames[[2]]), new("XPtrList"))
+    wrapMat_uint32_t(iterate_unpacked_matrix_mem_uint32_t_cpp(x, x@dimnames[[1]], x@dimnames[[2]], nrow(x)), new("XPtrList"))
 })
 
 setClass("UnpackedMatrixMem_float",
@@ -632,8 +628,9 @@ setClass("UnpackedMatrixMem_float",
 )
 setMethod("matrix_type", "UnpackedMatrixMem_float", function(x) "float")
 setMethod("iterate_matrix", "UnpackedMatrixMem_float", function(x) {
+    if (x@transpose) x <- t(x)
     x@dimnames <- denormalize_dimnames(x@dimnames)
-    wrapMat_float(iterate_unpacked_matrix_mem_float_cpp(x, x@dimnames[[1]], x@dimnames[[2]]), new("XPtrList"))
+    wrapMat_float(iterate_unpacked_matrix_mem_float_cpp(x, x@dimnames[[1]], x@dimnames[[2]], nrow(x)), new("XPtrList"))
 })
 
 setClass("UnpackedMatrixMem_double",
@@ -643,25 +640,41 @@ setClass("UnpackedMatrixMem_double",
 )
 setMethod("matrix_type", "UnpackedMatrixMem_double", function(x) "double")
 setMethod("iterate_matrix", "UnpackedMatrixMem_double", function(x) {
+    if (x@transpose) x <- t(x)
     x@dimnames <- denormalize_dimnames(x@dimnames)
-    wrapMat_double(iterate_unpacked_matrix_mem_double_cpp(x, x@dimnames[[1]], x@dimnames[[2]]), new("XPtrList"))
+    wrapMat_double(iterate_unpacked_matrix_mem_double_cpp(x, x@dimnames[[1]], x@dimnames[[2]], nrow(x)), new("XPtrList"))
 })
 
 
-#' load_bytes = 4MiB, sort_bytes = 1GiB, for a uint32_t matrix implies ~85GB of data
-#' can be sorted with two passes through the data, and ~7.3TB of data can be 
-#' sorted in three passes through the data.
-write_matrix_transpose <- function(matrix, tmpdir, load_bytes, sort_bytes) {
-
+#' Transpose the storage order for a matrix
+#' @param matrix Input matrix
+#' @param outdir Directory to store the output
+#' @param tmpdir Temporary directory to use for intermediate storage
+#' @param load_bytes The minimum contiguous load size during the merge sort passes
+#' @param sort_bytes The amount of memory to allocate for re-sorting chunks of entries
+#' @details This re-sorts the entries of a matrix to change the storage order
+#' from row-major to col-major. For large matrices, this can be slow -- around 2
+#' minutes to transpose a 500k cell RNA-seq matrix The default load_bytes (4MiB)
+#' and sort_bytes (1GiB) parameters allow ~85GB of data to be sorted with two
+#' passes through the data, and ~7.3TB of data to be sorted in three passes
+#' through the data. 
+#' @return MatrixDir object with a copy of the input matrix, but the storage order flipped
+#' @export
+transpose_storage_order <- function(matrix, outdir=tempfile("transpose"), tmpdir=tempdir(), load_bytes=4194304L, sort_bytes=1073741824L) {
     assert_true(matrix_type(matrix) %in% c("uint32_t", "float", "double"))
 
     write_function <- get(sprintf("write_matrix_transpose_%s_cpp", matrix_type(matrix)))
     wrap_function <- get(sprintf("wrapMat_%s", matrix_type(matrix)))
 
-    it <- iterate_matrix(matrix)
-    res <- write_function(ptr(it), tmpdir, load_bytes, sort_bytes)
+    outdir <- normalizePath(outdir, musWork=FALSE)
+    tmpdir <- normalizePath(tmpdir, musWork=FALSE)
+    tmpdir <- tempfile("transpose_tmp", tmpdir=tmpdir)
 
-    wrap_function(res, new("XPtrList"))
+    it <- iterate_matrix(matrix)
+    write_function(ptr(it), outdir, tmpdir, load_bytes, sort_bytes, !matrix@transpose)
+    
+    unlink(tmpdir, recursive=TRUE, expand=FALSE)
+    open_matrix_dir(outdir)
 }
 
 #' Write a sparse matrix object to memory.
@@ -684,7 +697,7 @@ write_matrix_transpose <- function(matrix, tmpdir, load_bytes, sort_bytes) {
 #' compression is desired. 
 #' 
 #' @export
-write_matrix_memory <- function(mat, compress=TRUE, transpose_tmpdir=tempdir()) {
+write_matrix_memory <- function(mat, compress=TRUE) {
     assert_is(mat, c("IterableMatrix", "dgCMatrix"))
     if (is(mat, "dgCMatrix")) mat <- as(mat, "IterableMatrix")
 
@@ -699,22 +712,16 @@ write_matrix_memory <- function(mat, compress=TRUE, transpose_tmpdir=tempdir()) 
     write_function <- get(sprintf("write_%s_matrix_mem_%s_cpp", ifelse(compress, "packed", "unpacked"), matrix_type(mat)))
     class <- sprintf("%sMatrixMem_%s", ifelse(compress, "Packed", "Unpacked"), matrix_type(mat))
 
-    if (mat@transpose) {
-        tmp_path <- tempfile(pattern="transpose", tmpdir=transpose_tmpdir)
-        it <- write_matrix_transpose(t(mat), tmp_path, load_bytes=4194304L, sort_bytes=1073741824L)
-    }
-    else it <- iterate_matrix(mat)
-    
-    m <- write_function(ptr(it))
-    
-    if (mat@transpose) unlink(tmp_path, recursive=TRUE, expand=FALSE)
-
+    it <- iterate_matrix(mat)
+    m <- write_function(ptr(it), mat@transpose)
     m[["dimnames"]] <- normalized_dimnames(m$row_names, m$col_names)
+    m$dim <- m$shape
+    m$transpose <- m$storage_order == "row"
     m$row_names <- NULL
     m$col_names <- NULL
+    m$shape <- NULL
+    m$storage_order <- NULL 
     res <- do.call(new, c(class, m))
-    res@dim <- mat@dim
-    res@dimnames <- m$dimnames
     res
 }
 
@@ -736,12 +743,13 @@ setClass("MatrixDir",
 setMethod("matrix_type", "MatrixDir", function(x) x@type)
 
 setMethod("iterate_matrix", "MatrixDir", function(x) {
+    if (x@transpose) x <- t(x)
     x@dimnames <- denormalize_dimnames(x@dimnames)
 
     iter_function <- get(sprintf("iterate_%s_matrix_file_%s_cpp", ifelse(x@compressed, "packed", "unpacked"), x@type))
     wrap_function <- get(sprintf("wrapMat_%s", x@type))
 
-    wrap_function(iter_function(x@dir, x@buffer_size, x@dimnames[[1]], x@dimnames[[2]]), new("XPtrList"))
+    wrap_function(iter_function(x@dir, x@buffer_size, x@dimnames[[1]], x@dimnames[[2]], nrow(x)), new("XPtrList"))
 })
 
 setMethod("short_description", "MatrixDir", function(x) {
@@ -776,19 +784,12 @@ write_matrix_dir <- function(mat, dir, compress=TRUE, buffer_size=8192L) {
         ), .frequency="regularly", .frequency_id="matrix_compress_non_integer")
     }
     
-    dir <- path.expand(dir)
-    
-    if (mat@transpose) {
-        tmp_path <- tempfile(pattern="transpose")
-        it <- write_matrix_transpose(t(mat), tmp_path, load_bytes=4194304L, sort_bytes=1073741824L)
-    }
-    else it <- iterate_matrix(mat)
+    dir <- normalizePath(dir, mustWork=FALSE)
+    it <- iterate_matrix(mat)
     
     write_function <- get(sprintf("write_%s_matrix_file_%s_cpp", ifelse(compress, "packed", "unpacked"), matrix_type(mat)))
-    write_function(ptr(it), dir, buffer_size)
+    write_function(ptr(it), dir, buffer_size, mat@transpose)
     
-    if (mat@transpose) unlink(tmp_path, recursive=TRUE, expand=FALSE)    
-
     open_matrix_dir(dir, buffer_size)
 }
 
@@ -801,10 +802,11 @@ open_matrix_dir <- function(dir, buffer_size=8192L) {
     assert_is_file(dir)
     assert_is(buffer_size, "integer")
     
-    dir <- path.expand(dir)
+    dir <- normalizePath(dir, mustWork=FALSE)
     info <- dims_matrix_file_cpp(dir, buffer_size)
     new("MatrixDir", dir=dir, dim=info$dims, compressed=info$compressed, buffer_size=buffer_size,
-        dimnames=normalized_dimnames(info$row_names, info$col_names), type=info$type)
+        dimnames=normalized_dimnames(info$row_names, info$col_names), type=info$type,
+        transpose=info$transpose)
 }
 
 setClass("MatrixH5",
@@ -827,12 +829,13 @@ setClass("MatrixH5",
 setMethod("matrix_type", "MatrixH5", function(x) x@type)
 
 setMethod("iterate_matrix", "MatrixH5", function(x) {
+    if (x@transpose) x <- t(x)
     x@dimnames <- denormalize_dimnames(x@dimnames)
 
     iter_function <- get(sprintf("iterate_%s_matrix_hdf5_%s_cpp", ifelse(x@compressed, "packed", "unpacked"), x@type))
     wrap_function <- get(sprintf("wrapMat_%s", x@type))
 
-    wrap_function(iter_function(x@path, x@group, x@buffer_size, x@dimnames[[1]], x@dimnames[[2]]), new("XPtrList"))
+    wrap_function(iter_function(x@path, x@group, x@buffer_size, x@dimnames[[1]], x@dimnames[[2]], nrow(x)), new("XPtrList"))
 })
 
 setMethod("short_description", "MatrixH5", function(x) {
@@ -867,19 +870,12 @@ write_matrix_hdf5 <- function(mat, path, group, compress=TRUE, buffer_size=8192L
         ), .frequency="regularly", .frequency_id="matrix_compress_non_integer")
     }
 
-    path <- path.expand(path)
-
-    if (mat@transpose) {
-        tmp_path <- tempfile(pattern="transpose")
-        it <- write_matrix_transpose(t(mat), tmp_path, load_bytes=4194304L, sort_bytes=1073741824L)
-    }
-    else it <- iterate_matrix(mat)
+    path <- normalizePath(path, mustWork=FALSE)
+    it <- iterate_matrix(mat)
     
     write_function <- get(sprintf("write_%s_matrix_hdf5_%s_cpp", ifelse(compress, "packed", "unpacked"), matrix_type(mat)))
-    write_function(ptr(it), path, group, buffer_size, chunk_size)
-    
-    if (mat@transpose) unlink(tmp_path, recursive=TRUE, expand=FALSE)    
-    
+    write_function(ptr(it), path, group, buffer_size, chunk_size, mat@transpose)
+        
     open_matrix_hdf5(path, group, buffer_size)
 }
 
@@ -893,9 +889,11 @@ open_matrix_hdf5 <- function(path, group, buffer_size=16384L) {
     assert_is(group, "character")
     assert_is(buffer_size, "integer")
 
-    info <- dims_matrix_hdf5_cpp(path.expand(path), group, buffer_size)
-    new("MatrixH5", path=path.expand(path), group=group, dim=info$dims, compressed=info$compressed, buffer_size=buffer_size,
-        dimnames=normalized_dimnames(info$row_names, info$col_names), type=info$type)
+    path <- normalizePath(path, mustWork=FALSE)
+    info <- dims_matrix_hdf5_cpp(path, group, buffer_size)
+    new("MatrixH5", path=path, group=group, dim=info$dims, compressed=info$compressed, buffer_size=buffer_size,
+        dimnames=normalized_dimnames(info$row_names, info$col_names), type=info$type,
+        transpose=info$transpose)
 }
 
 setClass("10xMatrixH5",
@@ -928,8 +926,9 @@ open_matrix_10x_hdf5 <- function(path, buffer_size=16384L) {
     assert_is_file(path)
     assert_is(buffer_size, "integer")
 
-    info <- dims_matrix_10x_hdf5_cpp(path.expand(path), buffer_size)
-    new("10xMatrixH5", path=path.expand(path), dim=info$dims, buffer_size=buffer_size,
+    path <- normalizePath(path, mustWork=FALSE)
+    info <- dims_matrix_10x_hdf5_cpp(path, buffer_size)
+    new("10xMatrixH5", path=path, dim=info$dims, buffer_size=buffer_size,
         dimnames=normalized_dimnames(info$row_names, info$col_names))
 }
 
@@ -959,14 +958,18 @@ setMethod("short_description", "AnnDataMatrixH5", function(x) {
 
 #' Read a sparse integer matrix from an anndata matrix in an hdf5 file
 #' @inheritParams open_matrix_hdf5
-#' @return 10xMatrixH5 object, with cells as the columns.
+#' @return AnnDataMatrixH5 object, with cells as the columns.
+#' @details Since AnnData stores RNA matrices as cells x genes, whereas BPCells
+#'   stores RNA matrices as genes x cells, the returned matrix will be transposed
+#'   relative to the native AnnData matrix.
 #' @export
 open_matrix_anndata_hdf5 <- function(path, group="X", buffer_size=16384L) {
     assert_is_file(path)
     assert_is(buffer_size, "integer")
 
-    info <- dims_matrix_anndata_hdf5_cpp(path.expand(path), group, buffer_size)
-    res <- new("AnnDataMatrixH5", path=path.expand(path), dim=info$dims, buffer_size=buffer_size,
+    path <- normalizePath(path, mustWork=FALSE)
+    info <- dims_matrix_anndata_hdf5_cpp(path, group, buffer_size)
+    res <- new("AnnDataMatrixH5", path=path, dim=info$dims, buffer_size=buffer_size,
         group=group, dimnames=normalized_dimnames(info$row_names, info$col_names))
     
     # We do the reverse of what transpose says, because anndata files are usually
@@ -978,8 +981,6 @@ open_matrix_anndata_hdf5 <- function(path, group="X", buffer_size=16384L) {
         return(t(res))
     }
 }
-
-
 
 # Overlap matrix from fragments
 setClass("PeakMatrix",
@@ -1211,6 +1212,7 @@ setAs("dgCMatrix", "IterableMatrix", function(from) {
     new("Iterable_dgCMatrix_wrapper", dim=dim(from), dimnames=dimnames(from), transpose=FALSE, mat=from)
 })
 setMethod("iterate_matrix", "Iterable_dgCMatrix_wrapper", function(x) {
+    if (x@transpose) x <- t(x)
     x@dimnames <- denormalize_dimnames(x@dimnames)
     wrapMat_double(iterate_csparse_matrix_cpp(x@mat, x@dimnames[[1]], x@dimnames[[2]]), new("XPtrList"))
 })
@@ -1226,7 +1228,7 @@ setAs("IterableMatrix", "dgCMatrix", function(from) {
     iter <- iterate_matrix(convert_matrix_type(from, "double"))
     res <- build_csparse_matrix_double_cpp(ptr(iter))
     if (from@transpose) {
-        res <- Matrix::t(res)
+        res <- t(res)
     }
     res@Dimnames <- from@dimnames
     return(res)

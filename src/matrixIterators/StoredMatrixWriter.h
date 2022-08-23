@@ -8,32 +8,43 @@
 
 namespace BPCells {
 
+
+// Class for writing a column-major MatrixLoader as either a column-major
+// or row-major disk format. Row-major outputs will be the transpose of the
+// column-major inputs
 template<typename T>
 class StoredMatrixWriter: public MatrixWriter<T> {
 private:
-    UIntWriter row, col_ptr, row_count;
+    UIntWriter row, col_ptr, shape;
     NumWriter<T> val;
-    std::unique_ptr<StringWriter> row_names, col_names;
+    std::unique_ptr<StringWriter> row_names, col_names, storage_order;
+    bool row_major;
 public:
     StoredMatrixWriter(UIntWriter &&row, NumWriter<T> &&val, UIntWriter &&col_ptr, 
-        UIntWriter &&row_count, std::unique_ptr<StringWriter> &&row_names, std::unique_ptr<StringWriter> &&col_names) :
-        row(std::move(row)), col_ptr(std::move(col_ptr)), row_count(std::move(row_count)),
+        UIntWriter &&shape, std::unique_ptr<StringWriter> &&row_names, std::unique_ptr<StringWriter> &&col_names,
+        std::unique_ptr<StringWriter> &&storage_order,
+        bool row_major = false) :
+        row(std::move(row)), col_ptr(std::move(col_ptr)), shape(std::move(shape)),
         val(std::move(val)),
-        row_names(std::move(row_names)), col_names(std::move(col_names)) {}
+        row_names(std::move(row_names)), col_names(std::move(col_names)),
+        storage_order(std::move(storage_order)),
+        row_major(row_major) {}
     
-    static StoredMatrixWriter createUnpacked(WriterBuilder &wb) {
+    static StoredMatrixWriter createUnpacked(WriterBuilder &wb, bool row_major=false) {
         wb.writeVersion(StoredMatrix<T>::versionString(false));
         return StoredMatrixWriter(
-            wb.createUIntWriter("row"),
+            wb.createUIntWriter("index"),
             wb.create<T>("val"),
-            wb.createUIntWriter("col_ptr"),
-            wb.createUIntWriter("row_count"),
+            wb.createUIntWriter("idxptr"),
+            wb.createUIntWriter("shape"),
             wb.createStringWriter("row_names"),
-            wb.createStringWriter("col_names")
+            wb.createStringWriter("col_names"),
+            wb.createStringWriter("storage_order"),
+            row_major
         );
     }
 
-    static StoredMatrixWriter createPacked(WriterBuilder &wb, uint32_t buffer_size=1024) {
+    static StoredMatrixWriter createPacked(WriterBuilder &wb, bool row_major=false, uint32_t buffer_size=1024) {
         wb.writeVersion(StoredMatrix<T>::versionString(true));
         NumWriter<T> val;
 
@@ -52,17 +63,19 @@ public:
         return StoredMatrixWriter(
             UIntWriter(
                 std::make_unique<BP128_D1Z_UIntWriter>(
-                    wb.createUIntWriter("row_data"),
-                    wb.createUIntWriter("row_idx"),
-                    wb.createUIntWriter("row_starts")
+                    wb.createUIntWriter("index_data"),
+                    wb.createUIntWriter("index_idx"),
+                    wb.createUIntWriter("index_starts")
                 ),
                 buffer_size
             ),
             std::move(val),
-            wb.createUIntWriter("col_ptr"),
-            wb.createUIntWriter("row_count"),
+            wb.createUIntWriter("idxptr"),
+            wb.createUIntWriter("shape"),
             wb.createStringWriter("row_names"),
-            wb.createStringWriter("col_names")
+            wb.createStringWriter("col_names"),
+            wb.createStringWriter("storage_order"),
+            row_major
         );
     }
     
@@ -105,13 +118,19 @@ public:
                 if(checkInterrupt != NULL) checkInterrupt();
             }
         }
-        row_count.write_one(mat.rows());
+        if (row_major) {
+            shape.write_one(mat.cols());
+            shape.write_one(mat.rows());
+        } else {
+            shape.write_one(mat.rows());
+            shape.write_one(mat.cols());
+        }
         col_ptr.write_one(idx);
 
         row.finalize();
         val.finalize();
         col_ptr.finalize();
-        row_count.finalize();
+        shape.finalize();
 
         // Get row and col names. This probably incurs a few extra copies,
         // but it shouldn't matter since writing the actual matrix should dominate cost
@@ -121,7 +140,6 @@ public:
             if (col_name == NULL) break;
             col_names.push_back(std::string(col_name));
         }
-        this->col_names->write(VecStringReader(col_names));
         
         std::vector<std::string> row_names(0);
         for (int i = 0; ; i++) {
@@ -129,7 +147,14 @@ public:
             if (row_name == NULL) break;
             row_names.push_back(std::string(row_name));
         }
+
+        if (row_major) std::swap(row_names, col_names);
+        this->col_names->write(VecStringReader(col_names));
         this->row_names->write(VecStringReader(row_names));
+
+        std::vector<std::string> storage_order;
+        storage_order.push_back(row_major ? "row" : "col");
+        this->storage_order->write(VecStringReader(storage_order));
     }
 };
 
