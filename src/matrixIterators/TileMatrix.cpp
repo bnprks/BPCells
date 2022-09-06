@@ -81,7 +81,24 @@ uint32_t TileMatrix::rows() const {return frags.cellCount();}
 uint32_t TileMatrix::cols() const {return n_tiles;}
 
 const char* TileMatrix::rowNames(uint32_t row) {return frags.cellNames(row);}
-const char* TileMatrix::colNames(uint32_t col) {return NULL;}
+const char* TileMatrix::colNames(uint32_t col) { 
+    if (col >= cols()) return NULL;
+    auto tile = std::upper_bound(
+        sorted_tiles.begin(), sorted_tiles.end(), 
+        col,
+        [](uint32_t col, Tile t) {return col < t.output_idx;}) - 1;
+    
+    uint32_t width = libdivide::libdivide_u32_recover(&tile->width);
+    uint32_t start_base = tile->start + width * (col - tile->output_idx);
+
+    tile_name.clear();
+    tile_name += frags.chrNames(tile->chr);
+    tile_name += ":";
+    tile_name += std::to_string(start_base);
+    tile_name += "-";
+    tile_name += std::to_string(std::min(tile->end, start_base + width));
+    return tile_name.c_str();
+}
 
 void TileMatrix::restart() {
     accumulator.clear();
@@ -111,7 +128,7 @@ void TileMatrix::seekCol(uint32_t col) {
 bool TileMatrix::nextCol() {
     current_output_tile += 1;
 
-    if (current_output_tile >= n_tiles) {current_output_tile -= 1; return false;}
+    if (current_output_tile >= cols()) {current_output_tile -= 1; return false;}
     if (current_output_tile >= next_completed_tile)
         loadFragments();
     accumulator.discard_until(current_output_tile);

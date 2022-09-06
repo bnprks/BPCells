@@ -353,6 +353,21 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// get_tile_names_cpp
+StringVector get_tile_names_cpp(IntegerVector chr_id, IntegerVector start, IntegerVector end, IntegerVector tile_width, StringVector chr_levels);
+RcppExport SEXP _BPCells_get_tile_names_cpp(SEXP chr_idSEXP, SEXP startSEXP, SEXP endSEXP, SEXP tile_widthSEXP, SEXP chr_levelsSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< IntegerVector >::type chr_id(chr_idSEXP);
+    Rcpp::traits::input_parameter< IntegerVector >::type start(startSEXP);
+    Rcpp::traits::input_parameter< IntegerVector >::type end(endSEXP);
+    Rcpp::traits::input_parameter< IntegerVector >::type tile_width(tile_widthSEXP);
+    Rcpp::traits::input_parameter< StringVector >::type chr_levels(chr_levelsSEXP);
+    rcpp_result_gen = Rcpp::wrap(get_tile_names_cpp(chr_id, start, end, tile_width, chr_levels));
+    return rcpp_result_gen;
+END_RCPP
+}
 // nucleosome_counts_cpp
 List nucleosome_counts_cpp(SEXP fragments, uint32_t nuc_width);
 RcppExport SEXP _BPCells_nucleosome_counts_cpp(SEXP fragmentsSEXP, SEXP nuc_widthSEXP) {
@@ -1522,6 +1537,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_BPCells_scan_fragments_cpp", (DL_FUNC) &_BPCells_scan_fragments_cpp, 1},
     {"_BPCells_iterate_peak_matrix_cpp", (DL_FUNC) &_BPCells_iterate_peak_matrix_cpp, 5},
     {"_BPCells_iterate_tile_matrix_cpp", (DL_FUNC) &_BPCells_iterate_tile_matrix_cpp, 6},
+    {"_BPCells_get_tile_names_cpp", (DL_FUNC) &_BPCells_get_tile_names_cpp, 5},
     {"_BPCells_nucleosome_counts_cpp", (DL_FUNC) &_BPCells_nucleosome_counts_cpp, 2},
     {"_BPCells_iterate_shift_cpp", (DL_FUNC) &_BPCells_iterate_shift_cpp, 3},
     {"_BPCells_iterate_chr_index_select_cpp", (DL_FUNC) &_BPCells_iterate_chr_index_select_cpp, 2},

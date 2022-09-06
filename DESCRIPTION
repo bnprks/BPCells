@@ -25,7 +25,8 @@ Imports:
     methods,
     Rcpp,
     rlang,
-    vctrs
+    vctrs,
+    stringr
 Suggests:
     IRanges,
     GenomicRanges

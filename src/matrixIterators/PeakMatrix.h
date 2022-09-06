@@ -32,6 +32,8 @@ private:
     uint32_t next_active_peak = 0;
     uint32_t n_peaks;
 
+    std::string peak_name; // buffer to use to store the peak name
+
     void loadFragments();
 public:
     // Note: It's the caller's responsibility to make sure that

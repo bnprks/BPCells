@@ -104,7 +104,17 @@ uint32_t PeakMatrix::rows() const {return frags.cellCount();}
 uint32_t PeakMatrix::cols() const {return n_peaks;}
 
 const char* PeakMatrix::rowNames(uint32_t row) {return frags.cellNames(row);}
-const char* PeakMatrix::colNames(uint32_t col) {return NULL;}
+const char* PeakMatrix::colNames(uint32_t col) {
+    if (col >= n_peaks) return NULL;
+    auto peak = sorted_peaks[end_sorted_lookup[col]];
+    peak_name.clear();
+    peak_name += frags.chrNames(peak.chr);
+    peak_name += ":";
+    peak_name += std::to_string(peak.start);
+    peak_name += "-";
+    peak_name += std::to_string(peak.end);
+    return peak_name.c_str();
+}
 
 void PeakMatrix::restart() {
     accumulator.clear();

@@ -387,6 +387,9 @@ setMethod("iterate_matrix", "MatrixSubset", function(x) {
     } else if (matrix_type(x) == "uint32_t") {
         if (length(x@row_selection) != 0) ret <- wrapMat_uint32_t(iterate_matrix_row_select_uint32_t_cpp(ptr(ret), x@row_selection-1L), ret)
         if (length(x@col_selection) != 0) ret <- wrapMat_uint32_t(iterate_matrix_col_select_uint32_t_cpp(ptr(ret), x@col_selection-1L), ret)
+    } else if (matrix_type(x) == "float") {
+        if (length(x@row_selection) != 0) ret <- wrapMat_float(iterate_matrix_row_select_uint32_t_cpp(ptr(ret), x@row_selection-1L), ret)
+        if (length(x@col_selection) != 0) ret <- wrapMat_float(iterate_matrix_col_select_uint32_t_cpp(ptr(ret), x@col_selection-1L), ret)
     } else {
         stop("Unrecognized matrix_type in MatrixSubset")
     }
@@ -666,13 +669,13 @@ transpose_storage_order <- function(matrix, outdir=tempfile("transpose"), tmpdir
     write_function <- get(sprintf("write_matrix_transpose_%s_cpp", matrix_type(matrix)))
     wrap_function <- get(sprintf("wrapMat_%s", matrix_type(matrix)))
 
-    outdir <- normalizePath(outdir, musWork=FALSE)
-    tmpdir <- normalizePath(tmpdir, musWork=FALSE)
+    outdir <- normalizePath(outdir, mustWork=FALSE)
+    tmpdir <- normalizePath(tmpdir, mustWork=FALSE)
     tmpdir <- tempfile("transpose_tmp", tmpdir=tmpdir)
 
     it <- iterate_matrix(matrix)
     write_function(ptr(it), outdir, tmpdir, load_bytes, sort_bytes, !matrix@transpose)
-    
+
     unlink(tmpdir, recursive=TRUE, expand=FALSE)
     open_matrix_dir(outdir)
 }
@@ -970,15 +973,16 @@ open_matrix_anndata_hdf5 <- function(path, group="X", buffer_size=16384L) {
     path <- normalizePath(path, mustWork=FALSE)
     info <- dims_matrix_anndata_hdf5_cpp(path, group, buffer_size)
     res <- new("AnnDataMatrixH5", path=path, dim=info$dims, buffer_size=buffer_size,
-        group=group, dimnames=normalized_dimnames(info$row_names, info$col_names))
+        group=group, dimnames=normalized_dimnames(info$row_names, info$col_names),
+        transpose=info$transpose)
     
     # We do the reverse of what transpose says, because anndata files are usually
     # stored row-major with cells as rows, whereas BPCells will work best with
     # col-major with cells as cols.
     if (info[["transpose"]]) {
-        return(res)
-    } else {
         return(t(res))
+    } else {
+        return(res)
     }
 }
 
@@ -1001,18 +1005,23 @@ setClass("PeakMatrix",
     )
 )
 setMethod("matrix_type", "PeakMatrix", function(x) "uint32_t")
-#' Calculate cell x ranges overlap matrix
+#' Calculate ranges x cells overlap matrix
 #' @param fragments Input fragments object. Must have cell names and chromosome names defined
 #' @param ranges GRanges object with the ranges to overlap, or list/data frame with columns chr, start, & end.
 #'     Must be sorted in order (chr, end, start) where chromosomes are ordered according to the chromosome names of `fragments`.
 #' @param zero_based_coords Boolean for whether the input ranges are in a 0-based 
 #'        or a 1-based coordinate system. (1-based will be converted to 0-based)
 #'        (see http://genome.ucsc.edu/blog/the-ucsc-genome-browser-coordinate-counting-systems/)
+#' @param explicit_peak_names Boolean for whether to add rownames to the output matrix in format e.g
+#'  chr1:500-1000, where start and end coords are given in a 0-based coordinate system.
+#'  Note that either way, peak names will be written when the matrix is saved.
 #' @note When calculating the matrix directly from a fragments tsv, it's necessary to first call `select_chromosomes` in order to 
 #'     provide the ordering of chromosomes to expect while reading the tsv.
-#' @return Iterable matrix object with dimension cell x ranges
+#' @return Iterable matrix object with dimension ranges x cells. When saved, 
+#'   the column names of the output matrix will be in the format chr1:500-1000,
+#'   where start and end coords are given in a 0-based coordinate system.
 #' @export
-peakMatrix <- function(fragments, ranges, zero_based_coords=TRUE) {
+peakMatrix <- function(fragments, ranges, zero_based_coords=TRUE, explicit_peak_names=TRUE) {
     assert_is(fragments, "IterableFragments")
     assert_is(ranges, c("GRanges", "list", "data.frame"))
     
@@ -1041,7 +1050,10 @@ peakMatrix <- function(fragments, ranges, zero_based_coords=TRUE) {
     res@chr_levels <-chrNames(fragments)
     res@dim <- c(length(cellNames(fragments)), length(res@chr_id))
     res@dimnames[[1]] <- cellNames(fragments)
-    return(res)
+    if (explicit_peak_names) {
+        res@dimnames[[2]] <- str_c(res@chr_levels[chr_id + 1], ":", start, "-", end)
+    }
+    return(t(res))
 }
 
 setMethod("iterate_matrix", "PeakMatrix", function(x) {
@@ -1083,7 +1095,7 @@ setClass("TileMatrix",
 )
 setMethod("matrix_type", "TileMatrix", function(x) "uint32_t")
 
-#' Calculate cell x ranges tile overlap matrix
+#' Calculate ranges x cells tile overlap matrix
 #' @param fragments Input fragments object
 #' @param ranges GRanges object with the ranges to overlap including a metadata column tile_width, 
 #'  or a list/data frame with columns chr, start, end, and tile_width. Must be non-overlapping and sorted by
@@ -1091,11 +1103,17 @@ setMethod("matrix_type", "TileMatrix", function(x) "uint32_t")
 #' @param zero_based_coords Boolean for whether the input ranges are in a 0-based 
 #'        or a 1-based coordinate system. (1-based will be converted to 0-based)
 #'        (see http://genome.ucsc.edu/blog/the-ucsc-genome-browser-coordinate-counting-systems/)
+#' @param explicit_tile_names Boolean for whether to add rownames to the output matrix in format e.g
+#'  chr1:500-1000, where start and end coords are given in a 0-based coordinate system. For
+#'  whole-genome Tile matrices the names will take ~5 seconds to generate and take up 400MB of memory.
+#'  Note that either way, tile names will be written when the matrix is saved.
 #' @note When calculating the matrix directly from a fragments tsv, it's necessary to first call `select_chromosomes` in order to 
 #'     provide the ordering of chromosomes to expect while reading the tsv.
-#' @return Iterable matrix object with dimension cell x ranges
+#' @return Iterable matrix object with dimension ranges x cells. When saved, 
+#'   the column names will be in the format chr1:500-1000,
+#'   where start and end coords are given in a 0-based coordinate system.
 #' @export
-tileMatrix <- function(fragments, ranges, zero_based_coords=TRUE) {
+tileMatrix <- function(fragments, ranges, zero_based_coords=TRUE, explicit_tile_names=FALSE) {
     assert_is(fragments, "IterableFragments")
     assert_is(ranges, c("GRanges", "list", "data.frame"))
     
@@ -1140,7 +1158,10 @@ tileMatrix <- function(fragments, ranges, zero_based_coords=TRUE) {
     tiles <- as.integer(ceiling((end - start) / tile_width))
     res@dim <- c(length(cellNames(fragments)), sum(tiles))
     res@dimnames[[1]] <- cellNames(fragments)
-    return(res)
+    if(explicit_tile_names) {
+        res@dimnames[[2]] <- get_tile_names_cpp(chr_id, start, end, tile_width, res@chr_levels)
+    }
+    return(t(res))
 }
 
 setMethod("iterate_matrix", "TileMatrix", function(x) {
@@ -1187,6 +1208,12 @@ setMethod("short_description", "ConvertMatrixType", function(x) {
     )
 })
 
+#' Convert the type of a matrix
+#' @param matrix IterableMatrix object input
+#' @param type One of uint32_t (unsigned 32-bit integer), float (32-bit real number),
+#'   or double (64-bit real number)
+#' @return IterableMatrix object
+#' @export
 convert_matrix_type <- function(matrix, type=c("uint32_t", "double", "float")) {
     assert_is(matrix, c("dgCMatrix", "IterableMatrix"))
     type <- match.arg(type)

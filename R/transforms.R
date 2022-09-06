@@ -30,7 +30,7 @@ setMethod("short_description", "TransformLog1p", function(x) {
     )
 })
 setMethod("log1p", "IterableMatrix", function(x) {
-    wrapMat_double("TransformLog1p", convert_matrix_type(x, "double"))
+    wrapMatrix("TransformLog1p", convert_matrix_type(x, "double"))
 })
 
 setClass("TransformLog1pSlow", contains="TransformedMatrix")

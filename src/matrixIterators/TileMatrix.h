@@ -33,6 +33,8 @@ private:
     uint32_t next_active_tile = 0; // Index of sorted_tiles for the next Tile where we'll find overlaps
     uint32_t n_tiles = 0;
 
+    std::string tile_name; // buffer to use to store the tile name
+    
     void loadFragments();
 public:
     // Note: It's the caller's responsibility to make sure that

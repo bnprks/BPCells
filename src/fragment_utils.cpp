@@ -1,3 +1,5 @@
+#include <sstream>
+
 #include <Rcpp.h>
 #include <RcppEigen.h>
 
@@ -66,6 +68,26 @@ SEXP iterate_tile_matrix_cpp(SEXP fragments,
         XPtr<TileMatrix>(new TileMatrix(*loader, chr, start, end, width,
             std::make_unique<RcppStringReader>(chr_levels)))
     );
+}
+
+// [[Rcpp::export]]
+StringVector get_tile_names_cpp(IntegerVector chr_id, IntegerVector start, IntegerVector end, IntegerVector tile_width, StringVector chr_levels) {
+    int64_t total_tiles = 0;
+    for (int64_t i = 0; i < chr_id.length(); i++) {
+        total_tiles += (end[i] - start[i] + tile_width[i] - 1) / tile_width[i];
+    }
+    StringVector ret(total_tiles);
+    size_t out_idx = 0;
+    for (size_t i = 0; i < chr_id.length(); i++) {
+        for (size_t base = start[i]; base < end[i]; base += tile_width[i]) {
+            std::stringstream out;
+            out << (const char*) chr_levels[chr_id[i]] << ":" 
+                << (base) << "-" 
+                << std::min((size_t) end[i], base + tile_width[i]);
+            ret[out_idx++] = out.str();
+        }
+    }
+    return ret;
 }
 
 //Compute number of fragments like ArchR does for cell stats
