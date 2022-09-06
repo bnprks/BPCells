@@ -345,6 +345,13 @@ setMethod("[", "IterableMatrix", function(x, i, j, ...) {
     if (missing(x)) stop("x is missing in matrix selection")
     ret <- wrapMatrix("MatrixSubset", x)
 
+    if (x@transpose) {
+        if (!missing(i) && !missing(j)) return(t(t(x)[j,i]))
+        if ( missing(i) && !missing(j)) return(t(t(x)[j, ]))
+        if (!missing(i) &&  missing(j)) return(t(t(x)[ ,i]))
+        if ( missing(i) &&  missing(j)) return(t(t(x)[,]))
+    }
+
     if(!missing(i)) {
         indices <- seq_len(nrow(x))
         names(indices) <- rownames(x)
@@ -397,11 +404,18 @@ setMethod("iterate_matrix", "MatrixSubset", function(x) {
 })
 
 setMethod("short_description", "MatrixSubset", function(x) {
+    if (x@transpose) {
+        rows <- x@col_selection
+        cols <- x@row_selection
+    } else {
+        rows <- x@row_selection
+        cols <- x@col_selection
+    }
     c(
         short_description(x@matrix),
         sprintf("Select rows: %s and cols: %s",
-            pretty_print_vector(x@row_selection, empty="all"),
-            pretty_print_vector(x@col_selection, empty="all"))
+            pretty_print_vector(rows, empty="all"),
+            pretty_print_vector(cols, empty="all"))
     )
 })
 
