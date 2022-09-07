@@ -1,5 +1,3 @@
-library(Matrix)
-
 generate_sparse_matrix <- function(nrow, ncol, fraction_nonzero=0.5, max_val=10) {
     m <- matrix(rbinom(nrow*ncol, 1, fraction_nonzero)*sample.int(max_val, nrow*ncol, replace=TRUE), nrow=nrow)
     as(m, "dgCMatrix")
@@ -138,7 +136,6 @@ test_that("Generic methods work", {
     colnames(id_right) <- colnames(m)
     id_left <- as(Matrix::Diagonal(nrow(m)), "dgCMatrix")
     rownames(id_left) <- rownames(m)
-
     ident_transforms <- list(
         write_memory_uint32_t = mi %>% convert_matrix_type("uint32_t") %>% write_matrix_memory(compress=TRUE),
         write_memory_unpacked_uint32_t = mi %>% convert_matrix_type("uint32_t") %>% write_matrix_memory(compress=FALSE),
@@ -155,6 +152,8 @@ test_that("Generic methods work", {
         multiply_left_1 = id_left %*% mi,
         multiply_types = convert_matrix_type(mi, "uint32_t") %*% convert_matrix_type(as(id_right, "IterableMatrix"), "uint32_t"),
         multiply_types = convert_matrix_type(mi, "float") %*% convert_matrix_type(as(id_right, "IterableMatrix"), "uint32_t"),
+
+        min_1 = min_scalar(mi, 1e9),
         
         subset = mi[seq_len(nrow(m)),][,seq_len(ncol(m))][seq_len(nrow(m)), seq_len(ncol(m))],
         rbind = rbind2(mi[1:2,], mi[3:nrow(m)]),

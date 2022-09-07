@@ -48,7 +48,34 @@ log1p_slow <- function(x) {
     wrapMatrix("TransformLog1pSlow", convert_matrix_type(x, "double"))
 }
 
+setClass("TransformMin", contains="TransformedMatrix")
+setMethod("iterate_matrix", "TransformMin", function(x) {
+    it <- iterate_matrix(x@matrix)
+    wrapMat_double(iterate_matrix_min_cpp(ptr(it), x@global_params[1]), it)
+})
+setMethod("short_description", "TransformMin", function(x) {
+    c(
+        short_description(x@matrix),
+        sprintf("Transform min(x, %d)", x@global_params[1])
+    )
+})
+#' Take the elementwise min with a constant
+#' @param mat IterableMatrix
+#' @param val Single positive numeric value
+#' @return IterableMatrix
+#' @description Take the elementwise minimum with a positive value.
+#' This has the effect of capping the maximum value in the matrix
+#' @export
+min_scalar <- function(mat, val) {
+    assert_is(mat, "IterableMatrix")
+    assert_is(val, "numeric")
+    assert_greater_than_zero(val)
+    assert_len(val, 1)
 
+    res <- wrapMatrix("TransformMin", convert_matrix_type(mat, "double"))
+    res@global_params <- val
+    res
+}
 
 # Scaling + shifting support (Scale first, then shift)
 # 

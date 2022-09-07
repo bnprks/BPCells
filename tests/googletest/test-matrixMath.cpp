@@ -13,6 +13,7 @@
 #include <arrayIO/vector.h>
 
 #include <matrixTransforms/Log1p.h>
+#include <matrixTransforms/Min.h>
 #include <matrixTransforms/Scale.h>
 #include <matrixTransforms/Shift.h>
 
@@ -161,6 +162,29 @@ TEST(MatrixMath, Log1p) {
 
     EXPECT_TRUE(MatrixXd(res.getMat()).isApprox(ans));
 }
+
+
+TEST(MatrixMath, Min) {
+    SparseMatrix<double> m1 = generate_mat(100, 50, 125123);
+
+    double c = 4.0;
+
+    ArrayXXd cmp(m1.rows(), m1.cols());
+    cmp = c;
+    MatrixXd ans = MatrixXd(m1).array().min(cmp);
+
+    ArrayXd global_params(1);
+    global_params = c;
+
+    CSparseMatrix mat_1(get_map(m1));
+    Min mat_1_trans(mat_1, {{}, {}, global_params});
+
+    CSparseMatrixWriter res;
+    res.write(mat_1_trans);
+
+    EXPECT_TRUE(MatrixXd(res.getMat()).isApprox(ans));
+}
+
 
 void checkMultiplyOps(MatrixLoader<double> &mat, MatrixXd res) {
     MatrixXd mat_right = generate_dense_mat(mat.cols(), 4, 125412);

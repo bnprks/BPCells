@@ -1065,7 +1065,7 @@ peakMatrix <- function(fragments, ranges, zero_based_coords=TRUE, explicit_peak_
     res@dim <- c(length(cellNames(fragments)), length(res@chr_id))
     res@dimnames[[1]] <- cellNames(fragments)
     if (explicit_peak_names) {
-        res@dimnames[[2]] <- str_c(res@chr_levels[chr_id + 1], ":", start, "-", end)
+        res@dimnames[[2]] <- stringr::str_c(res@chr_levels[chr_id + 1], ":", start, "-", end)
     }
     return(t(res))
 }

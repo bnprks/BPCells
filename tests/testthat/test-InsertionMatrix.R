@@ -55,7 +55,7 @@ test_that("Basic insertion matrix succeeds", {
         2,4,6,4,0,
         0,8,9,8,0,
         0,0,0,8,5
-    ), ncol=4)
+    ), ncol=4) %>% t()
 
     my_answer <- as.matrix(res)
     attr(my_answer, "dimnames") <- NULL
@@ -116,7 +116,7 @@ test_that("Out of range peaks work", {
         0,0,0,2,1,
         0,0,0,0,0,
         0,0,0,0,0
-    ), ncol=6)
+    ), ncol=6) %>% t()
 
     my_answer <- as.matrix(res)
     attr(my_answer, "dimnames") <- NULL
@@ -181,7 +181,7 @@ test_that("Basic tile matrix works", {
         2,2,1,0,0, # 402-403
         1,1,1,1,0, # 404
         0,0,0,2,1 # 1004-1006
-    ), ncol=8)
+    ), ncol=8) %>% t()
 
     my_answer <- as.matrix(res)
     attr(my_answer, "dimnames") <- NULL

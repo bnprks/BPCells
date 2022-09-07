@@ -165,17 +165,17 @@ test_that("Generic methods work", {
     )
 
     for (i in seq_along(ident_transforms)) {
-        t <- ident_transforms[[i]]
-        short_description(t)
-        expect_equal(chrNames(t), chrNames(frags))
-        expect_equal(cellNames(t), cellNames(frags))
-        expect_equal(write_fragments_memory(t), frags)
+        trans <- ident_transforms[[i]]
+        short_description(trans)
+        expect_equal(chrNames(trans), chrNames(frags))
+        expect_equal(cellNames(trans), cellNames(frags))
+        expect_equal(write_fragments_memory(trans), frags)
         
-        chrNames(t) <- paste0("new-", chrNames(frags))
-        cellNames(t) <- paste0("new-", cellNames(frags))
-        expect_equal(chrNames(t), paste0("new-", chrNames(frags)))
-        expect_equal(cellNames(t), paste0("new-", cellNames(frags)))
-        n <- write_fragments_memory(t)
+        chrNames(trans) <- paste0("new-", chrNames(frags))
+        cellNames(trans) <- paste0("new-", cellNames(frags))
+        expect_equal(chrNames(trans), paste0("new-", chrNames(frags)))
+        expect_equal(cellNames(trans), paste0("new-", cellNames(frags)))
+        n <- write_fragments_memory(trans)
         expect_equal(chrNames(n), paste0("new-", chrNames(frags)))
         expect_equal(cellNames(n), paste0("new-", cellNames(frags)))
     }

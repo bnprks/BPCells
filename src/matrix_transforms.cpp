@@ -3,6 +3,7 @@
 
 #include "matrixTransforms/MatrixTransform.h"
 #include "matrixTransforms/Log1p.h"
+#include "matrixTransforms/Min.h"
 #include "matrixTransforms/Scale.h"
 #include "matrixTransforms/Shift.h"
 
@@ -22,6 +23,16 @@ SEXP iterate_matrix_log1psimd_cpp(SEXP matrix) {
     XPtr<MatrixLoader<double>>input(matrix);
     return Rcpp::wrap(
         XPtr<MatrixLoader<double>>(new Log1pSIMD(*input))
+    );
+}
+
+// [[Rcpp::export]]
+SEXP iterate_matrix_min_cpp(SEXP matrix, double min_val) {
+    XPtr<MatrixLoader<double>>input(matrix);
+    Eigen::ArrayXd global_params(1);
+    global_params = min_val;
+    return Rcpp::wrap(
+        XPtr<MatrixLoader<double>>(new Min(*input, TransformFit{{}, {}, global_params}))
     );
 }
 

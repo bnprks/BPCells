@@ -72,6 +72,7 @@ add_library(
     matrixTransforms
     ${SRC}/matrixTransforms/MatrixTransform.cpp
     ${SRC}/matrixTransforms/Log1p.cpp
+    ${SRC}/matrixTransforms/Min.cpp
     ${SRC}/matrixTransforms/Scale.cpp
     ${SRC}/matrixTransforms/Shift.cpp
 )

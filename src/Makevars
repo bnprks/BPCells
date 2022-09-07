@@ -35,6 +35,7 @@ matrixIterators/PeakMatrix.o \
 matrixIterators/TileMatrix.o \
 matrixIterators/MatrixStats.o \
 matrixTransforms/Log1p.o \
+matrixTransforms/Min.o \
 matrixTransforms/MatrixTransform.o \
 matrixTransforms/Scale.o \
 matrixTransforms/Shift.o 
