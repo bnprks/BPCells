@@ -393,6 +393,19 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// iterate_length_select_cpp
+SEXP iterate_length_select_cpp(SEXP fragments, uint32_t min_len, uint32_t max_len);
+RcppExport SEXP _BPCells_iterate_length_select_cpp(SEXP fragmentsSEXP, SEXP min_lenSEXP, SEXP max_lenSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type fragments(fragmentsSEXP);
+    Rcpp::traits::input_parameter< uint32_t >::type min_len(min_lenSEXP);
+    Rcpp::traits::input_parameter< uint32_t >::type max_len(max_lenSEXP);
+    rcpp_result_gen = Rcpp::wrap(iterate_length_select_cpp(fragments, min_len, max_len));
+    return rcpp_result_gen;
+END_RCPP
+}
 // iterate_chr_index_select_cpp
 SEXP iterate_chr_index_select_cpp(SEXP fragments, std::vector<uint32_t> chr_selection);
 RcppExport SEXP _BPCells_iterate_chr_index_select_cpp(SEXP fragmentsSEXP, SEXP chr_selectionSEXP) {
@@ -1552,6 +1565,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_BPCells_get_tile_names_cpp", (DL_FUNC) &_BPCells_get_tile_names_cpp, 5},
     {"_BPCells_nucleosome_counts_cpp", (DL_FUNC) &_BPCells_nucleosome_counts_cpp, 2},
     {"_BPCells_iterate_shift_cpp", (DL_FUNC) &_BPCells_iterate_shift_cpp, 3},
+    {"_BPCells_iterate_length_select_cpp", (DL_FUNC) &_BPCells_iterate_length_select_cpp, 3},
     {"_BPCells_iterate_chr_index_select_cpp", (DL_FUNC) &_BPCells_iterate_chr_index_select_cpp, 2},
     {"_BPCells_iterate_chr_name_select_cpp", (DL_FUNC) &_BPCells_iterate_chr_name_select_cpp, 2},
     {"_BPCells_iterate_cell_index_select_cpp", (DL_FUNC) &_BPCells_iterate_cell_index_select_cpp, 2},

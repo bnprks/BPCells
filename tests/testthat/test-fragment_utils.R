@@ -126,6 +126,25 @@ test_that("Region select works", {
     expect_equal(as(exclusive, "GRanges"), ans_exclusive)
 })
 
+test_that("subset_lengths works", {
+    frags <- open_fragments_10x("../data/mini_fragments.tsv.gz") %>%
+        write_fragments_memory()
+    gfrags <- as(frags, "GRanges")
+    
+    min_size <- 20
+    max_size <- 100
+
+    lengths <- end(gfrags) - start(gfrags) + 1
+    expect_true(min(lengths) < min_size)
+    expect_true(max(lengths) > max_size)
+
+    ans <- gfrags[lengths >= min_size & lengths <= max_size]
+    
+    subset <- subset_lengths(frags, min_size, max_size)
+    
+    expect_equal(as(subset, "GRanges"), ans)
+})
+
 test_that("Name prefix works", {
     frags1 <- open_fragments_10x("../data/mini_fragments.tsv.gz") %>%
         write_fragments_memory()
@@ -153,6 +172,7 @@ test_that("Generic methods work", {
         write_h5 = write_fragments_hdf5(frags, file.path(dir, "fragments_identical.h5")),
         #write_bed = write_fragments_10x(frags, file.path(dir, "fragments_identical.tsv")),
         shift = shift_fragments(frags),
+        lengthSelect = subset_lengths(frags),
         chrSelectName = select_chromosomes(frags, chrNames(frags)),
         chrSelectIdx = select_chromosomes(frags, seq_along(chrNames(frags))),
         cellSelectName = select_cells(frags, cellNames(frags)),

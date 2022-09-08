@@ -121,6 +121,10 @@ iterate_shift_cpp <- function(fragments, shift_start, shift_end) {
     .Call(`_BPCells_iterate_shift_cpp`, fragments, shift_start, shift_end)
 }
 
+iterate_length_select_cpp <- function(fragments, min_len, max_len) {
+    .Call(`_BPCells_iterate_length_select_cpp`, fragments, min_len, max_len)
+}
+
 iterate_chr_index_select_cpp <- function(fragments, chr_selection) {
     .Call(`_BPCells_iterate_chr_index_select_cpp`, fragments, chr_selection)
 }

@@ -25,6 +25,7 @@ fragmentIterators/BedFragments.o \
 fragmentIterators/CellSelect.o \
 fragmentIterators/ChrSelect.o \
 fragmentIterators/FragmentIterator.o \
+fragmentIterators/LengthSelect.o \
 fragmentIterators/MergeFragments.o \
 fragmentIterators/RegionSelect.o \
 fragmentIterators/Rename.o \

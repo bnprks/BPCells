@@ -9,6 +9,7 @@
 #include "fragmentIterators/ShiftCoords.h"
 #include "fragmentIterators/ChrSelect.h"
 #include "fragmentIterators/CellSelect.h"
+#include "fragmentIterators/LengthSelect.h"
 #include "fragmentIterators/MergeFragments.h"
 #include "fragmentIterators/RegionSelect.h"
 #include "fragmentIterators/Rename.h"
@@ -140,6 +141,14 @@ SEXP iterate_shift_cpp(SEXP fragments, int32_t shift_start, int32_t shift_end) {
     );
 } 
 
+// [[Rcpp::export]]
+SEXP iterate_length_select_cpp(SEXP fragments, uint32_t min_len, uint32_t max_len) {
+    XPtr<FragmentLoader> loader(fragments);
+    
+    return Rcpp::wrap(
+        XPtr<FragmentLoader>(new LengthSelect(*loader, min_len, max_len))
+    );
+} 
 
 // [[Rcpp::export]]
 SEXP iterate_chr_index_select_cpp(SEXP fragments, std::vector<uint32_t> chr_selection) {

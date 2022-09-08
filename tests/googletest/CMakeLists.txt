@@ -49,6 +49,7 @@ add_library(
     ${SRC}/fragmentIterators/CellSelect.cpp
     ${SRC}/fragmentIterators/ChrSelect.cpp
     ${SRC}/fragmentIterators/FragmentIterator.cpp
+    ${SRC}/fragmentIterators/LengthSelect.cpp
     ${SRC}/fragmentIterators/MergeFragments.cpp
     ${SRC}/fragmentIterators/RegionSelect.cpp
     ${SRC}/fragmentIterators/Rename.cpp

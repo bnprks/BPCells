@@ -622,6 +622,51 @@ shift_fragments <- function(fragments, shift_start=0L, shift_end=0L) {
     new("ShiftFragments", fragments=fragments, shift_start=as.integer(shift_start), shift_end=as.integer(shift_end))
 }
 
+# Select fragments by length
+setClass("SelectLength",
+    contains = "IterableFragments",
+    slots = c(
+        fragments = "IterableFragments",
+        min_len = "integer",
+        max_len = "integer"
+    ),
+    prototype = list(
+        fragments = NULL,
+        min_len = NA_integer_,
+        max_len = NA_integer_
+    )
+)
+setMethod("iterate_fragments", "SelectLength", function(x) {
+    inner <- iterate_fragments(x@fragments)
+    max_len <- if(is.na(x@max_len)) .Machine$integer.max else x@max_len
+    wrapFragments(
+        iterate_length_select_cpp(ptr(inner), x@min_len, max_len), 
+        inner
+    )
+})
+setMethod("short_description", "SelectLength", function(x) {
+    text_min <- if(!is.na(x@min_len)) sprintf("%d", x@min_len) else "0"
+    text_max <- if(!is.na(x@max_len)) sprintf("%d", x@max_len) else "Inf"
+    c(
+        short_description(x@fragments),
+        sprintf("Filter to fragment sizes %s bp-%s bp", x@min_len, x@max_len)
+    )
+})
+#' Subset fragments to only include those in a given size range
+#' @param fragments Input fragments object
+#' @param min_len Minimum bases in fragment (inclusive)
+#' @param max_len Maximum bases in fragment (inclusive)
+#' @return Fragments object
+#' @details Fragment length is calculated as end-start
+#' @export
+subset_lengths <- function(fragments, min_len=0L, max_len=NA_integer_) {
+    assert_wholenumber(min_len)
+    if (!is.na(max_len)) assert_wholenumber(max_len)
+    assert_len(min_len, 1)
+    assert_len(max_len, 1)
+    new("SelectLength", fragments=fragments, min_len=as.integer(min_len), max_len=as.integer(max_len))
+}
+
 
 # Select fragments by chromosome
 setClass("ChrSelectName",
