@@ -1,31 +1,63 @@
-templates:
-  params:
-    bootswatch: flatly
+url: https://bnprks.github.io/BPCells
+template:
+  boostrap: 5
+  bootswatch: flatly
 # cosmo, flatly, united, sandstone all look reasonable
 reference:
 - title: "Fragment I/O"
-  desc: "Functions for reading & writing fragment objects"
+  desc: "Read & write fragment objects"
 - contents:
-  - matches("(open|write)_.*_fragments")
+  - matches("(open|write)_fragments_.*")
+  - convert_to_fragments
+- title: "ATAC Analysis Utilities"
+- contents:
+  - qc_scATAC
+  - nucleosome_counts
+  - getFootprints
+  - peakMatrix
+  - tileMatrix
+  - geneScoreTilesArchR
+  - geneScoreWeightsArchR
 - title: "Fragment Transformers"
-  desc: "Functions for transforming fragment objects"
+  desc: "Transforming fragment objects"
 - contents:
   - shift_fragments
   - select_chromosomes
   - select_cells
-- title: "Fragment Utils"
-  desc: "Other fragment utilities"
+  - subset_lengths
+  - selectRegions
+  - prefix_cell_names
+- title: "Fragment Utilities"
+  desc: "Other fragment functions"
 - contents:
   - IterableFragments-methods
-  - nucleosome_counts
   - scan_fragments
-  - RawFragments
-- title: "Matrices"
+- title: "Matrix I/O"
+  desc: "Functions for reading & writing sparse matrices"
 - contents:
+  - matches("(open|write)_matrix_.*")
+- title: "Matrix Utilities"
+- contents:
+  - matrixStats
+  - convert_matrix_type
+  - transpose_storage_order
   - IterableMatrix-methods
-  - peakMatrix
-  - tileMatrix
-- title: "ATAC Analysis Utilities"
+  - min_scalar
+- title: "Internal Functions"
+  desc: "Unexported functions for internal use"
 - contents:
-  - getFootprints
+  - LinearOperator-class
+  - linear_operator
+  - iterate_matrix
+  - matrix_type
+  - matrix_is_transform
+  - merge_dimnames
+  - concat_dimnames
+  - normalized_dimnames
+  - distanceToNearestDirectional
+  - extendGenomicRanges
+  - fragments_identical
+  - XPtrList-class
+  - wrapFragments
+  - wrapMatrix
 

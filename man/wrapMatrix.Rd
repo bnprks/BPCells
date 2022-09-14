@@ -2,12 +2,10 @@
 % Please edit documentation in R/matrix.R
 \name{wrapMatrix}
 \alias{wrapMatrix}
-\title{Construct an S4 matrix object wrapping another matrix object, avoiding
-duplicate storage of dimnames}
+\title{Construct an S4 matrix object wrapping another matrix object}
 \usage{
 wrapMatrix(class, m, ...)
 }
 \description{
-Construct an S4 matrix object wrapping another matrix object, avoiding
-duplicate storage of dimnames
+Helps to avoid duplicate storage of dimnames
 }

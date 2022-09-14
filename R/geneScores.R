@@ -1,5 +1,7 @@
+#' Find signed distance to nearest genomic ranges
+#' 
 #' Given a set of genomic ranges, find the distance to the nearest neighbors both
-#' upstream and downstream
+#' upstream and downstream.
 #' @param ranges GenomicRanges object
 #' @param addArchRBug boolean to reproduce ArchR's bug that incorrectly handles nested genes
 #' @return A 2-column data.frame with columns upstream and downstream, containing 
@@ -64,9 +66,19 @@ extendGenomicRanges <- function(ranges, upstream=0, downstream=0) {
     ranges
 }
 
-#' Calculate the tiles to use for GeneActivityScores, i.e. what counts as "core
-#' gene" and what is the start and stop of regions that should be considered for
-#' contributing to gene scores  
+#' Calculate gene-tile distances for ArchR gene activities
+#' 
+#' ArchR-style gene activity scores are based on a weighted sum of each tile
+#' according to the signed distance from the tile to a gene body. This function
+#' calculates the signed distances according to ArchR's default parameters.
+#' 
+#' ArchR's tile distance algorithm works as follows
+#' 1. Genes are extended 5kb upstream
+#' 2. Genes are linked to any tiles 1kb-100kb upstream + downstream, but tiles
+#'    beyond a neighboring gene are not considered
+#' @param genes GRanges object with gene start, end, and strand
+#' @param tile_size Size of tiles to consider
+#' @param addArchRBug Replicate ArchR bug in handling nested genes
 #' @details Note: assumes the 1-based, end inclusive coordinate convention used
 #' by GRanges, so 500bp tiles run from bases 1-500, 501-1000, etc.  
 #' @return GRanges object with one range per tile, with additional metadata
@@ -76,6 +88,7 @@ extendGenomicRanges <- function(ranges, upstream=0, downstream=0) {
 #' Distance is a signed distance calculated such that if the tile has a smaller
 #' start coordinate than the gene and the gene is on the + strand, distance will
 #' be negative and calculated as min(0, end(tile) - start(gene))
+#' @export
 geneScoreTilesArchR <- function(genes, tile_size = 500, addArchRBug = FALSE) {
     # Extend upstream by 5kb
     genes <- extendGenomicRanges(genes, upstream=5000)
@@ -115,11 +128,17 @@ geneScoreTilesArchR <- function(genes, tile_size = 500, addArchRBug = FALSE) {
     return(extendGenomicRanges(tiles, downstream=tile_size - 1))
 }
 
-#' Calculate a sparse matrix of GeneActivityScore weights given a set of tile coordinates
-#' @param tiles Tile coordinates as returned by geneScoreTilesArchR
+#' Calculate GeneActivityScore weights matrix
+#' 
+#' Given a set of tile coordinates and distances returned by `geneScoreTilesArchR`,
+#' calculate a weight matrix of dimensions genes x tiles. This matrix can be 
+#' multiplied with a tile matrix to obtain ArchR-compatible gene activity scores.
+#' 
+#' @param tiles Tile coordinates as returned by `geneScoreTilesArchR`
 #' @param chr_sizes Named vector of chromosome sizes with chromosmes in the order they are listed
 #' in the tile matrix (used to calculate the index of each tile)
 #' @return Weight matrix of dimension genes x tiles
+#' @export
 geneScoreWeightsArchR <- function(tiles, chr_sizes = GenomeInfoDb::seqlengths(tiles)) {
     tile_size <- width(tiles[1])
     tile_count <- chr_sizes %/% tile_size + 1

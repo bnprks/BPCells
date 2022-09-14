@@ -2,16 +2,13 @@
 % Please edit documentation in R/matrix.R
 \name{matrix_is_transform}
 \alias{matrix_is_transform}
-\title{Return boolean whether the matrix is a transform (i.e. is loading data from another
-matrix R object rather than a data source it owns). This is used primarily to know when it is safe
-to clear dimnames from intermediate transformed matrices. C++ relies on the base matrices (non-transform) to have
-dimnames, while R relies on the outermost matrix (transform) to have dimnames.}
+\title{Return boolean whether the matrix is a transform}
 \usage{
 matrix_is_transform(x)
 }
 \description{
-Return boolean whether the matrix is a transform (i.e. is loading data from another
-matrix R object rather than a data source it owns). This is used primarily to know when it is safe
+A matrix is a transform if it is loading data from another
+matrix R object rather than a data source it owns. This is used primarily to know when it is safe
 to clear dimnames from intermediate transformed matrices. C++ relies on the base matrices (non-transform) to have
 dimnames, while R relies on the outermost matrix (transform) to have dimnames.
 }

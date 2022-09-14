@@ -2,17 +2,11 @@
 % Please edit documentation in R/fragments.R
 \name{wrapFragments}
 \alias{wrapFragments}
-\title{Wrap an inner XPtrList with an outer externalptr object (aka Rcpp::XPtr)
-We also track the type of the current pointer to provide a little safety when converting
-to C++.
-WARNING: Always make sure to pass the correct inner object, because if it is not passed then
-the chain of pointers will be broken and C++ objects could be freed at random by the GC while we're
-still using them. ONLY pass inner=new("XPtrList") if the C++ object is not wrapping any other fragments/matrices}
+\title{Wrap an inner XPtrList with an outer externalptr object (Rcpp::XPtr)}
 \usage{
 wrapFragments(outer, inner)
 }
 \description{
-Wrap an inner XPtrList with an outer externalptr object (aka Rcpp::XPtr)
 We also track the type of the current pointer to provide a little safety when converting
 to C++.
 WARNING: Always make sure to pass the correct inner object, because if it is not passed then

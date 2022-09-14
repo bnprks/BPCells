@@ -2,12 +2,12 @@
 % Please edit documentation in R/geneScores.R
 \name{geneScoreWeightsArchR}
 \alias{geneScoreWeightsArchR}
-\title{Calculate a sparse matrix of GeneActivityScore weights given a set of tile coordinates}
+\title{Calculate GeneActivityScore weights matrix}
 \usage{
 geneScoreWeightsArchR(tiles, chr_sizes = GenomeInfoDb::seqlengths(tiles))
 }
 \arguments{
-\item{tiles}{Tile coordinates as returned by geneScoreTilesArchR}
+\item{tiles}{Tile coordinates as returned by \code{geneScoreTilesArchR}}
 
 \item{chr_sizes}{Named vector of chromosome sizes with chromosmes in the order they are listed
 in the tile matrix (used to calculate the index of each tile)}
@@ -16,5 +16,7 @@ in the tile matrix (used to calculate the index of each tile)}
 Weight matrix of dimension genes x tiles
 }
 \description{
-Calculate a sparse matrix of GeneActivityScore weights given a set of tile coordinates
+Given a set of tile coordinates and distances returned by \code{geneScoreTilesArchR},
+calculate a weight matrix of dimensions genes x tiles. This matrix can be
+multiplied with a tile matrix to obtain ArchR-compatible gene activity scores.
 }

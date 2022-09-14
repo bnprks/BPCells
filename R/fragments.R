@@ -11,7 +11,8 @@ setClass("IterableFragments")
 #' This class is used to hold a list of external pointers.
 setClass("XPtrList", slots=c("pointers"="list", "type"="character"))
 ptr <- function(x) {x@pointers[[1]]}
-#' Wrap an inner XPtrList with an outer externalptr object (aka Rcpp::XPtr)
+#' Wrap an inner XPtrList with an outer externalptr object (Rcpp::XPtr)
+#' 
 #' We also track the type of the current pointer to provide a little safety when converting
 #' to C++.
 #' WARNING: Always make sure to pass the correct inner object, because if it is not passed then
@@ -405,8 +406,8 @@ write_fragments_dir <- function(fragments, dir, compress=TRUE, buffer_size=1024L
     open_fragments_dir(dir, buffer_size)
 }
 
-#' Open an existing fragments object written with [write_fragments_dir]
-#' @param dir Directory to read the data from
+#' Open an existing fragments object from a directory
+#' @param dir Directory to read the data from, written by `write_fragments_dir`
 #' @param buffer_size For performance tuning only. The number of fragments to be buffered
 #' in memory for each read
 #' @return FragmentsDir object

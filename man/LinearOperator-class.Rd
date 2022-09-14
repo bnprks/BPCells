@@ -3,11 +3,9 @@
 \docType{class}
 \name{LinearOperator-class}
 \alias{LinearOperator-class}
-\title{LinearOperator class for performing sparse matrix - dense vector products, e.g.
-for downstream matrix solvers. This is to avoid having to call iterate_matrix
-repeatedly for a possible efficiency gain}
+\title{Represent a sparse matrix-vector product operation}
 \description{
-LinearOperator class for performing sparse matrix - dense vector products, e.g.
-for downstream matrix solvers. This is to avoid having to call iterate_matrix
-repeatedly for a possible efficiency gain
+LinearOperators perform sparse matrix-vector product operations for
+for downstream matrix solvers. They avoid repeatedly calling iterate_matrix
+from an SVD solver for a possible efficiency gain
 }

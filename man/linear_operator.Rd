@@ -2,12 +2,11 @@
 % Please edit documentation in R/matrix.R
 \name{linear_operator}
 \alias{linear_operator}
-\title{Construct a C++ matrix object and save the pointer to use for repeated matrix-vector products
-A bit experimental still so for internal use}
+\title{Construct a LinearOperator object}
 \usage{
 linear_operator(mat)
 }
 \description{
-Construct a C++ matrix object and save the pointer to use for repeated matrix-vector products
+Constructs a C++ matrix object and save the pointer to use for repeated matrix-vector products
 A bit experimental still so for internal use
 }

@@ -43,25 +43,25 @@ reading a peak set from a bed file, then calculating a cell x peak matrix.
 library("BPCells")
 
 # File reading is lazy, so this is instantaneous
-fragments <- open_10x_fragments("atac_fragments.tsv.gz")
+fragments <- open_fragments_10x("atac_fragments.tsv.gz")
 
 # This is when we actually read the file, should take 1-2 minutes to scan
 # since we bottleneck on gzip decompression.
-packed_fragments <- write_packed_fragments(fragments)
+packed_fragments <- write_fragments_memory(fragments)
 
 # Important to set compress=FALSE for speed. Should take a few seconds
 saveRDS(packed_fragments, "fragments.rds", compress=FALSE)
 
 # Reloading from disk is only a few seconds now.
-packed_fragments <- readRds("fragments.rds")
+packed_fragments <- readRDS("fragments.rds")
 
-peaks <- read_tsv("peaks.bed", col_names=c("chr", "start", "end"), col_types="cii")
+peaks <- readr::read_tsv("peaks.bed", col_names=c("chr", "start", "end"), col_types="cii")
 
 # This is fast because the peak matrix calculation is lazy.
 # It will be computed on-the-fly when we actually need results from it.
 # Note that we don't need to convert our peaks to 0-based coordinates since our bed file
 # is already 0-based
-peakMatrix <- overlapMatrix(packed_fragments, peaks, convert_to_0_based_coords=FALSE)
+peakMatrix <- peakMatrix(packed_fragments, peaks, convert_to_0_based_coords=FALSE)
 
 # Here is where the peak matrix calculation happens. Should take
 # under 10 seconds.
@@ -93,18 +93,18 @@ and returning the colMeans.
 library("tidyverse")
 
 # We'll subset to just the standard chromosomes
-standard_chr <- which(str_detect(packed_fragments@chr_names, "^chr[0-9XY]+$"))
+standard_chr <- which(stringr::str_detect(chrNames(packed_fragments), "^chr[0-9XY]+$"))
 
 # Pick a random subset of 100 cells to consider
 set.seed(1337)
-keeper_cells <- sample(packed_fragments@cell_names, 100)
+keeper_cells <- sample(cellNames(packed_fragments), 100)
 
 # Run the pipeline, and save the average accessibility per peak
 peak_accessibility <- packed_fragments %>%
   select_chromosomes(standard_chr) %>%
   select_cells(keeper_cells) %>%
   shift_fragments(shift_start=4, shift_end=-5) %>%
-  overlapMatrix(peaks) %>%
+  peakMatrix(peaks) %>%
   colMeans()
 ```
 
@@ -125,14 +125,13 @@ fragments in memory.
     - Calculation of Cell x Peak matrices
 - Matrices
     - Conversion to/from R sparse matrices
-    - Read-only access to 10x and AnnData hdf5 feature matrices
+    - Read-write access to 10x hdf5 feature matrices, and read-only access to AnnData files, and 
     - Reading/writing of packed sparse matrices in memory or directly from disk
     - Multiplication by dense matrices or vectors
     - Calculation of statistics like rowSums, colSums, rowMeans, and colMeans
     - Transparent handling of vector `+`, `-`, `*`, `/`, and `log1p` for streaming
       normalization. This allows implementation of ATAC-seq LSI and Seurat default
       normalization.
-- Support for 
 
 ### Upcoming additions:
 - Support for additional fragment formats:
@@ -143,7 +142,7 @@ fragments in memory.
 - Support for additional matrix normalizations:
     - sctransform normalization
 
-### Performance goals/estimates
+### Performance estimates
 - Bit-packed storage:
     - Packed fragments are about 2x smaller than ArchR fragments and gzipped 10x fragment files
     - Packed fragments can be decompressed at >5GB/s, and so decoding is disk-limited on
@@ -155,7 +154,16 @@ fragments in memory.
       (Note: compared to R dgCMatrices,
       the numbers are more like 6-8x smaller due to dgCMatrices always storing
       double-precision floats)
+- Comparison to ArchR:
+    - Fragment import speed is about 10-fold faster
+    - Peak and tile matrix calculations are about 10-fold faster than ArchR
+    - BPCells usually uses less memory than ArchR, though ArchR's memory usage is
+      never excessive
 - PCA calculation:
+    - Compared to Seurat/Scanpy's default normalization + PCA, BPCells can be nearly 100x more
+      memory efficient for large datasets (1M cells), even when subsetting to just 2,000 genes.
+    - The time for PCA calculation is faster than Seurat, but about 2x slower than Scanpy 
+      (BPCells) takes about 5 minutes to run PCA on a 1M cell matrix
     - Compared to Seurat's default normalization + PCA, BPCells will likely be about
       10x more efficient in memory and CPU. It is unclear if this will multiply with
       the 4-6x memory savings from bitpacking counts matrices.

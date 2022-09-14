@@ -2,12 +2,12 @@
 % Please edit documentation in R/fragments.R
 \name{open_fragments_dir}
 \alias{open_fragments_dir}
-\title{Open an existing fragments object written with \link{write_fragments_dir}}
+\title{Open an existing fragments object from a directory}
 \usage{
 open_fragments_dir(dir, buffer_size = 1024L)
 }
 \arguments{
-\item{dir}{Directory to read the data from}
+\item{dir}{Directory to read the data from, written by \code{write_fragments_dir}}
 
 \item{buffer_size}{For performance tuning only. The number of fragments to be buffered
 in memory for each read}
@@ -16,5 +16,5 @@ in memory for each read}
 FragmentsDir object
 }
 \description{
-Open an existing fragments object written with \link{write_fragments_dir}
+Open an existing fragments object from a directory
 }

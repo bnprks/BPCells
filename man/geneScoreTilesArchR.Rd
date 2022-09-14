@@ -2,11 +2,16 @@
 % Please edit documentation in R/geneScores.R
 \name{geneScoreTilesArchR}
 \alias{geneScoreTilesArchR}
-\title{Calculate the tiles to use for GeneActivityScores, i.e. what counts as "core
-gene" and what is the start and stop of regions that should be considered for
-contributing to gene scores}
+\title{Calculate gene-tile distances for ArchR gene activities}
 \usage{
 geneScoreTilesArchR(genes, tile_size = 500, addArchRBug = FALSE)
+}
+\arguments{
+\item{genes}{GRanges object with gene start, end, and strand}
+
+\item{tile_size}{Size of tiles to consider}
+
+\item{addArchRBug}{Replicate ArchR bug in handling nested genes}
 }
 \value{
 GRanges object with one range per tile, with additional metadata
@@ -18,11 +23,18 @@ start coordinate than the gene and the gene is on the + strand, distance will
 be negative and calculated as min(0, end(tile) - start(gene))
 }
 \description{
-Calculate the tiles to use for GeneActivityScores, i.e. what counts as "core
-gene" and what is the start and stop of regions that should be considered for
-contributing to gene scores
+ArchR-style gene activity scores are based on a weighted sum of each tile
+according to the signed distance from the tile to a gene body. This function
+calculates the signed distances according to ArchR's default parameters.
 }
 \details{
+ArchR's tile distance algorithm works as follows
+\enumerate{
+\item Genes are extended 5kb upstream
+\item Genes are linked to any tiles 1kb-100kb upstream + downstream, but tiles
+beyond a neighboring gene are not considered
+}
+
 Note: assumes the 1-based, end inclusive coordinate convention used
 by GRanges, so 500bp tiles run from bases 1-500, 501-1000, etc.
 }

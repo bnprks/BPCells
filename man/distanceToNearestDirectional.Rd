@@ -2,8 +2,7 @@
 % Please edit documentation in R/geneScores.R
 \name{distanceToNearestDirectional}
 \alias{distanceToNearestDirectional}
-\title{Given a set of genomic ranges, find the distance to the nearest neighbors both
-upstream and downstream}
+\title{Find signed distance to nearest genomic ranges}
 \usage{
 distanceToNearestDirectional(ranges, addArchRBug = FALSE)
 }
@@ -28,5 +27,5 @@ in a range.
 }
 \description{
 Given a set of genomic ranges, find the distance to the nearest neighbors both
-upstream and downstream
+upstream and downstream.
 }

@@ -38,8 +38,9 @@ setMethod("dimnames<-", signature(x="IterableMatrix", value="NULL"), function(x,
     x
 })
 
-#' Construct an S4 matrix object wrapping another matrix object, avoiding
-#' duplicate storage of dimnames
+#' Construct an S4 matrix object wrapping another matrix object
+#' 
+#' Helps to avoid duplicate storage of dimnames
 wrapMatrix <- function(class, m, ...) {
     dimnames <- dimnames(m)
     if (matrix_is_transform(m)) m@dimnames <- list(NULL, NULL)
@@ -76,8 +77,10 @@ setMethod("matrix_type", "XPtrList", function(x) {
 })
 
 
-#' Return boolean whether the matrix is a transform (i.e. is loading data from another
-#' matrix R object rather than a data source it owns). This is used primarily to know when it is safe
+#' Return boolean whether the matrix is a transform 
+#' 
+#' A matrix is a transform if it is loading data from another
+#' matrix R object rather than a data source it owns. This is used primarily to know when it is safe
 #' to clear dimnames from intermediate transformed matrices. C++ relies on the base matrices (non-transform) to have
 #' dimnames, while R relies on the outermost matrix (transform) to have dimnames.
 setGeneric("matrix_is_transform", function(x) standardGeneric("matrix_is_transform"))
@@ -169,9 +172,11 @@ setMethod("%*%", signature(x="numeric", y="IterableMatrix"), function(x, y) {
     }
 })
 
-#' LinearOperator class for performing sparse matrix - dense vector products, e.g.
-#' for downstream matrix solvers. This is to avoid having to call iterate_matrix
-#' repeatedly for a possible efficiency gain
+#' Represent a sparse matrix-vector product operation
+#' 
+#' LinearOperators perform sparse matrix-vector product operations for
+#' for downstream matrix solvers. They avoid repeatedly calling iterate_matrix 
+#' from an SVD solver for a possible efficiency gain
 setClass("LinearOperator",
     slots = c(
         dim = "integer",
@@ -184,7 +189,9 @@ setClass("LinearOperator",
     )
 )
 
-#' Construct a C++ matrix object and save the pointer to use for repeated matrix-vector products
+#' Construct a LinearOperator object
+#' 
+#' Constructs a C++ matrix object and save the pointer to use for repeated matrix-vector products
 #' A bit experimental still so for internal use
 linear_operator <- function(mat) {
     assert_is(mat, "IterableMatrix")

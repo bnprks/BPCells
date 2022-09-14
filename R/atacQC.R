@@ -12,19 +12,21 @@ nucleosome_counts <- function(fragments, nucleosome_width=147) {
     assert_len(nucleosome_width, 1)
 
     iter <- iterate_fragments(fragments)
-    nucleosome_counts_cpp(ptr(iter), nucleosome_width)
+    res <- nucleosome_counts_cpp(ptr(iter), nucleosome_width)
+    res[["nFrags"]] <- res[[1]] + res[[2]] + res[[3]]
+    return(res)
 }
 
 
-#' Calculate ArchR-compatible per-cell QC statistics according to ArchR's default parameters
+#' Calculate ArchR-compatible per-cell QC statistics
 #' @param fragments IterableFragments object
 #' @param genes GenomicRanges object with genes coordinates (e.g. ArchR::geneAnnoHg38$TSS)
 #' @param blacklist GenomicRanges object with blacklist regions (e.g. ArchR::genomeAnnoHg38$blacklist)
 #' @inheritParams peakMatrix
 #' @return data.frame with QC data
 #' @details 
-#' For uses requiring more flexibility to tweak default parameters, the best option is to 
-#' re-implement this function with required changes.
+#' This implementation mimics ArchR's default parameters. For uses requiring more flexibility to tweak default parameters, 
+#' the best option is to re-implement this function with required changes.
 #' Output columns of data.frame: 
 #'  - cellName: cell name for each cell
 #'  - nFrags: number of fragments per cell

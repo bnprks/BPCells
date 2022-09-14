@@ -2,7 +2,7 @@
 % Please edit documentation in R/atacQC.R
 \name{qc_scATAC}
 \alias{qc_scATAC}
-\title{Calculate ArchR-compatible per-cell QC statistics according to ArchR's default parameters}
+\title{Calculate ArchR-compatible per-cell QC statistics}
 \usage{
 qc_scATAC(fragments, genes, blacklist, zero_based_coords = TRUE)
 }
@@ -21,11 +21,11 @@ or a 1-based coordinate system. (1-based will be converted to 0-based)
 data.frame with QC data
 }
 \description{
-Calculate ArchR-compatible per-cell QC statistics according to ArchR's default parameters
+Calculate ArchR-compatible per-cell QC statistics
 }
 \details{
-For uses requiring more flexibility to tweak default parameters, the best option is to
-re-implement this function with required changes.
+This implementation mimics ArchR's default parameters. For uses requiring more flexibility to tweak default parameters,
+the best option is to re-implement this function with required changes.
 Output columns of data.frame:
 \itemize{
 \item cellName: cell name for each cell
