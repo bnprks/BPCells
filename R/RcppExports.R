@@ -333,6 +333,10 @@ iterate_matrix_10x_hdf5_cpp <- function(file, buffer_size) {
     .Call(`_BPCells_iterate_matrix_10x_hdf5_cpp`, file, buffer_size)
 }
 
+write_matrix_10x_hdf5_cpp <- function(matrix, path, barcodes, feature_ids, feature_names, feature_types, feature_metadata, buffer_size, chunk_size) {
+    invisible(.Call(`_BPCells_write_matrix_10x_hdf5_cpp`, matrix, path, barcodes, feature_ids, feature_names, feature_types, feature_metadata, buffer_size, chunk_size))
+}
+
 dims_matrix_anndata_hdf5_cpp <- function(file, group, buffer_size) {
     .Call(`_BPCells_dims_matrix_anndata_hdf5_cpp`, file, group, buffer_size)
 }

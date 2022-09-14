@@ -1124,6 +1124,24 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// write_matrix_10x_hdf5_cpp
+void write_matrix_10x_hdf5_cpp(SEXP matrix, std::string path, StringVector barcodes, StringVector feature_ids, StringVector feature_names, StringVector feature_types, List feature_metadata, uint32_t buffer_size, uint32_t chunk_size);
+RcppExport SEXP _BPCells_write_matrix_10x_hdf5_cpp(SEXP matrixSEXP, SEXP pathSEXP, SEXP barcodesSEXP, SEXP feature_idsSEXP, SEXP feature_namesSEXP, SEXP feature_typesSEXP, SEXP feature_metadataSEXP, SEXP buffer_sizeSEXP, SEXP chunk_sizeSEXP) {
+BEGIN_RCPP
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type matrix(matrixSEXP);
+    Rcpp::traits::input_parameter< std::string >::type path(pathSEXP);
+    Rcpp::traits::input_parameter< StringVector >::type barcodes(barcodesSEXP);
+    Rcpp::traits::input_parameter< StringVector >::type feature_ids(feature_idsSEXP);
+    Rcpp::traits::input_parameter< StringVector >::type feature_names(feature_namesSEXP);
+    Rcpp::traits::input_parameter< StringVector >::type feature_types(feature_typesSEXP);
+    Rcpp::traits::input_parameter< List >::type feature_metadata(feature_metadataSEXP);
+    Rcpp::traits::input_parameter< uint32_t >::type buffer_size(buffer_sizeSEXP);
+    Rcpp::traits::input_parameter< uint32_t >::type chunk_size(chunk_sizeSEXP);
+    write_matrix_10x_hdf5_cpp(matrix, path, barcodes, feature_ids, feature_names, feature_types, feature_metadata, buffer_size, chunk_size);
+    return R_NilValue;
+END_RCPP
+}
 // dims_matrix_anndata_hdf5_cpp
 List dims_matrix_anndata_hdf5_cpp(std::string file, std::string group, uint32_t buffer_size);
 RcppExport SEXP _BPCells_dims_matrix_anndata_hdf5_cpp(SEXP fileSEXP, SEXP groupSEXP, SEXP buffer_sizeSEXP) {
@@ -1618,6 +1636,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_BPCells_write_packed_matrix_hdf5_double_cpp", (DL_FUNC) &_BPCells_write_packed_matrix_hdf5_double_cpp, 6},
     {"_BPCells_dims_matrix_10x_hdf5_cpp", (DL_FUNC) &_BPCells_dims_matrix_10x_hdf5_cpp, 2},
     {"_BPCells_iterate_matrix_10x_hdf5_cpp", (DL_FUNC) &_BPCells_iterate_matrix_10x_hdf5_cpp, 2},
+    {"_BPCells_write_matrix_10x_hdf5_cpp", (DL_FUNC) &_BPCells_write_matrix_10x_hdf5_cpp, 9},
     {"_BPCells_dims_matrix_anndata_hdf5_cpp", (DL_FUNC) &_BPCells_dims_matrix_anndata_hdf5_cpp, 3},
     {"_BPCells_iterate_matrix_anndata_hdf5_cpp", (DL_FUNC) &_BPCells_iterate_matrix_anndata_hdf5_cpp, 3},
     {"_BPCells_iterate_matrix_log1p_cpp", (DL_FUNC) &_BPCells_iterate_matrix_log1p_cpp, 1},

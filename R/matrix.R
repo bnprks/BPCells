@@ -956,6 +956,82 @@ open_matrix_10x_hdf5 <- function(path, buffer_size=16384L) {
         dimnames=normalized_dimnames(info$row_names, info$col_names))
 }
 
+#' Write a matrix to a 10x-compatible hdf5 feature matrix file
+#' @inheritParams open_matrix_10x_hdf5
+#' @inheritParams write_matrix_hdf5
+#' @param mat IterableMatrix
+#' @param barcodes Vector of names for the cells
+#' @param feature_ids Vector of IDs for the features
+#' @param feature_names Vector of names for the features
+#' @param feature_type String or vector of feature types
+#' @param feature_metadata Named list of additional metadata vectors
+#' to store for each feature
+#' @return IterableMatrix with the contents of the output
+#' @details Input matrices must be in column-major storage order,
+#' and if the rownames and colnames are not set, names must be 
+#' provided for the relevant metadata parameters. Some of the
+#' metadata parameters are not read by default in BPCells, but
+#' it is possible to export them for use with other tools.
+#' @export
+write_matrix_10x_hdf5 <- function(
+    mat, 
+    path,
+    barcodes=colnames(mat),
+    feature_ids=rownames(mat), 
+    feature_names=rownames(mat), 
+    feature_types="Gene Expression", 
+    feature_metadata=list(),
+    buffer_size=16384L,
+    chunk_size=1024L
+) {
+    assert_is(mat, "IterableMatrix")
+    assert_is(path, "character")
+    if (mat@transpose) {
+        stop("Matrix must have column-major storage order.\nCall t() or transpose_storage_order() first.")
+    }
+    if (matrix_type(mat) != "uint32_t") {
+        warning("Converting to integer matrix for output to 10x format")
+        mat <- convert_matrix_type(mat, "uint32_t")
+    }
+    assert_is(barcodes, "character")
+    assert_len(barcodes, ncol(mat))
+    assert_is(feature_ids, "character")
+    assert_len(feature_ids, nrow(mat))
+    assert_is(feature_names, "character")
+    assert_len(feature_names, nrow(mat))
+    assert_is(feature_types, "character")
+    if (!(length(feature_types) %in% c(1, nrow(mat)))) {
+        stop("feature_types must have length 1 or nrow(mat)")
+    }
+    if (length(feature_types) == 1) {
+        feature_types <- rep_len(feature_types, nrow(mat))
+    }
+    assert_is(feature_metadata, "list")
+    if (length(feature_metadata) != 0) {
+        assert_not_null(names(feature_metadata))
+        for (name in names(feature_metadata)) {
+            assert_len(feature_metadata[[name]], nrow(mat))
+            assert_is(feature_metadata[[name]], "character")
+        }
+    }
+    assert_is(buffer_size, "integer")
+    assert_is(chunk_size, "integer")
+    
+    path <- normalizePath(path, mustWork=FALSE)
+    it <- iterate_matrix(mat)
+    write_matrix_10x_hdf5_cpp(
+        ptr(it), 
+        path, 
+        barcodes, 
+        feature_ids, 
+        feature_names, 
+        feature_types, 
+        feature_metadata, 
+        buffer_size, 
+        chunk_size
+    )
+    open_matrix_10x_hdf5(path, buffer_size)
+}
 
 setClass("AnnDataMatrixH5",
     contains = "IterableMatrix",

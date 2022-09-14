@@ -39,6 +39,42 @@ StoredMatrix<uint32_t> open10xFeatureMatrix(std::string file, uint32_t buffer_si
     );
 }
 
+StoredMatrixWriter<uint32_t> create10xFeatureMatrix(
+    std::string file_path, 
+    const StringReader &barcodes, 
+    const StringReader &feature_ids, 
+    const StringReader &feature_names,
+    const StringReader &feature_types, 
+    const std::map<std::string, std::unique_ptr<StringReader>> &feature_metadata, 
+    uint32_t buffer_size, 
+    uint32_t chunk_size
+) {
+    H5WriterBuilder wb(file_path, "matrix", buffer_size, chunk_size);
+    
+    wb.createStringWriter("barcodes")->write(barcodes);
+    wb.createStringWriter("features/id")->write(feature_ids);
+    wb.createStringWriter("features/name")->write(feature_names);
+    wb.createStringWriter("features/feature_type")->write(feature_types);
+    std::vector<std::string> tag_keys;
+    for (const auto& [key, value] : feature_metadata) {
+        wb.createStringWriter(std::string("features/") + key)
+            ->write(*value);
+        tag_keys.push_back(key);
+    }
+    wb.createStringWriter("features/_all_tag_keys")->write(VecStringReader(tag_keys));
+
+    
+    return StoredMatrixWriter(
+        wb.createULongWriter("indices").convert<uint32_t>(),
+        wb.createUIntWriter("data"),
+        wb.createULongWriter("indptr").convert<uint32_t>(),
+        wb.createUIntWriter("shape"),
+        std::make_unique<NullStringWriter>(),
+        std::make_unique<NullStringWriter>(),
+        std::make_unique<NullStringWriter>()
+    );
+}
+
 // Read AnnData sparse matrix, with an implicit transpose to CSC format for
 // any data stored in CSR format
 StoredMatrix<float> openAnnDataMatrix(std::string file, std::string group, uint32_t buffer_size, uint32_t read_size) {

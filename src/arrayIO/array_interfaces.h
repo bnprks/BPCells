@@ -34,6 +34,10 @@ public:
     uint32_t size() const override;
 };
 
+class NullStringWriter : public StringWriter {
+public:
+    void write(const StringReader &reader) override {}
+};
 
 template<class T>
 class BulkNumReader {
@@ -101,12 +105,12 @@ public:
     BulkNumWriterConverter(std::unique_ptr<BulkNumWriter<From>> writer) :
         writer(std::move(writer)) {}
     
-    void write(To *in, uint32_t count) override {
+    uint32_t write(To *in, uint32_t count) override {
         if (count > buffer.size()) buffer.resize(count);
         for (uint32_t i = 0; i < count; i++) {
             buffer[i] = (From) in[i];
         }
-        writer->write(buffer.data(), count);
+        return writer->write(buffer.data(), count);
     }
 
     void finalize() override {writer->finalize();}

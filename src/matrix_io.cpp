@@ -375,6 +375,38 @@ SEXP iterate_matrix_10x_hdf5_cpp(std::string file, uint32_t buffer_size) {
 }
 
 // [[Rcpp::export]]
+void write_matrix_10x_hdf5_cpp(
+    SEXP matrix, 
+    std::string path, 
+    StringVector barcodes, 
+    StringVector feature_ids, 
+    StringVector feature_names, 
+    StringVector feature_types, 
+    List feature_metadata, 
+    uint32_t buffer_size, 
+    uint32_t chunk_size
+) {
+    XPtr<MatrixLoader<uint32_t>> loader(matrix);
+    loader->restart();
+    std::map<std::string, std::unique_ptr<StringReader>> metadata;
+    StringVector metadata_names = feature_metadata.names();
+    for (int i = 0; i < feature_metadata.size(); i++) {
+        metadata[std::string(metadata_names[i])] = std::make_unique<RcppStringReader>(feature_metadata[i]);
+    }
+    StoredMatrixWriter<uint32_t> w = create10xFeatureMatrix(
+        path, 
+        RcppStringReader(barcodes), 
+        RcppStringReader(feature_ids), 
+        RcppStringReader(feature_names), 
+        RcppStringReader(feature_types),
+        metadata,
+        buffer_size,
+        chunk_size 
+    );
+    w.write(*loader, &Rcpp::checkUserInterrupt);
+}
+
+// [[Rcpp::export]]
 List dims_matrix_anndata_hdf5_cpp(std::string file, std::string group, uint32_t buffer_size) {
     bool transpose = isRowOrientedAnnDataMatrix(file, group);
     List l = dims_matrix(openAnnDataMatrix(file, group, buffer_size), transpose);

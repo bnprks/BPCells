@@ -1,4 +1,5 @@
 #include "StoredMatrix.h"
+#include "StoredMatrixWriter.h"
 #include "../arrayIO/array_interfaces.h"
 #include "../arrayIO/vector.h"
 #include "../arrayIO/hdf5.h"
@@ -28,7 +29,16 @@ public:
 // Reader interfaces for 10x and AnnData matrices
 
 StoredMatrix<uint32_t> open10xFeatureMatrix(std::string file, uint32_t buffer_size, uint32_t read_size=1024);
-
+StoredMatrixWriter<uint32_t> create10xFeatureMatrix(
+    std::string file, 
+    const StringReader &barcodes, 
+    const StringReader &feature_ids, 
+    const StringReader &feature_names,
+    const StringReader &feature_types, 
+    const std::map<std::string, std::unique_ptr<StringReader>> &feature_metadata, 
+    uint32_t buffer_size, 
+    uint32_t chunk_size
+);
 // Read AnnData sparse matrix, with an implicit transpose to CSC format for
 // any data stored in CSR format
 StoredMatrix<float> openAnnDataMatrix(std::string file, std::string group, uint32_t buffer_size, uint32_t read_size=1024);
