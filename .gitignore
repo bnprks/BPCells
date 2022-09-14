@@ -1,5 +1,3 @@
-docs
-man
 *.o
 *.so
 *.o.tmp
@@ -8,6 +6,7 @@ man
 timing_data.csv
 timing_plot.png
 settings.json
+compile_commands.json
 .Rproj.user
 BPCells.Rproj
 CHECKLIST.md
