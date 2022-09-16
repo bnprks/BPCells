@@ -2,13 +2,12 @@
 #include <cstring>
 namespace BPCells {
 
-
 VecStringWriter::VecStringWriter(std::vector<std::string> &data) : data(data) {}
 void VecStringWriter::write(const StringReader &reader) {
     uint32_t i = 0;
     data.resize(0);
     while (true) {
-        const char* s = reader.get(i);
+        const char *s = reader.get(i);
         if (s == NULL) break;
         data.push_back(s);
         i++;
@@ -49,7 +48,7 @@ std::unique_ptr<StringWriter> VecReaderWriterBuilder::createStringWriter(std::st
     string_vecs.emplace(name, std::vector<std::string>());
     return std::make_unique<VecStringWriter>(string_vecs.at(name));
 }
-void VecReaderWriterBuilder::writeVersion(std::string version) {this->version = version;}
+void VecReaderWriterBuilder::writeVersion(std::string version) { this->version = version; }
 
 void VecReaderWriterBuilder::deleteWriter(std::string name) {
     this->int_vecs.erase(name);
@@ -66,29 +65,44 @@ UIntReader VecReaderWriterBuilder::openUIntReader(std::string name) {
 
 FloatReader VecReaderWriterBuilder::openFloatReader(std::string name) {
     std::vector<float> &v = float_vecs.at(name);
-    return FloatReader(std::make_unique<VecNumReader<float>>(v.data(), v.size()), chunk_size, chunk_size);
+    return FloatReader(
+        std::make_unique<VecNumReader<float>>(v.data(), v.size()), chunk_size, chunk_size
+    );
 }
 
 ULongReader VecReaderWriterBuilder::openULongReader(std::string name) {
     std::vector<uint64_t> &v = long_vecs.at(name);
-    return ULongReader(std::make_unique<VecNumReader<uint64_t>>(v.data(), v.size()), chunk_size, chunk_size);
+    return ULongReader(
+        std::make_unique<VecNumReader<uint64_t>>(v.data(), v.size()), chunk_size, chunk_size
+    );
 }
 
 DoubleReader VecReaderWriterBuilder::openDoubleReader(std::string name) {
     std::vector<double> &v = double_vecs.at(name);
-    return DoubleReader(std::make_unique<VecNumReader<double>>(v.data(), v.size()), chunk_size, chunk_size);
+    return DoubleReader(
+        std::make_unique<VecNumReader<double>>(v.data(), v.size()), chunk_size, chunk_size
+    );
 }
-
 
 std::unique_ptr<StringReader> VecReaderWriterBuilder::openStringReader(std::string name) {
     std::vector<std::string> &v = string_vecs.at(name);
     return std::make_unique<VecStringReader>(v);
 }
-std::string VecReaderWriterBuilder::readVersion() {return version;}
+std::string VecReaderWriterBuilder::readVersion() { return version; }
 
-std::map<std::string, std::vector<uint32_t>>& VecReaderWriterBuilder::getIntVecs() {return int_vecs;}
-std::map<std::string, std::vector<float>>& VecReaderWriterBuilder::getFloatVecs() {return float_vecs;}
-std::map<std::string, std::vector<uint64_t>>& VecReaderWriterBuilder::getLongVecs() {return long_vecs;}
-std::map<std::string, std::vector<double>>& VecReaderWriterBuilder::getDoubleVecs() {return double_vecs;}
-std::map<std::string, std::vector<std::string>>& VecReaderWriterBuilder::getStringVecs() {return string_vecs;}
+std::map<std::string, std::vector<uint32_t>> &VecReaderWriterBuilder::getIntVecs() {
+    return int_vecs;
+}
+std::map<std::string, std::vector<float>> &VecReaderWriterBuilder::getFloatVecs() {
+    return float_vecs;
+}
+std::map<std::string, std::vector<uint64_t>> &VecReaderWriterBuilder::getLongVecs() {
+    return long_vecs;
+}
+std::map<std::string, std::vector<double>> &VecReaderWriterBuilder::getDoubleVecs() {
+    return double_vecs;
+}
+std::map<std::string, std::vector<std::string>> &VecReaderWriterBuilder::getStringVecs() {
+    return string_vecs;
+}
 } // end namespace BPCells

@@ -3,10 +3,17 @@
 
 namespace BPCells {
 
-RegionSelect::RegionSelect(FragmentLoader &loader, const std::vector<uint32_t> &chr, const std::vector<uint32_t> &start,
-    const std::vector<uint32_t> &end, std::unique_ptr<StringReader> &&chr_levels,
-    bool invert_selection) : FragmentLoaderWrapper(loader), invert_selection(invert_selection),
-    chr_levels(std::move(chr_levels)) {
+RegionSelect::RegionSelect(
+    FragmentLoader &loader,
+    const std::vector<uint32_t> &chr,
+    const std::vector<uint32_t> &start,
+    const std::vector<uint32_t> &end,
+    std::unique_ptr<StringReader> &&chr_levels,
+    bool invert_selection
+)
+    : FragmentLoaderWrapper(loader)
+    , invert_selection(invert_selection)
+    , chr_levels(std::move(chr_levels)) {
 
     if (chr.size() != start.size() || chr.size() != end.size())
         throw std::invalid_argument("chr, start, and end must all be same length");
@@ -20,7 +27,7 @@ RegionSelect::RegionSelect(FragmentLoader &loader, const std::vector<uint32_t> &
         r.chr = chr[i];
         sorted_regions.push_back(r);
     }
-    
+
     // Sort regions by start coord since that's the order we'll see them
     std::sort(sorted_regions.begin(), sorted_regions.end(), [](Region a, Region b) {
         if (a.chr != b.chr) return a.chr < b.chr;
@@ -42,8 +49,9 @@ RegionSelect::RegionSelect(FragmentLoader &loader, const std::vector<uint32_t> &
     }
     sorted_regions.resize(out_idx + 1);
 
-    // Sentinel value at end of sorted_regions. Use chr UINT32_MAX-1 to avoid conflicts with findChrIDTranslation
-    sorted_regions.push_back({UINT32_MAX-1, UINT32_MAX, UINT32_MAX});
+    // Sentinel value at end of sorted_regions. Use chr UINT32_MAX-1 to avoid conflicts with
+    // findChrIDTranslation
+    sorted_regions.push_back({UINT32_MAX - 1, UINT32_MAX, UINT32_MAX});
 }
 
 void RegionSelect::seek(uint32_t chr_id, uint32_t base) {
@@ -64,7 +72,7 @@ bool RegionSelect::nextChr() {
     return ret;
 }
 
-bool RegionSelect::load() {    
+bool RegionSelect::load() {
     // Overlap procedure:
     //  1. Scan until frag.start >= region.start, marking any overlaps that happen from frag.end
     //  2. Binary search for frag.start >= region.end to find all the remaining overlaps
@@ -92,12 +100,15 @@ bool RegionSelect::load() {
                     return loaded > 0;
                 }
             }
-            // 1. Scan until frag.start >= region.start, marking any overlaps that happen from frag.end
+            // 1. Scan until frag.start >= region.start, marking any overlaps that happen from
+            // frag.end
             while (start[i] < r.start) {
                 cell[loaded] = cell[i];
                 start[loaded] = start[i];
                 end[loaded] = end[i];
-                loaded += invert_selection != (end[i] > r.start); // Don't compare end[i] < r.end, since spanning the region counts as overlapping
+                loaded += invert_selection !=
+                          (end[i] > r.start); // Don't compare end[i] < r.end, since spanning the
+                                              // region counts as overlapping
                 i++;
             }
             // 2. Binary search for frag.start >= region.end to find all the remaining overlaps
@@ -114,10 +125,11 @@ bool RegionSelect::load() {
                 active_region++;
             }
         }
-        // If loaded == 0, try seeking to get closer to viable fragments, assuming we haven't already
-        // done a seek on the current region (to account for slop in the seeking process)
+        // If loaded == 0, try seeking to get closer to viable fragments, assuming we haven't
+        // already done a seek on the current region (to account for slop in the seeking process)
         if (loaded == 0 && active_region != last_seek_region) {
-            if (invert_selection) loader.seek(loader.currentChr(), sorted_regions[active_region].end);
+            if (invert_selection)
+                loader.seek(loader.currentChr(), sorted_regions[active_region].end);
             else loader.seek(loader.currentChr(), sorted_regions[active_region].start);
             last_seek_region = active_region;
         }
@@ -125,16 +137,19 @@ bool RegionSelect::load() {
     return loaded > 0;
 }
 
-uint32_t RegionSelect::capacity() const {return loaded;}
-
+uint32_t RegionSelect::capacity() const { return loaded; }
 
 uint32_t RegionSelect::computeNextActiveRegion(uint32_t chr, uint32_t base) const {
     // Find first region where end > start
-    auto it = std::upper_bound(sorted_regions.begin(), sorted_regions.end(), 
-        std::pair{chr, base}, [](std::pair<uint32_t, uint32_t> value, Region r) {
-        if (value.first != r.chr) return value.first < r.chr;
-        return value.second < r.end;
-    });
+    auto it = std::upper_bound(
+        sorted_regions.begin(),
+        sorted_regions.end(),
+        std::pair{chr, base},
+        [](std::pair<uint32_t, uint32_t> value, Region r) {
+            if (value.first != r.chr) return value.first < r.chr;
+            return value.second < r.end;
+        }
+    );
     uint32_t pos = it - sorted_regions.begin();
     // If we're on the wrong chromosme, our search will return sorted_regions.size(), but
     // we want to be looking at the sentinel region
@@ -142,11 +157,13 @@ uint32_t RegionSelect::computeNextActiveRegion(uint32_t chr, uint32_t base) cons
 }
 
 // Return the index in chr_levels of the given chr_name. Return UINT32_MAX if chromosome not found
-uint32_t RegionSelect::findChrIDTranslation(const char * chr_name) const {
-    if (chr_name == NULL) throw std::runtime_error("RegionSelect saw NULL chrName from fragment loader");
+uint32_t RegionSelect::findChrIDTranslation(const char *chr_name) const {
+    if (chr_name == NULL)
+        throw std::runtime_error("RegionSelect saw NULL chrName from fragment loader");
     for (uint32_t i = 0; i < chr_levels->size(); i++) {
-        const char * chr_level = chr_levels->get(i);
-        if (chr_level == NULL) throw std::runtime_error("RegionSelect saw NULL chrName from fragment loader");
+        const char *chr_level = chr_levels->get(i);
+        if (chr_level == NULL)
+            throw std::runtime_error("RegionSelect saw NULL chrName from fragment loader");
         if (strcmp(chr_name, chr_level) == 0) {
             return i;
         }

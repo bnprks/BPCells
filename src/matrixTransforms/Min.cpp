@@ -1,11 +1,10 @@
 #include "Min.h"
 
-
 namespace BPCells {
 
 bool Min::load() {
     if (!loader.load()) return false;
-    
+
     double *val_data = valData();
     const uint32_t cap = capacity();
 
@@ -14,6 +13,5 @@ bool Min::load() {
     }
     return true;
 }
-
 
 } // end namespace BPCells

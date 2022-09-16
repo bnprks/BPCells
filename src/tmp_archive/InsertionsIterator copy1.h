@@ -3,16 +3,16 @@
 #include <algorithm>
 #include <functional>
 
-#include "FragmentsIterator.h"
 #include "../lib/dary_heap.hpp"
-// This is a record of insertionsIterator where the heap is starts+ends, and 
+#include "FragmentsIterator.h"
+// This is a record of insertionsIterator where the heap is starts+ends, and
 // gets added to incrementally during nextInsertion rather than at load time
 namespace BPCells {
 
 // Class to conveniently iterate over insertion sites in sorted order.
 // Input must be a *sorted* fragments iterator
 class InsertionsIterator : public FragmentsLoaderWrapper {
-private:
+  private:
     const uint32_t chunk_capacity;
     int32_t chunk_size;
     uint32_t last_start;
@@ -23,14 +23,14 @@ private:
     uint32_t last_output = 0;
 
     class insertion {
-    private:
+      private:
         uint32_t coord_;
         uint32_t cell_id_;
-    public:
-        insertion(uint32_t coord, uint32_t cell_id):
-            coord_(coord), cell_id_(cell_id) {}
-        inline uint32_t coord() const {return coord_;}
-        inline uint32_t cell_id() const {return cell_id_;}
+
+      public:
+        insertion(uint32_t coord, uint32_t cell_id) : coord_(coord), cell_id_(cell_id) {}
+        inline uint32_t coord() const { return coord_; }
+        inline uint32_t cell_id() const { return cell_id_; }
         friend bool operator>(const insertion &i1, const insertion &i2) {
             return i1.coord_ > i2.coord_;
         }
@@ -46,7 +46,7 @@ private:
     inline bool loadFragments() {
         chunk_size = loader.load(chunk_capacity, fragments_buf);
         if (chunk_size == 0) return false;
-        //if (heap.size() > 0) printf("Heap min start: %d", heap.front().coord);
+        // if (heap.size() > 0) printf("Heap min start: %d", heap.front().coord);
         for (int i = 0; i < chunk_size; i++) {
             if (fragments_buf.start[i] < last_start)
                 throw std::runtime_error("Input fragments not in sorted order by start");
@@ -59,15 +59,20 @@ private:
             heap.push_back({fragments_buf.end[i] - 1, fragments_buf.cell[i]});
             dary_heap::push_heap<2>(heap.begin(), heap.end(), std::greater<insertion>());
         }
-        printf("Loaded fragments; new heap size: %ld, new heap min: %d\n", heap.size(), heap.front().coord());
+        printf(
+            "Loaded fragments; new heap size: %ld, new heap min: %d\n",
+            heap.size(),
+            heap.front().coord()
+        );
         return true;
     }
-public:
+
+  public:
     // Construct iterator with a given internal buffer size (must be a power of 2 >= 128)
     InsertionsIterator(FragmentsLoader &loader, uint32_t buffer_size = 1024);
 
     virtual ~InsertionsIterator() = default;
-    
+
     // Return false if there isn't a nextFragment in the current chromosome
     inline bool nextInsertion() {
         if (!heap.empty()) heap.pop_back();
@@ -110,11 +115,11 @@ public:
         return res;
     }
     // Access chr, start, end, cell from current fragment
-    inline uint32_t chr() const {return current_chr; };
-    inline uint32_t coord() const {return heap.back().coord(); };
-    inline uint32_t cell() const {return heap.back().cell_id(); };   
-    
-    inline uint32_t get_chunk_capacity() {return chunk_capacity;}; 
+    inline uint32_t chr() const { return current_chr; };
+    inline uint32_t coord() const { return heap.back().coord(); };
+    inline uint32_t cell() const { return heap.back().cell_id(); };
+
+    inline uint32_t get_chunk_capacity() { return chunk_capacity; };
 
     // Move iterator to just before fragments which end after "base".
     // It's possible that fragments returned after seek will end before "base",
@@ -125,7 +130,7 @@ public:
         last_start = 0;
         last_output = 0;
         idx = chunk_capacity;
-    }   
+    }
 
     int32_t load(uint32_t count, FragmentArray buffer) override;
 };

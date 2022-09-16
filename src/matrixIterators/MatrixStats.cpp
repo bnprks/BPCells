@@ -3,7 +3,8 @@
 namespace BPCells {
 
 Eigen::ArrayXXd StatsResult::rowNonzeros() {
-    if (row_stats.rows() < 1) throw std::runtime_error("Nonzero not calculated in this StatsResult");
+    if (row_stats.rows() < 1)
+        throw std::runtime_error("Nonzero not calculated in this StatsResult");
     return row_stats.row(0);
 }
 Eigen::ArrayXXd StatsResult::rowMean() {
@@ -11,12 +12,14 @@ Eigen::ArrayXXd StatsResult::rowMean() {
     return row_stats.row(1);
 }
 Eigen::ArrayXXd StatsResult::rowVariance() {
-    if (row_stats.rows() < 3) throw std::runtime_error("Variance not calculated in this StatsResult");
+    if (row_stats.rows() < 3)
+        throw std::runtime_error("Variance not calculated in this StatsResult");
     return row_stats.row(2);
 }
 
 Eigen::ArrayXXd StatsResult::colNonzeros() {
-    if (col_stats.rows() < 1) throw std::runtime_error("Nonzero not calculated in this StatsResult");
+    if (col_stats.rows() < 1)
+        throw std::runtime_error("Nonzero not calculated in this StatsResult");
     return col_stats.row(0);
 }
 Eigen::ArrayXXd StatsResult::colMean() {
@@ -24,12 +27,11 @@ Eigen::ArrayXXd StatsResult::colMean() {
     return col_stats.row(1);
 }
 Eigen::ArrayXXd StatsResult::colVariance() {
-    if (col_stats.rows() < 3) throw std::runtime_error("Variance not calculated in this StatsResult");
+    if (col_stats.rows() < 3)
+        throw std::runtime_error("Variance not calculated in this StatsResult");
     return col_stats.row(2);
 }
 
-StatsResult StatsResult::transpose() {
-    return StatsResult{col_stats, row_stats};
-}
+StatsResult StatsResult::transpose() { return StatsResult{col_stats, row_stats}; }
 
 } // end namespace BPCells

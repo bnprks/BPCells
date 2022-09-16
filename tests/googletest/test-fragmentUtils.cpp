@@ -2,6 +2,8 @@
 
 #include "utils-fragments.h"
 
+#include <array>
+#include <arrayIO/vector.h>
 #include <fragmentIterators/CellSelect.h>
 #include <fragmentIterators/FragmentIterator.h>
 #include <fragmentIterators/MergeFragments.h>
@@ -9,46 +11,43 @@
 #include <fragmentIterators/Rename.h>
 #include <fragmentIterators/StoredFragments.h>
 #include <fragmentUtils/InsertionIterator.h>
-#include <arrayIO/vector.h>
-#include <array>
 
 using namespace BPCells;
-
-
 
 TEST(FragmentUtils, SeekStoredFrags) {
     using namespace Testing;
     std::vector<Frag> frags_vec;
     // Write chr1 test data, zig-zag up+down
-    
+
     for (uint32_t start = 0; start < 2000; start += 500) {
-        for (uint32_t end = start+1; end < start+250; end++) {
+        for (uint32_t end = start + 1; end < start + 250; end++) {
             frags_vec.push_back({0, start, end, 0});
         }
-        for (uint32_t end = start+250; end > start; end--) {
+        for (uint32_t end = start + 250; end > start; end--) {
             frags_vec.push_back({0, start, end, 0});
         }
     }
-    // Write chr2 test data, 128 frags not aligned on a 128-block boundary in stored array
-    // Smaller ends than previous chr
+    // Write chr2 test data, 128 frags not aligned on a 128-block boundary in
+    // stored array Smaller ends than previous chr
     for (uint32_t i = 0; i < 128; i++) {
-        frags_vec.push_back({1, i+10, i+1000, 0});
+        frags_vec.push_back({1, i + 10, i + 1000, 0});
     }
 
-    // Write chr2 test data, 128 frags not aligned on a 128-block boundary in stored array
-    // Larger ends than previous chr
+    // Write chr2 test data, 128 frags not aligned on a 128-block boundary in
+    // stored array Larger ends than previous chr
     for (uint32_t i = 0; i < 128; i++) {
-        frags_vec.push_back({2, i+10, i+2000, 0});
+        frags_vec.push_back({2, i + 10, i + 2000, 0});
     }
 
     std::unique_ptr<VecReaderWriterBuilder> v = writeFragmentTuple(frags_vec);
     StoredFragments frags = StoredFragments::openUnpacked(*v);
 
-    // Try seeking a couple locations in chr1 to make sure basic functionality works
+    // Try seeking a couple locations in chr1 to make sure basic functionality
+    // works
     frags.seek(0, 1249);
     EXPECT_TRUE(frags.load());
     EXPECT_EQ(frags.startData()[0], 1000);
-    EXPECT_GT(frags.endData()[0], 1249-128);
+    EXPECT_GT(frags.endData()[0], 1249 - 128);
     frags.seek(0, 250);
     EXPECT_TRUE(frags.load());
     EXPECT_GT(frags.capacity(), 127);
@@ -63,7 +62,8 @@ TEST(FragmentUtils, SeekStoredFrags) {
     frags.seek(2, 0);
     EXPECT_TRUE(frags.load());
     EXPECT_EQ(frags.startData()[0], 10);
-    // For chr2, because of the end_max leftover from chr1, seeking should go to start of chr
+    // For chr2, because of the end_max leftover from chr1, seeking should go to
+    // start of chr
     frags.seek(1, 1126);
     EXPECT_TRUE(frags.load());
     EXPECT_EQ(frags.startData()[0], 10);
@@ -72,13 +72,13 @@ TEST(FragmentUtils, SeekStoredFrags) {
 TEST(FragmentUtils, RegionSelect) {
     using namespace Testing;
 
-    // Strategy -- cell 0 has no overlaps, cell 1 has all overlaps. 
+    // Strategy -- cell 0 has no overlaps, cell 1 has all overlaps.
     // Edge cases to consider:
     // - Chromosome that is entirely covered by an overlap (chr1)
     // - Chromosome that has no regions in it (chr0)
     // - Overlapping regions (chr2)
     // - Having to match on chromosome names rather than IDs
-    
+
     std::vector<std::string> region_chr_levels{"chr2", "chr1"};
     std::vector<uint32_t> region_chr{1, 0, 0, 0};
     std::vector<uint32_t> region_start{0, 10, 20, 50};
@@ -86,9 +86,11 @@ TEST(FragmentUtils, RegionSelect) {
 
     std::vector<Frag> c0, c1;
     // - Chromosome that has no regions in it (chr0)
-    for(uint32_t i = 0; i < 20; i++) c0.push_back({0, i, i+10, 0});
+    for (uint32_t i = 0; i < 20; i++)
+        c0.push_back({0, i, i + 10, 0});
     // - Chromosome that is entirely covered by an overlap (chr1)
-    for(uint32_t i = 21; i < 40; i++) c1.push_back({1, i, i+10, 1});
+    for (uint32_t i = 21; i < 40; i++)
+        c1.push_back({1, i, i + 10, 1});
 
     c0.push_back({2, 0, 10, 0});
     c0.push_back({2, 41, 50, 0});
@@ -96,11 +98,11 @@ TEST(FragmentUtils, RegionSelect) {
     c1.push_back({2, 0, 41, 1});
     c1.push_back({2, 41, 61, 1});
     for (uint32_t i = 10; i <= 39; i++) {
-        c1.push_back({2, 0, i+1, 1});
+        c1.push_back({2, 0, i + 1, 1});
         c1.push_back({2, i, 42, 1});
     }
     for (uint32_t i = 50; i <= 59; i++) {
-        c1.push_back({2, 42, i+1, 1});
+        c1.push_back({2, 42, i + 1, 1});
         c1.push_back({2, i, 70, 1});
     }
 
@@ -116,12 +118,17 @@ TEST(FragmentUtils, RegionSelect) {
 
     std::unique_ptr<VecReaderWriterBuilder> v_c1 = writeFragmentTuple(c1);
     StoredFragments frags_c1 = StoredFragments::openUnpacked(*v_c1);
-    
-    std::unique_ptr<StringReader> chr_levels1 = std::make_unique<VecStringReader>(region_chr_levels);
-    std::unique_ptr<StringReader> chr_levels2 = std::make_unique<VecStringReader>(region_chr_levels);
-    RegionSelect inclusive(frags_both, region_chr, region_start, region_end, std::move(chr_levels1), false);
-    RegionSelect exclusive(frags_both, region_chr, region_start, region_end, std::move(chr_levels2), true);
 
+    std::unique_ptr<StringReader> chr_levels1 =
+        std::make_unique<VecStringReader>(region_chr_levels);
+    std::unique_ptr<StringReader> chr_levels2 =
+        std::make_unique<VecStringReader>(region_chr_levels);
+    RegionSelect inclusive(
+        frags_both, region_chr, region_start, region_end, std::move(chr_levels1), false
+    );
+    RegionSelect exclusive(
+        frags_both, region_chr, region_start, region_end, std::move(chr_levels2), true
+    );
 
     EXPECT_TRUE(fragments_identical(frags_c1, inclusive));
     frags_both.restart();
@@ -130,10 +137,10 @@ TEST(FragmentUtils, RegionSelect) {
 
 TEST(FragmentUtils, MergeFragments) {
     uint32_t max_cell = 50;
-    auto v1 = Testing::generateFrags(1000, 3, 200, max_cell-1, 25, 1336);
-    auto v2 = Testing::generateFrags(1000, 3, 200, max_cell-1, 25, 1334);
-    auto v3 = Testing::generateFrags(1000, 3, 200, max_cell-1, 25, 1227);
-    
+    auto v1 = Testing::generateFrags(1000, 3, 200, max_cell - 1, 25, 1336);
+    auto v2 = Testing::generateFrags(1000, 3, 200, max_cell - 1, 25, 1334);
+    auto v3 = Testing::generateFrags(1000, 3, 200, max_cell - 1, 25, 1227);
+
     std::sort(v1.begin(), v1.end(), [](const Testing::Frag &a, const Testing::Frag &b) {
         if (a.chr != b.chr) return a.chr < b.chr;
         return a.start < b.start;
@@ -153,7 +160,7 @@ TEST(FragmentUtils, MergeFragments) {
     v.insert(v.end(), v3.begin(), v3.end());
     uint32_t idx = 0;
     for (int i = 0; i < v.size(); i++) {
-        v[i].cell += max_cell * (i/1000);
+        v[i].cell += max_cell * (i / 1000);
     }
     std::stable_sort(v.begin(), v.end(), [](const Testing::Frag &a, const Testing::Frag &b) {
         if (a.chr != b.chr) return a.chr < b.chr;
@@ -176,19 +183,18 @@ TEST(FragmentUtils, MergeFragments) {
     std::unique_ptr<VecReaderWriterBuilder> v3_data = writeFragmentTuple(v3, max_cell, true);
     std::vector<std::string> &names_v3 = v3_data->getStringVecs().at("cell_names");
     for (uint32_t i = 0; i < max_cell; i++) {
-        names_v3[i] = std::string("c") + std::to_string(i + 2*max_cell);
+        names_v3[i] = std::string("c") + std::to_string(i + 2 * max_cell);
     }
     StoredFragments v3_frags = StoredFragments::openUnpacked(*v3_data);
 
-    MergeFragments merge(std::vector<FragmentLoader*>{&v1_frags, &v2_frags, &v3_frags});
-    
+    MergeFragments merge(std::vector<FragmentLoader *>{&v1_frags, &v2_frags, &v3_frags});
 
     EXPECT_TRUE(Testing::fragments_identical(expected, merge));
 }
 
 TEST(FragmentUtils, InsertionIterator) {
     uint32_t max_cell = 50;
-    auto v = Testing::generateFrags(2000, 3, 400, max_cell-1, 100, 1336);
+    auto v = Testing::generateFrags(2000, 3, 400, max_cell - 1, 100, 1336);
     std::sort(v.begin(), v.end(), [](const Testing::Frag &a, const Testing::Frag &b) {
         if (a.chr != b.chr) return a.chr < b.chr;
         return a.start < b.start;
@@ -197,16 +203,22 @@ TEST(FragmentUtils, InsertionIterator) {
     StoredFragments frags = StoredFragments::openUnpacked(*d);
 
     InsertionIterator it(frags);
-    
-    std::vector<std::array<uint32_t, 3>> insert;
-    
-    for (auto f : v) insert.push_back({f.chr, f.start, f.cell});
-    for (auto f : v) insert.push_back({f.chr, f.end - 1, f.cell});
 
-    std::stable_sort(insert.begin(), insert.end(), [](const std::array<uint32_t, 3> &a, const std::array<uint32_t, 3> &b) {
-        if (a[0] != b[0]) return a[0] < b [0];
-        return a[1] < b[1];
-    });
+    std::vector<std::array<uint32_t, 3>> insert;
+
+    for (auto f : v)
+        insert.push_back({f.chr, f.start, f.cell});
+    for (auto f : v)
+        insert.push_back({f.chr, f.end - 1, f.cell});
+
+    std::stable_sort(
+        insert.begin(),
+        insert.end(),
+        [](const std::array<uint32_t, 3> &a, const std::array<uint32_t, 3> &b) {
+            if (a[0] != b[0]) return a[0] < b[0];
+            return a[1] < b[1];
+        }
+    );
 
     uint32_t current_chr = 0;
     ASSERT_TRUE(it.nextChr());
@@ -229,7 +241,7 @@ TEST(FragmentUtils, InsertionIterator) {
 
 TEST(FragmentUtils, CellSelect) {
     uint32_t max_cell = 50;
-    auto v = Testing::generateFrags(200, 3, 400, max_cell-1, 100, 1336);
+    auto v = Testing::generateFrags(200, 3, 400, max_cell - 1, 100, 1336);
     std::sort(v.begin(), v.end(), [](const Testing::Frag &a, const Testing::Frag &b) {
         if (a.chr != b.chr) return a.chr < b.chr;
         return a.start < b.start;
@@ -250,7 +262,6 @@ TEST(FragmentUtils, CellSelect) {
     }
     names_d2.resize(6);
 
-
     StoredFragments in1 = StoredFragments::openUnpacked(*d1);
     StoredFragments in2 = StoredFragments::openUnpacked(*d1);
     StoredFragments out = StoredFragments::openUnpacked(*d2);
@@ -264,7 +275,7 @@ TEST(FragmentUtils, CellSelect) {
 
 TEST(FragmentUtils, CellPrefix) {
     uint32_t max_cell = 50;
-    auto v = Testing::generateFrags(200, 3, 400, max_cell-1, 100, 1336);
+    auto v = Testing::generateFrags(200, 3, 400, max_cell - 1, 100, 1336);
 
     std::unique_ptr<VecReaderWriterBuilder> d1 = writeFragmentTuple(v, max_cell, true);
     std::vector<std::string> &names_d1 = d1->getStringVecs().at("cell_names");

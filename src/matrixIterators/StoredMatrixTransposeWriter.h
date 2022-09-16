@@ -1,27 +1,26 @@
 #pragma once
 
-#include <string>
 #include <filesystem>
+#include <string>
 
-#include "../lib/dary_heap.hpp"
-#include "../utils/radix_sort.h"
 #include "../arrayIO/array_interfaces.h"
 #include "../arrayIO/binaryfile.h"
 #include "../arrayIO/vector.h"
-#include "StoredMatrix.h"
+#include "../lib/dary_heap.hpp"
+#include "../utils/radix_sort.h"
 #include "MatrixIterator.h"
+#include "StoredMatrix.h"
 
 namespace BPCells {
 
-// Transpose the elements of an input column-major matrix and save a stored 
+// Transpose the elements of an input column-major matrix and save a stored
 // matrix on disk. Optionally, if saving as row-major the matrix will be logically
 // the same as the input, though the storage order will physically be transposed.
-template<typename T> 
-class StoredMatrixTransposeWriter : public MatrixWriter<T> {
+template <typename T> class StoredMatrixTransposeWriter : public MatrixWriter<T> {
     const size_t load_elements, sort_buffer_elements;
-    size_t round = 0, total_elements=0;
-    
-private:
+    size_t round = 0, total_elements = 0;
+
+  private:
     UIntReader row_reader, col_reader;
     NumReader<T> val_reader;
     UIntWriter row_writer, col_writer;
@@ -37,68 +36,82 @@ private:
     void openReaders(uint32_t round, bool last_round = false);
     void deleteWriters(uint32_t round, bool last_round = false);
 
-    template<typename S>
-    NumWriter<S> openWriter(WriterBuilder &wb, std::string name);
+    template <typename S> NumWriter<S> openWriter(WriterBuilder &wb, std::string name);
 
-    template<typename S>
-    NumWriter<S> openReader(WriterBuilder &wb, std::string name);
+    template <typename S> NumWriter<S> openReader(WriterBuilder &wb, std::string name);
 
-    static size_t bytesPerElement() {return 2*sizeof(uint32_t) + sizeof(T);}
+    static size_t bytesPerElement() { return 2 * sizeof(uint32_t) + sizeof(T); }
 
-    template<typename V>
-    static void flushToNumWriter(const V *vals, size_t count,  NumWriter<V> &writer);
+    template <typename V>
+    static void flushToNumWriter(const V *vals, size_t count, NumWriter<V> &writer);
 
     // Helper class to handle reading from a slice of a NumReader
-    // Allow sharing NumReader between multiple SliceReaders, meaning that a 
+    // Allow sharing NumReader between multiple SliceReaders, meaning that a
     // seek must be performed before each load
-    template<typename V>
-    class SliceReader {
+    template <typename V> class SliceReader {
         NumReader<V> &reader;
         std::vector<V> data;
-        uint32_t data_idx=1, num_loaded=0, reader_idx;
+        uint32_t data_idx = 1, num_loaded = 0, reader_idx;
         const uint32_t reader_end_idx;
-    public:
-        SliceReader(NumReader<V> &reader, uint32_t start_offset, uint32_t count, uint32_t chunk_size);
+
+      public:
+        SliceReader(
+            NumReader<V> &reader, uint32_t start_offset, uint32_t count, uint32_t chunk_size
+        );
         bool advance();
         V value() const;
     };
 
-public:
+  public:
     // Here, load_bytes is the smallest read size to use in bytes, and sort_buffer_bytes
     // is the total amount of memory to use for sort buffers
-    StoredMatrixTransposeWriter(WriterBuilder &output, const char * tmpdir, size_t load_bytes, size_t sort_buffer_bytes, bool row_major = false): 
-        load_elements(load_bytes/sizeof(uint32_t)), sort_buffer_elements(sort_buffer_bytes/(bytesPerElement())),
-        out_writer_builder(output),
-        file_writer_builder(tmpdir, 8192), file_reader_builder(tmpdir, 8192),
-        row_major(row_major) {
-        
-        if (sort_buffer_elements == 0 || load_elements == 0 || load_elements * 2 > sort_buffer_elements) {
-            throw std::invalid_argument("StoredMatrixTransposeWriter: invalid/incompatible values for sort_buffer_bytes or load_bytes");
+    StoredMatrixTransposeWriter(
+        WriterBuilder &output,
+        const char *tmpdir,
+        size_t load_bytes,
+        size_t sort_buffer_bytes,
+        bool row_major = false
+    )
+        : load_elements(load_bytes / sizeof(uint32_t))
+        , sort_buffer_elements(sort_buffer_bytes / (bytesPerElement()))
+        , out_writer_builder(output)
+        , file_writer_builder(tmpdir, 8192)
+        , file_reader_builder(tmpdir, 8192)
+        , row_major(row_major) {
+
+        if (sort_buffer_elements == 0 || load_elements == 0 ||
+            load_elements * 2 > sort_buffer_elements) {
+            throw std::invalid_argument(
+                "StoredMatrixTransposeWriter: invalid/incompatible values for sort_buffer_bytes or "
+                "load_bytes"
+            );
         }
         if (load_elements < 128) {
-            throw std::invalid_argument("StoredMatrixTransposeWriter: load_bytes too small (must be big enough to load >=128 non-zero elements, usually 1536 or 2048)");
+            throw std::invalid_argument(
+                "StoredMatrixTransposeWriter: load_bytes too small (must be big enough to load "
+                ">=128 non-zero elements, usually 1536 or 2048)"
+            );
         }
     }
 
     void write(MatrixLoader<T> &mat, void (*checkInterrupt)(void) = NULL) override {
         if (round != 0)
-            throw std::runtime_error("StoredMatrixTransposeWriter: can't write more than once to same temporary location");
+            throw std::runtime_error(
+                "StoredMatrixTransposeWriter: can't write more than once to same temporary location"
+            );
         std::vector<size_t> output_chunk_sizes;
         std::vector<size_t> input_chunk_sizes;
 
         // 1. Read in data + sort in max possible chunks
-        { 
+        {
             openWriters(round);
-            
-            // Scope to allocate + free these sorting buffers
-            std::vector<uint32_t> row_data(sort_buffer_elements / 2), 
-                                row_buf(sort_buffer_elements / 2), 
-                                col_data(sort_buffer_elements / 2),
-                                col_buf(sort_buffer_elements / 2);
-            std::vector<T> val_data(sort_buffer_elements / 2), 
-                        val_buf(sort_buffer_elements / 2);
-            size_t elems = 0;
 
+            // Scope to allocate + free these sorting buffers
+            std::vector<uint32_t> row_data(sort_buffer_elements / 2),
+                row_buf(sort_buffer_elements / 2), col_data(sort_buffer_elements / 2),
+                col_buf(sort_buffer_elements / 2);
+            std::vector<T> val_data(sort_buffer_elements / 2), val_buf(sort_buffer_elements / 2);
+            size_t elems = 0;
 
             while (mat.nextCol()) {
                 uint32_t current_col = mat.currentCol();
@@ -109,16 +122,26 @@ public:
                     while (elems + capacity - read > row_data.size()) {
                         if (checkInterrupt != NULL) checkInterrupt();
                         // Fill out the rest of the buffer size
-                        std::memmove(val_data.data() + elems, mat.valData()+read, (row_data.size()-elems) * sizeof(T));
-                        std::memmove(col_data.data() + elems, mat.rowData()+read, (row_data.size()-elems) * sizeof(uint32_t));
-                        for (uint32_t i = 0; i < (row_data.size()-elems); i++)
+                        std::memmove(
+                            val_data.data() + elems,
+                            mat.valData() + read,
+                            (row_data.size() - elems) * sizeof(T)
+                        );
+                        std::memmove(
+                            col_data.data() + elems,
+                            mat.rowData() + read,
+                            (row_data.size() - elems) * sizeof(uint32_t)
+                        );
+                        for (uint32_t i = 0; i < (row_data.size() - elems); i++)
                             row_data[elems + i] = current_col;
-                        read += (row_data.size()-elems);
+                        read += (row_data.size() - elems);
                         elems = row_data.size();
-                        
+
                         // Sort by (col, row)
                         // Already sorted by row, because input is sorted by column
-                        lsdRadixSortArrays<uint32_t, T>(elems, col_data, row_data, val_data, col_buf, row_buf, val_buf);
+                        lsdRadixSortArrays<uint32_t, T>(
+                            elems, col_data, row_data, val_data, col_buf, row_buf, val_buf
+                        );
                         // Output to tmpStorage
                         flushToNumWriter(row_data.data(), elems, row_writer);
                         flushToNumWriter(col_data.data(), elems, col_writer);
@@ -127,9 +150,15 @@ public:
                         output_chunk_sizes.push_back(elems);
                         elems = 0;
                     }
-                    std::memmove(val_data.data() + elems, mat.valData() + read, (capacity-read) * sizeof(T));
-                    std::memmove(col_data.data() + elems, mat.rowData() + read, (capacity-read) * sizeof(uint32_t));
-                    for (uint32_t i = 0; i < capacity-read; i++)
+                    std::memmove(
+                        val_data.data() + elems, mat.valData() + read, (capacity - read) * sizeof(T)
+                    );
+                    std::memmove(
+                        col_data.data() + elems,
+                        mat.rowData() + read,
+                        (capacity - read) * sizeof(uint32_t)
+                    );
+                    for (uint32_t i = 0; i < capacity - read; i++)
                         row_data[elems + i] = current_col;
 
                     elems += capacity - read;
@@ -141,12 +170,14 @@ public:
                 if (checkInterrupt != NULL) checkInterrupt();
                 // Sort by (col, row)
                 // Already sorted by row, because input is sorted by column
-                lsdRadixSortArrays<uint32_t, T>(elems, col_data, row_data, val_data, col_buf, row_buf, val_buf);
+                lsdRadixSortArrays<uint32_t, T>(
+                    elems, col_data, row_data, val_data, col_buf, row_buf, val_buf
+                );
                 // Output to tmpStorage
                 flushToNumWriter(row_data.data(), elems, row_writer);
                 flushToNumWriter(col_data.data(), elems, col_writer);
                 flushToNumWriter(val_data.data(), elems, val_writer);
-                
+
                 output_chunk_sizes.push_back(elems);
             }
             row_writer.finalize();
@@ -155,22 +186,24 @@ public:
 
             std::swap(output_chunk_sizes, input_chunk_sizes);
         } // row_data, row_buf etc. get freed here
-        for (auto x : input_chunk_sizes) total_elements += x;
+        for (auto x : input_chunk_sizes)
+            total_elements += x;
 
-        // 2. Merge up to (sort_buffer_elements / load_elements) chunks at once into a single sorted chunk
+        // 2. Merge up to (sort_buffer_elements / load_elements) chunks at once into a single sorted
+        // chunk
         //    until we have just one sorted chunk encompassing all the data entries
         std::vector<SliceReader<uint32_t>> row_chunks, col_chunks;
-        std::vector<SliceReader<T>> val_chunks; 
+        std::vector<SliceReader<T>> val_chunks;
 
         // heap of which chunk index to draw the next matrix entry from.
         // Format is col, row, chunk_idx such that std::greater will provide the
         // correct lexographic ordering to make a min-heap
-        std::vector<std::tuple<uint32_t, uint32_t, uint32_t>> heap; 
-        
+        std::vector<std::tuple<uint32_t, uint32_t, uint32_t>> heap;
+
         while (input_chunk_sizes.size() > 1) {
             round += 1;
             if (round >= 2) deleteWriters(round - 2);
-            openReaders(round-1);
+            openReaders(round - 1);
             if (input_chunk_sizes.size() <= sort_buffer_elements / load_elements) {
                 openWriters(round, true); // Open last-round writers with no numeric prefix
             } else {
@@ -182,47 +215,63 @@ public:
             uint32_t reader_offset = 0; // Used to calculate offsets for reads
 
             // Merge up to `row_chunks` sorted chunks at a time, starting at index `chunk`
-            for (int chunk = 0; chunk < input_chunk_sizes.size(); chunk += sort_buffer_elements / load_elements) {
+            for (int chunk = 0; chunk < input_chunk_sizes.size();
+                 chunk += sort_buffer_elements / load_elements) {
                 output_chunk_sizes.push_back(0);
                 // Set up heap
                 heap.clear();
-                row_chunks.clear(); col_chunks.clear(); val_chunks.clear();
-                for (int i = 0; chunk + i < input_chunk_sizes.size() && i < sort_buffer_elements / load_elements; i++) {
-                    row_chunks.push_back(SliceReader<uint32_t>(row_reader, reader_offset, input_chunk_sizes[chunk + i], load_elements));
-                    col_chunks.push_back(SliceReader<uint32_t>(col_reader, reader_offset, input_chunk_sizes[chunk + i], load_elements));
-                    val_chunks.push_back(SliceReader<T>(val_reader, reader_offset, input_chunk_sizes[chunk + i], load_elements));
-                    
-                    // Initialize the readers with the first batch of data
-                    row_chunks[i].advance(); col_chunks[i].advance(); val_chunks[i].advance();
-                    
-                    heap.push_back({col_chunks[i].value(), row_chunks[i].value(), i});
+                row_chunks.clear();
+                col_chunks.clear();
+                val_chunks.clear();
+                for (int i = 0; chunk + i < input_chunk_sizes.size() &&
+                                i < sort_buffer_elements / load_elements;
+                     i++) {
+                    row_chunks.push_back(SliceReader<uint32_t>(
+                        row_reader, reader_offset, input_chunk_sizes[chunk + i], load_elements
+                    ));
+                    col_chunks.push_back(SliceReader<uint32_t>(
+                        col_reader, reader_offset, input_chunk_sizes[chunk + i], load_elements
+                    ));
+                    val_chunks.push_back(SliceReader<T>(
+                        val_reader, reader_offset, input_chunk_sizes[chunk + i], load_elements
+                    ));
 
+                    // Initialize the readers with the first batch of data
+                    row_chunks[i].advance();
+                    col_chunks[i].advance();
+                    val_chunks[i].advance();
+
+                    heap.push_back({col_chunks[i].value(), row_chunks[i].value(), i});
 
                     reader_offset += input_chunk_sizes[chunk + i];
                 }
                 dary_heap::make_heap<2>(heap.begin(), heap.end(), std::greater<>{});
-                
+
                 // helper to get second to top value in heap
-                auto get_second_to_top = [](const std::vector<std::tuple<uint32_t, uint32_t, uint32_t>> &heap) {
-                    auto ret = std::make_tuple(UINT32_MAX, UINT32_MAX, UINT32_MAX);
-                    size_t child_1 = dary_heap::dary_heap_helpers::first_child_index<2>(0);
-                    size_t child_2 = dary_heap::dary_heap_helpers::last_child_index<2>(0);
-                    if (child_1 < heap.size()) ret = std::min(heap[child_1], ret);
-                    if (child_2 < heap.size()) ret = std::min(heap[child_2], ret);
-                    return ret;
-                };
+                auto get_second_to_top =
+                    [](const std::vector<std::tuple<uint32_t, uint32_t, uint32_t>> &heap) {
+                        auto ret = std::make_tuple(UINT32_MAX, UINT32_MAX, UINT32_MAX);
+                        size_t child_1 = dary_heap::dary_heap_helpers::first_child_index<2>(0);
+                        size_t child_2 = dary_heap::dary_heap_helpers::last_child_index<2>(0);
+                        if (child_1 < heap.size()) ret = std::min(heap[child_1], ret);
+                        if (child_2 < heap.size()) ret = std::min(heap[child_2], ret);
+                        return ret;
+                    };
                 auto second_to_top = get_second_to_top(heap);
                 while (heap.size() > 0) {
-                    if (output_chunk_sizes.back() %  (1<<14) == 0 && checkInterrupt != NULL) checkInterrupt();
+                    if (output_chunk_sizes.back() % (1 << 14) == 0 && checkInterrupt != NULL)
+                        checkInterrupt();
                     // Output element
                     uint32_t idx = std::get<2>(heap.front());
                     col_writer.write_one(std::get<0>(heap.front()));
-                    if (std::get<0>(heap.front()) != col_chunks[idx].value()) throw std::runtime_error("Had error with col_chunks matching");
+                    if (std::get<0>(heap.front()) != col_chunks[idx].value())
+                        throw std::runtime_error("Had error with col_chunks matching");
                     row_writer.write_one(std::get<1>(heap.front()));
-                    if (std::get<1>(heap.front()) != row_chunks[idx].value()) throw std::runtime_error("Had error with row_chunks matching");
+                    if (std::get<1>(heap.front()) != row_chunks[idx].value())
+                        throw std::runtime_error("Had error with row_chunks matching");
                     val_writer.write_one(val_chunks[idx].value());
                     output_chunk_sizes.back() += 1;
-                    
+
                     bool has_more = row_chunks[idx].advance();
                     col_chunks[idx].advance();
                     val_chunks[idx].advance();
@@ -235,7 +284,8 @@ public:
                     // Correctly reposition the head in the heap
                     // Because we will often have repeated elements coming from the same
                     // chunk, do a quick test to see if we even need to adjust the heap.
-                    // (Why often repeated? If a chunk spans several adjacent columns of input, then it
+                    // (Why often repeated? If a chunk spans several adjacent columns of input, then
+                    // it
                     //  will span several adjacent rows of the output)
                     if (!has_more || second_to_top < heap.front()) {
                         dary_heap::pop_heap<2>(heap.begin(), heap.end(), std::greater<>{});
@@ -252,10 +302,10 @@ public:
         }
 
         if (round > 0) deleteWriters(round - 1);
-        
+
         // 3. Write final metadata to the output writer, such that we can easily create
         // a StoredMatrix object from this later
-        
+
         openReaders(round, true); // Open just the col_reader as needed
 
         // Store the col_ptr vector
@@ -278,22 +328,22 @@ public:
         // Store row and col names. This probably incurs a few extra copies,
         // but it shouldn't matter since writing the actual matrix should dominate cost
         std::vector<std::string> col_names(0);
-        for (int i = 0; ; i++) {
-            const char* col_name = mat.rowNames(i);
+        for (int i = 0;; i++) {
+            const char *col_name = mat.rowNames(i);
             if (col_name == NULL) break;
             col_names.push_back(std::string(col_name));
         }
-                
+
         std::vector<std::string> row_names(0);
-        for (int i = 0; ; i++) {
-            const char* row_name = mat.colNames(i);
+        for (int i = 0;; i++) {
+            const char *row_name = mat.colNames(i);
             if (row_name == NULL) break;
             row_names.push_back(std::string(row_name));
         }
         if (row_major) std::swap(row_names, col_names);
         out_writer_builder.createStringWriter("col_names")->write(VecStringReader(col_names));
         out_writer_builder.createStringWriter("row_names")->write(VecStringReader(row_names));
-        
+
         auto shape = out_writer_builder.createUIntWriter("shape");
         if (row_major) {
             shape.write_one(mat.rows());
@@ -306,79 +356,99 @@ public:
 
         std::vector<std::string> storage_order;
         storage_order.push_back(row_major ? "row" : "col");
-        out_writer_builder.createStringWriter("storage_order")->write(VecStringReader(storage_order));
+        out_writer_builder.createStringWriter("storage_order")
+            ->write(VecStringReader(storage_order));
 
         out_writer_builder.writeVersion(StoredMatrix<T>::versionString(true));
     }
 };
 
-
-template<typename T>
+template <typename T>
 void StoredMatrixTransposeWriter<T>::openWriters(uint32_t round, bool last_round) {
     std::string prefix = last_round ? "" : (std::to_string(round) + "_");
     WriterBuilder &wb = last_round ? out_writer_builder : file_writer_builder;
 
     // D1Z for rows
-    row_writer = UIntWriter(std::make_unique<BP128_D1Z_UIntWriter>(
-        wb.createUIntWriter(prefix + "index_data"),
-        wb.createUIntWriter(prefix + "index_idx"),
-        wb.createUIntWriter(prefix + "index_starts")
-    ), 1024);
+    row_writer = UIntWriter(
+        std::make_unique<BP128_D1Z_UIntWriter>(
+            wb.createUIntWriter(prefix + "index_data"),
+            wb.createUIntWriter(prefix + "index_idx"),
+            wb.createUIntWriter(prefix + "index_starts")
+        ),
+        1024
+    );
     // D1 for cols. Always write to the temporary output
-    col_writer = UIntWriter(std::make_unique<BP128_D1_UIntWriter>(
-        file_writer_builder.createUIntWriter(std::to_string(round) + "_col_data"),
-        file_writer_builder.createUIntWriter(std::to_string(round) + "_col_idx"),
-        file_writer_builder.createUIntWriter(std::to_string(round) + "_col_starts")
-    ), 1024);
+    col_writer = UIntWriter(
+        std::make_unique<BP128_D1_UIntWriter>(
+            file_writer_builder.createUIntWriter(std::to_string(round) + "_col_data"),
+            file_writer_builder.createUIntWriter(std::to_string(round) + "_col_idx"),
+            file_writer_builder.createUIntWriter(std::to_string(round) + "_col_starts")
+        ),
+        1024
+    );
     // BP128 if vals is uint32_t, otherwise uncompressed
     if constexpr (std::is_same_v<T, uint32_t>) {
-        val_writer = UIntWriter(std::make_unique<BP128_FOR_UIntWriter>(
-            wb.createUIntWriter(prefix + "val_data"),
-            wb.createUIntWriter(prefix + "val_idx")
-        ), 1024);
+        val_writer = UIntWriter(
+            std::make_unique<BP128_FOR_UIntWriter>(
+                wb.createUIntWriter(prefix + "val_data"), wb.createUIntWriter(prefix + "val_idx")
+            ),
+            1024
+        );
     } else {
         val_writer = wb.create<T>(prefix + "val");
     }
 }
 
-template<typename T>
+template <typename T>
 void StoredMatrixTransposeWriter<T>::openReaders(uint32_t round, bool last_round) {
     std::string prefix = last_round ? "" : (std::to_string(round) + "_");
-    
-    col_reader = UIntReader(std::make_unique<BP128_D1_UIntReader>(
-        file_reader_builder.openUIntReader(std::to_string(round) + "_col_data"),
-        file_reader_builder.openUIntReader(std::to_string(round) + "_col_idx"),
-        file_reader_builder.openUIntReader(std::to_string(round) + "_col_starts"),
-        total_elements
-    ), 1024, 1024);
+
+    col_reader = UIntReader(
+        std::make_unique<BP128_D1_UIntReader>(
+            file_reader_builder.openUIntReader(std::to_string(round) + "_col_data"),
+            file_reader_builder.openUIntReader(std::to_string(round) + "_col_idx"),
+            file_reader_builder.openUIntReader(std::to_string(round) + "_col_starts"),
+            total_elements
+        ),
+        1024,
+        1024
+    );
 
     // Only update row_reader and val_reader if we're not on the last round
     if (last_round) return;
 
     // D1Z for rows
-    row_reader = UIntReader(std::make_unique<BP128_D1Z_UIntReader>(
-        file_reader_builder.openUIntReader(prefix + "index_data"),
-        file_reader_builder.openUIntReader(prefix + "index_idx"),
-        file_reader_builder.openUIntReader(prefix + "index_starts"),
-        total_elements
-    ), 1024, 1024);
+    row_reader = UIntReader(
+        std::make_unique<BP128_D1Z_UIntReader>(
+            file_reader_builder.openUIntReader(prefix + "index_data"),
+            file_reader_builder.openUIntReader(prefix + "index_idx"),
+            file_reader_builder.openUIntReader(prefix + "index_starts"),
+            total_elements
+        ),
+        1024,
+        1024
+    );
     // D1 for cols
     // BP128 if vals is uint32_t, otherwise uncompressed
     if constexpr (std::is_same_v<T, uint32_t>) {
-        val_reader = UIntReader(std::make_unique<BP128_FOR_UIntReader>(
-            file_reader_builder.openUIntReader(prefix + "val_data"),
-            file_reader_builder.openUIntReader(prefix + "val_idx"),
-            total_elements
-        ), 1024, 1024);
+        val_reader = UIntReader(
+            std::make_unique<BP128_FOR_UIntReader>(
+                file_reader_builder.openUIntReader(prefix + "val_data"),
+                file_reader_builder.openUIntReader(prefix + "val_idx"),
+                total_elements
+            ),
+            1024,
+            1024
+        );
     } else {
         val_reader = file_reader_builder.open<T>(prefix + "val");
     }
 }
 
-template<typename T>
+template <typename T>
 void StoredMatrixTransposeWriter<T>::deleteWriters(uint32_t round, bool last_round) {
-    //TODO: If I ever change the makeup of BP128 storage to support > 2^34 bytes,
-    // then I'll need to add another deletion here
+    // TODO: If I ever change the makeup of BP128 storage to support > 2^34 bytes,
+    //  then I'll need to add another deletion here
     std::string prefix = last_round ? "" : (std::to_string(round) + "_");
 
     // D1 for cols
@@ -392,7 +462,7 @@ void StoredMatrixTransposeWriter<T>::deleteWriters(uint32_t round, bool last_rou
     file_writer_builder.deleteWriter(prefix + "index_data");
     file_writer_builder.deleteWriter(prefix + "index_idx");
     file_writer_builder.deleteWriter(prefix + "index_starts");
-    
+
     // BP128 if vals is uint32_t, otherwise uncompressed
     if constexpr (std::is_same_v<T, uint32_t>) {
         file_writer_builder.deleteWriter(prefix + "val_data");
@@ -402,9 +472,11 @@ void StoredMatrixTransposeWriter<T>::deleteWriters(uint32_t round, bool last_rou
     }
 }
 
-template<typename T>
-template<typename V>
-void StoredMatrixTransposeWriter<T>::flushToNumWriter(const V *vals, size_t count,  NumWriter<V> &writer) {
+template <typename T>
+template <typename V>
+void StoredMatrixTransposeWriter<T>::flushToNumWriter(
+    const V *vals, size_t count, NumWriter<V> &writer
+) {
     size_t chunk_size = writer.maxCapacity();
     for (size_t i = 0; i < count; i += chunk_size) {
         size_t write_size = std::min(chunk_size, count - i);
@@ -414,16 +486,20 @@ void StoredMatrixTransposeWriter<T>::flushToNumWriter(const V *vals, size_t coun
     }
 }
 
-template<typename T>
-template<typename V>
-StoredMatrixTransposeWriter<T>::SliceReader<V>::SliceReader(NumReader<V> &reader, uint32_t start_offset, uint32_t count, uint32_t chunk_size) :
-    reader(reader), reader_idx(start_offset), reader_end_idx(start_offset + count) {
+template <typename T>
+template <typename V>
+StoredMatrixTransposeWriter<T>::SliceReader<V>::SliceReader(
+    NumReader<V> &reader, uint32_t start_offset, uint32_t count, uint32_t chunk_size
+)
+    : reader(reader)
+    , reader_idx(start_offset)
+    , reader_end_idx(start_offset + count) {
 
     data.resize(chunk_size);
 }
 
-template<typename T>
-template<typename V>
+template <typename T>
+template <typename V>
 bool StoredMatrixTransposeWriter<T>::SliceReader<V>::advance() {
     data_idx += 1;
     if (data_idx >= num_loaded) {
@@ -433,7 +509,7 @@ bool StoredMatrixTransposeWriter<T>::SliceReader<V>::advance() {
         num_loaded = 0;
         while (num_loaded < data.size()) {
             if (!reader.requestCapacity()) break;
-            uint32_t copy_size = std::min(reader.capacity(), (uint32_t) data.size() - num_loaded);
+            uint32_t copy_size = std::min(reader.capacity(), (uint32_t)data.size() - num_loaded);
             std::memmove(data.data() + num_loaded, reader.data(), sizeof(V) * copy_size);
             reader.advance(copy_size);
             num_loaded += copy_size;
@@ -444,9 +520,9 @@ bool StoredMatrixTransposeWriter<T>::SliceReader<V>::advance() {
     }
     return true;
 }
-    
-template<typename T>
-template<typename V>
+
+template <typename T>
+template <typename V>
 V StoredMatrixTransposeWriter<T>::SliceReader<V>::value() const {
     return data[data_idx];
 }

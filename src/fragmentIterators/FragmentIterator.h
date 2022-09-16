@@ -12,14 +12,15 @@ namespace BPCells {
 // `capacity()` elements loaded starting at each of those pointers, and the loaded
 // data can be modified by the caller as desired.
 // Users will call load repeatedly, until it hits the end of a chromosome or the end
-// of a file. 
+// of a file.
 // Optionally, a FragmentLoader can support seeking, which skips the current
 // reading position to a given genomic coordinate.
 // Requirements for building a FragmentLoader:
-// 1. Coordinates are assumed to be 0-based and half-open, same as the bed file format. 
+// 1. Coordinates are assumed to be 0-based and half-open, same as the bed file format.
 //    This means the first base in a chromosome is at position 0, and the end coordinate
 //    of a fragment is one basepair after the last mapped base.
-//    For more discussion, see here: http://genome.ucsc.edu/blog/the-ucsc-genome-browser-coordinate-counting-systems/
+//    For more discussion, see here:
+//    http://genome.ucsc.edu/blog/the-ucsc-genome-browser-coordinate-counting-systems/
 // 2. Assign chromosme and cell IDs that count up from zero with no skipping. It's
 //    okay if a given ID is never emitted, but there must be a string ID which can
 //    be returned from chrNames or cellNames
@@ -27,14 +28,14 @@ namespace BPCells {
 //    seekable FragmentIterators, along with their corresponding names
 // 4. Fragments are grouped by chromosme, although they need not be covered in
 //    order of chromosome ID.
-// 5. Implement load function, which will always load >= 1 fragment, returning false 
+// 5. Implement load function, which will always load >= 1 fragment, returning false
 //    if there are no more fragments in the current chromosome.
-// 6. Implement nextChr function, which will skip the rest of the fragments on the  
+// 6. Implement nextChr function, which will skip the rest of the fragments on the
 //    current chromosome (if any remain), and go to the next chromosome if it exists
 // 7. chrNames and cellNames should return NULL if either the chromosome/cell ID doesn't
 //    exist, (or perhaps it hasn't been read from disk yet for 10x fragments)
 class FragmentLoader {
-public:
+  public:
     virtual ~FragmentLoader() = default;
 
     virtual bool isSeekable() const = 0;
@@ -43,20 +44,20 @@ public:
     // Note that seek does not guarantee the next loaded fragment will have an end > base,
     // it's just a performance optimization that will get close without overshooting
     virtual void seek(uint32_t chr_id, uint32_t base) = 0;
-    
+
     // Reset the loader to start from the beginning
     virtual void restart() = 0;
 
-    // Return the number of cells/chromosomes, or return -1 if this number is 
+    // Return the number of cells/chromosomes, or return -1 if this number is
     // not known ahead of time
     virtual int chrCount() const = 0;
     virtual int cellCount() const = 0;
 
     // Return name for a given chr_id or cell_id. Only valid to call
     // for chromosme or cell_ids that have been actually returned by the loader
-    virtual const char* chrNames(uint32_t chr_id) = 0;
-    virtual const char* cellNames(uint32_t cell_id) = 0;
-    
+    virtual const char *chrNames(uint32_t chr_id) = 0;
+    virtual const char *cellNames(uint32_t cell_id) = 0;
+
     // Advance the loader to the next chromosome. Return false if there are no more chromosomes
     virtual bool nextChr() = 0;
     // Return chromosome ID of current fragment
@@ -67,11 +68,11 @@ public:
 
     // Number of loaded fragments available in the cell, start, and end pointers
     virtual uint32_t capacity() const = 0;
-    
+
     // Pointers to the loaded data
-    virtual uint32_t* cellData() = 0;
-    virtual uint32_t* startData() = 0;
-    virtual uint32_t* endData() = 0;
+    virtual uint32_t *cellData() = 0;
+    virtual uint32_t *startData() = 0;
+    virtual uint32_t *endData() = 0;
 };
 
 // Wrapper for a FragmentLoader, forwarding all to the inner loader object.
@@ -79,45 +80,45 @@ public:
 // Designed to allow easier writing of
 // loaders that perform transformations and filters on other loaders
 class FragmentLoaderWrapper : public FragmentLoader {
-protected:
+  protected:
     FragmentLoader &loader;
 
-public:
+  public:
     FragmentLoaderWrapper(FragmentLoader &loader);
     bool isSeekable() const override;
     void seek(uint32_t chr_id, uint32_t base) override;
-    
+
     void restart() override;
 
     int chrCount() const override;
     int cellCount() const override;
 
-    const char* chrNames(uint32_t chr_id) override;
-    const char* cellNames(uint32_t cell_id) override;
+    const char *chrNames(uint32_t chr_id) override;
+    const char *cellNames(uint32_t cell_id) override;
 
     bool nextChr() override;
     uint32_t currentChr() const override;
 
     bool load() override;
     uint32_t capacity() const override;
-    
-    uint32_t* cellData() override;
-    uint32_t* startData() override;
-    uint32_t* endData() override;
-};
 
+    uint32_t *cellData() override;
+    uint32_t *startData() override;
+    uint32_t *endData() override;
+};
 
 // Class to conveniently iterate over fragments from a FragmentLoader
 class FragmentIterator : public FragmentLoaderWrapper {
-private:
+  private:
     uint32_t idx = UINT32_MAX;
     uint32_t current_chr;
     uint32_t current_capacity = 0;
     uint32_t *current_cell, *current_start, *current_end;
-public:
+
+  public:
     FragmentIterator(FragmentLoader &loader);
     virtual ~FragmentIterator() = default;
-    
+
     inline void restart() override {
         loader.restart();
         idx = UINT32_MAX;
@@ -141,11 +142,11 @@ public:
         return res;
     }
     // Access chr, start, end, cell from current fragment
-    inline uint32_t chr() const {return current_chr; };
-    inline uint32_t start() const {return current_start[idx]; };
-    inline uint32_t end() const {return current_end[idx]; };
-    inline uint32_t cell() const {return current_cell[idx]; };   
-    
+    inline uint32_t chr() const { return current_chr; };
+    inline uint32_t start() const { return current_start[idx]; };
+    inline uint32_t end() const { return current_end[idx]; };
+    inline uint32_t cell() const { return current_cell[idx]; };
+
     // Move iterator to just before fragments which end after "base".
     // It's possible that fragments returned after seek will end before "base",
     // but it's guaranteed that it won't skip over any fragments ending before "base"
@@ -153,16 +154,16 @@ public:
         loader.seek(chr_id, base);
         idx = UINT32_MAX;
         current_capacity = 0;
-    }   
+    }
 
     bool load() override;
     uint32_t capacity() const override;
 };
 
 class FragmentWriter {
-public:
+  public:
     // Write fragments
-    // During progress, call checkInterrupt which will raise an exception if there's 
+    // During progress, call checkInterrupt which will raise an exception if there's
     // a user-requested interrupt
     virtual void write(FragmentLoader &fragments, void (*checkInterrupt)(void) = NULL) = 0;
 };

@@ -5,7 +5,7 @@
 namespace BPCells {
 
 class Min : public MatrixTransform {
-public:
+  public:
     using MatrixTransform::MatrixTransform;
 
     bool load() override;

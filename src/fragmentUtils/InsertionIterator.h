@@ -1,10 +1,10 @@
 #pragma once
 
-#include<vector>
+#include <vector>
 
+#include "../bitpacking/simd_vec.h"
 #include "../fragmentIterators/FragmentIterator.h"
 #include "../utils/radix_sort.h"
-#include "../bitpacking/simd_vec.h"
 
 namespace BPCells {
 
@@ -13,7 +13,7 @@ namespace BPCells {
 // fragments store end coordinates non-inclusive, end coordinates will be shifted
 // down by 1bp
 class InsertionIterator {
-private:
+  private:
     FragmentLoader &frags;
 
     // Pointers for accessing sorted start coordinate data
@@ -44,8 +44,10 @@ private:
         // This avoids having to re-sort data too frequently
         if (end_idx * 2 < end_data.size()) {
             uint32_t new_size = end_data.size() + 1 + end_data.size() / 2;
-            end_data.resize(new_size); end_data_buf.resize(new_size);
-            end_cell.resize(new_size); end_cell_buf.resize(new_size);
+            end_data.resize(new_size);
+            end_data_buf.resize(new_size);
+            end_cell.resize(new_size);
+            end_cell_buf.resize(new_size);
         }
         // Copy data to remove our used insertions the start of end_data
         std::memmove(&end_data[0], &end_data[end_idx], sizeof(uint32_t) * (end_capacity - end_idx));
@@ -54,8 +56,8 @@ private:
         end_idx = 0;
 
         uint32_t orig_size = end_data.size();
-        uint32_t min_load = std::max(1U, (uint32_t) end_data.size() / 2);
-        
+        uint32_t min_load = std::max(1U, (uint32_t)end_data.size() / 2);
+
         // Reset our vectors
         start_idx = 0;
         start_data.resize(0);
@@ -64,7 +66,7 @@ private:
         end_cell.resize(end_capacity);
 
         bool chr_end = false;
-        
+
         while (start_data.size() < min_load) {
             if (!frags.load()) {
                 chr_end = true;
@@ -78,10 +80,11 @@ private:
 
             // Subtract 1 form the end coordinates
             uint32_t i;
-            for (i = 0; i+4 <= capacity; i += 4) {
-                store((vec *) (ends + i), sub(load((vec *) (ends + i)), one));
+            for (i = 0; i + 4 <= capacity; i += 4) {
+                store((vec *)(ends + i), sub(load((vec *)(ends + i)), one));
             }
-            for (; i < capacity; i++) ends[i] = ends[i] - 1;
+            for (; i < capacity; i++)
+                ends[i] = ends[i] - 1;
 
             // Copy data into our vectors
             start_data.insert(start_data.end(), starts, starts + capacity);
@@ -91,16 +94,17 @@ private:
         }
 
         // Resize & sort end_data
-        uint32_t end_size = std::max((uint32_t) end_data.size(), orig_size);
-        end_data.resize(end_size); 
+        uint32_t end_size = std::max((uint32_t)end_data.size(), orig_size);
+        end_data.resize(end_size);
         end_cell.resize(end_size);
         end_data_buf.resize(end_size);
         end_cell_buf.resize(end_size);
-        lsdRadixSortArrays<uint32_t>(end_capacity + start_data.size(), 
-            end_data, end_cell, end_data_buf, end_cell_buf);
-        
+        lsdRadixSortArrays<uint32_t>(
+            end_capacity + start_data.size(), end_data, end_cell, end_data_buf, end_cell_buf
+        );
+
         end_capacity += start_data.size();
-        
+
         if (chr_end) {
             // Use a sentinel value of UINT32_MAX for starts, so we just need to check
             // if end_idx >= end_capacity
@@ -108,7 +112,8 @@ private:
             start_cell.push_back(UINT32_MAX);
         }
     }
-public:
+
+  public:
     InsertionIterator(FragmentLoader &loader);
 
     inline void restart() {
@@ -135,7 +140,7 @@ public:
         next_cell = use_start ? start_cell[start_idx] : end_cell[end_idx];
         start_idx += use_start;
         end_idx += !use_start;
-        
+
         return true;
     }
     inline void seek(uint32_t chr_id, uint32_t base) {
@@ -147,10 +152,10 @@ public:
         end_capacity = 0;
     }
 
-    inline uint32_t chr() const {return current_chr; };
-    inline uint32_t cell() const {return next_cell; };
-    inline uint32_t coord() const {return next_coord; };
-    inline bool isStart() const {return use_start; };
+    inline uint32_t chr() const { return current_chr; };
+    inline uint32_t cell() const { return next_cell; };
+    inline uint32_t coord() const { return next_coord; };
+    inline bool isStart() const { return use_start; };
 };
 
 } // end namespace BPCells

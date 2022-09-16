@@ -23,7 +23,7 @@ NumericVector scan_insertions_cpp(SEXP fragments) {
             len++;
         }
     }
-    return {(double) len, (double) coord_sum, (double) ((coord_sum + len/2) % 104729)};
+    return {(double)len, (double)coord_sum, (double)((coord_sum + len / 2) % 104729)};
 }
 
 // [[Rcpp::export]]
@@ -42,7 +42,7 @@ NumericVector scan_insertions2_cpp(SEXP fragments) {
             len++;
         }
     }
-    return {(double) len, (double) coord_sum, (double) ((coord_sum + len/2) % 104729)};
+    return {(double)len, (double)coord_sum, (double)((coord_sum + len / 2) % 104729)};
 }
 
 // [[Rcpp::export]]
@@ -59,8 +59,13 @@ NumericVector scan_insertions2_verbose_cpp(SEXP fragments) {
             last_coord = iter.coord();
             coord_sum += iter.coord();
             len++;
-            printf("%s\t%s\t%d\n", iter.chrNames(iter.currentChr()), iter.cellNames(iter.cell()), iter.coord());
+            printf(
+                "%s\t%s\t%d\n",
+                iter.chrNames(iter.currentChr()),
+                iter.cellNames(iter.cell()),
+                iter.coord()
+            );
         }
     }
-    return {(double) len, (double) coord_sum, (double) ((coord_sum + len/2) % 104729)};
+    return {(double)len, (double)coord_sum, (double)((coord_sum + len / 2) % 104729)};
 }

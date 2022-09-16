@@ -3,11 +3,11 @@
 
 #include <gtest/gtest.h>
 
-#include <fragmentIterators/FragmentIterator.h>
-#include <fragmentIterators/BedFragments.h>
-#include <fragmentIterators/StoredFragments.h>
-#include <fragmentIterators/ChrSelect.h>
 #include <arrayIO/vector.h>
+#include <fragmentIterators/BedFragments.h>
+#include <fragmentIterators/ChrSelect.h>
+#include <fragmentIterators/FragmentIterator.h>
+#include <fragmentIterators/StoredFragments.h>
 
 #include "utils-fragments.h"
 
@@ -15,12 +15,12 @@ namespace fs = std::filesystem;
 using namespace BPCells;
 using namespace ::testing;
 
-char** my_argv;
+char **my_argv;
 int my_argc;
 
 int main(int argc, char **argv) {
     ::testing::InitGoogleTest(&argc, argv);
-    
+
     my_argc = argc;
     my_argv = argv;
 
@@ -29,7 +29,7 @@ int main(int argc, char **argv) {
 
 TEST(FragmentIO, BedRoundtrip) {
     uint32_t max_cell = 50;
-    auto frags_vec = Testing::generateFrags(2000, 3, 400, max_cell-1, 100, 1336);
+    auto frags_vec = Testing::generateFrags(2000, 3, 400, max_cell - 1, 100, 1336);
     std::unique_ptr<VecReaderWriterBuilder> v = writeFragmentTuple(frags_vec);
     StoredFragments frags = StoredFragments::openUnpacked(*v);
 
@@ -49,14 +49,15 @@ TEST(FragmentIO, BedRoundtrip) {
 
     std::stringstream command;
     command << "bash -c \"diff -q <(gunzip -c '" << p2.string() << "' | cut -f 1-4) "
-        << "<(gunzip -c '" << p.string() << "')\"";
+            << "<(gunzip -c '" << p.string() << "')\"";
     EXPECT_EQ(0, std::system(command.str().c_str()));
 }
 
 TEST(FragmentIO, UnpackedVec) {
-    // This test is a little redundant, since writeFragmentTuple already assumes the unpacked round-trip works
+    // This test is a little redundant, since writeFragmentTuple already assumes
+    // the unpacked round-trip works
     uint32_t max_cell = 50;
-    auto frags_vec = Testing::generateFrags(2000, 3, 400, max_cell-1, 100, 1336);
+    auto frags_vec = Testing::generateFrags(2000, 3, 400, max_cell - 1, 100, 1336);
     std::unique_ptr<VecReaderWriterBuilder> v = writeFragmentTuple(frags_vec);
     StoredFragments in = StoredFragments::openUnpacked(*v);
 
@@ -65,7 +66,6 @@ TEST(FragmentIO, UnpackedVec) {
     auto w1 = StoredFragmentsWriter::createUnpacked(vb1);
     w1.write(in);
 
-    
     auto loader = StoredFragments::openUnpacked(vb1);
     in.restart();
     ASSERT_TRUE(Testing::fragments_identical(loader, in));
@@ -73,7 +73,7 @@ TEST(FragmentIO, UnpackedVec) {
 
 TEST(FragmentIO, PackedVec) {
     uint32_t max_cell = 50;
-    auto frags_vec = Testing::generateFrags(2000, 3, 400, max_cell-1, 100, 1336);
+    auto frags_vec = Testing::generateFrags(2000, 3, 400, max_cell - 1, 100, 1336);
     std::unique_ptr<VecReaderWriterBuilder> v = writeFragmentTuple(frags_vec);
     StoredFragments in = StoredFragments::openUnpacked(*v);
 
@@ -89,10 +89,10 @@ TEST(FragmentIO, PackedVec) {
 }
 
 TEST(FragmentIO, ReducedCapacityWrite) {
-    // Test writing StoredFragments when the reader loads more at a time than the 
+    // Test writing StoredFragments when the reader loads more at a time than the
     // chunk size of the writer
     uint32_t max_cell = 50;
-    auto frags_vec = Testing::generateFrags(2000, 3, 400, max_cell-1, 100, 1336);
+    auto frags_vec = Testing::generateFrags(2000, 3, 400, max_cell - 1, 100, 1336);
     // Write with chunk size of 1024
     std::unique_ptr<VecReaderWriterBuilder> v = writeFragmentTuple(frags_vec, 0, false, 1024);
     StoredFragments in = StoredFragments::openUnpacked(*v);
@@ -102,18 +102,16 @@ TEST(FragmentIO, ReducedCapacityWrite) {
     auto w1 = StoredFragmentsWriter::createUnpacked(vb1);
     w1.write(in);
 
-    
     auto loader = StoredFragments::openUnpacked(vb1);
     in.restart();
     ASSERT_TRUE(Testing::fragments_identical(loader, in));
-
 
     // Can't write packed with size < 128, but we can try 129
     VecReaderWriterBuilder vb2(129);
     auto w2 = StoredFragmentsWriter::createPacked(vb2);
     in.restart();
     w2.write(in);
-    
+
     auto loader2 = StoredFragmentsPacked::openPacked(vb2);
     in.restart();
     ASSERT_TRUE(Testing::fragments_identical(loader2, in));

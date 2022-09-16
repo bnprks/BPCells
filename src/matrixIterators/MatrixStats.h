@@ -1,6 +1,5 @@
 #pragma once
 
-
 #ifndef RCPP_EIGEN
 #include <Eigen/SparseCore>
 #else
@@ -11,20 +10,15 @@
 namespace BPCells {
 
 // Enum to request stats to calculate in MatrixLoader::computeMatrixStats
-enum class Stats {
-    None = 0,
-    NonZeroCount = 1,
-    Mean = 2,
-    Variance = 3
-};
+enum class Stats { None = 0, NonZeroCount = 1, Mean = 2, Variance = 3 };
 
 // Result class for row + column stats.
 // Each stat is a row in the matrix
 class StatsResult {
-public:
+  public:
     Eigen::ArrayXXd row_stats;
     Eigen::ArrayXXd col_stats;
-    
+
     Eigen::ArrayXXd rowNonzeros();
     Eigen::ArrayXXd rowMean();
     Eigen::ArrayXXd rowVariance();
@@ -35,6 +29,5 @@ public:
 
     StatsResult transpose();
 };
-
 
 } // end namespace BPCells

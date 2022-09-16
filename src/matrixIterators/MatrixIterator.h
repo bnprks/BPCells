@@ -21,7 +21,7 @@ namespace BPCells {
 // normalization, and re-indexing.
 //
 // For simplicity, matrix loaders are purely in column-major order, similar to
-// Eigen and R's default compressed sparse column layouts. 
+// Eigen and R's default compressed sparse column layouts.
 // Transposition can be performed only with a MatrixWriter,
 // since the re-ordering requires storing all entries in an intermediate matrix.
 //
@@ -34,10 +34,9 @@ namespace BPCells {
 //    this should return 0 repeatedly at the end of a column until nextCol is called.
 // 3. Implement nextCol() method to advance to the next available column.
 // 4. Implement restart() method to restart the iterator from the beginning
-template<typename T>
-class MatrixLoader {
-public:
-    virtual ~MatrixLoader() {};
+template <typename T> class MatrixLoader {
+  public:
+    virtual ~MatrixLoader(){};
 
     // Return the count of rows and columns
     virtual uint32_t rows() const = 0;
@@ -45,8 +44,8 @@ public:
 
     // Return name for a given row or column.
     // If a matrix doesn't have assigned names this will return NULL
-    virtual const char* rowNames(uint32_t row) = 0;
-    virtual const char* colNames(uint32_t col) = 0;
+    virtual const char *rowNames(uint32_t row) = 0;
+    virtual const char *colNames(uint32_t col) = 0;
 
     // Reset the iterator to start from the beginning
     virtual void restart() = 0;
@@ -61,7 +60,7 @@ public:
 
     // Return the index of the current column
     virtual uint32_t currentCol() const = 0;
-    
+
     // Return false if there are no more entries to load
     virtual bool load() = 0;
 
@@ -69,19 +68,22 @@ public:
     virtual uint32_t capacity() const = 0;
 
     // Pointers to the loaded entries
-    virtual uint32_t* rowData() = 0;
-    virtual T* valData() = 0;
-
+    virtual uint32_t *rowData() = 0;
+    virtual T *valData() = 0;
 
     // Matrix math operations (implemented in MatrixOps.cpp and MatrixStats.cpp)
     // These operations can be overloaded by matrix transform operations
 
     // Calculate matrix-matrix product A*B where A (this) is sparse and B is a dense matrix.
-    virtual Eigen::MatrixXd denseMultiplyRight(const Eigen::Map<Eigen::MatrixXd> B, void (*checkInterrupt)(void) = NULL); 
-    virtual Eigen::MatrixXd denseMultiplyLeft(const Eigen::Map<Eigen::MatrixXd> B, void (*checkInterrupt)(void) = NULL);
+    virtual Eigen::MatrixXd
+    denseMultiplyRight(const Eigen::Map<Eigen::MatrixXd> B, void (*checkInterrupt)(void) = NULL);
+    virtual Eigen::MatrixXd
+    denseMultiplyLeft(const Eigen::Map<Eigen::MatrixXd> B, void (*checkInterrupt)(void) = NULL);
     // Calculate matrix-vector product A*v where A (this) is sparse and B is a dense matrix.
-    virtual Eigen::VectorXd vecMultiplyRight(const Eigen::Map<Eigen::VectorXd> v, void (*checkInterrupt)(void) = NULL);
-    virtual Eigen::VectorXd vecMultiplyLeft(const Eigen::Map<Eigen::VectorXd> v, void (*checkInterrupt)(void) = NULL);
+    virtual Eigen::VectorXd
+    vecMultiplyRight(const Eigen::Map<Eigen::VectorXd> v, void (*checkInterrupt)(void) = NULL);
+    virtual Eigen::VectorXd
+    vecMultiplyLeft(const Eigen::Map<Eigen::VectorXd> v, void (*checkInterrupt)(void) = NULL);
 
     // Calculate row/column sums of the matrix
     virtual std::vector<T> colSums(void (*checkInterrupt)(void) = NULL);
@@ -94,54 +96,55 @@ public:
     // 2. NonZeroCount
     // 3. Mean
     // 4. Variance
-    // Each of the later statistics is always calculated simultaneously to the earlier statistics 
+    // Each of the later statistics is always calculated simultaneously to the earlier statistics
     // Outputs results to matrices row_output and col_output, which are col-major matrices,
     // with one column per # rows or # columns as appropriate, and one row per output statistic
-    virtual StatsResult computeMatrixStats(Stats row_stats, Stats col_stats, void (*checkInterrupt)(void) = NULL);
+    virtual StatsResult
+    computeMatrixStats(Stats row_stats, Stats col_stats, void (*checkInterrupt)(void) = NULL);
 };
 
-template<typename T>
-class MatrixLoaderWrapper : public MatrixLoader<T> {
-protected:
+template <typename T> class MatrixLoaderWrapper : public MatrixLoader<T> {
+  protected:
     MatrixLoader<T> &loader;
     uint32_t current_col = UINT32_MAX - 1;
-public:
-    MatrixLoaderWrapper(MatrixLoader<T> &loader) : loader(loader) {};
 
-    uint32_t rows() const override {return loader.rows(); }
-    uint32_t cols() const override {return loader.cols(); }
+  public:
+    MatrixLoaderWrapper(MatrixLoader<T> &loader) : loader(loader){};
 
-    const char* rowNames(uint32_t row) override {return loader.rowNames(row);} 
-    const char* colNames(uint32_t col) override {return loader.colNames(col);} 
+    uint32_t rows() const override { return loader.rows(); }
+    uint32_t cols() const override { return loader.cols(); }
 
-    void restart() override {loader.restart(); }
-    void seekCol(uint32_t col) override {loader.seekCol(col);}
+    const char *rowNames(uint32_t row) override { return loader.rowNames(row); }
+    const char *colNames(uint32_t col) override { return loader.colNames(col); }
+
+    void restart() override { loader.restart(); }
+    void seekCol(uint32_t col) override { loader.seekCol(col); }
 
     bool nextCol() override {
         if (!this->loader.nextCol()) return false;
         current_col = this->loader.currentCol();
         return true;
     }
-    
-    uint32_t currentCol() const override {return loader.currentCol();}
 
-    bool load() override {return loader.load();}
-    
-    uint32_t capacity() const override {return loader.capacity();}
+    uint32_t currentCol() const override { return loader.currentCol(); }
 
-    uint32_t* rowData() override {return loader.rowData();}
-    T* valData() override {return loader.valData();}
+    bool load() override { return loader.load(); }
+
+    uint32_t capacity() const override { return loader.capacity(); }
+
+    uint32_t *rowData() override { return loader.rowData(); }
+    T *valData() override { return loader.valData(); }
 };
 
-template<typename T> 
-class MatrixIterator : public MatrixLoaderWrapper<T> {
-private:
+template <typename T> class MatrixIterator : public MatrixLoaderWrapper<T> {
+  private:
     uint32_t idx = UINT32_MAX;
     uint32_t current_col;
     uint32_t current_capacity = 0;
     uint32_t *current_row;
     T *current_val;
-public:
+
+  public:
     MatrixIterator(MatrixLoader<T> &loader) : MatrixLoaderWrapper<T>(loader) {}
 
     // Reset the iterator to start from the beginning
@@ -156,7 +159,7 @@ public:
         idx = UINT32_MAX;
         current_capacity = 0;
     }
-    
+
     // Return false if there isn't another column to access
     bool nextCol() override {
         bool res = this->loader.nextCol();
@@ -175,9 +178,9 @@ public:
         return true;
     }
     // Access current row, column, and value
-    inline uint32_t row() const {return current_row[idx]; };
-    inline uint32_t col() const {return current_col; };
-    inline T val() const {return current_val[idx]; };
+    inline uint32_t row() const { return current_row[idx]; };
+    inline uint32_t col() const { return current_col; };
+    inline T val() const { return current_val[idx]; };
 
     bool load() override {
         if (!this->loader.load()) {
@@ -190,43 +193,40 @@ public:
         current_val = this->loader.valData();
         return true;
     };
-    uint32_t capacity() const override {return current_capacity;}
+    uint32_t capacity() const override { return current_capacity; }
 };
 
-
-template<typename T> 
-class MatrixWriter {
-public:
-    virtual ~MatrixWriter() {};
+template <typename T> class MatrixWriter {
+  public:
+    virtual ~MatrixWriter(){};
     virtual void write(MatrixLoader<T> &mat, void (*checkInterrupt)(void) = NULL) = 0;
 };
 
-template<typename Tin, typename Tout>
-class MatrixConverterLoader : public MatrixLoader<Tout> {
-private:
+template <typename Tin, typename Tout> class MatrixConverterLoader : public MatrixLoader<Tout> {
+  private:
     MatrixLoader<Tin> &loader;
     std::vector<Tout> vals;
-public:
-    MatrixConverterLoader(MatrixLoader<Tin> &loader) : 
-        loader(loader) {}
 
-    uint32_t rows() const override {return loader.rows(); }
-    uint32_t cols() const override {return loader.cols(); }
+  public:
+    MatrixConverterLoader(MatrixLoader<Tin> &loader) : loader(loader) {}
 
-    const char* rowNames(uint32_t row) override {return loader.rowNames(row);}
-    const char* colNames(uint32_t col) override {return loader.colNames(col);}
+    uint32_t rows() const override { return loader.rows(); }
+    uint32_t cols() const override { return loader.cols(); }
 
-    void restart() override {loader.restart(); }
-    void seekCol(uint32_t col) override {loader.seekCol(col);}
+    const char *rowNames(uint32_t row) override { return loader.rowNames(row); }
+    const char *colNames(uint32_t col) override { return loader.colNames(col); }
 
-    bool nextCol() override {return loader.nextCol(); }
-    uint32_t currentCol() const override {return loader.currentCol();}
+    void restart() override { loader.restart(); }
+    void seekCol(uint32_t col) override { loader.seekCol(col); }
+
+    bool nextCol() override { return loader.nextCol(); }
+    uint32_t currentCol() const override { return loader.currentCol(); }
 
     bool load() override {
-        if(!loader.load()) return false;
-        
+        if (!loader.load()) return false;
+
         uint32_t capacity = loader.capacity();
-        vals.resize(std::max(vals.size(), (size_t) capacity));
+        vals.resize(std::max(vals.size(), (size_t)capacity));
 
         Tin *val_in = loader.valData();
 
@@ -236,11 +236,9 @@ public:
         return true;
     };
 
-    uint32_t capacity() const override {
-        return loader.capacity();
-    }
-    uint32_t* rowData() override {return loader.rowData();}
-    Tout* valData() override {return vals.data();}
+    uint32_t capacity() const override { return loader.capacity(); }
+    uint32_t *rowData() override { return loader.rowData(); }
+    Tout *valData() override { return vals.data(); }
 };
 
 } // end namespace BPCells

@@ -2,7 +2,6 @@
 
 namespace BPCells {
 
-
 H5StringReader::H5StringReader(const HighFive::Group &group, std::string path) {
     HighFive::SilenceHDF5 s;
 
@@ -17,24 +16,25 @@ H5StringReader::H5StringReader(const HighFive::Group &group, std::string path) {
         d.read(char_data.data(), type);
         data.resize(elements);
         for (uint32_t i = 0; i < elements; i++) {
-            data[i] = std::string(char_data.data() + bytes*i, char_data.data() + bytes*(i+1));
+            data[i] = std::string(char_data.data() + bytes * i, char_data.data() + bytes * (i + 1));
         }
     }
 }
-const char* H5StringReader::get(uint32_t idx) const {
+const char *H5StringReader::get(uint32_t idx) const {
     if (idx < data.size()) return data[idx].c_str();
     return NULL;
 }
-uint32_t H5StringReader::size() const {return data.size();}
+uint32_t H5StringReader::size() const { return data.size(); }
 
-H5StringWriter::H5StringWriter(const HighFive::Group &group, std::string path) :
-    group(group), path(path) {}
+H5StringWriter::H5StringWriter(const HighFive::Group &group, std::string path)
+    : group(group)
+    , path(path) {}
 
 void H5StringWriter::write(const StringReader &reader) {
     std::vector<std::string> data;
     uint32_t i = 0;
     while (true) {
-        const char* s = reader.get(i);
+        const char *s = reader.get(i);
         if (s == NULL) break;
         data.push_back(s);
         i++;
@@ -47,7 +47,7 @@ void H5StringWriter::write(const StringReader &reader) {
 HighFive::Group createH5Group(std::string file_path, std::string group_path) {
     HighFive::SilenceHDF5 s;
     if (group_path == "") group_path = "/";
-    
+
     std::filesystem::path path(file_path);
     if (path.has_parent_path() && !std::filesystem::exists(path.parent_path())) {
         std::filesystem::create_directories(path.parent_path());
@@ -65,15 +65,23 @@ HighFive::Group createH5Group(std::string file_path, std::string group_path) {
     }
 }
 
-H5WriterBuilder::H5WriterBuilder(std::string file, std::string group, uint32_t buffer_size, uint32_t chunk_size) :
-    group(createH5Group(file, group)), buffer_size(buffer_size), chunk_size(chunk_size) {}
+H5WriterBuilder::H5WriterBuilder(
+    std::string file, std::string group, uint32_t buffer_size, uint32_t chunk_size
+)
+    : group(createH5Group(file, group))
+    , buffer_size(buffer_size)
+    , chunk_size(chunk_size) {}
 
 UIntWriter H5WriterBuilder::createUIntWriter(std::string name) {
-    return UIntWriter(std::make_unique<H5NumWriter<uint32_t>>(group, name, chunk_size), buffer_size);
+    return UIntWriter(
+        std::make_unique<H5NumWriter<uint32_t>>(group, name, chunk_size), buffer_size
+    );
 }
 
 ULongWriter H5WriterBuilder::createULongWriter(std::string name) {
-    return ULongWriter(std::make_unique<H5NumWriter<uint64_t>>(group, name, chunk_size), buffer_size);
+    return ULongWriter(
+        std::make_unique<H5NumWriter<uint64_t>>(group, name, chunk_size), buffer_size
+    );
 }
 
 FloatWriter H5WriterBuilder::createFloatWriter(std::string name) {
@@ -81,7 +89,9 @@ FloatWriter H5WriterBuilder::createFloatWriter(std::string name) {
 }
 
 DoubleWriter H5WriterBuilder::createDoubleWriter(std::string name) {
-    return DoubleWriter(std::make_unique<H5NumWriter<double>>(group, name, chunk_size), buffer_size);
+    return DoubleWriter(
+        std::make_unique<H5NumWriter<double>>(group, name, chunk_size), buffer_size
+    );
 }
 
 std::unique_ptr<StringWriter> H5WriterBuilder::createStringWriter(std::string name) {
@@ -89,26 +99,30 @@ std::unique_ptr<StringWriter> H5WriterBuilder::createStringWriter(std::string na
 }
 
 void H5WriterBuilder::writeVersion(std::string version) {
-    group.createAttribute<std::string>("version", HighFive::DataSpace::From(version)).write(version);
+    group.createAttribute<std::string>("version", HighFive::DataSpace::From(version))
+        .write(version);
 }
 
 void H5WriterBuilder::deleteWriter(std::string name) {
     throw std::logic_error("deleteWriter: HDF5 files don't support deletion");
 }
 
-H5ReaderBuilder::H5ReaderBuilder(std::string file, std::string group, uint32_t buffer_size, uint32_t read_size) :
-    group(HighFive::File(
-            file,
-            HighFive::File::ReadWrite
-        ).getGroup(group == "" ? std::string("/") : group)),
-    buffer_size(buffer_size), read_size(read_size) {}
+H5ReaderBuilder::H5ReaderBuilder(
+    std::string file, std::string group, uint32_t buffer_size, uint32_t read_size
+)
+    : group(HighFive::File(file, HighFive::File::ReadWrite)
+                .getGroup(group == "" ? std::string("/") : group))
+    , buffer_size(buffer_size)
+    , read_size(read_size) {}
 
 UIntReader H5ReaderBuilder::openUIntReader(std::string name) {
     return UIntReader(std::make_unique<H5NumReader<uint32_t>>(group, name), buffer_size, read_size);
 }
 
 ULongReader H5ReaderBuilder::openULongReader(std::string name) {
-    return ULongReader(std::make_unique<H5NumReader<uint64_t>>(group, name), buffer_size, read_size);
+    return ULongReader(
+        std::make_unique<H5NumReader<uint64_t>>(group, name), buffer_size, read_size
+    );
 }
 
 FloatReader H5ReaderBuilder::openFloatReader(std::string name) {
@@ -129,6 +143,6 @@ std::string H5ReaderBuilder::readVersion() {
     return version;
 }
 
-HighFive::Group& H5ReaderBuilder::getGroup() {return group;}
+HighFive::Group &H5ReaderBuilder::getGroup() { return group; }
 
 } // end namespace BPCells

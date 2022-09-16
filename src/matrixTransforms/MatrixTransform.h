@@ -6,29 +6,27 @@
 #include "../matrixIterators/MatrixIterator.h"
 
 namespace BPCells {
-    
+
 class TransformFit {
-public:
+  public:
     Eigen::ArrayXXd row_params;
     Eigen::ArrayXXd col_params;
     Eigen::ArrayXd global_params;
 };
 
 class MatrixTransform : public MatrixLoaderWrapper<double> {
-protected:
+  protected:
     TransformFit fit;
-public:    
-    enum class RecalculateFit {
-        None,
-        Rows,
-        Cols
-    };
+
+  public:
+    enum class RecalculateFit { None, Rows, Cols };
 
     MatrixTransform(MatrixLoader<double> &loader);
     MatrixTransform(MatrixLoader<double> &loader, TransformFit fit);
     // Constructor argument conventions:
     // MatrixTransform(MatrixLoader<double> &mat): Fit a transform, then iterate over mat
-    // MatrixTransform(MatrixLoader<double> &mat, TransformFit fit, RecalculateFit recalculate = RecalculateFit::None)
+    // MatrixTransform(MatrixLoader<double> &mat, TransformFit fit, RecalculateFit recalculate =
+    // RecalculateFit::None)
     //     Use the given transform parameters on the matrix, while optionally re-calculating
     //     transform parameters for either none, rows, or columns. (rows or columns could
     //     be useful for re-projecting matrices to match a given normalization)
@@ -44,23 +42,25 @@ public:
 // This class implements the basic loading primitives while inserting the newly
 // non-zero values into the data stream. Note that these primitives will likely have much
 // worse performance on dense matrices, but are provided for ease-of-use.
-// 
+//
 // To provide efficient implementations of both loading and matrix/vector products,
 // Child classes must implement both loadZero and loadZeroSubtracted. These functions
 // involve calculating transformed values as if the underlying sparse matrix was all zeros.
 class MatrixTransformDense : public MatrixTransform {
-private:
+  private:
     static inline const uint32_t buf_size = 1024;
     std::array<double, buf_size> val_data;
     std::array<uint32_t, buf_size> row_data;
     uint32_t loader_idx = UINT32_MAX; // Index of loader data for this->load() output
-    uint32_t loader_capacity = 0; // Capacity of loader data. loader_capacity==0 signals no more data for this column
+    uint32_t loader_capacity =
+        0; // Capacity of loader data. loader_capacity==0 signals no more data for this column
     uint32_t loader_col = UINT32_MAX;
     uint32_t current_row = UINT32_MAX;
     uint32_t current_col = UINT32_MAX;
-public:
+
+  public:
     MatrixTransformDense(MatrixLoader<double> &mat, TransformFit fit);
-    
+
     // Reset the iterator to start from the beginning
     void restart() override;
 
@@ -80,39 +80,61 @@ public:
     uint32_t capacity() const override;
 
     // Pointers to the loaded entries
-    uint32_t* rowData() override;
-    double* valData() override;
+    uint32_t *rowData() override;
+    double *valData() override;
 
-
-    Eigen::MatrixXd denseMultiplyRight(const Eigen::Map<Eigen::MatrixXd> B, void (*checkInterrupt)(void) = NULL) override;
-    Eigen::MatrixXd denseMultiplyLeft(const Eigen::Map<Eigen::MatrixXd> B, void (*checkInterrupt)(void) = NULL) override;
+    Eigen::MatrixXd denseMultiplyRight(
+        const Eigen::Map<Eigen::MatrixXd> B, void (*checkInterrupt)(void) = NULL
+    ) override;
+    Eigen::MatrixXd denseMultiplyLeft(
+        const Eigen::Map<Eigen::MatrixXd> B, void (*checkInterrupt)(void) = NULL
+    ) override;
     // Calculate matrix-vector product A*v where A (this) is sparse and B is a dense matrix.
-    Eigen::VectorXd vecMultiplyRight(const Eigen::Map<Eigen::VectorXd> v, void (*checkInterrupt)(void) = NULL) override;
-    Eigen::VectorXd vecMultiplyLeft(const Eigen::Map<Eigen::VectorXd> v, void (*checkInterrupt)(void) = NULL) override;
+    Eigen::VectorXd vecMultiplyRight(
+        const Eigen::Map<Eigen::VectorXd> v, void (*checkInterrupt)(void) = NULL
+    ) override;
+    Eigen::VectorXd vecMultiplyLeft(
+        const Eigen::Map<Eigen::VectorXd> v, void (*checkInterrupt)(void) = NULL
+    ) override;
 
     // Calculate row/column sums of the matrix
     std::vector<double> colSums(void (*checkInterrupt)(void) = NULL) override;
     std::vector<double> rowSums(void (*checkInterrupt)(void) = NULL) override;
 
-protected:
-    // Perform a normal load from the underlying matrix, then subtract transform(0) 
+  protected:
+    // Perform a normal load from the underlying matrix, then subtract transform(0)
     // from each entry and return false if there are no more non-zero values to load
     // from the underlying matrix
     virtual bool loadZeroSubtracted() = 0;
-    // Load a range of transform(0) values into an output vector. 
+    // Load a range of transform(0) values into an output vector.
     // The output values should represent rows `start_row` to `start_row + count`,
     // and come from column `col`
     virtual void loadZero(double *values, uint32_t count, uint32_t start_row, uint32_t col) = 0;
 
-
-    // Perform matrix-matrix or matrix-vector products as if all 
+    // Perform matrix-matrix or matrix-vector products as if all
     // entries in the underlying matrix were 0, adding the results into
     // an existing allocated dense matrix
-    virtual void denseMultiplyRightZero(Eigen::MatrixXd &out, const Eigen::Map<Eigen::MatrixXd> B, void (*checkInterrupt)(void) = NULL);
-    virtual void denseMultiplyLeftZero(Eigen::MatrixXd &out, const Eigen::Map<Eigen::MatrixXd> B, void (*checkInterrupt)(void) = NULL);
+    virtual void denseMultiplyRightZero(
+        Eigen::MatrixXd &out,
+        const Eigen::Map<Eigen::MatrixXd> B,
+        void (*checkInterrupt)(void) = NULL
+    );
+    virtual void denseMultiplyLeftZero(
+        Eigen::MatrixXd &out,
+        const Eigen::Map<Eigen::MatrixXd> B,
+        void (*checkInterrupt)(void) = NULL
+    );
 
-    virtual void vecMultiplyRightZero(Eigen::VectorXd &out, const Eigen::Map<Eigen::VectorXd> v, void (*checkInterrupt)(void) = NULL);
-    virtual void vecMultiplyLeftZero(Eigen::VectorXd &out, const Eigen::Map<Eigen::VectorXd> v, void (*checkInterrupt)(void) = NULL);
+    virtual void vecMultiplyRightZero(
+        Eigen::VectorXd &out,
+        const Eigen::Map<Eigen::VectorXd> v,
+        void (*checkInterrupt)(void) = NULL
+    );
+    virtual void vecMultiplyLeftZero(
+        Eigen::VectorXd &out,
+        const Eigen::Map<Eigen::VectorXd> v,
+        void (*checkInterrupt)(void) = NULL
+    );
 };
 
 } // end namespace BPCells

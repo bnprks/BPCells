@@ -4,20 +4,20 @@
 #include <cassert>
 #include <functional>
 
-#include "FragmentIterator.h"
 #include "../lib/dary_heap.hpp"
+#include "FragmentIterator.h"
 
 namespace BPCells {
 class insertion {
-private:
+  private:
     uint32_t coord_;
     uint32_t cell_id_;
-public:
+
+  public:
     insertion() : coord_(UINT32_MAX), cell_id_(UINT32_MAX) {}
-    insertion(uint32_t coord, uint32_t cell_id):
-        coord_(coord), cell_id_(cell_id) {}
-    inline uint32_t coord() const {return coord_;}
-    inline uint32_t cell_id() const {return cell_id_;}
+    insertion(uint32_t coord, uint32_t cell_id) : coord_(coord), cell_id_(cell_id) {}
+    inline uint32_t coord() const { return coord_; }
+    inline uint32_t cell_id() const { return cell_id_; }
     friend bool operator<(const insertion &i1, const insertion &i2) {
         return i1.coord_ < i2.coord_;
     }
@@ -27,29 +27,31 @@ public:
 };
 // A buffer that uses a heap to sort end coordinates
 class HeapBuffer {
-private:
+  private:
     std::vector<insertion> heap;
-public:
-    HeapBuffer() {
-        heap.push_back({UINT32_MAX, UINT32_MAX});
-    }
+
+  public:
+    HeapBuffer() { heap.push_back({UINT32_MAX, UINT32_MAX}); }
     inline void add_coord(const uint32_t coord, const uint32_t cell) {
         heap.push_back({coord, cell});
         dary_heap::push_heap<4>(heap.begin(), heap.end(), std::greater<insertion>());
     }
-    inline uint32_t minCoord() const {return heap.front().coord();}
-    inline uint32_t minCell() const {return heap.front().cell_id();}
+    inline uint32_t minCoord() const { return heap.front().coord(); }
+    inline uint32_t minCell() const { return heap.front().cell_id(); }
     inline void popMin() {
         dary_heap::pop_heap<4>(heap.begin(), heap.end(), std::greater<insertion>());
         heap.pop_back();
     }
-    inline bool empty() const {return heap.front().coord() == UINT32_MAX;}
-    inline void clear() {heap.resize(0); heap.push_back({UINT32_MAX, UINT32_MAX});}
+    inline bool empty() const { return heap.front().coord() == UINT32_MAX; }
+    inline void clear() {
+        heap.resize(0);
+        heap.push_back({UINT32_MAX, UINT32_MAX});
+    }
 };
 
 // A buffer that uses a circular
 class CircleBuffer {
-private:
+  private:
     std::vector<insertion> buf;
     // Properties:
     // end = next location to insert an item
@@ -60,22 +62,21 @@ private:
     inline uint32_t nextIdx(uint32_t idx) const {
         return idx + (idx < buf.size() - 1 ? 1 : -buf.size() + 1);
     }
-    inline uint32_t prevIdx(uint32_t idx) const {
-        return idx - (idx > 0 ? 1 : -buf.size() + 1);
-    }
+    inline uint32_t prevIdx(uint32_t idx) const { return idx - (idx > 0 ? 1 : -buf.size() + 1); }
     inline void resize() {
-        //printf("Calling resize, size=%zu, start=%zu, end=%zu\n", buf.size(), start, end);
+        // printf("Calling resize, size=%zu, start=%zu, end=%zu\n", buf.size(), start, end);
         assert(end == prevIdx(start));
         end = buf.size() - 1;
-        buf.resize(buf.size() + buf.size()/2 + 1);
-        //printf("new buf size: %zu\n", buf.size());
+        buf.resize(buf.size() + buf.size() / 2 + 1);
+        // printf("new buf size: %zu\n", buf.size());
         for (size_t i = 0; i < start; i++) {
             end = nextIdx(end);
             buf[end] = buf[i];
         }
-        //printf("Finished resize, size=%zu, start=%zu, end=%zu\n", buf.size(), start, end);
+        // printf("Finished resize, size=%zu, start=%zu, end=%zu\n", buf.size(), start, end);
     }
-public:
+
+  public:
     CircleBuffer() {
         start = 0;
         end = 1;
@@ -102,23 +103,24 @@ public:
         //     printf("%d ", buf[i].coord());
         // printf("\n");
     }
-    inline uint32_t minCoord() const {return buf[start].coord();}
-    inline uint32_t minCell() const {return buf[start].cell_id();}
+    inline uint32_t minCoord() const { return buf[start].coord(); }
+    inline uint32_t minCell() const { return buf[start].cell_id(); }
     inline void popMin() {
-        //printf("Removing coord %d. new_min=%d\n", minCoord(), buf[nextIdx(start)].coord());
+        // printf("Removing coord %d. new_min=%d\n", minCoord(), buf[nextIdx(start)].coord());
         start = nextIdx(start);
     }
-    inline bool empty() const {return buf[start].coord() == UINT32_MAX;}
+    inline bool empty() const { return buf[start].coord() == UINT32_MAX; }
     inline void clear() {
-        end = start; 
-        //printf("calling clear\n"); 
-        add_coord(UINT32_MAX, UINT32_MAX);}
+        end = start;
+        // printf("calling clear\n");
+        add_coord(UINT32_MAX, UINT32_MAX);
+    }
 };
 
 // Class to conveniently iterate over insertion sites in sorted order.
 // Input must be a *sorted* fragments iterator
 class InsertionsIterator : public FragmentsLoaderWrapper {
-private:
+  private:
     const uint32_t chunk_capacity;
     int32_t chunk_size;
     uint32_t current_chr;
@@ -129,8 +131,8 @@ private:
     insertion next_insertion = {UINT32_MAX, UINT32_MAX};
 
     HeapBuffer buf;
-    //CircleBuffer buf;
-public:
+    // CircleBuffer buf;
+  public:
     // Construct iterator with a given internal buffer size (must be a power of 2 >= 128)
     InsertionsIterator(FragmentsLoader &loader, uint32_t buffer_size = 1024);
 
@@ -148,7 +150,7 @@ public:
                 return true;
             }
         }
-        //printf("buf_min = %d, start_min=%d\n", buf.minCoord(), fragments_buf.start[idx]);
+        // printf("buf_min = %d, start_min=%d\n", buf.minCoord(), fragments_buf.start[idx]);
         if (buf.minCoord() < fragments_buf.start[idx]) {
             next_insertion = {buf.minCoord(), buf.minCell()};
             buf.popMin();
@@ -168,11 +170,11 @@ public:
         return res;
     }
     // Access chr, start, end, cell from current fragment
-    inline uint32_t chr() const {return current_chr; };
-    inline uint32_t coord() const {return next_insertion.coord(); };
-    inline uint32_t cell() const {return next_insertion.cell_id(); };   
-    
-    inline uint32_t get_chunk_capacity() {return chunk_capacity;}; 
+    inline uint32_t chr() const { return current_chr; };
+    inline uint32_t coord() const { return next_insertion.coord(); };
+    inline uint32_t cell() const { return next_insertion.cell_id(); };
+
+    inline uint32_t get_chunk_capacity() { return chunk_capacity; };
 
     // Move iterator to just before fragments which end after "base".
     // It's possible that fragments returned after seek will end before "base",
@@ -182,7 +184,7 @@ public:
         current_chr = chr_id;
         buf.clear();
         idx = chunk_capacity;
-    }   
+    }
 
     inline void restart() override {
         loader.restart();

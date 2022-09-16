@@ -1,9 +1,9 @@
 #pragma once
 
 #include <array>
+#include <filesystem>
 #include <string>
 #include <unordered_map>
-#include <filesystem>
 
 #include <zlib.h>
 
@@ -14,26 +14,26 @@ namespace BPCells {
 // Read a fragment TSV with columns chr, start, end, cell_id [optional others] in that order.
 // cell and chromosme IDs are assigned in sequential order from the order they're seen
 class BedFragments : public FragmentLoader {
-public:
+  public:
     BedFragments(const char *path, const char *comment_prefix = "");
 
     ~BedFragments();
-    
+
     BedFragments() = delete;
-    BedFragments(const BedFragments&) = delete;
-    BedFragments& operator=(const BedFragments& other) = delete;
+    BedFragments(const BedFragments &) = delete;
+    BedFragments &operator=(const BedFragments &other) = delete;
 
     // Reset the iterator to start from the beginning
     void restart() override;
 
-    // Return the number of cells/chromosomes, or return -1 if this number is 
+    // Return the number of cells/chromosomes, or return -1 if this number is
     // not known ahead of time
     int chrCount() const override;
     int cellCount() const override;
 
-    const char* chrNames(uint32_t chr_id) override;
-    const char* cellNames(uint32_t cell_id) override;
-    
+    const char *chrNames(uint32_t chr_id) override;
+    const char *cellNames(uint32_t cell_id) override;
+
     bool nextChr() override;
     uint32_t currentChr() const override;
 
@@ -43,14 +43,14 @@ public:
     bool load() override;
     uint32_t capacity() const override;
 
-    uint32_t* cellData() override;
-    uint32_t* startData() override;
-    uint32_t* endData() override;
+    uint32_t *cellData() override;
+    uint32_t *startData() override;
+    uint32_t *endData() override;
 
-private:
+  private:
     std::string path;
     gzFile f;
-    std::array<char, 1<<10 > line_buf;
+    std::array<char, 1 << 10> line_buf;
     std::vector<std::string> chr_names, cell_names;
     std::unordered_map<std::string, uint32_t> chr_lookup, cell_id_lookup;
     uint32_t next_chr_id, next_cell_id;
@@ -60,7 +60,7 @@ private:
     uint32_t last_start = 0;
     std::vector<uint32_t> cell, start, end;
 
-    const char* nextField(const char * c) ;
+    const char *nextField(const char *c);
 
     // Read the next line, returning false if we tried reading past the end of
     // the file
@@ -72,18 +72,18 @@ private:
     // Returns empty string at eof
     std::string_view parse_line(uint32_t &start, uint32_t &end, uint32_t &cell_id);
 
-    bool validInt(const char* c);
-
+    bool validInt(const char *c);
 };
 
-
 class BedFragmentsWriter : public FragmentWriter {
-public:
-    BedFragmentsWriter(const char *path, bool append_5th_column=false,
-                    uint32_t buffer_size = 1 << 20);
+  public:
+    BedFragmentsWriter(
+        const char *path, bool append_5th_column = false, uint32_t buffer_size = 1 << 20
+    );
     ~BedFragmentsWriter();
     void write(FragmentLoader &fragments, void (*checkInterrupt)(void) = NULL) override;
-private:
+
+  private:
     gzFile f;
     bool append_5th_column;
 };

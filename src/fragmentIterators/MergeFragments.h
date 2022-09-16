@@ -1,8 +1,8 @@
 #pragma once
 
-#include <vector>
-#include <cstring>
 #include "../lib/dary_heap.hpp"
+#include <cstring>
+#include <vector>
 
 #include "FragmentIterator.h"
 
@@ -13,7 +13,7 @@ namespace BPCells {
 // Chromosome names & IDs must match between fragments and come in the same ordering.
 //   (Use ChrSelect before merging if necessary to match ordering)
 class MergeFragments : public FragmentLoader {
-private:
+  private:
     std::vector<FragmentIterator> frags;
     std::vector<uint32_t> heap; // Heap of indices into the fragments array
     std::vector<uint32_t> cell_id_offset, frags_completed;
@@ -21,15 +21,16 @@ private:
     std::vector<uint32_t> start, end, cell;
     uint32_t loaded;
     uint32_t current_chr = UINT32_MAX;
-    
+
     // Order by start, breaking ties by the fragment loader index
     inline bool compare(uint32_t idx1, uint32_t idx2) {
-        if (frags[idx1].start() != frags[idx2].start()) 
+        if (frags[idx1].start() != frags[idx2].start())
             return frags[idx1].start() > frags[idx2].start();
         return idx1 > idx2;
     }
-public:
-    MergeFragments(const std::vector<FragmentLoader*> &fragments, uint32_t load_size=1024);
+
+  public:
+    MergeFragments(const std::vector<FragmentLoader *> &fragments, uint32_t load_size = 1024);
 
     ~MergeFragments() = default;
 
@@ -40,9 +41,9 @@ public:
     int chrCount() const override;
     int cellCount() const override;
 
-    const char* chrNames(uint32_t chr_id) override;
-    const char* cellNames(uint32_t cell_id) override;
-    
+    const char *chrNames(uint32_t chr_id) override;
+    const char *cellNames(uint32_t cell_id) override;
+
     bool nextChr() override;
 
     uint32_t currentChr() const override;
@@ -50,10 +51,10 @@ public:
     bool load() override;
 
     uint32_t capacity() const override;
-    
-    uint32_t* cellData() override;
-    uint32_t* startData() override;
-    uint32_t* endData() override;
+
+    uint32_t *cellData() override;
+    uint32_t *startData() override;
+    uint32_t *endData() override;
 };
 
 } // end namespace BPCells

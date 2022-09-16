@@ -1,15 +1,18 @@
 #pragma once
 
-// Provide a templated radix_sort method that works on 
+// Provide a templated radix_sort method that works on
 namespace BPCells {
-
 
 // Template helper to swap multiple vectors
 inline void vec_swap_helper() {}
 
-template<typename T, typename ...Rest>
-inline void vec_swap_helper(std::vector<T> &a1, std::vector<Rest>&... a_tail,
-                 std::vector<T> &b1, std::vector<Rest>&... b_tail) {
+template <typename T, typename... Rest>
+inline void vec_swap_helper(
+    std::vector<T> &a1,
+    std::vector<Rest> &...a_tail,
+    std::vector<T> &b1,
+    std::vector<Rest> &...b_tail
+) {
     std::swap(a1, b1);
     vec_swap_helper(a_tail..., b_tail...);
 }
@@ -17,10 +20,15 @@ inline void vec_swap_helper(std::vector<T> &a1, std::vector<Rest>&... a_tail,
 // Template helper to assign multiple vectors
 inline void vec_assign_helper(uint32_t from, uint32_t to) {}
 
-template<typename T, typename ...Rest>
-inline void vec_assign_helper(uint32_t from, uint32_t to,
-                 std::vector<T> &a1, std::vector<Rest>&... a_tail,
-                 std::vector<T> &b1, std::vector<Rest>&... b_tail) {
+template <typename T, typename... Rest>
+inline void vec_assign_helper(
+    uint32_t from,
+    uint32_t to,
+    std::vector<T> &a1,
+    std::vector<Rest> &...a_tail,
+    std::vector<T> &b1,
+    std::vector<Rest> &...b_tail
+) {
     b1[to] = a1[from];
     vec_assign_helper(from, to, a_tail..., b_tail...);
 }
@@ -32,18 +40,23 @@ inline void vec_assign_helper(uint32_t from, uint32_t to,
 // swaps in a cell_id array.
 // vector<uint32_t> ends, cell_id, end_buf, cell_buf;
 // lsdRadixSortArrays<uint32_t>(ends.size(), ends, cell_id, end_buf, cell_buf);
-template<typename ...Vals>
-void lsdRadixSortArrays(uint32_t size, std::vector<uint32_t> &key, std::vector<Vals>&... vals, 
-                                   std::vector<uint32_t> &key_scratch, std::vector<Vals>&... vals_scratch) {
+template <typename... Vals>
+void lsdRadixSortArrays(
+    uint32_t size,
+    std::vector<uint32_t> &key,
+    std::vector<Vals> &...vals,
+    std::vector<uint32_t> &key_scratch,
+    std::vector<Vals> &...vals_scratch
+) {
     uint32_t radix_counts[4][256] = {{0}};
     bool skip_byte[4] = {false};
 
     // Count up how many we see of each byte combination in 1 pass of the data
     for (uint32_t i = 0; i < size; i++) {
-        radix_counts[0][255 & ((uint32_t) key[i] >> (0*8))]++;
-        radix_counts[1][255 & ((uint32_t) key[i] >> (1*8))]++;
-        radix_counts[2][255 & ((uint32_t) key[i] >> (2*8))]++;
-        radix_counts[3][255 & ((uint32_t) key[i] >> (3*8))]++;
+        radix_counts[0][255 & ((uint32_t)key[i] >> (0 * 8))]++;
+        radix_counts[1][255 & ((uint32_t)key[i] >> (1 * 8))]++;
+        radix_counts[2][255 & ((uint32_t)key[i] >> (2 * 8))]++;
+        radix_counts[3][255 & ((uint32_t)key[i] >> (3 * 8))]++;
     }
 
     // Tally up which output index each byte combination should start at
@@ -59,10 +72,12 @@ void lsdRadixSortArrays(uint32_t size, std::vector<uint32_t> &key, std::vector<V
 
     for (int i = 0; i < 4; i++) {
         // Skip if this byte is all identical
-        if (skip_byte[i]) { continue; }
+        if (skip_byte[i]) {
+            continue;
+        }
         for (uint32_t j = 0; j < size; j++) {
             uint32_t val = key[j];
-            uint32_t bucket = 255 & ((uint32_t) val >> (i * 8));
+            uint32_t bucket = 255 & ((uint32_t)val >> (i * 8));
             key_scratch[radix_counts[i][bucket]] = val;
             vec_assign_helper<Vals...>(j, radix_counts[i][bucket], vals..., vals_scratch...);
             radix_counts[i][bucket]++;
@@ -72,17 +87,19 @@ void lsdRadixSortArrays(uint32_t size, std::vector<uint32_t> &key, std::vector<V
     }
 }
 
-// Base case copy+paste from above, since I'm having some template trouble when no value arrays are supplied
-inline void lsdRadixSortArrays(uint32_t size, std::vector<uint32_t> &key, std::vector<uint32_t> &key_scratch) {
+// Base case copy+paste from above, since I'm having some template trouble when no value arrays are
+// supplied
+inline void
+lsdRadixSortArrays(uint32_t size, std::vector<uint32_t> &key, std::vector<uint32_t> &key_scratch) {
     uint32_t radix_counts[4][256] = {{0}};
     bool skip_byte[4] = {false};
 
     // Count up how many we see of each byte combination in 1 pass of the data
     for (uint32_t i = 0; i < size; i++) {
-        radix_counts[0][255 & ((uint32_t) key[i] >> (0*8))]++;
-        radix_counts[1][255 & ((uint32_t) key[i] >> (1*8))]++;
-        radix_counts[2][255 & ((uint32_t) key[i] >> (2*8))]++;
-        radix_counts[3][255 & ((uint32_t) key[i] >> (3*8))]++;
+        radix_counts[0][255 & ((uint32_t)key[i] >> (0 * 8))]++;
+        radix_counts[1][255 & ((uint32_t)key[i] >> (1 * 8))]++;
+        radix_counts[2][255 & ((uint32_t)key[i] >> (2 * 8))]++;
+        radix_counts[3][255 & ((uint32_t)key[i] >> (3 * 8))]++;
     }
 
     // Tally up which output index each byte combination should start at
@@ -98,10 +115,12 @@ inline void lsdRadixSortArrays(uint32_t size, std::vector<uint32_t> &key, std::v
 
     for (int i = 0; i < 4; i++) {
         // Skip if this byte is all identical
-        if (skip_byte[i]) { continue; }
+        if (skip_byte[i]) {
+            continue;
+        }
         for (uint32_t j = 0; j < size; j++) {
             uint32_t val = key[j];
-            uint32_t bucket = 255 & ((uint32_t) val >> (i * 8));
+            uint32_t bucket = 255 & ((uint32_t)val >> (i * 8));
             key_scratch[radix_counts[i][bucket]] = val;
             radix_counts[i][bucket]++;
         }
@@ -109,11 +128,10 @@ inline void lsdRadixSortArrays(uint32_t size, std::vector<uint32_t> &key, std::v
     }
 }
 
-
 // // Variants for sorting based on floats
 
-// // Encode float->uint32_t for radix sorting (flip all bits for negative, or just sign bit for positive)
-// inline uint32_t float_encode_radix(float f) {
+// // Encode float->uint32_t for radix sorting (flip all bits for negative, or just sign bit for
+// positive) inline uint32_t float_encode_radix(float f) {
 //     uint32_t u = *(uint32_t *)&f;
 //     int32_t i = *(int32_t *)&f;
 //     uint32_t mask = (i >> 31) | (1 << 31);
@@ -135,8 +153,9 @@ inline void lsdRadixSortArrays(uint32_t size, std::vector<uint32_t> &key, std::v
 // }
 
 // template<typename ...Vals>
-// void lsdRadixSortArrays(uint32_t size, std::vector<float> &key, std::vector<Vals>&... vals, 
-//                                    std::vector<float> &key_scratch, std::vector<Vals>&... vals_scratch) {
+// void lsdRadixSortArrays(uint32_t size, std::vector<float> &key, std::vector<Vals>&... vals,
+//                                    std::vector<float> &key_scratch, std::vector<Vals>&...
+//                                    vals_scratch) {
 //     size_t i = 0;
 //     for (; i + 4 <= size; i += 4) {
 //         store(&key[i], float_encode_radix_vec(load(&key[i])));
