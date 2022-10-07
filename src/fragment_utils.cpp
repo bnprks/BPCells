@@ -147,6 +147,25 @@ List nucleosome_counts_cpp(SEXP fragments, uint32_t nuc_width = 147) {
     );
 }
 
+// Compute fragment length distribution
+// [[Rcpp::export]]
+std::vector<int> fragment_lengths_cpp(SEXP fragments) {
+    FragmentLoader *loader = &(*XPtr<FragmentLoader>(fragments));
+    FragmentIterator iter(*loader);
+
+    std::vector<int> lengths(0);
+
+    while (iter.nextChr()) {
+        while (iter.nextFrag()) {
+            uint32_t width = iter.end() - iter.start();
+            if (width >= lengths.size() - 1) lengths.resize(width + 1);
+            lengths[width] += 1;
+        }
+    }
+
+    return lengths;
+}
+
 // [[Rcpp::export]]
 SEXP iterate_shift_cpp(SEXP fragments, int32_t shift_start, int32_t shift_end) {
     XPtr<FragmentLoader> loader(fragments);

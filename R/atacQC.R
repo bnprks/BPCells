@@ -17,6 +17,18 @@ nucleosome_counts <- function(fragments, nucleosome_width=147) {
     return(res)
 }
 
+#' Count fragments by size
+#' @param fragments Fragments object
+#' @return Numeric vector where index i contans the number of length-i fragments
+#' @export
+length_distribution <- function(fragments) {
+    assert_is(fragments, "IterableFragments")
+
+    iter <- iterate_fragments(fragments)
+    res <- fragment_lengths_cpp(ptr(iter))
+    return(res)
+}
+
 
 #' Calculate ArchR-compatible per-cell QC statistics
 #' @param fragments IterableFragments object
