@@ -523,20 +523,11 @@ open_fragments_hdf5 <- function(path, group="fragments", buffer_size=16384L) {
 #' @return UnpackedMemFragments object representing the given fragments
 #' @export
 convert_to_fragments <- function(x, zero_based_coords=!is(x, "GRanges")) {
-    assert_is(x, c("list", "data.frame", "GRanges"))
     assert_is(zero_based_coords, "logical")
-    assert_not_null(x$cell_id)
-    if(is(x, "GRanges")) {
-        assert_has_names(GenomicRanges::mcols(x), c("cell_id"))
-        x <- as.data.frame(x)
-        x$chr <- x$seqnames
-    } else {
-        assert_has_names(x, c("chr", "start", "end", "cell_id"))
-    }
+    x <- normalize_ranges(x, metadata_cols="cell_id", zero_based_coords=zero_based_coords)
+    x <- data.frame(x)
     x <- x[order(x$chr, x$start),]
-    if(!zero_based_coords) {
-        x$start <- x$start - 1
-    }
+
     x$cell_id <- as.factor(x$cell_id)
     x$chr <- as.factor(x$chr)
 
@@ -962,7 +953,7 @@ setMethod("short_description", "CellPrefix", function(x) {
 #' @param prefix String to add as the prefix
 #' @return Fragments object with prefixed names
 #' @export
-prefix_cell_names <- function(fragments, prefix, invert_selection=FALSE, zero_based_coords=TRUE) {
+prefix_cell_names <- function(fragments, prefix) {
     assert_is(fragments, "IterableFragments")
     assert_is(prefix, "character")
     assert_len(prefix, 1)
@@ -1018,32 +1009,23 @@ setMethod("short_description", "RegionSelect", function(x) {
 #' @inheritParams peakMatrix
 #' @return Fragments object filtered according to the selected regions
 #' @export
-selectRegions <- function(fragments, ranges, invert_selection=FALSE, zero_based_coords=TRUE) {
+selectRegions <- function(fragments, ranges, invert_selection=FALSE, zero_based_coords=!is(ranges, "GRanges")) {
     assert_is(fragments, "IterableFragments")
-    assert_is(ranges, c("GRanges", "list", "data.frame"))
-    
+    ranges <- normalize_ranges(ranges, zero_based_coords=zero_based_coords)
+        
     assert_is(zero_based_coords, "logical")
     
-    if(is.list(ranges)) {
-        assert_has_names(ranges, c("chr", "start", "end"))
-        chr_levels <- as.character(unique(ranges$chr))
-        chr_id <- as.integer(factor(as.character(ranges$chr), chr_levels)) - 1L
-        start <- as.integer(ranges$start) - !zero_based_coords
-        end <- as.integer(ranges$end)
-    } else {
-        chr_levels <- as.character(unique(GenomicRanges::seqnames(ranges)))
-        chr_id <- as.integer(factor(as.character(GenomicRanges::seqnames(ranges)), chr_levels)) - 1L
-        start <- GenomicRanges::start(ranges) - !zero_based_coords
-        end <- GenomicRanges::end(ranges)
-    }
+    chr_levels <- levels(ranges$chr)
+    chr_id <- as.integer(ranges$chr) - 1L
+
     # Check to make sure regions are end-sorted
     pair_1 <- seq_len(length(chr_id)-1)
     pair_2 <- pair_1 + 1
-    if (any(chr_id[pair_1] == chr_id[pair_2] & end[pair_1] > end[pair_2])) {
+    if (any(chr_id[pair_1] == chr_id[pair_2] & ranges$end[pair_1] > ranges$end[pair_2])) {
         stop("Tile regions must be non-overlapping")
     }
 
-    new("RegionSelect", fragments=fragments, chr_id=chr_id, start=start, end=end, chr_levels=chr_levels, invert_selection=invert_selection)
+    new("RegionSelect", fragments=fragments, chr_id=chr_id, start=ranges$start, end=ranges$end, chr_levels=chr_levels, invert_selection=invert_selection)
 }
 
 setClass("MergeFragments",

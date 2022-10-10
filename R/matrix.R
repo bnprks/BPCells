@@ -1106,9 +1106,7 @@ setMethod("matrix_type", "PeakMatrix", function(x) "uint32_t")
 #' @param fragments Input fragments object. Must have cell names and chromosome names defined
 #' @param ranges GRanges object with the ranges to overlap, or list/data frame with columns chr, start, & end.
 #'     Must be sorted in order (chr, end, start) where chromosomes are ordered according to the chromosome names of `fragments`.
-#' @param zero_based_coords Boolean for whether the input ranges are in a 0-based 
-#'        or a 1-based coordinate system. (1-based will be converted to 0-based)
-#'        (see http://genome.ucsc.edu/blog/the-ucsc-genome-browser-coordinate-counting-systems/)
+#' @inheritParams convert_to_fragments
 #' @param explicit_peak_names Boolean for whether to add rownames to the output matrix in format e.g
 #'  chr1:500-1000, where start and end coords are given in a 0-based coordinate system.
 #'  Note that either way, peak names will be written when the matrix is saved.
@@ -1118,9 +1116,9 @@ setMethod("matrix_type", "PeakMatrix", function(x) "uint32_t")
 #'   the column names of the output matrix will be in the format chr1:500-1000,
 #'   where start and end coords are given in a 0-based coordinate system.
 #' @export
-peakMatrix <- function(fragments, ranges, zero_based_coords=TRUE, explicit_peak_names=TRUE) {
+peakMatrix <- function(fragments, ranges, zero_based_coords=!is(ranges, "GRanges"), explicit_peak_names=TRUE) {
     assert_is(fragments, "IterableFragments")
-    assert_is(ranges, c("GRanges", "list", "data.frame"))
+    ranges <- normalize_ranges(ranges, zero_based_coords=zero_based_coords)
     
     assert_is(zero_based_coords, "logical")
     
@@ -1129,26 +1127,17 @@ peakMatrix <- function(fragments, ranges, zero_based_coords=TRUE, explicit_peak_
     assert_not_null(chrNames(fragments))
     assert_not_na(chrNames(fragments))
     
-    if(is.list(ranges)) {
-        assert_has_names(ranges, c("chr", "start", "end"))
-        chr_id <- as.integer(factor(as.character(ranges$chr), chrNames(fragments))) - 1L
-        start <- as.integer(ranges$start) - !zero_based_coords
-        end <- as.integer(ranges$end)
-    } else {
-        chr_id <- as.integer(factor(as.character(GenomicRanges::seqnames(ranges)), chrNames(fragments))) - 1L
-        start <- GenomicRanges::start(ranges) - !zero_based_coords
-        end <- GenomicRanges::end(ranges)
-        
-    }
-    if(!all(order(chr_id, end, start) == seq_along(chr_id))) {
+    chr_id <- as.integer(factor(as.character(ranges$chr), chrNames(fragments))) - 1L
+
+    if(!all(order(chr_id, ranges$end, ranges$start) == seq_along(chr_id))) {
         stop("Peaks must be given in order sorted by (chr, end, start)")
     }
-    res <- new("PeakMatrix", fragments=fragments, chr_id=chr_id, start=start, end=end)
+    res <- new("PeakMatrix", fragments=fragments, chr_id=chr_id, start=ranges$start, end=ranges$end)
     res@chr_levels <-chrNames(fragments)
     res@dim <- c(length(cellNames(fragments)), length(res@chr_id))
     res@dimnames[[1]] <- cellNames(fragments)
     if (explicit_peak_names) {
-        res@dimnames[[2]] <- stringr::str_c(res@chr_levels[chr_id + 1], ":", start, "-", end)
+        res@dimnames[[2]] <- stringr::str_c(res@chr_levels[chr_id + 1], ":", ranges$start, "-", ranges$end)
     }
     return(t(res))
 }
@@ -1197,9 +1186,7 @@ setMethod("matrix_type", "TileMatrix", function(x) "uint32_t")
 #' @param ranges GRanges object with the ranges to overlap including a metadata column tile_width, 
 #'  or a list/data frame with columns chr, start, end, and tile_width. Must be non-overlapping and sorted by
 #'  (chr, start), with chromosomes ordered according to the chromosome names of `fragments`
-#' @param zero_based_coords Boolean for whether the input ranges are in a 0-based 
-#'        or a 1-based coordinate system. (1-based will be converted to 0-based)
-#'        (see http://genome.ucsc.edu/blog/the-ucsc-genome-browser-coordinate-counting-systems/)
+#' @inheritParams convert_to_fragments
 #' @param explicit_tile_names Boolean for whether to add rownames to the output matrix in format e.g
 #'  chr1:500-1000, where start and end coords are given in a 0-based coordinate system. For
 #'  whole-genome Tile matrices the names will take ~5 seconds to generate and take up 400MB of memory.
@@ -1210,9 +1197,9 @@ setMethod("matrix_type", "TileMatrix", function(x) "uint32_t")
 #'   the column names will be in the format chr1:500-1000,
 #'   where start and end coords are given in a 0-based coordinate system.
 #' @export
-tileMatrix <- function(fragments, ranges, zero_based_coords=TRUE, explicit_tile_names=FALSE) {
+tileMatrix <- function(fragments, ranges, zero_based_coords=!is(ranges, "GRanges"), explicit_tile_names=FALSE) {
     assert_is(fragments, "IterableFragments")
-    assert_is(ranges, c("GRanges", "list", "data.frame"))
+    ranges <- normalize_ranges(ranges, metadata_cols="tile_width", zero_based_coords=zero_based_coords)
     
     assert_is(zero_based_coords, "logical")
     
@@ -1221,42 +1208,29 @@ tileMatrix <- function(fragments, ranges, zero_based_coords=TRUE, explicit_tile_
     assert_not_null(chrNames(fragments))
     assert_not_na(chrNames(fragments))
     
-    if(is.list(ranges)) {
-        assert_has_names(ranges, c("chr", "start", "end", "tile_width"))
-        assert_true(all(as.character(ranges$chr) %in% chrNames(fragments)))
-
-        chr_id <- as.integer(factor(as.character(ranges$chr), chrNames(fragments))) - 1L
-        start <- as.integer(ranges$start) - !zero_based_coords
-        end <- as.integer(ranges$end)
-        tile_width <- as.integer(ranges$tile_width)
-    } else {
-        assert_has_names(mcols(ranges), c("tile_width"))
-        assert_true(all(as.character(GenomicRanges::seqnames(ranges)) %in% chrNames(fragments)))
-        chr_id <- as.integer(factor(as.character(GenomicRanges::seqnames(ranges)), chrNames(fragments))) - 1L
-
-        start <- GenomicRanges::start(ranges) - !zero_based_coords
-        end <- GenomicRanges::end(ranges)
-        tile_width <- mcols(ranges)$tile_width
-    }   
-    if(!all(order(chr_id, start, end) == seq_along(chr_id))) {
+    chr_id <- as.integer(factor(as.character(ranges$chr), chrNames(fragments))) - 1L
+    ranges$tile_width <- as.integer(ranges$tile_width)
+    assert_true(all(as.character(ranges$chr) %in% chrNames(fragments)))
+    
+    if(!all(order(chr_id, ranges$start, ranges$end) == seq_along(chr_id))) {
         stop("Tile regions must be given in order sorted by (chr, start, end)")
     }
     # Check to make sure tiles are non-overlapping
     pair_1 <- seq_len(length(chr_id)-1)
     pair_2 <- pair_1 + 1
-    if (any(chr_id[pair_1] == chr_id[pair_2] & end[pair_1] >= start[pair_2])) {
+    if (any(chr_id[pair_1] == chr_id[pair_2] & ranges$end[pair_1] >= ranges$start[pair_2])) {
         stop("Tile regions must be non-overlapping")
     }
 
     # Construct tile matrix
-    res <- new("TileMatrix", fragments=fragments, chr_id=chr_id, start=start, end=end, tile_width=tile_width)
+    res <- new("TileMatrix", fragments=fragments, chr_id=chr_id, start=ranges$start, end=ranges$end, tile_width=ranges$tile_width)
     res@chr_levels <- chrNames(fragments)
     
-    tiles <- as.integer(ceiling((end - start) / tile_width))
+    tiles <- as.integer(ceiling((ranges$end - ranges$start) / ranges$tile_width))
     res@dim <- c(length(cellNames(fragments)), sum(tiles))
     res@dimnames[[1]] <- cellNames(fragments)
     if(explicit_tile_names) {
-        res@dimnames[[2]] <- get_tile_names_cpp(chr_id, start, end, tile_width, res@chr_levels)
+        res@dimnames[[2]] <- get_tile_names_cpp(chr_id, ranges$start, ranges$end, ranges$tile_width, res@chr_levels)
     }
     return(t(res))
 }

@@ -1,4 +1,7 @@
+#pragma once
+
 // Wrapper to handle providing sleef math functions in a uniform way to downstream users
+#include <cstdint>
 
 // Note: may need to improve
 #if defined(__AVX2__)

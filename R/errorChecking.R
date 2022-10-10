@@ -125,13 +125,48 @@ normalize_length <- function(x, len, n=1) {
     return(x)
 }
 
-# assert_has_package <- function(packages, n=1) {
-#     missing <- c()
-#     for (p in packages) {
-#         if (!requireNamespace(p, quietly = TRUE))
-#             missing <- c(missing, p)
-#     }
-#     if (length(missing) > 0) {
-#         stop(sprintf("Missing required package(s): %s", paste0(missing, collapse=", ")), .call=FALSE)
-#     }
-# }
+assert_has_package <- function(packages, n=1) {
+    missing <- c()
+    for (p in packages) {
+        if (!requireNamespace(p, quietly = TRUE))
+            missing <- c(missing, p)
+    }
+    if (length(missing) > 0) {
+        stop(sprintf("Missing required package(s): %s", paste0(missing, collapse=", ")), .call=FALSE)
+    }
+}
+
+
+#' Normalize an object representing genomic ranges
+#' @param ranges List, GRanges, of data.frame object. Must have start, end, and chr/seqnames defined
+#' @param metadata_cols Optional list of metadata columns to require & extract
+#' @param zero_based_coords If true, coordinates start and 0 and the end coordinate is not included in the range
+#' @return list object with zero-based coordinates, and elements chr (factor), start (int), and end (int).
+#' If `ranges` does not have chr level information, chr levels are the sorted unique values of chr
+normalize_ranges <- function(ranges, metadata_cols=character(0), zero_based_coords=!is(ranges,"GRanges")) {
+    assert_is(ranges, c("GRanges", "list", "data.frame"), n=2)
+    assert_is(metadata_cols, "character")
+    assert_is(zero_based_coords, "logical")
+    ret <- list()
+    if (is(ranges, "GRanges")) {
+        assert_has_names(GenomicRanges::mcols(ranges), metadata_cols, n=2)
+        chr_levels <- GenomeInfoDb::seqlevels(ranges)
+        ret$chr <- factor(as.character(GenomicRanges::seqnames(ranges)), levels=chr_levels)
+        ret$start <- GenomicRanges::start(ranges) - !zero_based_coords
+        ret$end <- GenomicRanges::end(ranges)
+        for (c in metadata_cols) {
+            ret[[c]] <- GenomicRanges::mcols(ranges)[[c]]
+        }
+    } else {
+        assert_has_names(ranges, c("chr", "start", "end", metadata_cols), n=2)
+        chr_levels <- levels(ranges$chr)
+        if (is.null(chr_levels)) chr_levels <- sort(unique(as.character(ranges$chr)))
+        ret$chr <- factor(as.character(ranges$chr), levels=chr_levels)
+        ret$start <- as.integer(ranges$start) - !zero_based_coords
+        ret$end <- as.integer(ranges$end)
+        for (c in metadata_cols) {
+            ret[[c]] <- ranges[[c]]
+        }
+    }
+    return(ret)
+}

@@ -117,6 +117,10 @@ nucleosome_counts_cpp <- function(fragments, nuc_width = 147L) {
     .Call(`_BPCells_nucleosome_counts_cpp`, fragments, nuc_width)
 }
 
+fragment_lengths_cpp <- function(fragments) {
+    .Call(`_BPCells_fragment_lengths_cpp`, fragments)
+}
+
 iterate_shift_cpp <- function(fragments, shift_start, shift_end) {
     .Call(`_BPCells_iterate_shift_cpp`, fragments, shift_start, shift_end)
 }
