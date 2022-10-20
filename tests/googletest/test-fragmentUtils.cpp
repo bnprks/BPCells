@@ -10,6 +10,7 @@
 #include <fragmentIterators/StoredFragments.h>
 #include <fragmentUtils/InsertionIterator.h>
 #include <arrayIO/vector.h>
+#include <array>
 
 using namespace BPCells;
 
