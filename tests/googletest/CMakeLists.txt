@@ -154,8 +154,8 @@ add_executable(
     fragment_io_test
     test-fragmentIO.cpp
 )
-target_link_libraries(fragment_io_test fragmentIterators gtest_main)
-gtest_discover_tests(fragment_io_test)
+target_link_libraries(fragment_io_test fragmentIterators gtest)
+gtest_discover_tests(fragment_io_test EXTRA_ARGS ${CMAKE_CURRENT_SOURCE_DIR}/../data/mini_fragments.tsv.gz)
 
 
 add_executable(

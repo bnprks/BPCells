@@ -15,7 +15,17 @@ namespace fs = std::filesystem;
 using namespace BPCells;
 using namespace ::testing;
 
+char** my_argv;
+int my_argc;
 
+int main(int argc, char **argv) {
+    ::testing::InitGoogleTest(&argc, argv);
+    
+    my_argc = argc;
+    my_argv = argv;
+
+    return RUN_ALL_TESTS();
+}
 
 TEST(FragmentIO, BedRoundtrip) {
     uint32_t max_cell = 50;
@@ -110,8 +120,9 @@ TEST(FragmentIO, ReducedCapacityWrite) {
 }
 
 TEST(FragmentIO, ChrSelectRoundTrip) {
-    // Failing thing
-    BedFragments in("../../data/mini_fragments.tsv.gz");
+    // Slight hack to get path of an input test data file via CMake config
+    ASSERT_EQ(my_argc, 2);
+    BedFragments in(my_argv[1]);
     ChrNameSelect l1(in, {"chr1", "chr2", "chr3", "chrX", "chrY"});
 
     VecReaderWriterBuilder v;
