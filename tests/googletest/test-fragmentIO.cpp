@@ -111,7 +111,7 @@ TEST(FragmentIO, ReducedCapacityWrite) {
 
 TEST(FragmentIO, ChrSelectRoundTrip) {
     // Failing thing
-    BedFragments in("/Users/ben/Downloads/BPCells_data/tile_test.tsv.gz");
+    BedFragments in("../../data/mini_fragments.tsv.gz");
     ChrNameSelect l1(in, {"chr1", "chr2", "chr3", "chrX", "chrY"});
 
     VecReaderWriterBuilder v;
