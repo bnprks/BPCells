@@ -207,9 +207,11 @@ open_fragments_10x <- function(path, comment="#", end_inclusive=TRUE) {
 #' @export
 write_fragments_10x <- function(fragments, path, end_inclusive=TRUE, append_5th_column=FALSE) {
     assert_is_file(path, must_exist=FALSE, extension=c(".tsv", ".tsv.gz"))
-    if (end_inclusive) 
+    if (end_inclusive) {
         fragments <- shift_fragments(fragments, shift_end=-1)
-    p <- ptr(iterate_fragments(fragments))
+    }
+    it <- iterate_fragments(fragments)
+    p <- ptr(it)
     write_10x_fragments_cpp(
         normalizePath(path, mustWork=FALSE), 
         p,
@@ -330,7 +332,8 @@ setMethod("short_description", "PackedMemFragments", function(x) {
 write_fragments_memory <- function(fragments, compress=TRUE) {
     assert_is(fragments, "IterableFragments")
     assert_is(compress, "logical")
-    p <- ptr(iterate_fragments(fragments))
+    it <- iterate_fragments(fragments)
+    p <- ptr(it)
     if (compress) {
         res <- write_packed_fragments_cpp(p)
         do.call(new, c("PackedMemFragments", res))
@@ -398,7 +401,8 @@ write_fragments_dir <- function(fragments, dir, compress=TRUE, buffer_size=1024L
     assert_is(compress, "logical")
     assert_is(buffer_size, "integer")
     dir <- path.expand(dir)
-    p <- ptr(iterate_fragments(fragments))
+    it <- iterate_fragments(fragments)
+    p <- ptr(it)
     if (compress)
         write_packed_fragments_file_cpp(p, dir, buffer_size)
     else
@@ -485,7 +489,8 @@ write_fragments_hdf5 <- function(fragments, path, group="fragments", compress=TR
     assert_is(buffer_size, "integer")
     assert_is(chunk_size, "integer")
     path <- path.expand(path)
-    p <- ptr(iterate_fragments(fragments))
+    it <- iterate_fragments(fragments)
+    p <- ptr(it)
     if (compress)
         write_packed_fragments_hdf5_cpp(p, path, group, buffer_size, chunk_size)
     else
