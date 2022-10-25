@@ -3,7 +3,8 @@ template:
   boostrap: 5
   bootswatch: flatly
   includes:
-    in_header: <script defer data-domain="benparks.net" src="https://plausible.benparks.net/js/plausible.js"></script>
+    in_header: <script defer data-domain="benparks.net" src="https://plausible.benparks.net/js/visit-counts.js"></script>
+    after_body: <img src="https://data.benparks.net/viewcounts/bpcells-docs.png" style="position:absolute;" />
 # cosmo, flatly, united, sandstone all look reasonable
 reference:
 - title: "Fragment I/O"
