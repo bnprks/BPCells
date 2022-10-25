@@ -58,7 +58,13 @@
     <loc>https://bnprks.github.io/BPCells/reference/distanceToNearestDirectional.html</loc>
   </url>
   <url>
+    <loc>https://bnprks.github.io/BPCells/reference/ensure_downloaded.html</loc>
+  </url>
+  <url>
     <loc>https://bnprks.github.io/BPCells/reference/extendGenomicRanges.html</loc>
+  </url>
+  <url>
+    <loc>https://bnprks.github.io/BPCells/reference/footprint.html</loc>
   </url>
   <url>
     <loc>https://bnprks.github.io/BPCells/reference/fragments_identical.html</loc>
@@ -77,6 +83,9 @@
   </url>
   <url>
     <loc>https://bnprks.github.io/BPCells/reference/iterate_matrix.html</loc>
+  </url>
+  <url>
+    <loc>https://bnprks.github.io/BPCells/reference/length_distribution.html</loc>
   </url>
   <url>
     <loc>https://bnprks.github.io/BPCells/reference/linear_operator.html</loc>
@@ -98,6 +107,9 @@
   </url>
   <url>
     <loc>https://bnprks.github.io/BPCells/reference/normalize_TFIDF.html</loc>
+  </url>
+  <url>
+    <loc>https://bnprks.github.io/BPCells/reference/normalize_ranges.html</loc>
   </url>
   <url>
     <loc>https://bnprks.github.io/BPCells/reference/normalized_dimnames.html</loc>
@@ -130,6 +142,9 @@
     <loc>https://bnprks.github.io/BPCells/reference/open_matrix_hdf5.html</loc>
   </url>
   <url>
+    <loc>https://bnprks.github.io/BPCells/reference/order_ranges.html</loc>
+  </url>
+  <url>
     <loc>https://bnprks.github.io/BPCells/reference/overlapMatrix.html</loc>
   </url>
   <url>
@@ -143,6 +158,18 @@
   </url>
   <url>
     <loc>https://bnprks.github.io/BPCells/reference/qc_scATAC.html</loc>
+  </url>
+  <url>
+    <loc>https://bnprks.github.io/BPCells/reference/read_bed.html</loc>
+  </url>
+  <url>
+    <loc>https://bnprks.github.io/BPCells/reference/read_encode_blacklist.html</loc>
+  </url>
+  <url>
+    <loc>https://bnprks.github.io/BPCells/reference/read_gencode_genes.html</loc>
+  </url>
+  <url>
+    <loc>https://bnprks.github.io/BPCells/reference/read_gtf.html</loc>
   </url>
   <url>
     <loc>https://bnprks.github.io/BPCells/reference/scan_fragments.html</loc>

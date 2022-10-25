@@ -8,7 +8,7 @@ selectRegions(
   fragments,
   ranges,
   invert_selection = FALSE,
-  zero_based_coords = TRUE
+  zero_based_coords = !is(ranges, "GRanges")
 )
 }
 \arguments{
@@ -20,8 +20,9 @@ Must be sorted in order (chr, end, start) where chromosomes are ordered accordin
 \item{invert_selection}{If TRUE, select fragments \emph{not} overlapping selected regions
 instead of only fragments overlapping the selected regions.}
 
-\item{zero_based_coords}{Boolean for whether the input ranges are in a 0-based
-or a 1-based coordinate system. (1-based will be converted to 0-based)
+\item{zero_based_coords}{Whether to convert the ranges from a 1-based end-inclusive
+coordinate system to a 0-based end-exclusive coordinate system. Defaults to true
+for GRanges and false for other formats
 (see http://genome.ucsc.edu/blog/the-ucsc-genome-browser-coordinate-counting-systems/)}
 }
 \value{

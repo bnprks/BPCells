@@ -4,12 +4,7 @@
 \alias{prefix_cell_names}
 \title{Rename cells by adding a prefix to the names (e.g. sample name)}
 \usage{
-prefix_cell_names(
-  fragments,
-  prefix,
-  invert_selection = FALSE,
-  zero_based_coords = TRUE
-)
+prefix_cell_names(fragments, prefix)
 }
 \arguments{
 \item{fragments}{Input fragments object.}

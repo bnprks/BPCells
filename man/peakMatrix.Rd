@@ -7,7 +7,7 @@
 peakMatrix(
   fragments,
   ranges,
-  zero_based_coords = TRUE,
+  zero_based_coords = !is(ranges, "GRanges"),
   explicit_peak_names = TRUE
 )
 }
@@ -17,8 +17,9 @@ peakMatrix(
 \item{ranges}{GRanges object with the ranges to overlap, or list/data frame with columns chr, start, & end.
 Must be sorted in order (chr, end, start) where chromosomes are ordered according to the chromosome names of \code{fragments}.}
 
-\item{zero_based_coords}{Boolean for whether the input ranges are in a 0-based
-or a 1-based coordinate system. (1-based will be converted to 0-based)
+\item{zero_based_coords}{Whether to convert the ranges from a 1-based end-inclusive
+coordinate system to a 0-based end-exclusive coordinate system. Defaults to true
+for GRanges and false for other formats
 (see http://genome.ucsc.edu/blog/the-ucsc-genome-browser-coordinate-counting-systems/)}
 
 \item{explicit_peak_names}{Boolean for whether to add rownames to the output matrix in format e.g

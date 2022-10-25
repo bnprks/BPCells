@@ -2,6 +2,8 @@ url: https://bnprks.github.io/BPCells
 template:
   boostrap: 5
   bootswatch: flatly
+  includes:
+    in_header: <script defer data-domain="benparks.net" src="http://plausible.benparks.net/js/plausible.js"></script>
 # cosmo, flatly, united, sandstone all look reasonable
 reference:
 - title: "Fragment I/O"
@@ -13,11 +15,17 @@ reference:
 - contents:
   - qc_scATAC
   - nucleosome_counts
-  - getFootprints
+  - footprint
   - peakMatrix
   - tileMatrix
   - geneScoreTilesArchR
   - geneScoreWeightsArchR
+  - length_distribution
+  - order_ranges
+  - read_bed
+  - read_encode_blacklist
+  - read_gencode_genes
+  - read_gtf
 - title: "Fragment Transformers"
   desc: "Transforming fragment objects"
 - contents:
@@ -60,4 +68,6 @@ reference:
   - XPtrList-class
   - wrapFragments
   - wrapMatrix
+  - ensure_downloaded
+  - normalize_ranges
 
