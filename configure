@@ -1,0 +1,31 @@
+#!/bin/sh
+
+
+# This curl request helps count daily installs prior to CRAN release:
+# No identifiable information or IP addresses are saved once server logs are 
+# deleted after 14 days. More information on data privacy policy: https://plausible.io/data-policy
+# You can safely comment out this line if you do not want your installation counted.
+curl --silent https://plausible.benparks.net/flask-plausible/BPCells-configure > /dev/null 2> /dev/null
+
+# Test compiling a simple hdf5 program to check for compatibility
+CC=$("${R_HOME}/bin/R" CMD config CC)
+HDF5_NOT_FOUND_MSG="Unable to locate libhdf5. Please install manually or edit compiler flags."
+
+HDF5_CFLAGS=""
+HDF5_LIBS="-lhdf5"
+if ! $CC tools/h5write.c $HDF5_CFLAGS $HDF5_LIBS -o tools/h5write 2> /dev/null; then
+    # Next we optimistically try using pkg-config and retry the test compile
+    HDF5_CFLAGS="$(pkg-config hdf5 --cflags 2>/dev/null)"
+    HDF5_LIBS="$(pkg-config hdf5 --libs 2>/dev/null)"
+    if ! $CC tools/h5write.c $HDF5_CFLAGS $HDF5_LIBS -o tools/h5write 2> /dev/null; then
+        # If we fail after pkg-config, just give up
+        echo $HDF5_NOT_FOUND_MSG
+        exit 1
+    fi
+fi
+ 
+# Make substitutions in Makevars.in
+sed \
+    -e "s|%HDF5_CFLAGS%|${HDF5_CFLAGS}|g" \
+    -e "s|%HDF5_LIBS%|${HDF5_LIBS}|g" \
+    src/Makevars.in > src/Makevars

@@ -1,7 +1,7 @@
 # CXX_STD = CXX17
 
-PKG_CXXFLAGS = -march=native -std=c++17 -DRCPP_EIGEN -DEIGEN_PERMANENTLY_DISABLE_STUPID_WARNINGS -Wno-ignored-attributes # -Wall -Wextra -Wpedantic
-PKG_LIBS = -lz -lhdf5
+PKG_CXXFLAGS = %HDF5_CFLAGS% -march=native -std=c++17 -DRCPP_EIGEN -DEIGEN_PERMANENTLY_DISABLE_STUPID_WARNINGS -Wno-ignored-attributes # -Wall -Wextra -Wpedantic
+PKG_LIBS = -lz %HDF5_LIBS%
 
 # PKG_CXXFLAGS = -fsanitize=undefined -march=native -std=c++17 -DRCPP_EIGEN -DEIGEN_PERMANENTLY_DISABLE_STUPID_WARNINGS -Wno-ignored-attributes
 # PKG_LIBS = -lz -lhdf5 -fsanitize=undefined
@@ -31,6 +31,7 @@ fragmentIterators/RegionSelect.o \
 fragmentIterators/Rename.o \
 fragmentIterators/ShiftCoords.o \
 fragmentIterators/StoredFragments.o \
+fragmentUtils/FootprintMatrix.o \
 matrixIterators/ImportMatrixHDF5.o \
 matrixIterators/PeakMatrix.o \
 matrixIterators/TileMatrix.o \
