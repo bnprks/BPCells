@@ -14,6 +14,7 @@
 #include "fragmentIterators/Rename.h"
 #include "fragmentIterators/ShiftCoords.h"
 // #include "fragmentIterators/InsertionsIterator2.h"
+#include "fragmentUtils/FootprintMatrix.h"
 
 #include "matrixIterators/PeakMatrix.h"
 #include "matrixIterators/TileMatrix.h"
@@ -164,6 +165,30 @@ std::vector<int> fragment_lengths_cpp(SEXP fragments) {
     }
 
     return lengths;
+}
+
+// [[Rcpp::export]]
+Eigen::MatrixXd footprint_matrix_cpp(
+    SEXP fragments,
+    std::vector<uint32_t> chr,
+    std::vector<uint32_t> center,
+    std::vector<int32_t> strand,
+    uint32_t flank_width,
+    StringVector chr_levels,
+    std::vector<uint32_t> cell_groups,
+    std::vector<double> cell_weights
+) {
+    FragmentLoader *loader = &(*XPtr<FragmentLoader>(fragments));
+    return footprintMatrix(
+        *loader,
+        chr,
+        center,
+        strand,
+        flank_width,
+        std::make_unique<RcppStringReader>(chr_levels),
+        cell_groups,
+        cell_weights
+    );
 }
 
 // [[Rcpp::export]]

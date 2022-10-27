@@ -1056,7 +1056,6 @@ setMethod("chrNames<-", "MergeFragments", function(x, ..., value) {
     x
 })
 setMethod("cellNames<-", "MergeFragments", function(x, ..., value) {
-    # TODO: Add
     start_idx <- 1
     for (i in seq_along(x@fragments_list)) {
         end_idx <- start_idx - 1 + length(cellNames(x@fragments_list[[i]])) 

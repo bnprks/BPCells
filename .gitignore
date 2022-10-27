@@ -17,3 +17,6 @@ cmake-build-debug/
 bench
 run_test.R
 .Rhistory
+rsync.sh
+src/Makevars
+tools/h5write

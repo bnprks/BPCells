@@ -1,0 +1,12 @@
+# Ignore everything
+*
+# Except these patterns
+!src/**/*.cpp
+!src/**/*.cc
+!src/**/*.h
+!src/**/*.hpp
+!src/Makevars
+!R/*.R
+
+!DESCRIPTION
+!NAMESPACE

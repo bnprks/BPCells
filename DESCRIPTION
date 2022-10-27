@@ -27,7 +27,9 @@ Imports:
     Rcpp,
     rlang,
     vctrs,
-    stringr
+    stringr,
+    tibble,
+    dplyr
 Suggests:
     IRanges,
     GenomicRanges

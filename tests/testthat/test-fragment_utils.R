@@ -155,6 +155,47 @@ test_that("Name prefix works", {
     expect_equal(paste0(prefix, cellNames(frags1)), cellNames(frags2))
 })
 
+test_that("footprint works", {
+    # Footprint in bases 21-27, making a pattern of 1,2,3,4,5,6,7
+    # Note: Doesn't thoroughly test overlapping regions
+    motif_positions <- list(chr=c("chr1", "chr2"), start=c(24,2), end=c(60,25), strand=c("+", "-"))
+    frags1 <- tibble::tibble(
+        chr=1,
+        #       fix start;  fix end;   weighted; finish
+        start=  c(rep(10, 7), 22:27,     24,26,  23,27),
+        end=    c(22:28,      rep(40,6), 26,28,  26,40),
+        cell_id=c(rep(1,7), rep(3,6),  5 ,7,     9, 11)
+    )
+    frags2 <- frags1 %>%
+        dplyr::mutate(chr=2, cell_id=cell_id + 1)
+    
+    frags <- tibble_to_fragments(
+        dplyr::bind_rows(frags1, frags2) %>% dplyr::arrange(chr, start),
+        c("chr1", "chr2"),
+        paste0("c", 1:12)
+    ) 
+
+    expected <- tibble::tibble(
+        pos = c(-4:4, 4:-4),
+        group = c(rep("grp1", 9), rep("grp2", 9)),
+        value = rep(c(0,1:7,0), 2)
+    ) %>% dplyr::arrange(group, pos)
+
+    for (i in 0:4) {
+        res <- footprint(
+            frags, 
+            motif_positions, 
+            cell_groups=rep(c("grp1", "grp2"), 6), 
+            cell_weights=c(1,1,1,1,2,2,4,4,1,1,1,1),
+            flank=i
+        ) 
+        expect_equal(
+            res %>% dplyr::arrange(group, pos),
+            expected %>% dplyr::filter(abs(pos) <= i)
+        )
+    }
+})
+
 test_that("Generic methods work", {
     frags <- open_fragments_10x("../data/mini_fragments.tsv.gz") %>%
         write_fragments_memory()

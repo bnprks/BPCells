@@ -121,6 +121,10 @@ fragment_lengths_cpp <- function(fragments) {
     .Call(`_BPCells_fragment_lengths_cpp`, fragments)
 }
 
+footprint_matrix_cpp <- function(fragments, chr, center, strand, flank_width, chr_levels, cell_groups, cell_weights) {
+    .Call(`_BPCells_footprint_matrix_cpp`, fragments, chr, center, strand, flank_width, chr_levels, cell_groups, cell_weights)
+}
+
 iterate_shift_cpp <- function(fragments, shift_start, shift_end) {
     .Call(`_BPCells_iterate_shift_cpp`, fragments, shift_start, shift_end)
 }

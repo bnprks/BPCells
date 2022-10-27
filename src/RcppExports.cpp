@@ -391,6 +391,24 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// footprint_matrix_cpp
+Eigen::MatrixXd footprint_matrix_cpp(SEXP fragments, std::vector<uint32_t> chr, std::vector<uint32_t> center, std::vector<int32_t> strand, uint32_t flank_width, StringVector chr_levels, std::vector<uint32_t> cell_groups, std::vector<double> cell_weights);
+RcppExport SEXP _BPCells_footprint_matrix_cpp(SEXP fragmentsSEXP, SEXP chrSEXP, SEXP centerSEXP, SEXP strandSEXP, SEXP flank_widthSEXP, SEXP chr_levelsSEXP, SEXP cell_groupsSEXP, SEXP cell_weightsSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type fragments(fragmentsSEXP);
+    Rcpp::traits::input_parameter< std::vector<uint32_t> >::type chr(chrSEXP);
+    Rcpp::traits::input_parameter< std::vector<uint32_t> >::type center(centerSEXP);
+    Rcpp::traits::input_parameter< std::vector<int32_t> >::type strand(strandSEXP);
+    Rcpp::traits::input_parameter< uint32_t >::type flank_width(flank_widthSEXP);
+    Rcpp::traits::input_parameter< StringVector >::type chr_levels(chr_levelsSEXP);
+    Rcpp::traits::input_parameter< std::vector<uint32_t> >::type cell_groups(cell_groupsSEXP);
+    Rcpp::traits::input_parameter< std::vector<double> >::type cell_weights(cell_weightsSEXP);
+    rcpp_result_gen = Rcpp::wrap(footprint_matrix_cpp(fragments, chr, center, strand, flank_width, chr_levels, cell_groups, cell_weights));
+    return rcpp_result_gen;
+END_RCPP
+}
 // iterate_shift_cpp
 SEXP iterate_shift_cpp(SEXP fragments, int32_t shift_start, int32_t shift_end);
 RcppExport SEXP _BPCells_iterate_shift_cpp(SEXP fragmentsSEXP, SEXP shift_startSEXP, SEXP shift_endSEXP) {
@@ -1594,6 +1612,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_BPCells_get_tile_names_cpp", (DL_FUNC) &_BPCells_get_tile_names_cpp, 5},
     {"_BPCells_nucleosome_counts_cpp", (DL_FUNC) &_BPCells_nucleosome_counts_cpp, 2},
     {"_BPCells_fragment_lengths_cpp", (DL_FUNC) &_BPCells_fragment_lengths_cpp, 1},
+    {"_BPCells_footprint_matrix_cpp", (DL_FUNC) &_BPCells_footprint_matrix_cpp, 8},
     {"_BPCells_iterate_shift_cpp", (DL_FUNC) &_BPCells_iterate_shift_cpp, 3},
     {"_BPCells_iterate_length_select_cpp", (DL_FUNC) &_BPCells_iterate_length_select_cpp, 3},
     {"_BPCells_iterate_chr_index_select_cpp", (DL_FUNC) &_BPCells_iterate_chr_index_select_cpp, 2},
