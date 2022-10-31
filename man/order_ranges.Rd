@@ -16,5 +16,5 @@ Numeric vector analagous to the \code{order} function. Provides an index
 selection that will reorder the input ranges to be sorted by chr, end, start
 }
 \description{
-Use this function to order regioins prior to calling peakMatrix or tileMatrix.
+Use this function to order regioins prior to calling peak_matrix or tile_matrix.
 }

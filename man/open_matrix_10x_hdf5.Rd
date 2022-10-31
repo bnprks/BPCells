@@ -2,24 +2,58 @@
 % Please edit documentation in R/matrix.R
 \name{open_matrix_10x_hdf5}
 \alias{open_matrix_10x_hdf5}
-\title{Read a sparse integer matrix from a 10x formatted hdf5 feature matrix file}
+\alias{write_matrix_10x_hdf5}
+\title{Read/write a 10x feature matrix}
 \usage{
-open_matrix_10x_hdf5(path, buffer_size = 16384L)
+open_matrix_10x_hdf5(path, feature_type = NULL, buffer_size = 16384L)
+
+write_matrix_10x_hdf5(
+  mat,
+  path,
+  barcodes = colnames(mat),
+  feature_ids = rownames(mat),
+  feature_names = rownames(mat),
+  feature_types = "Gene Expression",
+  feature_metadata = list(),
+  buffer_size = 16384L,
+  chunk_size = 1024L
+)
 }
 \arguments{
 \item{path}{Path to the hdf5 file on disk}
 
+\item{feature_type}{String or vector of feature types}
+
 \item{buffer_size}{For performance tuning only. The number of items to be buffered
 in memory before calling writes to disk.}
+
+\item{mat}{IterableMatrix}
+
+\item{barcodes}{Vector of names for the cells}
+
+\item{feature_ids}{Vector of IDs for the features}
+
+\item{feature_names}{Vector of names for the features}
+
+\item{feature_metadata}{Named list of additional metadata vectors
+to store for each feature}
+
+\item{chunk_size}{For performance tuning only. The chunk size used for the HDF5 array storage.}
 }
 \value{
-10xMatrixH5 object
+BPCells matrix object
 }
 \description{
-Read a sparse integer matrix from a 10x formatted hdf5 feature matrix file
+Read/write a 10x feature matrix
 }
 \details{
 The 10x format makes use of gzip compression for the matrix data,
 which can slow down read performance. Consider writing into another format
 if the read performance is important to you.
+
+Input matrices must be in column-major storage order,
+and if the rownames and colnames are not set, names must be
+provided for the relevant metadata parameters. Some of the
+metadata parameters are not read by default in BPCells, but
+it is possible to export them for use with other tools.
 }

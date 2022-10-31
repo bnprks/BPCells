@@ -1,32 +1,38 @@
 url: https://bnprks.github.io/BPCells
 template:
-  boostrap: 5
-  bootswatch: flatly
+  bootstrap: 5
+  bootswatch: simplex
+  bslib:
+    pkgdown-nav-height: 75px
+  navbar: 
+    bg: light
   includes:
-    in_header: <script defer data-domain="benparks.net" src="https://plausible.benparks.net/js/visit-counts.js"></script>
-    after_body: <img src="https://data.benparks.net/viewcounts/bpcells-docs.png" style="position:absolute;" />
+    in_header: |
+       <script defer data-domain="benparks.net" src="https://plausible.benparks.net/js/visit-counts.js"></script>
+    after_body: |
+       <img src="https://data.benparks.net/viewcounts/bpcells-docs.png" style="position:absolute;" />
+
+
 # cosmo, flatly, united, sandstone all look reasonable
+# pulse, lumen, zephyr
 reference:
 - title: "Fragment I/O"
   desc: "Read & write fragment objects"
 - contents:
-  - matches("(open|write)_fragments_.*")
+  - open_fragments_10x
+  - write_fragments_memory
   - convert_to_fragments
 - title: "ATAC Analysis Utilities"
 - contents:
   - qc_scATAC
   - nucleosome_counts
   - footprint
-  - peakMatrix
-  - tileMatrix
+  - peak_matrix
+  - tile_matrix
   - geneScoreTilesArchR
   - geneScoreWeightsArchR
   - length_distribution
   - order_ranges
-  - read_bed
-  - read_encode_blacklist
-  - read_gencode_genes
-  - read_gtf
 - title: "Fragment Transformers"
   desc: "Transforming fragment objects"
 - contents:
@@ -34,7 +40,7 @@ reference:
   - select_chromosomes
   - select_cells
   - subset_lengths
-  - selectRegions
+  - select_regions
   - prefix_cell_names
 - title: "Fragment Utilities"
   desc: "Other fragment functions"
@@ -44,7 +50,9 @@ reference:
 - title: "Matrix I/O"
   desc: "Functions for reading & writing sparse matrices"
 - contents:
-  - matches("(open|write)_matrix_.*")
+  - open_matrix_10x_hdf5
+  - open_matrix_anndata_hdf5
+  - write_matrix_memory
 - title: "Matrix Utilities"
 - contents:
   - matrixStats
@@ -52,6 +60,21 @@ reference:
   - transpose_storage_order
   - IterableMatrix-methods
   - min_scalar
+- title: "Reference Annotations"
+- contents:
+  - human_gene_mapping
+  - match_gene_symbol
+  - read_gtf
+  - read_bed
+- title: "Clustering"
+- contents:
+  - knn_hnsw
+  - cluster_graph_leiden
+  - knn_to_graph
+- title: "Plots"
+- contents:
+  - plot_read_count_knee
+  # - plot_embedding
 - title: "Internal Functions"
   desc: "Unexported functions for internal use"
 - contents:

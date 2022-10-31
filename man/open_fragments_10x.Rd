@@ -2,25 +2,47 @@
 % Please edit documentation in R/fragments.R
 \name{open_fragments_10x}
 \alias{open_fragments_10x}
-\title{Read a 10x fragments file}
+\alias{write_fragments_10x}
+\title{Read/write a 10x fragments file}
 \usage{
 open_fragments_10x(path, comment = "#", end_inclusive = TRUE)
+
+write_fragments_10x(
+  fragments,
+  path,
+  end_inclusive = TRUE,
+  append_5th_column = FALSE
+)
 }
 \arguments{
-\item{path}{Path of 10x fragments file}
+\item{path}{File path (e.g. fragments.tsv or fragments.tsv.gz)}
 
 \item{comment}{Skip lines at beginning of file which start with comment}
 
 \item{end_inclusive}{Whether the end coordinate of the bed is inclusive -- i.e. there was an
 insertion at the end coordinate rather than the base before the end coordinate. This is the
 10x default, though it's not quite standard for the bed file format.}
+
+\item{fragments}{Input fragments object}
+
+\item{append_5th_column}{Whether to include 5th column of all 0 for compatibility
+with 10x fragment file outputs (defaults to 4 columns chr,start,end,cell)}
 }
 \value{
 10x fragments file object
 }
 \description{
-Read a 10x fragments file
+10x fragment files come in a bed-like format, with columns chr, start, end,
+cell_id, and pcr_duplicates. Unlike a standard bed format, the format from
+cellranger has an \emph{inclusive} end-coordinate, meaning the end coordinate itself
+is what should be counted as the tagmentation site, rather than offset by 1.
 }
 \details{
-Note: no disk operations will take place until the fragments are used in a function
+\strong{open_fragments_10x}
+
+No disk operations will take place until the fragments are used in a function
+
+\strong{write_fragments_10x}
+
+Fragments will be written to disk immediately, then returned in a readable object.
 }

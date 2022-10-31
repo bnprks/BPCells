@@ -2,7 +2,8 @@
 % Please edit documentation in R/utils.R
 \name{read_gtf}
 \alias{read_gtf}
-\title{Read a gtf file into a data frame}
+\alias{read_gencode_genes}
+\title{Read GTF gene annotations}
 \usage{
 read_gtf(
   path,
@@ -10,6 +11,16 @@ read_gtf(
   features = c("gene"),
   keep_attribute_column = FALSE,
   backup_url = NULL,
+  timeout = 300
+)
+
+read_gencode_genes(
+  dir,
+  release = "latest",
+  annotation_set = c("basic", "comprehensive"),
+  gene_type = "lncRNA|protein_coding|IG_.*_gene|TR_.*_gene",
+  attributes = c("gene_id", "gene_type", "gene_name"),
+  features = c("gene"),
   timeout = 300
 )
 }
@@ -25,10 +36,49 @@ read_gtf(
 \item{backup_url}{If path does not exist, provides a URL to download the gtf from}
 
 \item{timeout}{Maximum time in seconds to wait for download from backup_url}
+
+\item{dir}{Output directory to cache the downloaded gtf file}
+
+\item{release}{release version (prefix with M for mouse versions). For
+most recent version, use "latest" or "latest_mouse"}
+
+\item{annotation_set}{Either "basic" or "comprehensive" annotation sets (see details section).}
+
+\item{gene_type}{Regular expression with which gene types to keep.
+Defaults to protein_coding, lncRNA, and IG/TR genes}
 }
 \value{
-data frame with coordinates using the 0-based convention
+Data frame with coordinates using the 0-based convention. Columns are:
+\itemize{
+\item chr
+\item source
+\item feature
+\item start
+\item end
+\item score
+\item strand
+\item frame
+\item attributes (optional; named according to listed attributes)
+}
 }
 \description{
-Read a gtf file into a data frame
+Read gene annotations from gtf format into a data frame. The source can be
+a URL, a gtf file on disk, or a gencode release version.
+}
+\details{
+\strong{read_gtf}
+
+Read gtf from a file or URL
+
+\strong{read_gencode_genes}
+
+Read gene annotations directly from GENCODE. The file name will vary depending
+on the release and annotation set requested, but will be of the format
+\code{gencode.v42.annotation.gtf.gz}. GENCODE currently recommends the basic set:
+\url{https://www.gencodegenes.org/human/}. In release 42, both the comprehensive and
+basic sets had identical gene-level annotations, but the comprehensive set had
+additional transcript variants annotated.
+}
+\seealso{
+\code{\link[=read_bed]{read_bed()}}, \code{\link[=read_encode_blacklist]{read_encode_blacklist()}}
 }

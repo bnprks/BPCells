@@ -5,6 +5,7 @@ cover the processing pipeline from ATAC fragments or RNA counts matrices through
 to normalization, basic QC, and PCA. 
 
 Three of the key distinguishing features that allow for high performance in BPCells are:
+
 1. Bit-packing compression to allow for extremely compact storage of
    fragments or counts matrices on-disk or in memory.
 2. C++ code that operates on all data in a streaming fashion to support low
@@ -55,13 +56,11 @@ saveRDS(packed_fragments, "fragments.rds", compress=FALSE)
 # Reloading from disk is only a few seconds now.
 packed_fragments <- readRDS("fragments.rds")
 
-peaks <- readr::read_tsv("peaks.bed", col_names=c("chr", "start", "end"), col_types="cii")
+peaks <- read_bed("peaks.bed")
 
 # This is fast because the peak matrix calculation is lazy.
 # It will be computed on-the-fly when we actually need results from it.
-# Note that we don't need to convert our peaks to 0-based coordinates since our bed file
-# is already 0-based
-peakMatrix <- peakMatrix(packed_fragments, peaks, convert_to_0_based_coords=FALSE)
+peakMatrix <- peakMatrix(packed_fragments, peaks)
 
 # Here is where the peak matrix calculation happens. Should take
 # under 10 seconds.
@@ -93,7 +92,9 @@ and returning the colMeans.
 library("tidyverse")
 
 # We'll subset to just the standard chromosomes
-standard_chr <- which(stringr::str_detect(chrNames(packed_fragments), "^chr[0-9XY]+$"))
+standard_chr <- which(
+  stringr::str_detect(chrNames(packed_fragments), "^chr[0-9XY]+$")
+)
 
 # Pick a random subset of 100 cells to consider
 set.seed(1337)

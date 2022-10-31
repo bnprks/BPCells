@@ -2,7 +2,7 @@
 % Please edit documentation in R/matrix.R
 \name{open_matrix_anndata_hdf5}
 \alias{open_matrix_anndata_hdf5}
-\title{Read a sparse integer matrix from an anndata matrix in an hdf5 file}
+\title{Read AnnData matrix}
 \usage{
 open_matrix_anndata_hdf5(path, group = "X", buffer_size = 16384L)
 }
@@ -19,7 +19,7 @@ in memory before calling writes to disk.}
 AnnDataMatrixH5 object, with cells as the columns.
 }
 \description{
-Read a sparse integer matrix from an anndata matrix in an hdf5 file
+Read a sparse integer matrix from an anndata matrix in an hdf5 file.
 }
 \details{
 Since AnnData stores RNA matrices as cells x genes, whereas BPCells

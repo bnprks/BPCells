@@ -2,7 +2,7 @@
 % Please edit documentation in R/fragments.R
 \name{shift_fragments}
 \alias{shift_fragments}
-\title{Shift start or end coordinates of fragments by a fixed amount}
+\title{Shift start or end coordinates}
 \usage{
 shift_fragments(fragments, shift_start = 0L, shift_end = 0L)
 }
@@ -17,5 +17,12 @@ shift_fragments(fragments, shift_start = 0L, shift_end = 0L)
 Shifted fragments object
 }
 \description{
-Shift start or end coordinates of fragments by a fixed amount
+Shifts start or end of fragments by a fixed amount, which can be useful to
+correct the Tn5 offset.
+}
+\details{
+The correct Tn5 offset is +/- 4bp since the Tn5 cut sites on opposite strands
+are offset by 9bp. However, +4/-5 bp is often applied to bed-format files,
+since the end coordinate in bed files is 1 past the last basepair of the sequenced
+DNA fragment. This results in a bed-like format except with inclusive end coordinates.
 }

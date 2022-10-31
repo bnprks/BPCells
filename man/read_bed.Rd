@@ -2,12 +2,19 @@
 % Please edit documentation in R/utils.R
 \name{read_bed}
 \alias{read_bed}
-\title{Read a bed file file into a data frame}
+\alias{read_encode_blacklist}
+\title{Read a bed file into a data frame}
 \usage{
 read_bed(
   path,
   additional_columns = character(0),
   backup_url = NULL,
+  timeout = 300
+)
+
+read_encode_blacklist(
+  dir,
+  genome = c("hg38", "mm10", "hg19", "dm6", "dm3", "ce11", "ce10"),
   timeout = 300
 )
 }
@@ -19,10 +26,27 @@ read_bed(
 \item{backup_url}{If path does not exist, provides a URL to download the gtf from}
 
 \item{timeout}{Maximum time in seconds to wait for download from backup_url}
+
+\item{dir}{Output directory to cache the downloaded gtf file}
+
+\item{genome}{genome name}
 }
 \value{
-data frame with coordinates using the 0-based convention
+Data frame with coordinates using the 0-based convention.
 }
 \description{
-Read a bed file file into a data frame
+Bed files can contain peak or blacklist annotations. These utilities help
+read thos annotations
+}
+\details{
+\strong{read_bed}
+
+Read a bed file from disk or a url.
+
+\strong{read_encode_blacklist}
+
+Downloads the Boyle Lab blacklist, as described in \url{https://doi.org/10.1038/s41598-019-45839-z}
+}
+\seealso{
+\code{\link[=read_gtf]{read_gtf()}}, \code{\link[=read_gencode_genes]{read_gencode_genes()}}
 }
