@@ -29,8 +29,8 @@ test_that("MatrixStats basic test", {
     i2 <- t(i1)
 
     
-    stats1 <- matrixStats(i1, "variance", "variance")
-    stats2 <- matrixStats(i2, "variance", "variance")
+    stats1 <- matrix_stats(i1, "variance", "variance")
+    stats2 <- matrix_stats(i2, "variance", "variance")
 
     expect_equal(c("nonzero", "mean", "variance"), rownames(stats1$row_stats))
     expect_equal(c("nonzero", "mean", "variance"), rownames(stats1$col_stats))
@@ -41,11 +41,11 @@ test_that("MatrixStats basic test", {
     expect_equal(stats1$row_stats["nonzero",], rowSums(as.matrix(m1 != 0)))
     expect_equal(stats1$row_stats["mean",], rowMeans(as.matrix(m1)))
     
-    expect_equal(stats1$row_stats["variance",], matrixStats::rowVars(as.matrix(m1)))
+    expect_equal(stats1$row_stats["variance",], matrix_stats::rowVars(as.matrix(m1)))
     expect_equal(stats1$col_stats["nonzero",], colSums(as.matrix(m1 != 0)))
     
     expect_equal(stats1$col_stats["mean",], colMeans(as.matrix(m1)))
-    expect_equal(stats1$col_stats["variance",], matrixStats::colVars(as.matrix(m1)))
+    expect_equal(stats1$col_stats["variance",], matrix_stats::colVars(as.matrix(m1)))
 })
 
 test_that("MatrixStats comprehensive tests", { 
@@ -59,8 +59,8 @@ test_that("MatrixStats comprehensive tests", {
 
     for (row_stats in c("none", "nonzero", "mean", "variance")) {
         for (col_stats in c("none", "nonzero", "mean", "variance")) {
-            stats1 <- matrixStats(i1, row_stats, col_stats)
-            stats2 <- matrixStats(i2, row_stats, col_stats)
+            stats1 <- matrix_stats(i1, row_stats, col_stats)
+            stats2 <- matrix_stats(i2, row_stats, col_stats)
 
             expected_rownames <- c("nonzero", "mean", "variance")[seq_len(match(row_stats, c("none", "nonzero", "mean", "variance"))-1)]
             expected_colnames <- c("nonzero", "mean", "variance")[seq_len(match(col_stats, c("none", "nonzero", "mean", "variance"))-1)]
@@ -81,7 +81,7 @@ test_that("MatrixStats comprehensive tests", {
                 expect_equal(stats1$row_stats["mean",], rowMeans(as.matrix(m1)))
             }
             if (row_stats %in% c("variance")) {
-                expect_equal(stats1$row_stats["variance",], matrixStats::rowVars(as.matrix(m1)))
+                expect_equal(stats1$row_stats["variance",], matrix_stats::rowVars(as.matrix(m1)))
             }
 
             if (col_stats %in% c("nonzero", "mean", "variance")) {
@@ -91,7 +91,7 @@ test_that("MatrixStats comprehensive tests", {
                 expect_equal(stats1$col_stats["mean",], colMeans(as.matrix(m1)))
             }
             if (col_stats %in% c("variance")) {
-                expect_equal(stats1$col_stats["variance",], matrixStats::colVars(as.matrix(m1)))
+                expect_equal(stats1$col_stats["variance",], matrix_stats::colVars(as.matrix(m1)))
             }
 
         }

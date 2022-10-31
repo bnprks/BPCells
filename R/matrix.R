@@ -7,7 +7,7 @@
 #' @rdname IterableMatrix-methods
 NULL
 
-setClass("IterableMatrix", 
+setClass("IterableMatrix",
     slots = c(
         dim = "integer",
         transpose = "logical",
@@ -19,7 +19,7 @@ setClass("IterableMatrix",
         dimnames = list(NULL, NULL)
     )
 )
-setMethod("dimnames<-", signature(x="IterableMatrix", value="list"), function(x, value) {
+setMethod("dimnames<-", signature(x = "IterableMatrix", value = "list"), function(x, value) {
     d <- dim(x)
     has_error <- FALSE
     if (!is.list(value) || length(value) != 2) has_error <- TRUE
@@ -27,31 +27,37 @@ setMethod("dimnames<-", signature(x="IterableMatrix", value="list"), function(x,
     if (!is.null(value[[2]]) && length(value[[2]]) != d[2]) has_error <- TRUE
     if (has_error) stop("Invalid dimnames supplied")
 
-    if (!is.null(value[[1]])) x@dimnames[[1]] <- as.character(value[[1]])
-    else x@dimnames[1] <- list(NULL)
-    if (!is.null(value[[2]])) x@dimnames[[2]] <- as.character(value[[2]])
-    else x@dimnames[2] <- list(NULL)
+    if (!is.null(value[[1]])) {
+        x@dimnames[[1]] <- as.character(value[[1]])
+    } else {
+        x@dimnames[1] <- list(NULL)
+    }
+    if (!is.null(value[[2]])) {
+        x@dimnames[[2]] <- as.character(value[[2]])
+    } else {
+        x@dimnames[2] <- list(NULL)
+    }
     x
 })
-setMethod("dimnames<-", signature(x="IterableMatrix", value="NULL"), function(x, value) {
+setMethod("dimnames<-", signature(x = "IterableMatrix", value = "NULL"), function(x, value) {
     x@dimnames <- list(NULL, NULL)
     x
 })
 
 #' Construct an S4 matrix object wrapping another matrix object
-#' 
+#'
 #' Helps to avoid duplicate storage of dimnames
 wrapMatrix <- function(class, m, ...) {
     dimnames <- dimnames(m)
     if (matrix_is_transform(m)) m@dimnames <- list(NULL, NULL)
-    new(class, matrix=m, transpose=m@transpose, dim=m@dim, dimnames=dimnames, ...)
+    new(class, matrix = m, transpose = m@transpose, dim = m@dim, dimnames = dimnames, ...)
 }
 
 #' Helper function to set dimnames to NULL instead of 0-length character vectors
 normalized_dimnames <- function(row_names, col_names) {
     list(
-        if(length(row_names) == 0) NULL else row_names,
-        if(length(col_names) == 0) NULL else col_names
+        if (length(row_names) == 0) NULL else row_names,
+        if (length(col_names) == 0) NULL else col_names
     )
 }
 
@@ -77,8 +83,8 @@ setMethod("matrix_type", "XPtrList", function(x) {
 })
 
 
-#' Return boolean whether the matrix is a transform 
-#' 
+#' Return boolean whether the matrix is a transform
+#'
 #' A matrix is a transform if it is loading data from another
 #' matrix R object rather than a data source it owns. This is used primarily to know when it is safe
 #' to clear dimnames from intermediate transformed matrices. C++ relies on the base matrices (non-transform) to have
@@ -86,7 +92,9 @@ setMethod("matrix_type", "XPtrList", function(x) {
 setGeneric("matrix_is_transform", function(x) standardGeneric("matrix_is_transform"))
 setMethod("matrix_is_transform", "XPtrList", function(x) FALSE)
 # As a reasonable default convention, a matrix is a transform if it has a slot named matrix
-setMethod("matrix_is_transform", "IterableMatrix", function(x) {.hasSlot(x, "matrix")})
+setMethod("matrix_is_transform", "IterableMatrix", function(x) {
+    .hasSlot(x, "matrix")
+})
 
 setMethod("short_description", "IterableMatrix", function(x) {
     character(0)
@@ -99,17 +107,19 @@ setMethod("show", "IterableMatrix", function(object) {
     cat(sprintf("%d x %d IterableMatrix object with class %s\n", nrow(object), ncol(object), class(object)))
 
     cat("\n")
-    cat(sprintf("Row names: %s\n",
-        pretty_print_vector(rownames(object), empty="unknown names")
+    cat(sprintf(
+        "Row names: %s\n",
+        pretty_print_vector(rownames(object), empty = "unknown names")
     ))
-    cat(sprintf("Col names: %s\n",
-        pretty_print_vector(colnames(object), empty="unknown names")
+    cat(sprintf(
+        "Col names: %s\n",
+        pretty_print_vector(colnames(object), empty = "unknown names")
     ))
 
     cat("\n")
     cat(sprintf("Data type: %s\n", matrix_type(object)))
     cat(sprintf("Storage order: %s major\n", ifelse(object@transpose, "row", "column")))
-    
+
     cat("\n")
     description <- short_description(object)
     if (length(description) > 0) cat("Queued Operations:\n")
@@ -136,36 +146,36 @@ setMethod("t", signature(x = "IterableMatrix"), function(x) {
 #' @param y matrix
 #' @describeIn IterableMatrix-methods Multiply by a dense matrix
 #' @return * `x %*% y`: dense matrix result
-setMethod("%*%", signature(x="IterableMatrix", y="matrix"), function(x, y) {
+setMethod("%*%", signature(x = "IterableMatrix", y = "matrix"), function(x, y) {
     iter <- iterate_matrix(convert_matrix_type(x, "double"))
-    if(x@transpose) {
+    if (x@transpose) {
         return(t(dense_multiply_left_cpp(ptr(iter), t(y))))
     } else {
         return(dense_multiply_right_cpp(ptr(iter), y))
     }
 })
 
-setMethod("%*%", signature(x="matrix", y="IterableMatrix"), function(x, y) {
+setMethod("%*%", signature(x = "matrix", y = "IterableMatrix"), function(x, y) {
     iter <- iterate_matrix(convert_matrix_type(y, "double"))
-    if(y@transpose) {
+    if (y@transpose) {
         return(t(dense_multiply_right_cpp(ptr(iter), t(x))))
     } else {
         return(dense_multiply_left_cpp(ptr(iter), x))
     }
 })
 
-setMethod("%*%", signature(x="IterableMatrix", y="numeric"), function(x, y) {
+setMethod("%*%", signature(x = "IterableMatrix", y = "numeric"), function(x, y) {
     iter <- iterate_matrix(convert_matrix_type(x, "double"))
-    if(x@transpose) {
+    if (x@transpose) {
         return(vec_multiply_left_cpp(ptr(iter), y))
     } else {
         return(vec_multiply_right_cpp(ptr(iter), y))
     }
 })
 
-setMethod("%*%", signature(x="numeric", y="IterableMatrix"), function(x, y) {
+setMethod("%*%", signature(x = "numeric", y = "IterableMatrix"), function(x, y) {
     iter <- iterate_matrix(convert_matrix_type(y, "double"))
-    if(y@transpose) {
+    if (y@transpose) {
         return(vec_multiply_right_cpp(ptr(iter), x))
     } else {
         return(vec_multiply_left_cpp(ptr(iter), x))
@@ -173,9 +183,9 @@ setMethod("%*%", signature(x="numeric", y="IterableMatrix"), function(x, y) {
 })
 
 #' Represent a sparse matrix-vector product operation
-#' 
+#'
 #' LinearOperators perform sparse matrix-vector product operations for
-#' for downstream matrix solvers. They avoid repeatedly calling iterate_matrix 
+#' for downstream matrix solvers. They avoid repeatedly calling iterate_matrix
 #' from an SVD solver for a possible efficiency gain
 setClass("LinearOperator",
     slots = c(
@@ -190,40 +200,40 @@ setClass("LinearOperator",
 )
 
 #' Construct a LinearOperator object
-#' 
+#'
 #' Constructs a C++ matrix object and save the pointer to use for repeated matrix-vector products
 #' A bit experimental still so for internal use
 linear_operator <- function(mat) {
     assert_is(mat, "IterableMatrix")
-    new("LinearOperator", dim=dim(mat), xptrlist=iterate_matrix(convert_matrix_type(mat, "double")), transpose=mat@transpose)
+    new("LinearOperator", dim = dim(mat), xptrlist = iterate_matrix(convert_matrix_type(mat, "double")), transpose = mat@transpose)
 }
 
-setMethod("%*%", signature(x="LinearOperator", y="matrix"), function(x, y) {
-    if(x@transpose) {
+setMethod("%*%", signature(x = "LinearOperator", y = "matrix"), function(x, y) {
+    if (x@transpose) {
         return(t(dense_multiply_left_cpp(ptr(x@xptrlist), t(y))))
     } else {
         return(dense_multiply_right_cpp(ptr(x@xptrlist), y))
     }
 })
 
-setMethod("%*%", signature(x="matrix", y="LinearOperator"), function(x, y) {
-    if(y@transpose) {
+setMethod("%*%", signature(x = "matrix", y = "LinearOperator"), function(x, y) {
+    if (y@transpose) {
         return(t(dense_multiply_right_cpp(ptr(y@xptrlist), t(x))))
     } else {
         return(dense_multiply_left_cpp(ptr(y@xptrlist), x))
     }
 })
 
-setMethod("%*%", signature(x="LinearOperator", y="numeric"), function(x, y) {
-    if(x@transpose) {
+setMethod("%*%", signature(x = "LinearOperator", y = "numeric"), function(x, y) {
+    if (x@transpose) {
         return(vec_multiply_left_cpp(ptr(x@xptrlist), y))
     } else {
         return(vec_multiply_right_cpp(ptr(x@xptrlist), y))
     }
 })
 
-setMethod("%*%", signature(x="numeric", y="LinearOperator"), function(x, y) {
-    if(y@transpose) {
+setMethod("%*%", signature(x = "numeric", y = "LinearOperator"), function(x, y) {
+    if (y@transpose) {
         return(vec_multiply_right_cpp(ptr(y@xptrlist), x))
     } else {
         return(vec_multiply_left_cpp(ptr(y@xptrlist), x))
@@ -243,29 +253,33 @@ setClass("MatrixMultiply",
         right = NULL
     )
 )
-setMethod("matrix_type", signature(x="MatrixMultiply"), function(x) matrix_type(x@left))
+setMethod("matrix_type", signature(x = "MatrixMultiply"), function(x) matrix_type(x@left))
 setMethod("matrix_is_transform", "MatrixMultiply", function(x) TRUE)
 
 setMethod("iterate_matrix", "MatrixMultiply", function(x) {
     left <- iterate_matrix(x@left)
     right <- iterate_matrix(x@right)
-    inner_iterator <- new("XPtrList", pointers=c(left@pointers, right@pointers))
-    if (matrix_type(x) == "uint32_t")
-        wrapMat_uint32_t(iterate_matrix_multiply_uint32_t_cpp(ptr(left), ptr(right)), inner_iterator)
-    else if (matrix_type(x) == "double")
-        wrapMat_double(iterate_matrix_multiply_double_cpp(ptr(left), ptr(right)), inner_iterator)
+    inner_iterator <- new("XPtrList", pointers = c(left@pointers, right@pointers))
+    if (matrix_type(x) == "uint32_t") {
+          wrapMat_uint32_t(iterate_matrix_multiply_uint32_t_cpp(ptr(left), ptr(right)), inner_iterator)
+      } else if (matrix_type(x) == "double") {
+          wrapMat_double(iterate_matrix_multiply_double_cpp(ptr(left), ptr(right)), inner_iterator)
+      }
 })
 
 setMethod("short_description", "MatrixMultiply", function(x) {
-    sprintf("Multiply sparse matrices: %s (%dx%d) * %s (%dx%d)",
+    sprintf(
+        "Multiply sparse matrices: %s (%dx%d) * %s (%dx%d)",
         class(x@left), nrow(x@left), ncol(x@left),
         class(x@right), nrow(x@right), ncol(x@right)
     )
 })
 
-setMethod("%*%", signature(x="IterableMatrix", y="IterableMatrix"), function(x, y) {
+setMethod("%*%", signature(x = "IterableMatrix", y = "IterableMatrix"), function(x, y) {
     if (x@transpose != y@transpose) stop("Cannot multiply matrices with different interal transpose states.\nPlease convert one matrix to dgCMatrix, transpose, then re-convert to IterableMatrix.")
-    if (x@transpose) return(t(t(y) %*% t(x)))
+    if (x@transpose) {
+        return(t(t(y) %*% t(x)))
+    }
 
     assert_true(ncol(x) == nrow(y))
 
@@ -277,21 +291,23 @@ setMethod("%*%", signature(x="IterableMatrix", y="IterableMatrix"), function(x, 
 
     dim <- c(nrow(x), ncol(y))
     dimnames <- list(rownames(x), colnames(y))
-    new("MatrixMultiply", left=x, right=y, transpose=FALSE, dim=dim, dimnames=dimnames)
+    new("MatrixMultiply", left = x, right = y, transpose = FALSE, dim = dim, dimnames = dimnames)
 })
 
-setMethod("%*%", signature(x="IterableMatrix", y="dgCMatrix"), function(x, y) {
-    if (x@transpose)
-        t(as(t(y), "IterableMatrix") %*% t(x))
-    else
-        x %*% as(y, "IterableMatrix")
+setMethod("%*%", signature(x = "IterableMatrix", y = "dgCMatrix"), function(x, y) {
+    if (x@transpose) {
+          t(as(t(y), "IterableMatrix") %*% t(x))
+      } else {
+          x %*% as(y, "IterableMatrix")
+      }
 })
 
-setMethod("%*%", signature(x="dgCMatrix", y="IterableMatrix"), function(x, y) {
-    if (y@transpose)
-        t(t(y) %*% as(t(x), "IterableMatrix"))
-    else
-        as(x, "IterableMatrix") %*% y
+setMethod("%*%", signature(x = "dgCMatrix", y = "IterableMatrix"), function(x, y) {
+    if (y@transpose) {
+          t(t(y) %*% as(t(x), "IterableMatrix"))
+      } else {
+          as(x, "IterableMatrix") %*% y
+      }
 })
 
 # Row sums and row means
@@ -299,12 +315,13 @@ setMethod("%*%", signature(x="dgCMatrix", y="IterableMatrix"), function(x, y) {
 #' @param x IterableMatrix object
 #' @describeIn IterableMatrix-methods Calculate rowSums
 #' @return * `rowSums()`: vector of row sums
-setMethod("rowSums", signature(x="IterableMatrix"), function(x) {
+setMethod("rowSums", signature(x = "IterableMatrix"), function(x) {
     iter <- iterate_matrix(convert_matrix_type(x, "double"))
-    if (x@transpose) 
-        res <- col_sums_double_cpp(ptr(iter))
-    else
-        res <- row_sums_double_cpp(ptr(iter))
+    if (x@transpose) {
+          res <- col_sums_double_cpp(ptr(iter))
+      } else {
+          res <- row_sums_double_cpp(ptr(iter))
+      }
     names(res) <- rownames(x)
     res
 })
@@ -312,12 +329,13 @@ setMethod("rowSums", signature(x="IterableMatrix"), function(x) {
 #' @param x IterableMatrix object
 #' @describeIn IterableMatrix-methods Calculate colSums
 #' @return * `colSums()`: vector of col sums
-setMethod("colSums", signature(x="IterableMatrix"), function(x) {
+setMethod("colSums", signature(x = "IterableMatrix"), function(x) {
     iter <- iterate_matrix(convert_matrix_type(x, "double"))
-    if (x@transpose) 
-        res <- row_sums_double_cpp(ptr(iter))
-    else
-        res <- col_sums_double_cpp(ptr(iter))
+    if (x@transpose) {
+          res <- row_sums_double_cpp(ptr(iter))
+      } else {
+          res <- col_sums_double_cpp(ptr(iter))
+      }
     names(res) <- colnames(x)
     res
 })
@@ -325,12 +343,12 @@ setMethod("colSums", signature(x="IterableMatrix"), function(x) {
 #' @param x IterableMatrix object
 #' @describeIn IterableMatrix-methods Calculate rowMeans
 #' @return * `rowMeans()`: vector of row means
-setMethod("rowMeans", signature(x="IterableMatrix"), function(x) rowSums(x)/ncol(x))
+setMethod("rowMeans", signature(x = "IterableMatrix"), function(x) rowSums(x) / ncol(x))
 
 #' @param x IterableMatrix object
 #' @describeIn IterableMatrix-methods Calculate colMeans
 #' @return * `colMeans()`: vector of col means
-setMethod("colMeans", signature(x="IterableMatrix"), function(x) colSums(x)/nrow(x))
+setMethod("colMeans", signature(x = "IterableMatrix"), function(x) colSums(x) / nrow(x))
 
 
 # Index subsetting
@@ -346,24 +364,32 @@ setClass("MatrixSubset",
         col_selection = integer(0)
     )
 )
-setMethod("matrix_type", signature(x="MatrixSubset"), function(x) matrix_type(x@matrix))
+setMethod("matrix_type", signature(x = "MatrixSubset"), function(x) matrix_type(x@matrix))
 
 setMethod("[", "IterableMatrix", function(x, i, j, ...) {
     if (missing(x)) stop("x is missing in matrix selection")
     ret <- wrapMatrix("MatrixSubset", x)
 
     if (x@transpose) {
-        if (!missing(i) && !missing(j)) return(t(t(x)[j,i]))
-        if ( missing(i) && !missing(j)) return(t(t(x)[j, ]))
-        if (!missing(i) &&  missing(j)) return(t(t(x)[ ,i]))
-        if ( missing(i) &&  missing(j)) return(t(t(x)[,]))
+        if (!missing(i) && !missing(j)) {
+            return(t(t(x)[j, i]))
+        }
+        if (missing(i) && !missing(j)) {
+            return(t(t(x)[j, ]))
+        }
+        if (!missing(i) && missing(j)) {
+            return(t(t(x)[, i]))
+        }
+        if (missing(i) && missing(j)) {
+            return(t(t(x)[, ]))
+        }
     }
 
-    if(!missing(i)) {
+    if (!missing(i)) {
         indices <- seq_len(nrow(x))
         names(indices) <- rownames(x)
         ret@row_selection <- vctrs::vec_slice(indices, i)
-        if(!is.null(ret@dimnames[[1]])) ret@dimnames[[1]] <- ret@dimnames[[1]][ret@row_selection]
+        if (!is.null(ret@dimnames[[1]])) ret@dimnames[[1]] <- ret@dimnames[[1]][ret@row_selection]
         if (!is.logical(i)) assert_distinct(i)
         ret@dim[1] <- length(ret@row_selection)
     }
@@ -371,7 +397,7 @@ setMethod("[", "IterableMatrix", function(x, i, j, ...) {
         indices <- seq_len(ncol(x))
         names(indices) <- colnames(x)
         ret@col_selection <- vctrs::vec_slice(indices, j)
-        if(!is.null(ret@dimnames[[2]])) ret@dimnames[[2]] <- ret@dimnames[[2]][ret@col_selection]
+        if (!is.null(ret@dimnames[[2]])) ret@dimnames[[2]] <- ret@dimnames[[2]][ret@col_selection]
         assert_distinct(ret@col_selection)
         if (!is.logical(j)) assert_distinct(j)
         ret@dim[2] <- length(ret@col_selection)
@@ -379,12 +405,14 @@ setMethod("[", "IterableMatrix", function(x, i, j, ...) {
 
     # Handle chained subsets by collapsing repeated selections
     if (is(x, "MatrixSubset")) {
-        if (length(x@row_selection) == 0) x@row_selection <- ret@row_selection
-        else if (length(ret@row_selection) != 0) x@row_selection <- x@row_selection[ret@row_selection]
+        if (length(x@row_selection) == 0) {
+            x@row_selection <- ret@row_selection
+        } else if (length(ret@row_selection) != 0) x@row_selection <- x@row_selection[ret@row_selection]
 
-        if (length(x@col_selection) == 0) x@col_selection <- ret@col_selection
-        else if (length(ret@col_selection) != 0) x@col_selection <- x@col_selection[ret@col_selection]
-        
+        if (length(x@col_selection) == 0) {
+            x@col_selection <- ret@col_selection
+        } else if (length(ret@col_selection) != 0) x@col_selection <- x@col_selection[ret@col_selection]
+
         x@dim <- ret@dim
         x@dimnames <- ret@dimnames
         ret <- x
@@ -396,14 +424,14 @@ setMethod("iterate_matrix", "MatrixSubset", function(x) {
     ret <- iterate_matrix(x@matrix)
 
     if (matrix_type(x) == "double") {
-        if (length(x@row_selection) != 0) ret <- wrapMat_double(iterate_matrix_row_select_double_cpp(ptr(ret), x@row_selection-1L), ret)
-        if (length(x@col_selection) != 0) ret <- wrapMat_double(iterate_matrix_col_select_double_cpp(ptr(ret), x@col_selection-1L), ret)
+        if (length(x@row_selection) != 0) ret <- wrapMat_double(iterate_matrix_row_select_double_cpp(ptr(ret), x@row_selection - 1L), ret)
+        if (length(x@col_selection) != 0) ret <- wrapMat_double(iterate_matrix_col_select_double_cpp(ptr(ret), x@col_selection - 1L), ret)
     } else if (matrix_type(x) == "uint32_t") {
-        if (length(x@row_selection) != 0) ret <- wrapMat_uint32_t(iterate_matrix_row_select_uint32_t_cpp(ptr(ret), x@row_selection-1L), ret)
-        if (length(x@col_selection) != 0) ret <- wrapMat_uint32_t(iterate_matrix_col_select_uint32_t_cpp(ptr(ret), x@col_selection-1L), ret)
+        if (length(x@row_selection) != 0) ret <- wrapMat_uint32_t(iterate_matrix_row_select_uint32_t_cpp(ptr(ret), x@row_selection - 1L), ret)
+        if (length(x@col_selection) != 0) ret <- wrapMat_uint32_t(iterate_matrix_col_select_uint32_t_cpp(ptr(ret), x@col_selection - 1L), ret)
     } else if (matrix_type(x) == "float") {
-        if (length(x@row_selection) != 0) ret <- wrapMat_float(iterate_matrix_row_select_uint32_t_cpp(ptr(ret), x@row_selection-1L), ret)
-        if (length(x@col_selection) != 0) ret <- wrapMat_float(iterate_matrix_col_select_uint32_t_cpp(ptr(ret), x@col_selection-1L), ret)
+        if (length(x@row_selection) != 0) ret <- wrapMat_float(iterate_matrix_row_select_uint32_t_cpp(ptr(ret), x@row_selection - 1L), ret)
+        if (length(x@col_selection) != 0) ret <- wrapMat_float(iterate_matrix_col_select_uint32_t_cpp(ptr(ret), x@col_selection - 1L), ret)
     } else {
         stop("Unrecognized matrix_type in MatrixSubset")
     }
@@ -420,9 +448,11 @@ setMethod("short_description", "MatrixSubset", function(x) {
     }
     c(
         short_description(x@matrix),
-        sprintf("Select rows: %s and cols: %s",
-            pretty_print_vector(rows, empty="all"),
-            pretty_print_vector(cols, empty="all"))
+        sprintf(
+            "Select rows: %s and cols: %s",
+            pretty_print_vector(rows, empty = "all"),
+            pretty_print_vector(cols, empty = "all")
+        )
     )
 })
 
@@ -431,11 +461,16 @@ setMethod("short_description", "MatrixSubset", function(x) {
 
 #' Helper function for rbind/cbind concatenating dimnames
 concat_dimnames <- function(x, y, len_x, len_y, warning_prefix, dim_type) {
-    if (is.null(x) && is.null(y)) return(NULL)
-    if (!is.null(x) && !is.null(y)) return(c(x, y))
-    warning(sprintf("%s: %s names presenent on some but not all matrices. Setting missing names to \"\"",
+    if (is.null(x) && is.null(y)) {
+        return(NULL)
+    }
+    if (!is.null(x) && !is.null(y)) {
+        return(c(x, y))
+    }
+    warning(sprintf(
+        "%s: %s names presenent on some but not all matrices. Setting missing names to \"\"",
         warning_prefix, dim_type
-    ), call.=FALSE)
+    ), call. = FALSE)
     if (is.null(x)) x <- rep_len("", len_x)
     if (is.null(y)) y <- rep_len("", len_y)
     c(x, y)
@@ -444,10 +479,14 @@ concat_dimnames <- function(x, y, len_x, len_y, warning_prefix, dim_type) {
 #' Helper function for rbind/cbind merging dimnames
 merge_dimnames <- function(x, y, warning_prefix, dim_type) {
     if (!is.null(x) && !is.null(y) && !all(x == y)) {
-        warning(sprintf("%s: %s names are mismatched. Setting names to match first matrix", warning_prefix, dim_type), call.=FALSE)
+        warning(sprintf("%s: %s names are mismatched. Setting names to match first matrix", warning_prefix, dim_type), call. = FALSE)
     }
-    if (!is.null(x)) return(x)
-    if (!is.null(y)) return(y)
+    if (!is.null(x)) {
+        return(x)
+    }
+    if (!is.null(y)) {
+        return(y)
+    }
     return(NULL)
 }
 
@@ -460,29 +499,33 @@ setClass("RowBindMatrices",
         matrix_list = list()
     )
 )
-setMethod("matrix_type", signature(x="RowBindMatrices"), function(x) matrix_type(x@matrix_list[[1]]))
+setMethod("matrix_type", signature(x = "RowBindMatrices"), function(x) matrix_type(x@matrix_list[[1]]))
 
 setMethod("iterate_matrix", "RowBindMatrices", function(x) {
     iterators <- lapply(x@matrix_list, iterate_matrix)
-    inner_iterator <- new("XPtrList", pointers=do.call(c, lapply(iterators, function(i) i@pointers)))
-    if (matrix_type(x) == "uint32_t")
-        wrapMat_uint32_t(iterate_matrix_row_bind_uint32_t_cpp(lapply(iterators, ptr)), inner_iterator)
-    else if (matrix_type(x) == "double")
-        wrapMat_double(iterate_matrix_row_bind_double_cpp(lapply(iterators, ptr)), inner_iterator)
+    inner_iterator <- new("XPtrList", pointers = do.call(c, lapply(iterators, function(i) i@pointers)))
+    if (matrix_type(x) == "uint32_t") {
+          wrapMat_uint32_t(iterate_matrix_row_bind_uint32_t_cpp(lapply(iterators, ptr)), inner_iterator)
+      } else if (matrix_type(x) == "double") {
+          wrapMat_double(iterate_matrix_row_bind_double_cpp(lapply(iterators, ptr)), inner_iterator)
+      }
 })
 
 setMethod("matrix_is_transform", "RowBindMatrices", function(x) TRUE)
 
 setMethod("short_description", "RowBindMatrices", function(x) {
-    sprintf("Concatenate rows of %d matrix objects with classes%s",
+    sprintf(
+        "Concatenate rows of %d matrix objects with classes%s",
         length(x@matrix_list),
-        pretty_print_vector(vapply(x@matrix_list, class, character(1)), prefix=": ", max_len=3)
+        pretty_print_vector(vapply(x@matrix_list, class, character(1)), prefix = ": ", max_len = 3)
     )
 })
 
-setMethod("rbind2", signature(x="IterableMatrix", y="IterableMatrix"), function(x, y, ...) {
+setMethod("rbind2", signature(x = "IterableMatrix", y = "IterableMatrix"), function(x, y, ...) {
     if (x@transpose != y@transpose) stop("Cannot merge matrices with different interal transpose states.\nPlease convert one matrix to dgCMatrix, transpose, then re-convert to IterableMatrix.")
-    if (x@transpose) return(t(cbind2(t(x), t(y))))
+    if (x@transpose) {
+        return(t(cbind2(t(x), t(y))))
+    }
 
     if (ncol(x) != ncol(y)) stop("Error in rbind: matrices must have equal number of columns")
     # Handle dimnames
@@ -492,12 +535,18 @@ setMethod("rbind2", signature(x="IterableMatrix", y="IterableMatrix"), function(
     if (matrix_is_transform(y)) y@dimnames <- list(NULL, NULL)
 
     matrix_list <- list()
-    if (is(x, "RowBindMatrices")) matrix_list <- c(matrix_list, x@matrix_list)
-    else matrix_list <- c(matrix_list, x)
-    if (is(y, "RowBindMatrices")) matrix_list <- c(matrix_list, y@matrix_list)
-    else matrix_list <- c(matrix_list, y)
+    if (is(x, "RowBindMatrices")) {
+        matrix_list <- c(matrix_list, x@matrix_list)
+    } else {
+        matrix_list <- c(matrix_list, x)
+    }
+    if (is(y, "RowBindMatrices")) {
+        matrix_list <- c(matrix_list, y@matrix_list)
+    } else {
+        matrix_list <- c(matrix_list, y)
+    }
 
-    new("RowBindMatrices", matrix_list=matrix_list, dim=c(nrow(x)+nrow(y), ncol(x)), dimnames=list(row_names, col_names), transpose=FALSE)
+    new("RowBindMatrices", matrix_list = matrix_list, dim = c(nrow(x) + nrow(y), ncol(x)), dimnames = list(row_names, col_names), transpose = FALSE)
 })
 
 setClass("ColBindMatrices",
@@ -509,29 +558,33 @@ setClass("ColBindMatrices",
         matrix_list = list()
     )
 )
-setMethod("matrix_type", signature(x="ColBindMatrices"), function(x) matrix_type(x@matrix_list[[1]]))
+setMethod("matrix_type", signature(x = "ColBindMatrices"), function(x) matrix_type(x@matrix_list[[1]]))
 
 setMethod("iterate_matrix", "ColBindMatrices", function(x) {
     iterators <- lapply(x@matrix_list, iterate_matrix)
-    inner_iterator <- new("XPtrList", pointers=do.call(c, lapply(iterators, function(i) i@pointers)))
-    if (matrix_type(x) == "uint32_t")
-        wrapMat_uint32_t(iterate_matrix_col_bind_uint32_t_cpp(lapply(iterators, ptr)), inner_iterator)
-    else if (matrix_type(x) == "double")
-        wrapMat_double(iterate_matrix_col_bind_double_cpp(lapply(iterators, ptr)), inner_iterator)
+    inner_iterator <- new("XPtrList", pointers = do.call(c, lapply(iterators, function(i) i@pointers)))
+    if (matrix_type(x) == "uint32_t") {
+          wrapMat_uint32_t(iterate_matrix_col_bind_uint32_t_cpp(lapply(iterators, ptr)), inner_iterator)
+      } else if (matrix_type(x) == "double") {
+          wrapMat_double(iterate_matrix_col_bind_double_cpp(lapply(iterators, ptr)), inner_iterator)
+      }
 })
 
 setMethod("matrix_is_transform", "ColBindMatrices", function(x) TRUE)
 
 setMethod("short_description", "ColBindMatrices", function(x) {
-    sprintf("Concatenate columns of %d matrix objects with classes%s",
+    sprintf(
+        "Concatenate columns of %d matrix objects with classes%s",
         length(x@matrix_list),
-        pretty_print_vector(vapply(x@matrix_list, class, character(1)), prefix=": ", max_len=3)
+        pretty_print_vector(vapply(x@matrix_list, class, character(1)), prefix = ": ", max_len = 3)
     )
 })
 
-setMethod("cbind2", signature(x="IterableMatrix", y="IterableMatrix"), function(x, y, ...) {
+setMethod("cbind2", signature(x = "IterableMatrix", y = "IterableMatrix"), function(x, y, ...) {
     if (x@transpose != y@transpose) stop("Cannot merge matrices with different interal transpose states.\nPlease convert one matrix to dgCMatrix, transpose, then re-convert to IterableMatrix.")
-    if (x@transpose) return(t(rbind2(t(x), t(y))))
+    if (x@transpose) {
+        return(t(rbind2(t(x), t(y))))
+    }
 
     if (nrow(x) != nrow(y)) stop("Error in cbind: matrices must have equal number of columns")
     # Handle dimnames
@@ -541,12 +594,18 @@ setMethod("cbind2", signature(x="IterableMatrix", y="IterableMatrix"), function(
     if (matrix_is_transform(y)) y@dimnames <- list(NULL, NULL)
 
     matrix_list <- list()
-    if (is(x, "ColBindMatrices")) matrix_list <- c(matrix_list, x@matrix_list)
-    else matrix_list <- c(matrix_list, x)
-    if (is(y, "ColBindMatrices")) matrix_list <- c(matrix_list, y@matrix_list)
-    else matrix_list <- c(matrix_list, y)
+    if (is(x, "ColBindMatrices")) {
+        matrix_list <- c(matrix_list, x@matrix_list)
+    } else {
+        matrix_list <- c(matrix_list, x)
+    }
+    if (is(y, "ColBindMatrices")) {
+        matrix_list <- c(matrix_list, y@matrix_list)
+    } else {
+        matrix_list <- c(matrix_list, y)
+    }
 
-    new("ColBindMatrices", matrix_list=matrix_list, dim=c(nrow(x), ncol(x)+ncol(y)), dimnames=list(row_names, col_names), transpose=FALSE)
+    new("ColBindMatrices", matrix_list = matrix_list, dim = c(nrow(x), ncol(x) + ncol(y)), dimnames = list(row_names, col_names), transpose = FALSE)
 })
 
 # Packed integer matrix
@@ -554,18 +613,18 @@ setClass("PackedMatrixMemBase",
     contains = "IterableMatrix",
     slots = c(
         # Leave out val storage since it's datatype-dependent
-        index_data = "integer",   
-        index_starts = "integer", 
+        index_data = "integer",
+        index_starts = "integer",
         index_idx = "integer",
-        idxptr = "integer",   
+        idxptr = "integer",
         version = "character"
     ),
     prototype = list(
         # Leave out val storage since it's datatype-dependent
-        index_data = integer(0),   
-        index_starts = integer(0), 
+        index_data = integer(0),
+        index_starts = integer(0),
         index_idx = integer(0),
-        idxptr = integer(0),   
+        idxptr = integer(0),
         version = character(0)
     )
 )
@@ -576,12 +635,12 @@ setMethod("short_description", "PackedMatrixMemBase", function(x) {
 setClass("PackedMatrixMem_uint32_t",
     contains = "PackedMatrixMemBase",
     slots = c(
-        val_data = "integer",   
-        val_idx = "integer"  
+        val_data = "integer",
+        val_idx = "integer"
     ),
     prototype = list(
-        val_data = integer(0),   
-        val_idx = integer(0)   
+        val_data = integer(0),
+        val_idx = integer(0)
     )
 )
 setMethod("matrix_type", "PackedMatrixMem_uint32_t", function(x) "uint32_t")
@@ -619,14 +678,14 @@ setClass("UnpackedMatrixMemBase",
     contains = "IterableMatrix",
     slots = c(
         # Leave out val storage since it's data-type dependent
-        index = "integer",    
-        idxptr = "integer",   
-        version="character"
+        index = "integer",
+        idxptr = "integer",
+        version = "character"
     ),
     prototype = list(
-        index = integer(0),   
-        idxptr = integer(0),   
-        version=character(0)
+        index = integer(0),
+        idxptr = integer(0),
+        version = character(0)
     )
 )
 setMethod("short_description", "UnpackedMatrixMemBase", function(x) {
@@ -681,47 +740,59 @@ setMethod("iterate_matrix", "UnpackedMatrixMem_double", function(x) {
 #' minutes to transpose a 500k cell RNA-seq matrix The default load_bytes (4MiB)
 #' and sort_bytes (1GiB) parameters allow ~85GB of data to be sorted with two
 #' passes through the data, and ~7.3TB of data to be sorted in three passes
-#' through the data. 
+#' through the data.
 #' @return MatrixDir object with a copy of the input matrix, but the storage order flipped
 #' @export
-transpose_storage_order <- function(matrix, outdir=tempfile("transpose"), tmpdir=tempdir(), load_bytes=4194304L, sort_bytes=1073741824L) {
+transpose_storage_order <- function(matrix, outdir = tempfile("transpose"), tmpdir = tempdir(), load_bytes = 4194304L, sort_bytes = 1073741824L) {
     assert_true(matrix_type(matrix) %in% c("uint32_t", "float", "double"))
 
     write_function <- get(sprintf("write_matrix_transpose_%s_cpp", matrix_type(matrix)))
     wrap_function <- get(sprintf("wrapMat_%s", matrix_type(matrix)))
 
-    outdir <- normalizePath(outdir, mustWork=FALSE)
-    tmpdir <- normalizePath(tmpdir, mustWork=FALSE)
-    tmpdir <- tempfile("transpose_tmp", tmpdir=tmpdir)
+    outdir <- normalizePath(outdir, mustWork = FALSE)
+    tmpdir <- normalizePath(tmpdir, mustWork = FALSE)
+    tmpdir <- tempfile("transpose_tmp", tmpdir = tmpdir)
 
     it <- iterate_matrix(matrix)
     write_function(ptr(it), outdir, tmpdir, load_bytes, sort_bytes, !matrix@transpose)
 
-    unlink(tmpdir, recursive=TRUE, expand=FALSE)
+    unlink(tmpdir, recursive = TRUE, expand = FALSE)
     open_matrix_dir(outdir)
 }
 
-#' Write a sparse matrix object to memory.
+#' Read/write sparse matrices
+#'
+#' BPCells matrices are stored in sparse format, meaning only the non-zero entries
+#' are stored. Matrices can store integer counts data or decimal numbers (float or double).
+#' See details for more information.
+#'
+#' ### Storage locations
+#' Matrices can be stored in a directory on disk, in memory, or in an HDF5 file.
+#' Saving in a directory on disk is a good default for local analysis, as it provides
+#' the best I/O performance and lowest memory usage. The HDF5 format
+#' allows saving within existing hdf5 files to group data together, and the in
+#' memory format provides the fastest performance in the event memory usage is
+#' unimportant.
+#'
+#' ### Bitpacking Compression
+#' For typical RNA counts matrices holding integer counts, this bitpacking
+#' compression will result in 6-8x less space than an R dgCMatrix, and 4-6x
+#' smaller than a scipy csc_matrix. The compression will be more effective when
+#' the count values in the matrix are small, and when the rows of the matrix are
+#' sorted by rowMeans. In tests on RNA-seq data optimal ordering could save up
+#' to 40% of storage space. On non-integer data only the row indices are
+#' compressed, not the values themselves so space savings will be smaller.
+#'
+#' For non-integer data matrices, bitpacking compression is much less effective,
+#' as it can only be applied to the indexes of each entry but not the values.
+#' There will still be some space savings, but far less than for counts matrices.
+#'
 #' @param matrix Input matrix, either IterableMatrix or dgCMatrix
-#' @param compress Whether or not to compress the data. 
-#' @return IterableMatrix object
-#' @details This function will convert row major storage orders to column major,
-#' which will usually require 2 extra passes over the data. 
-#' 
-#' For typical RNA counts matrices, which are unsigned integer matrices 
-#' (type uint32_t), this function will result in 6-8x less space than an R dgCMatrix,
-#' and 4-6x smaller than a scipy csc_matrix. The compression will be more effective when
-#' the count values in the matrix are small, and when the rows of the matrix are 
-#' sorted by rowMeans. In tests on RNA-seq data optimal ordering could save up to
-#' 40% of storage space. On non-integer data only the row indices are compressed,
-#' not the values themselves so space savings will be smaller.
-#' 
-#' Note: this function will not perform automatic conversions to non-negative
-#' integer matrices, so use the function `convert_matrix_type_uint32_t` first if high-efficiency
-#' compression is desired. 
-#' 
+#' @param compress Whether or not to compress the data.
+#' @return BPCells matrix object
+#' @rdname matrix_io
 #' @export
-write_matrix_memory <- function(mat, compress=TRUE) {
+write_matrix_memory <- function(mat, compress = TRUE) {
     assert_is(mat, c("IterableMatrix", "dgCMatrix"))
     if (is(mat, "dgCMatrix")) mat <- as(mat, "IterableMatrix")
 
@@ -730,7 +801,7 @@ write_matrix_memory <- function(mat, compress=TRUE) {
         rlang::inform(c(
             "Warning: Matrix compression performs poorly with non-integers.",
             "Consider calling convert_matrix_type if a compressed integer matrix is intended."
-        ), .frequency="regularly", .frequency_id="matrix_compress_non_integer")
+        ), .frequency = "regularly", .frequency_id = "matrix_compress_non_integer")
     }
 
     write_function <- get(sprintf("write_%s_matrix_mem_%s_cpp", ifelse(compress, "packed", "unpacked"), matrix_type(mat)))
@@ -744,7 +815,7 @@ write_matrix_memory <- function(mat, compress=TRUE) {
     m$row_names <- NULL
     m$col_names <- NULL
     m$shape <- NULL
-    m$storage_order <- NULL 
+    m$storage_order <- NULL
     res <- do.call(new, c(class, m))
     res
 }
@@ -777,22 +848,20 @@ setMethod("iterate_matrix", "MatrixDir", function(x) {
 })
 
 setMethod("short_description", "MatrixDir", function(x) {
-    sprintf("Load %s matrix from directory %s", 
-        if(x@compressed) "compressed" else "uncompressed",
-        x@dir    
+    sprintf(
+        "Load %s matrix from directory %s",
+        if (x@compressed) "compressed" else "uncompressed",
+        x@dir
     )
 })
 
 
-#' Make an integer sparse matrix object in binary files within a directory
-#' @inheritParams write_matrix_memory
+#' @rdname matrix_io
 #' @param dir Directory to save the data into
 #' @param buffer_size For performance tuning only. The number of items to be buffered
 #' in memory before calling writes to disk.
-#' @inherit write_matrix_memory details
-#' @return MatrixDir object
 #' @export
-write_matrix_dir <- function(mat, dir, compress=TRUE, buffer_size=8192L) {
+write_matrix_dir <- function(mat, dir, compress = TRUE, buffer_size = 8192L) {
     assert_is(mat, c("IterableMatrix", "dgCMatrix"))
     if (is(mat, "dgCMatrix")) mat <- as(mat, "IterableMatrix")
 
@@ -805,32 +874,31 @@ write_matrix_dir <- function(mat, dir, compress=TRUE, buffer_size=8192L) {
         rlang::inform(c(
             "Warning: Matrix compression performs poorly with non-integers.",
             "Consider calling convert_matrix_type if a compressed integer matrix is intended."
-        ), .frequency="regularly", .frequency_id="matrix_compress_non_integer")
+        ), .frequency = "regularly", .frequency_id = "matrix_compress_non_integer")
     }
-    
-    dir <- normalizePath(dir, mustWork=FALSE)
+
+    dir <- normalizePath(dir, mustWork = FALSE)
     it <- iterate_matrix(mat)
-    
+
     write_function <- get(sprintf("write_%s_matrix_file_%s_cpp", ifelse(compress, "packed", "unpacked"), matrix_type(mat)))
     write_function(ptr(it), dir, buffer_size, mat@transpose)
-    
+
     open_matrix_dir(dir, buffer_size)
 }
 
-#' Open an existing integer sparse matrix object written with [write_matrix_dir]
-#' @param dir Directory to read the data from
-#' @param buffer_size For performance tuning only. The number of items to be buffered
-#' in memory before calling writes to disk.
+#' @rdname matrix_io
 #' @export
-open_matrix_dir <- function(dir, buffer_size=8192L) {
+open_matrix_dir <- function(dir, buffer_size = 8192L) {
     assert_is_file(dir)
     assert_is(buffer_size, "integer")
-    
-    dir <- normalizePath(dir, mustWork=FALSE)
+
+    dir <- normalizePath(dir, mustWork = FALSE)
     info <- dims_matrix_file_cpp(dir, buffer_size)
-    new("MatrixDir", dir=dir, dim=info$dims, compressed=info$compressed, buffer_size=buffer_size,
-        dimnames=normalized_dimnames(info$row_names, info$col_names), type=info$type,
-        transpose=info$transpose)
+    new("MatrixDir",
+        dir = dir, dim = info$dims, compressed = info$compressed, buffer_size = buffer_size,
+        dimnames = normalized_dimnames(info$row_names, info$col_names), type = info$type,
+        transpose = info$transpose
+    )
 }
 
 setClass("MatrixH5",
@@ -863,20 +931,18 @@ setMethod("iterate_matrix", "MatrixH5", function(x) {
 })
 
 setMethod("short_description", "MatrixH5", function(x) {
-    sprintf("Load %s matrix in hdf5 file %s, group %s", 
-        if(x@compressed) "compressed" else "uncompressed",
-        x@path, 
+    sprintf(
+        "Load %s matrix in hdf5 file %s, group %s",
+        if (x@compressed) "compressed" else "uncompressed",
+        x@path,
         x@group
     )
 })
 
-#' Write a sparse integer matrix to an hdf5 file
+#' @rdname matrix_io
 #' @inheritParams write_fragments_hdf5
-#' @inheritParams write_matrix_dir
-#' @inherit write_matrix_memory details
-#' @return MatrixH5 object
 #' @export
-write_matrix_hdf5 <- function(mat, path, group, compress=TRUE, buffer_size=8192L, chunk_size=1024L) {
+write_matrix_hdf5 <- function(mat, path, group, compress = TRUE, buffer_size = 8192L, chunk_size = 1024L) {
     assert_is(mat, c("IterableMatrix", "dgCMatrix"))
     if (is(mat, "dgCMatrix")) mat <- as(mat, "IterableMatrix")
 
@@ -891,33 +957,33 @@ write_matrix_hdf5 <- function(mat, path, group, compress=TRUE, buffer_size=8192L
         rlang::inform(c(
             "Warning: Matrix compression performs poorly with non-integers.",
             "Consider calling convert_matrix_type if a compressed integer matrix is intended."
-        ), .frequency="regularly", .frequency_id="matrix_compress_non_integer")
+        ), .frequency = "regularly", .frequency_id = "matrix_compress_non_integer")
     }
 
-    path <- normalizePath(path, mustWork=FALSE)
+    path <- normalizePath(path, mustWork = FALSE)
     it <- iterate_matrix(mat)
-    
+
     write_function <- get(sprintf("write_%s_matrix_hdf5_%s_cpp", ifelse(compress, "packed", "unpacked"), matrix_type(mat)))
     write_function(ptr(it), path, group, buffer_size, chunk_size, mat@transpose)
-        
+
     open_matrix_hdf5(path, group, buffer_size)
 }
 
-#' Read a sparse integer matrix from an hdf5 file
-#' @inheritParams open_matrix_dir
+#' @rdname matrix_io
 #' @inheritParams open_fragments_hdf5
-#' @return MatrixH5 object
 #' @export
-open_matrix_hdf5 <- function(path, group, buffer_size=16384L) {
+open_matrix_hdf5 <- function(path, group, buffer_size = 16384L) {
     assert_is_file(path)
     assert_is(group, "character")
     assert_is(buffer_size, "integer")
 
-    path <- normalizePath(path, mustWork=FALSE)
+    path <- normalizePath(path, mustWork = FALSE)
     info <- dims_matrix_hdf5_cpp(path, group, buffer_size)
-    new("MatrixH5", path=path, group=group, dim=info$dims, compressed=info$compressed, buffer_size=buffer_size,
-        dimnames=normalized_dimnames(info$row_names, info$col_names), type=info$type,
-        transpose=info$transpose)
+    new("MatrixH5",
+        path = path, group = group, dim = info$dims, compressed = info$compressed, buffer_size = buffer_size,
+        dimnames = normalized_dimnames(info$row_names, info$col_names), type = info$type,
+        transpose = info$transpose
+    )
 }
 
 setClass("10xMatrixH5",
@@ -939,25 +1005,38 @@ setMethod("short_description", "10xMatrixH5", function(x) {
     sprintf("10x HDF5 feature matrix in file %s", x@path)
 })
 
-#' Read a sparse integer matrix from a 10x formatted hdf5 feature matrix file
+#' Read/write a 10x feature matrix
+#'
 #' @inheritParams open_matrix_hdf5
-#' @return 10xMatrixH5 object
+#' @param feature_type Optional selection of feature types to include in output matrix.
+#'    For multiome data, the options are "Gene Expression" and "Peaks". This option is
+#'    only compatible
+#' @return BPCells matrix object
 #' @details The 10x format makes use of gzip compression for the matrix data,
 #' which can slow down read performance. Consider writing into another format
 #' if the read performance is important to you.
 #' @export
-open_matrix_10x_hdf5 <- function(path, buffer_size=16384L) {
+open_matrix_10x_hdf5 <- function(path, feature_type = NULL, buffer_size = 16384L) {
     assert_is_file(path)
     assert_is(buffer_size, "integer")
+    if (!is.null(feature_type)) assert_is(feature_type, "character")
 
-    path <- normalizePath(path, mustWork=FALSE)
+    path <- normalizePath(path, mustWork = FALSE)
     info <- dims_matrix_10x_hdf5_cpp(path, buffer_size)
-    new("10xMatrixH5", path=path, dim=info$dims, buffer_size=buffer_size,
-        dimnames=normalized_dimnames(info$row_names, info$col_names))
+    res <- new("10xMatrixH5",
+        path = path, dim = info$dims, buffer_size = buffer_size,
+        dimnames = normalized_dimnames(info$row_names, info$col_names)
+    )
+
+    if (!is.null(feature_type)) {
+        valid_features <- read_hdf5_string_cpp(path, "matrix/features/feature_type", buffer_size) %in% feature_type
+        res <- res[valid_features, ]
+    }
+
+    return(res)
 }
 
-#' Write a matrix to a 10x-compatible hdf5 feature matrix file
-#' @inheritParams open_matrix_10x_hdf5
+#' @rdname open_matrix_10x_hdf5
 #' @inheritParams write_matrix_hdf5
 #' @param mat IterableMatrix
 #' @param barcodes Vector of names for the cells
@@ -966,24 +1045,21 @@ open_matrix_10x_hdf5 <- function(path, buffer_size=16384L) {
 #' @param feature_type String or vector of feature types
 #' @param feature_metadata Named list of additional metadata vectors
 #' to store for each feature
-#' @return IterableMatrix with the contents of the output
 #' @details Input matrices must be in column-major storage order,
-#' and if the rownames and colnames are not set, names must be 
+#' and if the rownames and colnames are not set, names must be
 #' provided for the relevant metadata parameters. Some of the
 #' metadata parameters are not read by default in BPCells, but
 #' it is possible to export them for use with other tools.
 #' @export
-write_matrix_10x_hdf5 <- function(
-    mat, 
-    path,
-    barcodes=colnames(mat),
-    feature_ids=rownames(mat), 
-    feature_names=rownames(mat), 
-    feature_types="Gene Expression", 
-    feature_metadata=list(),
-    buffer_size=16384L,
-    chunk_size=1024L
-) {
+write_matrix_10x_hdf5 <- function(mat,
+                                  path,
+                                  barcodes = colnames(mat),
+                                  feature_ids = rownames(mat),
+                                  feature_names = rownames(mat),
+                                  feature_types = "Gene Expression",
+                                  feature_metadata = list(),
+                                  buffer_size = 16384L,
+                                  chunk_size = 1024L) {
     assert_is(mat, "IterableMatrix")
     assert_is(path, "character")
     if (mat@transpose) {
@@ -1016,18 +1092,18 @@ write_matrix_10x_hdf5 <- function(
     }
     assert_is(buffer_size, "integer")
     assert_is(chunk_size, "integer")
-    
-    path <- normalizePath(path, mustWork=FALSE)
+
+    path <- normalizePath(path, mustWork = FALSE)
     it <- iterate_matrix(mat)
     write_matrix_10x_hdf5_cpp(
-        ptr(it), 
-        path, 
-        barcodes, 
-        feature_ids, 
-        feature_names, 
-        feature_types, 
-        feature_metadata, 
-        buffer_size, 
+        ptr(it),
+        path,
+        barcodes,
+        feature_ids,
+        feature_names,
+        feature_types,
+        feature_metadata,
+        buffer_size,
         chunk_size
     )
     open_matrix_10x_hdf5(path, buffer_size)
@@ -1051,28 +1127,33 @@ setMethod("iterate_matrix", "AnnDataMatrixH5", function(x) {
     wrapMat_double(iterate_matrix_anndata_hdf5_cpp(x@path, x@group, x@buffer_size), new("XPtrList"))
 })
 setMethod("short_description", "AnnDataMatrixH5", function(x) {
-    sprintf("AnnData HDF5 matrix in file %s, group %s", 
+    sprintf(
+        "AnnData HDF5 matrix in file %s, group %s",
         x@path, x@group
     )
 })
 
-#' Read a sparse integer matrix from an anndata matrix in an hdf5 file
+#' Read AnnData matrix
+#'
+#' Read a sparse integer matrix from an anndata matrix in an hdf5 file.
 #' @inheritParams open_matrix_hdf5
 #' @return AnnDataMatrixH5 object, with cells as the columns.
 #' @details Since AnnData stores RNA matrices as cells x genes, whereas BPCells
 #'   stores RNA matrices as genes x cells, the returned matrix will be transposed
 #'   relative to the native AnnData matrix.
 #' @export
-open_matrix_anndata_hdf5 <- function(path, group="X", buffer_size=16384L) {
+open_matrix_anndata_hdf5 <- function(path, group = "X", buffer_size = 16384L) {
     assert_is_file(path)
     assert_is(buffer_size, "integer")
 
-    path <- normalizePath(path, mustWork=FALSE)
+    path <- normalizePath(path, mustWork = FALSE)
     info <- dims_matrix_anndata_hdf5_cpp(path, group, buffer_size)
-    res <- new("AnnDataMatrixH5", path=path, dim=info$dims, buffer_size=buffer_size,
-        group=group, dimnames=normalized_dimnames(info$row_names, info$col_names),
-        transpose=info$transpose)
-    
+    res <- new("AnnDataMatrixH5",
+        path = path, dim = info$dims, buffer_size = buffer_size,
+        group = group, dimnames = normalized_dimnames(info$row_names, info$col_names),
+        transpose = info$transpose
+    )
+
     # We do the reverse of what transpose says, because anndata files are usually
     # stored row-major with cells as rows, whereas BPCells will work best with
     # col-major with cells as cols.
@@ -1110,30 +1191,30 @@ setMethod("matrix_type", "PeakMatrix", function(x) "uint32_t")
 #' @param explicit_peak_names Boolean for whether to add rownames to the output matrix in format e.g
 #'  chr1:500-1000, where start and end coords are given in a 0-based coordinate system.
 #'  Note that either way, peak names will be written when the matrix is saved.
-#' @note When calculating the matrix directly from a fragments tsv, it's necessary to first call `select_chromosomes` in order to 
+#' @note When calculating the matrix directly from a fragments tsv, it's necessary to first call `select_chromosomes` in order to
 #'     provide the ordering of chromosomes to expect while reading the tsv.
-#' @return Iterable matrix object with dimension ranges x cells. When saved, 
+#' @return Iterable matrix object with dimension ranges x cells. When saved,
 #'   the column names of the output matrix will be in the format chr1:500-1000,
 #'   where start and end coords are given in a 0-based coordinate system.
 #' @export
-peakMatrix <- function(fragments, ranges, zero_based_coords=!is(ranges, "GRanges"), explicit_peak_names=TRUE) {
+peak_matrix <- function(fragments, ranges, zero_based_coords = !is(ranges, "GRanges"), explicit_peak_names = TRUE) {
     assert_is(fragments, "IterableFragments")
-    ranges <- normalize_ranges(ranges, zero_based_coords=zero_based_coords)
-    
+    ranges <- normalize_ranges(ranges, zero_based_coords = zero_based_coords)
+
     assert_is(zero_based_coords, "logical")
-    
+
     assert_not_null(cellNames(fragments))
     assert_not_na(cellNames(fragments))
     assert_not_null(chrNames(fragments))
     assert_not_na(chrNames(fragments))
-    
+
     chr_id <- as.integer(factor(as.character(ranges$chr), chrNames(fragments))) - 1L
 
-    if(!all(order(chr_id, ranges$end, ranges$start) == seq_along(chr_id))) {
+    if (!all(order(chr_id, ranges$end, ranges$start) == seq_along(chr_id))) {
         stop("Peaks must be given in order sorted by (chr, end, start)")
     }
-    res <- new("PeakMatrix", fragments=fragments, chr_id=chr_id, start=ranges$start, end=ranges$end)
-    res@chr_levels <-chrNames(fragments)
+    res <- new("PeakMatrix", fragments = fragments, chr_id = chr_id, start = ranges$start, end = ranges$end)
+    res@chr_levels <- chrNames(fragments)
     res@dim <- c(length(cellNames(fragments)), length(res@chr_id))
     res@dimnames[[1]] <- cellNames(fragments)
     if (explicit_peak_names) {
@@ -1149,11 +1230,12 @@ setMethod("iterate_matrix", "PeakMatrix", function(x) {
 setMethod("short_description", "PeakMatrix", function(x) {
     # Subset strings first to avoid a very slow string concatenation process
     indices <- c(head(seq_along(x@chr_id), 3), tail(seq_along(x@chr_id), 1))
-    labels <- paste0(x@chr_levels[1+x@chr_id[indices]], ":", x@start[indices]+1, "-", x@end[indices])
+    labels <- paste0(x@chr_levels[1 + x@chr_id[indices]], ":", x@start[indices] + 1, "-", x@end[indices])
     c(
         short_description(x@fragments),
-        sprintf("Calculate %d peaks over %d ranges%s", ncol(x), length(x@chr_id), 
-            pretty_print_vector(labels, prefix=": ", max_len=2)
+        sprintf(
+            "Calculate %d peaks over %d ranges%s", ncol(x), length(x@chr_id),
+            pretty_print_vector(labels, prefix = ": ", max_len = 2)
         )
     )
 })
@@ -1167,7 +1249,7 @@ setClass("TileMatrix",
         chr_id = "integer",
         start = "integer",
         end = "integer",
-        tile_width = "integer", 
+        tile_width = "integer",
         chr_levels = "character"
     ),
     prototype = list(
@@ -1183,7 +1265,7 @@ setMethod("matrix_type", "TileMatrix", function(x) "uint32_t")
 
 #' Calculate ranges x cells tile overlap matrix
 #' @param fragments Input fragments object
-#' @param ranges GRanges object with the ranges to overlap including a metadata column tile_width, 
+#' @param ranges GRanges object with the ranges to overlap including a metadata column tile_width,
 #'  or a list/data frame with columns chr, start, end, and tile_width. Must be non-overlapping and sorted by
 #'  (chr, start), with chromosomes ordered according to the chromosome names of `fragments`
 #' @inheritParams convert_to_fragments
@@ -1191,45 +1273,45 @@ setMethod("matrix_type", "TileMatrix", function(x) "uint32_t")
 #'  chr1:500-1000, where start and end coords are given in a 0-based coordinate system. For
 #'  whole-genome Tile matrices the names will take ~5 seconds to generate and take up 400MB of memory.
 #'  Note that either way, tile names will be written when the matrix is saved.
-#' @note When calculating the matrix directly from a fragments tsv, it's necessary to first call `select_chromosomes` in order to 
+#' @note When calculating the matrix directly from a fragments tsv, it's necessary to first call `select_chromosomes` in order to
 #'     provide the ordering of chromosomes to expect while reading the tsv.
-#' @return Iterable matrix object with dimension ranges x cells. When saved, 
+#' @return Iterable matrix object with dimension ranges x cells. When saved,
 #'   the column names will be in the format chr1:500-1000,
 #'   where start and end coords are given in a 0-based coordinate system.
 #' @export
-tileMatrix <- function(fragments, ranges, zero_based_coords=!is(ranges, "GRanges"), explicit_tile_names=FALSE) {
+tile_matrix <- function(fragments, ranges, zero_based_coords = !is(ranges, "GRanges"), explicit_tile_names = FALSE) {
     assert_is(fragments, "IterableFragments")
-    ranges <- normalize_ranges(ranges, metadata_cols="tile_width", zero_based_coords=zero_based_coords)
-    
+    ranges <- normalize_ranges(ranges, metadata_cols = "tile_width", zero_based_coords = zero_based_coords)
+
     assert_is(zero_based_coords, "logical")
-    
+
     assert_not_null(cellNames(fragments))
     assert_not_na(cellNames(fragments))
     assert_not_null(chrNames(fragments))
     assert_not_na(chrNames(fragments))
-    
+
     chr_id <- as.integer(factor(as.character(ranges$chr), chrNames(fragments))) - 1L
     ranges$tile_width <- as.integer(ranges$tile_width)
     assert_true(all(as.character(ranges$chr) %in% chrNames(fragments)))
-    
-    if(!all(order(chr_id, ranges$start, ranges$end) == seq_along(chr_id))) {
+
+    if (!all(order(chr_id, ranges$start, ranges$end) == seq_along(chr_id))) {
         stop("Tile regions must be given in order sorted by (chr, start, end)")
     }
     # Check to make sure tiles are non-overlapping
-    pair_1 <- seq_len(length(chr_id)-1)
+    pair_1 <- seq_len(length(chr_id) - 1)
     pair_2 <- pair_1 + 1
     if (any(chr_id[pair_1] == chr_id[pair_2] & ranges$end[pair_1] >= ranges$start[pair_2])) {
         stop("Tile regions must be non-overlapping")
     }
 
     # Construct tile matrix
-    res <- new("TileMatrix", fragments=fragments, chr_id=chr_id, start=ranges$start, end=ranges$end, tile_width=ranges$tile_width)
+    res <- new("TileMatrix", fragments = fragments, chr_id = chr_id, start = ranges$start, end = ranges$end, tile_width = ranges$tile_width)
     res@chr_levels <- chrNames(fragments)
-    
+
     tiles <- as.integer(ceiling((ranges$end - ranges$start) / ranges$tile_width))
     res@dim <- c(length(cellNames(fragments)), sum(tiles))
     res@dimnames[[1]] <- cellNames(fragments)
-    if(explicit_tile_names) {
+    if (explicit_tile_names) {
         res@dimnames[[2]] <- get_tile_names_cpp(chr_id, ranges$start, ranges$end, ranges$tile_width, res@chr_levels)
     }
     return(t(res))
@@ -1243,11 +1325,12 @@ setMethod("iterate_matrix", "TileMatrix", function(x) {
 setMethod("short_description", "TileMatrix", function(x) {
     # Subset strings first to avoid a very slow string concatenation process
     indices <- c(head(seq_along(x@chr_id), 3), tail(seq_along(x@chr_id), 1))
-    labels <- paste0(x@chr_levels[1+x@chr_id[indices]], ":", x@start[indices]+1, "-", x@end[indices], " (", x@tile_width[indices], "bp)")
+    labels <- paste0(x@chr_levels[1 + x@chr_id[indices]], ":", x@start[indices] + 1, "-", x@end[indices], " (", x@tile_width[indices], "bp)")
     c(
         short_description(x@fragments),
-        sprintf("Calculate %d tiles over %d ranges%s", ncol(x), length(x@chr_id), 
-            pretty_print_vector(labels, prefix=": ", max_len=2)
+        sprintf(
+            "Calculate %d tiles over %d ranges%s", ncol(x), length(x@chr_id),
+            pretty_print_vector(labels, prefix = ": ", max_len = 2)
         )
     )
 })
@@ -1264,7 +1347,7 @@ setClass("ConvertMatrixType",
         type = character(0)
     )
 )
-setMethod("matrix_type", signature(x="ConvertMatrixType"), function(x) x@type)
+setMethod("matrix_type", signature(x = "ConvertMatrixType"), function(x) x@type)
 setMethod("iterate_matrix", "ConvertMatrixType", function(x) {
     iter_function <- get(sprintf("convert_matrix_%s_%s_cpp", matrix_type(x@matrix), x@type))
     wrap_function <- get(sprintf("wrapMat_%s", x@type))
@@ -1285,13 +1368,14 @@ setMethod("short_description", "ConvertMatrixType", function(x) {
 #'   or double (64-bit real number)
 #' @return IterableMatrix object
 #' @export
-convert_matrix_type <- function(matrix, type=c("uint32_t", "double", "float")) {
+convert_matrix_type <- function(matrix, type = c("uint32_t", "double", "float")) {
     assert_is(matrix, c("dgCMatrix", "IterableMatrix"))
     type <- match.arg(type)
     if (is(matrix, "dgCMatrix")) matrix <- as(matrix, "IterableMatrix")
-    if (matrix_type(matrix) == type)
-        return(matrix)
-    wrapMatrix("ConvertMatrixType", matrix, type=type)
+    if (matrix_type(matrix) == type) {
+          return(matrix)
+      }
+    wrapMatrix("ConvertMatrixType", matrix, type = type)
 }
 
 # Conversions with dgCMatrix
@@ -1304,10 +1388,10 @@ setClass("Iterable_dgCMatrix_wrapper",
         mat = NULL
     )
 )
-setMethod("matrix_type", signature(x="Iterable_dgCMatrix_wrapper"), function(x) "double")
+setMethod("matrix_type", signature(x = "Iterable_dgCMatrix_wrapper"), function(x) "double")
 
 setAs("dgCMatrix", "IterableMatrix", function(from) {
-    new("Iterable_dgCMatrix_wrapper", dim=dim(from), dimnames=dimnames(from), transpose=FALSE, mat=from)
+    new("Iterable_dgCMatrix_wrapper", dim = dim(from), dimnames = dimnames(from), transpose = FALSE, mat = from)
 })
 setMethod("iterate_matrix", "Iterable_dgCMatrix_wrapper", function(x) {
     if (x@transpose) x <- t(x)
@@ -1334,33 +1418,32 @@ setAs("IterableMatrix", "dgCMatrix", function(from) {
 
 #' Calculate matrix stats
 #' @param matrix Input matrix object
-#' @param row_stats Which row statistics to compute 
-#' @param col_stats Which col statistics to compute 
-#' @return List of row_stats: matrix of n_stats x n_rows, 
+#' @param row_stats Which row statistics to compute
+#' @param col_stats Which col statistics to compute
+#' @return List of row_stats: matrix of n_stats x n_rows,
 #'          col_stats: matrix of n_stats x n_cols
 #' @details The statistics will be calculated in a single pass over the matrix,
-#' so this method is desirable to use for efficiency purposes compared to 
+#' so this method is desirable to use for efficiency purposes compared to
 #' the more standard rowMeans or colMeans if multiple statistics are needed.
 #' If variance is calculated, then mean and nonzero count will be included in the
 #' output, and if mean is calculated then nonzero count will be included in the output.
 #' @export
-matrixStats <- function(matrix, 
-                        row_stats = c("none", "nonzero", "mean", "variance"), 
-                        col_stats = c("none", "nonzero", "mean", "variance")) {
-
+matrix_stats <- function(matrix,
+                         row_stats = c("none", "nonzero", "mean", "variance"),
+                         col_stats = c("none", "nonzero", "mean", "variance")) {
     stat_options <- c("none", "nonzero", "mean", "variance")
     row_stats <- match.arg(row_stats)
     col_stats <- match.arg(col_stats)
 
     if (matrix@transpose) {
-        tmp <- row_stats 
+        tmp <- row_stats
         row_stats <- col_stats
         col_stats <- tmp
     }
 
     row_stats_number <- match(row_stats, stat_options) - 1
     col_stats_number <- match(col_stats, stat_options) - 1
-    
+
     it <- iterate_matrix(matrix)
     res <- matrix_stats_cpp(ptr(it), row_stats_number, col_stats_number)
     rownames(res$row_stats) <- stat_options[seq_len(row_stats_number) + 1]
@@ -1373,6 +1456,6 @@ matrixStats <- function(matrix,
 
     colnames(res$row_stats) <- rownames(matrix)
     colnames(res$col_stats) <- colnames(matrix)
-  
+
     return(res)
 }

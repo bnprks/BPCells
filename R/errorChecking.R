@@ -155,7 +155,7 @@ normalize_ranges <- function(ranges, metadata_cols=character(0), zero_based_coor
 
     ret <- list()
     if (is(ranges, "GRanges")) {
-        if ("strand" %in% metadata_cols) ret$strand <- as.logical(GenomicRanges::strand(ranges) != '-')
+        if ("strand" %in% metadata_cols) ret$strand <- as.logical(GenomicRanges::strand(ranges) != "-")
         metadata_cols <- metadata_cols[metadata_cols != "strand"]
         
         assert_has_names(GenomicRanges::mcols(ranges), metadata_cols, n=2)

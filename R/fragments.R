@@ -9,10 +9,12 @@ NULL
 setClass("IterableFragments")
 
 #' This class is used to hold a list of external pointers.
-setClass("XPtrList", slots=c("pointers"="list", "type"="character"))
-ptr <- function(x) {x@pointers[[1]]}
+setClass("XPtrList", slots = c("pointers" = "list", "type" = "character"))
+ptr <- function(x) {
+    x@pointers[[1]]
+}
 #' Wrap an inner XPtrList with an outer externalptr object (Rcpp::XPtr)
-#' 
+#'
 #' We also track the type of the current pointer to provide a little safety when converting
 #' to C++.
 #' WARNING: Always make sure to pass the correct inner object, because if it is not passed then
@@ -50,7 +52,7 @@ setMethod("iterate_fragments", "XPtrList", function(x) {
     x
 })
 
-# Provide a short description of the IterableFragments, used for 
+# Provide a short description of the IterableFragments, used for
 # pretty-printing pipelines.
 # Returns a vector of strings, each of which describes one step of the
 # transformation pipeline
@@ -66,19 +68,23 @@ setMethod("show", "IterableFragments", function(object) {
 
     cat("\n")
 
-    if(is.null(cellNames(object)))
-        cat("Cells: count unknown\n")
-    else
-        cat(sprintf("Cells: %d cells with %s\n", length(cellNames(object)),
-            pretty_print_vector(cellNames(object), prefix="names ", empty="unknown names")
-        ))
-    
-    if(is.null(chrNames(object)))
-        cat("Chromosomes: count unknown\n")
-    else
-        cat(sprintf("Chromosomes: %d chromosomes with %s\n", length(chrNames(object)),
-            pretty_print_vector(chrNames(object), prefix="names ", empty="unknown names")
-        ))
+    if (is.null(cellNames(object))) {
+          cat("Cells: count unknown\n")
+      } else {
+          cat(sprintf(
+              "Cells: %d cells with %s\n", length(cellNames(object)),
+              pretty_print_vector(cellNames(object), prefix = "names ", empty = "unknown names")
+          ))
+      }
+
+    if (is.null(chrNames(object))) {
+          cat("Chromosomes: count unknown\n")
+      } else {
+          cat(sprintf(
+              "Chromosomes: %d chromosomes with %s\n", length(chrNames(object)),
+              pretty_print_vector(chrNames(object), prefix = "names ", empty = "unknown names")
+          ))
+      }
 
     cat("\n")
     description <- short_description(object)
@@ -97,8 +103,9 @@ setMethod("show", "IterableFragments", function(object) {
 #' @export
 setGeneric("cellNames", function(x) standardGeneric("cellNames"))
 setMethod("cellNames", "IterableFragments", function(x) {
-    if (.hasSlot(x, "fragments"))
-        return(cellNames(x@fragments))
+    if (.hasSlot(x, "fragments")) {
+          return(cellNames(x@fragments))
+      }
     stop(sprintf("Error: cellNames not implemented on object of class %s", class(x)))
 })
 
@@ -129,8 +136,9 @@ setMethod("cellNames<-", "IterableFragments", function(x, ..., value) {
 #' @export
 setGeneric("chrNames", function(x) standardGeneric("chrNames"))
 setMethod("chrNames", "IterableFragments", function(x) {
-    if (.hasSlot(x, "fragments"))
-        return(chrNames(x@fragments))
+    if (.hasSlot(x, "fragments")) {
+          return(chrNames(x@fragments))
+      }
     stop(sprintf("Error: chrNames not implemented on object of class %s", class(x)))
 })
 
@@ -167,10 +175,10 @@ setMethod("chrNames", "FragmentsTsv", function(x) NULL)
 setMethod("cellNames", "FragmentsTsv", function(x) NULL)
 
 setMethod("chrNames<-", "FragmentsTsv", function(x, ..., value) {
-    new("ChrRename", x, chr_names=value)
+    new("ChrRename", x, chr_names = value)
 })
 setMethod("cellNames<-", "FragmentsTsv", function(x, ..., value) {
-    new("CellRename", x, cell_names=value)
+    new("CellRename", x, cell_names = value)
 })
 
 setMethod("iterate_fragments", "FragmentsTsv", function(x) wrapFragments(iterate_10x_fragments_cpp(normalizePath(x@path), x@comment), new("XPtrList")))
@@ -178,47 +186,58 @@ setMethod("short_description", "FragmentsTsv", function(x) {
     sprintf("Load 10x fragments file from %s", x@path)
 })
 
-#' Read a 10x fragments file
-#' @details Note: no disk operations will take place until the fragments are used in a function
-#' @param path Path of 10x fragments file
+#' Read/write a 10x fragments file
+#'
+#' 10x fragment files come in a bed-like format, with columns chr, start, end,
+#' cell_id, and pcr_duplicates. Unlike a standard bed format, the format from
+#' cellranger has an *inclusive* end-coordinate, meaning the end coordinate itself
+#' is what should be counted as the tagmentation site, rather than offset by 1.
+#'
+#' @details **open_fragments_10x**
+#'
+#' No disk operations will take place until the fragments are used in a function
+#' @param path File path (e.g. fragments.tsv or fragments.tsv.gz)
 #' @param comment Skip lines at beginning of file which start with comment
 #' @param end_inclusive Whether the end coordinate of the bed is inclusive -- i.e. there was an
 #'     insertion at the end coordinate rather than the base before the end coordinate. This is the
 #'     10x default, though it's not quite standard for the bed file format.
 #' @return 10x fragments file object
 #' @export
-open_fragments_10x <- function(path, comment="#", end_inclusive=TRUE) {
-    assert_is_file(path, extension=c(".tsv", ".tsv.gz"))
+open_fragments_10x <- function(path, comment = "#", end_inclusive = TRUE) {
+    assert_is_file(path, extension = c(".tsv", ".tsv.gz"))
     assert_is_character(comment)
     assert_len(comment, 1)
     path <- normalizePath(path)
-    res <- new("FragmentsTsv", path=path, comment=comment)
-    if (end_inclusive)
-        res <- shift_fragments(res, shift_end=1)
+    res <- new("FragmentsTsv", path = path, comment = comment)
+    if (end_inclusive) {
+          res <- shift_fragments(res, shift_end = 1)
+      }
     res
 }
 
 
-#' Write to a 10x fragments file
+#' @rdname open_fragments_10x
 #' @param fragments Input fragments object
-#' @inheritParams open_fragments_10x
 #' @param append_5th_column Whether to include 5th column of all 0 for compatibility
 #'        with 10x fragment file outputs (defaults to 4 columns chr,start,end,cell)
+#' @details **write_fragments_10x**
+#'
+#' Fragments will be written to disk immediately, then returned in a readable object.
 #' @export
-write_fragments_10x <- function(fragments, path, end_inclusive=TRUE, append_5th_column=FALSE) {
-    assert_is_file(path, must_exist=FALSE, extension=c(".tsv", ".tsv.gz"))
+write_fragments_10x <- function(fragments, path, end_inclusive = TRUE, append_5th_column = FALSE) {
+    assert_is_file(path, must_exist = FALSE, extension = c(".tsv", ".tsv.gz"))
     if (end_inclusive) {
-        fragments <- shift_fragments(fragments, shift_end=-1)
+        fragments <- shift_fragments(fragments, shift_end = -1)
     }
     it <- iterate_fragments(fragments)
     p <- ptr(it)
     write_10x_fragments_cpp(
-        normalizePath(path, mustWork=FALSE), 
+        normalizePath(path, mustWork = FALSE),
         p,
         append_5th_column
     )
 
-    open_fragments_10x(path, comment="", end_inclusive=end_inclusive)
+    open_fragments_10x(path, comment = "", end_inclusive = end_inclusive)
 }
 
 
@@ -226,9 +245,9 @@ setClass("UnpackedMemFragments",
     contains = "IterableFragments",
     slots = c(
         cell = "integer",
-        start = "integer", 
-        end = "integer", 
-        end_max = "integer", 
+        start = "integer",
+        end = "integer",
+        end_max = "integer",
         chr_ptr = "integer",
         chr_names = "character",
         cell_names = "character",
@@ -279,7 +298,6 @@ setClass("PackedMemFragments",
         end_idx = "integer",
         end_max = "integer",
         chr_ptr = "integer",
-        
         chr_names = "character",
         cell_names = "character",
         version = "character"
@@ -294,7 +312,6 @@ setClass("PackedMemFragments",
         end_idx = integer(0),
         end_max = integer(0),
         chr_ptr = integer(0),
-
         chr_names = character(0),
         cell_names = character(0),
         version = character(0)
@@ -322,14 +339,25 @@ setMethod("short_description", "PackedMemFragments", function(x) {
     "Read compressed fragments from memory"
 })
 
-#' Make a fragments object in memory. 
+#' Read/write BPCells fragment objects
+#'
+#' BPCells fragments can be read/written in compressed (bitpacked) or
+#' uncompressed form in a variety of storage locations: in memory (as an R
+#' object), in an hdf5 file, or in a directory on disk (containing binary
+#' files).
+#'
+#' Saving in a directory on disk is a good default for local analysis, as it
+#' provides the best I/O performance and lowest memory usage. The HDF5 format
+#' allows saving within existing hdf5 files to group data together, and the in
+#' memory format provides the fastest performance in the event memory usage is
+#' unimportant.
+#'
 #' @param fragments Input fragments object
-#' @param compress Whether or not to compress the data. With compression, memory usage should
-#' be about half the size of a gzip-compressed 10x fragments file holding the same data. 
-#' Without compression memory usage can be 10-20% larger.
-#' @return MemFragments object
+#' @param compress Whether or not to compress the data. With compression, storage size is
+#' be about half the size of a gzip-compressed 10x fragments file.
+#' @rdname fragment_io
 #' @export
-write_fragments_memory <- function(fragments, compress=TRUE) {
+write_fragments_memory <- function(fragments, compress = TRUE) {
     assert_is(fragments, "IterableFragments")
     assert_is(compress, "logical")
     it <- iterate_fragments(fragments)
@@ -349,7 +377,6 @@ setClass("FragmentsDir",
         dir = "character",
         compressed = "logical",
         buffer_size = "integer",
-
         chr_names = "character",
         cell_names = "character"
     ),
@@ -357,7 +384,6 @@ setClass("FragmentsDir",
         dir = character(0),
         compressed = TRUE,
         buffer_size = 1024L,
-
         chr_names = character(0),
         cell_names = character(0)
     )
@@ -377,25 +403,28 @@ setMethod("cellNames<-", "FragmentsDir", function(x, ..., value) {
     x
 })
 setMethod("iterate_fragments", "FragmentsDir", function(x) {
-    if (x@compressed)
-        wrapFragments(iterate_packed_fragments_file_cpp(x@dir, x@buffer_size, x@chr_names, x@cell_names), new("XPtrList"))
-    else
-        wrapFragments(iterate_unpacked_fragments_file_cpp(x@dir, x@buffer_size, x@chr_names, x@cell_names), new("XPtrList"))
+    if (x@compressed) {
+          wrapFragments(iterate_packed_fragments_file_cpp(x@dir, x@buffer_size, x@chr_names, x@cell_names), new("XPtrList"))
+      } else {
+          wrapFragments(iterate_unpacked_fragments_file_cpp(x@dir, x@buffer_size, x@chr_names, x@cell_names), new("XPtrList"))
+      }
 })
 setMethod("short_description", "FragmentsDir", function(x) {
-    sprintf("Read %s fragments from directory %s", 
-        if(x@compressed) "compressed" else "uncompressed",
+    sprintf(
+        "Read %s fragments from directory %s",
+        if (x@compressed) "compressed" else "uncompressed",
         x@dir
     )
 })
-#' Make a fragments object in binary files within a directory. 
-#' @inheritParams write_fragments_memory
-#' @param dir Directory to save the data into
+
+
+#' @param dir Directory to read/write the data from
 #' @param buffer_size For performance tuning only. The number of items to be bufferred
 #' in memory before calling writes to disk.
-#' @return FragmentsDir object
+#' @return Fragment object
+#' @rdname fragment_io
 #' @export
-write_fragments_dir <- function(fragments, dir, compress=TRUE, buffer_size=1024L) {
+write_fragments_dir <- function(fragments, dir, compress = TRUE, buffer_size = 1024L) {
     assert_is(fragments, "IterableFragments")
     assert_is(dir, "character")
     assert_is(compress, "logical")
@@ -403,26 +432,23 @@ write_fragments_dir <- function(fragments, dir, compress=TRUE, buffer_size=1024L
     dir <- path.expand(dir)
     it <- iterate_fragments(fragments)
     p <- ptr(it)
-    if (compress)
-        write_packed_fragments_file_cpp(p, dir, buffer_size)
-    else
-        write_unpacked_fragments_file_cpp(p, dir, buffer_size)
+    if (compress) {
+          write_packed_fragments_file_cpp(p, dir, buffer_size)
+      } else {
+          write_unpacked_fragments_file_cpp(p, dir, buffer_size)
+      }
     open_fragments_dir(dir, buffer_size)
 }
 
-#' Open an existing fragments object from a directory
-#' @param dir Directory to read the data from, written by `write_fragments_dir`
-#' @param buffer_size For performance tuning only. The number of fragments to be buffered
-#' in memory for each read
-#' @return FragmentsDir object
+#' @rdname fragment_io
 #' @export
-open_fragments_dir <- function(dir, buffer_size=1024L) {
+open_fragments_dir <- function(dir, buffer_size = 1024L) {
     assert_is_file(dir)
     assert_is(buffer_size, "integer")
-    
+
     dir <- path.expand(dir)
     info <- info_fragments_file_cpp(dir, buffer_size)
-    new("FragmentsDir", dir=path.expand(dir), compressed=info$compressed, buffer_size=buffer_size, cell_names=info$cell_names, chr_names=info$chr_names)
+    new("FragmentsDir", dir = path.expand(dir), compressed = info$compressed, buffer_size = buffer_size, cell_names = info$cell_names, chr_names = info$chr_names)
 }
 
 setClass("FragmentsHDF5",
@@ -432,16 +458,14 @@ setClass("FragmentsHDF5",
         group = "character",
         compressed = "logical",
         buffer_size = "integer",
-
         chr_names = "character",
         cell_names = "character"
     ),
     prototype = list(
         path = character(0),
         group = "",
-        compressed=TRUE,
+        compressed = TRUE,
         buffer_size = 8192L,
-
         chr_names = character(0),
         cell_names = character(0)
     )
@@ -461,27 +485,28 @@ setMethod("cellNames<-", "FragmentsHDF5", function(x, ..., value) {
     x
 })
 setMethod("iterate_fragments", "FragmentsHDF5", function(x) {
-    if (x@compressed)
-        wrapFragments(iterate_packed_fragments_hdf5_cpp(x@path, x@group, x@buffer_size, x@chr_names, x@cell_names), new("XPtrList"))
-    else
-        wrapFragments(iterate_unpacked_fragments_hdf5_cpp(x@path, x@group, x@buffer_size, x@chr_names, x@cell_names), new("XPtrList"))
+    if (x@compressed) {
+          wrapFragments(iterate_packed_fragments_hdf5_cpp(x@path, x@group, x@buffer_size, x@chr_names, x@cell_names), new("XPtrList"))
+      } else {
+          wrapFragments(iterate_unpacked_fragments_hdf5_cpp(x@path, x@group, x@buffer_size, x@chr_names, x@cell_names), new("XPtrList"))
+      }
 })
 setMethod("short_description", "FragmentsHDF5", function(x) {
-    sprintf("Read %s fragments from %s, group %s", 
-        if(x@compressed) "compressed" else "uncompressed",
-        x@path, 
+    sprintf(
+        "Read %s fragments from %s, group %s",
+        if (x@compressed) "compressed" else "uncompressed",
+        x@path,
         x@group
     )
 })
-#' Write a fragments object in an hdf5 file
-#' @inheritParams write_fragments_dir
+
+#' @rdname fragment_io
 #' @param path Path to the hdf5 file on disk
 #' @param group The group within the hdf5 file to write the data to. If writing
 #' to an existing hdf5 file this group must not already be in use
 #' @param chunk_size For performance tuning only. The chunk size used for the HDF5 array storage.
-#' @return FragmentsHDF5 object
 #' @export
-write_fragments_hdf5 <- function(fragments, path, group="fragments", compress=TRUE, buffer_size=8192L, chunk_size=1024L) {
+write_fragments_hdf5 <- function(fragments, path, group = "fragments", compress = TRUE, buffer_size = 8192L, chunk_size = 1024L) {
     assert_is(fragments, "IterableFragments")
     assert_is(path, "character")
     assert_is(group, "character")
@@ -491,84 +516,81 @@ write_fragments_hdf5 <- function(fragments, path, group="fragments", compress=TR
     path <- path.expand(path)
     it <- iterate_fragments(fragments)
     p <- ptr(it)
-    if (compress)
-        write_packed_fragments_hdf5_cpp(p, path, group, buffer_size, chunk_size)
-    else
-        write_unpacked_fragments_hdf5_cpp(p, path, group, buffer_size, chunk_size)
+    if (compress) {
+          write_packed_fragments_hdf5_cpp(p, path, group, buffer_size, chunk_size)
+      } else {
+          write_unpacked_fragments_hdf5_cpp(p, path, group, buffer_size, chunk_size)
+      }
     open_fragments_hdf5(path, group, buffer_size)
 }
 
-#' Read a fragments object from an hdf5 file
-#' @inheritParams write_fragments_hdf5
-#' @param buffer_size For performance tuning only. The number of items to be bufferred
-#' in memory before calling reads from disk.
-#' @return FragmentsHDF5 object
+#' @rdname fragment_io
 #' @export
-open_fragments_hdf5 <- function(path, group="fragments", buffer_size=16384L) {
+open_fragments_hdf5 <- function(path, group = "fragments", buffer_size = 16384L) {
     assert_is_file(path)
     assert_is(group, "character")
     assert_is(buffer_size, "integer")
-    
+
     path <- path.expand(path)
     info <- info_fragments_hdf5_cpp(path, group, buffer_size)
-    new("FragmentsHDF5", path=path, group=group, compressed=info$compressed, buffer_size=buffer_size, cell_names=info$cell_names, chr_names=info$chr_names)
+    new("FragmentsHDF5", path = path, group = group, compressed = info$compressed, buffer_size = buffer_size, cell_names = info$cell_names, chr_names = info$chr_names)
 }
 
 
 
 
 #' Build a Fragments object from an R data frame or GRanges object
-#' @param x An input GRanges, list or data frame. Lists and dataframes 
+#' @param x An input GRanges, list or data frame. Lists and dataframes
 #'    must have chr, start, end, cell_id. GRanges must have a metadata column
 #'    for cell_id
 #' @param zero_based_coords Whether to convert the ranges from a 1-based end-inclusive
 #'    coordinate system to a 0-based end-exclusive coordinate system. Defaults to true
 #'    for GRanges and false for other formats
-#'    (see http://genome.ucsc.edu/blog/the-ucsc-genome-browser-coordinate-counting-systems/)
+#'    (see <http://genome.ucsc.edu/blog/the-ucsc-genome-browser-coordinate-counting-systems/>)
 #' @return UnpackedMemFragments object representing the given fragments
 #' @export
-convert_to_fragments <- function(x, zero_based_coords=!is(x, "GRanges")) {
+convert_to_fragments <- function(x, zero_based_coords = !is(x, "GRanges")) {
     assert_is(zero_based_coords, "logical")
-    x <- normalize_ranges(x, metadata_cols="cell_id", zero_based_coords=zero_based_coords)
+    x <- normalize_ranges(x, metadata_cols = "cell_id", zero_based_coords = zero_based_coords)
     x <- data.frame(x)
-    x <- x[order(x$chr, x$start),]
+    x <- x[order(x$chr, x$start), ]
 
     x$cell_id <- as.factor(x$cell_id)
     x$chr <- as.factor(x$chr)
 
-    chr_ptr <- rep(cumsum(table(x$chr)), each=2)
+    chr_ptr <- rep(cumsum(table(x$chr)), each = 2)
     chr_ptr <- c(0, chr_ptr[-length(chr_ptr)])
 
     end_max <- calculate_end_max_cpp(as.integer(x$end), chr_ptr)
-    new("UnpackedMemFragments", 
-        cell=as.integer(x$cell_id) - 1L, 
-        start=as.integer(x$start),
-        end=as.integer(x$end),
-        end_max=end_max,
-        chr_ptr=as.integer(chr_ptr),
+    new("UnpackedMemFragments",
+        cell = as.integer(x$cell_id) - 1L,
+        start = as.integer(x$start),
+        end = as.integer(x$end),
+        end_max = end_max,
+        chr_ptr = as.integer(chr_ptr),
         cell_names = levels(x$cell_id),
-        chr_names = levels(x$chr), 
+        chr_names = levels(x$chr),
         version = "unpacked-fragments-v1"
     )
 }
 
 
 # Define converters with GRanges if we have the GenomicRanges package available
-if (requireNamespace("GenomicRanges", quietly=TRUE)) {
+if (requireNamespace("GenomicRanges", quietly = TRUE)) {
     setAs("IterableFragments", "GRanges", function(from) {
         if (is(from, "UnpackedMemFragments")) {
             frags <- from
         } else {
-            frags <- write_fragments_memory(from, compress=FALSE)
+            frags <- write_fragments_memory(from, compress = FALSE)
         }
         # Get the differences between adjacent elements on the chr_ptr list
         # to calculate how many values are in each chromosome
-        chr_counts <- frags@chr_ptr[c(FALSE,TRUE)] - frags@chr_ptr[c(TRUE,FALSE)]
+        chr_counts <- frags@chr_ptr[c(FALSE, TRUE)] - frags@chr_ptr[c(TRUE, FALSE)]
         # order by where this chromosome range starts
-        chr_order <- order(frags@chr_ptr[c(TRUE,FALSE)])
-        
+        chr_order <- order(frags@chr_ptr[c(TRUE, FALSE)])
+
         GenomicRanges::GRanges(
-            seqnames=S4Vectors::Rle(values=factor(chrNames(frags)[order(chr_order)], chrNames(frags)), lengths=chr_counts),
+            seqnames = S4Vectors::Rle(values = factor(chrNames(frags)[order(chr_order)], chrNames(frags)), lengths = chr_counts),
             ranges = IRanges::IRanges(
                 start = frags@start + 1,
                 end = frags@end
@@ -595,7 +617,7 @@ setClass("ShiftFragments",
 setMethod("iterate_fragments", "ShiftFragments", function(x) {
     inner <- iterate_fragments(x@fragments)
     wrapFragments(
-        iterate_shift_cpp(ptr(inner), x@shift_start, x@shift_end), 
+        iterate_shift_cpp(ptr(inner), x@shift_start, x@shift_end),
         inner
     )
 })
@@ -605,18 +627,26 @@ setMethod("short_description", "ShiftFragments", function(x) {
         sprintf("Shift start %+dbp, end %+dbp", x@shift_start, x@shift_end)
     )
 })
-#' Shift start or end coordinates of fragments by a fixed amount
+#' Shift start or end coordinates
+#'
+#' Shifts start or end of fragments by a fixed amount, which can be useful to
+#' correct the Tn5 offset.
+#'
+#' The correct Tn5 offset is +/- 4bp since the Tn5 cut sites on opposite strands
+#' are offset by 9bp. However, +4/-5 bp is often applied to bed-format files,
+#' since the end coordinate in bed files is 1 past the last basepair of the sequenced
+#' DNA fragment. This results in a bed-like format except with inclusive end coordinates.
 #' @param fragments Input fragments object
 #' @param shift_start How many basepairs to shift the start coords
 #' @param shift_end How many basepairs to shift the end coords
 #' @return Shifted fragments object
 #' @export
-shift_fragments <- function(fragments, shift_start=0L, shift_end=0L) {
+shift_fragments <- function(fragments, shift_start = 0L, shift_end = 0L) {
     assert_wholenumber(shift_start)
     assert_wholenumber(shift_end)
     assert_len(shift_start, 1)
     assert_len(shift_end, 1)
-    new("ShiftFragments", fragments=fragments, shift_start=as.integer(shift_start), shift_end=as.integer(shift_end))
+    new("ShiftFragments", fragments = fragments, shift_start = as.integer(shift_start), shift_end = as.integer(shift_end))
 }
 
 # Select fragments by length
@@ -635,15 +665,15 @@ setClass("SelectLength",
 )
 setMethod("iterate_fragments", "SelectLength", function(x) {
     inner <- iterate_fragments(x@fragments)
-    max_len <- if(is.na(x@max_len)) .Machine$integer.max else x@max_len
+    max_len <- if (is.na(x@max_len)) .Machine$integer.max else x@max_len
     wrapFragments(
-        iterate_length_select_cpp(ptr(inner), x@min_len, max_len), 
+        iterate_length_select_cpp(ptr(inner), x@min_len, max_len),
         inner
     )
 })
 setMethod("short_description", "SelectLength", function(x) {
-    text_min <- if(!is.na(x@min_len)) sprintf("%d", x@min_len) else "0"
-    text_max <- if(!is.na(x@max_len)) sprintf("%d", x@max_len) else "Inf"
+    text_min <- if (!is.na(x@min_len)) sprintf("%d", x@min_len) else "0"
+    text_max <- if (!is.na(x@max_len)) sprintf("%d", x@max_len) else "Inf"
     c(
         short_description(x@fragments),
         sprintf("Filter to fragment sizes %s bp-%s bp", x@min_len, x@max_len)
@@ -656,12 +686,12 @@ setMethod("short_description", "SelectLength", function(x) {
 #' @return Fragments object
 #' @details Fragment length is calculated as end-start
 #' @export
-subset_lengths <- function(fragments, min_len=0L, max_len=NA_integer_) {
+subset_lengths <- function(fragments, min_len = 0L, max_len = NA_integer_) {
     assert_wholenumber(min_len)
     if (!is.na(max_len)) assert_wholenumber(max_len)
     assert_len(min_len, 1)
     assert_len(max_len, 1)
-    new("SelectLength", fragments=fragments, min_len=as.integer(min_len), max_len=as.integer(max_len))
+    new("SelectLength", fragments = fragments, min_len = as.integer(min_len), max_len = as.integer(max_len))
 }
 
 
@@ -695,9 +725,9 @@ setMethod("short_description", "ChrSelectName", function(x) {
     c(
         short_description(x@fragments),
         sprintf(
-            "Select %d chromosomes by name%s", 
+            "Select %d chromosomes by name%s",
             length(x@chr_names),
-            pretty_print_vector(x@chr_names, max_len=3, prefix=": ")
+            pretty_print_vector(x@chr_names, max_len = 3, prefix = ": ")
         )
     )
 })
@@ -716,7 +746,7 @@ setMethod("chrNames", "ChrSelectIndex", function(x) chrNames(x@fragments)[x@chr_
 setMethod("chrNames<-", "ChrSelectIndex", function(x, ..., value) {
     assert_is_character(value)
     assert_len(value, length(x@chr_index_selection))
-    new("ChrRename", fragments=x, chr_names=value)
+    new("ChrRename", fragments = x, chr_names = value)
 })
 
 setMethod("iterate_fragments", "ChrSelectIndex", function(x) {
@@ -730,35 +760,35 @@ setMethod("short_description", "ChrSelectIndex", function(x) {
     c(
         short_description(x@fragments),
         sprintf(
-            "Select %d chromosomes by index%s", 
+            "Select %d chromosomes by index%s",
             length(x@chr_index_selection),
-            pretty_print_vector(x@chr_index_selection, max_len=3, prefix=": ")
+            pretty_print_vector(x@chr_index_selection, max_len = 3, prefix = ": ")
         )
     )
 })
 
 #' Select chromosmes for subsetting or translating chromosome IDs in a fragments object
 #' @param fragments Input fragments object
-#' @param chromosome_selection List of chromosme IDs (numeric), or names (character). 
+#' @param chromosome_selection List of chromosme IDs (numeric), or names (character).
 #'    The output chromosome ID n will be taken
-#'    from the input fragments chromosome with ID/name chromosome_selection[n]. 
+#'    from the input fragments chromosome with ID/name chromosome_selection[n].
 #' @export
 select_chromosomes <- function(fragments, chromosome_selection) {
     assert_is(fragments, "IterableFragments")
     assert_distinct(chromosome_selection)
     assert_is(chromosome_selection, c("character", "numeric"))
-    if(is.numeric(chromosome_selection)) {
+    if (is.numeric(chromosome_selection)) {
         assert_greater_than_zero(chromosome_selection)
         new_names <- NA_character_
         if (!is.null(chrNames(fragments))) {
             assert_true(all(chromosome_selection <= length(chrNames(fragments))))
         }
         return(
-            new("ChrSelectIndex", fragments=fragments, chr_index_selection=as.integer(chromosome_selection))
+            new("ChrSelectIndex", fragments = fragments, chr_index_selection = as.integer(chromosome_selection))
         )
     } else {
         return(
-            new("ChrSelectName", fragments=fragments, chr_names=chromosome_selection)
+            new("ChrSelectName", fragments = fragments, chr_names = chromosome_selection)
         )
     }
 }
@@ -795,9 +825,9 @@ setMethod("short_description", "CellSelectName", function(x) {
     c(
         short_description(x@fragments),
         sprintf(
-            "Select %d cells by name%s", 
+            "Select %d cells by name%s",
             length(x@cell_names),
-            pretty_print_vector(x@cell_names, max_len=3, prefix=": ")
+            pretty_print_vector(x@cell_names, max_len = 3, prefix = ": ")
         )
     )
 })
@@ -816,7 +846,7 @@ setMethod("cellNames", "CellSelectIndex", function(x) cellNames(x@fragments)[x@c
 setMethod("cellNames<-", "CellSelectIndex", function(x, ..., value) {
     assert_is_character(value)
     assert_len(value, length(x@cell_index_selection))
-    new("CellRename", fragments=x, cell_names=value)
+    new("CellRename", fragments = x, cell_names = value)
 })
 setMethod("iterate_fragments", "CellSelectIndex", function(x) {
     inner <- iterate_fragments(x@fragments)
@@ -829,34 +859,34 @@ setMethod("short_description", "CellSelectIndex", function(x) {
     c(
         short_description(x@fragments),
         sprintf(
-            "Select %d cells by index%s", 
+            "Select %d cells by index%s",
             length(x@cell_index_selection),
-            pretty_print_vector(x@cell_index_selection, max_len=3, prefix=": ")
+            pretty_print_vector(x@cell_index_selection, max_len = 3, prefix = ": ")
         )
     )
 })
 #' Select cells for subsetting or translating cells IDs in a fragments object
 #' @param fragments Input fragments object
-#' @param cell_selection List of chromosme IDs (numeric), or names (character). 
+#' @param cell_selection List of chromosme IDs (numeric), or names (character).
 #'    The output chromosome ID n will be taken
-#'    from the input fragments chromosome with ID/name cell_selection[n]. 
+#'    from the input fragments chromosome with ID/name cell_selection[n].
 #' @export
 select_cells <- function(fragments, cell_selection) {
     assert_is(fragments, "IterableFragments")
     assert_distinct(cell_selection)
     assert_is(cell_selection, c("character", "numeric"))
-    if(is.numeric(cell_selection)) {
+    if (is.numeric(cell_selection)) {
         assert_greater_than_zero(cell_selection)
         new_names <- NA_character_
         if (!is.null(cellNames(fragments))) {
             assert_true(all(cell_selection <= length(cellNames(fragments))))
         }
         return(
-            new("CellSelectIndex", fragments=fragments, cell_index_selection=as.integer(cell_selection))
+            new("CellSelectIndex", fragments = fragments, cell_index_selection = as.integer(cell_selection))
         )
     } else {
         return(
-            new("CellSelectName", fragments=fragments, cell_names=cell_selection)
+            new("CellSelectName", fragments = fragments, cell_names = cell_selection)
         )
     }
 }
@@ -891,7 +921,7 @@ setMethod("iterate_fragments", "ChrRename", function(x) {
 setMethod("short_description", "ChrRename", function(x) {
     c(
         short_description(x@fragments),
-        sprintf("Rename chromosomes to: %s", pretty_print_vector(x@chr_names, max_len=3))
+        sprintf("Rename chromosomes to: %s", pretty_print_vector(x@chr_names, max_len = 3))
     )
 })
 
@@ -924,7 +954,7 @@ setMethod("iterate_fragments", "CellRename", function(x) {
 setMethod("short_description", "CellRename", function(x) {
     c(
         short_description(x@fragments),
-        sprintf("Rename cells to: %s", pretty_print_vector(x@cell_names, max_len=3))
+        sprintf("Rename cells to: %s", pretty_print_vector(x@cell_names, max_len = 3))
     )
 })
 
@@ -962,7 +992,7 @@ prefix_cell_names <- function(fragments, prefix) {
     assert_is(fragments, "IterableFragments")
     assert_is(prefix, "character")
     assert_len(prefix, 1)
-    new("CellPrefix", fragments=fragments, prefix=prefix)
+    new("CellPrefix", fragments = fragments, prefix = prefix)
 }
 
 # Select fragments by chromosome
@@ -995,14 +1025,15 @@ setMethod("iterate_fragments", "RegionSelect", function(x) {
 setMethod("short_description", "RegionSelect", function(x) {
     # Subset strings first to avoid a very slow string concatenation process
     indices <- c(head(seq_along(x@chr_id), 3), tail(seq_along(x@chr_id), 1))
-    labels <- paste0(x@chr_levels[1+x@chr_id[indices]], ":", x@start[indices]+1, "-", x@end[indices])
+    labels <- paste0(x@chr_levels[1 + x@chr_id[indices]], ":", x@start[indices] + 1, "-", x@end[indices])
 
     c(
         short_description(x@fragments),
-        sprintf("Subset to fragments %soverlapping %d ranges%s", 
+        sprintf(
+            "Subset to fragments %soverlapping %d ranges%s",
             ifelse(x@invert_selection, "not ", ""),
-            length(x@chr_id), 
-            pretty_print_vector(labels, prefix=": ", max_len=2)
+            length(x@chr_id),
+            pretty_print_vector(labels, prefix = ": ", max_len = 2)
         )
     )
 })
@@ -1011,26 +1042,19 @@ setMethod("short_description", "RegionSelect", function(x) {
 #' @param fragments Input fragments object.
 #' @param invert_selection If TRUE, select fragments *not* overlapping selected regions
 #'  instead of only fragments overlapping the selected regions.
-#' @inheritParams peakMatrix
+#' @inheritParams peak_matrix
 #' @return Fragments object filtered according to the selected regions
 #' @export
-selectRegions <- function(fragments, ranges, invert_selection=FALSE, zero_based_coords=!is(ranges, "GRanges")) {
+select_regions <- function(fragments, ranges, invert_selection = FALSE, zero_based_coords = !is(ranges, "GRanges")) {
     assert_is(fragments, "IterableFragments")
-    ranges <- normalize_ranges(ranges, zero_based_coords=zero_based_coords)
-        
+    ranges <- normalize_ranges(ranges, zero_based_coords = zero_based_coords)
+
     assert_is(zero_based_coords, "logical")
-    
+
     chr_levels <- levels(ranges$chr)
     chr_id <- as.integer(ranges$chr) - 1L
 
-    # Check to make sure regions are end-sorted
-    pair_1 <- seq_len(length(chr_id)-1)
-    pair_2 <- pair_1 + 1
-    if (any(chr_id[pair_1] == chr_id[pair_2] & ranges$end[pair_1] > ranges$end[pair_2])) {
-        stop("Tile regions must be non-overlapping")
-    }
-
-    new("RegionSelect", fragments=fragments, chr_id=chr_id, start=ranges$start, end=ranges$end, chr_levels=chr_levels, invert_selection=invert_selection)
+    new("RegionSelect", fragments = fragments, chr_id = chr_id, start = ranges$start, end = ranges$end, chr_levels = chr_levels, invert_selection = invert_selection)
 }
 
 setClass("MergeFragments",
@@ -1058,7 +1082,7 @@ setMethod("chrNames<-", "MergeFragments", function(x, ..., value) {
 setMethod("cellNames<-", "MergeFragments", function(x, ..., value) {
     start_idx <- 1
     for (i in seq_along(x@fragments_list)) {
-        end_idx <- start_idx - 1 + length(cellNames(x@fragments_list[[i]])) 
+        end_idx <- start_idx - 1 + length(cellNames(x@fragments_list[[i]]))
         cellNames(x@fragments_list[[i]]) <- value[start_idx:end_idx]
         start_idx <- end_idx + 1
     }
@@ -1069,38 +1093,42 @@ setMethod("iterate_fragments", "MergeFragments", function(x) {
     inner <- lapply(x@fragments_list, iterate_fragments)
     wrapFragments(
         iterate_merge_fragments_cpp(lapply(inner, ptr)),
-        new("XPtrList", pointers=inner)
+        new("XPtrList", pointers = inner)
     )
 })
 setMethod("short_description", "MergeFragments", function(x) {
     # Subset strings first to avoid a very slow string concatenation process
-    sprintf("Merge %d fragments objects of classes%s",
+    sprintf(
+        "Merge %d fragments objects of classes%s",
         length(x@fragments_list),
-        pretty_print_vector(vapply(x@fragments_list, class, character(1)), prefix=": ", max_len=3)
+        pretty_print_vector(vapply(x@fragments_list, class, character(1)), prefix = ": ", max_len = 3)
     )
 })
 
 # Allow merging fragments using standard concatenation method
 setMethod("c", "IterableFragments", function(x, ...) {
     tail <- list(...)
-    if (length(tail) == 1 && is.null(tail[[1]]))
-        args <- list(x)
-    else
-        args <- c(list(x), list(...))
+    if (length(tail) == 1 && is.null(tail[[1]])) {
+          args <- list(x)
+      } else {
+          args <- c(list(x), list(...))
+      }
     chr_names <- chrNames(x)
     assert_not_null(chr_names)
     fragments_list <- list()
     for (i in seq_along(args)) {
         assert_is(args[[i]], "IterableFragments")
         assert_not_null(chrNames(args[[i]]))
-        if(!all(chr_names == chrNames(args[[i]])))
-            stop("To concatenate fragments, all chrNames must be identical")
-        if (is(args[[i]], "MergeFragments"))
-            fragments_list <- c(fragments_list, args[[i]]@fragments_list)
-        else
-            fragments_list <- c(fragments_list, args[[i]])
+        if (!all(chr_names == chrNames(args[[i]]))) {
+              stop("To concatenate fragments, all chrNames must be identical")
+          }
+        if (is(args[[i]], "MergeFragments")) {
+              fragments_list <- c(fragments_list, args[[i]]@fragments_list)
+          } else {
+              fragments_list <- c(fragments_list, args[[i]])
+          }
     }
-    new("MergeFragments", fragments_list=fragments_list)
+    new("MergeFragments", fragments_list = fragments_list)
     # TODO: check that cellNames are unique
 })
 
@@ -1127,19 +1155,21 @@ scan_fragments <- function(fragments) {
 }
 
 
-pretty_print_vector <- function(x, max_len=3, sep=", ", prefix="", empty="") {
+pretty_print_vector <- function(x, max_len = 3, sep = ", ", prefix = "", empty = "") {
     # Print whole vector if possible, or else
     # print first few, ellipsis, then the last one
     # if x is length 0, just return the empty value
-    if (length(x) == 0) return(empty)
+    if (length(x) == 0) {
+        return(empty)
+    }
 
     if (length(x) <= max_len) {
-        res <- paste0(x, collapse=sep)
+        res <- paste0(x, collapse = sep)
     } else {
-        res <- paste0(x[seq_len(max_len-1)], collapse=sep)
-        res <- paste0(res, " ... ", x[length(x)], collapse=sep)
+        res <- paste0(x[seq_len(max_len - 1)], collapse = sep)
+        res <- paste0(res, " ... ", x[length(x)], collapse = sep)
     }
-    
+
     res <- paste0(prefix, res)
     res
 }

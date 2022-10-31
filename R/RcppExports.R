@@ -353,6 +353,10 @@ iterate_matrix_anndata_hdf5_cpp <- function(file, group, buffer_size) {
     .Call(`_BPCells_iterate_matrix_anndata_hdf5_cpp`, file, group, buffer_size)
 }
 
+read_hdf5_string_cpp <- function(path, group, buffer_size) {
+    .Call(`_BPCells_read_hdf5_string_cpp`, path, group, buffer_size)
+}
+
 iterate_matrix_log1p_cpp <- function(matrix) {
     .Call(`_BPCells_iterate_matrix_log1p_cpp`, matrix)
 }

@@ -1,12 +1,14 @@
 raw_fragments_to_tibble <- function(raw_fragments) {
-    dplyr::bind_rows(raw_fragments$fragments, .id="chr")
+    dplyr::bind_rows(raw_fragments$fragments, .id = "chr")
 }
 
 tibble_to_fragments <- function(x, chr_names, cell_names) {
-    x %>% dplyr::mutate(
-        chr = factor(chr_names[chr], levels=chr_names),
-        cell_id = factor(cell_names[cell_id], levels=cell_names)
-    ) %>% convert_to_fragments()
+    x %>%
+        dplyr::mutate(
+            chr = factor(chr_names[chr], levels = chr_names),
+            cell_id = factor(cell_names[cell_id], levels = cell_names)
+        ) %>%
+        convert_to_fragments()
 }
 
 test_that("Chromosome name/index select works", {
@@ -14,13 +16,13 @@ test_that("Chromosome name/index select works", {
     library(GenomicRanges)
 
     withr::local_seed(1258123)
-    
+
     nfrags <- 10e3
     short_chrs_tibble <- tibble::tibble(
-        chr = sample.int(500, nfrags, replace=TRUE),
-        start = sample.int(10000, nfrags, replace=TRUE),
-        end = start + sample.int(500, nfrags, replace=TRUE),
-        cell_id = sample.int(500, nfrags, replace=TRUE)
+        chr = sample.int(500, nfrags, replace = TRUE),
+        start = sample.int(10000, nfrags, replace = TRUE),
+        end = start + sample.int(500, nfrags, replace = TRUE),
+        cell_id = sample.int(500, nfrags, replace = TRUE)
     ) %>% dplyr::arrange(chr, start)
 
     short_chrs <- tibble_to_fragments(
@@ -29,20 +31,21 @@ test_that("Chromosome name/index select works", {
         paste0("cell", 1:500)
     )
 
-    chr_selection <- sample.int(500, 250, replace=FALSE)
+    chr_selection <- sample.int(500, 250, replace = FALSE)
 
     short_chrs_ans <- as(short_chrs, "GRanges")
     short_chrs_ans <- short_chrs_ans[as.character(GenomicRanges::seqnames(short_chrs_ans)) %in% paste0("chr", chr_selection)] %>%
-        convert_to_fragments() %>% as("GRanges")
-    
+        convert_to_fragments() %>%
+        as("GRanges")
+
     short_chrs_2 <- select_chromosomes(short_chrs, chr_selection) %>%
         as("GRanges")
 
     short_chrs_3 <- select_chromosomes(short_chrs, paste0("chr", chr_selection)) %>%
         as("GRanges")
 
-    expect_equal(short_chrs_ans, short_chrs_2, check.attributes=FALSE)
-    expect_equal(short_chrs_ans, short_chrs_3, check.attributes=FALSE)
+    expect_equal(short_chrs_ans, short_chrs_2, check.attributes = FALSE)
+    expect_equal(short_chrs_ans, short_chrs_3, check.attributes = FALSE)
 })
 
 test_that("Cell name/index select works", {
@@ -54,18 +57,19 @@ test_that("Cell name/index select works", {
     nfrags <- 1e4
     nchrs <- 20
     ncells <- 100
-    cell_selection <- sample.int(ncells, ncells/2, replace=FALSE)
+    cell_selection <- sample.int(ncells, ncells / 2, replace = FALSE)
 
     frags_tibble <- tibble::tibble(
-        chr = sample.int(nchrs, nfrags, replace=TRUE),
-        start = sample.int(10000, nfrags, replace=TRUE),
-        end = start + sample.int(500, nfrags, replace=TRUE),
-        cell_id = sample.int(ncells, nfrags, replace=TRUE)
-    ) %>% dplyr::arrange(chr, start) %>%
+        chr = sample.int(nchrs, nfrags, replace = TRUE),
+        start = sample.int(10000, nfrags, replace = TRUE),
+        end = start + sample.int(500, nfrags, replace = TRUE),
+        cell_id = sample.int(ncells, nfrags, replace = TRUE)
+    ) %>%
+        dplyr::arrange(chr, start) %>%
         dplyr::filter(
             (chr == 2 & !(cell_id %in% cell_selection)) |
-            (chr == 3 & cell_id %in% cell_selection) |
-            !(chr %in% c(2, 3))
+                (chr == 3 & cell_id %in% cell_selection) |
+                !(chr %in% c(2, 3))
         )
 
     frags <- tibble_to_fragments(
@@ -75,12 +79,14 @@ test_that("Cell name/index select works", {
     )
 
     frags_ans <- tibble_to_fragments(
-        frags_tibble %>% 
+        frags_tibble %>%
             dplyr::filter(cell_id %in% cell_selection) %>%
             dplyr::mutate(cell_id = match(cell_id, cell_selection)),
         frags@chr_names,
         frags@cell_names[cell_selection]
-    ) %>% write_fragments_memory() %>% as("GRanges")
+    ) %>%
+        write_fragments_memory() %>%
+        as("GRanges")
 
     frags_2 <- select_cells(frags, cell_selection) %>%
         as("GRanges")
@@ -112,15 +118,15 @@ test_that("Region select works", {
         start = c(1000000, 6373800, 6373699, 224956193, 225551362),
         end = c(1100000, 6375000, 15144614, 227996287, 230681382)
     )
-    
-    inclusive <- frags %>% selectRegions(regions, invert_selection=FALSE)
-    exclusive <- frags %>% selectRegions(regions, invert_selection=TRUE)
+
+    inclusive <- frags %>% selectRegions(regions, invert_selection = FALSE)
+    exclusive <- frags %>% selectRegions(regions, invert_selection = TRUE)
 
     gregions <- as(regions, "GRanges")
     end(gregions) <- regions$end - 1
 
     ans_inclusive <- subsetByOverlaps(gfrags, gregions)
-    ans_exclusive <- subsetByOverlaps(gfrags, gregions, invert=TRUE)
+    ans_exclusive <- subsetByOverlaps(gfrags, gregions, invert = TRUE)
 
     expect_equal(as(inclusive, "GRanges"), ans_inclusive)
     expect_equal(as(exclusive, "GRanges"), ans_exclusive)
@@ -130,7 +136,7 @@ test_that("subset_lengths works", {
     frags <- open_fragments_10x("../data/mini_fragments.tsv.gz") %>%
         write_fragments_memory()
     gfrags <- as(frags, "GRanges")
-    
+
     min_size <- 20
     max_size <- 100
 
@@ -139,9 +145,9 @@ test_that("subset_lengths works", {
     expect_true(max(lengths) > max_size)
 
     ans <- gfrags[lengths >= min_size & lengths <= max_size]
-    
+
     subset <- subset_lengths(frags, min_size, max_size)
-    
+
     expect_equal(as(subset, "GRanges"), ans)
 })
 
@@ -158,37 +164,37 @@ test_that("Name prefix works", {
 test_that("footprint works", {
     # Footprint in bases 21-27, making a pattern of 1,2,3,4,5,6,7
     # Note: Doesn't thoroughly test overlapping regions
-    motif_positions <- list(chr=c("chr1", "chr2"), start=c(24,2), end=c(60,25), strand=c("+", "-"))
+    motif_positions <- list(chr = c("chr1", "chr2"), start = c(24, 2), end = c(60, 25), strand = c("+", "-"))
     frags1 <- tibble::tibble(
-        chr=1,
+        chr = 1,
         #       fix start;  fix end;   weighted; finish
-        start=  c(rep(10, 7), 22:27,     24,26,  23,27),
-        end=    c(22:28,      rep(40,6), 26,28,  26,40),
-        cell_id=c(rep(1,7), rep(3,6),  5 ,7,     9, 11)
+        start = c(rep(10, 7), 22:27, 24, 26, 23, 27),
+        end = c(22:28, rep(40, 6), 26, 28, 26, 40),
+        cell_id = c(rep(1, 7), rep(3, 6), 5, 7, 9, 11)
     )
     frags2 <- frags1 %>%
-        dplyr::mutate(chr=2, cell_id=cell_id + 1)
-    
+        dplyr::mutate(chr = 2, cell_id = cell_id + 1)
+
     frags <- tibble_to_fragments(
         dplyr::bind_rows(frags1, frags2) %>% dplyr::arrange(chr, start),
         c("chr1", "chr2"),
         paste0("c", 1:12)
-    ) 
+    )
 
     expected <- tibble::tibble(
         pos = c(-4:4, 4:-4),
         group = c(rep("grp1", 9), rep("grp2", 9)),
-        value = rep(c(0,1:7,0), 2)
+        value = rep(c(0, 1:7, 0), 2)
     ) %>% dplyr::arrange(group, pos)
 
     for (i in 0:4) {
         res <- footprint(
-            frags, 
-            motif_positions, 
-            cell_groups=rep(c("grp1", "grp2"), 6), 
-            cell_weights=c(1,1,1,1,2,2,4,4,1,1,1,1),
-            flank=i
-        ) 
+            frags,
+            motif_positions,
+            cell_groups = rep(c("grp1", "grp2"), 6),
+            cell_weights = c(1, 1, 1, 1, 2, 2, 4, 4, 1, 1, 1, 1),
+            flank = i
+        )
         expect_equal(
             res %>% dplyr::arrange(group, pos),
             expected %>% dplyr::filter(abs(pos) <= i)
@@ -199,29 +205,29 @@ test_that("footprint works", {
 test_that("Generic methods work", {
     frags <- open_fragments_10x("../data/mini_fragments.tsv.gz") %>%
         write_fragments_memory()
-    
 
-    first_half_cells <- sort(sample.int(length(cellNames(frags)), length(cellNames(frags))/2))
+
+    first_half_cells <- sort(sample.int(length(cellNames(frags)), length(cellNames(frags)) / 2))
     second_half_cells <- seq_along(cellNames(frags))[-first_half_cells]
 
     dir <- withr::local_tempdir()
 
     ident_transforms <- list(
-        write_memory = write_fragments_memory(frags, compress=TRUE),
-        write_memory_unpacked = write_fragments_memory(frags, compress=FALSE),
+        write_memory = write_fragments_memory(frags, compress = TRUE),
+        write_memory_unpacked = write_fragments_memory(frags, compress = FALSE),
         write_dir = write_fragments_dir(frags, file.path(dir, "fragments_identical")),
         write_h5 = write_fragments_hdf5(frags, file.path(dir, "fragments_identical.h5")),
-        #write_bed = write_fragments_10x(frags, file.path(dir, "fragments_identical.tsv")),
+        # write_bed = write_fragments_10x(frags, file.path(dir, "fragments_identical.tsv")),
         shift = shift_fragments(frags),
         lengthSelect = subset_lengths(frags),
         chrSelectName = select_chromosomes(frags, chrNames(frags)),
         chrSelectIdx = select_chromosomes(frags, seq_along(chrNames(frags))),
         cellSelectName = select_cells(frags, cellNames(frags)),
         cellSelectIdx = select_cells(frags, seq_along(cellNames(frags))),
-        chrRename = new("ChrRename", fragments=frags, chr_names=chrNames(frags)),
-        cellRename = new("CellRename", fragments=frags, cell_names=cellNames(frags)),
+        chrRename = new("ChrRename", fragments = frags, chr_names = chrNames(frags)),
+        cellRename = new("CellRename", fragments = frags, cell_names = cellNames(frags)),
         cellPrefix = prefix_cell_names(frags, ""),
-        regionSelect = selectRegions(frags, list(chr=chrNames(frags), start=rep_len(0, length(chrNames(frags))), end=rep_len(1e9, length(chrNames(frags))))),
+        regionSelect = selectRegions(frags, list(chr = chrNames(frags), start = rep_len(0, length(chrNames(frags))), end = rep_len(1e9, length(chrNames(frags))))),
         merge = select_cells(c(select_cells(frags, first_half_cells), select_cells(frags, second_half_cells)), cellNames(frags))
     )
 
@@ -231,7 +237,7 @@ test_that("Generic methods work", {
         expect_equal(chrNames(trans), chrNames(frags))
         expect_equal(cellNames(trans), cellNames(frags))
         expect_equal(write_fragments_memory(trans), frags)
-        
+
         chrNames(trans) <- paste0("new-", chrNames(frags))
         cellNames(trans) <- paste0("new-", cellNames(frags))
         expect_equal(chrNames(trans), paste0("new-", chrNames(frags)))
