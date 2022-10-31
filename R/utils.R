@@ -185,6 +185,9 @@ remove_ensembl_version <- function(vec) {
 #' symbols in `query`
 #' @export
 match_gene_symbol <- function(query, subject, gene_mapping = human_gene_mapping) {
+  assert_is(query, "character")
+  assert_is(subject, "character")
+  assert_is(gene_mapping, "character")
   # Any exact match counts
   res <- match(query, subject, incomparables = NA)
 
@@ -214,6 +217,8 @@ match_gene_symbol <- function(query, subject, gene_mapping = human_gene_mapping)
 #' Character vector of canonical gene symbols for each symbol in `query`
 #' @export
 canonical_gene_symbol <- function(query, gene_mapping = human_gene_mapping) {
+  assert_is(query, "character")
+  assert_is(gene_mapping, "character")
   res <- remove_ensembl_version(query)
   res <- human_gene_mapping[res]
   names(res) <- query
