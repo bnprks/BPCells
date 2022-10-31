@@ -10,7 +10,7 @@ template:
     in_header: |
        <script defer data-domain="benparks.net" src="https://plausible.benparks.net/js/visit-counts.js"></script>
     after_body: |
-       <img src="https://data.benparks.net/viewcounts/bpcells-docs.png" style="position:absolute;" />
+       <img src="https://data.benparks.net/flask-plausible/bpcells-docs.png" style="position:absolute;" />
 
 
 # cosmo, flatly, united, sandstone all look reasonable
@@ -55,7 +55,7 @@ reference:
   - write_matrix_memory
 - title: "Matrix Utilities"
 - contents:
-  - matrixStats
+  - matrix_stats
   - convert_matrix_type
   - transpose_storage_order
   - IterableMatrix-methods
