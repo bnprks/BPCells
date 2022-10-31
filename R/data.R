@@ -1,0 +1,28 @@
+#' Gene Symbol Mapping data
+#'
+#' Mapping of the canonical gene symbols corresponding to each
+#' unambiguous alias, previous symbol, ensembl ID, or entrez ID
+#'
+#' @format **human_gene_mapping**
+#'
+#' A named character vector. Names are aliases or IDs and values
+#' are the corresponding canonical gene symbol
+#'
+#' @source **human_gene_mapping**
+#'
+#' <http://ftp.ebi.ac.uk/pub/databases/genenames/hgnc/tsv/non_alt_loci_set.txt>
+#'
+#' @rdname gene_mapping
+"human_gene_mapping"
+
+#' @rdname gene_mapping
+#' @format **mouse_gene_mapping**
+#'
+#' A named character vector. Names are aliases or IDs and values
+#' are the corresponding canonical gene symbol
+#'
+#' @source **mouse_gene_mapping**
+#'
+#' <http://www.informatics.jax.org/downloads/reports/MGI_EntrezGene.rpt>
+#' <http://www.informatics.jax.org/downloads/reports/MRK_ENSEMBL.rpt>
+"mouse_gene_mapping"

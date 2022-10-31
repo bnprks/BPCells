@@ -29,7 +29,11 @@ Imports:
     vctrs,
     stringr,
     tibble,
-    dplyr
+    dplyr,
+    ggplot2,
+    scales
 Suggests:
     IRanges,
     GenomicRanges
+Depends: 
+    R (>= 2.10)

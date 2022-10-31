@@ -117,3 +117,69 @@ order_ranges <- function(ranges, chr_levels) {
   ranges <- normalize_ranges(ranges)
   order(match(as.character(ranges$chr), chr_levels), ranges$end, ranges$start)
 }
+
+# Helper function to remove ensembl version suffixes from gene names
+remove_ensembl_version <- function(vec) {
+  is_versioned_ensembl <- stringr::str_detect(vec, "^ENS(MUS)?G[0-9]{11}\\.[0-9]+")
+  vec[is_versioned_ensembl] <- stringr::str_remove(vec[is_versioned_ensembl], "\\.[0-9]+")
+  vec
+}
+
+#' Gene symbol matching
+#'
+#' Correct alias gene symbols, Ensembl IDs, and Entrez IDs to canonical gene
+#' symbols. This is useful for matching gene names between different datasets
+#' which might not always use the same gene naming conventions.
+#'
+#' @rdname gene_matching
+#' @param query Character vector of gene symbols or IDs
+#' @param subject Vector of gene symbols or IDs to index into
+#' @param gene_mapping Named vector where names are gene symbols or IDs and values are
+#'   canonical gene symbols
+#' @return **match_gene_symbol**
+#'
+#' Integer vector of indices `v` such that `subject[v]` corresponds to the gene
+#' symbols in `query`
+#' @export
+match_gene_symbol <- function(query, subject, gene_mapping = human_gene_mapping) {
+  # Any exact match counts
+  res <- match(query, subject, incomparables = NA)
+
+  initial_missing <- sum(is.na(res))
+
+  query <- human_gene_mapping[remove_ensembl_version(query)]
+  subject <- human_gene_mapping[remove_ensembl_version(subject)]
+
+  corrected_match <- match(query, subject, incomparables = NA)
+
+  res[is.na(res)] <- corrected_match[is.na(res)]
+
+  corrected_missing <- sum(is.na(res))
+  if (corrected_missing > 0) {
+    rlang::warn(sprintf(
+      "Could not match %d symbols: %s",
+      corrected_missing,
+      pretty_print_vector(query[is.na(res)])
+    ))
+  }
+  return(res)
+}
+
+#' @rdname gene_matching
+#' @return **canonical_gene_symbol**
+#'
+#' Character vector of canonical gene symbols for each symbol in `query`
+#' @export
+canonical_gene_symbol <- function(query, gene_mapping = human_gene_mapping) {
+  res <- remove_ensembl_version(query)
+  res <- human_gene_mapping[res]
+  names(res) <- query
+  if (any(is.na(res))) {
+    rlang::warn(sprintf(
+      "Could not match %d symbols: %s",
+      sum(is.na(res)),
+      pretty_print_vector(query[is.na(res)])
+    ))
+  }
+  return(res)
+}
