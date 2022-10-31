@@ -119,8 +119,8 @@ test_that("Region select works", {
         end = c(1100000, 6375000, 15144614, 227996287, 230681382)
     )
 
-    inclusive <- frags %>% selectRegions(regions, invert_selection = FALSE)
-    exclusive <- frags %>% selectRegions(regions, invert_selection = TRUE)
+    inclusive <- frags %>% select_regions(regions, invert_selection = FALSE)
+    exclusive <- frags %>% select_regions(regions, invert_selection = TRUE)
 
     gregions <- as(regions, "GRanges")
     end(gregions) <- regions$end - 1
@@ -227,7 +227,7 @@ test_that("Generic methods work", {
         chrRename = new("ChrRename", fragments = frags, chr_names = chrNames(frags)),
         cellRename = new("CellRename", fragments = frags, cell_names = cellNames(frags)),
         cellPrefix = prefix_cell_names(frags, ""),
-        regionSelect = selectRegions(frags, list(chr = chrNames(frags), start = rep_len(0, length(chrNames(frags))), end = rep_len(1e9, length(chrNames(frags))))),
+        regionSelect = select_regions(frags, list(chr = chrNames(frags), start = rep_len(0, length(chrNames(frags))), end = rep_len(1e9, length(chrNames(frags))))),
         merge = select_cells(c(select_cells(frags, first_half_cells), select_cells(frags, second_half_cells)), cellNames(frags))
     )
 
