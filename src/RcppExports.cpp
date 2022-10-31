@@ -1197,6 +1197,19 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// read_hdf5_string_cpp
+std::vector<std::string> read_hdf5_string_cpp(std::string path, std::string group, uint32_t buffer_size);
+RcppExport SEXP _BPCells_read_hdf5_string_cpp(SEXP pathSEXP, SEXP groupSEXP, SEXP buffer_sizeSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< std::string >::type path(pathSEXP);
+    Rcpp::traits::input_parameter< std::string >::type group(groupSEXP);
+    Rcpp::traits::input_parameter< uint32_t >::type buffer_size(buffer_sizeSEXP);
+    rcpp_result_gen = Rcpp::wrap(read_hdf5_string_cpp(path, group, buffer_size));
+    return rcpp_result_gen;
+END_RCPP
+}
 // iterate_matrix_log1p_cpp
 SEXP iterate_matrix_log1p_cpp(SEXP matrix);
 RcppExport SEXP _BPCells_iterate_matrix_log1p_cpp(SEXP matrixSEXP) {
@@ -1670,6 +1683,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_BPCells_write_matrix_10x_hdf5_cpp", (DL_FUNC) &_BPCells_write_matrix_10x_hdf5_cpp, 9},
     {"_BPCells_dims_matrix_anndata_hdf5_cpp", (DL_FUNC) &_BPCells_dims_matrix_anndata_hdf5_cpp, 3},
     {"_BPCells_iterate_matrix_anndata_hdf5_cpp", (DL_FUNC) &_BPCells_iterate_matrix_anndata_hdf5_cpp, 3},
+    {"_BPCells_read_hdf5_string_cpp", (DL_FUNC) &_BPCells_read_hdf5_string_cpp, 3},
     {"_BPCells_iterate_matrix_log1p_cpp", (DL_FUNC) &_BPCells_iterate_matrix_log1p_cpp, 1},
     {"_BPCells_iterate_matrix_log1psimd_cpp", (DL_FUNC) &_BPCells_iterate_matrix_log1psimd_cpp, 1},
     {"_BPCells_iterate_matrix_min_cpp", (DL_FUNC) &_BPCells_iterate_matrix_min_cpp, 2},

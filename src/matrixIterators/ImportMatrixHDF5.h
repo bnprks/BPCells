@@ -37,6 +37,7 @@ StoredMatrixWriter<uint32_t> create10xFeatureMatrix(
     uint32_t buffer_size,
     uint32_t chunk_size
 );
+
 // Read AnnData sparse matrix, with an implicit transpose to CSC format for
 // any data stored in CSR format
 StoredMatrix<float> openAnnDataMatrix(

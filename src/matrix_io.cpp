@@ -619,3 +619,15 @@ SEXP iterate_matrix_anndata_hdf5_cpp(std::string file, std::string group, uint32
         XPtr<StoredMatrix<float>>(new StoredMatrix(openAnnDataMatrix(file, group, buffer_size)))
     );
 }
+
+// [[Rcpp::export]]
+std::vector<std::string>
+read_hdf5_string_cpp(std::string path, std::string group, uint32_t buffer_size) {
+    H5ReaderBuilder rb(path, "/", buffer_size);
+    auto reader = rb.openStringReader(group);
+    std::vector<std::string> res;
+    for (uint32_t i = 0; i < reader->size(); i++) {
+        res.push_back(reader->get(i));
+    }
+    return res;
+}
