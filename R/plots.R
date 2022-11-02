@@ -1,5 +1,73 @@
 
 
+#' Discrete color palettes
+#'
+#' These color palettes are derived from the ArchR color palettes, and provide
+#' large sets of distinguishable colors
+#'
+#' If the requested number of colors is too large, a new palette will be constructed
+#' via interpolation from the requested palette
+#'
+#' @param name Name of the color palette
+#' @param n Minimum number of colors needed
+#' @export
+discrete_palette <- function(name, n = 1) {
+    palettes <- list(
+        # 20-colors
+        stallion = c(
+            "#D51F26", "#272E6A", "#208A42", "#89288F", "#F47D2B", "#FEE500", "#8A9FD1", "#C06CAB", "#E6C2DC",
+            "#90D5E4", "#89C75F", "#F37B7D", "#9983BD", "#D24B27", "#3BBCA8", "#6E4B9E", "#0C727C", "#7E1416", "#D8A767", "#3D3D3D"
+        ),
+        calm = c(
+            "#7DD06F", "#844081", "#688EC1", "#C17E73", "#484125", "#6CD3A7", "#597873", "#7B6FD0", "#CF4A31", "#D0CD47",
+            "#722A2D", "#CBC594", "#D19EC4", "#5A7E36", "#D4477D", "#403552", "#76D73C", "#96CED5", "#CE54D1", "#C48736"
+        ),
+        kelly = c(
+            "#FFB300", "#803E75", "#FF6800", "#A6BDD7", "#C10020", "#CEA262", "#817066", "#007D34", "#F6768E", "#00538A",
+            "#FF7A5C", "#53377A", "#FF8E00", "#B32851", "#F4C800", "#7F180D", "#93AA00", "#593315", "#F13A13", "#232C16"
+        ),
+
+        # 16-colors
+        bear = c(
+            "#faa818", "#41a30d", "#fbdf72", "#367d7d", "#d33502", "#6ebcbc", "#37526d",
+            "#916848", "#f5b390", "#342739", "#bed678", "#a6d9ee", "#0d74b6",
+            "#60824f", "#725ca5", "#e0598b"
+        ),
+
+        # 15-colors
+        ironMan = c(
+            "#371377", "#7700FF", "#9E0142", "#FF0080", "#DC494C", "#F88D51", "#FAD510", "#FFFF5F", "#88CFA4",
+            "#238B45", "#02401B", "#0AD7D3", "#046C9A", "#A2A475", "grey35"
+        ),
+        circus = c(
+            "#D52126", "#88CCEE", "#FEE52C", "#117733", "#CC61B0", "#99C945", "#2F8AC4", "#332288",
+            "#E68316", "#661101", "#F97B72", "#DDCC77", "#11A579", "#89288F", "#E73F74"
+        ),
+
+        # 12-colors
+        paired = c(
+            "#A6CDE2", "#1E78B4", "#74C476", "#34A047", "#F59899", "#E11E26",
+            "#FCBF6E", "#F47E1F", "#CAB2D6", "#6A3E98", "#FAF39B", "#B15928"
+        ),
+
+        # 11-colors
+        grove = c("#1a1334", "#01545a", "#017351", "#03c383", "#aad962", "#fbbf45", "#ef6a32", "#ed0345", "#a12a5e", "#710162", "#3B9AB2"),
+
+        # 7-colors
+        summerNight = c("#2a7185", "#a64027", "#fbdf72", "#60824f", "#9cdff0", "#022336", "#725ca5"),
+
+        # 5-colors
+        captain = c("grey", "#A1CDE1", "#12477C", "#EC9274", "#67001E")
+    )
+    if (!(name %in% names(palettes))) {
+        stop(sprintf("palette name must be one of: %s", paste0(names(palettes), collapse = ", ")))
+    }
+    palette <- palettes[[name]]
+    if (n > length(palette)) {
+        palette <- grDevices::colorRampPalette(palette, space = "Lab")(n)
+    }
+    return(palette)
+}
 #' Make a knee plot of single cell read counts
 #'
 #' Plots read count rank vs. number of reads on a log-log scale.
@@ -54,41 +122,339 @@ plot_read_count_knee <- function(read_counts, cutoff = NULL, return_data = FALSE
 }
 
 
-#' Notes:
-#' - scattermore seems like a better choice for rasterized plots
-#' Important functionality:
-#' - Can pass
+
+#' Collect features for plotting
 #'
+#' Helper function for data on features to plot from a diverse
+#' set of data sources.
+#'
+#' If `source` is a data.frame, features will be drawn from the columns. If
+#' `source` is a matrix object (`IterableMatrix`, `dgCMatrix`, or `matrix`), features
+#' will be drawn from rows.
+#'
+#' @param features A vector of feature names to collect
+#' @param source A data frame or matrix object to pull features from. Matrices must
+#'   have features as rows with cells as columns.
+#' @param gene_mapping An optional vector for gene name matching with match_gene_symbol().
+#'   Ignored if source is a data frame.
+#' @return Data frame with one column for each feature requested
+#' @export
+collect_features <- function(features, source, gene_mapping = human_gene_mapping) {
+    assert_is(features, "character")
+    assert_is(source, c("data.frame", "IterableMatrix", "dgCMatrix", "matrix"))
+    if (is(source, "data.frame")) {
+        # Data frame
+        assert_has_names(source, features)
+        data <- source[, features]
+    } else if (is(source, "IterableMatrix") || is(source, "dgCMatrix") || is(source, "matrix")) {
+        # Iterable Matrix
+        assert_not_null(rownames(source))
+        indices <- match(features, rownames(source), incomparables = NA)
+        if (!is.null(gene_mapping)) {
+            indices <- match_gene_symbol(features, rownames(source), gene_mapping)
+        } else if (any(is.na(indices))) {
+            rlang::warn(sprintf(
+                "collect_features could not match %d features: %s",
+                sum(is.na(indices)),
+                pretty_print_vector(features[is.na(indices)])
+            ))
+        }
+        features <- features[!is.na(indices)]
+        indices <- indices[!is.na(indices)]
+        data <- source[indices, ]
+        if (is(source, "IterableMatrix")) {
+            data <- as(data, "dgCMatrix")
+        }
+        data <- data %>%
+            as("matrix") %>%
+            t()
+        colnames(data) <- features
+        rownames(data) <- colnames(source)
+    }
+    return(tibble::as_tibble(data, rownames = NA))
+}
 
-# ' Plot a UMAP, t-SNE, or PCA with color highlighting
-# '
-# '
-# '
-# ' @param feature Character vector of features to plot if source is not NULL,
-# '  or a vector of data to plot if source is NULL.
-# ' @param embedding A matrix of dimensions cells x 2 with embedding coordinates
-# ' @param source (optional) Matrix, list, or data frame to pull features from. For
-# '   a matrix, the features must be rows.
-# ' @param ncol Number of columns to use for multi-feature plots
-# ' @param quantile_range (optional) Length 2 vector giving the quantiles to clip the minimum and
-# '   maximum color scale values, as fractions between 0 and 1. NULL or NA values to skip clipping
-# ' @param randomize_order (optional) If TRUE, randomize the order of cells for plotting
-# ' @param point_geom ggplot2 point geom for plotting. Can be used to adjust point size,
-# '   or use an alternative geom like ggrastr::geom_point_rast
-# ' @param
-# ' @param match_gene_symbol (optional) A function to match gene symbols/ids from different
-# '   systems. Used to match entries in `feature` if source represents a gene matrix.
-# '   Function must work like the built-in `match` function, where first argument is the
-# '   requested symbols/ids; second argument is the available symbols/ids; return value
-# '   is a integer vector giving the correct index for each requested entry in the available
-# '   vector (or NA for unmatched IDs)
-# ' @inheritParams plot_read_count_knee
-# ' @return ggplot2 object
-# plot_embedding <- function(feature, embedding, source = NULL, ncol = 3) {}
-#                            quantile_range = c(0.01, 0.99),
-#                            randomize_order = TRUE
-#                            match_gene_symbol = match_gene_symbol_human,
-#                            return_data = FALSE, apply_styling = TRUE) {
+#' Plot UMAP or embeddings
+#'
+#' Plot one or more features by coloring cells in a UMAP plot.
+#' 
+#' ### Smoothing
+#' Smoothing is performed as follows: first, the smoothing matrix is normalized
+#' so the sum of incoming weights to every cell is 1. Then, the raw data values
+#' are repeatedly multiplied by the smoothing matrix and re-scaled so the average
+#' value stays the same.
+#' 
+#' @param features Character vector of features to plot if source is not NULL,
+#'  or a vector of data to plot if source is NULL.
+#' @param embedding A matrix of dimensions cells x 2 with embedding coordinates
+#' @param source (optional) Matrix, list, or data frame to pull features from. For
+#'   a matrix, the features must be rows.
+#' @param quantile_range (optional) Length 2 vector giving the quantiles to clip the minimum and
+#'   maximum color scale values, as fractions between 0 and 1. NULL or NA values to skip clipping
+#' @param randomize_order If TRUE, shuffle cells to prevent overplotting biases. Can pass
+#'   an integer instead to specify a random seed to use.
+#' @param smooth (optional) Sparse matrix of dimensions cells x cells with cell-cell distance
+#'   weights for smoothing.
+#' @param smooth_rounds Number of multiplication rounds to apply when smoothing.
+#' @param gene_mapping An optional vector for gene name matching with match_gene_symbol().
+#'   Ignored if `source` is a data frame.
+#' @param size Point size for plotting
+#' @param rasterize Whether to rasterize the point drawing to speed up display in graphics
+#' programs.
+#' @param raster_pixels Number of pixels to use when rasterizing. Can provide one number for
+#' square dimensions, or two numbers for width x height.
+#' @param legend_continuous Whether to label continuous features by quantile or value. "auto"
+#'   labels by quantile only when all features are continuous and `quantile_range` is not NULL.
+#'   Quantile labeling adds text annotation listing the range of displayed values.
+#' @param labels_quantile_range Whether to add a text label with the value range of each feature
+#'   when the legend is set to quantile
+#' @param colors_continuous Vector of colors to use for continuous color palette
+#' @param labels_discrete Whether to add text labels at the center of each group for discrete (categorical) features.
+#' @param legend_discrete Whether to show the legend for discrete (categorical) features.
+#' @param colors_discrete Vector of colors to use for discrete (categorical) features.
+#' @param plot_grid If `TRUE`, plot output in a grid using patchwork::wrap_plots(). If `FALSE`
+#'   return multiple plots as a list
+#' @inheritParams plot_read_count_knee
+#' @return ggplot2 object
+plot_embedding <- function(features, embedding, source = NULL,
+                           quantile_range = c(0.01, 0.99),
+                           randomize_order = TRUE,
+                           smooth = NULL,
+                           smooth_rounds = 3,
+                           gene_mapping = human_gene_mapping,
+                           size = NULL,
+                           rasterize = FALSE, raster_pixels = 512,
+                           legend_continuous = c("auto", "quantile", "value"),
+                           labels_quantile_range = TRUE,
+                           colors_continuous = c("lightgrey", "#4682B4"),
+                           legend_discrete = TRUE,
+                           labels_discrete = TRUE,
+                           colors_discrete = discrete_palette("stallion"),
+                           return_data = FALSE, plot_grid = TRUE, apply_styling = TRUE) {
+    assert_is(embedding, "matrix")
+    assert_true(ncol(embedding) == 2)
+    assert_is(randomize_order, c("logical", "numeric"))
+    assert_wholenumber(smooth_rounds)
+    assert_is(raster_pixels, "numeric")
+    legend_continuous <- match.arg(legend_continuous)
+    assert_is(colors_continuous, "character")
+    assert_is(labels_discrete, "logical")
+    assert_is(legend_discrete, "logical")
+    assert_is(colors_discrete, "character")
+    assert_is(return_data, "logical")
+    assert_is(plot_grid, "logical")
+    assert_is(apply_styling, "logical")
+
+    # Check raster + size arguments
+    if (is.null(size)) {
+        size <- ifelse(rasterize, 1.01, 0.1)
+    } else {
+        assert_is_numeric(size)
+    }
+
+    if (!rasterize) {
+        point_geom <- ggplot2::geom_point(size = size)
+    } else {
+        if (length(raster_pixels) == 1) {
+            raster_pixels <- c(raster_pixels, raster_pixels)
+        }
+        point_geom <- scattermore::geom_scattermore(pointsize = size, pixels = raster_pixels)
+    }
+
+    # Fetch the actual data
+    data <- list(embedding = embedding)
+    if (is.null(source)) {
+        # Interpret feature as the data to plot
+        assert_true(length(features) == nrow(embedding))
+        feature_name <- argument_name(features, 2)
+        data$data <- list(features)
+        names(data$data) <- feature_name
+        data$data <- tibble::as_tibble(data$data)
+    } else {
+        data$data <- collect_features(features, source, gene_mapping)
+    }
+
+    # Check for mismatched cell counts/names
+    if (is.null(source) && is.character(features) && length(features) != nrow(data$embedding) && length(features) < 50) {
+        rlang::abort("Features length does not match number of cells in embedding.\nDid you forget to pass source?")
+    }
+    assert_true(nrow(data$data) == nrow(data$embedding))
+    if (!is.null(rownames(data$embedding)) && !is.null(rownames(data$data))) {
+        mapping <- match(rownames(data$data), rownames(data$embedding), incomparables = NA)
+        if (!all(is.na(mapping))) {
+            rlang::warn("Cell names are mismatched between source and embedding")
+        } else {
+            data$data <- data$data[mapping, ]
+        }
+    }
+
+    # Perform data smoothing if requested
+    if (!is.null(smooth)) {
+        assert_is(smooth, "dgCMatrix")
+        assert_true(nrow(smooth) == ncol(smooth))
+        assert_true(nrow(smooth) == nrow(embedding))
+        # Normalize smoothing inputs for each cell to sum to 1
+        smooth <- t(t(smooth) / rowSums(smooth)) 
+        
+        numeric_cols <- as.logical(lapply(data$data, is.numeric))
+        d <- as.matrix(data$data[,numeric_cols]) %>% t()
+        target_means <- rowMeans(d)
+        for (i in seq_len(smooth_rounds)) {
+            d <- d %*% smooth
+            d <- d * (target_means / rowMeans(d))
+        }
+        d <- t(d)
+        for (i in seq_along(numeric_cols)) {
+            if (numeric_cols[i]) {
+                data$data[[i]] <- d[,i]
+            }
+        }
+        rm(d, target_means)
+    }
+
+    # Perform quantile clipping if requested
+    if (!is.null(quantile_range)) {
+        assert_is(quantile_range, "numeric")
+        data$quantile_cutoffs <- list()
+        for (f in names(data$data)) {
+            if (!is.numeric(data$data[[f]])) next()
+            cutoffs <- quantile(data$data[[f]], quantile_range)
+            data$quantile_cutoffs[[f]] <- cutoffs
+            data$data[[f]] <- data$data[[f]] %>%
+                pmax(min(cutoffs)) %>%
+                pmin(max(cutoffs))
+        }
+    } else {
+        if (legend_continuous == "quantile") {
+            rlang::warn("legend_continuous = \"quantile\" not supported when quantile_range is NULL")
+            legend_continuous <- "auto"
+        }
+    }
+
+    # Generate a random order for cells
+    if (is.numeric(randomize_order) || randomize_order) {
+        if (is.numeric(randomize_order)) {
+            prev_seed <- get(".Random.seed", globalenv(), mode = "integer", inherits = FALSE)
+            set.seed(randomize_order)
+        }
+        data$random_order <- sample.int(nrow(embedding))
+        if (is.numeric(randomize_order)) {
+            set.seed(prev_seed)
+        }
+    }
+
+    if (return_data) {
+        return(data)
+    }
+    
+    # Apply random order for cells
+    if (is.numeric(randomize_order) || randomize_order) {
+        data$embedding <- data$embedding[data$random_order,]
+        data$data <- data$data[data$random_order,]
+    }
+
+    # Find names for the embedding dimensions
+    embedding_names <- colnames(embedding)
+    if (is.null(embedding_names)) {
+        embedding_names <- paste0(argument_name(embedding, 2), c(" 1", " 2"))
+    }
+    label_pos <- c(min(embedding[, 1]), max(embedding[, 2]))
+
+    # Only share color scale if all data is numeric
+    all_numeric <- all(as.logical(lapply(data$data, is.numeric)))
+    if (legend_continuous == "auto") {
+
+        if (all_numeric && !is.null(quantile_range) && ncol(data$data) > 1) {
+            legend_continuous <- "quantile"
+        } else {
+            legend_continuous <- "value"
+        }
+    }
+
+    aspect_ratio <- diff(range(data$embedding[,1])) / diff(range(data$embedding[,2]))
+
+    # Make plots
+    plots <- lapply(colnames(data$data), function(feature) {
+        feature_values <- data$data[[feature]]
+        # Re-scale if combining color scales
+        is_continuous <- is.numeric(data$quantile_cutoffs[[feature]])
+        if (is_continuous && legend_continuous == "quantile") {
+            cutoffs <- data$quantile_cutoffs[[feature]]
+            feature_values <- (feature_values - min(cutoffs)) / max(cutoffs)
+        }
+
+        plot <- ggplot2::ggplot(NULL, ggplot2::aes(data$embedding[, 1], data$embedding[, 2], color = feature_values)) +
+            point_geom +
+            ggplot2::labs(color = "")
+
+        if (!is_continuous && labels_discrete) {
+            centers <- tibble::tibble(
+                x = data$embedding[, 1],
+                y = data$embedding[, 2],
+                label = feature_values
+            ) %>%
+                dplyr::group_by(label) %>%
+                dplyr::summarize(x = mean(x), y = mean(y))
+            plot <- plot + ggrepel::geom_text_repel(data = centers, mapping = ggplot2::aes(x, y, label = label, color = NULL))
+        }
+
+        if (!apply_styling) {
+            return(plot)
+        }
+
+        # Handle color scale (both color and fill since we're trying to get the "rect" shape in the legend)
+        if (is_continuous && legend_continuous == "quantile") {
+            cutoffs <- data$quantile_cutoffs[[feature]]
+            label <- sprintf("(%.2g-%.2g)", cutoffs[1], cutoffs[2])
+            if (labels_quantile_range) {
+                plot <- plot + ggplot2::labs(subtitle = label)
+            }
+            scale_labels <- sprintf("p%.2g", 100 * quantile_range)
+            plot <- plot + ggplot2::scale_color_gradientn(
+                colors = colors_continuous, breaks = c(0, 1), labels = scale_labels,
+                limits = c(0,1)
+            )
+        } else if (is_continuous) {
+            plot <- plot + ggplot2::scale_color_gradientn(colors = colors_continuous,
+                limits = c(0,1)
+            )
+        } else {
+            palette <- colors_discrete
+            colors_needed <- dplyr::n_distinct(feature_values)
+            if (length(palette) < colors_needed) {
+                palette <- grDevices::colorRampPalette(palette, space = "Lab")(colors_needed)
+            }
+            plot <- plot + ggplot2::scale_color_manual(values = palette)
+            if (legend_discrete) {
+                # Set color guide to use squares, with a max of 8 per column
+                plot <- plot + ggplot2::guides(
+                    color = ggplot2::guide_legend(nrow = 8, override.aes = list(size = 3, shape = "square"))
+                )
+            } else {
+                plot <- plot + ggplot2::guides(color = "none")
+            }
+        }
+        plot <- plot +
+            ggplot2::labs(x = embedding_names[1], y = embedding_names[2], title = feature) +
+            ggplot2::coord_fixed(aspect_ratio) +
+            ggplot2::theme_classic() #+
+            #ggplot2::theme(plot.title = ggplot2::element_text(hjust = 0.5))
 
 
-# }
+
+        return(plot)
+    })
+
+    if (!plot_grid && length(plots) > 1) {
+        return(plots)
+    } else if (!plot_grid || length(plots) == 1) {
+        return(plots[[1]])
+    } else {
+        guides <- ifelse(all_numeric && legend_continuous == "quantile", "collect", "auto")
+        plot <- patchwork::wrap_plots(plots)
+        if (apply_styling) {
+            plot <- plot + patchwork::plot_layout(guides = guides, byrow = TRUE)
+        }
+        return(plot)
+    }
+}

@@ -21,9 +21,10 @@ LinkingTo:
     Rcpp,
     RcppEigen
 Imports: 
+    methods,
+    grDevices,
     magrittr,
     Matrix,
-    methods,
     Rcpp,
     rlang,
     vctrs,
@@ -31,7 +32,12 @@ Imports:
     tibble,
     dplyr,
     ggplot2,
-    scales
+    scales,
+    patchwork,
+    scattermore,
+    ggrepel,
+    RColorBrewer,
+    hexbin
 Suggests:
     IRanges,
     GenomicRanges
