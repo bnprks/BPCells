@@ -5,7 +5,7 @@
 # No identifiable information or IP addresses are saved once server logs are 
 # deleted after 14 days. More information on data privacy policy: https://plausible.io/data-policy
 # You can safely comment out this line if you do not want your installation counted.
-curl --silent https://plausible.benparks.net/flask-plausible/BPCells-configure > /dev/null 2> /dev/null
+curl --silent https://plausible.benparks.net/flask-plausible/bpcells-configure > /dev/null 2> /dev/null
 
 # Test compiling a simple hdf5 program to check for compatibility
 CC=$("${R_HOME}/bin/R" CMD config CC)

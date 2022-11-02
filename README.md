@@ -60,11 +60,11 @@ peaks <- read_bed("peaks.bed")
 
 # This is fast because the peak matrix calculation is lazy.
 # It will be computed on-the-fly when we actually need results from it.
-peakMatrix <- peakMatrix(packed_fragments, peaks)
+peak_matrix <- peak_matrix(packed_fragments, peaks)
 
 # Here is where the peak matrix calculation happens. Should take
 # under 10 seconds.
-R_matrix <- as(peakMatrix, "dgCMatrix")
+R_matrix <- as(peak_matrix, "dgCMatrix")
 ```
 
 ### Streaming operations
@@ -77,15 +77,15 @@ As an example, we will perform the following pipeline:
 1. Exclude fragments from non-standard chromosomes
 2. Subset our cells
 3. Add a Tn5 offset
-4. Calculate the peakMatrix
+4. Calculate the peak matrix
 5. Calculate the mean-accessibility per peak
 
 If this were done using e.g. GRanges or sparse matrices, we would need to do 3
 passes through the fragments while saving intermediate results, and 2 passes over
-the peakMatrix.
+the peak matrix.
 
 With BPCell's streaming operations, this can all be done directly from the fragments in a single pass, and the memory
-usage is limited to a few bytes per cell for iterating over the peakMatrix 
+usage is limited to a few bytes per cell for iterating over the peak matrix 
 and returning the colMeans.
 ```R
 # Here I make use of the pipe operator (%>%) for better readability
@@ -105,7 +105,7 @@ peak_accessibility <- packed_fragments %>%
   select_chromosomes(standard_chr) %>%
   select_cells(keeper_cells) %>%
   shift_fragments(shift_start=4, shift_end=-5) %>%
-  peakMatrix(peaks) %>%
+  peak_matrix(peaks) %>%
   colMeans()
 ```
 
