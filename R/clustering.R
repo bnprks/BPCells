@@ -1,5 +1,12 @@
 
-
+# Prune zeros from a dgCMatrix
+prune_zeros_dgCMatrix <- function(mat) {
+  nonzeros <- colSums(mat != 0)
+  mat@i <- mat@i[mat@x != 0]
+  mat@x <- mat@x[mat@x != 0]
+  mat@p <- as.integer(c(0, cumsum(nonzeros)))
+  mat
+}
 #' K Nearest Neighbor (KNN) Graph
 #'
 #' Convert a KNN object (e.g. returned by `knn_hnsw()` or `knn_annoy()`) into
@@ -10,12 +17,13 @@
 #' Create a knn graph
 #' @param knn List of 2 matrices -- idx for cell x K neighbor indices,
 #'  dist for cell x K neighbor distances
-#' @param useWeights boolean for whether to replace all distance weights with 1
+#' @param use_weights boolean for whether to replace all distance weights with 1
+#' @param self_loops boolean for whether to allow cells to count themselves as neighbors
 #' @return **knn_to_graph**
 #'   Sparse matrix (dgCMatrix) where `mat[i,j]` = distance from cell `i` to
 #'   cell `j`, or 0 if cell `j` is not in the K nearest neighbors of `i`
-knn_to_graph <- function(knn, useWeights = FALSE) {
-  if (useWeights) {
+knn_to_graph <- function(knn, use_weights = FALSE, self_loops = TRUE) {
+  if (use_weights) {
     weights <- knn$dist
   } else {
     weights <- 1
@@ -25,6 +33,10 @@ knn_to_graph <- function(knn, useWeights = FALSE) {
     j = knn$idx,
     x = weights
   )
+  if (!self_loops) {
+    diag(mat) <- 0
+    mat <- prune_zeros_dgCMatrix(mat)
+  }
   rownames(mat) <- rownames(knn$idx)
   colnames(mat) <- rownames(knn$idx)
   mat
@@ -41,16 +53,16 @@ knn_to_graph <- function(knn, useWeights = FALSE) {
 #'   Sparse matrix (dgCMatrix) where `mat[i,j]` = jaccard index of the overlap
 #'   in nearest neigbors between cell `i` and cell `j`, or 0 if the jaccard index
 #'   is < `min_val`
-knn_to_snn_graph <- function(knn, min_val = 1 / 15) {
-  mat <- knn_to_graph(knn, useWeights = FALSE)
+knn_to_snn_graph <- function(knn, min_val = 1 / 15, self_loops = TRUE) {
+  mat <- knn_to_graph(knn, use_weights = FALSE)
   mat <- mat %*% t(mat)
   mat <- mat / (2 * ncol(knn$idx) - mat)
   mat@x[mat@x < min_val] <- 0
+  if (!self_loops) {
+    diag(mat) <- 0
+  }
   # Prune the explicit 0 entries from storage
-  nonzeros <- colSums(mat != 0)
-  mat@i <- mat@i[mat@x != 0]
-  mat@x <- mat@x[mat@x != 0]
-  mat@p <- as.integer(c(0, cumsum(nonzeros)))
+  mat <- prune_zeros_dgCMatrix(mat)
   mat
 }
 
