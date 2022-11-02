@@ -268,11 +268,20 @@ setMethod("iterate_matrix", "MatrixMultiply", function(x) {
 })
 
 setMethod("short_description", "MatrixMultiply", function(x) {
-    sprintf(
-        "Multiply sparse matrices: %s (%dx%d) * %s (%dx%d)",
-        class(x@left), nrow(x@left), ncol(x@left),
-        class(x@right), nrow(x@right), ncol(x@right)
-    )
+    if (x@transpose) {
+        # Flip the display order for transposed case
+        sprintf(
+            "Multiply sparse matrices: %s (%dx%d) * %s (%dx%d)",
+            class(x@right), ncol(x@right), nrow(x@right),
+            class(x@left), ncol(x@left), nrow(x@left)
+        )
+    } else {
+        sprintf(
+            "Multiply sparse matrices: %s (%dx%d) * %s (%dx%d)",
+            class(x@left), nrow(x@left), ncol(x@left),
+            class(x@right), nrow(x@right), ncol(x@right)
+        )
+    }
 })
 
 setMethod("%*%", signature(x = "IterableMatrix", y = "IterableMatrix"), function(x, y) {
