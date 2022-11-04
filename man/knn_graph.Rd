@@ -5,15 +5,17 @@
 \alias{knn_to_snn_graph}
 \title{K Nearest Neighbor (KNN) Graph}
 \usage{
-knn_to_graph(knn, useWeights = FALSE)
+knn_to_graph(knn, use_weights = FALSE, self_loops = TRUE)
 
-knn_to_snn_graph(knn, min_val = 1/15)
+knn_to_snn_graph(knn, min_val = 1/15, self_loops = TRUE)
 }
 \arguments{
 \item{knn}{List of 2 matrices -- idx for cell x K neighbor indices,
 dist for cell x K neighbor distances}
 
-\item{useWeights}{boolean for whether to replace all distance weights with 1}
+\item{use_weights}{boolean for whether to replace all distance weights with 1}
+
+\item{self_loops}{boolean for whether to allow cells to count themselves as neighbors}
 
 \item{min_val}{minimum jaccard index between neighbors. Values below this will
 round to 0}

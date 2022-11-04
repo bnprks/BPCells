@@ -51,9 +51,9 @@ a graph. The graph is represented as a sparse adjacency matrix.</p>
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">knn_to_graph</span><span class="op">(</span><span class="va">knn</span>, useWeights <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">knn_to_graph</span><span class="op">(</span><span class="va">knn</span>, use_weights <span class="op">=</span> <span class="cn">FALSE</span>, self_loops <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
 <span></span>
-<span><span class="fu">knn_to_snn_graph</span><span class="op">(</span><span class="va">knn</span>, min_val <span class="op">=</span> <span class="fl">1</span><span class="op">/</span><span class="fl">15</span><span class="op">)</span></span></code></pre></div>
+<span><span class="fu">knn_to_snn_graph</span><span class="op">(</span><span class="va">knn</span>, min_val <span class="op">=</span> <span class="fl">1</span><span class="op">/</span><span class="fl">15</span>, self_loops <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -63,8 +63,12 @@ a graph. The graph is represented as a sparse adjacency matrix.</p>
 dist for cell x K neighbor distances</p></dd>
 
 
-<dt>useWeights</dt>
+<dt>use_weights</dt>
 <dd><p>boolean for whether to replace all distance weights with 1</p></dd>
+
+
+<dt>self_loops</dt>
+<dd><p>boolean for whether to allow cells to count themselves as neighbors</p></dd>
 
 
 <dt>min_val</dt>

@@ -28,6 +28,12 @@
     <loc>https://bnprks.github.io/BPCells/reference/cluster.html</loc>
   </url>
   <url>
+    <loc>https://bnprks.github.io/BPCells/reference/cluster_membership_matrix.html</loc>
+  </url>
+  <url>
+    <loc>https://bnprks.github.io/BPCells/reference/collect_features.html</loc>
+  </url>
+  <url>
     <loc>https://bnprks.github.io/BPCells/reference/concat_dimnames.html</loc>
   </url>
   <url>
@@ -37,7 +43,16 @@
     <loc>https://bnprks.github.io/BPCells/reference/convert_to_fragments.html</loc>
   </url>
   <url>
+    <loc>https://bnprks.github.io/BPCells/reference/coordinates.html</loc>
+  </url>
+  <url>
+    <loc>https://bnprks.github.io/BPCells/reference/discrete_palette.html</loc>
+  </url>
+  <url>
     <loc>https://bnprks.github.io/BPCells/reference/distanceToNearestDirectional.html</loc>
+  </url>
+  <url>
+    <loc>https://bnprks.github.io/BPCells/reference/draw_trackplot_grid.html</loc>
   </url>
   <url>
     <loc>https://bnprks.github.io/BPCells/reference/ensure_downloaded.html</loc>
@@ -67,6 +82,12 @@
     <loc>https://bnprks.github.io/BPCells/reference/gene_matching.html</loc>
   </url>
   <url>
+    <loc>https://bnprks.github.io/BPCells/reference/gene_region.html</loc>
+  </url>
+  <url>
+    <loc>https://bnprks.github.io/BPCells/reference/genomic-ranges.html</loc>
+  </url>
+  <url>
     <loc>https://bnprks.github.io/BPCells/reference/index.html</loc>
   </url>
   <url>
@@ -83,6 +104,9 @@
   </url>
   <url>
     <loc>https://bnprks.github.io/BPCells/reference/linear_operator.html</loc>
+  </url>
+  <url>
+    <loc>https://bnprks.github.io/BPCells/reference/mat_norm.html</loc>
   </url>
   <url>
     <loc>https://bnprks.github.io/BPCells/reference/matrixStats.html</loc>
@@ -145,6 +169,9 @@
     <loc>https://bnprks.github.io/BPCells/reference/peak_matrix.html</loc>
   </url>
   <url>
+    <loc>https://bnprks.github.io/BPCells/reference/plot_dot.html</loc>
+  </url>
+  <url>
     <loc>https://bnprks.github.io/BPCells/reference/plot_embedding.html</loc>
   </url>
   <url>
@@ -167,6 +194,9 @@
   </url>
   <url>
     <loc>https://bnprks.github.io/BPCells/reference/read_gtf.html</loc>
+  </url>
+  <url>
+    <loc>https://bnprks.github.io/BPCells/reference/rotate_x_labels.html</loc>
   </url>
   <url>
     <loc>https://bnprks.github.io/BPCells/reference/scan_fragments.html</loc>
@@ -194,6 +224,12 @@
   </url>
   <url>
     <loc>https://bnprks.github.io/BPCells/reference/tile_matrix.html</loc>
+  </url>
+  <url>
+    <loc>https://bnprks.github.io/BPCells/reference/trackplot_bulk.html</loc>
+  </url>
+  <url>
+    <loc>https://bnprks.github.io/BPCells/reference/trackplot_gene.html</loc>
   </url>
   <url>
     <loc>https://bnprks.github.io/BPCells/reference/transpose_storage_order.html</loc>

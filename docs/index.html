@@ -110,19 +110,19 @@
 <span></span>
 <span><span class="co"># This is fast because the peak matrix calculation is lazy.</span></span>
 <span><span class="co"># It will be computed on-the-fly when we actually need results from it.</span></span>
-<span><span class="va">peakMatrix</span> <span class="op">&lt;-</span> <span class="fu">peakMatrix</span><span class="op">(</span><span class="va">packed_fragments</span>, <span class="va">peaks</span><span class="op">)</span></span>
+<span><span class="va">peak_matrix</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/peak_matrix.html">peak_matrix</a></span><span class="op">(</span><span class="va">packed_fragments</span>, <span class="va">peaks</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># Here is where the peak matrix calculation happens. Should take</span></span>
 <span><span class="co"># under 10 seconds.</span></span>
-<span><span class="va">R_matrix</span> <span class="op">&lt;-</span> <span class="fu">as</span><span class="op">(</span><span class="va">peakMatrix</span>, <span class="st">"dgCMatrix"</span><span class="op">)</span></span></code></pre></div>
+<span><span class="va">R_matrix</span> <span class="op">&lt;-</span> <span class="fu">as</span><span class="op">(</span><span class="va">peak_matrix</span>, <span class="st">"dgCMatrix"</span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level3">
 <h3 id="streaming-operations">Streaming operations<a class="anchor" aria-label="anchor" href="#streaming-operations"></a>
 </h3>
 <p>The lazy, stream-oriented design means that we can calculate more complicated transformations in a single pass. This is both faster and more memory-efficient than calculating several intermediate results in a sequential manner.</p>
-<p>As an example, we will perform the following pipeline: 1. Exclude fragments from non-standard chromosomes 2. Subset our cells 3. Add a Tn5 offset 4. Calculate the peakMatrix 5. Calculate the mean-accessibility per peak</p>
-<p>If this were done using e.g. GRanges or sparse matrices, we would need to do 3 passes through the fragments while saving intermediate results, and 2 passes over the peakMatrix.</p>
-<p>With BPCell’s streaming operations, this can all be done directly from the fragments in a single pass, and the memory usage is limited to a few bytes per cell for iterating over the peakMatrix and returning the colMeans.</p>
+<p>As an example, we will perform the following pipeline: 1. Exclude fragments from non-standard chromosomes 2. Subset our cells 3. Add a Tn5 offset 4. Calculate the peak matrix 5. Calculate the mean-accessibility per peak</p>
+<p>If this were done using e.g. GRanges or sparse matrices, we would need to do 3 passes through the fragments while saving intermediate results, and 2 passes over the peak matrix.</p>
+<p>With BPCell’s streaming operations, this can all be done directly from the fragments in a single pass, and the memory usage is limited to a few bytes per cell for iterating over the peak matrix and returning the colMeans.</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Here I make use of the pipe operator (%&gt;%) for better readability</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="st"><a href="https://tidyverse.tidyverse.org" class="external-link">"tidyverse"</a></span><span class="op">)</span></span>
@@ -141,7 +141,7 @@
 <span>  <span class="fu"><a href="reference/select_chromosomes.html">select_chromosomes</a></span><span class="op">(</span><span class="va">standard_chr</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
 <span>  <span class="fu"><a href="reference/select_cells.html">select_cells</a></span><span class="op">(</span><span class="va">keeper_cells</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
 <span>  <span class="fu"><a href="reference/shift_fragments.html">shift_fragments</a></span><span class="op">(</span>shift_start<span class="op">=</span><span class="fl">4</span>, shift_end<span class="op">=</span><span class="op">-</span><span class="fl">5</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
-<span>  <span class="fu">peakMatrix</span><span class="op">(</span><span class="va">peaks</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
+<span>  <span class="fu"><a href="reference/peak_matrix.html">peak_matrix</a></span><span class="op">(</span><span class="va">peaks</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
 <span>  <span class="fu"><a href="https://rdrr.io/r/base/colSums.html" class="external-link">colMeans</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
 <p>Note that if we knew the cell names ahead of time, we could even perform this operation directly on our orignal 10x fragments without ever saving the fragments into memory. This would be fairly slow because 10x fragment files are slow to decompress. With upcoming support for storing packed fragments directly on disk, this can become a much faster operation without ever needing to store fragments in memory.</p>
 </div>

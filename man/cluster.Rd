@@ -6,9 +6,9 @@
 \alias{cluster_graph_seurat}
 \title{Cluster an adjacency matrix}
 \usage{
-cluster_graph_leiden(snn, resolution = 0.001, ...)
+cluster_graph_leiden(snn, resolution = 0.001, seed = 12531, ...)
 
-cluster_graph_louvain(snn, resolution = 1)
+cluster_graph_louvain(snn, resolution = 1, seed = 12531)
 
 cluster_graph_seurat(snn, resolution = 0.8, ...)
 }
@@ -16,6 +16,8 @@ cluster_graph_seurat(snn, resolution = 0.8, ...)
 \item{snn}{Symmetric adjacency matrix (dgCMatrix) output from e.g. knn_to_snn_graph}
 
 \item{resolution}{Resolution parameter. Higher values result in more clusters}
+
+\item{seed}{Random seed for clustering initialization}
 
 \item{...}{Additional arguments to underlying clustering function}
 }

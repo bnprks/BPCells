@@ -60,6 +60,7 @@ reference:
   - transpose_storage_order
   - IterableMatrix-methods
   - min_scalar
+  - add_rows
 - title: "Reference Annotations"
 - contents:
   - human_gene_mapping
@@ -71,10 +72,28 @@ reference:
   - knn_hnsw
   - cluster_graph_leiden
   - knn_to_graph
+  - cluster_membership_matrix
 - title: "Plots"
+- subtitle: "Single cell plots"
+- desc: Plots for single-cell analysis
 - contents:
   - plot_read_count_knee
-  # - plot_embedding
+  - plot_embedding
+  - plot_dot
+- subtitle: "Genomic track plots"
+- desc: Genome-browser style plotting function
+- contents:
+  - draw_trackplot_grid
+  - trackplot_bulk
+  - trackplot_gene
+  - gene_region
+- subtitle: "Plotting utilities"
+- contents:
+  - discrete_palette
+  - collect_features
+  - rotate_x_labels
+
+
 - title: "Internal Functions"
   desc: "Unexported functions for internal use"
 - contents:
@@ -94,4 +113,5 @@ reference:
   - wrapMatrix
   - ensure_downloaded
   - normalize_ranges
+  - genomic-ranges
 

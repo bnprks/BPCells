@@ -7,7 +7,8 @@
 normalize_ranges(
   ranges,
   metadata_cols = character(0),
-  zero_based_coords = !is(ranges, "GRanges")
+  zero_based_coords = !is(ranges, "GRanges"),
+  n = 1
 )
 }
 \arguments{

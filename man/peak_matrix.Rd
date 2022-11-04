@@ -14,8 +14,7 @@ peak_matrix(
 \arguments{
 \item{fragments}{Input fragments object. Must have cell names and chromosome names defined}
 
-\item{ranges}{GRanges object with the ranges to overlap, or list/data frame with columns chr, start, & end.
-Must be sorted in order (chr, end, start) where chromosomes are ordered according to the chromosome names of \code{fragments}.}
+\item{ranges}{GRanges object with the ranges to overlap, or list/data frame with columns chr, start, & end.}
 
 \item{zero_based_coords}{Whether to convert the ranges from a 1-based end-inclusive
 coordinate system to a 0-based end-exclusive coordinate system. Defaults to true

@@ -246,6 +246,11 @@
           <code><a href="min_scalar.html">min_scalar()</a></code> 
         </dt>
         <dd>Take the elementwise min with a constant</dd>
+      </dl><dl><dt>
+          
+          <code><a href="mat_norm.html">add_rows()</a></code> <code><a href="mat_norm.html">add_cols()</a></code> <code><a href="mat_norm.html">multiply_rows()</a></code> <code><a href="mat_norm.html">multiply_cols()</a></code> 
+        </dt>
+        <dd>Broadcasting vector arithmetic</dd>
       </dl></div><div class="section level2">
       <h2 id="reference-annotations">Reference Annotations<a class="anchor" aria-label="anchor" href="#reference-annotations"></a></h2>
       
@@ -269,7 +274,7 @@
         <dd>Gene symbol matching</dd>
       </dl><dl><dt>
           
-          <code><a href="read_gtf.html">read_gtf()</a></code> <code><a href="read_gtf.html">read_gencode_genes()</a></code> 
+          <code><a href="read_gtf.html">read_gtf()</a></code> <code><a href="read_gtf.html">read_gencode_genes()</a></code> <code><a href="read_gtf.html">read_gencode_transcripts()</a></code> 
         </dt>
         <dd>Read GTF gene annotations</dd>
       </dl><dl><dt>
@@ -303,9 +308,20 @@
           <code><a href="knn_graph.html">knn_to_graph()</a></code> <code><a href="knn_graph.html">knn_to_snn_graph()</a></code> 
         </dt>
         <dd>K Nearest Neighbor (KNN) Graph</dd>
+      </dl><dl><dt>
+          
+          <code><a href="cluster_membership_matrix.html">cluster_membership_matrix()</a></code> 
+        </dt>
+        <dd>Convert grouping vector to sparse matrix</dd>
       </dl></div><div class="section level2">
       <h2 id="plots">Plots<a class="anchor" aria-label="anchor" href="#plots"></a></h2>
       
+      
+
+      
+    </div><div class="section level2">
+      
+      <h3 id="single-cell-plots">Single cell plots<a class="anchor" aria-label="anchor" href="#single-cell-plots"></a></h3>
       
 
       
@@ -319,6 +335,74 @@
           <code><a href="plot_read_count_knee.html">plot_read_count_knee()</a></code> 
         </dt>
         <dd>Make a knee plot of single cell read counts</dd>
+      </dl><dl><dt>
+          
+          <code><a href="plot_embedding.html">plot_embedding()</a></code> 
+        </dt>
+        <dd>Plot UMAP or embeddings</dd>
+      </dl><dl><dt>
+          
+          <code><a href="plot_dot.html">plot_dot()</a></code> 
+        </dt>
+        <dd>Dotplot</dd>
+      </dl></div><div class="section level2">
+      
+      <h3 id="genomic-track-plots">Genomic track plots<a class="anchor" aria-label="anchor" href="#genomic-track-plots"></a></h3>
+      
+
+      
+    </div><div id="" class="section level2">
+      
+      
+      
+
+      <dl><dt>
+          
+          <code><a href="draw_trackplot_grid.html">draw_trackplot_grid()</a></code> 
+        </dt>
+        <dd>Combine ggplot track plots into an aligned grid.
+Uses patchwork to perform the alignment</dd>
+      </dl><dl><dt>
+          
+          <code><a href="trackplot_bulk.html">trackplot_bulk()</a></code> 
+        </dt>
+        <dd>Pseudobulk trackplot</dd>
+      </dl><dl><dt>
+          
+          <code><a href="trackplot_gene.html">trackplot_gene()</a></code> 
+        </dt>
+        <dd>Plot transcript models</dd>
+      </dl><dl><dt>
+          
+          <code><a href="gene_region.html">gene_region()</a></code> 
+        </dt>
+        <dd>Find gene region</dd>
+      </dl></div><div class="section level2">
+      
+      <h3 id="plotting-utilities">Plotting utilities<a class="anchor" aria-label="anchor" href="#plotting-utilities"></a></h3>
+      
+
+      
+    </div><div id="" class="section level2">
+      
+      
+      
+
+      <dl><dt>
+          
+          <code><a href="discrete_palette.html">discrete_palette()</a></code> 
+        </dt>
+        <dd>Discrete color palettes</dd>
+      </dl><dl><dt>
+          
+          <code><a href="collect_features.html">collect_features()</a></code> 
+        </dt>
+        <dd>Collect features for plotting</dd>
+      </dl><dl><dt>
+          
+          <code><a href="rotate_x_labels.html">rotate_x_labels()</a></code> 
+        </dt>
+        <dd>Rotate ggplot x axis labels</dd>
       </dl></div><div class="section level2">
       <h2 id="internal-functions">Internal Functions<a class="anchor" aria-label="anchor" href="#internal-functions"></a></h2>
       
@@ -410,6 +494,11 @@
           <code><a href="normalize_ranges.html">normalize_ranges()</a></code> 
         </dt>
         <dd>Normalize an object representing genomic ranges</dd>
+      </dl><dl><dt>
+          
+          <code><a href="genomic-ranges.html">genomic-ranges</a></code> 
+        </dt>
+        <dd>Genomic range objects</dd>
       </dl></div>
   </main><aside class="col-md-3"><nav id="toc"><h2>On this page</h2>
     </nav></aside></div>

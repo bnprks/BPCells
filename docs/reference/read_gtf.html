@@ -40,7 +40,7 @@ a URL, a gtf file on disk, or a gencode release version."><!-- mathjax --><scrip
 <div class="row">
   <main id="main" class="col-md-9"><div class="page-header">
       <img src="" class="logo" alt=""><h1>Read GTF gene annotations</h1>
-      <small class="dont-index">Source: <a href="https://github.com/bnprks/BPCells/blob/HEAD/R/utils.R" class="external-link"><code>R/utils.R</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/bnprks/BPCells/blob/HEAD/R/genomeAnnotations.R" class="external-link"><code>R/genomeAnnotations.R</code></a></small>
       <div class="d-none name"><code>read_gtf.Rd</code></div>
     </div>
 
@@ -54,6 +54,7 @@ a URL, a gtf file on disk, or a gencode release version.</p>
     <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">read_gtf</span><span class="op">(</span></span>
 <span>  <span class="va">path</span>,</span>
 <span>  attributes <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"gene_id"</span><span class="op">)</span>,</span>
+<span>  tags <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/character.html" class="external-link">character</a></span><span class="op">(</span><span class="fl">0</span><span class="op">)</span>,</span>
 <span>  features <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"gene"</span><span class="op">)</span>,</span>
 <span>  keep_attribute_column <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  backup_url <span class="op">=</span> <span class="cn">NULL</span>,</span>
@@ -66,7 +67,19 @@ a URL, a gtf file on disk, or a gencode release version.</p>
 <span>  annotation_set <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"basic"</span>, <span class="st">"comprehensive"</span><span class="op">)</span>,</span>
 <span>  gene_type <span class="op">=</span> <span class="st">"lncRNA|protein_coding|IG_.*_gene|TR_.*_gene"</span>,</span>
 <span>  attributes <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"gene_id"</span>, <span class="st">"gene_type"</span>, <span class="st">"gene_name"</span><span class="op">)</span>,</span>
+<span>  tags <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/character.html" class="external-link">character</a></span><span class="op">(</span><span class="fl">0</span><span class="op">)</span>,</span>
 <span>  features <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"gene"</span><span class="op">)</span>,</span>
+<span>  timeout <span class="op">=</span> <span class="fl">300</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu">read_gencode_transcripts</span><span class="op">(</span></span>
+<span>  <span class="va">dir</span>,</span>
+<span>  release <span class="op">=</span> <span class="st">"latest"</span>,</span>
+<span>  transcript_choice <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"MANE_Select"</span>, <span class="st">"Ensembl_Canonical"</span>, <span class="st">"all"</span><span class="op">)</span>,</span>
+<span>  annotation_set <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"basic"</span>, <span class="st">"comprehensive"</span><span class="op">)</span>,</span>
+<span>  gene_type <span class="op">=</span> <span class="st">"lncRNA|protein_coding|IG_.*_gene|TR_.*_gene"</span>,</span>
+<span>  attributes <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"gene_id"</span>, <span class="st">"gene_type"</span>, <span class="st">"gene_name"</span>, <span class="st">"transcript_id"</span><span class="op">)</span>,</span>
+<span>  features <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"transcript"</span>, <span class="st">"exon"</span><span class="op">)</span>,</span>
 <span>  timeout <span class="op">=</span> <span class="fl">300</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
@@ -79,6 +92,10 @@ a URL, a gtf file on disk, or a gencode release version.</p>
 
 <dt>attributes</dt>
 <dd><p>Vector of GTF attribute names to parse out as columns</p></dd>
+
+
+<dt>tags</dt>
+<dd><p>Vector of tags to parse out as boolean presence/absence</p></dd>
 
 
 <dt>features</dt>
@@ -114,6 +131,13 @@ most recent version, use "latest" or "latest_mouse"</p></dd>
 <dd><p>Regular expression with which gene types to keep.
 Defaults to protein_coding, lncRNA, and IG/TR genes</p></dd>
 
+
+<dt>transcript_choice</dt>
+<dd><p>Method for selecting representative transcripts. Choices are:</p><ul><li><p>MANE_Select: human-only, most conservative</p></li>
+<li><p>Ensembl_Canonical: human+mouse, superset of MANE_Select for human</p></li>
+<li><p>all: Preserve all transcript models (not recommended for plotting)</p></li>
+</ul></dd>
+
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
@@ -128,6 +152,7 @@ Defaults to protein_coding, lncRNA, and IG/TR genes</p></dd>
 <li><p>strand</p></li>
 <li><p>frame</p></li>
 <li><p>attributes (optional; named according to listed attributes)</p></li>
+<li><p>tags (named according to listed tags)</p></li>
 </ul></div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
@@ -140,6 +165,8 @@ on the release and annotation set requested, but will be of the format
 <a href="https://www.gencodegenes.org/human/" class="external-link">https://www.gencodegenes.org/human/</a>. In release 42, both the comprehensive and
 basic sets had identical gene-level annotations, but the comprehensive set had
 additional transcript variants annotated.</p>
+<p><strong>read_gencode_transcripts</strong></p>
+<p>Read transcript models from GENCODE, for use with trackplot_gene()</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>

@@ -14,8 +14,7 @@ select_regions(
 \arguments{
 \item{fragments}{Input fragments object.}
 
-\item{ranges}{GRanges object with the ranges to overlap, or list/data frame with columns chr, start, & end.
-Must be sorted in order (chr, end, start) where chromosomes are ordered according to the chromosome names of \code{fragments}.}
+\item{ranges}{GRanges object with the ranges to overlap, or list/data frame with columns chr, start, & end.}
 
 \item{invert_selection}{If TRUE, select fragments \emph{not} overlapping selected regions
 instead of only fragments overlapping the selected regions.}
