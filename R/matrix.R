@@ -1195,7 +1195,6 @@ setMethod("matrix_type", "PeakMatrix", function(x) "uint32_t")
 #' Calculate ranges x cells overlap matrix
 #' @param fragments Input fragments object. Must have cell names and chromosome names defined
 #' @param ranges GRanges object with the ranges to overlap, or list/data frame with columns chr, start, & end.
-#'     Must be sorted in order (chr, end, start) where chromosomes are ordered according to the chromosome names of `fragments`.
 #' @inheritParams convert_to_fragments
 #' @param explicit_peak_names Boolean for whether to add rownames to the output matrix in format e.g
 #'  chr1:500-1000, where start and end coords are given in a 0-based coordinate system.
@@ -1217,11 +1216,16 @@ peak_matrix <- function(fragments, ranges, zero_based_coords = !is(ranges, "GRan
     assert_not_null(chrNames(fragments))
     assert_not_na(chrNames(fragments))
 
+    peak_order <- order_ranges(ranges, chrNames(fragments))
+    if (!all(peak_order == seq_along(peak_order))) {
+        rlang::warn("Peaks given out of order. Reordering with order_ranges()")
+        ranges$chr <- ranges$chr[peak_order]
+        ranges$start <- ranges$start[peak_order]
+        ranges$end <- ranges$end[peak_order]
+    }
+
     chr_id <- as.integer(factor(as.character(ranges$chr), chrNames(fragments))) - 1L
 
-    if (!all(order(chr_id, ranges$end, ranges$start) == seq_along(chr_id))) {
-        stop("Peaks must be given in order sorted by (chr, end, start)")
-    }
     res <- new("PeakMatrix", fragments = fragments, chr_id = chr_id, start = ranges$start, end = ranges$end)
     res@chr_levels <- chrNames(fragments)
     res@dim <- c(length(cellNames(fragments)), length(res@chr_id))
@@ -1303,14 +1307,20 @@ tile_matrix <- function(fragments, ranges, zero_based_coords = !is(ranges, "GRan
     ranges$tile_width <- as.integer(ranges$tile_width)
     assert_true(all(as.character(ranges$chr) %in% chrNames(fragments)))
 
-    if (!all(order(chr_id, ranges$start, ranges$end) == seq_along(chr_id))) {
-        stop("Tile regions must be given in order sorted by (chr, start, end)")
+    tile_order <- order_ranges(ranges, chrNames(fragments))
+    if (!all(tile_order == seq_along(tile_order))) {
+        rlang::warn("Peaks given out of order. Reordering with order_ranges()")
+        ranges$chr <- ranges$chr[tile_order]
+        ranges$start <- ranges$start[tile_order]
+        ranges$end <- ranges$end[tile_order]
+        ranges$tile_width <- ranges$tile_width[tile_order]
     }
+
     # Check to make sure tiles are non-overlapping
     pair_1 <- seq_len(length(chr_id) - 1)
     pair_2 <- pair_1 + 1
     if (any(chr_id[pair_1] == chr_id[pair_2] & ranges$end[pair_1] >= ranges$start[pair_2])) {
-        stop("Tile regions must be non-overlapping")
+        rlang::abort("Tile regions must be non-overlapping")
     }
 
     # Construct tile matrix

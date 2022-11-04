@@ -157,17 +157,27 @@ assert_has_package <- function(packages, n = 1) {
 #'
 #' If strand is in metadata_cols, then the output strand element will be TRUE for positive strand,
 #' and FALSE for negative strand. (Converted from a character vector of "+"/"-" if necessary)
-normalize_ranges <- function(ranges, metadata_cols = character(0), zero_based_coords = !is(ranges, "GRanges")) {
-    assert_is(ranges, c("GRanges", "list", "data.frame"), n = 2)
-    assert_is(metadata_cols, "character")
-    assert_is(zero_based_coords, "logical")
+normalize_ranges <- function(ranges, metadata_cols = character(0), zero_based_coords = !is(ranges, "GRanges"), n=1) {
+    assert_is(ranges, c("GRanges", "list", "data.frame", "character"), n = n+1)
+    assert_is(metadata_cols, "character", n=n+1)
+    assert_is(zero_based_coords, "logical", n=n+1)
 
     ret <- list()
-    if (is(ranges, "GRanges")) {
+    if (is(ranges, "character")) {
+        assert_len(metadata_cols, 0, n=n+1)
+        ret_parse <- stringr::str_match(ranges, "^([^:]+):([0-9,]+)-([0-9,]+)$")
+        if (any(is.na(ret_parse))) {
+            rlang::abort("Could not parse ranges from character. Must have form chr1:2501-2900")
+        }
+        chr_levels <- sort(unique(ret_parse[,2]))
+        ret$chr <- factor(ret_parse[,2], levels=chr_levels)
+        ret$start <- as.integer(stringr::str_remove_all(ret_parse[,3], ",")) - !zero_based_coords
+        ret$end <- as.integer(stringr::str_remove_all(ret_parse[,4], ",")) 
+    } else if (is(ranges, "GRanges")) {
         if ("strand" %in% metadata_cols) ret$strand <- as.logical(GenomicRanges::strand(ranges) != "-")
         metadata_cols <- metadata_cols[metadata_cols != "strand"]
 
-        assert_has_names(GenomicRanges::mcols(ranges), metadata_cols, n = 2)
+        assert_has_names(GenomicRanges::mcols(ranges), metadata_cols, n = n+1)
         chr_levels <- GenomeInfoDb::seqlevels(ranges)
         ret$chr <- factor(as.character(GenomicRanges::seqnames(ranges)), levels = chr_levels)
         ret$start <- GenomicRanges::start(ranges) - !zero_based_coords
@@ -177,14 +187,14 @@ normalize_ranges <- function(ranges, metadata_cols = character(0), zero_based_co
             ret[[c]] <- GenomicRanges::mcols(ranges)[[c]]
         }
     } else {
-        assert_has_names(ranges, c("chr", "start", "end", metadata_cols), n = 2)
+        assert_has_names(ranges, c("chr", "start", "end", metadata_cols), n = n+1)
         chr_levels <- levels(ranges$chr)
         if (is.null(chr_levels)) chr_levels <- sort(unique(as.character(ranges$chr)))
         ret$chr <- factor(as.character(ranges$chr), levels = chr_levels)
         ret$start <- as.integer(ranges$start) - !zero_based_coords
         ret$end <- as.integer(ranges$end)
         if ("strand" %in% metadata_cols) {
-            assert_is(ranges$strand, c("character", "logical"))
+            assert_is(ranges$strand, c("character", "logical"), n=n+1)
             if (is(ranges$strand, "character")) {
                 ret$strand <- ranges$strand != "-"
             } else {

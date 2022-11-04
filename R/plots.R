@@ -132,17 +132,28 @@ plot_read_count_knee <- function(read_counts, cutoff = NULL, return_data = FALSE
 #' `source` is a matrix object (`IterableMatrix`, `dgCMatrix`, or `matrix`), features
 #' will be drawn from rows.
 #'
-#' @param features A vector of feature names to collect
-#' @param source A data frame or matrix object to pull features from. Matrices must
-#'   have features as rows with cells as columns.
+#' @param source Matrix or data frame to pull features from, or a vector of feature values for a single feature. For
+#'   a matrix, the features must be rows.
+#' @param features Character vector of features names to plot if `source` is not a vector.
 #' @param gene_mapping An optional vector for gene name matching with match_gene_symbol().
 #'   Ignored if source is a data frame.
+#' @param n Internal-use parameter marking the number of nested calls. This is used for
+#'   finding the name of the "source" input variable from the caller's perspective
 #' @return Data frame with one column for each feature requested
 #' @export
-collect_features <- function(features, source, gene_mapping = human_gene_mapping) {
-    assert_is(features, "character")
-    assert_is(source, c("data.frame", "IterableMatrix", "dgCMatrix", "matrix"))
-    if (is(source, "data.frame")) {
+collect_features <- function(source, features=NULL, gene_mapping = human_gene_mapping, n=1) {
+    if (!is.null(features)) {
+        assert_is(features, "character")
+        assert_is(source, c("data.frame", "IterableMatrix", "dgCMatrix", "matrix"))
+    } else {
+        if (!is.atomic(source) || is.null(source)) {
+            rlang::abort("collect_features: if features is NULL, source must be a vector")
+        }
+    }
+    if (is.null(features)) {
+        data <- data.frame(source)
+        colnames(data) <- argument_name(source, n+1)
+    } else if (is(source, "data.frame")) {
         # Data frame
         assert_has_names(source, features)
         data <- source[, features]
@@ -184,11 +195,10 @@ collect_features <- function(features, source, gene_mapping = human_gene_mapping
 #' are repeatedly multiplied by the smoothing matrix and re-scaled so the average
 #' value stays the same.
 #' 
-#' @param features Character vector of features to plot if source is not NULL,
-#'  or a vector of data to plot if source is NULL.
-#' @param embedding A matrix of dimensions cells x 2 with embedding coordinates
-#' @param source (optional) Matrix, list, or data frame to pull features from. For
+#' @param source Matrix, or data frame to pull features from, or a vector of feature values for a single feature. For
 #'   a matrix, the features must be rows.
+#' @param embedding A matrix of dimensions cells x 2 with embedding coordinates
+#' @param features Character vector of features to plot if `source` is not a vector.
 #' @param quantile_range (optional) Length 2 vector giving the quantiles to clip the minimum and
 #'   maximum color scale values, as fractions between 0 and 1. NULL or NA values to skip clipping
 #' @param randomize_order If TRUE, shuffle cells to prevent overplotting biases. Can pass
@@ -212,11 +222,13 @@ collect_features <- function(features, source, gene_mapping = human_gene_mapping
 #' @param labels_discrete Whether to add text labels at the center of each group for discrete (categorical) features.
 #' @param legend_discrete Whether to show the legend for discrete (categorical) features.
 #' @param colors_discrete Vector of colors to use for discrete (categorical) features.
-#' @param plot_grid If `TRUE`, plot output in a grid using patchwork::wrap_plots(). If `FALSE`
-#'   return multiple plots as a list
+#' @param return_plot_list If `TRUE`, return multiple plots as a list, rather than a
+#'   single plot combined using patchwork::wrap_plots()
 #' @inheritParams plot_read_count_knee
-#' @return ggplot2 object
-plot_embedding <- function(features, embedding, source = NULL,
+#' @return By default, returns a ggplot2 object with all the requested features plotted
+#' in a grid. If `return_data` or `return_plot_list` is called, the return value will
+#' match that argument.
+plot_embedding <- function(source, embedding, features = NULL,
                            quantile_range = c(0.01, 0.99),
                            randomize_order = TRUE,
                            smooth = NULL,
@@ -230,7 +242,7 @@ plot_embedding <- function(features, embedding, source = NULL,
                            legend_discrete = TRUE,
                            labels_discrete = TRUE,
                            colors_discrete = discrete_palette("stallion"),
-                           return_data = FALSE, plot_grid = TRUE, apply_styling = TRUE) {
+                           return_data = FALSE, return_plot_list = TRUE, apply_styling = TRUE) {
     assert_is(embedding, "matrix")
     assert_true(ncol(embedding) == 2)
     assert_is(randomize_order, c("logical", "numeric"))
@@ -242,7 +254,7 @@ plot_embedding <- function(features, embedding, source = NULL,
     assert_is(legend_discrete, "logical")
     assert_is(colors_discrete, "character")
     assert_is(return_data, "logical")
-    assert_is(plot_grid, "logical")
+    assert_is(return_plot_list, "logical")
     assert_is(apply_styling, "logical")
 
     # Check raster + size arguments
@@ -263,16 +275,7 @@ plot_embedding <- function(features, embedding, source = NULL,
 
     # Fetch the actual data
     data <- list(embedding = embedding)
-    if (is.null(source)) {
-        # Interpret feature as the data to plot
-        assert_true(length(features) == nrow(embedding))
-        feature_name <- argument_name(features, 2)
-        data$data <- list(features)
-        names(data$data) <- feature_name
-        data$data <- tibble::as_tibble(data$data)
-    } else {
-        data$data <- collect_features(features, source, gene_mapping)
-    }
+    data$data <- collect_features(source, features, gene_mapping, n=2)
 
     # Check for mismatched cell counts/names
     if (is.null(source) && is.character(features) && length(features) != nrow(data$embedding) && length(features) < 50) {
@@ -334,12 +337,13 @@ plot_embedding <- function(features, embedding, source = NULL,
     # Generate a random order for cells
     if (is.numeric(randomize_order) || randomize_order) {
         if (is.numeric(randomize_order)) {
-            prev_seed <- get(".Random.seed", globalenv(), mode = "integer", inherits = FALSE)
+            # Set seed without permanently changing seed state
+            prev_seed <- get_seed(); 
             set.seed(randomize_order)
         }
         data$random_order <- sample.int(nrow(embedding))
         if (is.numeric(randomize_order)) {
-            set.seed(prev_seed)
+            restore_seed(prev_seed)
         }
     }
 
@@ -445,9 +449,9 @@ plot_embedding <- function(features, embedding, source = NULL,
         return(plot)
     })
 
-    if (!plot_grid && length(plots) > 1) {
+    if (return_plot_list && length(plots) > 1) {
         return(plots)
-    } else if (!plot_grid || length(plots) == 1) {
+    } else if (return_plot_list || length(plots) == 1) {
         return(plots[[1]])
     } else {
         guides <- ifelse(all_numeric && legend_continuous == "quantile", "collect", "auto")
@@ -457,4 +461,72 @@ plot_embedding <- function(features, embedding, source = NULL,
         }
         return(plot)
     }
+}
+
+#' Rotate ggplot x axis labels
+#' @param degrees Number of degrees to rotate by
+#' @export
+rotate_x_labels <- function(degrees=45) {
+    ggplot2::theme(axis.text.x = ggplot2::element_text(angle=degrees, hjust=1, vjust=1))
+}
+
+#' Dotplot
+#' 
+#' Plot feature levels per group or cluster as a grid of dots.
+#' Dots are colored by z-score normalized average expression, and sized by percent non-zero.
+#' 
+#' @param source Feature x cell matrix or data.frame with features. For best results,
+#'   features should be sparse and log-normalized (e.g. run `log1p()` so zero raw counts
+#'   map to zero)
+#' @param features Character vector of features to plot 
+#' @inheritParams cluster_membership_matrix
+#' @inheritParams plot_embedding
+#' @param gene_mapping An optional vector for gene name matching with match_gene_symbol().
+#' @param colors Color scale for plot
+#' @export
+plot_dot <- function(source, features, groups, group_order=NULL, gene_mapping=human_gene_mapping,
+                     colors = c("lightgrey", "#4682B4"),
+                     return_data = FALSE, apply_styling = TRUE) {
+    assert_is(features, "character")
+    assert_is(source, c("IterableMatrix", "matrix", "dgCMatrix"))
+    
+    feature_data <- collect_features(source, features, gene_mapping, n=2)
+
+    numeric_features <- as.logical(lapply(feature_data, is.numeric))
+    if (!all(numeric_features)) {
+        rlang::abort(sprintf("Non-numeric features detected: %s",
+            pretty_print_vector(features[!numeric_features])
+        ))
+    }
+    feature_data <- as.matrix(feature_data)
+    group_weights <- cluster_membership_matrix(groups, group_order)
+    group_weights <- multiply_cols(group_weights, 1/colSums(group_weights))
+    
+    avg <- t(group_weights) %*% scale(feature_data)
+    pct <- 100 * (t(group_weights) %*% (feature_data != 0))
+    
+    data <- tibble::tibble(
+        group = rep(rownames(avg), ncol(avg)),
+        feature = rep(colnames(avg), each=nrow(avg)),
+        average = as.vector(avg),
+        percent = as.vector(pct)
+    )
+    if (return_data) {
+        return(data)
+    }
+
+    group_name <- argument_name(groups, 2)
+    plot <- ggplot2::ggplot(data, ggplot2::aes(feature, group, color=average, size=percent)) +
+        ggplot2::geom_point() +
+        ggplot2::scale_size_area()
+    if (!apply_styling) {
+        return(plot)
+    }
+    plot <- plot + ggplot2::scale_color_gradientn(colors = colors) +
+        ggplot2::labs(x = "Features", y=group_name, size="% Detected", color="Mean Z-score") +
+        ggplot2::theme_classic() +
+        ggplot2::scale_y_discrete(limits=rownames(avg)) +
+        ggplot2::scale_x_discrete(limits=colnames(avg)) +
+        rotate_x_labels(45)
+    return(plot)
 }

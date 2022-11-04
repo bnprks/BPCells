@@ -275,6 +275,49 @@ setMethod("+", signature(e1="TransformScaleShift", e2="numeric"), function(e1, e
     }
     return(x)
 })
-# Just take advantadge of commutative property to only implement half
+# Just take advantage of commutative property to only implement half
 setMethod("*", signature(e1="numeric", e2="TransformScaleShift"), function(e1, e2) {e2 * e1})
 setMethod("+", signature(e1="numeric", e2="TransformScaleShift"), function(e1, e2) {e2 + e1})
+
+
+
+#' Broadcasting vector arithmetic
+#' 
+#' Convenience functions for adding or multiplying 
+#' each row / column of a mtarix by a number.
+#' 
+#' @rdname mat_norm
+#' 
+#' @param mat Matrix-like object
+#' @param vec Numeric vector
+#' @return Matrix-like object
+add_rows <- function(mat, vec) {
+    assert_is(mat, c("dgCMatrix", "IterableMatrix", "matrix"))
+    assert_is_numeric(vec)
+    assert_true(length(vec) == nrow(mat))
+    mat + vec
+}
+#' @rdname mat_norm
+#' @export
+add_cols <- function(mat, vec) {
+    assert_is(mat, c("dgCMatrix", "IterableMatrix", "matrix"))
+    assert_is_numeric(vec)
+    assert_true(length(vec) == ncol(mat))
+    t(t(mat) + vec)
+}
+#' @rdname mat_norm
+#' @export
+multiply_rows <- function(mat, vec) {
+    assert_is(mat, c("dgCMatrix", "IterableMatrix", "matrix"))
+    assert_is_numeric(vec)
+    assert_true(length(vec) == nrow(mat))
+    mat * vec
+}
+#' @rdname mat_norm
+#' @export
+multiply_cols <- function(mat, vec) {
+    assert_is(mat, c("dgCMatrix", "IterableMatrix", "matrix"))
+    assert_is_numeric(vec)
+    assert_true(length(vec) == ncol(mat))
+    t(t(mat) * vec)
+}

@@ -7,6 +7,7 @@ prune_zeros_dgCMatrix <- function(mat) {
   mat@p <- as.integer(c(0, cumsum(nonzeros)))
   mat
 }
+
 #' K Nearest Neighbor (KNN) Graph
 #'
 #' Convert a KNN object (e.g. returned by `knn_hnsw()` or `knn_annoy()`) into
@@ -71,9 +72,15 @@ knn_to_snn_graph <- function(knn, min_val = 1 / 15, self_loops = TRUE) {
 #' @details **cluster_graph_leiden**: Leiden graph clustering algorithm `igraph::cluster_leiden()`
 #' @param snn Symmetric adjacency matrix (dgCMatrix) output from e.g. knn_to_snn_graph
 #' @param resolution Resolution parameter. Higher values result in more clusters
+#' @param seed Random seed for clustering initialization
 #' @param ... Additional arguments to underlying clustering function
 #' @return Factor vector containing the cluster assignment for each cell.
-cluster_graph_leiden <- function(snn, resolution = 1e-3, ...) {
+cluster_graph_leiden <- function(snn, resolution = 1e-3, seed=12531, ...) {
+  # Set seed without permanently changing seed state
+  prev_seed <- get_seed(); 
+  on.exit(restore_seed(prev_seed), add=TRUE); 
+  set.seed(seed)
+
   igraph::graph_from_adjacency_matrix(snn, weighted = TRUE, diag = FALSE, mode = "lower") %>%
     igraph::cluster_leiden(resolution_parameter = resolution, ...) %>%
     igraph::membership() %>%
@@ -83,7 +90,12 @@ cluster_graph_leiden <- function(snn, resolution = 1e-3, ...) {
 
 #' @rdname cluster
 #' @details **cluster_graph_louvain**: Louvain graph clustering algorithm `igraph::cluster_louvain()`
-cluster_graph_louvain <- function(snn, resolution = 1) {
+cluster_graph_louvain <- function(snn, resolution = 1, seed=12531) {
+  # Set seed without permanently changing seed state
+  prev_seed <- get_seed(); 
+  on.exit(restore_seed(prev_seed), add=TRUE); 
+  set.seed(seed)
+
   igraph::graph_from_adjacency_matrix(snn, weighted = TRUE, diag = FALSE, mode = "lower") %>%
     igraph::cluster_louvain(resolution = resolution) %>%
     igraph::membership() %>%
@@ -97,6 +109,34 @@ cluster_graph_seurat <- function(snn, resolution = 0.8, ...) {
   Seurat::as.Graph(snn) %>%
     Seurat::FindClusters(resolution = resolution, ...) %>%
     .[[1]]
+}
+
+#' Convert grouping vector to sparse matrix
+#' 
+#' Converts a vector of membership IDs into a sparse matrix
+#' 
+#' @param groups Vector with one entry per cell, specifying the cell's group
+#' @param group_order Optional vector listing ordering of groups
+#' @return cell x group matrix where an entry is 1 when a cell is in a given group
+cluster_membership_matrix <- function(groups, group_order=NULL) {
+  if (is.null(group_order)) {
+    group_order <- levels(as.factor(groups))
+  }
+  membership <- match(as.character(groups), group_order)
+
+  if (any(is.na(membership))) {
+    rlang::warn(sprintf("Could not match %d groups to group_order: %s",
+      sum(is.na(membership)),
+      pretty_print_vector(groups[is.na(membership)])
+    ))
+  }
+  Matrix::sparseMatrix(
+    i = seq_along(groups)[!is.na(membership)],
+    j = membership[!is.na(membership)],
+    x = 1,
+    dims = c(length(groups), length(group_order)),
+    dimnames = list(names(groups), group_order)
+  )
 }
 
 
