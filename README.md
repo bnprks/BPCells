@@ -21,6 +21,13 @@ BPCells is easiest to install directly from github:
 ```R
 devtools::install_github("bnprks/BPCells")
 ```
+Before installing, you must have the HDF5 library installed on your system.
+HDF5 can be installed from your choice of package manager:
+
+- conda: `conda install -c anaconda hdf5` 
+- apt: `sudo apt-get install libhdf5-dev` 
+- yum: `yum install hdf5-devel`
+
 
 ## Getting started
 
