@@ -194,6 +194,27 @@ read_encode_blacklist <- function(dir, genome = c("hg38", "mm10", "hg19", "dm6",
   return(read_bed(path, backup_url = url, additional_columns = "reason"))
 }
 
+#' Read UCSC chromosome sizes 
+#' 
+#' Read chromosome sizes from UCSC and return as a tibble with one row per
+#' chromosome.
+#' The underlying data is pulled from here: <https://hgdownload.soe.ucsc.edu/downloads.html>
+#' 
+read_ucsc_chrom_sizes <- function(dir, genome = c("hg38", "mm39", "mm10", "mm9", "hg19"), 
+                                  keep_chromosomes="chr[0-9]+|chrX|chrY", timeout = 300) {
+  genome <- match.arg(genome)
+  url <- sprintf("https://hgdownload.soe.ucsc.edu/goldenPath/%s/bigZips/%1$s.chrom.sizes", genome)
+  path <- file.path(dir, basename(url))
+  ensure_downloaded(path, url, timeout)
+  sizes <- readr::read_tsv(path, col_names = c("chr", "end"), col_types="ci") %>%
+    dplyr::transmute(chr, start=0, end)
+  if (!is.null(keep_chromosomes)) {
+    sizes <- sizes %>%
+      dplyr::filter(stringr::str_detect(chr, paste0("^(", keep_chromosomes, ")$")))
+  }
+  return(sizes)
+}
+
 
 #' Get end-sorted ordering for genome ranges
 #'
