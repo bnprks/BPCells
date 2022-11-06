@@ -1,7 +1,9 @@
 #include "PeakMatrix.h"
 
 namespace BPCells {
-PeakMatrix::PeakMatrix(
+
+template <int MODE>
+PeakMatrixBase<MODE>::PeakMatrixBase(
     FragmentLoader &frags,
     const std::vector<uint32_t> &chr,
     const std::vector<uint32_t> &start,
@@ -106,11 +108,13 @@ PeakMatrix::PeakMatrix(
     next_active_peak = next_completed_peak;
 }
 
-uint32_t PeakMatrix::rows() const { return frags.cellCount(); }
-uint32_t PeakMatrix::cols() const { return n_peaks; }
+template <int MODE> uint32_t PeakMatrixBase<MODE>::rows() const { return frags.cellCount(); }
+template <int MODE> uint32_t PeakMatrixBase<MODE>::cols() const { return n_peaks; }
 
-const char *PeakMatrix::rowNames(uint32_t row) { return frags.cellNames(row); }
-const char *PeakMatrix::colNames(uint32_t col) {
+template <int MODE> const char *PeakMatrixBase<MODE>::rowNames(uint32_t row) {
+    return frags.cellNames(row);
+}
+template <int MODE> const char *PeakMatrixBase<MODE>::colNames(uint32_t col) {
     if (col >= n_peaks) return NULL;
     auto peak = sorted_peaks[end_sorted_lookup[col]];
     peak_name.clear();
@@ -122,14 +126,14 @@ const char *PeakMatrix::colNames(uint32_t col) {
     return peak_name.c_str();
 }
 
-void PeakMatrix::restart() {
+template <int MODE> void PeakMatrixBase<MODE>::restart() {
     accumulator.clear();
     active_peaks.clear();
     next_completed_peak = 0;
     next_active_peak = 0;
     current_output_peak = UINT32_MAX;
 }
-void PeakMatrix::seekCol(uint32_t col) {
+template <int MODE> void PeakMatrixBase<MODE>::seekCol(uint32_t col) {
     if (!frags.isSeekable())
         throw std::runtime_error("Can't seek a PeakMatrix if the fragments aren't seekable");
     next_active_peak = end_sorted_lookup[col];
@@ -141,7 +145,7 @@ void PeakMatrix::seekCol(uint32_t col) {
     nextCol();
 }
 
-bool PeakMatrix::nextCol() {
+template <int MODE> bool PeakMatrixBase<MODE>::nextCol() {
     current_output_peak += 1;
 
     if (current_output_peak >= n_peaks) {
@@ -153,16 +157,23 @@ bool PeakMatrix::nextCol() {
     return true;
 }
 
-uint32_t PeakMatrix::currentCol() const { return current_output_peak; }
+template <int MODE> uint32_t PeakMatrixBase<MODE>::currentCol() const {
+    return current_output_peak;
+}
 
-bool PeakMatrix::load() { return accumulator.load(current_output_peak, 1024); }
+template <int MODE> bool PeakMatrixBase<MODE>::load() {
+    return accumulator.load(current_output_peak, 1024);
+}
 
-uint32_t PeakMatrix::capacity() const { return accumulator.capacity(); }
+template <int MODE> uint32_t PeakMatrixBase<MODE>::capacity() const {
+    return accumulator.capacity();
+}
 
-uint32_t *PeakMatrix::rowData() { return accumulator.rowData(); }
-uint32_t *PeakMatrix::valData() { return accumulator.valData(); }
+template <int MODE> uint32_t *PeakMatrixBase<MODE>::rowData() { return accumulator.rowData(); }
 
-void PeakMatrix::loadFragments() {
+template <int MODE> uint32_t *PeakMatrixBase<MODE>::valData() { return accumulator.valData(); }
+
+template <int MODE> void PeakMatrixBase<MODE>::loadFragments() {
     // Load fragments data until we hit enough loaded for output
     // Post-conditions:
     //  - accumulator is ready for loading, and has complete data on peaks at least until
@@ -253,33 +264,69 @@ void PeakMatrix::loadFragments() {
 
                 uint32_t k = 0;
                 // Calculate all comparisons using SIMD if necessary, then add accumulator
+                // - Valid MODE options:
+                //    - 0: Count insertions per peak. One fragment can count twice if it lands
+                //      in same peak twice
+                //    - 1: Count fragments per peak. Same as MODE == 0 but fragment cannot count
+                //      twice per peak
+                //    - 2: Count fragment overlaps. Same as MODE == 1 but fragments that fully
+                //      surround a peak will also be counted in that peak
                 uint32_t overlap_counts[128];
                 for (k = 0; k + 4 <= items && start_data[i + k] < p.end; k += 4) {
                     vec start = BPCells::load((vec *)&start_data[i + k]);
                     vec end = BPCells::load((vec *)&end_data[i + k]);
-                    // overlap = (start_data[k] >= p.start && start_data[k] < p.end) + (end_data[k]
-                    // > p.start && end_data[k] <= p.end)
-                    vec overlap =
-                        add(bitwise_and(
-                                mask,
-                                bitwise_and(
-                                    bitwise_xor(mask, cmp_lt_signed(start, p_start)),
-                                    cmp_lt_signed(start, p_end)
-                                )
-                            ),
+
+                    vec overlap;
+                    if constexpr (MODE == 0 || MODE == 1) {
+                        // overlap = (start_data[k] >= p.start && start_data[k] < p.end) +
+                        // (end_data[k] > p.start && end_data[k] <= p.end)
+                        vec overlap_start = bitwise_and(
+                            mask,
                             bitwise_and(
-                                mask,
-                                bitwise_and(
-                                    cmp_gt_signed(end, p_start),
-                                    bitwise_xor(mask, cmp_gt_signed(end, p_end))
-                                )
-                            ));
+                                bitwise_xor(mask, cmp_lt_signed(start, p_start)),
+                                cmp_lt_signed(start, p_end)
+                            )
+                        );
+                        vec overlap_end = bitwise_and(
+                            mask,
+                            bitwise_and(
+                                cmp_gt_signed(end, p_start),
+                                bitwise_xor(mask, cmp_gt_signed(end, p_end))
+                            )
+                        );
+                        if constexpr (MODE == 0) {
+                            overlap = add(overlap_start, overlap_end);
+                        }
+                        if constexpr (MODE == 1) {
+                            overlap = bitwise_or(overlap_start, overlap_end);
+                        }
+                    }
+                    if constexpr (MODE == 2) {
+                        overlap = bitwise_and(
+                            mask,
+                            bitwise_and(cmp_lt_signed(start, p_end), cmp_gt_signed(end, p_start))
+                        );
+                    }
+
                     BPCells::store((vec *)&overlap_counts[k], overlap);
                 }
                 for (; k < items && start_data[i + k] < p.end; k++) {
-                    overlap_counts[k] =
-                        (start_data[i + k] >= p.start && start_data[i + k] < p.end) +
-                        (end_data[i + k] > p.start && end_data[i + k] <= p.end);
+                    if constexpr (MODE == 0 || MODE == 1) {
+                        uint32_t overlap_start =
+                            (start_data[i + k] >= p.start && start_data[i + k] < p.end);
+                        uint32_t overlap_end =
+                            (end_data[i + k] > p.start && end_data[i + k] <= p.end);
+                        if constexpr (MODE == 0) {
+                            overlap_counts[k] = overlap_start + overlap_end;
+                        }
+                        if constexpr (MODE == 1) {
+                            overlap_counts[k] = overlap_start | overlap_end;
+                        }
+                    }
+                    if constexpr (MODE == 2) {
+                        overlap_counts[k] =
+                            (start_data[i + k] < p.end) && (end_data[i + k] > p.start);
+                    }
                 }
                 // Now k is the last item that's beyond the end of the peak
 
@@ -315,5 +362,9 @@ void PeakMatrix::loadFragments() {
         }
     }
 }
+
+template class PeakMatrixBase<0>;
+template class PeakMatrixBase<1>;
+template class PeakMatrixBase<2>;
 
 } // end namespace BPCells

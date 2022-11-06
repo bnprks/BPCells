@@ -60,12 +60,25 @@ SEXP iterate_peak_matrix_cpp(
     std::vector<uint32_t> chr,
     std::vector<uint32_t> start,
     std::vector<uint32_t> end,
-    StringVector chr_levels
+    StringVector chr_levels,
+    std::string mode
 ) {
     XPtr<FragmentLoader> loader(fragments);
-    return Rcpp::wrap(XPtr<PeakMatrix>(
-        new PeakMatrix(*loader, chr, start, end, std::make_unique<RcppStringReader>(chr_levels))
-    ));
+    if (mode == "insertions") {
+        return Rcpp::wrap(XPtr<PeakInsertionMatrix>(new PeakInsertionMatrix(
+            *loader, chr, start, end, std::make_unique<RcppStringReader>(chr_levels)
+        )));
+    } else if (mode == "fragments") {
+        return Rcpp::wrap(XPtr<PeakFragmentMatrix>(new PeakFragmentMatrix(
+            *loader, chr, start, end, std::make_unique<RcppStringReader>(chr_levels)
+        )));
+    } else if (mode == "overlaps") {
+        return Rcpp::wrap(XPtr<PeakOverlapMatrix>(new PeakOverlapMatrix(
+            *loader, chr, start, end, std::make_unique<RcppStringReader>(chr_levels)
+        )));
+    } else {
+        throw std::invalid_argument("mode must be one of insertions, fragments, or overlaps");
+    }
 }
 
 // [[Rcpp::export]]
@@ -106,6 +119,39 @@ StringVector get_tile_names_cpp(
         }
     }
     return ret;
+}
+
+// [[Rcpp::export]]
+List get_tile_ranges_cpp(
+    IntegerVector chr_id,
+    IntegerVector start,
+    IntegerVector end,
+    IntegerVector tile_width,
+    StringVector chr_levels,
+    NumericVector selection
+) {
+    // Calculate starting index for each tile range
+    std::vector<int64_t> starting_idx;
+    int64_t total_tiles = 0;
+    for (int64_t i = 0; i < chr_id.length(); i++) {
+        starting_idx.push_back(total_tiles);
+        total_tiles += (end[i] - start[i] + tile_width[i] - 1) / tile_width[i];
+    }
+
+    // Calculate coordinates for each selection
+    std::vector<uint32_t> ret_chr_id, ret_start, ret_end;
+    for (int64_t i = 0; i < selection.length(); i++) {
+        int64_t idx = (int64_t)selection[i];
+        int64_t range = std::upper_bound(starting_idx.begin(), starting_idx.end(), idx) - 1 -
+                        starting_idx.begin();
+
+        ret_chr_id.push_back(chr_id[range]);
+        ret_start.push_back(start[range] + tile_width[range] * (idx - starting_idx[range]));
+        ret_end.push_back(std::min(ret_start.back() + tile_width[range], (uint32_t)end[range]));
+    }
+    return List::create(
+        Named("chr") = ret_chr_id, Named("start") = ret_start, Named("end") = ret_end
+    );
 }
 
 // Compute number of fragments like ArchR does for cell stats
@@ -159,7 +205,7 @@ std::vector<int> fragment_lengths_cpp(SEXP fragments) {
     while (iter.nextChr()) {
         while (iter.nextFrag()) {
             uint32_t width = iter.end() - iter.start();
-            if (width >= lengths.size() - 1) lengths.resize(width + 1);
+            if (width >= lengths.size()) lengths.resize(width + 1);
             lengths[width] += 1;
         }
     }

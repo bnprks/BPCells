@@ -101,8 +101,8 @@ scan_fragments_cpp <- function(fragments) {
     .Call(`_BPCells_scan_fragments_cpp`, fragments)
 }
 
-iterate_peak_matrix_cpp <- function(fragments, chr, start, end, chr_levels) {
-    .Call(`_BPCells_iterate_peak_matrix_cpp`, fragments, chr, start, end, chr_levels)
+iterate_peak_matrix_cpp <- function(fragments, chr, start, end, chr_levels, mode) {
+    .Call(`_BPCells_iterate_peak_matrix_cpp`, fragments, chr, start, end, chr_levels, mode)
 }
 
 iterate_tile_matrix_cpp <- function(fragments, chr, start, end, width, chr_levels) {

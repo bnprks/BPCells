@@ -13,7 +13,22 @@ namespace BPCells {
 // Output cell x peak matrix (rows = cell_id, col = peak_id)
 // Regions are given as half-open format
 // Peaks can overlap, and columns are ordered by (end, start) coordinate
-class PeakMatrix : public MatrixLoader<uint32_t> {
+
+// Notes on MODE template:
+// - The template is in order to easily swap out the ~30 lines that actually register
+//   overlap counts without having to copy-paste a bunch of code
+// - The cpp file still contains the method definitions, and explicit instatiations
+//   of the valid MODE options
+// - Valid MODE options:
+//    - 0: Count insertions per peak. One fragment can count twice if it lands
+//      in same peak twice
+//    - 1: Count fragments per peak. Same as MODE == 0 but fragment cannot count
+//      twice per peak
+//    - 2: Count fragment overlaps. Same as MODE == 1 but fragments that fully
+//      surround a peak will also be counted in that peak
+template <int MODE> class PeakMatrixBase : public MatrixLoader<uint32_t> {
+    static_assert(MODE == 0 || MODE == 1 || MODE == 2, "PeakMatrixBase: MODE must be 0, 1, or 2");
+
   private:
     class Peak {
       public:
@@ -45,7 +60,7 @@ class PeakMatrix : public MatrixLoader<uint32_t> {
     // start, end - list of start + end coordinates for the peaks (start inclusive, end exclusive)
     // chr_levels - list of expected chr levels, for safety checking that peaks are coming from the
     //    correct chromosomes
-    PeakMatrix(
+    PeakMatrixBase(
         FragmentLoader &frags,
         const std::vector<uint32_t> &chr,
         const std::vector<uint32_t> &start,
@@ -73,5 +88,13 @@ class PeakMatrix : public MatrixLoader<uint32_t> {
     uint32_t *rowData() override;
     uint32_t *valData() override;
 };
+
+// Peak Matrix where start/end insertion sites are counted independently
+using PeakInsertionMatrix = PeakMatrixBase<0>; 
+// Peak Matrix where start/end insertion sites from same fragment count only once
+using PeakFragmentMatrix = PeakMatrixBase<1>; 
+// Peak Matrix where we compute full fragment overlaps, so a fragment overlaps with a
+// peak if it fully surrounds said peak
+using PeakOverlapMatrix = PeakMatrixBase<2>; 
 
 } // end namespace BPCells

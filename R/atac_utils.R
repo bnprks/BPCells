@@ -177,3 +177,25 @@ qc_scATAC <- function(fragments, genes, blacklist) {
         ReadsInBlacklist = overlap_sums["blacklist", ]
     )
 }
+range_overlaps <- function(a, b) {
+    a <- normalize_ranges(a)
+    b <- normalize_ranges(b)
+
+    a$cell_id <- seq_len(nrow(a))
+    order_a <- order_ranges(a, levels(a$chr), sort_by_end=FALSE)
+    order_b <- order_ranges(b, levels(a$chr))
+
+    peak_matrix(
+        convert_to_fragments(a[order_a,]),
+        b[order_b,],
+        explicit_peak_names = FALSE,
+        mode = "overlaps"
+    ) %>%
+        as("dgCMatrix") %>%
+        as("dgTMatrix") %>% 
+        {tibble::tibble(
+            from = .@j + 1,
+            to = order_b[.@i + 1]
+        )} %>%
+        dplyr::arrange(from, to)
+}

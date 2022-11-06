@@ -152,7 +152,7 @@ assert_has_package <- function(packages, n = 1) {
 #' @param metadata_cols Optional list of metadata columns to require & extract
 #' @param zero_based_coords If true, coordinates start and 0 and the end coordinate is not included in the range.
 #'  If false, coordinates start at 1 and the end coordinate is included in the range
-#' @return list object with zero-based coordinates, and elements chr (factor), start (int), and end (int).
+#' @return data frame with zero-based coordinates, and elements chr (factor), start (int), and end (int).
 #' If `ranges` does not have chr level information, chr levels are the sorted unique values of chr.
 #'
 #' If strand is in metadata_cols, then the output strand element will be TRUE for positive strand,
@@ -206,5 +206,5 @@ normalize_ranges <- function(ranges, metadata_cols = character(0), zero_based_co
             ret[[c]] <- ranges[[c]]
         }
     }
-    return(ret)
+    return(tibble::as_tibble(ret))
 }

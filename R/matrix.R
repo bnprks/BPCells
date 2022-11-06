@@ -1181,20 +1181,23 @@ setClass("PeakMatrix",
         chr_id = "integer",
         start = "integer",
         end = "integer",
-        chr_levels = "character"
+        chr_levels = "character",
+        mode = "character"
     ),
     prototype = list(
         fragments = NULL,
         chr_id = integer(0),
         start = integer(0),
         end = integer(0),
-        chr_levels = character(0)
+        chr_levels = character(0),
+        mode = "insertions"
     )
 )
 setMethod("matrix_type", "PeakMatrix", function(x) "uint32_t")
 #' Calculate ranges x cells overlap matrix
 #' @param fragments Input fragments object. Must have cell names and chromosome names defined
 #' @param ranges GRanges object with the ranges to overlap, or list/data frame with columns chr, start, & end.
+#' @param mode Mode for counting peak overlaps. (See "value" section for more details)
 #' @inheritParams convert_to_fragments
 #' @param explicit_peak_names Boolean for whether to add rownames to the output matrix in format e.g
 #'  chr1:500-1000, where start and end coords are given in a 0-based coordinate system.
@@ -1204,8 +1207,16 @@ setMethod("matrix_type", "PeakMatrix", function(x) "uint32_t")
 #' @return Iterable matrix object with dimension ranges x cells. When saved,
 #'   the column names of the output matrix will be in the format chr1:500-1000,
 #'   where start and end coords are given in a 0-based coordinate system.
+#' 
+#' **`mode` options**
+#' 
+#' - `"insertions"`: Start and end coordinates are separately overlapped with each peak
+#' - `"fragments"`: Like `"insertions"`, but each fragment can contribute at most 1 count
+#'    to each peak, even if both the start and end coordinates overlap
+#' - `"overlaps"`: Like `"fragments"`, but an overlap is also counted if the fragment fully
+#'    spans the peak even if neither the start or end falls within the peak
 #' @export
-peak_matrix <- function(fragments, ranges, zero_based_coords = !is(ranges, "GRanges"), explicit_peak_names = TRUE) {
+peak_matrix <- function(fragments, ranges, mode = c("insertions", "fragments", "overlaps"), zero_based_coords = !is(ranges, "GRanges"), explicit_peak_names = TRUE) {
     assert_is(fragments, "IterableFragments")
     ranges <- normalize_ranges(ranges, zero_based_coords = zero_based_coords)
 
@@ -1215,6 +1226,8 @@ peak_matrix <- function(fragments, ranges, zero_based_coords = !is(ranges, "GRan
     assert_not_na(cellNames(fragments))
     assert_not_null(chrNames(fragments))
     assert_not_na(chrNames(fragments))
+
+    mode <- match.arg(mode)
 
     peak_order <- order_ranges(ranges, chrNames(fragments))
     if (!all(peak_order == seq_along(peak_order))) {
@@ -1226,7 +1239,7 @@ peak_matrix <- function(fragments, ranges, zero_based_coords = !is(ranges, "GRan
 
     chr_id <- as.integer(factor(as.character(ranges$chr), chrNames(fragments))) - 1L
 
-    res <- new("PeakMatrix", fragments = fragments, chr_id = chr_id, start = ranges$start, end = ranges$end)
+    res <- new("PeakMatrix", fragments = fragments, chr_id = chr_id, start = ranges$start, end = ranges$end, mode=mode)
     res@chr_levels <- chrNames(fragments)
     res@dim <- c(length(cellNames(fragments)), length(res@chr_id))
     res@dimnames[[1]] <- cellNames(fragments)
@@ -1238,7 +1251,7 @@ peak_matrix <- function(fragments, ranges, zero_based_coords = !is(ranges, "GRan
 
 setMethod("iterate_matrix", "PeakMatrix", function(x) {
     it <- iterate_fragments(x@fragments)
-    wrapMat_uint32_t(iterate_peak_matrix_cpp(ptr(it), x@chr_id, x@start, x@end, x@chr_levels), it)
+    wrapMat_uint32_t(iterate_peak_matrix_cpp(ptr(it), x@chr_id, x@start, x@end, x@chr_levels, x@mode), it)
 })
 setMethod("short_description", "PeakMatrix", function(x) {
     # Subset strings first to avoid a very slow string concatenation process

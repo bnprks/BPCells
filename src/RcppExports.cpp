@@ -323,8 +323,8 @@ BEGIN_RCPP
 END_RCPP
 }
 // iterate_peak_matrix_cpp
-SEXP iterate_peak_matrix_cpp(SEXP fragments, std::vector<uint32_t> chr, std::vector<uint32_t> start, std::vector<uint32_t> end, StringVector chr_levels);
-RcppExport SEXP _BPCells_iterate_peak_matrix_cpp(SEXP fragmentsSEXP, SEXP chrSEXP, SEXP startSEXP, SEXP endSEXP, SEXP chr_levelsSEXP) {
+SEXP iterate_peak_matrix_cpp(SEXP fragments, std::vector<uint32_t> chr, std::vector<uint32_t> start, std::vector<uint32_t> end, StringVector chr_levels, std::string mode);
+RcppExport SEXP _BPCells_iterate_peak_matrix_cpp(SEXP fragmentsSEXP, SEXP chrSEXP, SEXP startSEXP, SEXP endSEXP, SEXP chr_levelsSEXP, SEXP modeSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -333,7 +333,8 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< std::vector<uint32_t> >::type start(startSEXP);
     Rcpp::traits::input_parameter< std::vector<uint32_t> >::type end(endSEXP);
     Rcpp::traits::input_parameter< StringVector >::type chr_levels(chr_levelsSEXP);
-    rcpp_result_gen = Rcpp::wrap(iterate_peak_matrix_cpp(fragments, chr, start, end, chr_levels));
+    Rcpp::traits::input_parameter< std::string >::type mode(modeSEXP);
+    rcpp_result_gen = Rcpp::wrap(iterate_peak_matrix_cpp(fragments, chr, start, end, chr_levels, mode));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -1620,7 +1621,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_BPCells_get_bp128_version_cpp", (DL_FUNC) &_BPCells_get_bp128_version_cpp, 0},
     {"_BPCells_fragments_identical_cpp", (DL_FUNC) &_BPCells_fragments_identical_cpp, 2},
     {"_BPCells_scan_fragments_cpp", (DL_FUNC) &_BPCells_scan_fragments_cpp, 1},
-    {"_BPCells_iterate_peak_matrix_cpp", (DL_FUNC) &_BPCells_iterate_peak_matrix_cpp, 5},
+    {"_BPCells_iterate_peak_matrix_cpp", (DL_FUNC) &_BPCells_iterate_peak_matrix_cpp, 6},
     {"_BPCells_iterate_tile_matrix_cpp", (DL_FUNC) &_BPCells_iterate_tile_matrix_cpp, 6},
     {"_BPCells_get_tile_names_cpp", (DL_FUNC) &_BPCells_get_tile_names_cpp, 5},
     {"_BPCells_nucleosome_counts_cpp", (DL_FUNC) &_BPCells_nucleosome_counts_cpp, 2},
