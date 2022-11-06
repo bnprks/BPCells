@@ -17,18 +17,6 @@ nucleosome_counts <- function(fragments, nucleosome_width = 147) {
     return(res)
 }
 
-#' Count fragments by size
-#' @param fragments Fragments object
-#' @return Numeric vector where index i contans the number of length-i fragments
-#' @export
-length_distribution <- function(fragments) {
-    assert_is(fragments, "IterableFragments")
-
-    iter <- iterate_fragments(fragments)
-    res <- fragment_lengths_cpp(ptr(iter))
-    return(res)
-}
-
 #' Get footprints around a set of genomic coordinates
 #'
 #' @param fragments IterableFragments object
@@ -44,9 +32,9 @@ length_distribution <- function(fragments) {
 #'   (e.g. inverse of total reads) to each cell, in order of `cellNames(fragments)`
 #' @param flank Number of flanking basepairs to include on either side of the motif
 #' @param normalization_width Number of basepairs at the upstream + downstream
-#'   extremes to use for normalizing, or 0 to skip normalization
+#'   extremes to use for calculating enrichment
 #'
-#' @return tibble with columns "group", "position", and "value"
+#' @return tibble with columns "group", "position", and "count", "enrichment"
 #' @export
 footprint <- function(fragments, ranges, zero_based_coords = !is(ranges, "GRanges"),
                       cell_groups = rlang::rep_along(cellNames(fragments), "all"),
@@ -75,15 +63,18 @@ footprint <- function(fragments, ranges, zero_based_coords = !is(ranges, "GRange
         as.integer(cell_groups) - 1,
         cell_weights
     )
-    if (normalization_width != 0) {
+    
         flank_indices <- c(1:normalization_width, ncol(mat) + 1 - (1:normalization_width))
-        mat <- mat / rowMeans(mat[, flank_indices])
-    }
+    mat_norm <- mat / rowMeans(mat[, flank_indices, drop=FALSE])
+    
     rownames(mat) <- levels(cell_groups)
-    res <- tibble::as_tibble(t(mat)) %>%
-        dplyr::mutate(pos = -flank:flank) %>%
-        tidyr::pivot_longer(!pos, names_to = "group", values_to = "value")
-    return(res)
+    data <- tibble::tibble(
+        group = rep(rownames(mat), ncol(mat)),
+        position = rep(-flank:flank, each=nrow(mat)),
+        count = as.vector(mat),
+        enrichment = as.vector(mat_norm)
+    )
+    return(data)
 }
 
 
@@ -121,10 +112,8 @@ footprint <- function(fragments, ranges, zero_based_coords = !is(ranges, "GRange
 #' @export
 qc_scATAC <- function(fragments, genes, blacklist) {
     assert_is(fragments, "IterableFragments")
-    genes <- normalize_ranges(genes, metadata_cols = "strand") %>%
-        tibble::as_tibble()
-    blacklist <- normalize_ranges(blacklist) %>%
-        tibble::as_tibble()
+    genes <- normalize_ranges(genes, metadata_cols = "strand")
+    blacklist <- normalize_ranges(blacklist)
 
     # Things to check: standard chromosomes?
     # standard_chr <- grep("^chr[0-9XY]+$", chrNames(fragments))

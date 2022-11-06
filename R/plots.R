@@ -68,7 +68,8 @@ discrete_palette <- function(name, n = 1) {
     }
     return(palette)
 }
-#' Make a knee plot of single cell read counts
+
+#' Knee plot of single cell read counts
 #'
 #' Plots read count rank vs. number of reads on a log-log scale.
 #'
@@ -85,7 +86,7 @@ plot_read_count_knee <- function(read_counts, cutoff = NULL, return_data = FALSE
     ranks <- unique(floor(10^(1:(1000 * ceiling(log10(length(read_counts)))) / 1000)))
 
     data <- list(
-        table = tibble::tibble(
+        data = tibble::tibble(
             ranks = ranks[ranks < length(read_counts)],
             reads = sort(read_counts, decreasing = TRUE)[ranks]
         ),
@@ -99,29 +100,191 @@ plot_read_count_knee <- function(read_counts, cutoff = NULL, return_data = FALSE
     }
 
 
-    plot <- ggplot2::ggplot(data$table, ggplot2::aes(log10(ranks), log10(reads))) +
+    plot <- ggplot2::ggplot(data$data, ggplot2::aes(log10(ranks), log10(reads))) +
         ggplot2::geom_point() +
         ggplot2::scale_x_continuous(labels = scales::label_math(), breaks = scales::breaks_width(1)) +
         ggplot2::scale_y_continuous(labels = scales::label_math(), breaks = scales::breaks_width(1))
 
-    subtitle <- NULL
+    plot <- plot + ggplot2::labs(x = "Barcode Rank", y = "Reads")
+
+    if (!apply_styling) {
+        return(plot)
+    }
+    
+    # Add shaded rectangle and passing cells label
     if (!is.null(cutoff)) {
+        cell_label <- tibble::tibble(
+            label = sprintf("%s cells", scales::label_comma()(data$cells_passing)),
+            x = max(log10(data$data$ranks)),
+            y= max(log10(data$data$reads))
+        )
+        rectangle_highlight <- tibble::tibble(
+            xmin = -Inf, xmax=Inf,
+            ymin = log10(cutoff), ymax=Inf
+        )
         plot <- plot +
-            ggplot2::geom_vline(xintercept = log10(data$cells_passing), linetype = "dashed")
-        subtitle <- sprintf("%s cells with > %s reads", scales::comma(data$cells_passing), scales::comma(floor(cutoff)))
+            ggplot2::geom_hline(yintercept = log10(cutoff), linetype = "dashed") +
+            ggplot2::geom_text(data=cell_label, ggplot2::aes(x, y, label=label), hjust="inward", vjust="inward") +
+            ggplot2::geom_rect(
+                ggplot2::aes(xmin=xmin, xmax=xmax, ymin=ymin, ymax=ymax, x=NULL, y=NULL),
+                data=rectangle_highlight, 
+                alpha = 0.1
+            )
     }
 
-    plot <- plot + ggplot2::labs(x = "Barcode Rank", y = "Reads", subtitle = subtitle)
-
-    if (apply_styling) {
-        plot <- plot +
-            ggplot2::annotation_logticks() +
-            ggplot2::theme_classic()
-    }
+    plot <- plot +
+        ggplot2::annotation_logticks() +
+        ggplot2::theme_classic()
+    
     return(plot)
 }
 
+#' TSS Enrichment vs. Fragment Counts plot
+#' 
+#' Density scatter plot with log10(fragment_count) on the x-axis and TSS 
+#' enrichment on the y-axis. This plot is most useful to select which cell barcodes
+#' in an experiment correspond to high-quality cells
+#' 
+#' @param atac_qc Tibble as returned by `qc_scATAC()`. Must have columns `nFrags` and `TSSEnrichment`
+#' @param min_frags Minimum fragment count cutoff
+#' @param min_tss Minimum TSS Enrichment cutoff
+#' @param bins Number of bins for density calculation
+#' @inheritParams plot_embedding
+plot_tss_scatter <- function(atac_qc, min_frags=NULL, min_tss=NULL, bins=100, apply_styling = TRUE) {
+    assert_is(atac_qc, "data.frame")
+    if(!is.null(min_frags)) {
+        assert_is_numeric(min_frags)
+    }
+    if(!is.null(min_tss)) {
+        assert_is_numeric(min_tss)
+    }
+    assert_is(apply_styling, "logical")
 
+    assert_has_names(atac_qc, c("nFrags", "TSSEnrichment"))
+    plot <- ggplot2::ggplot(atac_qc, ggplot2::aes(log10(nFrags), TSSEnrichment)) +
+        ggplot2::stat_bin_hex(bins=bins)
+    
+    passing_cells <- rep(TRUE, nrow(atac_qc))
+    if (!is.null(min_frags)) {
+        plot <- plot + ggplot2::geom_vline(xintercept=log10(min_frags), linetype="dashed")
+        passing_cells <- passing_cells & atac_qc$nFrags > min_frags
+    }
+    if (!is.null(min_tss)) {
+        plot <- plot + ggplot2::geom_hline(yintercept=min_tss, linetype="dashed")
+        passing_cells <- passing_cells & atac_qc$TSSEnrichment > min_tss
+    }
+
+    if (!apply_styling) {
+        return(plot)
+    }
+
+    if (!is.null(min_frags) || !is.null(min_tss)) {
+        cell_label <- tibble::tibble(
+            label = sprintf("%s cells", scales::label_comma()(sum(passing_cells))),
+            x = max(log10(atac_qc$nFrags)),
+            y= max(atac_qc$TSSEnrichment)
+        )
+        if (is.null(min_frags)) {
+            min_frags <- 0
+        }
+        rectangle_highlight <- tibble::tibble(
+            xmin = max(-Inf, log10(min_frags)), xmax=Inf,
+            ymin = max(-Inf, min_tss), ymax=Inf
+        )
+        plot <- plot + 
+            ggplot2::geom_text(data=cell_label, ggplot2::aes(x, y, label=label), hjust="inward", vjust="inward") +
+            ggplot2::geom_rect(
+                ggplot2::aes(xmin=xmin, xmax=xmax, ymin=ymin, ymax=ymax, x=NULL, y=NULL),
+                data=rectangle_highlight, 
+                alpha = 0.1
+            )
+    }
+    
+    passing_cells <- sum(atac_qc$nFrags > min_frags)
+
+    plot <- plot +
+        ggplot2::scale_x_continuous(labels=scales::label_math(), breaks = scales::breaks_width(1)) +
+        ggplot2::scale_fill_distiller(
+            palette="Spectral", 
+            trans="log10",
+            labels = scales::label_comma()
+        ) +
+        ggplot2::labs(x = "Fragments", y="TSS Enrichment", fill="Cell Density") +
+        ggplot2::annotation_logticks(side="b") + 
+        ggplot2::theme_classic()
+    return(plot)
+}
+
+#' Fragment size distribution
+#' 
+#' Plot the distribution of fragment lengths, with length in basepairs on the
+#' x-axis, and proportion of fragments on the y-axis. Typical plots will show
+#' 10-basepair periodicity, as well as humps spaced at multiples of a nucleosome
+#' width (about 150bp).
+#' 
+#' @param fragments Fragments object
+#' @param max_length Maximum length to show on the plot
+#' @inheritParams plot_embedding
+#' @return Numeric vector where index i contans the number of length-i fragments
+#' @export
+plot_fragment_length <- function(fragments, max_length=500, return_data = FALSE, apply_styling = TRUE) {
+    assert_is(fragments, "IterableFragments")
+    assert_wholenumber(max_length)
+
+    iter <- iterate_fragments(fragments)
+    res <- fragment_lengths_cpp(ptr(iter))
+
+    data <- tibble::tibble(
+        length = seq_along(res),
+        count = res,
+        proportion =  res / sum(res) 
+    )
+    if (return_data) {
+        return(data)
+    }
+
+    plot <- data %>%
+        dplyr::filter(length <= max_length) %>%
+        ggplot2::ggplot(ggplot2::aes(length, proportion)) +
+        ggplot2::geom_line()
+    if (!apply_styling) {
+        return(plot)
+    }
+    plot <- plot +
+        ggplot2::theme_classic() +
+        ggplot2::scale_y_continuous(labels=scales::label_percent()) +
+        ggplot2::labs(x = "Fragment Length (bp)", y="Proportion")
+    return(plot)
+}
+
+#' Plot TSS profile
+#' 
+#' Plot the enrichmment of insertions relative to transcription start sites (TSS).
+#' Typically, this plot shows strong enrichment of insertions near a TSS, and a 
+#' small bump downstream around 220bp downstream of the TSS for the +1 nucleosome.
+#' 
+#' @inheritParams plot_embedding
+#' @inheritParams footprint
+#' @param genes Coordinate ranges for genes
+#' @seealso `footprint()`
+plot_tss_profile <- function(fragments, genes, cell_groups = rlang::rep_along(cellNames(fragments), "all"), flank=2000L, zero_based_coords = !is(genes, "GRanges"), 
+                            return_data = FALSE, apply_styling = TRUE) {
+    assert_is(fragments, "IterableFragments")
+    ranges <- normalize_ranges(genes, metadata_cols = "strand", zero_based_coords=zero_based_coords)
+    data <- footprint(fragments, genes, cell_groups=cell_groups, flank=flank)
+    if (return_data) {
+        return(data)
+    }
+    plot <- ggplot2::ggplot(data, ggplot2::aes(position, enrichment)) +
+        ggplot2::geom_line() +
+        ggplot2::labs(x = "Distance from TSS (bp)", y = "Enrichment")
+    if (!apply_styling) {
+        return(plot)
+    }
+    plot <- plot +
+        ggplot2::theme_classic()
+    return(plot)
+}
 
 #' Collect features for plotting
 #'
@@ -242,7 +405,7 @@ plot_embedding <- function(source, embedding, features = NULL,
                            legend_discrete = TRUE,
                            labels_discrete = TRUE,
                            colors_discrete = discrete_palette("stallion"),
-                           return_data = FALSE, return_plot_list = TRUE, apply_styling = TRUE) {
+                           return_data = FALSE, return_plot_list = FALSE, apply_styling = TRUE) {
     assert_is(embedding, "matrix")
     assert_true(ncol(embedding) == 2)
     assert_is(randomize_order, c("logical", "numeric"))

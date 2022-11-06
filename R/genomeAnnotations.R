@@ -111,7 +111,7 @@ read_gencode_genes <- function(dir, release = "latest",
   )
   path <- file.path(dir, basename(url))
   gtf <- read_gtf(path, attributes = attributes, tags = tags, features = features, backup_url = url, timeout = timeout)
-  gtf <- gtf[stringr::str_detect(gtf$gene_type, gene_type), ]
+  gtf <- gtf[stringr::str_detect(gtf$gene_type, paste0("^(", gene_type, ")$")), ]
   return(gtf)
 }
 
@@ -176,7 +176,7 @@ read_bed <- function(path, additional_columns = character(0), backup_url = NULL,
   assert_is_file(path, must_exist = is.null(backup_url), multiple_ok = FALSE)
   ensure_downloaded(path, backup_url, timeout)
   bed <- readr::read_tsv(path, col_names = c("chr", "start", "end", additional_columns), col_types = "") %>%
-    dplyr::select(c(col_names, additional_columns))
+    dplyr::select(c(chr, start, end, additional_columns))
   return(bed)
 }
 
@@ -201,12 +201,17 @@ read_encode_blacklist <- function(dir, genome = c("hg38", "mm10", "hg19", "dm6",
 #'
 #' @inheritParams normalize_ranges
 #' @param chr_levels Ordering of chromosome names
+#' @param sort_by_end If TRUE (defualt), sort by (chr, end, start). Else sort by (chr, start, end)
 #' @return Numeric vector analagous to the `order` function. Provides an index
 #' selection that will reorder the input ranges to be sorted by chr, end, start
 #' @export
-order_ranges <- function(ranges, chr_levels) {
+order_ranges <- function(ranges, chr_levels, sort_by_end=TRUE) {
   ranges <- normalize_ranges(ranges)
-  order(match(as.character(ranges$chr), chr_levels), ranges$end, ranges$start)
+  if (sort_by_end){
+    return(order(match(as.character(ranges$chr), chr_levels), ranges$end, ranges$start))
+  } else {
+    return(order(match(as.character(ranges$chr), chr_levels), ranges$start, ranges$end))
+  }
 }
 
 # Helper function to remove ensembl version suffixes from gene names
