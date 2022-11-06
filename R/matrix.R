@@ -1316,18 +1316,18 @@ tile_matrix <- function(fragments, ranges, zero_based_coords = !is(ranges, "GRan
     assert_not_null(chrNames(fragments))
     assert_not_na(chrNames(fragments))
 
-    chr_id <- as.integer(factor(as.character(ranges$chr), chrNames(fragments))) - 1L
     ranges$tile_width <- as.integer(ranges$tile_width)
     assert_true(all(as.character(ranges$chr) %in% chrNames(fragments)))
 
     tile_order <- order_ranges(ranges, chrNames(fragments))
     if (!all(tile_order == seq_along(tile_order))) {
-        rlang::warn("Peaks given out of order. Reordering with order_ranges()")
+        rlang::warn("Tiles given out of order. Reordering with order_ranges()")
         ranges$chr <- ranges$chr[tile_order]
         ranges$start <- ranges$start[tile_order]
         ranges$end <- ranges$end[tile_order]
         ranges$tile_width <- ranges$tile_width[tile_order]
     }
+    chr_id <- as.integer(factor(as.character(ranges$chr), chrNames(fragments))) - 1L
 
     # Check to make sure tiles are non-overlapping
     pair_1 <- seq_len(length(chr_id) - 1)
@@ -1349,6 +1349,23 @@ tile_matrix <- function(fragments, ranges, zero_based_coords = !is(ranges, "GRan
     return(t(res))
 }
 
+#' Get ranges corresponding to selected tiles of a tile matrix
+tile_ranges <- function(tile_matrix, selection) {
+    # Handle manually transposed tile_matrix objects
+    if (!tile_matrix@transpose) {
+        tile_matrix <- tile_matrix@transpose
+    }
+    indices <- seq_len(nrow(tile_matrix))
+    selection <- vctrs::vec_slice(indices, selection) - 1
+    ranges <- get_tile_ranges_cpp(
+        tile_matrix@chr_id, tile_matrix@start, tile_matrix@end,
+        tile_matrix@tile_width, tile_matrix@chr_levels, 
+        selection
+    )
+    ranges$chr <- factor(tile_matrix@chr_levels[ranges$chr+1], levels=tile_matrix@chr_levels)
+    return(tibble::as_tibble(ranges))
+}
+
 setMethod("iterate_matrix", "TileMatrix", function(x) {
     it <- iterate_fragments(x@fragments)
     wrapMat_uint32_t(iterate_tile_matrix_cpp(ptr(it), x@chr_id, x@start, x@end, x@tile_width, x@chr_levels), it)
@@ -1358,10 +1375,11 @@ setMethod("short_description", "TileMatrix", function(x) {
     # Subset strings first to avoid a very slow string concatenation process
     indices <- c(head(seq_along(x@chr_id), 3), tail(seq_along(x@chr_id), 1))
     labels <- paste0(x@chr_levels[1 + x@chr_id[indices]], ":", x@start[indices] + 1, "-", x@end[indices], " (", x@tile_width[indices], "bp)")
+    tiles <- sum(as.integer(ceiling((x@end - x@start) / x@tile_width)))
     c(
         short_description(x@fragments),
         sprintf(
-            "Calculate %d tiles over %d ranges%s", ncol(x), length(x@chr_id),
+            "Calculate %d tiles over %d ranges%s", tiles, length(x@chr_id),
             pretty_print_vector(labels, prefix = ": ", max_len = 2)
         )
     )

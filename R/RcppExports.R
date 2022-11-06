@@ -113,6 +113,10 @@ get_tile_names_cpp <- function(chr_id, start, end, tile_width, chr_levels) {
     .Call(`_BPCells_get_tile_names_cpp`, chr_id, start, end, tile_width, chr_levels)
 }
 
+get_tile_ranges_cpp <- function(chr_id, start, end, tile_width, chr_levels, selection) {
+    .Call(`_BPCells_get_tile_ranges_cpp`, chr_id, start, end, tile_width, chr_levels, selection)
+}
+
 nucleosome_counts_cpp <- function(fragments, nuc_width = 147L) {
     .Call(`_BPCells_nucleosome_counts_cpp`, fragments, nuc_width)
 }
