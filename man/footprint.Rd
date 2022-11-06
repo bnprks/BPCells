@@ -35,10 +35,10 @@ If false, coordinates start at 1 and the end coordinate is included in the range
 \item{flank}{Number of flanking basepairs to include on either side of the motif}
 
 \item{normalization_width}{Number of basepairs at the upstream + downstream
-extremes to use for normalizing, or 0 to skip normalization}
+extremes to use for calculating enrichment}
 }
 \value{
-tibble with columns "group", "position", and "value"
+tibble with columns "group", "position", and "count", "enrichment"
 }
 \description{
 Get footprints around a set of genomic coordinates

@@ -23,7 +23,7 @@ plot_embedding(
   labels_discrete = TRUE,
   colors_discrete = discrete_palette("stallion"),
   return_data = FALSE,
-  return_plot_list = TRUE,
+  return_plot_list = FALSE,
   apply_styling = TRUE
 )
 }

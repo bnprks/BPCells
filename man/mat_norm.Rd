@@ -20,6 +20,10 @@ multiply_cols(mat, vec)
 
 \item{vec}{Numeric vector}
 }
+\value{
+Matrix-like object
+}
 \description{
-Convenience functions for scaling and shifting matrices
+Convenience functions for adding or multiplying
+each row / column of a mtarix by a number.
 }

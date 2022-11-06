@@ -2,7 +2,7 @@
 % Please edit documentation in R/plots.R
 \name{plot_read_count_knee}
 \alias{plot_read_count_knee}
-\title{Make a knee plot of single cell read counts}
+\title{Knee plot of single cell read counts}
 \usage{
 plot_read_count_knee(
   read_counts,
