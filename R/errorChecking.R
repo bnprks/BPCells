@@ -40,7 +40,7 @@ pretty_error <- function(arg, msg, n) {
     stop(message, call. = FALSE)
 }
 
-assert_wholenumber <- function(x, n = 1) {
+assert_is_wholenumber <- function(x, n = 1) {
     assert_is_numeric(x, n + 1)
     # Taken from documentation for is.integer
     if (any(abs(x - round(x)) >= .Machine$double.eps^0.5)) {

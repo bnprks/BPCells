@@ -229,7 +229,7 @@ plot_tss_scatter <- function(atac_qc, min_frags=NULL, min_tss=NULL, bins=100, ap
 #' @export
 plot_fragment_length <- function(fragments, max_length=500, return_data = FALSE, apply_styling = TRUE) {
     assert_is(fragments, "IterableFragments")
-    assert_wholenumber(max_length)
+    assert_is_wholenumber(max_length)
 
     iter <- iterate_fragments(fragments)
     res <- fragment_lengths_cpp(ptr(iter))
@@ -409,7 +409,7 @@ plot_embedding <- function(source, embedding, features = NULL,
     assert_is(embedding, "matrix")
     assert_true(ncol(embedding) == 2)
     assert_is(randomize_order, c("logical", "numeric"))
-    assert_wholenumber(smooth_rounds)
+    assert_is_wholenumber(smooth_rounds)
     assert_is(raster_pixels, "numeric")
     legend_continuous <- match.arg(legend_continuous)
     assert_is(colors_continuous, "character")

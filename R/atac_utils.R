@@ -8,7 +8,7 @@
 #' @export
 nucleosome_counts <- function(fragments, nucleosome_width = 147) {
     assert_is(fragments, "IterableFragments")
-    assert_wholenumber(nucleosome_width)
+    assert_is_wholenumber(nucleosome_width)
     assert_len(nucleosome_width, 1)
 
     iter <- iterate_fragments(fragments)
@@ -47,7 +47,7 @@ footprint <- function(fragments, ranges, zero_based_coords = !is(ranges, "GRange
 
     assert_is(cell_weights, c("numeric"))
     assert_len(cell_weights, length(cellNames(fragments)))
-    assert_wholenumber(flank)
+    assert_is_wholenumber(flank)
 
     chr <- as.integer(factor(ranges$chr, chrNames(fragments))) - 1
     cell_groups <- as.factor(cell_groups)

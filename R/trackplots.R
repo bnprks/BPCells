@@ -134,7 +134,7 @@ trackplot_bulk <- function(fragments, region, groups,
     assert_not_null(cellNames(fragments))
     region <- normalize_ranges(region)
     assert_true(length(region$chr) == 1)
-    assert_wholenumber(bins)
+    assert_is_wholenumber(bins)
     if (!is.null(clip_quantile)) {
         assert_is_numeric(clip_quantile)
         assert_len(clip_quantile, 1)

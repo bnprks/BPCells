@@ -642,8 +642,8 @@ setMethod("short_description", "ShiftFragments", function(x) {
 #' @return Shifted fragments object
 #' @export
 shift_fragments <- function(fragments, shift_start = 0L, shift_end = 0L) {
-    assert_wholenumber(shift_start)
-    assert_wholenumber(shift_end)
+    assert_is_wholenumber(shift_start)
+    assert_is_wholenumber(shift_end)
     assert_len(shift_start, 1)
     assert_len(shift_end, 1)
     new("ShiftFragments", fragments = fragments, shift_start = as.integer(shift_start), shift_end = as.integer(shift_end))
@@ -687,8 +687,8 @@ setMethod("short_description", "SelectLength", function(x) {
 #' @details Fragment length is calculated as end-start
 #' @export
 subset_lengths <- function(fragments, min_len = 0L, max_len = NA_integer_) {
-    assert_wholenumber(min_len)
-    if (!is.na(max_len)) assert_wholenumber(max_len)
+    assert_is_wholenumber(min_len)
+    if (!is.na(max_len)) assert_is_wholenumber(max_len)
     assert_len(min_len, 1)
     assert_len(max_len, 1)
     new("SelectLength", fragments = fragments, min_len = as.integer(min_len), max_len = as.integer(max_len))
