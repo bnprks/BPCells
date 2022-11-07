@@ -64,8 +64,12 @@ footprint <- function(fragments, ranges, zero_based_coords = !is(ranges, "GRange
         cell_weights
     )
     
-        flank_indices <- c(1:normalization_width, ncol(mat) + 1 - (1:normalization_width))
+    if (normalization_width > 0) {
+        flank_indices <- c(seq_len(normalization_width), ncol(mat) + 1 - seq_len(normalization_width))
     mat_norm <- mat / rowMeans(mat[, flank_indices, drop=FALSE])
+    } else {
+        mat_norm <- NA
+    }
     
     rownames(mat) <- levels(cell_groups)
     data <- tibble::tibble(

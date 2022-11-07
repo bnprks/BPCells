@@ -211,10 +211,11 @@ test_that("footprint works", {
     )
 
     expected <- tibble::tibble(
-        pos = c(-4:4, 4:-4),
         group = c(rep("grp1", 9), rep("grp2", 9)),
-        value = rep(c(0, 1:7, 0), 2)
-    ) %>% dplyr::arrange(group, pos)
+        position = c(-4:4, 4:-4),
+        count = rep(c(0, 1:7, 0), 2),
+        enrichment = NA
+    ) %>% dplyr::arrange(group, position)
 
     for (i in 0:4) {
         res <- footprint(
@@ -222,11 +223,12 @@ test_that("footprint works", {
             motif_positions,
             cell_groups = rep(c("grp1", "grp2"), 6),
             cell_weights = c(1, 1, 1, 1, 2, 2, 4, 4, 1, 1, 1, 1),
-            flank = i
+            flank = i,
+            normalization_width = 0L
         )
         expect_equal(
-            res %>% dplyr::arrange(group, pos),
-            expected %>% dplyr::filter(abs(pos) <= i)
+            res %>% dplyr::arrange(group, position),
+            expected %>% dplyr::filter(abs(position) <= i)
         )
     }
 })
@@ -246,7 +248,7 @@ test_that("Generic methods work", {
         write_memory_unpacked = write_fragments_memory(frags, compress = FALSE),
         write_dir = write_fragments_dir(frags, file.path(dir, "fragments_identical")),
         write_h5 = write_fragments_hdf5(frags, file.path(dir, "fragments_identical.h5")),
-        # write_bed = write_fragments_10x(frags, file.path(dir, "fragments_identical.tsv")),
+        # write_bed = write_fragments_10x(frags, file.path(dir, "fragments_identical.tsv")), # Ignored because this doesn't have cell/chr Names
         shift = shift_fragments(frags),
         lengthSelect = subset_lengths(frags),
         chrSelectName = select_chromosomes(frags, chrNames(frags)),
