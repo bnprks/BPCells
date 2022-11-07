@@ -66,7 +66,7 @@ footprint <- function(fragments, ranges, zero_based_coords = !is(ranges, "GRange
     
     if (normalization_width > 0) {
         flank_indices <- c(seq_len(normalization_width), ncol(mat) + 1 - seq_len(normalization_width))
-    mat_norm <- mat / rowMeans(mat[, flank_indices, drop=FALSE])
+        mat_norm <- mat / rowMeans(mat[, flank_indices, drop=FALSE])
     } else {
         mat_norm <- NA
     }
@@ -170,6 +170,195 @@ qc_scATAC <- function(fragments, genes, blacklist) {
         ReadsInBlacklist = overlap_sums["blacklist", ]
     )
 }
+
+#' Merge peaks
+#'
+#' Merge peaks according to ArchR's iterative merging algorithm. More 
+#' details here: <https://www.archrproject.com/bookdown/the-iterative-overlap-peak-merging-procedure.html>
+#' 
+#' Properties of merged peaks:
+#'   - No peaks in the merged set overlap
+#'   - Peaks are prioritized according to their order in the original input
+#'   - The output peaks are a subset of the input peaks, with no peak boundaries
+#'     changed
+#' 
+#' @param peaks `data.frame`, `tibble`, or `list` ranges object. Must be ordered by 
+#'  priority and have columns chr, start, end.
+#' @return `tibble::tibble()`` with a nonoverlapping subset of the rows in peaks. All metadata
+#'  columns are preserved
+merge_peaks_iterative <- function(peaks) {
+    assert_is(peaks, c("data.frame", "list"))
+    assert_has_names(peaks, c("chr", "start", "end"))
+
+    # Filter out identical peaks as a quick first pass
+    peaks <- tibble::as_tibble(peaks) %>%
+        dplyr::distinct(chr, start, end, .keep_all=TRUE)
+
+    overlaps <- range_overlaps(peaks, peaks) 
+    # Initialize keeper set with any non-overlapping peaks
+    keeper_sets <- list(setdiff(seq_len(nrow(peaks)), overlaps$from))
+
+    # Maintain invariant: overlaps contains only overlap pairs where we have not
+    #    permanently kept or discarded either of the elements in the pair
+    overlaps <- dplyr::filter(overlaps, from < to)
+    while (nrow(overlaps) > 0) {
+        # Add peaks with no higher-ranked overlap to the keeper set
+        keeper_set <- setdiff(overlaps$from, overlaps$to)
+        keeper_sets <- c(keeper_sets, list(keeper_set))
+        # Mark peaks that overlap directly with the keeper set
+        discard_set <- overlaps$to[overlaps$from %in% keeper_set] %>% unique()
+        # Discard all overlap information on the keeper and discard sets
+        overlaps <- overlaps %>% 
+            dplyr::filter(
+                !(to %in% discard_set), !(from %in% discard_set),
+                !(from %in% keeper_set)
+            )
+    }
+    return(peaks[sort(unlist(keeper_sets)),])
+}
+
+#' Call peaks from tiles
+#' 
+#' Calling peaks from a pre-set list of tiles can be much faster than using 
+#' dedicated peak-calling software like `macs3`. The resulting peaks are less
+#' precise in terms of exact coordinates, but should be sufficient for most
+#' analyses.
+#' 
+#' @param fragments IterableFragments object
+#' @param chromosome_sizes [genomic-ranges] holding start and end coordinates for
+#'    each chromosome. See read_ucsc_chrom_sizes().
+#' @param cell_groups Grouping vector with one entry per cell in fragments, e.g.
+#'    cluster IDs
+#' @param effective_genome_size (Optional) effective genome size for poisson 
+#'    background rate estimation. See (deeptools)[https://deeptools.readthedocs.io/en/develop/content/feature/effectiveGenomeSize.html]
+#'    for values for common genomes. Defaults to sum of chromosome sizes, which
+#'    overestimates peak significance
+#' @param peak_width Width of candidate peaks 
+#' @param peak_tiling Number of candidate peaks overlapping each base of genome.
+#'    E.g. peak_width = 300 and peak_tiling = 3 results in candidate peaks of
+#'    300bp spaced 100bp apart
+#' @param fdr_cutoff Adjusted p-value significance cutoff
+#' @param merge_peaks How to merge significant peaks with `merge_peaks_iterative()`
+#' 
+#' - `"all"` Merge the full set of peaks
+#' - `"group"` Merge peaks within each group
+#' - `"none"` Don't perform any merging
+#' 
+#' @return tibble with peak calls and the following columns:
+#' 
+#' - `chr`, `start`, `end`: genome coordinates
+#' - `group`: group ID that this peak was identified in
+#' - `p_val`, `q_val`: Poission p-value and BH-corrected p-value
+#' - `enrichment`: Enrichment of counts in this peak compared to a genome-wide 
+#'    background
+#' 
+#' @details Peak calling steps:
+#' 
+#' 1. Estimate the genome-wide expected insertions per tile based on
+#'  `peak_width`, `effective_genome_size`, and per-group read counts
+#' 2. Tile the genome with nonoverlapping tiles of size peak_width
+#' 3. For each tile and group, calculate p_value based on a Poisson model
+#' 4. Compute adjusted p-values using BH method and using the total number of 
+#' tiles as the number of hypotheses tested.
+#' 5. Repeat steps 2-4 `peak_tiling` times, with evenly spaced offsets
+#' 
+#' If `merge_peaks`
+#' 4. Within each group, use `merge_peaks_iterative()` to keep only the most
+#' significant of the overlapping candidate peaks
+#' 5. If `merge_peaks == TRUE`, perform a final round of `merge_peaks_iterative()`, 
+#' prioritizing each peak by its within-group significance rank
+call_peaks_tile <- function(fragments, chromosome_sizes, cell_groups=rep.int("all", length(cellNames(fragments))), 
+                        effective_genome_size = NULL,
+                        peak_width = 200, peak_tiling = 3, fdr_cutoff = 0.01,
+                        merge_peaks = c("all", "group", "none")) {
+    assert_is(fragments, "IterableFragments")
+    assert_not_null(chrNames(fragments))
+    assert_not_null(cellNames(fragments))
+    assert_true(length(cell_groups) == length(cellNames(fragments)))
+    assert_is_wholenumber(peak_width)
+    assert_is_wholenumber(peak_tiling)
+    assert_is_numeric(fdr_cutoff)
+
+    merge_peaks <- match.arg(merge_peaks)
+
+    fragments <- merge_cells(fragments, cell_groups)
+
+    ranges <- normalize_ranges(chromosome_sizes)
+    ranges$tile_width <- peak_width
+    ranges <- ranges[order_ranges(ranges, chrNames(fragments)),]
+    if (is.null(effective_genome_size)) {
+        effective_genome_size <- sum(ranges$end - ranges$start)
+    } else {
+        assert_is_numeric(effective_genome_size)
+    }
+
+    group_counts <- peak_matrix(fragments, ranges) %>% colSums()
+    background_rate <- group_counts / effective_genome_size * peak_width
+    min_cutoffs <- qpois(1 - fdr_cutoff, background_rate)
+
+    offsets <- (peak_width * seq_len(peak_tiling)) %/% peak_tiling
+    peak_list <- list()
+    for (offset in offsets) {
+        ranges$start <- offset
+
+        tile_mat <- tile_matrix(fragments, ranges)
+        tile_counts <- as(tile_mat, "dgCMatrix")
+    
+        total_tiles <- nrow(tile_counts)
+
+        peaks <- as(tile_counts, "dgTMatrix") %>% 
+            {tibble::tibble(
+                tile = .@i + 1,
+                group = .@j + 1,
+                counts = .@x
+            )} %>%
+            dplyr::filter(counts > min_cutoffs[group]) %>%
+            dplyr::group_by(group) %>%
+            dplyr::mutate(
+                p_val = ppois(background_rate[group], counts),
+                q_val = p.adjust(p_val, method="BH", n = total_tiles),
+            ) %>%
+            dplyr::ungroup() %>%
+            dplyr::filter(q_val < fdr_cutoff) %>%
+            dplyr::arrange(tile)
+        peak_coords <- tile_ranges(tile_mat, peaks$tile)
+        peaks <- peaks %>%
+            dplyr::transmute(
+                chr = peak_coords$chr,
+                start = peak_coords$start,
+                end = peak_coords$end,
+                group = cellNames(fragments)[group],
+                p_val = p_val,
+                q_val = q_val,
+                enrichment = counts / background_rate[group]
+            )
+        peak_list <- c(peak_list, list(peaks))
+    }
+
+    peaks <- dplyr::bind_rows(peak_list) %>%
+        dplyr::arrange(dplyr::desc(enrichment))
+    if (merge_peaks == "none") {
+        return(peaks)
+    } else if (merge_peaks == "group") {
+        peaks <- peaks %>%
+            dplyr::group_by(group) %>%
+            dplyr::summarize(
+                data = merge_peaks_iterative(dplyr::cur_data_all())
+            ) %>%
+            dplyr::ungroup()
+        return(dplyr::bind_rows(peaks$data))
+    } else {
+        peaks <- peaks %>%
+            dplyr::group_by(group) %>%
+            dplyr::mutate(group_rank = rank(dplyr::desc(enrichment))) %>%
+            dplyr::arrange(group_rank) %>%
+            dplyr::select(!group_rank) %>%
+            merge_peaks_iterative()
+
+        return(peaks)
+    }
+}
+
 range_overlaps <- function(a, b) {
     a <- normalize_ranges(a)
     b <- normalize_ranges(b)
