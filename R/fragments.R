@@ -868,8 +868,8 @@ setMethod("short_description", "CellSelectIndex", function(x) {
 #' Select cells for subsetting or translating cells IDs in a fragments object
 #' @param fragments Input fragments object
 #' @param cell_selection List of chromosme IDs (numeric), or names (character).
-#'    The output chromosome ID `n`` will be taken
-#'    from the input fragments chromosome with ID/name `cell_selection[n]`.
+#'    The output cell ID `n`` will be taken
+#'    from the input cell with ID/name `cell_selection[n]`.
 #' @export
 select_cells <- function(fragments, cell_selection) {
     assert_is(fragments, "IterableFragments")

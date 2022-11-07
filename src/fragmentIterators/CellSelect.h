@@ -15,9 +15,9 @@ class CellIndexSelect : public FragmentLoaderWrapper {
     std::vector<uint32_t> reverse_indices;
 
   public:
-    // cell_indices -- vector with length <= the number of chromosomes in the input
+    // cell_indices -- vector with length <= the number of cells in the input
     //     FragmentIterator. The output cell `i` will come from input cell
-    //     `chr_assignments[i]`. The entries of cell_indices must be unique
+    //     `cell_indices[i]`. The entries of cell_indices must be unique
     CellIndexSelect(FragmentLoader &loader, const std::vector<uint32_t> cell_indices);
 
     ~CellIndexSelect() = default;
