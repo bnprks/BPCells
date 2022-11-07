@@ -891,6 +891,60 @@ select_cells <- function(fragments, cell_selection) {
     }
 }
 
+setClass("CellMerge",
+    contains = "IterableFragments",
+    slots = c(
+        fragments = "IterableFragments",
+        group_ids = "integer",
+        group_names = "character"
+    ),
+    prototype = list(
+        fragments = NULL,
+        group_ids = integer(0),
+        group_names = character(0)
+    )
+)
+setMethod("cellNames", "CellMerge", function(x) x@group_names)
+setMethod("cellNames<-", "CellMerge", function(x, ..., value) {
+    assert_is_character(value)
+    assert_len(value, length(x@group_names))
+    x@group_names <- value
+    x
+})
+setMethod("iterate_fragments", "CellMerge", function(x) {
+    inner <- iterate_fragments(x@fragments)
+    wrapFragments(
+        iterate_cell_merge_cpp(ptr(inner), x@group_ids, x@group_names),
+        inner
+    )
+})
+setMethod("short_description", "CellMerge", function(x) {
+    c(
+        short_description(x@fragments),
+        sprintf(
+            "Merge %d cells into %d groups",
+            length(x@group_ids),
+            length(x@group_names)
+        )
+    )
+})
+#' Merge cells into pseudobulks
+#' 
+#' Peak and tile matrix calculations can be sped up by reducing the number of
+#' cells. For cases where the outputs are going to be added together afterwards, this can 
+#' provide a performance improvement
+#' 
+#' @param fragments Input fragments object
+#' @param cell_groups Character or factor vector providing a group for each cell. 
+#' Ordering is the same as `cellNames(fragments)`
+merge_cells <- function(fragments, cell_groups) {
+    assert_is(fragments, "IterableFragments")
+    assert_not_null(cellNames(fragments))
+    assert_is(cell_groups, c("character", "factor"))
+    cell_groups <- as.factor(cell_groups)
+    new("CellMerge", fragments=fragments, group_ids = as.integer(cell_groups) - 1L, group_names = levels(cell_groups))
+}
+
 # Rename cells or chromosomes
 # Select fragments by chromosome
 setClass("ChrRename",

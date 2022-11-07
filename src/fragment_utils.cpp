@@ -280,6 +280,17 @@ SEXP iterate_cell_name_select_cpp(SEXP fragments, std::vector<std::string> cell_
 }
 
 // [[Rcpp::export]]
+SEXP iterate_cell_merge_cpp(
+    SEXP fragments, std::vector<uint32_t> group_ids, StringVector group_names
+) {
+    XPtr<FragmentLoader> loader(fragments);
+
+    return Rcpp::wrap(XPtr<FragmentLoader>(
+        new CellMerge(*loader, group_ids, std::make_unique<RcppStringReader>(group_names))
+    ));
+}
+
+// [[Rcpp::export]]
 SEXP iterate_chr_rename_cpp(SEXP fragments, const StringVector &chr_names) {
     XPtr<FragmentLoader> loader(fragments);
 

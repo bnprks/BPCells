@@ -500,6 +500,19 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// iterate_cell_merge_cpp
+SEXP iterate_cell_merge_cpp(SEXP fragments, std::vector<uint32_t> group_ids, StringVector group_names);
+RcppExport SEXP _BPCells_iterate_cell_merge_cpp(SEXP fragmentsSEXP, SEXP group_idsSEXP, SEXP group_namesSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type fragments(fragmentsSEXP);
+    Rcpp::traits::input_parameter< std::vector<uint32_t> >::type group_ids(group_idsSEXP);
+    Rcpp::traits::input_parameter< StringVector >::type group_names(group_namesSEXP);
+    rcpp_result_gen = Rcpp::wrap(iterate_cell_merge_cpp(fragments, group_ids, group_names));
+    return rcpp_result_gen;
+END_RCPP
+}
 // iterate_chr_rename_cpp
 SEXP iterate_chr_rename_cpp(SEXP fragments, const StringVector& chr_names);
 RcppExport SEXP _BPCells_iterate_chr_rename_cpp(SEXP fragmentsSEXP, SEXP chr_namesSEXP) {
@@ -1650,6 +1663,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_BPCells_iterate_chr_name_select_cpp", (DL_FUNC) &_BPCells_iterate_chr_name_select_cpp, 2},
     {"_BPCells_iterate_cell_index_select_cpp", (DL_FUNC) &_BPCells_iterate_cell_index_select_cpp, 2},
     {"_BPCells_iterate_cell_name_select_cpp", (DL_FUNC) &_BPCells_iterate_cell_name_select_cpp, 2},
+    {"_BPCells_iterate_cell_merge_cpp", (DL_FUNC) &_BPCells_iterate_cell_merge_cpp, 3},
     {"_BPCells_iterate_chr_rename_cpp", (DL_FUNC) &_BPCells_iterate_chr_rename_cpp, 2},
     {"_BPCells_iterate_cell_rename_cpp", (DL_FUNC) &_BPCells_iterate_cell_rename_cpp, 2},
     {"_BPCells_iterate_cell_prefix_cpp", (DL_FUNC) &_BPCells_iterate_cell_prefix_cpp, 2},

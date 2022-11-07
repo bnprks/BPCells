@@ -1,4 +1,5 @@
 #pragma once
+#include "../arrayIO/array_interfaces.h"
 #include "FragmentIterator.h"
 #include <unordered_map>
 
@@ -59,6 +60,34 @@ class CellNameSelect : public FragmentLoaderWrapper {
 
     bool load() override;
     uint32_t capacity() const override;
+};
+
+// Transform a fragments iterator by merging cells
+class CellMerge : public FragmentLoaderWrapper {
+  private:
+    const std::vector<uint32_t> group_ids;
+    std::unique_ptr<StringReader> group_names;
+    uint32_t group_count;
+
+  public:
+    // group_ids -- vector with length == the number of cells in the input
+    //     FragmentIterator. The input cell `i` will be turned into output cell
+    //     `group_ids[i]`.
+    CellMerge(
+        FragmentLoader &loader,
+        const std::vector<uint32_t> group_ids,
+        std::unique_ptr<StringReader> &&group_names
+    );
+
+    ~CellMerge() = default;
+
+    // Return the number of cells/chromosomes, or return -1 if this number is
+    // not known ahead of time
+    int cellCount() const override;
+
+    const char *cellNames(uint32_t cell_id) override;
+
+    bool load() override;
 };
 
 } // end namespace BPCells

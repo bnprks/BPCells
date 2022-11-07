@@ -97,6 +97,35 @@ test_that("Cell name/index select works", {
     expect_equal(frags_ans, frags_3)
 })
 
+test_that("Merge cells works", {
+    nfrags <- 1e4
+    nchrs <- 20
+    ncells <- 100
+    ngroups <- 10
+    cell_groups <- sample.int(ngroups, ncells, replace=TRUE)
+
+    frags_in <- tibble::tibble(
+        chr = sample.int(nchrs, nfrags, replace = TRUE),
+        start = sample.int(10000, nfrags, replace = TRUE),
+        end = start + sample.int(500, nfrags, replace = TRUE),
+        cell_id = sample.int(ncells, nfrags, replace = TRUE)
+    ) %>%
+        dplyr::arrange(chr, start, end, cell_id)
+    
+    frags_out <- tibble_to_fragments(
+        frags_in,
+        paste0("chr", seq_len(nchrs)),
+        paste0("cell", seq_len(ncells))
+    ) %>%
+        merge_cells(as.factor(cell_groups)) %>%
+        as("GRanges")
+
+    frags_ans <- dplyr::mutate(frags_in, cell_id = cell_groups[cell_id]) %>%
+        tibble_to_fragments(paste0("chr", seq_len(nchrs)), as.character(seq_len(ngroups))) %>%
+        as("GRanges")
+    expect_equal(frags_out, frags_ans)
+})
+
 test_that("GRanges conversion round-trips", {
     frags <- open_fragments_10x("../data/mini_fragments.tsv.gz")
     raw <- write_fragments_memory(frags)
@@ -224,6 +253,7 @@ test_that("Generic methods work", {
         chrSelectIdx = select_chromosomes(frags, seq_along(chrNames(frags))),
         cellSelectName = select_cells(frags, cellNames(frags)),
         cellSelectIdx = select_cells(frags, seq_along(cellNames(frags))),
+        cellMerge = merge_cells(frags, factor(cellNames(frags), levels=cellNames(frags))),
         chrRename = new("ChrRename", fragments = frags, chr_names = chrNames(frags)),
         cellRename = new("CellRename", fragments = frags, cell_names = cellNames(frags)),
         cellPrefix = prefix_cell_names(frags, ""),

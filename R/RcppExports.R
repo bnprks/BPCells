@@ -153,6 +153,10 @@ iterate_cell_name_select_cpp <- function(fragments, cell_selection) {
     .Call(`_BPCells_iterate_cell_name_select_cpp`, fragments, cell_selection)
 }
 
+iterate_cell_merge_cpp <- function(fragments, group_ids, group_names) {
+    .Call(`_BPCells_iterate_cell_merge_cpp`, fragments, group_ids, group_names)
+}
+
 iterate_chr_rename_cpp <- function(fragments, chr_names) {
     .Call(`_BPCells_iterate_chr_rename_cpp`, fragments, chr_names)
 }

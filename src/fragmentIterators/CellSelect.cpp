@@ -104,4 +104,41 @@ bool CellNameSelect::load() {
 
 uint32_t CellNameSelect::capacity() const { return loaded; }
 
+CellMerge::CellMerge(
+    FragmentLoader &loader,
+    const std::vector<uint32_t> group_ids,
+    std::unique_ptr<StringReader> &&group_names
+)
+    : FragmentLoaderWrapper(loader)
+    , group_ids(group_ids)
+    , group_names(std::move(group_names)) {
+
+    group_count = 0;
+    for (auto id : group_ids) {
+        group_count = std::max(group_count, id + 1);
+    }
+
+    if (group_count > this->group_names->size()) {
+        throw std::invalid_argument("CellMerge has more groups given than group_names");
+    }
+    if (group_ids.size() != loader.cellCount()) {
+        throw std::invalid_argument("CellMerge number of input cells != length of group_ids");
+    }
+    group_count = this->group_names->size();
+}
+
+int CellMerge::cellCount() const { return group_count; }
+
+const char *CellMerge::cellNames(uint32_t cell_id) { return group_names->get(cell_id); }
+
+bool CellMerge::load() {
+    if (!loader.load()) return false;
+    uint32_t capacity = loader.capacity();
+    uint32_t *cell = loader.cellData();
+    for (uint32_t i = 0; i < capacity; i++) {
+        cell[i] = group_ids[cell[i]];
+    }
+    return true;
+}
+
 } // end namespace BPCells
