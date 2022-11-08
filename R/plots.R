@@ -265,24 +265,85 @@ plot_fragment_length <- function(fragments, max_length=500, return_data = FALSE,
 #' 
 #' @inheritParams plot_embedding
 #' @inheritParams footprint
-#' @param genes Coordinate ranges for genes
-#' @seealso `footprint()`
-plot_tss_profile <- function(fragments, genes, cell_groups = rlang::rep_along(cellNames(fragments), "all"), flank=2000L, zero_based_coords = !is(genes, "GRanges"), 
+#' @param genes Coordinate ranges for genes (must include strand)
+#' @param smooth Number of bases to smooth over (rolling average)
+#' @seealso `footprint()`, `plot_tf_footprint()`
+plot_tss_profile <- function(fragments, genes, cell_groups = rlang::rep_along(cellNames(fragments), "all"), 
+                            flank=2000L, smooth=0L, zero_based_coords = !is(genes, "GRanges"), 
+                            colors = discrete_palette("stallion"),
                             return_data = FALSE, apply_styling = TRUE) {
     assert_is(fragments, "IterableFragments")
+    assert_is_wholenumber(smooth)
     ranges <- normalize_ranges(genes, metadata_cols = "strand", zero_based_coords=zero_based_coords)
-    data <- footprint(fragments, genes, cell_groups=cell_groups, flank=flank)
+    data <- footprint(fragments, ranges, cell_groups=cell_groups, flank=flank+smooth)
+
+    # Helper function to compute rolling means using cumsums
+    rollmean <- function(x, k) {
+        if (k <= 1) {
+            return(x)
+        }
+        idx <- seq_along(x)
+        roll_sum <- cumsum(x)[k-1+idx] - (cumsum(x)-x)[idx]
+        roll_mean <- roll_sum / k
+        na_left <- (k-1)%/%2
+        return(c(rep.int(NA, na_left), roll_mean[seq_len(length(x) - na_left)]))
+    }
+
+    data <- data %>%
+        dplyr::group_by(group) %>%
+        dplyr::arrange(position) %>%
+        dplyr::mutate(
+            smoothed_enrichment = rollmean(enrichment, smooth)
+        ) %>%
+        dplyr::filter(abs(position) <= flank)
+    
     if (return_data) {
         return(data)
     }
-    plot <- ggplot2::ggplot(data, ggplot2::aes(position, enrichment)) +
+    plot <- ggplot2::ggplot(data, ggplot2::aes(position, smoothed_enrichment, color=group)) +
         ggplot2::geom_line() +
         ggplot2::labs(x = "Distance from TSS (bp)", y = "Enrichment")
     if (!apply_styling) {
         return(plot)
     }
+    group_name <- argument_name(cell_groups, 2)
     plot <- plot +
+        ggplot2::scale_color_manual(values=colors) +
+        ggplot2::labs(color=group_name) +
         ggplot2::theme_classic()
+    if (dplyr::n_distinct(data$group) == 1) {
+        plot <- plot + ggplot2::guides(color="none")
+    }
+    return(plot)
+}
+
+#' Plot TF footprint
+#' 
+#' Plot the footprinting around TF motif sites
+#' 
+#' @inheritParams plot_embedding
+#' @inheritParams footprint
+#' @param motif_positions Coordinate ranges for motifs (must include strand) and
+#'   have constant width
+#' @seealso `footprint()`, `plot_tss_profile()`
+plot_tf_footprint <- function(fragments, motif_positions, cell_groups = rlang::rep_along(cellNames(fragments), "all"), 
+                           flank=250L, smooth=0L, zero_based_coords = !is(genes, "GRanges"),
+                           colors = discrete_palette("stallion"),
+                           return_data = FALSE, apply_styling = TRUE) {
+    assert_is(fragments, "IterableFragments")
+    assert_is_wholenumber(smooth)
+    ranges <- normalize_ranges(motif_positions, metadata_cols = "strand", zero_based_coords=zero_based_coords)
+    if (1 != dplyr::n_distinct(ranges$end - ranges$start)) {
+        rlang::abort("motif_positions must all have same width (end - start)")
+    }
+    width <- ranges$end[1] - ranges$start[1]
+    ranges$start <- ranges$start + width %/% 2
+    plot <- plot_tss_profile(fragments, ranges, cell_groups=cell_groups, flank=flank, smooth=smooth,
+                            colors = colors, return_data = return_data, apply_styling = apply_styling)
+    if (return_data) {
+        return(plot)
+    }
+    plot <- plot + ggplot2::labs(x = "Distance from Motif Center (bp)", y = "Enrichment")
     return(plot)
 }
 
