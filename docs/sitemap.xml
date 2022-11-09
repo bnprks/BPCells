@@ -25,6 +25,9 @@
     <loc>https://bnprks.github.io/BPCells/reference/XPtrList-class.html</loc>
   </url>
   <url>
+    <loc>https://bnprks.github.io/BPCells/reference/call_peaks_tile.html</loc>
+  </url>
+  <url>
     <loc>https://bnprks.github.io/BPCells/reference/cluster.html</loc>
   </url>
   <url>
@@ -61,6 +64,9 @@
     <loc>https://bnprks.github.io/BPCells/reference/extendGenomicRanges.html</loc>
   </url>
   <url>
+    <loc>https://bnprks.github.io/BPCells/reference/extend_ranges.html</loc>
+  </url>
+  <url>
     <loc>https://bnprks.github.io/BPCells/reference/footprint.html</loc>
   </url>
   <url>
@@ -83,6 +89,12 @@
   </url>
   <url>
     <loc>https://bnprks.github.io/BPCells/reference/gene_region.html</loc>
+  </url>
+  <url>
+    <loc>https://bnprks.github.io/BPCells/reference/gene_score_tiles.html</loc>
+  </url>
+  <url>
+    <loc>https://bnprks.github.io/BPCells/reference/gene_score_weights_archr.html</loc>
   </url>
   <url>
     <loc>https://bnprks.github.io/BPCells/reference/genomic-ranges.html</loc>
@@ -124,7 +136,13 @@
     <loc>https://bnprks.github.io/BPCells/reference/matrix_type.html</loc>
   </url>
   <url>
+    <loc>https://bnprks.github.io/BPCells/reference/merge_cells.html</loc>
+  </url>
+  <url>
     <loc>https://bnprks.github.io/BPCells/reference/merge_dimnames.html</loc>
+  </url>
+  <url>
+    <loc>https://bnprks.github.io/BPCells/reference/merge_peaks_iterative.html</loc>
   </url>
   <url>
     <loc>https://bnprks.github.io/BPCells/reference/min_scalar.html</loc>
@@ -175,13 +193,28 @@
     <loc>https://bnprks.github.io/BPCells/reference/plot_embedding.html</loc>
   </url>
   <url>
+    <loc>https://bnprks.github.io/BPCells/reference/plot_fragment_length.html</loc>
+  </url>
+  <url>
     <loc>https://bnprks.github.io/BPCells/reference/plot_read_count_knee.html</loc>
+  </url>
+  <url>
+    <loc>https://bnprks.github.io/BPCells/reference/plot_tf_footprint.html</loc>
+  </url>
+  <url>
+    <loc>https://bnprks.github.io/BPCells/reference/plot_tss_profile.html</loc>
+  </url>
+  <url>
+    <loc>https://bnprks.github.io/BPCells/reference/plot_tss_scatter.html</loc>
   </url>
   <url>
     <loc>https://bnprks.github.io/BPCells/reference/prefix_cell_names.html</loc>
   </url>
   <url>
     <loc>https://bnprks.github.io/BPCells/reference/qc_scATAC.html</loc>
+  </url>
+  <url>
+    <loc>https://bnprks.github.io/BPCells/reference/range_distance_to_nearest.html</loc>
   </url>
   <url>
     <loc>https://bnprks.github.io/BPCells/reference/read_bed.html</loc>
@@ -194,6 +227,9 @@
   </url>
   <url>
     <loc>https://bnprks.github.io/BPCells/reference/read_gtf.html</loc>
+  </url>
+  <url>
+    <loc>https://bnprks.github.io/BPCells/reference/read_ucsc_chrom_sizes.html</loc>
   </url>
   <url>
     <loc>https://bnprks.github.io/BPCells/reference/rotate_x_labels.html</loc>
@@ -224,6 +260,9 @@
   </url>
   <url>
     <loc>https://bnprks.github.io/BPCells/reference/tile_matrix.html</loc>
+  </url>
+  <url>
+    <loc>https://bnprks.github.io/BPCells/reference/tile_ranges.html</loc>
   </url>
   <url>
     <loc>https://bnprks.github.io/BPCells/reference/trackplot_bulk.html</loc>

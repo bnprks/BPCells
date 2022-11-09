@@ -51,6 +51,7 @@
     <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">peak_matrix</span><span class="op">(</span></span>
 <span>  <span class="va">fragments</span>,</span>
 <span>  <span class="va">ranges</span>,</span>
+<span>  mode <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"insertions"</span>, <span class="st">"fragments"</span>, <span class="st">"overlaps"</span><span class="op">)</span>,</span>
 <span>  zero_based_coords <span class="op">=</span> <span class="op">!</span><span class="fu">is</span><span class="op">(</span><span class="va">ranges</span>, <span class="st">"GRanges"</span><span class="op">)</span>,</span>
 <span>  explicit_peak_names <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span><span class="op">)</span></span></code></pre></div>
@@ -64,6 +65,10 @@
 
 <dt>ranges</dt>
 <dd><p>GRanges object with the ranges to overlap, or list/data frame with columns chr, start, &amp; end.</p></dd>
+
+
+<dt>mode</dt>
+<dd><p>Mode for counting peak overlaps. (See "value" section for more details)</p></dd>
 
 
 <dt>zero_based_coords</dt>
@@ -86,7 +91,17 @@ Note that either way, peak names will be written when the matrix is saved.</p></
 <p>Iterable matrix object with dimension ranges x cells. When saved,
 the column names of the output matrix will be in the format chr1:500-1000,
 where start and end coords are given in a 0-based coordinate system.</p>
-    </div>
+
+
+<p><strong><code>mode</code> options</strong></p>
+
+
+<ul><li><p><code>"insertions"</code>: Start and end coordinates are separately overlapped with each peak</p></li>
+<li><p><code>"fragments"</code>: Like <code>"insertions"</code>, but each fragment can contribute at most 1 count
+to each peak, even if both the start and end coordinates overlap</p></li>
+<li><p><code>"overlaps"</code>: Like <code>"fragments"</code>, but an overlap is also counted if the fragment fully
+spans the peak even if neither the start or end falls within the peak</p></li>
+</ul></div>
     <div class="section level2">
     <h2 id="note">Note<a class="anchor" aria-label="anchor" href="#note"></a></h2>
     <p>When calculating the matrix directly from a fragments tsv, it's necessary to first call <code>select_chromosomes</code> in order to

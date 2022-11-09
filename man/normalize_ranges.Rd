@@ -12,7 +12,7 @@ normalize_ranges(
 )
 }
 \arguments{
-\item{ranges}{List, GRanges, or data.frame object. Must have start, end, and chr defined}
+\item{ranges}{List, GRanges, or data.frame object. Must have start, end, and chr defined. See \link{genomic-ranges}}
 
 \item{metadata_cols}{Optional list of metadata columns to require & extract}
 
@@ -20,7 +20,7 @@ normalize_ranges(
 If false, coordinates start at 1 and the end coordinate is included in the range}
 }
 \value{
-list object with zero-based coordinates, and elements chr (factor), start (int), and end (int).
+data frame with zero-based coordinates, and elements chr (factor), start (int), and end (int).
 If \code{ranges} does not have chr level information, chr levels are the sorted unique values of chr.
 
 If strand is in metadata_cols, then the output strand element will be TRUE for positive strand,

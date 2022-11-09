@@ -4,12 +4,14 @@
 \alias{order_ranges}
 \title{Get end-sorted ordering for genome ranges}
 \usage{
-order_ranges(ranges, chr_levels)
+order_ranges(ranges, chr_levels, sort_by_end = TRUE)
 }
 \arguments{
-\item{ranges}{List, GRanges, or data.frame object. Must have start, end, and chr defined}
+\item{ranges}{List, GRanges, or data.frame object. Must have start, end, and chr defined. See \link{genomic-ranges}}
 
 \item{chr_levels}{Ordering of chromosome names}
+
+\item{sort_by_end}{If TRUE (defualt), sort by (chr, end, start). Else sort by (chr, start, end)}
 }
 \value{
 Numeric vector analagous to the \code{order} function. Provides an index

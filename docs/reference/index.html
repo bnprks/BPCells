@@ -104,24 +104,29 @@
         <dd>Calculate ranges x cells tile overlap matrix</dd>
       </dl><dl><dt>
           
-          <code><a href="geneScoreTilesArchR.html">geneScoreTilesArchR()</a></code> 
+          <code><a href="gene_score_tiles.html">gene_score_tiles()</a></code> 
         </dt>
         <dd>Calculate gene-tile distances for ArchR gene activities</dd>
       </dl><dl><dt>
           
-          <code><a href="geneScoreWeightsArchR.html">geneScoreWeightsArchR()</a></code> 
+          <code><a href="gene_score_weights_archr.html">gene_score_weights_archr()</a></code> 
         </dt>
         <dd>Calculate GeneActivityScore weights matrix</dd>
-      </dl><dl><dt>
-          
-          <code><a href="length_distribution.html">length_distribution()</a></code> 
-        </dt>
-        <dd>Count fragments by size</dd>
       </dl><dl><dt>
           
           <code><a href="order_ranges.html">order_ranges()</a></code> 
         </dt>
         <dd>Get end-sorted ordering for genome ranges</dd>
+      </dl><dl><dt>
+          
+          <code><a href="call_peaks_tile.html">call_peaks_tile()</a></code> 
+        </dt>
+        <dd>Call peaks from tiles</dd>
+      </dl><dl><dt>
+          
+          <code><a href="merge_peaks_iterative.html">merge_peaks_iterative()</a></code> 
+        </dt>
+        <dd>Merge peaks</dd>
       </dl></div><div class="section level2">
       <h2 id="fragment-transformers">Fragment Transformers<a class="anchor" aria-label="anchor" href="#fragment-transformers"></a></h2>
       
@@ -148,6 +153,11 @@
           <code><a href="select_cells.html">select_cells()</a></code> 
         </dt>
         <dd>Select cells for subsetting or translating cells IDs in a fragments object</dd>
+      </dl><dl><dt>
+          
+          <code><a href="merge_cells.html">merge_cells()</a></code> 
+        </dt>
+        <dd>Merge cells into pseudobulks</dd>
       </dl><dl><dt>
           
           <code><a href="subset_lengths.html">subset_lengths()</a></code> 
@@ -184,6 +194,21 @@
           <code><a href="scan_fragments.html">scan_fragments()</a></code> 
         </dt>
         <dd>Scan through fragments without performing any operations (used for benchmarking)</dd>
+      </dl><dl><dt>
+          
+          <code><a href="range_distance_to_nearest.html">range_distance_to_nearest()</a></code> 
+        </dt>
+        <dd>Find signed distance to nearest genomic ranges</dd>
+      </dl><dl><dt>
+          
+          <code><a href="tile_ranges.html">tile_ranges()</a></code> 
+        </dt>
+        <dd>Get ranges corresponding to selected tiles of a tile matrix</dd>
+      </dl><dl><dt>
+          
+          <code><a href="extend_ranges.html">extend_ranges()</a></code> 
+        </dt>
+        <dd>Extend genome ranges in a strand-aware fashion.</dd>
       </dl></div><div class="section level2">
       <h2 id="matrix-i-o">Matrix I/O<a class="anchor" aria-label="anchor" href="#matrix-i-o"></a></h2>
       
@@ -282,6 +307,11 @@
           <code><a href="read_bed.html">read_bed()</a></code> <code><a href="read_bed.html">read_encode_blacklist()</a></code> 
         </dt>
         <dd>Read a bed file into a data frame</dd>
+      </dl><dl><dt>
+          
+          <code><a href="read_ucsc_chrom_sizes.html">read_ucsc_chrom_sizes()</a></code> 
+        </dt>
+        <dd>Read UCSC chromosome sizes</dd>
       </dl></div><div class="section level2">
       <h2 id="clustering">Clustering<a class="anchor" aria-label="anchor" href="#clustering"></a></h2>
       
@@ -334,7 +364,7 @@
           
           <code><a href="plot_read_count_knee.html">plot_read_count_knee()</a></code> 
         </dt>
-        <dd>Make a knee plot of single cell read counts</dd>
+        <dd>Knee plot of single cell read counts</dd>
       </dl><dl><dt>
           
           <code><a href="plot_embedding.html">plot_embedding()</a></code> 
@@ -345,6 +375,26 @@
           <code><a href="plot_dot.html">plot_dot()</a></code> 
         </dt>
         <dd>Dotplot</dd>
+      </dl><dl><dt>
+          
+          <code><a href="plot_fragment_length.html">plot_fragment_length()</a></code> 
+        </dt>
+        <dd>Fragment size distribution</dd>
+      </dl><dl><dt>
+          
+          <code><a href="plot_tf_footprint.html">plot_tf_footprint()</a></code> 
+        </dt>
+        <dd>Plot TF footprint</dd>
+      </dl><dl><dt>
+          
+          <code><a href="plot_tss_profile.html">plot_tss_profile()</a></code> 
+        </dt>
+        <dd>Plot TSS profile</dd>
+      </dl><dl><dt>
+          
+          <code><a href="plot_tss_scatter.html">plot_tss_scatter()</a></code> 
+        </dt>
+        <dd>TSS Enrichment vs. Fragment Counts plot</dd>
       </dl></div><div class="section level2">
       
       <h3 id="genomic-track-plots">Genomic track plots<a class="anchor" aria-label="anchor" href="#genomic-track-plots"></a></h3>
@@ -454,16 +504,6 @@ Uses patchwork to perform the alignment</dd>
           <code><a href="normalized_dimnames.html">normalized_dimnames()</a></code> 
         </dt>
         <dd>Helper function to set dimnames to NULL instead of 0-length character vectors</dd>
-      </dl><dl><dt>
-          
-          <code><a href="distanceToNearestDirectional.html">distanceToNearestDirectional()</a></code> 
-        </dt>
-        <dd>Find signed distance to nearest genomic ranges</dd>
-      </dl><dl><dt>
-          
-          <code><a href="extendGenomicRanges.html">extendGenomicRanges()</a></code> 
-        </dt>
-        <dd>Extend GenomicRanges in a strand-aware fashion.</dd>
       </dl><dl><dt>
           
           <code><a href="fragments_identical.html">fragments_identical()</a></code> 

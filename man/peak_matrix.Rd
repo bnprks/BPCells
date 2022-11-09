@@ -7,6 +7,7 @@
 peak_matrix(
   fragments,
   ranges,
+  mode = c("insertions", "fragments", "overlaps"),
   zero_based_coords = !is(ranges, "GRanges"),
   explicit_peak_names = TRUE
 )
@@ -15,6 +16,8 @@ peak_matrix(
 \item{fragments}{Input fragments object. Must have cell names and chromosome names defined}
 
 \item{ranges}{GRanges object with the ranges to overlap, or list/data frame with columns chr, start, & end.}
+
+\item{mode}{Mode for counting peak overlaps. (See "value" section for more details)}
 
 \item{zero_based_coords}{Whether to convert the ranges from a 1-based end-inclusive
 coordinate system to a 0-based end-exclusive coordinate system. Defaults to true
@@ -29,6 +32,15 @@ Note that either way, peak names will be written when the matrix is saved.}
 Iterable matrix object with dimension ranges x cells. When saved,
 the column names of the output matrix will be in the format chr1:500-1000,
 where start and end coords are given in a 0-based coordinate system.
+
+\strong{\code{mode} options}
+\itemize{
+\item \code{"insertions"}: Start and end coordinates are separately overlapped with each peak
+\item \code{"fragments"}: Like \code{"insertions"}, but each fragment can contribute at most 1 count
+to each peak, even if both the start and end coordinates overlap
+\item \code{"overlaps"}: Like \code{"fragments"}, but an overlap is also counted if the fragment fully
+spans the peak even if neither the start or end falls within the peak
+}
 }
 \description{
 Calculate ranges x cells overlap matrix

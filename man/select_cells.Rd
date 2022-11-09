@@ -10,7 +10,7 @@ select_cells(fragments, cell_selection)
 \item{fragments}{Input fragments object}
 
 \item{cell_selection}{List of chromosme IDs (numeric), or names (character).
-The output chromosome ID \verb{n`` will be taken from the input fragments chromosome with ID/name }cell_selection\link{n}`.}
+The output cell ID \verb{n`` will be taken from the input cell with ID/name }cell_selection\link{n}`.}
 }
 \description{
 Select cells for subsetting or translating cells IDs in a fragments object

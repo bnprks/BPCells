@@ -20,3 +20,4 @@ Given a set of tile coordinates and distances returned by \code{geneScoreTilesAr
 calculate a weight matrix of dimensions genes x tiles. This matrix can be
 multiplied with a tile matrix to obtain ArchR-compatible gene activity scores.
 }
+\keyword{internal}

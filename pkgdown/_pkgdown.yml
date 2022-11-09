@@ -29,16 +29,18 @@ reference:
   - footprint
   - peak_matrix
   - tile_matrix
-  - geneScoreTilesArchR
-  - geneScoreWeightsArchR
-  - length_distribution
+  - gene_score_tiles
+  - gene_score_weights_archr
   - order_ranges
+  - call_peaks_tile
+  - merge_peaks_iterative
 - title: "Fragment Transformers"
   desc: "Transforming fragment objects"
 - contents:
   - shift_fragments
   - select_chromosomes
   - select_cells
+  - merge_cells
   - subset_lengths
   - select_regions
   - prefix_cell_names
@@ -47,6 +49,9 @@ reference:
 - contents:
   - IterableFragments-methods
   - scan_fragments
+  - range_distance_to_nearest
+  - tile_ranges
+  - extend_ranges
 - title: "Matrix I/O"
   desc: "Functions for reading & writing sparse matrices"
 - contents:
@@ -67,6 +72,7 @@ reference:
   - match_gene_symbol
   - read_gtf
   - read_bed
+  - read_ucsc_chrom_sizes
 - title: "Clustering"
 - contents:
   - knn_hnsw
@@ -80,6 +86,10 @@ reference:
   - plot_read_count_knee
   - plot_embedding
   - plot_dot
+  - plot_fragment_length
+  - plot_tf_footprint
+  - plot_tss_profile
+  - plot_tss_scatter
 - subtitle: "Genomic track plots"
 - desc: Genome-browser style plotting function
 - contents:
@@ -105,8 +115,6 @@ reference:
   - merge_dimnames
   - concat_dimnames
   - normalized_dimnames
-  - distanceToNearestDirectional
-  - extendGenomicRanges
   - fragments_identical
   - XPtrList-class
   - wrapFragments

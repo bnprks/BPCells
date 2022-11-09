@@ -59,7 +59,7 @@
     <div class="section level2">
     <h2 id="arguments">Arguments<a class="anchor" aria-label="anchor" href="#arguments"></a></h2>
     <dl><dt>ranges</dt>
-<dd><p>List, GRanges, or data.frame object. Must have start, end, and chr defined</p></dd>
+<dd><p>List, GRanges, or data.frame object. Must have start, end, and chr defined. See <a href="genomic-ranges.html">genomic-ranges</a></p></dd>
 
 
 <dt>metadata_cols</dt>
@@ -75,7 +75,7 @@ If false, coordinates start at 1 and the end coordinate is included in the range
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     
 
-<p>list object with zero-based coordinates, and elements chr (factor), start (int), and end (int).
+<p>data frame with zero-based coordinates, and elements chr (factor), start (int), and end (int).
 If <code>ranges</code> does not have chr level information, chr levels are the sorted unique values of chr.</p>
 
 

@@ -19,3 +19,4 @@ Extend GenomicRanges in a strand-aware fashion.
 \details{
 Note that ranges will be blocked from extending past base 1, or the maximum
 }
+\keyword{internal}
