@@ -15,6 +15,36 @@ setClass("TransformedMatrix",
     )
 )
 setMethod("matrix_type", "TransformedMatrix", function(x) "double")
+
+# Subsetting on TransformedMatrix objects
+setMethod("[", "TransformedMatrix", function(x, i, j, ...) {
+    if (missing(x)) stop("x is missing in matrix selection")
+    
+    # Handle transpose via recursive call
+    if (x@transpose) {
+        return(t(t(x)[rlang::maybe_missing(j), rlang::maybe_missing(i)]))
+    }
+    
+    # Subset the underlying matrix
+    x@matrix <- x@matrix[rlang::maybe_missing(i), rlang::maybe_missing(j)]
+    
+    # Subset the row/col params
+    if (!missing(i) && ncol(x@row_params) != 0) {
+        indices <- seq_len(nrow(x))
+        names(indices) <- rownames(x)
+        selection <- vctrs::vec_slice(indices, i)
+        x@row_params <- x@row_params[,selection]
+    }
+    if (!missing(j) && ncol(x@col_params) != 0) {
+        indices <- seq_len(ncol(x))
+        names(indices) <- colnames(x)
+        selection <- vctrs::vec_slice(indices, j)
+        x@col_params <- x@col_params[,selection]
+    }
+    x
+})
+
+
 # log1p method support. The SIMD method may be ever so slightly less precise,
 # but it can be substantially faster depending on the CPU SIMD features
 # (Should still provide 32-bit float accuracy)

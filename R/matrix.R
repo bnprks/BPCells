@@ -319,6 +319,25 @@ setMethod("%*%", signature(x = "dgCMatrix", y = "IterableMatrix"), function(x, y
       }
 })
 
+# Subsetting on MatrixMultiply
+setMethod("[", "MatrixMultiply", function(x, i, j, ...) {
+    if (missing(x)) stop("x is missing in matrix selection")
+    
+    # Handle transpose via recursive call
+    if (x@transpose) {
+        return(t(t(x)[rlang::maybe_missing(j), rlang::maybe_missing(i)]))
+    }
+
+    if (!missing(i)) {
+        x@right <- x@right[i,]
+    }
+    if (!missing(j)) {
+        x@right <- x@right[,j]
+    }
+    x
+})
+
+
 # Row sums and row means
 
 #' @param x IterableMatrix object
@@ -380,18 +399,7 @@ setMethod("[", "IterableMatrix", function(x, i, j, ...) {
     ret <- wrapMatrix("MatrixSubset", x)
 
     if (x@transpose) {
-        if (!missing(i) && !missing(j)) {
-            return(t(t(x)[j, i]))
-        }
-        if (missing(i) && !missing(j)) {
-            return(t(t(x)[j, ]))
-        }
-        if (!missing(i) && missing(j)) {
-            return(t(t(x)[, i]))
-        }
-        if (missing(i) && missing(j)) {
-            return(t(t(x)[, ]))
-        }
+        return(t(t(x)[rlang::maybe_missing(j), rlang::maybe_missing(i)]))
     }
 
     if (!missing(i)) {
@@ -426,6 +434,7 @@ setMethod("[", "IterableMatrix", function(x, i, j, ...) {
         x@dimnames <- ret@dimnames
         ret <- x
     }
+
     ret
 })
 
