@@ -86,12 +86,11 @@ template <typename T> class SparseMultiply : public MatrixLoader<T> {
         }
 
         loaded = 0;
-        for (; row_idx < col_buffer.size(); row_idx++) {
+        for (; row_idx < col_buffer.size() && loaded < max_load_size; row_idx++) {
             if (col_buffer[row_idx] == 0) continue;
             val_buffer[loaded] = col_buffer[row_idx];
             row_buffer[loaded] = row_idx;
             loaded += 1;
-            if (loaded >= max_load_size) break;
         }
         return loaded > 0;
     }
