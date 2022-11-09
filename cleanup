@@ -1,4 +1,9 @@
 #!/bin/sh
 
-rm src/Makevars
-rm tools/h5write
+if [ -f src/Makevars ]; then
+    rm src/Makevars
+fi
+
+if [ -f tools/h5write ]; then
+    rm tools/h5write
+fi
