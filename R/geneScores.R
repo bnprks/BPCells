@@ -14,7 +14,7 @@
 #' Note that this definition of distance is slightly different from 
 #' `GRanges::distance`, as it effectively assumes end-coordinates are not included
 #' in a range.
-#' @export
+#' @keywords internal
 distanceToNearestDirectional <- function(ranges, addArchRBug = FALSE) {
     # Label indices of the ranges incase they aren't pre-sorted
     mcols(ranges) <- NULL
@@ -29,7 +29,7 @@ distanceToNearestDirectional <- function(ranges, addArchRBug = FALSE) {
     # Once we filter them out, we know that starts + ends are unique, and
     # sorting by starts implies also getting sorted ends.
     if (!addArchRBug)
-        ranges <- ranges[GenomicRanges::countOverlaps(gene_regions, type="within") == 1]
+        ranges <- ranges[GenomicRanges::countOverlaps(ranges, type="within", ignore.strand=TRUE) == 1]
 
     ranges_list <- split(ranges, GenomicRanges::seqnames(ranges))
 
@@ -51,8 +51,7 @@ distanceToNearestDirectional <- function(ranges, addArchRBug = FALSE) {
 #' @param upstream Number of bases to extend each range upstream (negative to shrink width)
 #' @param downstream Number of bases to extend each range downstream (negative to shrink width)
 #' @details Note that ranges will be blocked from extending past base 1, or the maximum
-#' 
-#' @export
+#' @keywords internal
 extendGenomicRanges <- function(ranges, upstream=0, downstream=0) {
     GenomicRanges::start(ranges) <- pmax(
         1, 
@@ -88,7 +87,7 @@ extendGenomicRanges <- function(ranges, upstream=0, downstream=0) {
 #' Distance is a signed distance calculated such that if the tile has a smaller
 #' start coordinate than the gene and the gene is on the + strand, distance will
 #' be negative and calculated as min(0, end(tile) - start(gene))
-#' @export
+#' @keywords internal
 geneScoreTilesArchR <- function(genes, tile_size = 500, addArchRBug = FALSE) {
     # Extend upstream by 5kb
     genes <- extendGenomicRanges(genes, upstream=5000)
@@ -138,7 +137,7 @@ geneScoreTilesArchR <- function(genes, tile_size = 500, addArchRBug = FALSE) {
 #' @param chr_sizes Named vector of chromosome sizes with chromosmes in the order they are listed
 #' in the tile matrix (used to calculate the index of each tile)
 #' @return Weight matrix of dimension genes x tiles
-#' @export
+#' @keywords internal
 geneScoreWeightsArchR <- function(tiles, chr_sizes = GenomeInfoDb::seqlengths(tiles)) {
     tile_size <- width(tiles[1])
     tile_count <- chr_sizes %/% tile_size + 1
