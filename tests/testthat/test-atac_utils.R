@@ -61,7 +61,7 @@ test_that("merge_peaks works", {
         start = c(1,3,5,7,9),
         end = start + 2
     )
-    assert_equal(merge_peaks_iterative(peaks1), res1)
+    expect_equal(merge_peaks_iterative(peaks1), res1)
 
     peaks2 <- tibble::tibble(
         chr = "chr1", 
@@ -73,5 +73,5 @@ test_that("merge_peaks works", {
         start = c(1,22,11,3,13),
         end = start+2
     )
-    assert_equal(merge_peaks_iterative(peaks2), res2)
+    expect_equal(merge_peaks_iterative(peaks2), res2)
 })
