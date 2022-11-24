@@ -19,4 +19,4 @@ run_test.R
 .Rhistory
 rsync.sh
 src/Makevars
-tools/h5write
+tools/h5write*
