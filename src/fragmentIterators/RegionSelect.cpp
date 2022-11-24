@@ -102,7 +102,7 @@ bool RegionSelect::load() {
             }
             // 1. Scan until frag.start >= region.start, marking any overlaps that happen from
             // frag.end
-            while (start[i] < r.start) {
+            while (start[i] < r.start && i < capacity) {
                 cell[loaded] = cell[i];
                 start[loaded] = start[i];
                 end[loaded] = end[i];
@@ -111,6 +111,7 @@ bool RegionSelect::load() {
                                               // region counts as overlapping
                 i++;
             }
+            if (i >= capacity) break;
             // 2. Binary search for frag.start >= region.end to find all the remaining overlaps
             auto easy_overlaps = std::lower_bound(&start[i], &start[capacity], r.end) - &start[i];
             if (!invert_selection) {
@@ -121,7 +122,7 @@ bool RegionSelect::load() {
             }
             i += easy_overlaps;
             //  3. Increment active_region and continue scan from step 1
-            if (i != capacity) {
+            if (i < capacity) {
                 active_region++;
             }
         }
