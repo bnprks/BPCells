@@ -41,6 +41,7 @@ Imports:
     hexbin
 Suggests:
     IRanges,
-    GenomicRanges
+    GenomicRanges,
+    matrixStats
 Depends: 
     R (>= 2.10)
