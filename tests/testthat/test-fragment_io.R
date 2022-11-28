@@ -13,13 +13,11 @@ test_that("10x Fragments round-trip", {
     write_fragments_10x(input, out_path1)
     write_fragments_10x(input, out_path2)
 
-    res <- system(sprintf("bash -c \"diff -q <(gunzip -c %s) %s\"", in_path, out_path1),
-        ignore.stdout = TRUE)
-    expect_equal(res, 0)
-
-    res <- system(sprintf("bash -c \"diff -q <(gunzip -c %s) <(gunzip -c %s)\"", in_path, out_path2),
-        ignore.stdout = TRUE) 
-    expect_equal(res, 0)
+    expected <- readr::read_file(in_path)
+    res1 <- readr::read_file(out_path1)
+    res2 <- readr::read_file(out_path2)
+    expect_equal(res1, expected)
+    expect_equal(res2, expected)
 })
 
 test_that("Packed Fragments example data round-trip", {
