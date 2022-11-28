@@ -38,20 +38,26 @@ FileWriterBuilder::FileWriterBuilder(std::string _dir, uint32_t buffer_size)
 }
 
 UIntWriter FileWriterBuilder::createUIntWriter(std::string name) {
-    return UIntWriter(std::make_unique<FileNumWriter<uint32_t>>((dir / name).c_str()), buffer_size);
+    return UIntWriter(
+        std::make_unique<FileNumWriter<uint32_t>>((dir / name).string().c_str()), buffer_size
+    );
 }
 
 FloatWriter FileWriterBuilder::createFloatWriter(std::string name) {
-    return FloatWriter(std::make_unique<FileNumWriter<float>>((dir / name).c_str()), buffer_size);
+    return FloatWriter(
+        std::make_unique<FileNumWriter<float>>((dir / name).string().c_str()), buffer_size
+    );
 }
 
 ULongWriter FileWriterBuilder::createULongWriter(std::string name) {
     return ULongWriter(
-        std::make_unique<FileNumWriter<uint64_t>>((dir / name).c_str()), buffer_size
+        std::make_unique<FileNumWriter<uint64_t>>((dir / name).string().c_str()), buffer_size
     );
 }
 DoubleWriter FileWriterBuilder::createDoubleWriter(std::string name) {
-    return DoubleWriter(std::make_unique<FileNumWriter<double>>((dir / name).c_str()), buffer_size);
+    return DoubleWriter(
+        std::make_unique<FileNumWriter<double>>((dir / name).string().c_str()), buffer_size
+    );
 }
 
 std::unique_ptr<StringWriter> FileWriterBuilder::createStringWriter(std::string name) {
@@ -77,24 +83,32 @@ FileReaderBuilder::FileReaderBuilder(std::string _dir, uint32_t buffer_size, uin
 
 UIntReader FileReaderBuilder::openUIntReader(std::string name) {
     return UIntReader(
-        std::make_unique<FileNumReader<uint32_t>>((dir / name).c_str()), buffer_size, read_size
+        std::make_unique<FileNumReader<uint32_t>>((dir / name).string().c_str()),
+        buffer_size,
+        read_size
     );
 }
 
 FloatReader FileReaderBuilder::openFloatReader(std::string name) {
     return FloatReader(
-        std::make_unique<FileNumReader<float>>((dir / name).c_str()), buffer_size, read_size
+        std::make_unique<FileNumReader<float>>((dir / name).string().c_str()),
+        buffer_size,
+        read_size
     );
 }
 
 ULongReader FileReaderBuilder::openULongReader(std::string name) {
     return ULongReader(
-        std::make_unique<FileNumReader<uint64_t>>((dir / name).c_str()), buffer_size, read_size
+        std::make_unique<FileNumReader<uint64_t>>((dir / name).string().c_str()),
+        buffer_size,
+        read_size
     );
 }
 DoubleReader FileReaderBuilder::openDoubleReader(std::string name) {
     return DoubleReader(
-        std::make_unique<FileNumReader<double>>((dir / name).c_str()), buffer_size, read_size
+        std::make_unique<FileNumReader<double>>((dir / name).string().c_str()),
+        buffer_size,
+        read_size
     );
 }
 
@@ -116,7 +130,7 @@ std::vector<std::string> readLines(std::filesystem::path path) {
     std::vector<std::string> ret;
 
     in.open(path.c_str());
-    if (!in) throw std::runtime_error(std::string("Could not open file: ") + path.c_str());
+    if (!in) throw std::runtime_error(std::string("Could not open file: ") + path.string());
 
     while (std::getline(in, line)) {
         ret.push_back(line);

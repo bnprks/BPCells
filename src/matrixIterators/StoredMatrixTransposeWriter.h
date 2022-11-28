@@ -30,6 +30,11 @@ template <typename T> class StoredMatrixTransposeWriter : public MatrixWriter<T>
     FileWriterBuilder file_writer_builder;
     FileReaderBuilder file_reader_builder;
 
+    // Track which round reader/writer were opened so we can close
+    // open file handles prior to delete (Windows doesn't like closing files with open handles)
+    size_t reader_round = SIZE_MAX;
+    size_t writer_round = SIZE_MAX;
+
     bool row_major;
 
     void openWriters(uint32_t round, bool last_round = false);
@@ -365,6 +370,8 @@ template <typename T> class StoredMatrixTransposeWriter : public MatrixWriter<T>
 
 template <typename T>
 void StoredMatrixTransposeWriter<T>::openWriters(uint32_t round, bool last_round) {
+    writer_round = round;
+
     std::string prefix = last_round ? "" : (std::to_string(round) + "_");
     WriterBuilder &wb = last_round ? out_writer_builder : file_writer_builder;
 
@@ -401,6 +408,8 @@ void StoredMatrixTransposeWriter<T>::openWriters(uint32_t round, bool last_round
 
 template <typename T>
 void StoredMatrixTransposeWriter<T>::openReaders(uint32_t round, bool last_round) {
+    reader_round = round;
+
     std::string prefix = last_round ? "" : (std::to_string(round) + "_");
 
     col_reader = UIntReader(
@@ -451,12 +460,26 @@ void StoredMatrixTransposeWriter<T>::deleteWriters(uint32_t round, bool last_rou
     //  then I'll need to add another deletion here
     std::string prefix = last_round ? "" : (std::to_string(round) + "_");
 
+    // Remove open file handles if needed
+    if (reader_round == round) col_reader = UIntReader();
+    if (writer_round == round) col_writer = UIntWriter();
+
     // D1 for cols
     file_writer_builder.deleteWriter(std::to_string(round) + "_col_data");
     file_writer_builder.deleteWriter(std::to_string(round) + "_col_idx");
     file_writer_builder.deleteWriter(std::to_string(round) + "_col_starts");
 
     if (last_round) return; // Don't delete the actually needed data
+
+    // Remove open file handles if needed
+    if (reader_round == round) {
+        row_reader = UIntReader();
+        val_reader = NumReader<T>();
+    }
+    if (writer_round == round) {
+        row_writer = UIntWriter();
+        val_writer = NumWriter<T>();
+    }
 
     // D1Z for rows
     file_writer_builder.deleteWriter(prefix + "index_data");
