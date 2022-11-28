@@ -83,17 +83,34 @@ setMethod("matrix_type", "XPtrList", function(x) {
 })
 
 
-#' Return boolean whether the matrix is a transform
+#' Return a list of input matrices to the current matrix
 #'
-#' A matrix is a transform if it is loading data from another
-#' matrix R object rather than a data source it owns. This is used primarily to know when it is safe
-#' to clear dimnames from intermediate transformed matrices. C++ relies on the base matrices (non-transform) to have
-#' dimnames, while R relies on the outermost matrix (transform) to have dimnames.
-setGeneric("matrix_is_transform", function(x) standardGeneric("matrix_is_transform"))
-setMethod("matrix_is_transform", "XPtrList", function(x) FALSE)
+#' File objects have 0 inputs. Most transforms have 1 input. Some transforms
+#' (e.g. matrix multiplication or matrix concatenation) can have multiple
+#' This is used primarily to know when it is safe to clear dimnames from intermediate transformed matrices. 
+#' C++ relies on the base matrices (non-transform) to have dimnames, while R relies on the outermost matrix (transform) to have dimnames.
+setGeneric("matrix_inputs", function(x) standardGeneric("matrix_inputs"))
+matrix_is_transform <- function(x) length(matrix_inputs(x)) != 0
+
+setMethod("matrix_inputs", "XPtrList", function(x) list())
 # As a reasonable default convention, a matrix is a transform if it has a slot named matrix
-setMethod("matrix_is_transform", "IterableMatrix", function(x) {
-    .hasSlot(x, "matrix")
+setMethod("matrix_inputs", "IterableMatrix", function(x) {
+    if (.hasSlot(x, "matrix")) {
+        return(list(x@matrix))
+    }
+    rlang::abort(sprintf("matrix_inputs not defined for inputs of type %s", class(x)))
+})
+
+setGeneric("matrix_inputs<-", function(x, ..., value) standardGeneric("matrix_inputs<-"))
+setMethod("matrix_inputs<-", "IterableMatrix", function(x, ..., value) {
+    if (.hasSlot(x, "matrix")) {
+        assert_is(value, "list")
+        assert_len(value, 1)
+        assert_is(value[[1]], "IterableMatrix")
+        x@matrix <- value[[1]]
+        return(x)
+    } 
+    rlang::abort(sprintf("matrix_inputs not defined for inputs of type %s", class(x)))
 })
 
 setMethod("short_description", "IterableMatrix", function(x) {
@@ -137,6 +154,9 @@ setMethod("t", signature(x = "IterableMatrix"), function(x) {
     x@transpose <- !x@transpose
     x@dim <- c(x@dim[2L], x@dim[1L])
     x@dimnames <- list(x@dimnames[[2]], x@dimnames[[1]])
+    if (matrix_is_transform(x)) {
+        matrix_inputs(x) <- lapply(matrix_inputs(x), t)
+    }
     return(x)
 })
 
@@ -254,7 +274,15 @@ setClass("MatrixMultiply",
     )
 )
 setMethod("matrix_type", signature(x = "MatrixMultiply"), function(x) matrix_type(x@left))
-setMethod("matrix_is_transform", "MatrixMultiply", function(x) TRUE)
+setMethod("matrix_inputs", "MatrixMultiply", function(x) list(x@left, x@right))
+setMethod("matrix_inputs<-", "MatrixMultiply", function(x, ..., value) {
+    assert_is(value, "list")
+    assert_len(value, 2)
+    for (v in value) assert_is(v, "IterableMatrix")
+    x@left <- value[[1]]
+    x@right <- value[[2]]
+    x
+})
 
 setMethod("iterate_matrix", "MatrixMultiply", function(x) {
     left <- iterate_matrix(x@left)
@@ -319,21 +347,23 @@ setMethod("%*%", signature(x = "dgCMatrix", y = "IterableMatrix"), function(x, y
       }
 })
 
+
 # Subsetting on MatrixMultiply
 setMethod("[", "MatrixMultiply", function(x, i, j, ...) {
     if (missing(x)) stop("x is missing in matrix selection")
-    
     # Handle transpose via recursive call
     if (x@transpose) {
         return(t(t(x)[rlang::maybe_missing(j), rlang::maybe_missing(i)]))
     }
 
-    if (!missing(i)) {
-        x@right <- x@right[i,]
-    }
-    if (!missing(j)) {
-        x@right <- x@right[,j]
-    }
+    i <- selection_index(i, nrow(x), rownames(x))
+    j <- selection_index(j, ncol(x), colnames(x))
+    x <- selection_fix_dims(x, i, j)
+    
+    # Selection will be a no-op if i or j is missing
+    x@left <- x@left[rlang::maybe_missing(i),]
+    x@right <- x@right[,rlang::maybe_missing(j)]
+    
     x
 })
 
@@ -394,49 +424,71 @@ setClass("MatrixSubset",
 )
 setMethod("matrix_type", signature(x = "MatrixSubset"), function(x) matrix_type(x@matrix))
 
+# Helper function to convert logical/character indexing into numeric indexing
+selection_index <- function(selection, dim_len, dimnames) {
+    if (!rlang::is_missing(selection)) {
+        indices <- seq_len(dim_len)
+        names(indices) <- dimnames
+        if(!is.logical(selection)) assert_distinct(selection, n=2)
+        return(vctrs::vec_slice(indices, selection))
+    } else {
+        return(rlang::missing_arg())
+    }
+}
+# Helper function for fixing dims and dimnames after selection.
+# i and j must be integer indexes or missing
+selection_fix_dims <- function(x, i, j) {
+    if(!rlang::is_missing(i)) {
+        x@dim[1] <- length(i)
+        x@dimnames[1] <- list(rownames(x)[i])
+    }
+    if (!rlang::is_missing(j)) {
+        x@dim[2] <- length(j)
+        x@dimnames[2] <- list(colnames(x)[j])
+    }
+    x
+}
 setMethod("[", "IterableMatrix", function(x, i, j, ...) {
     if (missing(x)) stop("x is missing in matrix selection")
+    if (rlang::is_missing(i) && rlang::is_missing(j)) return(x)
+
     ret <- wrapMatrix("MatrixSubset", x)
-
+    i <- selection_index(i, nrow(x), rownames(x))
+    j <- selection_index(j, ncol(x), colnames(x))
+    ret <- selection_fix_dims(ret, i, j)
+    
     if (x@transpose) {
-        return(t(t(x)[rlang::maybe_missing(j), rlang::maybe_missing(i)]))
+        tmp <- rlang::maybe_missing(i)
+        i <- rlang::maybe_missing(j)
+        j <- rlang::maybe_missing(tmp)
     }
-
-    if (!missing(i)) {
-        indices <- seq_len(nrow(x))
-        names(indices) <- rownames(x)
-        ret@row_selection <- vctrs::vec_slice(indices, i)
-        if (!is.null(ret@dimnames[[1]])) ret@dimnames[[1]] <- ret@dimnames[[1]][ret@row_selection]
-        if (!is.logical(i)) assert_distinct(i)
-        ret@dim[1] <- length(ret@row_selection)
-    }
-    if (!missing(j)) {
-        indices <- seq_len(ncol(x))
-        names(indices) <- colnames(x)
-        ret@col_selection <- vctrs::vec_slice(indices, j)
-        if (!is.null(ret@dimnames[[2]])) ret@dimnames[[2]] <- ret@dimnames[[2]][ret@col_selection]
-        assert_distinct(ret@col_selection)
-        if (!is.logical(j)) assert_distinct(j)
-        ret@dim[2] <- length(ret@col_selection)
-    }
-
-    # Handle chained subsets by collapsing repeated selections
-    if (is(x, "MatrixSubset")) {
-        if (length(x@row_selection) == 0) {
-            x@row_selection <- ret@row_selection
-        } else if (length(ret@row_selection) != 0) x@row_selection <- x@row_selection[ret@row_selection]
-
-        if (length(x@col_selection) == 0) {
-            x@col_selection <- ret@col_selection
-        } else if (length(ret@col_selection) != 0) x@col_selection <- x@col_selection[ret@col_selection]
-
-        x@dim <- ret@dim
-        x@dimnames <- ret@dimnames
-        ret <- x
-    }
-
+    if (!rlang::is_missing(i)) ret@row_selection <- i
+    if (!rlang::is_missing(j)) ret@col_selection <- j
     ret
 })
+
+setMethod("[", "MatrixSubset", function(x, i, j, ...) {
+    if (missing(x)) stop("x is missing in matrix selection")
+    i <- selection_index(i, nrow(x), rownames(x))
+    j <- selection_index(j, ncol(x), colnames(x))
+    x <- selection_fix_dims(x, i, j)
+
+    if (x@transpose) {
+        tmp <- i
+        i <- j
+        j <- tmp
+    }
+    if (!rlang::is_missing(i)) {
+        if (length(x@row_selection) == 0) x@row_selection <- i
+        else x@row_selection <- x@row_selection[i]
+    }
+    if (!rlang::is_missing(j)) {
+        if (length(x@col_selection) == 0) x@col_selection <- j
+        else x@col_selection <- x@col_selection[j]
+    }
+    x
+})
+
 
 setMethod("iterate_matrix", "MatrixSubset", function(x) {
     ret <- iterate_matrix(x@matrix)
@@ -529,7 +581,14 @@ setMethod("iterate_matrix", "RowBindMatrices", function(x) {
       }
 })
 
-setMethod("matrix_is_transform", "RowBindMatrices", function(x) TRUE)
+setMethod("matrix_inputs", "RowBindMatrices", function(x) x@matrix_list)
+setMethod("matrix_inputs<-", "RowBindMatrices", function(x, ..., value) {
+    assert_is(value, "list")
+    assert_len(value, length(x@matrix_list))
+    for (v in value) assert_is(v, "IterableMatrix")
+    x@matrix_list <- value
+    return(x)
+})
 
 setMethod("short_description", "RowBindMatrices", function(x) {
     sprintf(
@@ -588,7 +647,15 @@ setMethod("iterate_matrix", "ColBindMatrices", function(x) {
       }
 })
 
-setMethod("matrix_is_transform", "ColBindMatrices", function(x) TRUE)
+setMethod("matrix_inputs", "ColBindMatrices", function(x) x@matrix_list)
+setMethod("matrix_inputs<-", "ColBindMatrices", function(x, ..., value) {
+    assert_is(value, "list")
+    assert_len(value, length(x@matrix_list))
+    for (v in value) assert_is(v, "IterableMatrix")
+    x@matrix_list <- value
+    return(x)
+})
+
 
 setMethod("short_description", "ColBindMatrices", function(x) {
     sprintf(
@@ -649,6 +716,7 @@ setClass("PackedMatrixMemBase",
 setMethod("short_description", "PackedMatrixMemBase", function(x) {
     "Load compressed matrix from memory"
 })
+setMethod("matrix_inputs", "PackedMatrixMemBase", function(x) list())
 
 setClass("PackedMatrixMem_uint32_t",
     contains = "PackedMatrixMemBase",
@@ -709,6 +777,7 @@ setClass("UnpackedMatrixMemBase",
 setMethod("short_description", "UnpackedMatrixMemBase", function(x) {
     "Load uncompressed matrix from memory"
 })
+setMethod("matrix_inputs", "UnpackedMatrixMemBase", function(x) list())
 
 setClass("UnpackedMatrixMem_uint32_t",
     contains = "UnpackedMatrixMemBase",
@@ -854,6 +923,7 @@ setClass("MatrixDir",
     )
 )
 setMethod("matrix_type", "MatrixDir", function(x) x@type)
+setMethod("matrix_inputs", "MatrixDir", function(x) list())
 
 setMethod("iterate_matrix", "MatrixDir", function(x) {
     if (x@transpose) x <- t(x)
@@ -937,6 +1007,7 @@ setClass("MatrixH5",
     )
 )
 setMethod("matrix_type", "MatrixH5", function(x) x@type)
+setMethod("matrix_inputs", "MatrixH5", function(x) list())
 
 setMethod("iterate_matrix", "MatrixH5", function(x) {
     if (x@transpose) x <- t(x)
@@ -1016,6 +1087,7 @@ setClass("10xMatrixH5",
     )
 )
 setMethod("matrix_type", "10xMatrixH5", function(x) "uint32_t")
+setMethod("matrix_inputs", "10xMatrixH5", function(x) list())
 setMethod("iterate_matrix", "10xMatrixH5", function(x) {
     wrapMat_uint32_t(iterate_matrix_10x_hdf5_cpp(x@path, x@buffer_size), new("XPtrList"))
 })
@@ -1141,6 +1213,7 @@ setClass("AnnDataMatrixH5",
     )
 )
 setMethod("matrix_type", "AnnDataMatrixH5", function(x) "float")
+setMethod("matrix_inputs", "AnnDataMatrixH5", function(x) list())
 setMethod("iterate_matrix", "AnnDataMatrixH5", function(x) {
     wrapMat_double(iterate_matrix_anndata_hdf5_cpp(x@path, x@group, x@buffer_size), new("XPtrList"))
 })
@@ -1203,6 +1276,8 @@ setClass("PeakMatrix",
     )
 )
 setMethod("matrix_type", "PeakMatrix", function(x) "uint32_t")
+setMethod("matrix_inputs", "PeakMatrix", function(x) list())
+
 #' Calculate ranges x cells overlap matrix
 #' @param fragments Input fragments object. Must have cell names and chromosome names defined
 #' @param ranges GRanges object with the ranges to overlap, or list/data frame with columns chr, start, & end.
@@ -1297,6 +1372,8 @@ setClass("TileMatrix",
     )
 )
 setMethod("matrix_type", "TileMatrix", function(x) "uint32_t")
+setMethod("matrix_inputs", "TileMatrix", function(x) list())
+
 
 #' Calculate ranges x cells tile overlap matrix
 #' @param fragments Input fragments object
@@ -1420,6 +1497,16 @@ setMethod("short_description", "ConvertMatrixType", function(x) {
         sprintf("Convert type from %s to %s", matrix_type(x@matrix), x@type)
     )
 })
+setMethod("[", "ConvertMatrixType", function(x, i, j, ...) {
+    if (missing(x)) stop("x is missing in matrix selection")
+    
+    i <- selection_index(i, nrow(x), rownames(x))
+    j <- selection_index(j, ncol(x), colnames(x))
+    x <- selection_fix_dims(x, i, j)
+
+    x@matrix <- x@matrix[rlang::maybe_missing(i), rlang::maybe_missing(j)]
+    x
+})
 
 #' Convert the type of a matrix
 #' @param matrix IterableMatrix object input
@@ -1430,10 +1517,14 @@ setMethod("short_description", "ConvertMatrixType", function(x) {
 convert_matrix_type <- function(matrix, type = c("uint32_t", "double", "float")) {
     assert_is(matrix, c("dgCMatrix", "IterableMatrix"))
     type <- match.arg(type)
-    if (is(matrix, "dgCMatrix")) matrix <- as(matrix, "IterableMatrix")
+    if (is(matrix, "dgCMatrix")) {
+        matrix <- as(matrix, "IterableMatrix")
+    } 
     if (matrix_type(matrix) == type) {
-          return(matrix)
-      }
+        return(matrix)
+    } else if (matrix@transpose) {
+        return(t(convert_matrix_type(t(matrix), type)))
+    }
     wrapMatrix("ConvertMatrixType", matrix, type = type)
 }
 
@@ -1448,6 +1539,7 @@ setClass("Iterable_dgCMatrix_wrapper",
     )
 )
 setMethod("matrix_type", signature(x = "Iterable_dgCMatrix_wrapper"), function(x) "double")
+setMethod("matrix_inputs", "Iterable_dgCMatrix_wrapper", function(x) list())
 
 setAs("dgCMatrix", "IterableMatrix", function(from) {
     new("Iterable_dgCMatrix_wrapper", dim = dim(from), dimnames = dimnames(from), transpose = FALSE, mat = from)

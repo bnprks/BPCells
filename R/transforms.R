@@ -19,27 +19,19 @@ setMethod("matrix_type", "TransformedMatrix", function(x) "double")
 # Subsetting on TransformedMatrix objects
 setMethod("[", "TransformedMatrix", function(x, i, j, ...) {
     if (missing(x)) stop("x is missing in matrix selection")
-    
-    # Handle transpose via recursive call
-    if (x@transpose) {
-        return(t(t(x)[rlang::maybe_missing(j), rlang::maybe_missing(i)]))
-    }
-    
-    # Subset the underlying matrix
-    x@matrix <- x@matrix[rlang::maybe_missing(i), rlang::maybe_missing(j)]
+
+    i <- selection_index(i, nrow(x), rownames(x))
+    j <- selection_index(j, ncol(x), colnames(x))
+    x <- selection_fix_dims(x, i, j)
+
+    x@matrix <- x@matrix[rlang::maybe_missing(i),rlang::maybe_missing(j)]
     
     # Subset the row/col params
-    if (!missing(i) && ncol(x@row_params) != 0) {
-        indices <- seq_len(nrow(x))
-        names(indices) <- rownames(x)
-        selection <- vctrs::vec_slice(indices, i)
-        x@row_params <- x@row_params[,selection]
+    if (!rlang::is_missing(i) && ncol(x@row_params) != 0) {
+        x@row_params <- x@row_params[,i, drop=FALSE]
     }
-    if (!missing(j) && ncol(x@col_params) != 0) {
-        indices <- seq_len(ncol(x))
-        names(indices) <- colnames(x)
-        selection <- vctrs::vec_slice(indices, j)
-        x@col_params <- x@col_params[,selection]
+    if (!rlang::is_missing(j) && ncol(x@col_params) != 0) {
+        x@col_params <- x@col_params[,j, drop=FALSE]
     }
     x
 })

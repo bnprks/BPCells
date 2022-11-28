@@ -42,6 +42,24 @@ test_that("Chained subsetting works", {
     expect_equal(m1[c(2,4,3,5),][c(3,1),c(1,3)], m2[c(2,4,3,5),][c(3,1),c(1,3)] %>% as("dgCMatrix"))
 })
 
+test_that("Subsetting matrix multiply works", {
+    m1 <- generate_dense_matrix(10, 5) %>% as("dgCMatrix")
+    m2 <- generate_dense_matrix(5, 6) %>% as("dgCMatrix")
+
+    m <- as(m1, "IterableMatrix") %*% as(m2, "IterableMatrix")
+    res <- m1 %*% m2
+
+
+    expect_equal(as(m[c(2,4,9,5),], "dgCMatrix"), res[c(2,4,9,5),])
+    expect_true(is(m[c(2,4,9,5),], "MatrixMultiply"))
+
+    expect_equal(as(m[,c(4,3,6)], "dgCMatrix"), res[,c(4,3,6)])
+    expect_true(is(m[,c(4,3,6)], "MatrixMultiply"))
+
+    expect_equal(as(m[c(2,4,9,5),c(4,3,6)], "dgCMatrix"), res[c(2,4,9,5),c(4,3,6)])
+    expect_true(is(m[c(2,4,9,5),c(4,3,6)], "MatrixMultiply"))
+})
+
 test_that("Dense matrix/vector multiply works", { 
     withr::local_seed(195123)
 
