@@ -267,7 +267,7 @@ trackplot_gene <- function(transcripts, region, exon_size=3, gene_size=1, label_
     #    as a transcript it overlaps.
     tx_boundaries <- data %>% # Data frame of pos, tx_id, is_start
         dplyr::filter(feature == "transcript") %>%
-        {bind_rows(
+        {dplyr::bind_rows(
                 dplyr::transmute(., pos=start, transcript_id, start=TRUE),
                 dplyr::transmute(., pos=end, transcript_id, start=FALSE)
         )} %>%
