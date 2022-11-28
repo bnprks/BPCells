@@ -1,21 +1,21 @@
 suppressPackageStartupMessages({
-    library(BPCells)
-    library(magrittr)
+  library(BPCells)
+  library(magrittr)
 })
 
 
 
 args <- c(
-    "/oak/stanford/groups/wjg/bparks/BPCells/01_raw_data/ENCODE/samples/snyder_*_PANC/fragments.tsv.gz",
-    "hg38",
-    "2000",
-    "5",
-    "/oak/stanford/groups/wjg/bparks/BPCells/04_data/test_real_data/bpcells_snyder_panc",
-    "/oak/stanford/groups/wjg/bparks/BPCells/01_raw_data/peaksets/ENCFF305BGH.shuffle.bed",
-    "8"
+  "/oak/stanford/groups/wjg/bparks/BPCells/01_raw_data/ENCODE/samples/snyder_*_PANC/fragments.tsv.gz",
+  "hg38",
+  "2000",
+  "5",
+  "/oak/stanford/groups/wjg/bparks/BPCells/04_data/test_real_data/bpcells_snyder_panc",
+  "/oak/stanford/groups/wjg/bparks/BPCells/01_raw_data/peaksets/ENCFF305BGH.shuffle.bed",
+  "8"
 )
 get_abspath <- function(path) {
-    file.path(normalizePath(dirname(path)), basename(path))
+  file.path(normalizePath(dirname(path)), basename(path))
 }
 
 args <- commandArgs(trailingOnly = TRUE)
@@ -45,64 +45,64 @@ temp_frag_paths <- lapply(sample_names, tempfile)
 
 
 fragments_list <- parallel::mclapply(seq_along(input_paths), mc.cores = threads, function(i) {
-    open_fragments_10x(input_paths[i]) %>%
-        prefix_cell_names(paste0(sample_names[i], "#")) %>%
-        select_chromosomes(standard_chr) %>%
-        write_fragments_dir(temp_frag_paths[[i]])
+  open_fragments_10x(input_paths[i]) %>%
+    prefix_cell_names(paste0(sample_names[i], "#")) %>%
+    select_chromosomes(standard_chr) %>%
+    write_fragments_dir(temp_frag_paths[[i]])
 })
 fragments <- do.call(c, fragments_list) %>% write_fragments_dir(file.path(output_dir, "fragments"))
 for (p in temp_frag_paths) {
-    unlink(p, recursive = TRUE)
+  unlink(p, recursive = TRUE)
 }
 
 # QC data + filter
 qc_res <- fragments %>%
-    shift_fragments(shift_end = -1) %>% # Match ArchR bug in fragment coords
-    qc_scATAC(gene_annotation$TSS, genome_annotation$blacklist)
+  shift_fragments(shift_end = -1) %>% # Match ArchR bug in fragment coords
+  qc_scATAC(gene_annotation$TSS, genome_annotation$blacklist)
 qc_res_promoter <- fragments %>%
-    shift_fragments(shift_end = -1) %>% # Match ArchR bug in fragment coords
-    qc_scATAC(gene_annotation$genes, genome_annotation$blacklist)
+  shift_fragments(shift_end = -1) %>% # Match ArchR bug in fragment coords
+  qc_scATAC(gene_annotation$genes, genome_annotation$blacklist)
 qc_res$ReadsInPromoter <- qc_res_promoter$ReadsInPromoter
 readr::write_tsv(qc_res, file.path(output_dir, "cell_qc.tsv.gz"))
 
 keeper_cells <- dplyr::filter(qc_res, TSSEnrichment >= min_tss, nFrags >= min_frags) %>%
-    dplyr::pull(cellName)
+  dplyr::pull(cellName)
 
 fragments <- select_cells(fragments, keeper_cells) %>%
-    write_fragments_dir(file.path(output_dir, "fragments_filtered"))
+  write_fragments_dir(file.path(output_dir, "fragments_filtered"))
 
 
 # Calculate tile matrix
 tile_coords <- genome_annotation$chromSizes %>%
-    tibble::as_tibble() %>%
-    dplyr::transmute(chr = seqnames, start = 0, end = end, tile_width = 500)
+  tibble::as_tibble() %>%
+  dplyr::transmute(chr = seqnames, start = 0, end = end, tile_width = 500)
 
 tile_mat <- fragments %>%
-    shift_fragments(shift_start = 1) %>%
-    # Mimic a quirk of ArchR's tile alignment
-    tile_matrix(tile_coords) %>%
-    write_matrix_dir(file.path(output_dir, "tile_mat"))
+  shift_fragments(shift_start = 1) %>%
+  # Mimic a quirk of ArchR's tile alignment
+  tile_matrix(tile_coords) %>%
+  write_matrix_dir(file.path(output_dir, "tile_mat"))
 
 # Calculate peak matrix
 ordered_peaks <- BPCells:::order_ranges(peak_set, chrNames(fragments))
 peak_matrix <- fragments %>%
-    shift_fragments(shift_end = -1) %>%
-    # Since ArchR incorrectly sets the end-coordinate of 10x fragments
-    peak_matrix(peak_set[ordered_peaks, ]) %>%
-    write_matrix_dir(file.path(output_dir, "peak_mat"))
+  shift_fragments(shift_end = -1) %>%
+  # Since ArchR incorrectly sets the end-coordinate of 10x fragments
+  peak_matrix(peak_set[ordered_peaks, ]) %>%
+  write_matrix_dir(file.path(output_dir, "peak_mat"))
 
 # Calculate footprints
 groups <- stringr::str_c(
-    stringr::str_match(cellNames(fragments), "#(.)")[, 2],
-    "._.",
-    stringr::str_split_fixed(cellNames(fragments), "#", 2)[, 1]
+  stringr::str_match(cellNames(fragments), "#(.)")[, 2],
+  "._.",
+  stringr::str_split_fixed(cellNames(fragments), "#", 2)[, 1]
 )
 footprint_data <- fragments %>%
-    shift_fragments(shift_end = -1) %>%
-    footprint(
-        gene_annotation$TSS,
-        cell_groups = groups,
-        flank = 2000,
-        normalization_width = 0
-    )
+  shift_fragments(shift_end = -1) %>%
+  footprint(
+    gene_annotation$TSS,
+    cell_groups = groups,
+    flank = 2000,
+    normalization_width = 0
+  )
 readr::write_tsv(footprint_data, file.path(output_dir, "footprint.tsv.gz"))

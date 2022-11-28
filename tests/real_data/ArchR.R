@@ -1,24 +1,24 @@
 suppressPackageStartupMessages({
-    library(dplyr)
-    library(readr)
-    library(stringr)
-    library(ArchR)
+  library(dplyr)
+  library(readr)
+  library(stringr)
+  library(ArchR)
 })
 
 args <- c(
-    "/oak/stanford/groups/wjg/bparks/BPCells/01_raw_data/ENCODE/samples/snyder_*_PANC/fragments.tsv.gz",
-    "hg38",
-    "2000",
-    "5",
-    "/oak/stanford/groups/wjg/bparks/BPCells/04_data/test_real_data/ArchR_snyder_panc",
-    "/oak/stanford/groups/wjg/bparks/BPCells/01_raw_data/peaksets/ENCFF305BGH.shuffle.bed",
-    "8"
+  "/oak/stanford/groups/wjg/bparks/BPCells/01_raw_data/ENCODE/samples/snyder_*_PANC/fragments.tsv.gz",
+  "hg38",
+  "2000",
+  "5",
+  "/oak/stanford/groups/wjg/bparks/BPCells/04_data/test_real_data/ArchR_snyder_panc",
+  "/oak/stanford/groups/wjg/bparks/BPCells/01_raw_data/peaksets/ENCFF305BGH.shuffle.bed",
+  "8"
 )
 get_abspath <- function(path) {
-    file.path(normalizePath(dirname(path)), basename(path))
+  file.path(normalizePath(dirname(path)), basename(path))
 }
 
-args <- commandArgs(trailingOnly=TRUE)
+args <- commandArgs(trailingOnly = TRUE)
 stopifnot(length(args) == 7)
 
 input_glob <- args[1] # Glob pattern for input fragments.tsv.gz files
@@ -26,7 +26,7 @@ genome <- args[2] # Name of genome
 min_frags <- as.numeric(args[3]) # Minimum fragments cutoff
 min_tss <- as.numeric(args[4]) # Minimum TSS cutoff
 output_dir <- get_abspath(args[5]) # Output directory
-peak_path <- get_abspath(args[6]) #Input peak set
+peak_path <- get_abspath(args[6]) # Input peak set
 threads <- as.numeric(args[7])
 
 output_arrow_dir <- file.path(output_dir, "arrows")
@@ -35,20 +35,22 @@ output_log <- file.path(output_dir, "logs")
 output_project <- file.path(output_dir, "project")
 
 # Read peaks here to fail fast
-peak_set <- read_tsv(peak_path, col_names=FALSE, col_types=NULL) %>%
-    transmute(chr=X1, start=X2+1, end=X3) %>% 
-    filter(chr %in% seqnames(getGenomeAnnotation()$chromSizes)) %>%
-    GenomicRanges::makeGRangesFromDataFrame() 
+peak_set <- read_tsv(peak_path, col_names = FALSE, col_types = NULL) %>%
+  transmute(chr = X1, start = X2 + 1, end = X3) %>%
+  filter(chr %in% seqnames(getGenomeAnnotation()$chromSizes)) %>%
+  GenomicRanges::makeGRangesFromDataFrame()
 
-dir.create(output_arrow_dir, recursive=TRUE, showWarnings=FALSE)
-dir.create(output_log, recursive=TRUE, showWarnings=FALSE)
+dir.create(output_arrow_dir, recursive = TRUE, showWarnings = FALSE)
+dir.create(output_log, recursive = TRUE, showWarnings = FALSE)
 # Write the arguments passed while running the code
 write_lines(args, file.path(output_dir, "arguments.txt"))
 # Write the current script as well
-cmdArgs <- commandArgs(trailingOnly=FALSE)
+cmdArgs <- commandArgs(trailingOnly = FALSE)
 scriptPath <- normalizePath(dirname(sub("^--file=", "", cmdArgs[grep("^--file=", cmdArgs)])))[1]
 
-genome <- basename(chrom_sizes_path) %>% str_split_fixed(fixed("."), n=2) %>% .[1,1]
+genome <- basename(chrom_sizes_path) %>%
+  str_split_fixed(fixed("."), n = 2) %>%
+  .[1, 1]
 addArchRGenome(genome)
 addArchRThreads(threads)
 # Make sure these come out as absolute paths since we're going to change directories
@@ -63,18 +65,18 @@ tmp <- tempdir()
 setwd(tmp)
 
 arrow_path <- createArrowFiles(
-    inputFiles = input_paths,
-    sampleName=sample_names,
-    outputNames = str_remove(output_arrow_path, fixed(".arrow")),
-    excludeChr = c("chrM"),
-    QCDir = output_qc,
-    minTSS = min_tss,
-    minFrags = min_frags,
-    maxFrags = Inf,
-    addTileMat = TRUE,
-    TileMatParams = list(binarize=FALSE),
-    addGeneScoreMat = TRUE,
-    logFile = createLogFile("createArrowFiles", output_log)
+  inputFiles = input_paths,
+  sampleName = sample_names,
+  outputNames = str_remove(output_arrow_path, fixed(".arrow")),
+  excludeChr = c("chrM"),
+  QCDir = output_qc,
+  minTSS = min_tss,
+  minFrags = min_frags,
+  maxFrags = Inf,
+  addTileMat = TRUE,
+  TileMatParams = list(binarize = FALSE),
+  addGeneScoreMat = TRUE,
+  logFile = createLogFile("createArrowFiles", output_log)
 )
 
 setwd(original_dir)
@@ -87,56 +89,56 @@ proj <- ArchRProject(
   threads = 1
 )
 
-proj <- saveArchRProject(proj, output_project, logFile=createLogFile("saveProject_1", output_log))
+proj <- saveArchRProject(proj, output_project, logFile = createLogFile("saveProject_1", output_log))
 
 # Add peak matrix
 proj <- addPeakSet(proj, peak_set)
 
 proj <- addPeakMatrix(
-    ArchRProj = proj,
-    ceiling = 1e9,
-    binarize = FALSE,
-    verbose = TRUE,
-    parallelParam = NULL,
-    force = TRUE,
-    logFile = createLogFile("addPeakMatrix", output_log)
+  ArchRProj = proj,
+  ceiling = 1e9,
+  binarize = FALSE,
+  verbose = TRUE,
+  parallelParam = NULL,
+  force = TRUE,
+  logFile = createLogFile("addPeakMatrix", output_log)
 )
 
-proj <- saveArchRProject(proj, output_project, logFile=createLogFile("saveProject_2", output_log))
+proj <- saveArchRProject(proj, output_project, logFile = createLogFile("saveProject_2", output_log))
 
 # Add dummy groups based on first base of cell barcode
-barcode_group <- stringr::str_match(proj$cellNames, "#(.)")[,2]
-proj <- addCellColData(proj, barcode_group, "barcode_group", cells=proj$cellNames)
+barcode_group <- stringr::str_match(proj$cellNames, "#(.)")[, 2]
+proj <- addCellColData(proj, barcode_group, "barcode_group", cells = proj$cellNames)
 
 # Trying my darndest to prevent weird pseudoreplicate creation
 cellGroups <- addGroupCoverages(
-    proj, 
-    returnGroups=TRUE,
-    groupBy="barcode_group", 
-    minCells=0, 
-    maxCells=1e9,
-    maxFragments=1e10,
-    maxRep=1e9,
-    logFile = createLogFile("addGroupCoverages", output_log)
+  proj,
+  returnGroups = TRUE,
+  groupBy = "barcode_group",
+  minCells = 0,
+  maxCells = 1e9,
+  maxFragments = 1e10,
+  maxRep = 1e9,
+  logFile = createLogFile("addGroupCoverages", output_log)
 )
-saveRDS(cellGroups, file.path(output_project, "barcode_group_membership.Rds"), compress=FALSE)
+saveRDS(cellGroups, file.path(output_project, "barcode_group_membership.Rds"), compress = FALSE)
 proj <- addGroupCoverages(
-    proj, 
-    groupBy="barcode_group", 
-    minCells=0, 
-    maxCells=1e9,
-    maxFragments=1e10,
-    maxRep=1e9,
-    logFile = createLogFile("addGroupCoverages", output_log)
+  proj,
+  groupBy = "barcode_group",
+  minCells = 0,
+  maxCells = 1e9,
+  maxFragments = 1e10,
+  maxRep = 1e9,
+  logFile = createLogFile("addGroupCoverages", output_log)
 )
 
-proj <- saveArchRProject(proj, output_project, logFile=createLogFile("saveProject_3", output_log))
+proj <- saveArchRProject(proj, output_project, logFile = createLogFile("saveProject_3", output_log))
 
 footprints <- getFootprints(
-    proj,
-    positions = GRangesList(TSS = getTSS(proj)),
-    groupBy="barcode_group",
-    flank=2000
+  proj,
+  positions = GRangesList(TSS = getTSS(proj)),
+  groupBy = "barcode_group",
+  flank = 2000
 )
 
-saveRDS(footprints, file.path(output_project, "footprints.Rds"), compress=FALSE)
+saveRDS(footprints, file.path(output_project, "footprints.Rds"), compress = FALSE)

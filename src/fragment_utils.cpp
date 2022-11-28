@@ -139,7 +139,7 @@ List get_tile_ranges_cpp(
     }
 
     // Calculate coordinates for each selection
-    std::vector<uint32_t> ret_chr_id, ret_start, ret_end;
+    std::vector<int32_t> ret_chr_id, ret_start, ret_end;
     for (int64_t i = 0; i < selection.length(); i++) {
         int64_t idx = (int64_t)selection[i];
         int64_t range = std::upper_bound(starting_idx.begin(), starting_idx.end(), idx) - 1 -
@@ -147,7 +147,7 @@ List get_tile_ranges_cpp(
 
         ret_chr_id.push_back(chr_id[range]);
         ret_start.push_back(start[range] + tile_width[range] * (idx - starting_idx[range]));
-        ret_end.push_back(std::min(ret_start.back() + tile_width[range], (uint32_t)end[range]));
+        ret_end.push_back(std::min(ret_start.back() + tile_width[range], end[range]));
     }
     return List::create(
         Named("chr") = ret_chr_id, Named("start") = ret_start, Named("end") = ret_end

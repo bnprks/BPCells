@@ -84,7 +84,7 @@ read_gtf <- function(path, attributes = c("gene_id"), tags = character(0), featu
 read_gencode_genes <- function(dir, release = "latest",
                                annotation_set = c("basic", "comprehensive"),
                                gene_type = "lncRNA|protein_coding|IG_.*_gene|TR_.*_gene",
-                               attributes = c("gene_id", "gene_type", "gene_name"), tags=character(0),
+                               attributes = c("gene_id", "gene_type", "gene_name"), tags = character(0),
                                features = c("gene"), timeout = 300) {
   assert_true("gene_type" %in% attributes)
   annotation_set <- match.arg(annotation_set)
@@ -95,7 +95,7 @@ read_gencode_genes <- function(dir, release = "latest",
     conn <- url(md5_url)
     lines <- readLines(conn)
     close(conn)
-    matches <- stringr::str_match(lines, "gencode\\.v([^.]+)\\.annotation.gtf.gz")[, 2]
+    matches <- stringr::str_match(lines, "gencode\\.v([^.]+)\\.annotation.gtf.gz")[, 2] #nolint
     matches <- matches[!is.na(matches)]
     if (length(matches) != 1) {
       stop("Error fetching latest release number from gencode. Please specify explicit release")
@@ -121,9 +121,9 @@ read_gencode_genes <- function(dir, release = "latest",
 #'    - Ensembl_Canonical: human+mouse, superset of MANE_Select for human
 #'    - all: Preserve all transcript models (not recommended for plotting)
 #' @details **read_gencode_transcripts**
-#' 
+#'
 #' Read transcript models from GENCODE, for use with trackplot_gene()
-read_gencode_transcripts <- function(dir, release="latest", transcript_choice = c("MANE_Select", "Ensembl_Canonical", "all"),
+read_gencode_transcripts <- function(dir, release = "latest", transcript_choice = c("MANE_Select", "Ensembl_Canonical", "all"),
                                      annotation_set = c("basic", "comprehensive"),
                                      gene_type = "lncRNA|protein_coding|IG_.*_gene|TR_.*_gene",
                                      attributes = c("gene_id", "gene_type", "gene_name", "transcript_id"),
@@ -135,21 +135,21 @@ read_gencode_transcripts <- function(dir, release="latest", transcript_choice = 
     rlang::warn("MANE_Select transcripts not available for mouse. Defaulting to Ensembl_Canonical")
     transcript_choice <- "Ensembl_Canonical"
   }
-  tags <- if(transcript_choice != "all") transcript_choice else character(0)
+  tags <- if (transcript_choice != "all") transcript_choice else character(0)
   gtf <- read_gencode_genes(
-    dir, 
-    release=release, 
-    annotation_set=annotation_set, 
-    gene_type=gene_type, 
-    attributes=attributes, 
-    tags=tags,
-    features=features, 
-    timeout=timeout
+    dir,
+    release = release,
+    annotation_set = annotation_set,
+    gene_type = gene_type,
+    attributes = attributes,
+    tags = tags,
+    features = features,
+    timeout = timeout
   )
   if (transcript_choice == "MANE_Select") {
-    return(gtf[gtf$MANE_Select,])
+    return(gtf[gtf$MANE_Select, ])
   } else if (transcript_choice == "Ensembl_Canonical") {
-    return(gtf[gtf$Ensembl_Canonical,])
+    return(gtf[gtf$Ensembl_Canonical, ])
   } else {
     return(gtf)
   }
@@ -194,20 +194,20 @@ read_encode_blacklist <- function(dir, genome = c("hg38", "mm10", "hg19", "dm6",
   return(read_bed(path, backup_url = url, additional_columns = "reason"))
 }
 
-#' Read UCSC chromosome sizes 
-#' 
+#' Read UCSC chromosome sizes
+#'
 #' Read chromosome sizes from UCSC and return as a tibble with one row per
 #' chromosome.
 #' The underlying data is pulled from here: <https://hgdownload.soe.ucsc.edu/downloads.html>
-#' 
-read_ucsc_chrom_sizes <- function(dir, genome = c("hg38", "mm39", "mm10", "mm9", "hg19"), 
-                                  keep_chromosomes="chr[0-9]+|chrX|chrY", timeout = 300) {
+#'
+read_ucsc_chrom_sizes <- function(dir, genome = c("hg38", "mm39", "mm10", "mm9", "hg19"),
+                                  keep_chromosomes = "chr[0-9]+|chrX|chrY", timeout = 300) {
   genome <- match.arg(genome)
   url <- sprintf("https://hgdownload.soe.ucsc.edu/goldenPath/%s/bigZips/%1$s.chrom.sizes", genome)
   path <- file.path(dir, basename(url))
   ensure_downloaded(path, url, timeout)
-  sizes <- readr::read_tsv(path, col_names = c("chr", "end"), col_types="ci") %>%
-    dplyr::transmute(chr, start=0, end)
+  sizes <- readr::read_tsv(path, col_names = c("chr", "end"), col_types = "ci") %>%
+    dplyr::transmute(chr, start = 0, end)
   if (!is.null(keep_chromosomes)) {
     sizes <- sizes %>%
       dplyr::filter(stringr::str_detect(chr, paste0("^(", keep_chromosomes, ")$")))
@@ -226,9 +226,9 @@ read_ucsc_chrom_sizes <- function(dir, genome = c("hg38", "mm39", "mm10", "mm9",
 #' @return Numeric vector analagous to the `order` function. Provides an index
 #' selection that will reorder the input ranges to be sorted by chr, end, start
 #' @export
-order_ranges <- function(ranges, chr_levels, sort_by_end=TRUE) {
+order_ranges <- function(ranges, chr_levels, sort_by_end = TRUE) {
   ranges <- normalize_ranges(ranges)
-  if (sort_by_end){
+  if (sort_by_end) {
     return(order(match(as.character(ranges$chr), chr_levels), ranges$end, ranges$start))
   } else {
     return(order(match(as.character(ranges$chr), chr_levels), ranges$start, ranges$end))
@@ -296,7 +296,7 @@ canonical_gene_symbol <- function(query, gene_mapping = human_gene_mapping) {
   res <- remove_ensembl_version(query)
   res <- human_gene_mapping[res]
   names(res) <- query
-  if (any(is.na(res))) {
+  if (anyNA(res)) {
     rlang::warn(sprintf(
       "Could not match %d symbols: %s",
       sum(is.na(res)),
@@ -307,11 +307,11 @@ canonical_gene_symbol <- function(query, gene_mapping = human_gene_mapping) {
 }
 
 #' Find gene region
-#' 
+#'
 #' Conveniently look up the region of a gene by gene symbol. The value returned by this function
-#' can be used as the `region` argument for trackplot functions such as 
+#' can be used as the `region` argument for trackplot functions such as
 #' `trackplot_bulk()` or `trackplot_gene()`
-#' 
+#'
 #' @inheritParams match_gene_symbol
 #' @param genes GRanges, list, or data.frame of transcript features to plot.
 #' Required attributes are:
@@ -321,15 +321,15 @@ canonical_gene_symbol <- function(query, gene_mapping = human_gene_mapping) {
 #' @param extend_bp Bases to extend region upstream and downstream of gene
 #' @return list of chr, start, end positions for use with , etc.
 #' @export
-gene_region <- function(genes, gene_symbol, extend_bp=1e4, gene_mapping=human_gene_mapping) {
-  genes <- normalize_ranges(genes, metadata_cols=c("gene_name"))
+gene_region <- function(genes, gene_symbol, extend_bp = 1e4, gene_mapping = human_gene_mapping) {
+  genes <- normalize_ranges(genes, metadata_cols = c("gene_name"))
   idx <- match_gene_symbol(gene_symbol, genes$gene_name)
-  if(is.na(idx)) {
+  if (is.na(idx)) {
     rlang::stop("Could not locate gene")
   }
   return(list(
-    chr=as.character(genes$chr[idx]), 
-    start=genes$start[idx]-extend_bp, 
-    end=genes$end[idx]+extend_bp
+    chr = as.character(genes$chr[idx]),
+    start = genes$start[idx] - extend_bp,
+    end = genes$end[idx] + extend_bp
   ))
 }
