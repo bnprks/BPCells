@@ -267,6 +267,7 @@ merge_peaks_iterative <- function(peaks) {
 #' significant of the overlapping candidate peaks
 #' 5. If `merge_peaks == TRUE`, perform a final round of `merge_peaks_iterative()`,
 #' prioritizing each peak by its within-group significance rank
+#' @export
 call_peaks_tile <- function(fragments, chromosome_sizes, cell_groups = rep.int("all", length(cellNames(fragments))),
                             effective_genome_size = NULL,
                             peak_width = 200, peak_tiling = 3, fdr_cutoff = 0.01,

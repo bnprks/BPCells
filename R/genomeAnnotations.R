@@ -10,7 +10,7 @@ ensure_downloaded <- function(path, backup_url, timeout) {
   options(timeout = timeout)
   if (!is.null(backup_url) && !file.exists(path)) {
     dir.create(dirname(path), recursive = TRUE, showWarnings = FALSE)
-    download.file(backup_url, path)
+    download.file(backup_url, path, mode="wb")
   }
 }
 
@@ -123,6 +123,7 @@ read_gencode_genes <- function(dir, release = "latest",
 #' @details **read_gencode_transcripts**
 #'
 #' Read transcript models from GENCODE, for use with trackplot_gene()
+#' @export 
 read_gencode_transcripts <- function(dir, release = "latest", transcript_choice = c("MANE_Select", "Ensembl_Canonical", "all"),
                                      annotation_set = c("basic", "comprehensive"),
                                      gene_type = "lncRNA|protein_coding|IG_.*_gene|TR_.*_gene",
@@ -200,6 +201,7 @@ read_encode_blacklist <- function(dir, genome = c("hg38", "mm10", "hg19", "dm6",
 #' chromosome.
 #' The underlying data is pulled from here: <https://hgdownload.soe.ucsc.edu/downloads.html>
 #'
+#' @export
 read_ucsc_chrom_sizes <- function(dir, genome = c("hg38", "mm39", "mm10", "mm9", "hg19"),
                                   keep_chromosomes = "chr[0-9]+|chrX|chrY", timeout = 300) {
   genome <- match.arg(genome)

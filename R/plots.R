@@ -150,6 +150,7 @@ plot_read_count_knee <- function(read_counts, cutoff = NULL, return_data = FALSE
 #' @param min_tss Minimum TSS Enrichment cutoff
 #' @param bins Number of bins for density calculation
 #' @inheritParams plot_embedding
+#' @export
 plot_tss_scatter <- function(atac_qc, min_frags = NULL, min_tss = NULL, bins = 100, apply_styling = TRUE) {
   assert_is(atac_qc, "data.frame")
   if (!is.null(min_frags)) {
@@ -268,6 +269,7 @@ plot_fragment_length <- function(fragments, max_length = 500, return_data = FALS
 #' @param genes Coordinate ranges for genes (must include strand)
 #' @param smooth Number of bases to smooth over (rolling average)
 #' @seealso `footprint()`, `plot_tf_footprint()`
+#' @export
 plot_tss_profile <- function(fragments, genes, cell_groups = rlang::rep_along(cellNames(fragments), "all"),
                              flank = 2000L, smooth = 0L, zero_based_coords = !is(genes, "GRanges"),
                              colors = discrete_palette("stallion"),
@@ -326,6 +328,7 @@ plot_tss_profile <- function(fragments, genes, cell_groups = rlang::rep_along(ce
 #' @param motif_positions Coordinate ranges for motifs (must include strand) and
 #'   have constant width
 #' @seealso `footprint()`, `plot_tss_profile()`
+#' @export
 plot_tf_footprint <- function(fragments, motif_positions, cell_groups = rlang::rep_along(cellNames(fragments), "all"),
                               flank = 250L, smooth = 0L, zero_based_coords = !is(genes, "GRanges"),
                               colors = discrete_palette("stallion"),
@@ -389,7 +392,7 @@ collect_features <- function(source, features = NULL, gene_mapping = human_gene_
     indices <- match(features, rownames(source), incomparables = NA)
     if (!is.null(gene_mapping)) {
       indices <- match_gene_symbol(features, rownames(source), gene_mapping)
-    } else if (anyNa(indices)) {
+    } else if (anyNA(indices)) {
       rlang::warn(sprintf(
         "collect_features could not match %d features: %s",
         sum(is.na(indices)),
@@ -454,6 +457,7 @@ collect_features <- function(source, features = NULL, gene_mapping = human_gene_
 #' @return By default, returns a ggplot2 object with all the requested features plotted
 #' in a grid. If `return_data` or `return_plot_list` is called, the return value will
 #' match that argument.
+#' @export
 plot_embedding <- function(source, embedding, features = NULL,
                            quantile_range = c(0.01, 0.99),
                            randomize_order = TRUE,

@@ -77,16 +77,16 @@ draw_trackplot_grid <- function(..., labels, title = NULL,
 
   # Make column of plot labels
   labels_plots <- lapply(labels, function(label_text) {
-    ggplot(NULL, aes(0, 0, label = label_text)) +
-      do.call(geom_text, label_style) +
-      theme_void()
+    ggplot2::ggplot(NULL, ggplot2::aes(0, 0, label = label_text)) +
+      do.call(ggplot2::geom_text, label_style) +
+      ggplot2::theme_void()
   })
 
   data_plots <- lapply(plots, function(p) {
-    p + theme(
-      axis.title.x = element_blank(),
-      axis.ticks.length.x = unit(0, "pt"),
-      axis.text.x = element_blank()
+    p + ggplot2::theme(
+      axis.title.x = ggplot2::element_blank(),
+      axis.ticks.length.x = ggplot2::unit(0, "pt"),
+      axis.text.x = ggplot2::element_blank()
     )
   })
   data_plots[[1]] <- plots[[1]]
@@ -244,6 +244,7 @@ trackplot_bulk <- function(fragments, region, groups,
 #' @param transcript_size size for transcript lines
 #' @param label_size size for transcript labels
 #' @return Plot of gene locations
+#' @export
 trackplot_gene <- function(transcripts, region, exon_size = 3, gene_size = 1, label_size = 3, return_data = FALSE) {
   region <- normalize_ranges(region)
   transcripts <- normalize_ranges(transcripts, metadata_cols = c("strand", "feature", "transcript_id", "gene_name"))
@@ -307,7 +308,7 @@ trackplot_gene <- function(transcripts, region, exon_size = 3, gene_size = 1, la
       size = size
     )
   ) +
-    ggplot2::geom_segment(aes(color = dplyr::if_else(strand, "+", "-"))) +
+    ggplot2::geom_segment(ggplot2::aes(color = dplyr::if_else(strand, "+", "-"))) +
     ggrepel::geom_text_repel(
       data = dplyr::filter(data, feature == "transcript"),
       ggplot2::aes(label = gene_name),

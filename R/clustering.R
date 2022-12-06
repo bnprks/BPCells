@@ -54,6 +54,7 @@ knn_to_graph <- function(knn, use_weights = FALSE, self_loops = TRUE) {
 #'   Sparse matrix (dgCMatrix) where `mat[i,j]` = jaccard index of the overlap
 #'   in nearest neigbors between cell `i` and cell `j`, or 0 if the jaccard index
 #'   is < `min_val`
+#' @export
 knn_to_snn_graph <- function(knn, min_val = 1 / 15, self_loops = TRUE) {
   mat <- knn_to_graph(knn, use_weights = FALSE)
   mat <- mat %*% t(mat)
@@ -75,6 +76,7 @@ knn_to_snn_graph <- function(knn, min_val = 1 / 15, self_loops = TRUE) {
 #' @param seed Random seed for clustering initialization
 #' @param ... Additional arguments to underlying clustering function
 #' @return Factor vector containing the cluster assignment for each cell.
+#' @export
 cluster_graph_leiden <- function(snn, resolution = 1e-3, seed = 12531, ...) {
   # Set seed without permanently changing seed state
   prev_seed <- get_seed()
@@ -90,6 +92,7 @@ cluster_graph_leiden <- function(snn, resolution = 1e-3, seed = 12531, ...) {
 
 #' @rdname cluster
 #' @details **cluster_graph_louvain**: Louvain graph clustering algorithm `igraph::cluster_louvain()`
+#' @export
 cluster_graph_louvain <- function(snn, resolution = 1, seed = 12531) {
   # Set seed without permanently changing seed state
   prev_seed <- get_seed()
@@ -104,6 +107,7 @@ cluster_graph_louvain <- function(snn, resolution = 1, seed = 12531) {
 
 #' @rdname cluster
 #' @details **cluster_graph_seurat**: Seurat's clustering algorithm `Seurat::FindClusters()`
+#' @export
 cluster_graph_seurat <- function(snn, resolution = 0.8, ...) {
   assert_has_package("Seurat")
   Seurat::as.Graph(snn) %>%
@@ -124,7 +128,7 @@ cluster_membership_matrix <- function(groups, group_order = NULL) {
   }
   membership <- match(as.character(groups), group_order)
 
-  if (anyNa(membership)) {
+  if (anyNA(membership)) {
     rlang::warn(sprintf(
       "Could not match %d groups to group_order: %s",
       sum(is.na(membership)),
