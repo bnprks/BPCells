@@ -37,14 +37,14 @@ TEST(FragmentIO, BedRoundtrip) {
     fs::create_directories(p.parent_path());
     if (fs::exists(p)) fs::remove(p);
 
-    BedFragmentsWriter w(p.c_str());
+    BedFragmentsWriter w(p.string().c_str());
     w.write(frags);
 
-    BedFragments bed1(p.c_str());
+    BedFragments bed1(p.string().c_str());
 
     fs::path p2 = fs::temp_directory_path() / "BPCells_fragmentIO_test/fragments2.tsv.gz";
     if (fs::exists(p2)) fs::remove(p2);
-    BedFragmentsWriter w2(p2.c_str());
+    BedFragmentsWriter w2(p2.string().c_str());
     w2.write(bed1);
 
     std::stringstream command;

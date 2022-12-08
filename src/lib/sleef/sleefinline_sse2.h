@@ -1155,7 +1155,7 @@ typedef struct {
 
 typedef vquad_sse2_sleef vargquad_sse2_sleef;
 
-static SLEEF_ALWAYS_INLINE void vprefetch_v_p_sse2_sleef(const void *ptr) { _mm_prefetch(ptr, _MM_HINT_T0); }
+static SLEEF_ALWAYS_INLINE void vprefetch_v_p_sse2_sleef(const void *ptr) { _mm_prefetch((const char *) ptr, _MM_HINT_T0); }
 
 static SLEEF_ALWAYS_INLINE int vtestallones_i_vo32_sse2_sleef(vopmask_sse2_sleef g) { return _mm_movemask_epi8(g) == 0xFFFF; }
 static SLEEF_ALWAYS_INLINE int vtestallones_i_vo64_sse2_sleef(vopmask_sse2_sleef g) { return _mm_movemask_epi8(g) == 0xFFFF; }
