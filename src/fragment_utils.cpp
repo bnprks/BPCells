@@ -1,5 +1,7 @@
 #include <sstream>
 
+#define RCPP_NO_RTTI
+#define RCPP_NO_SUGAR
 #include <Rcpp.h>
 #include <RcppEigen.h>
 

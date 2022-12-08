@@ -1,3 +1,4 @@
+#pragma once
 #include "../arrayIO/array_interfaces.h"
 #include "../arrayIO/hdf5.h"
 #include "../arrayIO/vector.h"

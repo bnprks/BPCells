@@ -3,6 +3,8 @@
 #ifndef RCPP_EIGEN
 #include <Eigen/SparseCore>
 #else
+#define RCPP_NO_RTTI
+#define RCPP_NO_SUGAR
 #include <RcppEigen.h>
 #endif
 // [[Rcpp::depends(RcppEigen)]]

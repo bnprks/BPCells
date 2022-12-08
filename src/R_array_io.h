@@ -2,6 +2,8 @@
 
 #include "arrayIO/array_interfaces.h"
 #include "arrayIO/vector.h"
+#define RCPP_NO_RTTI
+#define RCPP_NO_SUGAR
 #include <Rcpp.h>
 
 using namespace Rcpp;

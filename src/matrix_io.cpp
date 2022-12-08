@@ -1,3 +1,5 @@
+#define RCPP_NO_RTTI
+#define RCPP_NO_SUGAR
 #include <Rcpp.h>
 
 #include "matrixIterators/ImportMatrixHDF5.h"
