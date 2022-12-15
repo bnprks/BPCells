@@ -26,6 +26,12 @@ setMethod("[", "TransformedMatrix", function(x, i, j, ...) {
 
   x@matrix <- x@matrix[rlang::maybe_missing(i), rlang::maybe_missing(j)]
 
+  if (x@transpose) {
+    tmp <- rlang::maybe_missing(i)
+    i <- rlang::maybe_missing(j)
+    j <- rlang::maybe_missing(tmp)
+  }
+
   # Subset the row/col params
   if (!rlang::is_missing(i) && ncol(x@row_params) != 0) {
     x@row_params <- x@row_params[, i, drop = FALSE]

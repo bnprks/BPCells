@@ -358,7 +358,7 @@ setMethod("[", "MatrixMultiply", function(x, i, j, ...) {
 
   i <- selection_index(i, nrow(x), rownames(x))
   j <- selection_index(j, ncol(x), colnames(x))
-  x <- selection_fix_dims(x, i, j)
+  x <- selection_fix_dims(x, rlang::maybe_missing(i), rlang::maybe_missing(j))
 
   # Selection will be a no-op if i or j is missing
   x@left <- x@left[rlang::maybe_missing(i), ]
@@ -457,7 +457,7 @@ setMethod("[", "IterableMatrix", function(x, i, j, ...) {
   ret <- wrapMatrix("MatrixSubset", x)
   i <- selection_index(i, nrow(x), rownames(x))
   j <- selection_index(j, ncol(x), colnames(x))
-  ret <- selection_fix_dims(ret, i, j)
+  ret <- selection_fix_dims(ret, rlang::maybe_missing(i), rlang::maybe_missing(j))
 
   if (x@transpose) {
     tmp <- rlang::maybe_missing(i)
@@ -473,12 +473,12 @@ setMethod("[", "MatrixSubset", function(x, i, j, ...) {
   if (missing(x)) stop("x is missing in matrix selection")
   i <- selection_index(i, nrow(x), rownames(x))
   j <- selection_index(j, ncol(x), colnames(x))
-  x <- selection_fix_dims(x, i, j)
+  x <- selection_fix_dims(x, rlang::maybe_missing(i), rlang::maybe_missing(j))
 
   if (x@transpose) {
-    tmp <- i
-    i <- j
-    j <- tmp
+    tmp <- rlang::maybe_missing(i)
+    i <- rlang::maybe_missing(j)
+    j <- rlang::maybe_missing(tmp)
   }
   if (!rlang::is_missing(i)) {
     if (length(x@row_selection) == 0) {
@@ -1510,7 +1510,7 @@ setMethod("[", "ConvertMatrixType", function(x, i, j, ...) {
 
   i <- selection_index(i, nrow(x), rownames(x))
   j <- selection_index(j, ncol(x), colnames(x))
-  x <- selection_fix_dims(x, i, j)
+  x <- selection_fix_dims(x, rlang::maybe_missing(i), rlang::maybe_missing(j))
 
   x@matrix <- x@matrix[rlang::maybe_missing(i), rlang::maybe_missing(j)]
   x
