@@ -22,7 +22,7 @@ setMethod("[", "TransformedMatrix", function(x, i, j, ...) {
 
   i <- selection_index(i, nrow(x), rownames(x))
   j <- selection_index(j, ncol(x), colnames(x))
-  x <- selection_fix_dims(x, i, j)
+  x <- selection_fix_dims(x, rlang::maybe_missing(i), rlang::maybe_missing(j))
 
   x@matrix <- x@matrix[rlang::maybe_missing(i), rlang::maybe_missing(j)]
 
@@ -157,41 +157,51 @@ setMethod("short_description", "TransformScaleShift", function(x) {
   # Return multiple lines, one for each transform active
   res <- short_description(x@matrix)
 
+  # Subset the row + col params matrices for faster pretty printing of
+  # large parameter sets
+  print_entries <- 3
+  if (ncol(x@row_params) > print_entries + 1) {
+    x@row_params <- x@row_params[,c(1:print_entries, ncol(x@row_params))]
+  }
+  if (ncol(x@col_params) > print_entries + 1) {
+    x@col_params <- x@col_params[,c(1:print_entries, ncol(x@col_params))]
+  }
+
   # Handle scale transforms
   if (x@active_transforms["global", "scale"]) {
-    res <- c(res, sprintf("Scale by %.2e", x@global_params[1]))
+    res <- c(res, sprintf("Scale by %.3g", x@global_params[1]))
   }
   if (x@active_transforms["row", "scale"]) {
     res <- c(res, sprintf(
       "Scale %s by %s",
       if (x@transpose) "columns" else "rows",
-      pretty_print_vector(sprintf("%.2e", x@row_params[1, ]), max_len = 3)
+      pretty_print_vector(sprintf("%.3g", x@row_params[1, ]), max_len = 3)
     ))
   }
   if (x@active_transforms["col", "scale"]) {
     res <- c(res, sprintf(
       "Scale %s by %s",
       if (x@transpose) "rows" else "columns",
-      pretty_print_vector(sprintf("%.2e", x@col_params[1, ]), max_len = 3)
+      pretty_print_vector(sprintf("%.3g", x@col_params[1, ]), max_len = 3)
     ))
   }
 
   # Handle shift transforms
   if (x@active_transforms["global", "shift"]) {
-    res <- c(res, sprintf("Shift by %.2e", x@global_params[2]))
+    res <- c(res, sprintf("Shift by %.3g", x@global_params[2]))
   }
   if (x@active_transforms["row", "shift"]) {
     res <- c(res, sprintf(
       "Shift %s by %s",
       if (x@transpose) "columns" else "rows",
-      pretty_print_vector(sprintf("%.2e", x@row_params[2, ]), max_len = 3)
+      pretty_print_vector(sprintf("%.3g", x@row_params[2, ]), max_len = 3)
     ))
   }
   if (x@active_transforms["col", "shift"]) {
     res <- c(res, sprintf(
       "Shift %s by %s",
       if (x@transpose) "rows" else "columns",
-      pretty_print_vector(sprintf("%.2e", x@col_params[2, ]), max_len = 3)
+      pretty_print_vector(sprintf("%.3g", x@col_params[2, ]), max_len = 3)
     ))
   }
   res
