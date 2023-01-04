@@ -307,11 +307,11 @@ call_peaks_tile <- function(fragments, chromosome_sizes, cell_groups = rep.int("
 
     total_tiles <- nrow(tile_counts)
 
-    peaks <- as(tile_counts, "dgTMatrix") %>%
+    peaks <- tile_counts %>%
       {
         tibble::tibble(
           tile = .@i + 1,
-          group = .@j + 1,
+          group = rep.int(seq_len(ncol(.)), diff(.@p)),
           counts = .@x
         )
       } %>%
@@ -377,11 +377,10 @@ range_overlaps <- function(a, b) {
     mode = "overlaps"
   ) %>%
     as("dgCMatrix") %>%
-    as("dgTMatrix") %>%
     {
       tibble::tibble(
-        from = .@j + 1L,
-        to = order_b[.@i + 1]
+          from = rep.int(seq_len(ncol(.)), diff(.@p)),
+          to = order_b[.@i +1]
       )
     } %>%
     dplyr::arrange(from, to)
