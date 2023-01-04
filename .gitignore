@@ -20,3 +20,4 @@ run_test.R
 rsync.sh
 src/Makevars
 tools/h5write*
+vignettes/*.html

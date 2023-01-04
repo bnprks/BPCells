@@ -14,10 +14,7 @@ echo "Testing hdf5 by compiling example program..."
 
 HDF5_CFLAGS=""
 HDF5_LIBS="-lhdf5 -lsz -lz"
-HDF5_FOUND=""
-$CC tools/h5write.c $HDF5_CFLAGS $HDF5_LIBS -o tools/h5write && HDF5_FOUND="yes";
-
-if [ -z $HDF5_FOUND ]; then
+if ! $CC tools/h5write.c $HDF5_CFLAGS $HDF5_LIBS -o tools/h5write; then
     echo ""
     echo ""
     echo "Unable to locate libhdf5. Please install manually or edit compiler flags."
@@ -28,8 +25,22 @@ echo "Found working hdf5"
 echo "HDF5_CFLAGS='${HDF5_CFLAGS}'"
 echo "HDF5_LIBS='${HDF5_LIBS}'"
  
+ARCH_FLAG="-march=native"
+printf "\nTesting architecture flag support support..."
+ARCH_CANDIDATES=("-march=native" "")
+for ARCH_FLAG in "${ARCH_CANDIDATES[@]}"; do
+    if $CC tools/h5write.c $ARCH_FLAG $HDF5_CFLAGS $HDF5_LIBS -o tools/h5write 2>/dev/null; then
+        printf "'%s' succeeded\n" $ARCH_FLAG
+        break;
+    else
+        printf "'%s' failed..." $ARCH_FLAG
+    fi
+done
+echo "ARCH_FLAG='$ARCH_FLAG'"
+
 # Make substitutions in Makevars.in
 sed \
     -e "s|%HDF5_CFLAGS%|${HDF5_CFLAGS}|g" \
     -e "s|%HDF5_LIBS%|${HDF5_LIBS}|g" \
+    -e "s|%ARCH_FLAG%|${ARCH_FLAG}|g" \
     src/Makevars.in > src/Makevars

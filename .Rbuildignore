@@ -4,6 +4,9 @@
 ^.*\.Rproj$
 ^\.Rproj\.user$
 
+^\.idea
+^bench$
+
 .*\.o$
 .*\.so$
 .*\.o\.tmp$
