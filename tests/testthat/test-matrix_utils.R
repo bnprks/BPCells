@@ -42,6 +42,24 @@ test_that("Chained subsetting works", {
   expect_identical(m1[c(2, 4, 3, 5), ][c(3, 1), c(1, 3)], m2[c(2, 4, 3, 5), ][c(3, 1), c(1, 3)] %>% as("dgCMatrix"))
 })
 
+test_that("Subsetting transpose missing variable works", {
+  # This addresses a specific bug and checks to prevent regression
+  x <- matrix(1:12, nrow=3) %>%
+    as("dgCMatrix") %>%
+    as("IterableMatrix")
+
+  # This had a missing variable error
+  ans <- x[1:2,] %>%
+    t() %>%
+    .[,1:2] %>%
+    as("dgCMatrix")
+  
+  expected <- matrix(1:12, nrow=3)[1:2,] %>%
+    t() %>%
+    as("dgCMatrix")
+  expect_identical(ans, expected)
+})
+
 test_that("Subsetting matrix multiply works", {
   m1 <- generate_dense_matrix(10, 5) %>% as("dgCMatrix")
   m2 <- generate_dense_matrix(5, 6) %>% as("dgCMatrix")

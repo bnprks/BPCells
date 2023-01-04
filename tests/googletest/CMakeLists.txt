@@ -90,6 +90,8 @@ target_include_directories(
 ### TESTING ###
 enable_testing()
 
+# For newer cmake, suprress a cmake warning
+cmake_policy(SET CMP0135 NEW)
 include(FetchContent)
 FetchContent_Declare(
   googletest
