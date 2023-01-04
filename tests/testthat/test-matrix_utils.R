@@ -17,6 +17,22 @@ to_vector <- function(x) {
   x
 }
 
+test_that("Conversion to base types works", {
+  for (row_names in c(TRUE, FALSE)) {
+    for (col_names in c(TRUE, FALSE)) {
+      base_mat <- matrix(as.numeric(1:12), nrow=3)
+      if (row_names) rownames(base_mat) <- sprintf("row_%d", 1:3)
+      if (col_names) colnames(base_mat) <- sprintf("col_%d", 1:4)
+      dgc_mat <- as(base_mat, "dgCMatrix")
+      bpcells_mat <- as(dgc_mat, "IterableMatrix")
+    
+      expect_identical(as(bpcells_mat, "dgCMatrix"), dgc_mat)
+      expect_identical(as.matrix(bpcells_mat), base_mat)
+      expect_identical(as(bpcells_mat, "matrix"), base_mat)
+    }
+  }
+})
+
 test_that("Chained subsetting works", {
   m1 <- generate_dense_matrix(10, 10) %>% as("dgCMatrix")
 

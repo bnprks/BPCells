@@ -1583,6 +1583,15 @@ setAs("IterableMatrix", "dgCMatrix", function(from) {
   return(res)
 })
 
+# Add conversion to base R dense matrices
+setAs("IterableMatrix", "matrix", function(from) {
+  rlang::inform(c(
+      "Warning: Converting to a dense matrix may use excessive memory"
+    ), .frequency = "regularly", .frequency_id = "matrix_dense_conversion")
+  as(from, "dgCMatrix") %>% as.matrix()  
+})
+setMethod("as.matrix", signature(x = "IterableMatrix"), function(x, ...) as(x, "matrix"))
+
 #' Calculate matrix stats
 #' @param matrix Input matrix object
 #' @param row_stats Which row statistics to compute
