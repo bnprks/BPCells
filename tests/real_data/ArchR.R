@@ -2,6 +2,7 @@ suppressPackageStartupMessages({
   library(dplyr)
   library(readr)
   library(stringr)
+  library(GenomicRanges)
   library(ArchR)
 })
 
@@ -34,10 +35,14 @@ output_qc <- file.path(output_dir, "QualityControl")
 output_log <- file.path(output_dir, "logs")
 output_project <- file.path(output_dir, "project")
 
+addArchRGenome(genome)
+addArchRThreads(threads)
+
 # Read peaks here to fail fast
 peak_set <- read_tsv(peak_path, col_names = FALSE, col_types = NULL) %>%
   transmute(chr = X1, start = X2 + 1, end = X3) %>%
   filter(chr %in% seqnames(getGenomeAnnotation()$chromSizes)) %>%
+  distinct() %>%
   GenomicRanges::makeGRangesFromDataFrame()
 
 dir.create(output_arrow_dir, recursive = TRUE, showWarnings = FALSE)
@@ -48,11 +53,6 @@ write_lines(args, file.path(output_dir, "arguments.txt"))
 cmdArgs <- commandArgs(trailingOnly = FALSE)
 scriptPath <- normalizePath(dirname(sub("^--file=", "", cmdArgs[grep("^--file=", cmdArgs)])))[1]
 
-genome <- basename(chrom_sizes_path) %>%
-  str_split_fixed(fixed("."), n = 2) %>%
-  .[1, 1]
-addArchRGenome(genome)
-addArchRThreads(threads)
 # Make sure these come out as absolute paths since we're going to change directories
 # during actual Arrow creation
 input_paths <- normalizePath(Sys.glob(input_glob))
