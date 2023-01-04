@@ -7,7 +7,7 @@
 gene_score_tiles(
   genes,
   chromosome_sizes = NULL,
-  tile_size = 500,
+  tile_width = 500,
   addArchRBug = FALSE
 )
 }
@@ -16,7 +16,7 @@ gene_score_tiles(
 
 \item{chromosome_sizes}{(optional) Size of chromosomes as a \link{genomic-ranges} object}
 
-\item{tile_size}{Size of tiles to consider}
+\item{tile_width}{Size of tiles to consider}
 
 \item{addArchRBug}{Replicate ArchR bug in handling nested genes}
 }

@@ -1,0 +1,561 @@
+---
+title: "Basic tutorial"
+output: 
+  html_document:
+    df_print: "paged"
+    toc: true
+    toc_depth: 2
+    toc_float: true
+    theme: simplex
+vignette: >
+  %\VignetteIndexEntry{Basic tutorial}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+
+
+# Introduction
+In this tutorial, we will will:
+
+- [Load RNA and ATAC-seq data from a 10x multiome experiment](#data-loading)
+- [Filter for high-quality cells](#filter-for-high-quality-cells)
+- [Perform PCA + UMAP dimensionality reduction](#normalization-pca-and-umap)
+- [Unbiased clustering](#clustering)
+- [Visualize marker genes to annotate clusters](#visualize-marker-genes)
+- [Call ATAC-seq peaks](#atac-seq-peaks)
+- [Visualize transcription factor footprints](#motif-footprinting)
+- [Plot accessibility genome tracks](#genome-accessibility-tracks)
+
+This tutorial is a work-in-progress, inspired by Seurat's [PBMC 3k](https://satijalab.org/seurat/articles/pbmc3k_tutorial.html) clustering tutorial.
+
+# Setup
+
+## Install packages
+
+<details>
+  <summary>**Install analysis-specific packages**</summary>
+
+Install cran dependencies:
+
+- irlba (PCA)
+- uwot (UMAP)
+- RcppHNSW (clustering)
+- igraph (clustering)
+- BiocManager (access bioconductor packages)
+- ggplot2 version 3.3.5 (before hexbin was broken)
+
+```{r, eval=FALSE}
+install.packages(c("irlba", "uwot", "RcppHNSW", "igraph", "BiocManager", "devtools"))
+devtools::install_version("ggplot2", "3.3.5")
+```
+
+Bioconductor dependencies:
+
+- BSgenome.Hsapiens.UCSC.hg38 (TF motif scanning)
+
+```{r, eval=FALSE}
+BiocManager::install("BSgenome.Hsapiens.UCSC.hg38")
+```
+
+Github:
+
+
+- [motifmatchr](https://github.com/GreenleafLab/motifmatchr) (TF motif scanning)
+- [chromVARmotifs](https://github.com/GreenleafLab/chromVARmotifs) (TF motif database)
+```{r, eval=FALSE}
+devtools::install_github(c("GreenleafLab/motifmatchr", "GreenleafLab/chromVARmotifs"), repos=BiocManager::repositories())
+```
+
+</details>
+
+<details>
+  <summary>**Install BPCells**</summary>
+```{r, eval=FALSE}
+devtools::install_github(c("bnprks/BPCells"))
+```
+
+</details>
+
+## Set up analysis folder
+```{r "setup", include=FALSE}
+data_dir <- file.path(tempdir(), "pbmc-3k")
+data_dir <- file.path("C:/Users/Ben/Downloads/pbmc-3k")
+dir.create(data_dir, recursive = TRUE, showWarnings = FALSE)
+knitr::opts_knit$set(root.dir = data_dir)
+```
+
+```{r}
+library(BPCells)
+suppressPackageStartupMessages({
+  library(dplyr)
+  library(patchwork)
+})
+
+# Substitute your preferred working directory for data_dir
+data_dir <- file.path(tempdir(), "pbmc-3k")
+dir.create(data_dir, recursive = TRUE, showWarnings = FALSE)
+setwd(data_dir)
+```
+
+## Download data
+Next, we download this [3k PBMC dataset](https://www.10xgenomics.com/resources/datasets/pbmc-from-a-healthy-donor-granulocytes-removed-through-cell-sorting-3-k-1-standard-2-0-0) 
+from 10x Genomics into a temporary directory.
+
+The files are about 500MB large when combined
+
+```{r}
+url_base <- "https://cf.10xgenomics.com/samples/cell-arc/2.0.0/pbmc_granulocyte_sorted_3k/"
+rna_raw_url <- paste0(url_base, "pbmc_granulocyte_sorted_3k_raw_feature_bc_matrix.h5")
+atac_raw_url <- paste0(url_base, "pbmc_granulocyte_sorted_3k_atac_fragments.tsv.gz")
+
+# Only download files if we haven't downloaded already
+if (!file.exists("pbmc_3k_10x.h5")) {
+  download.file(rna_raw_url, "pbmc_3k_10x.h5", mode="wb")
+}
+if (!file.exists("pbmc_3k_10x.fragments.tsv.gz")) {
+  download.file(atac_raw_url, "pbmc_3k_10x.fragments.tsv.gz", mode="wb")
+}
+```
+
+# Data Loading
+First, we convert the raw data inputs from a 10x format into a bitpacked compressed
+format stored as binary files on disk.
+
+BPCells can still read the data if we don't convert the format, but certain ATAC-seq 
+functionality will run much faster on the converted data.
+
+Convert the RNA matrix:
+```{r}
+# Check if we already ran import
+if (!file.exists("pbmc_3k_rna_raw")) {
+  mat_raw <- open_matrix_10x_hdf5("pbmc_3k_10x.h5", feature_type="Gene Expression") %>% 
+    write_matrix_dir("pbmc_3k_rna_raw")
+} else {
+  mat_raw <- open_matrix_dir("pbmc_3k_rna_raw")
+}
+mat_raw
+```
+
+Convert the ATAC-seq fragments
+```{r}
+# Check if we already ran import
+if (!file.exists("pbmc_3k_frags")) {
+  frags_raw <- open_fragments_10x("pbmc_3k_10x.fragments.tsv.gz") %>%
+      write_fragments_dir("pbmc_3k_frags")
+} else {
+  frags_raw <- open_fragments_dir("pbmc_3k_frags")
+}
+frags_raw
+```
+
+<details>
+  <summary>**How much storage space did we save with bitpacking compression?**</summary>
+```{r, include=FALSE}
+atac_sizes <- file.info(list.files("pbmc_3k_frags", full.names=TRUE)) %>%
+  tibble::as_tibble(rownames="file") %>%
+  transmute(
+    category = stringr::str_match(file, "/(.*)_")[,2],
+    file = basename(file),
+    size = size
+  ) %>%
+  mutate(
+    category = case_when(
+      file == "version" ~ "names",
+      stringr::str_detect(file, "_names") ~ "names",
+      TRUE ~ category
+    )
+  ) %>% 
+  group_by(category) %>%
+  summarize(size=sum(size)) %>% 
+  pull(size, category)
+
+rna_sizes <- file.info(list.files("pbmc_3k_rna_raw/", full.names=TRUE)) %>%
+  tibble::as_tibble(rownames="file") %>%
+  transmute(
+    category = stringr::str_match(file, "/(.*)_")[,2],
+    file = basename(file),
+    size = size
+  ) %>%
+  mutate(
+    category = case_when(
+      file == "version" ~ "names",
+      file=="idxptr" ~ "column",
+      file %in% c("shape", "storage_order") ~ "metadata",
+      stringr::str_detect(file, "_names") ~ "names",
+      TRUE ~ category
+    )
+  ) %>% 
+  group_by(category) %>%
+  summarize(size=sum(size)) %>% 
+  pull(size, category)
+
+size_atac_raw <- file.info("pbmc_3k_10x.fragments.tsv.gz")$size
+size_rna_raw <- file.info("pbmc_3k_10x.h5")$size
+
+```
+
+ATAC storage space dropped from `r sprintf("%.3g", size_atac_raw/1e6)` MB for the 
+gzipped 10x file to `r sprintf("%.3g", sum(atac_sizes)/1e6)` MB for the bitpacked
+storage. 
+
+RNA storage space dropped from `r sprintf("%.3g", size_rna_raw/1e6)` MB for the 
+10x hdf5 file with gzip compression to `r sprintf("%.3g", sum(rna_sizes)/1e6)` MB using
+bitpacking compression. In this case, the storage space is a little misleading
+since `r sprintf("%.2g",rna_sizes["names"]/sum(rna_sizes)*100)`% of the bitpacked
+storage is spent on the gene + cell names. In this case both 10x compressed hdf5
+and bitpacking compression are 4-6x smaller than an uncompressed sparse matrix 
+format such as AnnData.
+
+Aside from compact storage, bitpacking compression also enables very fast read
+speeds which is useful for downstream calculations.
+</details>
+
+# Filter for high-quality cells
+
+## RNA-seq filtering
+We use a simple minimum read threshold for RNA-seq quality. The cutoff we choose
+is just below the first knee of our log-log plot of reads vs. barcode rank, which 
+separates cells from empty droplets.
+```{r}
+reads_per_cell <- Matrix::colSums(mat_raw)
+plot_read_count_knee(reads_per_cell, cutoff = 1e3)
+```
+
+## ATAC-seq filtering
+### Download reference annotations
+We fetch reference information necessary to calculate quality-control statistics.
+By default, this fetches the latest annotations for hg38.
+
+Since fetching the references involves downloading gtf and bed files, we provide
+the name of a directory to save the files in. This also allows us to skip re-downloading
+the same files next time.
+```{r}
+genes <- read_gencode_genes(getwd())
+head(genes)
+```
+
+```{r}
+blacklist <- read_encode_blacklist(getwd())
+head(blacklist)
+```
+
+```{r}
+chrom_sizes <- read_ucsc_chrom_sizes(getwd())
+head(chrom_sizes)
+```
+
+### Calculate ATAC-seq quality-control metrics
+We can calculate several built-in quality control metrics for each barcode, 
+including number of fragments and TSS enrichment. These calculations are fully
+compatible with ArchR's methodology for quality control statistics.
+```{r}
+atac_qc <- qc_scATAC(frags_raw, genes, blacklist)
+head(atac_qc)
+```
+
+One of the key ways to identify high-quality cells in ATAC-seq data is to plot the
+number of fragments vs. TSS Enrichment. This plot puts empty droplets in the bottom-left
+quadrant, low-quality/dead cells in the bottom-right quadrant, and high-quality
+cells in the top-right quadrant. From a flow-cytometry perspective, we use the bottom-left
+group of empty droplets as a negative control to help set our cutoffs.
+```{r}
+plot_tss_scatter(atac_qc, min_frags=1000, min_tss=10)
+```
+
+We can also plot some sample-level quality control plots. 
+
+On the left, the fragment
+length distribution shows three broad bumps corresponding to nucleosome spacing
+(147bp), and smaller wiggles corresponding to DNA winding (11.5bp).
+
+On the right, the TSS enrichment profile shows a strong enrichment of signal at
+transcription start sites, as well as a small asymmetrical bump downstream of the
+TSS after the +1 nucleosome.
+```{r}
+plot_fragment_length(frags_raw) + plot_tss_profile(frags_raw, genes)
+```
+
+## Select high-quality cells
+We take cells that pass our minimum RNA reads, minimum ATAC reads, and minimum TSS Enrichment
+cutoffs. 
+```{r}
+pass_atac <- atac_qc %>%
+    dplyr::filter(nFrags > 1000, TSSEnrichment > 10) %>%
+    dplyr::pull(cellName)
+pass_rna <- colnames(mat_raw)[Matrix::colSums(mat_raw) > 1e3]
+keeper_cells <- intersect(pass_atac, pass_rna)
+```
+
+We subset the RNA and ATAC input data to just the cells passing filter. And for RNA,
+we subset to genes with at least 3 reads. This subset operation also
+puts the cells in a matching order which simplifies cross-modality calculations later on.
+
+```{r}
+frags <- frags_raw %>% select_cells(keeper_cells)
+
+keeper_genes <- Matrix::rowSums(mat_raw) > 3
+mat <- mat_raw[keeper_genes,keeper_cells]
+```
+
+# Normalization, PCA and UMAP
+
+## Matrix normalization
+Here, we walk through the Seurat-style matrix normalization calculations manually, though soon
+there will be helper functions to simplify the process.
+
+First we log-normalize, roughly equivalent to `Seurat::NormalizeData`
+```{r}
+
+# Normalize by reads-per-cell
+mat <- multiply_cols(mat, 1/Matrix::colSums(mat))
+
+# Log normalization
+mat <- log1p(mat * 10000) # Log normalization
+```
+
+Next we pick out variable genes:
+```{r}
+stats <- matrix_stats(mat, row_stats="variance")
+
+# To keep the example small, we'll do a very naive variable gene selection
+variable_genes <- order(stats$row_stats["variance",], decreasing=TRUE) %>% 
+  head(1000) %>% 
+  sort()
+
+mat_norm <- mat[variable_genes,]
+```
+
+If we look at our normalized matrix object, we can see we have quite a few
+math operations queued up which are performed on-the-fly as needed.
+```{r}
+mat_norm
+```
+
+To improve performance of the downstream PCA, we save this sparse normalized
+matrix to a temporary file just prior to normalizations that would make the matrix
+dense. This saves storage space while preventing us from having to re-calculate the
+queued operations several-hundred times during the PCA optimization iterations.
+
+In this case, the matrix is quite small so we'll just store it in memory. In
+a larger example we could swap this for `write_matrix_dir(tempfile("mat"))`
+```{r}
+mat_norm <- mat_norm %>% write_matrix_memory(compress=FALSE)
+```
+
+Finally, we perform z-score normalization which makes the matrix dense.
+```{r}
+gene_means <- stats$row_stats["mean",variable_genes]
+gene_vars <- stats$row_stats["variance", variable_genes]
+mat_norm <- (mat_norm - gene_means) / gene_vars
+```
+
+## PCA and UMAP
+PCA can be performed with a standard solver like that in `irlba`.
+
+```{r, results='hold'}
+svd <- irlba::irlba(mat_norm, nv=50)
+pca <- multiply_cols(svd$v, svd$d)
+
+cat(sprintf("PCA dimensions: %s\n", toString(dim(pca))))
+pca[1:4,1:3]
+```
+
+Next we calculate UMAP coordinates
+```{r}
+set.seed(12341512)
+umap <- uwot::umap(pca)
+umap[1:4,]
+```
+
+## Clustering
+We perform a quick clustering as follows, based on the PCA coordinates.
+```{r, message=FALSE}
+clusts <- knn_hnsw(pca, ef=500) %>% # Find approximate nearest neighbors
+  knn_to_snn_graph() %>% # Convert to a SNN graph
+  cluster_graph_louvain() # Perform graph-based clustering
+
+```
+
+```{r, results="hold"}
+cat(sprintf("Clusts length: %s\n", length(clusts)))
+clusts[1:10]
+```
+
+And now we can visualize the clusters on a UMAP:
+```{r}
+plot_embedding(clusts, umap)
+```
+
+## Visualize marker genes
+To annotate our clusters with cell types, we can plot several marker genes
+overlaid onto the UMAP. 
+```{r, fig.width=10, fig.height=9}
+plot_embedding(
+  source = mat,
+  umap,
+  features = c("MS4A1", "GNLY", "CD3E", 
+               "CD14", "FCER1A", "FCGR3A", 
+               "LYZ", "CD4","CD8"),
+)
+```
+
+We observe cluster-specific enrichment of B-cell marker
+MS4A1, T-cell marker CD3E, and Monocyte marker LYZ. This allows us to make some broad cell type groupings as follows:
+```{r}
+cluster_annotations <- c(
+  "1" = "T",
+  "2" = "CD8 T",
+  "3" = "B",
+  "4" = "T",
+  "5" = "NK",
+  "6" = "Mono",
+  "7" = "Mono",
+  "8" = "Mono",
+  "9" = "T",
+  "10" = "DC",
+  "11" = "Mono",
+  "12" = "DC"
+)
+cell_types <- cluster_annotations[clusts]
+plot_embedding(cell_types, umap)
+```
+
+We can further visualize the marker genes for each cluster using a dot plot. As
+is typical for these situations, some known marker genes are very clear, while others
+are less specific.
+```{r}
+plot_dot(
+  mat, 
+  c("MS4A1", "GNLY", "CD3E", 
+    "CD14", "FCER1A", "FCGR3A", 
+    "LYZ", "CD4", "CD8"), 
+  cell_types
+)
+```
+
+# ATAC-seq peaks
+We start with tile-based peak calling, which tests pre-determined overlapping tile
+positions for significant enrichment of ATAC-seq signal over the genome-wide background
+in each cell type independently. This is faster than using a real peak-caller like
+MACS, though with the default parameters the peaks will always be 200bp wide and the positioning
+resolution is approximately +/- 30bp.
+```{r, warning=FALSE, message=FALSE}
+peaks <- call_peaks_tile(frags, chrom_sizes, cell_groups=cell_types,
+                           effective_genome_size = 2.8e9)
+head(peaks)
+```
+
+# Motif footprinting
+For motif footprinting, first we need to find all instances of our
+motifs-of-interest in peaks
+```{r, results="hold", message=FALSE, warning=FALSE}
+suppressPackageStartupMessages({
+  library(GenomicRanges)
+  library(Biostrings)
+})
+peaks_sorted <- dplyr::arrange(peaks, chr, start)
+peaks_gr <- dplyr::mutate(peaks_sorted, start = start + 1) %>% as("GenomicRanges")
+selected_motifs <- c(
+  "CEBPA" = "ENSG00000245848_LINE568_CEBPA_D_N4",
+  "EOMES" = "ENSG00000163508_LINE3544_EOMES_D_N1", 
+  "SPI1" = "ENSG00000066336_LINE1813_SPI1_D_N5",
+  "CTCF" = "ENSG00000102974_LINE747_CTCF_D_N67"
+)
+suppressWarnings({
+  motif_positions <- motifmatchr::matchMotifs(
+      chromVARmotifs::human_pwms_v2[selected_motifs], 
+      peaks_gr, genome="hg38", out="positions")
+})
+names(motif_positions) <- names(selected_motifs)
+motif_positions
+```
+
+Next, we can use these motif positions to plot aggregate accessibility surrounding
+TF binding sites across our cell types as a proxy for TF activity. Here we're able
+to see enrichment of accessibility neighboring the sites of a myeloid transcription factor 
+in our DC and Monocyte cells. Transcription factor binding is (generally) mutually-exclusive with nucleosome occupancy, so the transcription factor is bound
+it creates accessibility in its flanking regions. The squiggly bit in the center
+is due to Tn5 insertion bias of the motif itself.
+```{r}
+plot_tf_footprint(
+  frags,
+  motif_positions$CEBPA,
+  cell_groups = cell_types,
+  flank = 250,
+  smooth = 2
+) +
+  ggplot2::labs(title="CEBPA")
+```
+
+We can also use the `patchwork` library to show multiple plots in a grid, highlighting
+cell-type-specific factors as well as general factors like CTCF.
+```{r}
+footprinting_plots <- list()
+for (motif in names(selected_motifs)) {
+  footprinting_plots[[motif]] <- plot_tf_footprint(
+    frags, 
+    motif_positions[[motif]], 
+    cell_groups = cell_types, 
+    flank=250,
+    smooth=2) +
+    ggplot2::labs(title=motif, color="Cluster")
+}
+patchwork::wrap_plots(footprinting_plots, guides="collect")
+```
+
+# Genome accessibility tracks
+
+To plot genome accessibility tracks, we need to select a genome region to view.
+BPCells provides a helper function to find genome regions centered around a gene.
+```{r}
+region <- gene_region(genes, "CD19", extend_bp = 1e5)
+region
+```
+
+For normalizing the tracks, we need to provide the total number of reads for each 
+cell type. This can be substituted for total reads in peaks or other metrics if 
+desired.
+```{r}
+read_counts <- atac_qc$nFrags[
+  match(cellNames(frags), atac_qc$cellName)
+]
+```
+
+We can create the first component of our track plot by plotting the genome tracks
+themselves. We can see a small peak in the center that is mainly present in B
+cells (top row), but it is unclear where this sits relative to the B-cell marker
+CD19.
+```{r}
+bulk_plot <- trackplot_bulk(
+  frags,
+  region = region, 
+  groups=cell_types,
+  read_counts,
+  bins=500
+)
+bulk_plot
+```
+
+This is much more useful with a gene annotation track added in. For this we'll
+get a set of canonical transcripts (one per gene) from Gencode
+```{r}
+transcripts <- read_gencode_transcripts(getwd())
+head(transcripts)
+```
+
+Then we can make an annotation track
+```{r, fig.height=1, fig.width=6}
+gene_plot <- trackplot_gene(transcripts, region)
+gene_plot
+```
+
+Finally, we can put these elements together and make a combined trackplot. Now
+we see that the small peak is just upstream of the CD19 gene.
+```{r}
+draw_trackplot_grid(
+  bulk_plot,
+  gene_plot,
+  labels = list("Cell Types", "Genes")
+)
+```

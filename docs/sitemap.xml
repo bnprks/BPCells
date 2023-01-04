@@ -4,25 +4,22 @@
     <loc>https://bnprks.github.io/BPCells/404.html</loc>
   </url>
   <url>
-    <loc>https://bnprks.github.io/BPCells/CHECKLIST.html</loc>
+    <loc>https://bnprks.github.io/BPCells/articles/index.html</loc>
+  </url>
+  <url>
+    <loc>https://bnprks.github.io/BPCells/articles/pbmc3k.html</loc>
+  </url>
+  <url>
+    <loc>https://bnprks.github.io/BPCells/articles/WindowsInstall.html</loc>
   </url>
   <url>
     <loc>https://bnprks.github.io/BPCells/authors.html</loc>
   </url>
   <url>
+    <loc>https://bnprks.github.io/BPCells/CHECKLIST.html</loc>
+  </url>
+  <url>
     <loc>https://bnprks.github.io/BPCells/index.html</loc>
-  </url>
-  <url>
-    <loc>https://bnprks.github.io/BPCells/reference/IterableFragments-methods.html</loc>
-  </url>
-  <url>
-    <loc>https://bnprks.github.io/BPCells/reference/IterableMatrix-methods.html</loc>
-  </url>
-  <url>
-    <loc>https://bnprks.github.io/BPCells/reference/LinearOperator-class.html</loc>
-  </url>
-  <url>
-    <loc>https://bnprks.github.io/BPCells/reference/XPtrList-class.html</loc>
   </url>
   <url>
     <loc>https://bnprks.github.io/BPCells/reference/call_peaks_tile.html</loc>
@@ -70,10 +67,10 @@
     <loc>https://bnprks.github.io/BPCells/reference/footprint.html</loc>
   </url>
   <url>
-    <loc>https://bnprks.github.io/BPCells/reference/fragment_io.html</loc>
+    <loc>https://bnprks.github.io/BPCells/reference/fragments_identical.html</loc>
   </url>
   <url>
-    <loc>https://bnprks.github.io/BPCells/reference/fragments_identical.html</loc>
+    <loc>https://bnprks.github.io/BPCells/reference/fragment_io.html</loc>
   </url>
   <url>
     <loc>https://bnprks.github.io/BPCells/reference/geneScoreTilesArchR.html</loc>
@@ -91,6 +88,9 @@
     <loc>https://bnprks.github.io/BPCells/reference/gene_region.html</loc>
   </url>
   <url>
+    <loc>https://bnprks.github.io/BPCells/reference/gene_scores.html</loc>
+  </url>
+  <url>
     <loc>https://bnprks.github.io/BPCells/reference/gene_score_tiles.html</loc>
   </url>
   <url>
@@ -101,6 +101,12 @@
   </url>
   <url>
     <loc>https://bnprks.github.io/BPCells/reference/index.html</loc>
+  </url>
+  <url>
+    <loc>https://bnprks.github.io/BPCells/reference/IterableFragments-methods.html</loc>
+  </url>
+  <url>
+    <loc>https://bnprks.github.io/BPCells/reference/IterableMatrix-methods.html</loc>
   </url>
   <url>
     <loc>https://bnprks.github.io/BPCells/reference/iterate_matrix.html</loc>
@@ -115,13 +121,16 @@
     <loc>https://bnprks.github.io/BPCells/reference/length_distribution.html</loc>
   </url>
   <url>
+    <loc>https://bnprks.github.io/BPCells/reference/LinearOperator-class.html</loc>
+  </url>
+  <url>
     <loc>https://bnprks.github.io/BPCells/reference/linear_operator.html</loc>
   </url>
   <url>
-    <loc>https://bnprks.github.io/BPCells/reference/mat_norm.html</loc>
+    <loc>https://bnprks.github.io/BPCells/reference/matrixStats.html</loc>
   </url>
   <url>
-    <loc>https://bnprks.github.io/BPCells/reference/matrixStats.html</loc>
+    <loc>https://bnprks.github.io/BPCells/reference/matrix_inputs.html</loc>
   </url>
   <url>
     <loc>https://bnprks.github.io/BPCells/reference/matrix_io.html</loc>
@@ -136,6 +145,9 @@
     <loc>https://bnprks.github.io/BPCells/reference/matrix_type.html</loc>
   </url>
   <url>
+    <loc>https://bnprks.github.io/BPCells/reference/mat_norm.html</loc>
+  </url>
+  <url>
     <loc>https://bnprks.github.io/BPCells/reference/merge_cells.html</loc>
   </url>
   <url>
@@ -148,10 +160,10 @@
     <loc>https://bnprks.github.io/BPCells/reference/min_scalar.html</loc>
   </url>
   <url>
-    <loc>https://bnprks.github.io/BPCells/reference/normalize_ranges.html</loc>
+    <loc>https://bnprks.github.io/BPCells/reference/normalized_dimnames.html</loc>
   </url>
   <url>
-    <loc>https://bnprks.github.io/BPCells/reference/normalized_dimnames.html</loc>
+    <loc>https://bnprks.github.io/BPCells/reference/normalize_ranges.html</loc>
   </url>
   <url>
     <loc>https://bnprks.github.io/BPCells/reference/nucleosome_counts.html</loc>
@@ -302,5 +314,8 @@
   </url>
   <url>
     <loc>https://bnprks.github.io/BPCells/reference/write_matrix_memory.html</loc>
+  </url>
+  <url>
+    <loc>https://bnprks.github.io/BPCells/reference/XPtrList-class.html</loc>
   </url>
 </urlset>

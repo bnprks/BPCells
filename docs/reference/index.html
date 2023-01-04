@@ -21,6 +21,12 @@
       <ul class="navbar-nav me-auto"><li class="active nav-item">
   <a class="nav-link" href="../reference/index.html">Reference</a>
 </li>
+<li class="nav-item dropdown">
+  <a href="#" class="nav-link dropdown-toggle" data-bs-toggle="dropdown" role="button" aria-expanded="false" aria-haspopup="true" id="dropdown-articles">Articles</a>
+  <div class="dropdown-menu" aria-labelledby="dropdown-articles">
+    <a class="dropdown-item" href="../articles/pbmc3k.html">Basic tutorial</a>
+  </div>
+</li>
       </ul><form class="form-inline my-2 my-lg-0" role="search">
         <input type="search" class="form-control me-sm-2" aria-label="Toggle navigation" name="search-input" data-search-index="../search.json" id="search-input" placeholder="Search for" autocomplete="off"></form>
 
@@ -109,9 +115,9 @@
         <dd>Calculate gene-tile distances for ArchR gene activities</dd>
       </dl><dl><dt>
           
-          <code><a href="gene_score_weights_archr.html">gene_score_weights_archr()</a></code> 
+          <code><a href="gene_scores.html">gene_score_weights_archr()</a></code> <code><a href="gene_scores.html">gene_score_archr()</a></code> 
         </dt>
-        <dd>Calculate GeneActivityScore weights matrix</dd>
+        <dd>Calculate GeneActivityScores</dd>
       </dl><dl><dt>
           
           <code><a href="order_ranges.html">order_ranges()</a></code> 
@@ -486,9 +492,9 @@ Uses patchwork to perform the alignment</dd>
         <dd>Get the matrix data type (mat_uint32_t, mat_float, or mat_double for now)</dd>
       </dl><dl><dt>
           
-          <code><a href="matrix_is_transform.html">matrix_is_transform()</a></code> 
+          <code><a href="matrix_inputs.html">matrix_inputs()</a></code> 
         </dt>
-        <dd>Return boolean whether the matrix is a transform</dd>
+        <dd>Return a list of input matrices to the current matrix</dd>
       </dl><dl><dt>
           
           <code><a href="merge_dimnames.html">merge_dimnames()</a></code> 

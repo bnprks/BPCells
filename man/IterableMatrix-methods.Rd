@@ -62,18 +62,18 @@ Methods for IterableMatrix objects
 }
 \section{Functions}{
 \itemize{
-\item \code{show,IterableMatrix-method}: Display an IterableMatrix
+\item \code{show(IterableMatrix)}: Display an IterableMatrix
 
-\item \code{t,IterableMatrix-method}: Transpose an IterableMatrix
+\item \code{t(IterableMatrix)}: Transpose an IterableMatrix
 
-\item \code{\%*\%,IterableMatrix,matrix-method}: Multiply by a dense matrix
+\item \code{x \%*\% y}: Multiply by a dense matrix
 
-\item \code{rowSums,IterableMatrix-method}: Calculate rowSums
+\item \code{rowSums(IterableMatrix)}: Calculate rowSums
 
-\item \code{colSums,IterableMatrix-method}: Calculate colSums
+\item \code{colSums(IterableMatrix)}: Calculate colSums
 
-\item \code{rowMeans,IterableMatrix-method}: Calculate rowMeans
+\item \code{rowMeans(IterableMatrix)}: Calculate rowMeans
 
-\item \code{colMeans,IterableMatrix-method}: Calculate colMeans
+\item \code{colMeans(IterableMatrix)}: Calculate colMeans
+
 }}
-

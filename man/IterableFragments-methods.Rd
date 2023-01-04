@@ -49,14 +49,14 @@ Methods for IterableFragments objects
 }
 \section{Functions}{
 \itemize{
-\item \code{show,IterableFragments-method}: Print IterableFragments
+\item \code{show(IterableFragments)}: Print IterableFragments
 
-\item \code{cellNames}: Get cell names
+\item \code{cellNames()}: Get cell names
 
-\item \code{cellNames<-}: Set cell names
+\item \code{cellNames(x, ...) <- value}: Set cell names
 
-\item \code{chrNames}: Set chromosome names
+\item \code{chrNames()}: Set chromosome names
 
-\item \code{chrNames<-}: Set chromosome names
+\item \code{chrNames(x, ...) <- value}: Set chromosome names
+
 }}
-

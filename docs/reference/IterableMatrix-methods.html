@@ -21,6 +21,12 @@
       <ul class="navbar-nav me-auto"><li class="active nav-item">
   <a class="nav-link" href="../reference/index.html">Reference</a>
 </li>
+<li class="nav-item dropdown">
+  <a href="#" class="nav-link dropdown-toggle" data-bs-toggle="dropdown" role="button" aria-expanded="false" aria-haspopup="true" id="dropdown-articles">Articles</a>
+  <div class="dropdown-menu" aria-labelledby="dropdown-articles">
+    <a class="dropdown-item" href="../articles/pbmc3k.html">Basic tutorial</a>
+  </div>
+</li>
       </ul><form class="form-inline my-2 my-lg-0" role="search">
         <input type="search" class="form-control me-sm-2" aria-label="Toggle navigation" name="search-input" data-search-index="../search.json" id="search-input" placeholder="Search for" autocomplete="off"></form>
 
@@ -98,13 +104,13 @@ colMeans(x)</code></pre></div>
     <div class="section level2">
     <h2 id="functions">Functions<a class="anchor" aria-label="anchor" href="#functions"></a></h2>
     
-<ul><li><p><code>show,IterableMatrix-method</code>: Display an IterableMatrix</p></li>
-<li><p><code>t,IterableMatrix-method</code>: Transpose an IterableMatrix</p></li>
-<li><p><code>%*%,IterableMatrix,matrix-method</code>: Multiply by a dense matrix</p></li>
-<li><p><code>rowSums,IterableMatrix-method</code>: Calculate rowSums</p></li>
-<li><p><code>colSums,IterableMatrix-method</code>: Calculate colSums</p></li>
-<li><p><code>rowMeans,IterableMatrix-method</code>: Calculate rowMeans</p></li>
-<li><p><code>colMeans,IterableMatrix-method</code>: Calculate colMeans</p></li>
+<ul><li><p><code>show(IterableMatrix)</code>: Display an IterableMatrix</p></li>
+<li><p><code>t(IterableMatrix)</code>: Transpose an IterableMatrix</p></li>
+<li><p><code>x %*% y</code>: Multiply by a dense matrix</p></li>
+<li><p><code>rowSums(IterableMatrix)</code>: Calculate rowSums</p></li>
+<li><p><code>colSums(IterableMatrix)</code>: Calculate colSums</p></li>
+<li><p><code>rowMeans(IterableMatrix)</code>: Calculate rowMeans</p></li>
+<li><p><code>colMeans(IterableMatrix)</code>: Calculate colMeans</p></li>
 </ul></div>
 
   </main><aside class="col-md-3"><nav id="toc"><h2>On this page</h2>

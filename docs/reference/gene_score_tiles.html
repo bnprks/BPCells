@@ -25,6 +25,12 @@ calculates the signed distances according to ArchR's default parameters."><!-- m
       <ul class="navbar-nav me-auto"><li class="active nav-item">
   <a class="nav-link" href="../reference/index.html">Reference</a>
 </li>
+<li class="nav-item dropdown">
+  <a href="#" class="nav-link dropdown-toggle" data-bs-toggle="dropdown" role="button" aria-expanded="false" aria-haspopup="true" id="dropdown-articles">Articles</a>
+  <div class="dropdown-menu" aria-labelledby="dropdown-articles">
+    <a class="dropdown-item" href="../articles/pbmc3k.html">Basic tutorial</a>
+  </div>
+</li>
       </ul><form class="form-inline my-2 my-lg-0" role="search">
         <input type="search" class="form-control me-sm-2" aria-label="Toggle navigation" name="search-input" data-search-index="../search.json" id="search-input" placeholder="Search for" autocomplete="off"></form>
 
@@ -57,7 +63,7 @@ calculates the signed distances according to ArchR's default parameters.</p>
     <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">gene_score_tiles</span><span class="op">(</span></span>
 <span>  <span class="va">genes</span>,</span>
 <span>  chromosome_sizes <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  tile_size <span class="op">=</span> <span class="fl">500</span>,</span>
+<span>  tile_width <span class="op">=</span> <span class="fl">500</span>,</span>
 <span>  addArchRBug <span class="op">=</span> <span class="cn">FALSE</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
@@ -72,7 +78,7 @@ calculates the signed distances according to ArchR's default parameters.</p>
 <dd><p>(optional) Size of chromosomes as a <a href="genomic-ranges.html">genomic-ranges</a> object</p></dd>
 
 
-<dt>tile_size</dt>
+<dt>tile_width</dt>
 <dd><p>Size of tiles to consider</p></dd>
 
 

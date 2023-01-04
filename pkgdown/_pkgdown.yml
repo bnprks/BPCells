@@ -111,7 +111,7 @@ reference:
   - linear_operator
   - iterate_matrix
   - matrix_type
-  - matrix_is_transform
+  - matrix_inputs
   - merge_dimnames
   - concat_dimnames
   - normalized_dimnames
