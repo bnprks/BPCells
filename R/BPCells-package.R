@@ -7,7 +7,7 @@
 NULL
 
 
-#' Genomic range objects
+#' Genomic range formats
 #'
 #' @name genomic-ranges
 #' @description

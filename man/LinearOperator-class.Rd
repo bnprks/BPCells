@@ -9,3 +9,4 @@ LinearOperators perform sparse matrix-vector product operations for
 for downstream matrix solvers. They avoid repeatedly calling iterate_matrix
 from an SVD solver for a possible efficiency gain
 }
+\keyword{internal}

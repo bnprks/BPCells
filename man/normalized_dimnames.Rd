@@ -9,3 +9,4 @@ normalized_dimnames(row_names, col_names)
 \description{
 Helper function to set dimnames to NULL instead of 0-length character vectors
 }
+\keyword{internal}

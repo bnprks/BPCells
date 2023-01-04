@@ -42,7 +42,6 @@
   <a href="#" class="nav-link dropdown-toggle" data-bs-toggle="dropdown" role="button" aria-expanded="false" aria-haspopup="true" id="dropdown-articles">Articles</a>
   <div class="dropdown-menu" aria-labelledby="dropdown-articles">
     <a class="dropdown-item" href="../articles/pbmc3k.html">Basic tutorial</a>
-    <a class="dropdown-item" href="../articles/WindowsInstall.html">UNKNOWN TITLE</a>
   </div>
 </li>
       </ul>
@@ -443,20 +442,20 @@ dense.</p>
 <span><span class="va">pca</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">4</span>,<span class="fl">1</span><span class="op">:</span><span class="fl">3</span><span class="op">]</span></span></code></pre></div>
 <pre><code><span><span class="co">## PCA dimensions: 2599, 50</span></span>
 <span><span class="co">##           [,1]      [,2]      [,3]</span></span>
-<span><span class="co">## [1,] 15.168703  0.813149  2.381169</span></span>
-<span><span class="co">## [2,]  6.607428  7.203094 -4.386106</span></span>
-<span><span class="co">## [3,] 14.605054 -1.157472  0.620746</span></span>
-<span><span class="co">## [4,]  8.129926  1.123073  2.492770</span></span></code></pre>
+<span><span class="co">## [1,] 15.168703 -0.813149  2.381169</span></span>
+<span><span class="co">## [2,]  6.607428 -7.203094 -4.386106</span></span>
+<span><span class="co">## [3,] 14.605054  1.157472  0.620746</span></span>
+<span><span class="co">## [4,]  8.129926 -1.123073  2.492770</span></span></code></pre>
 <p>Next we calculate UMAP coordinates</p>
 <div class="sourceCode" id="cb32"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">12341512</span><span class="op">)</span></span>
 <span><span class="va">umap</span> <span class="op">&lt;-</span> <span class="fu">uwot</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/uwot/man/umap.html" class="external-link">umap</a></span><span class="op">(</span><span class="va">pca</span><span class="op">)</span></span>
 <span><span class="va">umap</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">4</span>,<span class="op">]</span></span></code></pre></div>
-<pre><code><span><span class="co">##           [,1]       [,2]</span></span>
-<span><span class="co">## [1,]  9.545168  2.4179242</span></span>
-<span><span class="co">## [2,] -1.217623 -8.0095281</span></span>
-<span><span class="co">## [3,]  9.456664  2.6680222</span></span>
-<span><span class="co">## [4,]  7.077941  0.2849846</span></span></code></pre>
+<pre><code><span><span class="co">##          [,1]     [,2]</span></span>
+<span><span class="co">## [1,] 9.264220 5.189455</span></span>
+<span><span class="co">## [2,] 8.810988 2.399051</span></span>
+<span><span class="co">## [3,] 9.217899 4.962598</span></span>
+<span><span class="co">## [4,] 7.826959 2.192085</span></span></code></pre>
 </div>
 <div class="section level3">
 <h3 id="clustering">Clustering<a class="anchor" aria-label="anchor" href="#clustering"></a>

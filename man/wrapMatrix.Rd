@@ -9,3 +9,4 @@ wrapMatrix(class, m, ...)
 \description{
 Helps to avoid duplicate storage of dimnames
 }
+\keyword{internal}

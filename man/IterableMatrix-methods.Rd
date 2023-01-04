@@ -2,6 +2,7 @@
 % Please edit documentation in R/matrix.R
 \name{IterableMatrix-methods}
 \alias{IterableMatrix-methods}
+\alias{matrix_type}
 \alias{show,IterableMatrix-method}
 \alias{t,IterableMatrix-method}
 \alias{\%*\%,IterableMatrix,matrix-method}
@@ -11,6 +12,8 @@
 \alias{colMeans,IterableMatrix-method}
 \title{IterableMatrix methods}
 \usage{
+matrix_type(x)
+
 \S4method{show}{IterableMatrix}(object)
 
 \S4method{t}{IterableMatrix}(x)
@@ -26,9 +29,9 @@
 \S4method{colMeans}{IterableMatrix}(x)
 }
 \arguments{
-\item{object}{IterableMatrix object}
-
 \item{x}{IterableMatrix object}
+
+\item{object}{IterableMatrix object}
 
 \item{y}{matrix}
 }
@@ -62,6 +65,8 @@ Methods for IterableMatrix objects
 }
 \section{Functions}{
 \itemize{
+\item \code{matrix_type()}: Get the matrix data type (mat_uint32_t, mat_float, or mat_double for now)
+
 \item \code{show(IterableMatrix)}: Display an IterableMatrix
 
 \item \code{t(IterableMatrix)}: Transpose an IterableMatrix

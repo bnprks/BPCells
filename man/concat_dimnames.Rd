@@ -9,3 +9,4 @@ concat_dimnames(x, y, len_x, len_y, warning_prefix, dim_type)
 \description{
 Helper function for rbind/cbind concatenating dimnames
 }
+\keyword{internal}

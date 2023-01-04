@@ -47,9 +47,15 @@
     </div>
 
     <div class="section level2">
-      <h2 id="fragment-i-o">Fragment I/O<a class="anchor" aria-label="anchor" href="#fragment-i-o"></a></h2>
+      <h2 id="atac-seq-fragments">ATAC-seq Fragments<a class="anchor" aria-label="anchor" href="#atac-seq-fragments"></a></h2>
       
-      <p class="section-desc"></p><p>Read &amp; write fragment objects</p>
+      
+
+      
+    </div><div class="section level2">
+      
+      <h3 id="fragment-i-o">Fragment I/O<a class="anchor" aria-label="anchor" href="#fragment-i-o"></a></h3>
+      
 
       
     </div><div id="" class="section level2">
@@ -73,8 +79,8 @@
         </dt>
         <dd>Build a Fragments object from an R data frame or GRanges object</dd>
       </dl></div><div class="section level2">
-      <h2 id="atac-analysis-utilities">ATAC Analysis Utilities<a class="anchor" aria-label="anchor" href="#atac-analysis-utilities"></a></h2>
       
+      <h3 id="atac-analysis">ATAC Analysis<a class="anchor" aria-label="anchor" href="#atac-analysis"></a></h3>
       
 
       
@@ -110,19 +116,9 @@
         <dd>Calculate ranges x cells tile overlap matrix</dd>
       </dl><dl><dt>
           
-          <code><a href="gene_score_tiles.html">gene_score_tiles()</a></code> 
-        </dt>
-        <dd>Calculate gene-tile distances for ArchR gene activities</dd>
-      </dl><dl><dt>
-          
           <code><a href="gene_scores.html">gene_score_weights_archr()</a></code> <code><a href="gene_scores.html">gene_score_archr()</a></code> 
         </dt>
         <dd>Calculate GeneActivityScores</dd>
-      </dl><dl><dt>
-          
-          <code><a href="order_ranges.html">order_ranges()</a></code> 
-        </dt>
-        <dd>Get end-sorted ordering for genome ranges</dd>
       </dl><dl><dt>
           
           <code><a href="call_peaks_tile.html">call_peaks_tile()</a></code> 
@@ -134,9 +130,9 @@
         </dt>
         <dd>Merge peaks</dd>
       </dl></div><div class="section level2">
-      <h2 id="fragment-transformers">Fragment Transformers<a class="anchor" aria-label="anchor" href="#fragment-transformers"></a></h2>
       
-      <p class="section-desc"></p><p>Transforming fragment objects</p>
+      <h3 id="fragment-operations">Fragment Operations<a class="anchor" aria-label="anchor" href="#fragment-operations"></a></h3>
+      
 
       
     </div><div id="" class="section level2">
@@ -179,10 +175,20 @@
           <code><a href="prefix_cell_names.html">prefix_cell_names()</a></code> 
         </dt>
         <dd>Rename cells by adding a prefix to the names (e.g. sample name)</dd>
+      </dl><dl><dt>
+          
+          <code><a href="IterableFragments-methods.html">show(<i>&lt;IterableFragments&gt;</i>)</a></code> <code><a href="IterableFragments-methods.html">cellNames()</a></code> <code><a href="IterableFragments-methods.html">`cellNames&lt;-`()</a></code> <code><a href="IterableFragments-methods.html">chrNames()</a></code> <code><a href="IterableFragments-methods.html">`chrNames&lt;-`()</a></code> 
+        </dt>
+        <dd>IterableFragments methods</dd>
+      </dl><dl><dt>
+          
+          <code><a href="fragments_identical.html">fragments_identical()</a></code> 
+        </dt>
+        <dd>Check if two fragments objects are identical</dd>
       </dl></div><div class="section level2">
-      <h2 id="fragment-utilities">Fragment Utilities<a class="anchor" aria-label="anchor" href="#fragment-utilities"></a></h2>
       
-      <p class="section-desc"></p><p>Other fragment functions</p>
+      <h3 id="genomic-range-calculations">Genomic Range Calculations<a class="anchor" aria-label="anchor" href="#genomic-range-calculations"></a></h3>
+      
 
       
     </div><div id="" class="section level2">
@@ -192,14 +198,19 @@
 
       <dl><dt>
           
-          <code><a href="IterableFragments-methods.html">show(<i>&lt;IterableFragments&gt;</i>)</a></code> <code><a href="IterableFragments-methods.html">cellNames()</a></code> <code><a href="IterableFragments-methods.html">`cellNames&lt;-`()</a></code> <code><a href="IterableFragments-methods.html">chrNames()</a></code> <code><a href="IterableFragments-methods.html">`chrNames&lt;-`()</a></code> 
+          <code><a href="genomic-ranges.html">genomic-ranges</a></code> 
         </dt>
-        <dd>IterableFragments methods</dd>
+        <dd>Genomic range formats</dd>
       </dl><dl><dt>
           
           <code><a href="scan_fragments.html">scan_fragments()</a></code> 
         </dt>
         <dd>Scan through fragments without performing any operations (used for benchmarking)</dd>
+      </dl><dl><dt>
+          
+          <code><a href="order_ranges.html">order_ranges()</a></code> 
+        </dt>
+        <dd>Get end-sorted ordering for genome ranges</dd>
       </dl><dl><dt>
           
           <code><a href="range_distance_to_nearest.html">range_distance_to_nearest()</a></code> 
@@ -215,10 +226,26 @@
           <code><a href="extend_ranges.html">extend_ranges()</a></code> 
         </dt>
         <dd>Extend genome ranges in a strand-aware fashion.</dd>
+      </dl><dl><dt>
+          
+          <code><a href="gene_score_tiles_archr.html">gene_score_tiles_archr()</a></code> 
+        </dt>
+        <dd>Calculate gene-tile distances for ArchR gene activities</dd>
+      </dl><dl><dt>
+          
+          <code><a href="normalize_ranges.html">normalize_ranges()</a></code> 
+        </dt>
+        <dd>Normalize an object representing genomic ranges</dd>
       </dl></div><div class="section level2">
-      <h2 id="matrix-i-o">Matrix I/O<a class="anchor" aria-label="anchor" href="#matrix-i-o"></a></h2>
+      <h2 id="matrix-operations-rna-atac-">Matrix Operations (RNA + ATAC)<a class="anchor" aria-label="anchor" href="#matrix-operations-rna-atac-"></a></h2>
       
-      <p class="section-desc"></p><p>Functions for reading &amp; writing sparse matrices</p>
+      
+
+      
+    </div><div class="section level2">
+      
+      <h3 id="matrix-i-o">Matrix I/O<a class="anchor" aria-label="anchor" href="#matrix-i-o"></a></h3>
+      
 
       
     </div><div id="" class="section level2">
@@ -242,8 +269,8 @@
         </dt>
         <dd>Read/write sparse matrices</dd>
       </dl></div><div class="section level2">
-      <h2 id="matrix-utilities">Matrix Utilities<a class="anchor" aria-label="anchor" href="#matrix-utilities"></a></h2>
       
+      <h3 id="matrix-operations">Matrix Operations<a class="anchor" aria-label="anchor" href="#matrix-operations"></a></h3>
       
 
       
@@ -269,11 +296,6 @@
         <dd>Transpose the storage order for a matrix</dd>
       </dl><dl><dt>
           
-          <code><a href="IterableMatrix-methods.html">show(<i>&lt;IterableMatrix&gt;</i>)</a></code> <code><a href="IterableMatrix-methods.html">t(<i>&lt;IterableMatrix&gt;</i>)</a></code> <code><a href="IterableMatrix-methods.html">`%*%`(<i>&lt;IterableMatrix&gt;</i>,<i>&lt;matrix&gt;</i>)</a></code> <code><a href="IterableMatrix-methods.html">rowSums(<i>&lt;IterableMatrix&gt;</i>)</a></code> <code><a href="IterableMatrix-methods.html">colSums(<i>&lt;IterableMatrix&gt;</i>)</a></code> <code><a href="IterableMatrix-methods.html">rowMeans(<i>&lt;IterableMatrix&gt;</i>)</a></code> <code><a href="IterableMatrix-methods.html">colMeans(<i>&lt;IterableMatrix&gt;</i>)</a></code> 
-        </dt>
-        <dd>IterableMatrix methods</dd>
-      </dl><dl><dt>
-          
           <code><a href="min_scalar.html">min_scalar()</a></code> 
         </dt>
         <dd>Take the elementwise min with a constant</dd>
@@ -282,6 +304,11 @@
           <code><a href="mat_norm.html">add_rows()</a></code> <code><a href="mat_norm.html">add_cols()</a></code> <code><a href="mat_norm.html">multiply_rows()</a></code> <code><a href="mat_norm.html">multiply_cols()</a></code> 
         </dt>
         <dd>Broadcasting vector arithmetic</dd>
+      </dl><dl><dt>
+          
+          <code><a href="IterableMatrix-methods.html">matrix_type()</a></code> <code><a href="IterableMatrix-methods.html">show(<i>&lt;IterableMatrix&gt;</i>)</a></code> <code><a href="IterableMatrix-methods.html">t(<i>&lt;IterableMatrix&gt;</i>)</a></code> <code><a href="IterableMatrix-methods.html">`%*%`(<i>&lt;IterableMatrix&gt;</i>,<i>&lt;matrix&gt;</i>)</a></code> <code><a href="IterableMatrix-methods.html">rowSums(<i>&lt;IterableMatrix&gt;</i>)</a></code> <code><a href="IterableMatrix-methods.html">colSums(<i>&lt;IterableMatrix&gt;</i>)</a></code> <code><a href="IterableMatrix-methods.html">rowMeans(<i>&lt;IterableMatrix&gt;</i>)</a></code> <code><a href="IterableMatrix-methods.html">colMeans(<i>&lt;IterableMatrix&gt;</i>)</a></code> 
+        </dt>
+        <dd>IterableMatrix methods</dd>
       </dl></div><div class="section level2">
       <h2 id="reference-annotations">Reference Annotations<a class="anchor" aria-label="anchor" href="#reference-annotations"></a></h2>
       
@@ -318,6 +345,11 @@
           <code><a href="read_ucsc_chrom_sizes.html">read_ucsc_chrom_sizes()</a></code> 
         </dt>
         <dd>Read UCSC chromosome sizes</dd>
+      </dl><dl><dt>
+          
+          <code><a href="ensure_downloaded.html">ensure_downloaded()</a></code> 
+        </dt>
+        <dd>Download a file with a custom timeout</dd>
       </dl></div><div class="section level2">
       <h2 id="clustering">Clustering<a class="anchor" aria-label="anchor" href="#clustering"></a></h2>
       
@@ -459,92 +491,6 @@ Uses patchwork to perform the alignment</dd>
           <code><a href="rotate_x_labels.html">rotate_x_labels()</a></code> 
         </dt>
         <dd>Rotate ggplot x axis labels</dd>
-      </dl></div><div class="section level2">
-      <h2 id="internal-functions">Internal Functions<a class="anchor" aria-label="anchor" href="#internal-functions"></a></h2>
-      
-      <p class="section-desc"></p><p>Unexported functions for internal use</p>
-
-      
-    </div><div id="" class="section level2">
-      
-      
-      
-
-      <dl><dt>
-          
-          <code><a href="LinearOperator-class.html">LinearOperator-class</a></code> 
-        </dt>
-        <dd>Represent a sparse matrix-vector product operation</dd>
-      </dl><dl><dt>
-          
-          <code><a href="linear_operator.html">linear_operator()</a></code> 
-        </dt>
-        <dd>Construct a LinearOperator object</dd>
-      </dl><dl><dt>
-          
-          <code><a href="iterate_matrix.html">iterate_matrix()</a></code> 
-        </dt>
-        <dd>Get a wrapped pointer to the iterable matrix, in the form of an XPtrList (see fragments.R)</dd>
-      </dl><dl><dt>
-          
-          <code><a href="matrix_type.html">matrix_type()</a></code> 
-        </dt>
-        <dd>Get the matrix data type (mat_uint32_t, mat_float, or mat_double for now)</dd>
-      </dl><dl><dt>
-          
-          <code><a href="matrix_inputs.html">matrix_inputs()</a></code> 
-        </dt>
-        <dd>Return a list of input matrices to the current matrix</dd>
-      </dl><dl><dt>
-          
-          <code><a href="merge_dimnames.html">merge_dimnames()</a></code> 
-        </dt>
-        <dd>Helper function for rbind/cbind merging dimnames</dd>
-      </dl><dl><dt>
-          
-          <code><a href="concat_dimnames.html">concat_dimnames()</a></code> 
-        </dt>
-        <dd>Helper function for rbind/cbind concatenating dimnames</dd>
-      </dl><dl><dt>
-          
-          <code><a href="normalized_dimnames.html">normalized_dimnames()</a></code> 
-        </dt>
-        <dd>Helper function to set dimnames to NULL instead of 0-length character vectors</dd>
-      </dl><dl><dt>
-          
-          <code><a href="fragments_identical.html">fragments_identical()</a></code> 
-        </dt>
-        <dd>Check if two fragments objects are identical</dd>
-      </dl><dl><dt>
-          
-          <code><a href="XPtrList-class.html">XPtrList-class</a></code> 
-        </dt>
-        <dd>This class is used to hold a list of external pointers.</dd>
-      </dl><dl><dt>
-          
-          <code><a href="wrapFragments.html">wrapFragments()</a></code> 
-        </dt>
-        <dd>Wrap an inner XPtrList with an outer externalptr object (Rcpp::XPtr)</dd>
-      </dl><dl><dt>
-          
-          <code><a href="wrapMatrix.html">wrapMatrix()</a></code> 
-        </dt>
-        <dd>Construct an S4 matrix object wrapping another matrix object</dd>
-      </dl><dl><dt>
-          
-          <code><a href="ensure_downloaded.html">ensure_downloaded()</a></code> 
-        </dt>
-        <dd>Download a file with a custom timeout</dd>
-      </dl><dl><dt>
-          
-          <code><a href="normalize_ranges.html">normalize_ranges()</a></code> 
-        </dt>
-        <dd>Normalize an object representing genomic ranges</dd>
-      </dl><dl><dt>
-          
-          <code><a href="genomic-ranges.html">genomic-ranges</a></code> 
-        </dt>
-        <dd>Genomic range objects</dd>
       </dl></div>
   </main><aside class="col-md-3"><nav id="toc"><h2>On this page</h2>
     </nav></aside></div>

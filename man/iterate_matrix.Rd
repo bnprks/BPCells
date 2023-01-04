@@ -9,3 +9,4 @@ iterate_matrix(x)
 \description{
 Get a wrapped pointer to the iterable matrix, in the form of an XPtrList (see fragments.R)
 }
+\keyword{internal}

@@ -2,7 +2,7 @@
 % Please edit documentation in R/matrix.R
 \name{matrix_inputs}
 \alias{matrix_inputs}
-\title{Return a list of input matrices to the current matrix}
+\title{Return a list of input matrices to the current matrix (experimental)}
 \usage{
 matrix_inputs(x)
 }
@@ -12,3 +12,4 @@ File objects have 0 inputs. Most transforms have 1 input. Some transforms
 This is used primarily to know when it is safe to clear dimnames from intermediate transformed matrices.
 C++ relies on the base matrices (non-transform) to have dimnames, while R relies on the outermost matrix (transform) to have dimnames.
 }
+\keyword{internal}

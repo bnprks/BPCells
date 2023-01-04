@@ -9,3 +9,4 @@ merge_dimnames(x, y, warning_prefix, dim_type)
 \description{
 Helper function for rbind/cbind merging dimnames
 }
+\keyword{internal}

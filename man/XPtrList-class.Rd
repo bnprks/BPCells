@@ -7,3 +7,4 @@
 \description{
 This class is used to hold a list of external pointers.
 }
+\keyword{internal}

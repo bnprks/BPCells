@@ -2,7 +2,7 @@
 % Please edit documentation in R/BPCells-package.R
 \name{genomic-ranges}
 \alias{genomic-ranges}
-\title{Genomic range objects}
+\title{Genomic range formats}
 \description{
 Ranges of genomic coordinates are given by chromosme, start, and end coordinate,
 along with optional metadata about each range. With the exception of

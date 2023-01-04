@@ -16,26 +16,27 @@ template:
 # cosmo, flatly, united, sandstone all look reasonable
 # pulse, lumen, zephyr
 reference:
-- title: "Fragment I/O"
-  desc: "Read & write fragment objects"
+- title: "ATAC-seq Fragments"
+
+- subtitle: "Fragment I/O"
+- desc: "Read & write fragment objects"
 - contents:
   - open_fragments_10x
   - write_fragments_memory
   - convert_to_fragments
-- title: "ATAC Analysis Utilities"
+
+- subtitle: "ATAC Analysis"
 - contents:
   - qc_scATAC
   - nucleosome_counts
   - footprint
   - peak_matrix
   - tile_matrix
-  - gene_score_tiles
   - gene_score_weights_archr
-  - order_ranges
   - call_peaks_tile
   - merge_peaks_iterative
-- title: "Fragment Transformers"
-  desc: "Transforming fragment objects"
+
+- subtitle: "Fragment Operations"
 - contents:
   - shift_fragments
   - select_chromosomes
@@ -44,28 +45,37 @@ reference:
   - subset_lengths
   - select_regions
   - prefix_cell_names
-- title: "Fragment Utilities"
-  desc: "Other fragment functions"
-- contents:
   - IterableFragments-methods
+  - fragments_identical
+
+- subtitle: "Genomic Range Calculations"
+- contents:
+  - genomic-ranges
   - scan_fragments
+  - order_ranges
   - range_distance_to_nearest
   - tile_ranges
   - extend_ranges
-- title: "Matrix I/O"
-  desc: "Functions for reading & writing sparse matrices"
+  - gene_score_tiles_archr
+  - normalize_ranges
+
+- title: "Matrix Operations (RNA + ATAC)"
+- subtitle: "Matrix I/O"
+- desc: "Reading & write sparse matrices"
 - contents:
   - open_matrix_10x_hdf5
   - open_matrix_anndata_hdf5
   - write_matrix_memory
-- title: "Matrix Utilities"
+
+- subtitle: "Matrix Operations"
 - contents:
   - matrix_stats
   - convert_matrix_type
   - transpose_storage_order
-  - IterableMatrix-methods
   - min_scalar
   - add_rows
+  - IterableMatrix-methods
+
 - title: "Reference Annotations"
 - contents:
   - human_gene_mapping
@@ -73,13 +83,18 @@ reference:
   - read_gtf
   - read_bed
   - read_ucsc_chrom_sizes
+  - ensure_downloaded
+
 - title: "Clustering"
 - contents:
   - knn_hnsw
   - cluster_graph_leiden
   - knn_to_graph
   - cluster_membership_matrix
+
+
 - title: "Plots"
+
 - subtitle: "Single cell plots"
 - desc: Plots for single-cell analysis
 - contents:
@@ -90,6 +105,7 @@ reference:
   - plot_tf_footprint
   - plot_tss_profile
   - plot_tss_scatter
+
 - subtitle: "Genomic track plots"
 - desc: Genome-browser style plotting function
 - contents:
@@ -97,29 +113,9 @@ reference:
   - trackplot_bulk
   - trackplot_gene
   - gene_region
+
 - subtitle: "Plotting utilities"
 - contents:
   - discrete_palette
   - collect_features
   - rotate_x_labels
-
-
-- title: "Internal Functions"
-  desc: "Unexported functions for internal use"
-- contents:
-  - LinearOperator-class
-  - linear_operator
-  - iterate_matrix
-  - matrix_type
-  - matrix_inputs
-  - merge_dimnames
-  - concat_dimnames
-  - normalized_dimnames
-  - fragments_identical
-  - XPtrList-class
-  - wrapFragments
-  - wrapMatrix
-  - ensure_downloaded
-  - normalize_ranges
-  - genomic-ranges
-

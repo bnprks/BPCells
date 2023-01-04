@@ -47,6 +47,7 @@ setMethod("dimnames<-", signature(x = "IterableMatrix", value = "NULL"), functio
 #' Construct an S4 matrix object wrapping another matrix object
 #'
 #' Helps to avoid duplicate storage of dimnames
+#' @keywords internal
 wrapMatrix <- function(class, m, ...) {
   dimnames <- dimnames(m)
   if (matrix_is_transform(m)) m@dimnames <- list(NULL, NULL)
@@ -54,6 +55,7 @@ wrapMatrix <- function(class, m, ...) {
 }
 
 #' Helper function to set dimnames to NULL instead of 0-length character vectors
+#' @keywords internal
 normalized_dimnames <- function(row_names, col_names) {
   list(
     if (length(row_names) == 0) NULL else row_names,
@@ -68,13 +70,14 @@ denormalize_dimnames <- function(dimnames) {
 }
 
 #' Get a wrapped pointer to the iterable matrix, in the form of an XPtrList (see fragments.R)
+#' @keywords internal
 setGeneric("iterate_matrix", function(x) standardGeneric("iterate_matrix"))
 setMethod("iterate_matrix", "XPtrList", function(x) {
   stopifnot(x@type == "mat_uint32_t" || x@type == "mat_double" || x@type == "mat_float")
   x
 })
 
-#' Get the matrix data type (mat_uint32_t, mat_float, or mat_double for now)
+#' @describeIn IterableMatrix-methods Get the matrix data type (mat_uint32_t, mat_float, or mat_double for now)
 setGeneric("matrix_type", function(x) standardGeneric("matrix_type"))
 setMethod("matrix_type", "XPtrList", function(x) {
   # Strip off the "mat_" prefix
@@ -83,12 +86,13 @@ setMethod("matrix_type", "XPtrList", function(x) {
 })
 
 
-#' Return a list of input matrices to the current matrix
+#' Return a list of input matrices to the current matrix (experimental)
 #'
 #' File objects have 0 inputs. Most transforms have 1 input. Some transforms
 #' (e.g. matrix multiplication or matrix concatenation) can have multiple
 #' This is used primarily to know when it is safe to clear dimnames from intermediate transformed matrices.
 #' C++ relies on the base matrices (non-transform) to have dimnames, while R relies on the outermost matrix (transform) to have dimnames.
+#' @keywords internal
 setGeneric("matrix_inputs", function(x) standardGeneric("matrix_inputs"))
 matrix_is_transform <- function(x) length(matrix_inputs(x)) != 0
 
@@ -207,6 +211,7 @@ setMethod("%*%", signature(x = "numeric", y = "IterableMatrix"), function(x, y) 
 #' LinearOperators perform sparse matrix-vector product operations for
 #' for downstream matrix solvers. They avoid repeatedly calling iterate_matrix
 #' from an SVD solver for a possible efficiency gain
+#' @keywords internal
 setClass("LinearOperator",
   slots = c(
     dim = "integer",
@@ -223,6 +228,7 @@ setClass("LinearOperator",
 #'
 #' Constructs a C++ matrix object and save the pointer to use for repeated matrix-vector products
 #' A bit experimental still so for internal use
+#' @keywords internal
 linear_operator <- function(mat) {
   assert_is(mat, "IterableMatrix")
   new("LinearOperator", dim = dim(mat), xptrlist = iterate_matrix(convert_matrix_type(mat, "double")), transpose = mat@transpose)
@@ -538,6 +544,7 @@ setMethod("short_description", "MatrixSubset", function(x) {
 # Concatenating matrices by row or by column
 
 #' Helper function for rbind/cbind concatenating dimnames
+#' @keywords internal
 concat_dimnames <- function(x, y, len_x, len_y, warning_prefix, dim_type) {
   if (is.null(x) && is.null(y)) {
     return(NULL)
@@ -555,6 +562,7 @@ concat_dimnames <- function(x, y, len_x, len_y, warning_prefix, dim_type) {
 }
 
 #' Helper function for rbind/cbind merging dimnames
+#' @keywords internal
 merge_dimnames <- function(x, y, warning_prefix, dim_type) {
   if (!is.null(x) && !is.null(y) && !all(x == y)) {
     warning(sprintf("%s: %s names are mismatched. Setting names to match first matrix", warning_prefix, dim_type), call. = FALSE)

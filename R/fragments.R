@@ -9,6 +9,7 @@ NULL
 setClass("IterableFragments")
 
 #' This class is used to hold a list of external pointers.
+#' @keywords internal
 setClass("XPtrList", slots = c("pointers" = "list", "type" = "character"))
 ptr <- function(x) {
   x@pointers[[1]]
@@ -20,6 +21,7 @@ ptr <- function(x) {
 #' WARNING: Always make sure to pass the correct inner object, because if it is not passed then
 #' the chain of pointers will be broken and C++ objects could be freed at random by the GC while we're
 #' still using them. ONLY pass inner=new("XPtrList") if the C++ object is not wrapping any other fragments/matrices
+#' @keywords internal
 wrapFragments <- function(outer, inner) {
   inner@pointers <- c(outer, inner@pointers)
   inner@type <- "fragments"

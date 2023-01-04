@@ -10,3 +10,4 @@ linear_operator(mat)
 Constructs a C++ matrix object and save the pointer to use for repeated matrix-vector products
 A bit experimental still so for internal use
 }
+\keyword{internal}
