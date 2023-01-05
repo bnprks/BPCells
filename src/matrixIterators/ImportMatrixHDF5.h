@@ -47,4 +47,8 @@ StoredMatrix<float> openAnnDataMatrix(
 
 bool isRowOrientedAnnDataMatrix(std::string file, std::string group);
 
+// Read a single member from a struct-type dataset
+template <typename T>
+void readMember(HighFive::DataSet &&dataset, std::string name, std::vector<T> &out);
+
 } // end namespace BPCells

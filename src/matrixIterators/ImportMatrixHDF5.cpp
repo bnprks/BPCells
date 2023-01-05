@@ -86,21 +86,44 @@ openAnnDataMatrix(std::string file, std::string group, uint32_t buffer_size, uin
     HighFive::Group &g = rb.getGroup();
     std::string encoding;
     std::vector<uint32_t> dims;
-    g.getAttribute("encoding-type").read(encoding);
-    g.getAttribute("shape").read(dims);
 
-    std::string col_ids;
-    std::string row_ids;
     HighFive::Group root = g.getFile().getGroup("/");
-    root.getGroup("var").getAttribute("_index").read(col_ids);
-    root.getGroup("obs").getAttribute("_index").read(row_ids);
-    col_ids = "var/" + col_ids;
-    row_ids = "obs/" + row_ids;
+    std::unique_ptr<StringReader> col_names, row_names;
+
+    if (g.hasAttribute("h5sparse_format")) {
+        // Support for legacy format
+        g.getAttribute("h5sparse_format").read(encoding);
+        g.getAttribute("h5sparse_shape").read(dims);
+        encoding += "_matrix";
+
+        auto dt = root.getDataSet("var").getDataType();
+
+        std::vector<std::string> row_name_data, col_name_data;
+        readMember(root.getDataSet("var"), "index", col_name_data);
+        readMember(root.getDataSet("obs"), "index", row_name_data);
+        col_names = std::make_unique<VecStringReader>(col_name_data);
+        row_names = std::make_unique<VecStringReader>(row_name_data);
+    } else if (g.hasAttribute("encoding-type")) {
+        g.getAttribute("encoding-type").read(encoding);
+        g.getAttribute("shape").read(dims);
+
+        std::string row_ids, col_ids;
+        root.getGroup("var").getAttribute("_index").read(col_ids);
+        root.getGroup("obs").getAttribute("_index").read(row_ids);
+        col_ids = "var/" + col_ids;
+        row_ids = "obs/" + row_ids;
+        col_names = std::make_unique<H5StringReader>(root, col_ids);
+        row_names = std::make_unique<H5StringReader>(root, row_ids);
+    } else {
+        throw std::runtime_error(
+            "h5ad could not be read - missing attribute 'encoding-type' on sparse matrix"
+        );
+    }
 
     uint32_t rows;
     if (encoding == "csr_matrix") {
         rows = dims[1];
-        std::swap(row_ids, col_ids);
+        std::swap(row_names, col_names);
     } else if (encoding == "csc_matrix") {
         rows = dims[0];
     } else throw std::runtime_error("Unsupported matrix encoding: " + encoding);
@@ -110,8 +133,8 @@ openAnnDataMatrix(std::string file, std::string group, uint32_t buffer_size, uin
         rb.openFloatReader("data"),
         rb.openUIntReader("indptr"),
         rows,
-        std::make_unique<H5StringReader>(root, row_ids),
-        std::make_unique<H5StringReader>(root, col_ids)
+        std::move(row_names),
+        std::move(col_names)
     );
 }
 
@@ -122,11 +145,60 @@ bool isRowOrientedAnnDataMatrix(std::string file, std::string group) {
     HighFive::Group &g = rb.getGroup();
     std::string encoding;
 
-    g.getAttribute("encoding-type").read(encoding);
+    if (g.hasAttribute("h5sparse_format")) {
+        // Support for legacy format
+        g.getAttribute("h5sparse_format").read(encoding);
+        encoding += "_matrix";
+    } else if (g.hasAttribute("encoding-type")) {
+        g.getAttribute("encoding-type").read(encoding);
+    } else {
+        throw std::runtime_error(
+            "h5ad could not be read - missing attribute 'encoding-type' on sparse matrix"
+        );
+    }
 
     if (encoding == "csr_matrix") return true;
     else if (encoding == "csc_matrix") return false;
     else throw std::runtime_error("Unsupported matrix encoding: " + encoding);
+}
+
+template <typename T>
+void readMember(HighFive::DataSet &&dataset, std::string name, std::vector<T> &out) {
+    auto dims = dataset.getDimensions();
+    if (dims.size() != 1) {
+        std::ostringstream ss;
+        ss << "readMember: dims must be 1, found " << dims.size();
+        throw std::runtime_error(ss.str());
+    }
+    HighFive::CompoundType base_type = dataset.getDataType();
+    HighFive::DataType field_type = HighFive::create_datatype<T>();
+    bool found = false;
+    // Error checking that the type exists
+    for (auto t : base_type.getMembers()) {
+        if (t.name == name) {
+            if (t.base_type.getClass() == field_type.getClass()) {
+                found = true;
+                break;
+            }
+            std::ostringstream ss;
+            ss << "Type of member \"" << name << "\" in file (" << t.base_type.string()
+               << ") does not match class of requested type (" << field_type.string() << ")";
+            throw HighFive::DataTypeException(ss.str());
+        }
+    }
+    if (!found) {
+        std::ostringstream ss;
+        ss << "Member \"" << name << "\" not found in compound data type";
+        throw HighFive::DataTypeException(ss.str());
+    }
+    HighFive::CompoundType subtype({{name.c_str(), field_type}});
+
+    out.resize(dims[0]);
+    // Use a data-converter like the fancy read function (makes string conversion etc. work)
+    auto r = HighFive::details::data_converter::get_reader<std::vector<T>>(dims, out);
+    dataset.read(r.get_pointer(), subtype);
+    // re-arrange results
+    r.unserialize();
 }
 
 } // end namespace BPCells
