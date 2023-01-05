@@ -9,10 +9,13 @@
 #ifndef H5DATATYPE_HPP
 #define H5DATATYPE_HPP
 
+#include <type_traits>
 #include <vector>
 
 #include "H5Object.hpp"
 #include "bits/H5Utils.hpp"
+
+#include "H5PropertyList.hpp"
 
 namespace HighFive {
 
@@ -21,27 +24,36 @@ namespace HighFive {
 /// \brief Enum of Fundamental data classes
 ///
 enum class DataTypeClass {
-    Time,
-    Integer,
-    Float,
-    String,
-    BitField,
-    Opaque,
-    Compound,
-    Reference,
-    Enum,
-    VarLen,
-    Array,
-    Invalid
+    Time = 1 << 1,
+    Integer = 1 << 2,
+    Float = 1 << 3,
+    String = 1 << 4,
+    BitField = 1 << 5,
+    Opaque = 1 << 6,
+    Compound = 1 << 7,
+    Reference = 1 << 8,
+    Enum = 1 << 9,
+    VarLen = 1 << 10,
+    Array = 1 << 11,
+    Invalid = 0
 };
+
+inline DataTypeClass operator|(DataTypeClass lhs, DataTypeClass rhs) {
+    using T = std::underlying_type<DataTypeClass>::type;
+    return static_cast<DataTypeClass>(static_cast<T>(lhs) | static_cast<T>(rhs));
+}
+
+inline DataTypeClass operator&(DataTypeClass lhs, DataTypeClass rhs) {
+    using T = std::underlying_type<DataTypeClass>::type;
+    return static_cast<DataTypeClass>(static_cast<T>(lhs) & static_cast<T>(rhs));
+}
 
 
 ///
 /// \brief HDF5 Data Type
 ///
-class DataType : public Object {
+class DataType: public Object {
   public:
-
     bool operator==(const DataType& other) const;
 
     bool operator!=(const DataType& other) const;
@@ -83,12 +95,18 @@ class DataType : public Object {
     /// \brief Returns whether the type is a Reference
     bool isReference() const;
 
+    /// \brief Get the list of properties for creation of this DataType
+    DataTypeCreateProps getCreatePropertyList() const {
+        return details::get_plist<DataTypeCreateProps>(*this, H5Tget_create_plist);
+    }
+
   protected:
     using Object::Object;
 
     friend class Attribute;
     friend class File;
     friend class DataSet;
+    friend class CompoundType;
 };
 
 ///
@@ -97,19 +115,19 @@ class DataType : public Object {
 ///  Support only basic data type
 ///
 template <typename T>
-class AtomicType : public DataType {
+class AtomicType: public DataType {
   public:
     AtomicType();
 
-    typedef T basic_type;
+    using basic_type = T;
 };
 
 
 ///
 /// \brief Create a compound HDF5 datatype
 ///
-class CompoundType : public DataType {
-public:
+class CompoundType: public DataType {
+  public:
     ///
     /// \brief Use for defining a sub-type of compound type
     struct member_def {
@@ -136,10 +154,34 @@ public:
         : members(std::move(t_members)) {
         create(size);
     }
-    inline CompoundType(const std::initializer_list<member_def>& t_members,
-                        size_t size = 0)
+    inline CompoundType(const std::initializer_list<member_def>& t_members, size_t size = 0)
         : members(t_members) {
         create(size);
+    }
+
+    ///
+    /// \brief Initializes a compound type from a DataType
+    /// \param type
+    inline CompoundType(DataType&& type)
+        : DataType(type) {
+        if (getClass() != DataTypeClass::Compound) {
+            std::ostringstream ss;
+            ss << "hid " << _hid << " does not refer to a compound data type";
+            throw DataTypeException(ss.str());
+        }
+        int result = H5Tget_nmembers(_hid);
+        if (result < 0) {
+            throw DataTypeException("Could not get members of compound datatype");
+        }
+        size_t n_members = static_cast<size_t>(result);
+        members.reserve(n_members);
+        for (unsigned i = 0; i < n_members; i++) {
+            const char* name = H5Tget_member_name(_hid, i);
+            size_t offset = H5Tget_member_offset(_hid, i);
+            hid_t member_hid = H5Tget_member_type(_hid, i);
+            DataType member_type{member_hid};
+            members.emplace_back(name, member_type, offset);
+        }
     }
 
     /// \brief Commit datatype into the given Object
@@ -152,8 +194,7 @@ public:
         return members;
     }
 
-private:
-
+  private:
     /// A vector of the member_def members of this CompoundType
     std::vector<member_def> members;
 
@@ -184,9 +225,9 @@ private:
 ///     auto dataset = file.createDataSet("/foo", Position::FIRST);
 /// }
 /// \endcode
-template<typename T>
+template <typename T>
 class EnumType: public DataType {
-public:
+  public:
     ///
     /// \brief Use for defining a member of enum type
     struct member_def {
@@ -201,6 +242,11 @@ public:
 
     EnumType(const std::vector<member_def>& t_members)
         : members(t_members) {
+        static_assert(std::is_enum<T>::value, "EnumType<T>::create takes only enum");
+        if (members.empty()) {
+            HDF5ErrMapper::ToException<DataTypeException>(
+                "Could not create an enum without members");
+        }
         create();
     }
 
@@ -212,7 +258,7 @@ public:
     /// \param name Name to give the datatype
     void commit(const Object& object, const std::string& name) const;
 
-private:
+  private:
     std::vector<member_def> members;
 
     void create();
@@ -250,11 +296,11 @@ class FixedLenStringArray {
     ///
     /// Such conversion involves a copy, original vector is not modified
     ///
-    explicit FixedLenStringArray(const std::vector<std::string> & vec);
+    explicit FixedLenStringArray(const std::vector<std::string>& vec);
 
     FixedLenStringArray(const std::string* iter_begin, const std::string* iter_end);
 
-    FixedLenStringArray(const std::initializer_list<std::string> &);
+    FixedLenStringArray(const std::initializer_list<std::string>&);
 
     ///
     /// \brief Append an std::string to the buffer structure
@@ -358,14 +404,12 @@ class FixedLenStringArray {
 /// }
 /// HIGHFIVE_REGISTER_TYPE(FooBar, create_enum_foobar)
 /// \endcode
-#define HIGHFIVE_REGISTER_TYPE(type, function) \
-    namespace HighFive {                       \
-    template<>                                 \
-    DataType create_datatype<type>() {         \
-        return function();                     \
-    }                                          \
+#define HIGHFIVE_REGISTER_TYPE(type, function)             \
+    template <>                                            \
+    HighFive::DataType HighFive::create_datatype<type>() { \
+        return function();                                 \
     }
 
 #include "bits/H5DataType_misc.hpp"
 
-#endif // H5DATATYPE_HPP
+#endif  // H5DATATYPE_HPP

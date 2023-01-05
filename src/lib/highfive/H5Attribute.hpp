@@ -11,6 +11,8 @@
 
 #include <vector>
 
+#include "H5Apublic.h"
+
 #include "H5DataSpace.hpp"
 #include "H5DataType.hpp"
 #include "H5Object.hpp"
@@ -21,10 +23,8 @@ namespace HighFive {
 ///
 /// \brief Class representing an attribute of a dataset or group
 ///
-class Attribute : public Object,
-                  public PathTraits<Attribute> {
+class Attribute: public Object, public PathTraits<Attribute> {
   public:
-
     const static ObjectType type = ObjectType::Attribute;
 
     ///
@@ -53,6 +53,10 @@ class Attribute : public Object,
     ///
     DataSpace getMemSpace() const;
 
+    /// \brief Return the attribute
+    template <typename T>
+    T read() const;
+
     ///
     /// Read the attribute into a buffer
     /// An exception is raised if the numbers of dimension of the buffer and of
@@ -63,9 +67,7 @@ class Attribute : public Object,
     template <typename T>
     void read(T& array) const;
 
-    ///
-    /// Read the attribute into a buffer
-    ///
+    /// \brief Read the attribute into a buffer
     template <typename T>
     void read(T* array, const DataType& dtype = DataType()) const;
 
@@ -79,11 +81,14 @@ class Attribute : public Object,
     template <typename T>
     void write(const T& buffer);
 
-    ///
-    /// Write a buffer to this attribute
-    ///
+    /// \brief Write a buffer to this attribute
     template <typename T>
     void write_raw(const T* buffer, const DataType& dtype = DataType());
+
+    /// \brief Get the list of properties for creation of this attribute
+    AttributeCreateProps getCreatePropertyList() const {
+        return details::get_plist<AttributeCreateProps>(*this, H5Aget_create_plist);
+    }
 
     // No empty attributes
     Attribute() = delete;
@@ -91,10 +96,11 @@ class Attribute : public Object,
   private:
     using Object::Object;
 
-    template <typename Derivate> friend class ::HighFive::AnnotateTraits;
+    template <typename Derivate>
+    friend class ::HighFive::AnnotateTraits;
 };
 
 }  // namespace HighFive
 
 
-#endif // H5ATTRIBUTE_HPP
+#endif  // H5ATTRIBUTE_HPP
