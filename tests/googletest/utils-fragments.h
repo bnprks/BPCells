@@ -7,14 +7,18 @@
 
 namespace Testing {
 
-
 class Frag {
-public:
-    uint32_t chr, start, end, cell; 
+  public:
+    uint32_t chr, start, end, cell;
 };
 
 // Create a Fragment object from a vector of fragments (sorting not required)
-std::unique_ptr<BPCells::VecReaderWriterBuilder> writeFragmentTuple(std::vector<Frag> frag_vec, uint32_t min_cell_count=0, bool skip_sort = false, uint32_t chunk_size=1024) {
+std::unique_ptr<BPCells::VecReaderWriterBuilder> writeFragmentTuple(
+    std::vector<Frag> frag_vec,
+    uint32_t min_cell_count = 0,
+    bool skip_sort = false,
+    uint32_t chunk_size = 1024
+) {
     using namespace BPCells;
 
     VecReaderWriterBuilder v;
@@ -24,12 +28,12 @@ std::unique_ptr<BPCells::VecReaderWriterBuilder> writeFragmentTuple(std::vector<
     UIntWriter w_end_max = v.createUIntWriter("end_max");
     UIntWriter w_chr_ptr = v.createUIntWriter("chr_ptr");
     v.writeVersion("unpacked-fragments-v1");
-    
+
     std::unique_ptr<StringWriter> w_chr_names = v.createStringWriter("chr_names");
     std::unique_ptr<StringWriter> w_cell_names = v.createStringWriter("cell_names");
 
     // Sort by (chr, start, end, cell) to ensure consistent ordering
-    if(!skip_sort) {
+    if (!skip_sort) {
         std::sort(frag_vec.begin(), frag_vec.end(), [](const Frag &a, const Frag &b) {
             if (a.chr != b.chr) return a.chr < b.chr;
             if (a.start != b.start) return a.start < b.start;
@@ -47,7 +51,10 @@ std::unique_ptr<BPCells::VecReaderWriterBuilder> writeFragmentTuple(std::vector<
             w_chr_ptr.write_one(count);
             current_chr += 1;
         }
-        w_cell.write_one(f.cell); w_start.write_one(f.start); w_end.write_one(f.end); count++;
+        w_cell.write_one(f.cell);
+        w_start.write_one(f.start);
+        w_end.write_one(f.end);
+        count++;
     }
     w_chr_ptr.write_one(count);
 
@@ -60,7 +67,8 @@ std::unique_ptr<BPCells::VecReaderWriterBuilder> writeFragmentTuple(std::vector<
         chr_names.push_back("chr" + std::to_string(i));
     }
 
-    for (auto f : frag_vec) min_cell_count = std::max(min_cell_count, f.cell + 1);
+    for (auto f : frag_vec)
+        min_cell_count = std::max(min_cell_count, f.cell + 1);
     std::vector<std::string> cell_names;
     for (int i = 0; i < min_cell_count; i++) {
         cell_names.push_back("c" + std::to_string(i));
@@ -68,7 +76,11 @@ std::unique_ptr<BPCells::VecReaderWriterBuilder> writeFragmentTuple(std::vector<
 
     w_chr_names->write(VecStringReader(chr_names));
     w_cell_names->write(VecStringReader(cell_names));
-    w_cell.finalize(); w_start.finalize(); w_end.finalize(); w_end_max.finalize(); w_chr_ptr.finalize();
+    w_cell.finalize();
+    w_start.finalize();
+    w_end.finalize();
+    w_end_max.finalize();
+    w_chr_ptr.finalize();
     StoredFragments manual_frags = StoredFragments::openUnpacked(v);
 
     auto ret = std::make_unique<VecReaderWriterBuilder>(chunk_size);
@@ -77,8 +89,16 @@ std::unique_ptr<BPCells::VecReaderWriterBuilder> writeFragmentTuple(std::vector<
     return ret;
 }
 
-std::vector<Frag> generateFrags(uint32_t n, uint32_t max_chr, uint32_t max_coord, uint32_t max_cell, uint32_t max_width, uint32_t seed = 12548) {
-    std::minstd_rand gen(seed); //Linear congruential engine (not super random, but probably enough for this)
+std::vector<Frag> generateFrags(
+    uint32_t n,
+    uint32_t max_chr,
+    uint32_t max_coord,
+    uint32_t max_cell,
+    uint32_t max_width,
+    uint32_t seed = 12548
+) {
+    std::minstd_rand gen(seed
+    ); // Linear congruential engine (not super random, but probably enough for this)
     std::uniform_int_distribution<> chr(0, max_chr);
     std::uniform_int_distribution<> cell(0, max_cell);
     std::uniform_int_distribution<> width(1, max_width);
@@ -87,11 +107,10 @@ std::vector<Frag> generateFrags(uint32_t n, uint32_t max_chr, uint32_t max_coord
     std::vector<Frag> ret;
     for (uint32_t i = 0; i < n; i++) {
         uint32_t s = start(gen);
-        ret.push_back(Frag{(uint32_t) chr(gen), s, s + width(gen), (uint32_t) cell(gen)});
+        ret.push_back(Frag{(uint32_t)chr(gen), s, s + width(gen), (uint32_t)cell(gen)});
     }
     return ret;
 }
-
 
 bool fragments_identical(BPCells::FragmentLoader &fragments1, BPCells::FragmentLoader &fragments2) {
     using namespace BPCells;
@@ -99,19 +118,19 @@ bool fragments_identical(BPCells::FragmentLoader &fragments1, BPCells::FragmentL
     FragmentIterator i1(fragments1);
     FragmentIterator i2(fragments2);
 
-    while(true) {
+    while (true) {
         bool res1 = i1.nextChr();
         bool res2 = i2.nextChr();
-        if(res1 != res2) {
+        if (res1 != res2) {
             std::cout << "Different number of remaining chromosomes." << std::endl;
             return false;
         }
         if (!res1) break;
-        if(i1.currentChr() != i2.currentChr()) {
+        if (i1.currentChr() != i2.currentChr()) {
             std::cout << "Different chromosome ID loaded" << std::endl;
             return false;
         }
-        while(true) {
+        while (true) {
             bool res1 = i1.nextFrag();
             bool res2 = i2.nextFrag();
             if (res1 != res2) {
@@ -120,17 +139,24 @@ bool fragments_identical(BPCells::FragmentLoader &fragments1, BPCells::FragmentL
             }
             if (!res1) break;
             if (i1.cell() != i2.cell() || i1.start() != i2.start() || i1.end() != i2.end()) {
-                printf("Mismatched fragments: %s(id=%d):%d-%d vs. %s(id=%d):%d-%d\n",
-                    i1.cellNames(i1.cell()), i1.cell(), i1.start(), i1.end(),
-                    i2.cellNames(i2.cell()), i2.cell(), i2.start(), i2.end()
+                printf(
+                    "Mismatched fragments: %s(id=%d):%d-%d vs. %s(id=%d):%d-%d\n",
+                    i1.cellNames(i1.cell()),
+                    i1.cell(),
+                    i1.start(),
+                    i1.end(),
+                    i2.cellNames(i2.cell()),
+                    i2.cell(),
+                    i2.start(),
+                    i2.end()
                 );
                 return false;
             }
         }
     }
-    for (uint32_t i = 0; ;i++) {
-        const char* n1 = i1.cellNames(i);
-        const char* n2 = i2.cellNames(i);
+    for (uint32_t i = 0;; i++) {
+        const char *n1 = i1.cellNames(i);
+        const char *n2 = i2.cellNames(i);
         if ((n1 == NULL) != (n2 == NULL)) {
             std::cout << "Mismatched number of cell names" << std::endl;
             return false;
@@ -141,9 +167,9 @@ bool fragments_identical(BPCells::FragmentLoader &fragments1, BPCells::FragmentL
             return false;
         }
     }
-    for (uint32_t i = 0; ;i++) {
-        const char* n1 = i1.chrNames(i);
-        const char* n2 = i2.chrNames(i);
+    for (uint32_t i = 0;; i++) {
+        const char *n1 = i1.chrNames(i);
+        const char *n2 = i2.chrNames(i);
         if ((n1 == NULL) != (n2 == NULL)) {
             std::cout << "Mismatched number of chr names" << std::endl;
             return false;
@@ -157,4 +183,4 @@ bool fragments_identical(BPCells::FragmentLoader &fragments1, BPCells::FragmentL
     return true;
 }
 
-}
+} // namespace Testing
