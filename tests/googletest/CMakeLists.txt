@@ -91,7 +91,9 @@ target_include_directories(
 enable_testing()
 
 # For newer cmake, suprress a cmake warning
-cmake_policy(SET CMP0135 NEW)
+if(POLICY CMP0135)
+    cmake_policy(SET CMP0135 NEW)
+endif()
 include(FetchContent)
 FetchContent_Declare(
   googletest
@@ -170,6 +172,7 @@ gtest_discover_tests(fragment_utils_test)
 add_executable(
     matrix_io_test
     test-matrixIO.cpp
+    ${SRC}/matrixIterators/ImportMatrixHDF5.cpp
 )
 target_link_libraries(matrix_io_test arrayIO Eigen3::Eigen gtest_main gmock)
 gtest_discover_tests(matrix_io_test)
