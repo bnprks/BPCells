@@ -337,7 +337,7 @@ SEXP iterate_merge_fragments_cpp(SEXP fragments_list) {
     std::vector<FragmentLoader *> fragments_vec;
     List l = fragments_list;
     for (uint32_t i = 0; i < l.size(); i++) {
-        XPtr<FragmentLoader> loader(l[i]);
+        XPtr<FragmentLoader> loader(Rcpp::as<XPtr<FragmentLoader>>(l[i]));
         fragments_vec.push_back(&(*loader));
     }
 

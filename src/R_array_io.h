@@ -54,7 +54,7 @@ class S4ReaderBuilder : public ReaderBuilder {
         );
     }
     inline std::unique_ptr<StringReader> openStringReader(std::string name) override {
-        return std::make_unique<RcppStringReader>(s4.slot(name));
+        return std::make_unique<RcppStringReader>(Rcpp::as<StringVector>(s4.slot(name)));
     }
     inline std::string readVersion() override { return s4.slot("version"); }
 };

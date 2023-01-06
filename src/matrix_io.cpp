@@ -593,7 +593,7 @@ void write_matrix_10x_hdf5_cpp(
     StringVector metadata_names = feature_metadata.names();
     for (int i = 0; i < feature_metadata.size(); i++) {
         metadata[std::string(metadata_names[i])] =
-            std::make_unique<RcppStringReader>(feature_metadata[i]);
+            std::make_unique<RcppStringReader>(Rcpp::as<StringVector>(feature_metadata[i]));
     }
     StoredMatrixWriter<uint32_t> w = create10xFeatureMatrix(
         path,
