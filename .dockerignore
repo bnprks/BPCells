@@ -1,12 +1,27 @@
 # Ignore everything
-*
-# Except these patterns
-!src/**/*.cpp
-!src/**/*.cc
-!src/**/*.h
-!src/**/*.hpp
-!src/Makevars
-!R/*.R
+.vscode
+bench
+build
+docs
+man
+pkgdown
+src/**/*.o
+src/**/*.so
+src/Makevars
+tests
+vignettes
 
-!DESCRIPTION
-!NAMESPACE
+# Except these patterns
+# !src/**/*.cpp
+# !src/**/*.cc
+# !src/**/*.h
+# !src/**/*.hpp
+# !src/Makevars
+# !R/*.R
+
+# !DESCRIPTION
+# !NAMESPACE
+# !configure
+# !cleanup
+# !tools/*.cc
+# !tools/*.c
