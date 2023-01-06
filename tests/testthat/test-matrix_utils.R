@@ -204,11 +204,15 @@ test_that("Generic methods work", {
     multiply_right_2 = mi %*% as(id_right, "IterableMatrix"),
     multiply_left_1 = id_left %*% mi,
     multiply_types_1 = convert_matrix_type(mi, "uint32_t") %*% convert_matrix_type(as(id_right, "IterableMatrix"), "uint32_t"),
-    multiply_types_2 = convert_matrix_type(mi, "float") %*% convert_matrix_type(as(id_right, "IterableMatrix"), "uint32_t"),
+    multiply_types_2 = convert_matrix_type(mi, "float") %*% convert_matrix_type(as(id_right, "IterableMatrix"), "float"),
     min_1 = min_scalar(mi, 1e9),
     subset = mi[seq_len(nrow(m)), ][, seq_len(ncol(m))][seq_len(nrow(m)), seq_len(ncol(m))],
     rbind = rbind2(mi[1:2, ], mi[3:nrow(m)]),
-    cbind = cbind2(mi[, 1:2], mi[, 3:ncol(m)])
+    cbind = cbind2(mi[, 1:2], mi[, 3:ncol(m)]),
+    rbind_uint32_t = convert_matrix_type(mi, "uint32_t")  %>% {rbind2(.[1:2, ], .[3:nrow(m)])},
+    cbind_uint32_t = convert_matrix_type(mi, "uint32_t")  %>% {cbind2(.[, 1:2], .[, 3:ncol(m)])},
+    rbind_float = convert_matrix_type(mi, "float")  %>% {rbind2(.[1:2, ], .[3:nrow(m)])},
+    cbind_float = convert_matrix_type(mi, "float")  %>% {cbind2(.[, 1:2], .[, 3:ncol(m)])}
   )
 
   for (i in names(ident_transforms)) {

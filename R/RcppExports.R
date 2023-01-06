@@ -421,40 +421,60 @@ build_csparse_matrix_double_cpp <- function(matrix) {
     .Call(`_BPCells_build_csparse_matrix_double_cpp`, matrix)
 }
 
-iterate_matrix_col_select_double_cpp <- function(matrix, col_selection) {
-    .Call(`_BPCells_iterate_matrix_col_select_double_cpp`, matrix, col_selection)
-}
-
 iterate_matrix_col_select_uint32_t_cpp <- function(matrix, col_selection) {
     .Call(`_BPCells_iterate_matrix_col_select_uint32_t_cpp`, matrix, col_selection)
 }
 
-iterate_matrix_row_select_double_cpp <- function(matrix, row_selection) {
-    .Call(`_BPCells_iterate_matrix_row_select_double_cpp`, matrix, row_selection)
+iterate_matrix_col_select_float_cpp <- function(matrix, col_selection) {
+    .Call(`_BPCells_iterate_matrix_col_select_float_cpp`, matrix, col_selection)
+}
+
+iterate_matrix_col_select_double_cpp <- function(matrix, col_selection) {
+    .Call(`_BPCells_iterate_matrix_col_select_double_cpp`, matrix, col_selection)
 }
 
 iterate_matrix_row_select_uint32_t_cpp <- function(matrix, row_selection) {
     .Call(`_BPCells_iterate_matrix_row_select_uint32_t_cpp`, matrix, row_selection)
 }
 
-iterate_matrix_row_bind_double_cpp <- function(matrix_list) {
-    .Call(`_BPCells_iterate_matrix_row_bind_double_cpp`, matrix_list)
+iterate_matrix_row_select_float_cpp <- function(matrix, row_selection) {
+    .Call(`_BPCells_iterate_matrix_row_select_float_cpp`, matrix, row_selection)
+}
+
+iterate_matrix_row_select_double_cpp <- function(matrix, row_selection) {
+    .Call(`_BPCells_iterate_matrix_row_select_double_cpp`, matrix, row_selection)
 }
 
 iterate_matrix_row_bind_uint32_t_cpp <- function(matrix_list) {
     .Call(`_BPCells_iterate_matrix_row_bind_uint32_t_cpp`, matrix_list)
 }
 
-iterate_matrix_col_bind_double_cpp <- function(matrix_list) {
-    .Call(`_BPCells_iterate_matrix_col_bind_double_cpp`, matrix_list)
+iterate_matrix_row_bind_float_cpp <- function(matrix_list) {
+    .Call(`_BPCells_iterate_matrix_row_bind_float_cpp`, matrix_list)
+}
+
+iterate_matrix_row_bind_double_cpp <- function(matrix_list) {
+    .Call(`_BPCells_iterate_matrix_row_bind_double_cpp`, matrix_list)
 }
 
 iterate_matrix_col_bind_uint32_t_cpp <- function(matrix_list) {
     .Call(`_BPCells_iterate_matrix_col_bind_uint32_t_cpp`, matrix_list)
 }
 
+iterate_matrix_col_bind_float_cpp <- function(matrix_list) {
+    .Call(`_BPCells_iterate_matrix_col_bind_float_cpp`, matrix_list)
+}
+
+iterate_matrix_col_bind_double_cpp <- function(matrix_list) {
+    .Call(`_BPCells_iterate_matrix_col_bind_double_cpp`, matrix_list)
+}
+
 iterate_matrix_multiply_uint32_t_cpp <- function(s_left, s_right) {
     .Call(`_BPCells_iterate_matrix_multiply_uint32_t_cpp`, s_left, s_right)
+}
+
+iterate_matrix_multiply_float_cpp <- function(s_left, s_right) {
+    .Call(`_BPCells_iterate_matrix_multiply_float_cpp`, s_left, s_right)
 }
 
 iterate_matrix_multiply_double_cpp <- function(s_left, s_right) {

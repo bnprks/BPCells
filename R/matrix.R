@@ -294,11 +294,10 @@ setMethod("iterate_matrix", "MatrixMultiply", function(x) {
   left <- iterate_matrix(x@left)
   right <- iterate_matrix(x@right)
   inner_iterator <- new("XPtrList", pointers = c(left@pointers, right@pointers))
-  if (matrix_type(x) == "uint32_t") {
-    wrapMat_uint32_t(iterate_matrix_multiply_uint32_t_cpp(ptr(left), ptr(right)), inner_iterator)
-  } else if (matrix_type(x) == "double") {
-    wrapMat_double(iterate_matrix_multiply_double_cpp(ptr(left), ptr(right)), inner_iterator)
-  }
+
+  iter_function <- get(sprintf("iterate_matrix_multiply_%s_cpp", matrix_type(x)))
+  wrap_function <- get(sprintf("wrapMat_%s", matrix_type(x)))
+  wrap_function(iter_function(ptr(left), ptr(right)), inner_iterator)
 })
 
 setMethod("short_description", "MatrixMultiply", function(x) {
@@ -587,11 +586,10 @@ setMethod("matrix_type", signature(x = "RowBindMatrices"), function(x) matrix_ty
 setMethod("iterate_matrix", "RowBindMatrices", function(x) {
   iterators <- lapply(x@matrix_list, iterate_matrix)
   inner_iterator <- new("XPtrList", pointers = do.call(c, lapply(iterators, function(i) i@pointers)))
-  if (matrix_type(x) == "uint32_t") {
-    wrapMat_uint32_t(iterate_matrix_row_bind_uint32_t_cpp(lapply(iterators, ptr)), inner_iterator)
-  } else if (matrix_type(x) == "double") {
-    wrapMat_double(iterate_matrix_row_bind_double_cpp(lapply(iterators, ptr)), inner_iterator)
-  }
+  
+  iter_function <- get(sprintf("iterate_matrix_row_bind_%s_cpp", matrix_type(x)))
+  wrap_function <- get(sprintf("wrapMat_%s", matrix_type(x)))
+  wrap_function(iter_function(lapply(iterators, ptr)), inner_iterator)
 })
 
 setMethod("matrix_inputs", "RowBindMatrices", function(x) x@matrix_list)
@@ -653,11 +651,9 @@ setMethod("matrix_type", signature(x = "ColBindMatrices"), function(x) matrix_ty
 setMethod("iterate_matrix", "ColBindMatrices", function(x) {
   iterators <- lapply(x@matrix_list, iterate_matrix)
   inner_iterator <- new("XPtrList", pointers = do.call(c, lapply(iterators, function(i) i@pointers)))
-  if (matrix_type(x) == "uint32_t") {
-    wrapMat_uint32_t(iterate_matrix_col_bind_uint32_t_cpp(lapply(iterators, ptr)), inner_iterator)
-  } else if (matrix_type(x) == "double") {
-    wrapMat_double(iterate_matrix_col_bind_double_cpp(lapply(iterators, ptr)), inner_iterator)
-  }
+  iter_function <- get(sprintf("iterate_matrix_col_bind_%s_cpp", matrix_type(x)))
+  wrap_function <- get(sprintf("wrapMat_%s", matrix_type(x)))
+  wrap_function(iter_function(lapply(iterators, ptr)), inner_iterator)
 })
 
 setMethod("matrix_inputs", "ColBindMatrices", function(x) x@matrix_list)
@@ -942,8 +938,8 @@ setMethod("iterate_matrix", "MatrixDir", function(x) {
   if (x@transpose) x <- t(x)
   x@dimnames <- denormalize_dimnames(x@dimnames)
 
-  iter_function <- get(sprintf("iterate_%s_matrix_file_%s_cpp", ifelse(x@compressed, "packed", "unpacked"), x@type))
-  wrap_function <- get(sprintf("wrapMat_%s", x@type))
+  iter_function <- get(sprintf("iterate_%s_matrix_file_%s_cpp", ifelse(x@compressed, "packed", "unpacked"), matrix_type(x)))
+  wrap_function <- get(sprintf("wrapMat_%s", matrix_type(x)))
 
   wrap_function(iter_function(x@dir, x@buffer_size, x@dimnames[[1]], x@dimnames[[2]], nrow(x)), new("XPtrList"))
 })
@@ -1026,8 +1022,8 @@ setMethod("iterate_matrix", "MatrixH5", function(x) {
   if (x@transpose) x <- t(x)
   x@dimnames <- denormalize_dimnames(x@dimnames)
 
-  iter_function <- get(sprintf("iterate_%s_matrix_hdf5_%s_cpp", ifelse(x@compressed, "packed", "unpacked"), x@type))
-  wrap_function <- get(sprintf("wrapMat_%s", x@type))
+  iter_function <- get(sprintf("iterate_%s_matrix_hdf5_%s_cpp", ifelse(x@compressed, "packed", "unpacked"), matrix_type(x)))
+  wrap_function <- get(sprintf("wrapMat_%s", matrix_type(x)))
 
   wrap_function(iter_function(x@path, x@group, x@buffer_size, x@dimnames[[1]], x@dimnames[[2]], nrow(x)), new("XPtrList"))
 })
@@ -1498,8 +1494,8 @@ setClass("ConvertMatrixType",
 )
 setMethod("matrix_type", signature(x = "ConvertMatrixType"), function(x) x@type)
 setMethod("iterate_matrix", "ConvertMatrixType", function(x) {
-  iter_function <- get(sprintf("convert_matrix_%s_%s_cpp", matrix_type(x@matrix), x@type))
-  wrap_function <- get(sprintf("wrapMat_%s", x@type))
+  iter_function <- get(sprintf("convert_matrix_%s_%s_cpp", matrix_type(x@matrix), matrix_type(x)))
+  wrap_function <- get(sprintf("wrapMat_%s", matrix_type(x)))
 
   it <- iterate_matrix(x@matrix)
   wrap_function(iter_function(ptr(it)), it)
@@ -1507,7 +1503,7 @@ setMethod("iterate_matrix", "ConvertMatrixType", function(x) {
 setMethod("short_description", "ConvertMatrixType", function(x) {
   c(
     short_description(x@matrix),
-    sprintf("Convert type from %s to %s", matrix_type(x@matrix), x@type)
+    sprintf("Convert type from %s to %s", matrix_type(x@matrix), matrix_type(x))
   )
 })
 setMethod("[", "ConvertMatrixType", function(x, i, j, ...) {

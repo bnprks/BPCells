@@ -107,9 +107,27 @@ SEXP iterate_matrix_row_select_double_cpp(SEXP matrix, std::vector<uint32_t> row
 }
 
 // [[Rcpp::export]]
-SEXP iterate_matrix_row_select_uint32_t_cpp(SEXP matrix, std::vector<uint32_t> row_selection) {
-    XPtr<MatrixLoader<uint32_t>> loader(matrix);
-    return Rcpp::wrap(XPtr<MatrixLoader<uint32_t>>(new MatrixRowSelect(*loader, row_selection)));
+SEXP iterate_matrix_row_bind_uint32_t_cpp(SEXP matrix_list) {
+    std::vector<MatrixLoader<uint32_t> *> matrix_vec;
+    List l = matrix_list;
+    for (uint32_t i = 0; i < l.size(); i++) {
+        XPtr<MatrixLoader<uint32_t>> loader(l[i]);
+        matrix_vec.push_back(&(*loader));
+    }
+
+    return Rcpp::wrap(XPtr<MatrixLoader<uint32_t>>(new ConcatRows(matrix_vec)));
+}
+
+// [[Rcpp::export]]
+SEXP iterate_matrix_row_bind_float_cpp(SEXP matrix_list) {
+    std::vector<MatrixLoader<float> *> matrix_vec;
+    List l = matrix_list;
+    for (uint32_t i = 0; i < l.size(); i++) {
+        XPtr<MatrixLoader<float>> loader(l[i]);
+        matrix_vec.push_back(&(*loader));
+    }
+
+    return Rcpp::wrap(XPtr<MatrixLoader<float>>(new ConcatRows(matrix_vec)));
 }
 
 // [[Rcpp::export]]
@@ -124,8 +142,9 @@ SEXP iterate_matrix_row_bind_double_cpp(SEXP matrix_list) {
     return Rcpp::wrap(XPtr<MatrixLoader<double>>(new ConcatRows(matrix_vec)));
 }
 
+
 // [[Rcpp::export]]
-SEXP iterate_matrix_row_bind_uint32_t_cpp(SEXP matrix_list) {
+SEXP iterate_matrix_col_bind_uint32_t_cpp(SEXP matrix_list) {
     std::vector<MatrixLoader<uint32_t> *> matrix_vec;
     List l = matrix_list;
     for (uint32_t i = 0; i < l.size(); i++) {
@@ -133,7 +152,19 @@ SEXP iterate_matrix_row_bind_uint32_t_cpp(SEXP matrix_list) {
         matrix_vec.push_back(&(*loader));
     }
 
-    return Rcpp::wrap(XPtr<MatrixLoader<uint32_t>>(new ConcatRows(matrix_vec)));
+    return Rcpp::wrap(XPtr<MatrixLoader<uint32_t>>(new ConcatCols(matrix_vec)));
+}
+
+// [[Rcpp::export]]
+SEXP iterate_matrix_col_bind_float_cpp(SEXP matrix_list) {
+    std::vector<MatrixLoader<float> *> matrix_vec;
+    List l = matrix_list;
+    for (uint32_t i = 0; i < l.size(); i++) {
+        XPtr<MatrixLoader<float>> loader(l[i]);
+        matrix_vec.push_back(&(*loader));
+    }
+
+    return Rcpp::wrap(XPtr<MatrixLoader<float>>(new ConcatCols(matrix_vec)));
 }
 
 // [[Rcpp::export]]
@@ -149,22 +180,17 @@ SEXP iterate_matrix_col_bind_double_cpp(SEXP matrix_list) {
 }
 
 // [[Rcpp::export]]
-SEXP iterate_matrix_col_bind_uint32_t_cpp(SEXP matrix_list) {
-    std::vector<MatrixLoader<uint32_t> *> matrix_vec;
-    List l = matrix_list;
-    for (uint32_t i = 0; i < l.size(); i++) {
-        XPtr<MatrixLoader<uint32_t>> loader(l[i]);
-        matrix_vec.push_back(&(*loader));
-    }
-
-    return Rcpp::wrap(XPtr<MatrixLoader<uint32_t>>(new ConcatCols(matrix_vec)));
-}
-
-// [[Rcpp::export]]
 SEXP iterate_matrix_multiply_uint32_t_cpp(SEXP s_left, SEXP s_right) {
     XPtr<MatrixLoader<uint32_t>> left(s_left);
     XPtr<MatrixLoader<uint32_t>> right(s_right);
     return Rcpp::wrap(XPtr<MatrixLoader<uint32_t>>(new SparseMultiply<uint32_t>(*left, *right)));
+}
+
+// [[Rcpp::export]]
+SEXP iterate_matrix_multiply_float_cpp(SEXP s_left, SEXP s_right) {
+    XPtr<MatrixLoader<float>> left(s_left);
+    XPtr<MatrixLoader<float>> right(s_right);
+    return Rcpp::wrap(XPtr<MatrixLoader<float>>(new SparseMultiply<float>(*left, *right)));
 }
 
 // [[Rcpp::export]]
