@@ -1583,6 +1583,11 @@ setAs("IterableMatrix", "matrix", function(from) {
     ), .frequency = "regularly", .frequency_id = "matrix_dense_conversion")
   as(from, "dgCMatrix") %>% as.matrix()  
 })
+
+#' @export 
+as.matrix.IterableMatrix <- function(x, ...) as(x, "matrix")
+
+#' @export
 setMethod("as.matrix", signature(x = "IterableMatrix"), function(x, ...) as(x, "matrix"))
 
 #' Calculate matrix stats
