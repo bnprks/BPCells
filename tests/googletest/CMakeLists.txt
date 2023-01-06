@@ -55,7 +55,6 @@ add_library(
     ${SRC}/fragmentIterators/Rename.cpp
     ${SRC}/fragmentIterators/ShiftCoords.cpp
     ${SRC}/fragmentIterators/StoredFragments.cpp
-    ${SRC}/fragmentUtils/InsertionIterator.cpp
 )
 target_link_libraries(
     fragmentIterators 
