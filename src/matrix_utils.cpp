@@ -69,6 +69,19 @@ SEXP build_csparse_matrix_double_cpp(SEXP matrix) {
     return Rcpp::wrap(writer.getMat());
 }
 
+
+// [[Rcpp::export]]
+SEXP iterate_matrix_col_select_uint32_t_cpp(SEXP matrix, std::vector<uint32_t> col_selection) {
+    XPtr<MatrixLoader<uint32_t>> loader(matrix);
+    return Rcpp::wrap(XPtr<MatrixLoader<uint32_t>>(new MatrixColSelect(*loader, col_selection)));
+}
+
+// [[Rcpp::export]]
+SEXP iterate_matrix_col_select_float_cpp(SEXP matrix, std::vector<uint32_t> col_selection) {
+    XPtr<MatrixLoader<float>> loader(matrix);
+    return Rcpp::wrap(XPtr<MatrixLoader<float>>(new MatrixColSelect(*loader, col_selection)));
+}
+
 // [[Rcpp::export]]
 SEXP iterate_matrix_col_select_double_cpp(SEXP matrix, std::vector<uint32_t> col_selection) {
     XPtr<MatrixLoader<double>> loader(matrix);
@@ -76,9 +89,15 @@ SEXP iterate_matrix_col_select_double_cpp(SEXP matrix, std::vector<uint32_t> col
 }
 
 // [[Rcpp::export]]
-SEXP iterate_matrix_col_select_uint32_t_cpp(SEXP matrix, std::vector<uint32_t> col_selection) {
+SEXP iterate_matrix_row_select_uint32_t_cpp(SEXP matrix, std::vector<uint32_t> row_selection) {
     XPtr<MatrixLoader<uint32_t>> loader(matrix);
-    return Rcpp::wrap(XPtr<MatrixLoader<uint32_t>>(new MatrixColSelect(*loader, col_selection)));
+    return Rcpp::wrap(XPtr<MatrixLoader<uint32_t>>(new MatrixRowSelect(*loader, row_selection)));
+}
+
+// [[Rcpp::export]]
+SEXP iterate_matrix_row_select_float_cpp(SEXP matrix, std::vector<uint32_t> row_selection) {
+    XPtr<MatrixLoader<float>> loader(matrix);
+    return Rcpp::wrap(XPtr<MatrixLoader<float>>(new MatrixRowSelect(*loader, row_selection)));
 }
 
 // [[Rcpp::export]]

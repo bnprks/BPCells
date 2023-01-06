@@ -164,3 +164,14 @@ test_that("Transpose storage order works", {
     }
   }
 })
+
+test_that("AnnData subset hasn't regressed", {
+  x <- open_matrix_anndata_hdf5("../data/mini_mat.h5ad") %>%
+    .[1:nrow(.),1:ncol(.)]
+
+  s <- matrix_stats(x, row_stats="mean", col_stats="mean")
+  colnames(s$row_stats) <- NULL
+  colnames(s$col_stats) <- NULL
+  expect_identical(s$row_stats["mean",], c(1/3,2/3, 4/3, 5/3, 1))
+  expect_identical(s$col_stats["mean",], c(1.2, 1, 0.8))
+})

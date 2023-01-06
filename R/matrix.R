@@ -505,20 +505,17 @@ setMethod("[", "MatrixSubset", function(x, i, j, ...) {
 
 
 setMethod("iterate_matrix", "MatrixSubset", function(x) {
+  assert_true(matrix_type(x) %in% c("uint32_t", "float", "double"))
+  
   ret <- iterate_matrix(x@matrix)
 
-  if (matrix_type(x) == "double") {
-    if (length(x@row_selection) != 0) ret <- wrapMat_double(iterate_matrix_row_select_double_cpp(ptr(ret), x@row_selection - 1L), ret)
-    if (length(x@col_selection) != 0) ret <- wrapMat_double(iterate_matrix_col_select_double_cpp(ptr(ret), x@col_selection - 1L), ret)
-  } else if (matrix_type(x) == "uint32_t") {
-    if (length(x@row_selection) != 0) ret <- wrapMat_uint32_t(iterate_matrix_row_select_uint32_t_cpp(ptr(ret), x@row_selection - 1L), ret)
-    if (length(x@col_selection) != 0) ret <- wrapMat_uint32_t(iterate_matrix_col_select_uint32_t_cpp(ptr(ret), x@col_selection - 1L), ret)
-  } else if (matrix_type(x) == "float") {
-    if (length(x@row_selection) != 0) ret <- wrapMat_float(iterate_matrix_row_select_uint32_t_cpp(ptr(ret), x@row_selection - 1L), ret)
-    if (length(x@col_selection) != 0) ret <- wrapMat_float(iterate_matrix_col_select_uint32_t_cpp(ptr(ret), x@col_selection - 1L), ret)
-  } else {
-    stop("Unrecognized matrix_type in MatrixSubset")
-  }
+  iter_row_function <- get(sprintf("iterate_matrix_row_select_%s_cpp", matrix_type(x)))
+  iter_col_function <- get(sprintf("iterate_matrix_col_select_%s_cpp", matrix_type(x)))
+  wrap_function <- get(sprintf("wrapMat_%s", matrix_type(x)))
+
+  if (length(x@row_selection) != 0) ret <- wrap_function(iter_row_function(ptr(ret), x@row_selection - 1L), ret)
+  if (length(x@col_selection) != 0) ret <- wrap_function(iter_col_function(ptr(ret), x@col_selection - 1L), ret)
+  
   ret
 })
 
