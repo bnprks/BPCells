@@ -592,7 +592,7 @@ if (requireNamespace("GenomicRanges", quietly = TRUE)) {
     chr_order <- order(frags@chr_ptr[c(TRUE, FALSE)])
 
     GenomicRanges::GRanges(
-      seqnames = S4Vectors::Rle(values = factor(chrNames(frags)[order(chr_order)], chrNames(frags)), lengths = chr_counts),
+      seqnames = S4Vectors::Rle(values = factor(chrNames(frags)[chr_order], chrNames(frags)), lengths = chr_counts[chr_order]),
       ranges = IRanges::IRanges(
         start = frags@start + 1,
         end = frags@end
@@ -600,7 +600,37 @@ if (requireNamespace("GenomicRanges", quietly = TRUE)) {
       cell_id = factor(frags@cell_names[frags@cell + 1], frags@cell_names)
     )
   })
+  setAs("GRanges", "IterableFragments", function(from) {
+    convert_to_fragments(from)
+  })
 }
+
+setAs("IterableFragments", "data.frame", function(from) {
+  if (is(from, "UnpackedMemFragments")) {
+    frags <- from
+  } else {
+    frags <- write_fragments_memory(from, compress = FALSE)
+  }
+  # Get the differences between adjacent elements on the chr_ptr list
+  # to calculate how many values are in each chromosome
+  chr_counts <- frags@chr_ptr[c(FALSE, TRUE)] - frags@chr_ptr[c(TRUE, FALSE)]
+  # order by where this chromosome range starts
+  chr_order <- order(frags@chr_ptr[c(TRUE, FALSE)])
+  data.frame(
+    chr = factor(rep.int(chrNames(frags)[chr_order], chr_counts[chr_order]), levels=chrNames(frags)),
+    start = frags@start,
+    end = frags@end,
+    cell_id = factor(cellNames(frags)[frags@cell + 1], cellNames(frags))
+  )
+})
+
+#' @exportS3Method base::as.data.frame
+as.data.frame.IterableFragments <- function(x, ...) as(x, "data.frame")
+#' @export
+setMethod("as.data.frame", signature(x = "IterableFragments"), function(x, ...) as(x, "data.frame"))
+setAs("data.frame", "IterableFragments", function(from) {
+  convert_to_fragments(from)
+}) 
 
 # Shift start/end coordinates of fragments
 setClass("ShiftFragments",

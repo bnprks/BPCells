@@ -13,8 +13,6 @@ tibble_to_fragments <- function(x, chr_names, cell_names) {
 
 test_that("Chromosome name/index select works", { #nolint
   # Test lots of short chromosomes with index and name selection
-  library(GenomicRanges)
-
   withr::local_seed(1258123)
 
   nfrags <- 10e3
@@ -33,16 +31,15 @@ test_that("Chromosome name/index select works", { #nolint
 
   chr_selection <- sample.int(500, 250, replace = FALSE)
 
-  short_chrs_ans <- as(short_chrs, "GRanges")
-  short_chrs_ans <- short_chrs_ans[as.character(GenomicRanges::seqnames(short_chrs_ans)) %in% paste0("chr", chr_selection)] %>%
-    convert_to_fragments() %>%
-    as("GRanges")
+  short_chrs_ans <- as(short_chrs, "data.frame")
+  short_chrs_ans <- short_chrs_ans[as.character(short_chrs_ans$chr) %in% paste0("chr", chr_selection),] %>%
+    dplyr::mutate(chr = factor(as.character(chr), levels=paste0("chr", chr_selection)))
 
   short_chrs_2 <- select_chromosomes(short_chrs, chr_selection) %>%
-    as("GRanges")
+    as("data.frame")
 
   short_chrs_3 <- select_chromosomes(short_chrs, paste0("chr", chr_selection)) %>%
-    as("GRanges")
+    as("data.frame")
 
   expect_equal(short_chrs_ans, short_chrs_2, check.attributes = FALSE)
   expect_equal(short_chrs_ans, short_chrs_3, check.attributes = FALSE)
@@ -86,12 +83,12 @@ test_that("Cell name/index select works", { #nolint
     frags@cell_names[cell_selection]
   ) %>%
     write_fragments_memory() %>%
-    as("GRanges")
+    as("data.frame")
 
   frags_2 <- select_cells(frags, cell_selection) %>%
-    as("GRanges")
+    as("data.frame")
   frags_3 <- select_cells(frags, paste0("cell", cell_selection)) %>%
-    as("GRanges")
+    as("data.frame")
 
   expect_identical(frags_ans, frags_2)
   expect_identical(frags_ans, frags_3)
@@ -118,15 +115,16 @@ test_that("Merge cells works", {
     paste0("cell", seq_len(ncells))
   ) %>%
     merge_cells(as.factor(cell_groups)) %>%
-    as("GRanges")
+    as("data.frame")
 
   frags_ans <- dplyr::mutate(frags_in, cell_id = cell_groups[cell_id]) %>%
     tibble_to_fragments(paste0("chr", seq_len(nchrs)), as.character(seq_len(ngroups))) %>%
-    as("GRanges")
+    as("data.frame")
   expect_identical(frags_out, frags_ans)
 })
 
 test_that("GRanges conversion round-trips", {
+  skip_if_not_installed("GenomicRanges")
   frags <- open_fragments_10x("../data/mini_fragments.tsv.gz") #nolint
   raw <- write_fragments_memory(frags)
   ranges <- as(raw, "GRanges")
@@ -137,6 +135,7 @@ test_that("GRanges conversion round-trips", {
 })
 
 test_that("Region select works", {
+  skip_if_not_installed("GenomicRanges")
   frags <- open_fragments_10x("../data/mini_fragments.tsv.gz") %>% #nolint
     write_fragments_memory()
   gfrags <- as(frags, "GRanges")
@@ -154,8 +153,8 @@ test_that("Region select works", {
   gregions <- as(regions, "GRanges")
   end(gregions) <- regions$end - 1
 
-  ans_inclusive <- subsetByOverlaps(gfrags, gregions)
-  ans_exclusive <- subsetByOverlaps(gfrags, gregions, invert = TRUE)
+  ans_inclusive <- GenomicRanges::subsetByOverlaps(gfrags, gregions)
+  ans_exclusive <- GenomicRanges::subsetByOverlaps(gfrags, gregions, invert = TRUE)
 
   expect_identical(as(inclusive, "GRanges"), ans_inclusive)
   expect_identical(as(exclusive, "GRanges"), ans_exclusive)
@@ -164,20 +163,21 @@ test_that("Region select works", {
 test_that("subset_lengths works", {
   frags <- open_fragments_10x("../data/mini_fragments.tsv.gz") %>% #nolint
     write_fragments_memory()
-  gfrags <- as(frags, "GRanges")
+  gfrags <- as(frags, "data.frame")
 
   min_size <- 20
   max_size <- 100
 
-  lengths <- end(gfrags) - start(gfrags) + 1
+  lengths <- gfrags$end - gfrags$start
   expect_lt(min(lengths), min_size)
   expect_gt(max(lengths), max_size)
 
-  ans <- gfrags[lengths >= min_size & lengths <= max_size]
+  ans <- gfrags[lengths >= min_size & lengths <= max_size,]
+  row.names(ans) <- NULL
 
   subset <- subset_lengths(frags, min_size, max_size)
 
-  expect_identical(as(subset, "GRanges"), ans)
+  expect_identical(as(subset, "data.frame"), ans)
 })
 
 test_that("Name prefix works", {
