@@ -7,6 +7,8 @@
 #include "arrayIO/hdf5.h"
 #include "arrayIO/vector.h"
 
+#include "lib/sleef_wrapper.h"
+
 using namespace Rcpp;
 using namespace BPCells;
 
@@ -59,4 +61,27 @@ SEXP open_bp128_for(SEXP data, SEXP idx, uint32_t count) {
         1024,
         1024
     )));
+}
+
+// [[Rcpp::export]]
+std::string simd_vec_version() {
+    switch (_SIMDBP128_MODE_) {
+        case _SIMDBP128_X86_FULL: return "x86_full_simd";
+        case _SIMDBP128_X86: return "x86_simd";
+        case _SIMDBP128_ARM_NEON: return "arm_neon";
+        case _SIMDBP128_C_FALLBACK: return "c_fallback";
+    }
+    return "Unknown";
+}
+
+// [[Rcpp::export]]
+std::string simd_sleef_version() {
+    switch (_SIMDBP128_MODE_) {
+        case _BPCELLS_SLEEF_FALLBACK: return "FALLBACK";
+        case _BPCELLS_SLEEF_SSE2: return "SSE2";
+        case _BPCELLS_SLEEF_AVX: return "AVX";
+        case _BPCELLS_SLEEF_AVX2: return "AVX2";
+        case _BPCELLS_SLEEF_NEON: return "NEON";
+    }
+    return "Unknown";
 }

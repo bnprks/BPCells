@@ -74,6 +74,26 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// simd_vec_version
+std::string simd_vec_version();
+RcppExport SEXP _BPCells_simd_vec_version() {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    rcpp_result_gen = Rcpp::wrap(simd_vec_version());
+    return rcpp_result_gen;
+END_RCPP
+}
+// sleef_vec_width
+int sleef_vec_width();
+RcppExport SEXP _BPCells_sleef_vec_width() {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    rcpp_result_gen = Rcpp::wrap(sleef_vec_width());
+    return rcpp_result_gen;
+END_RCPP
+}
 // iterate_10x_fragments_cpp
 SEXP iterate_10x_fragments_cpp(std::string path, std::string comment);
 RcppExport SEXP _BPCells_iterate_10x_fragments_cpp(SEXP pathSEXP, SEXP commentSEXP) {
@@ -1286,6 +1306,18 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// iterate_matrix_powsimd_cpp
+SEXP iterate_matrix_powsimd_cpp(SEXP matrix, double exponent);
+RcppExport SEXP _BPCells_iterate_matrix_powsimd_cpp(SEXP matrixSEXP, SEXP exponentSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type matrix(matrixSEXP);
+    Rcpp::traits::input_parameter< double >::type exponent(exponentSEXP);
+    rcpp_result_gen = Rcpp::wrap(iterate_matrix_powsimd_cpp(matrix, exponent));
+    return rcpp_result_gen;
+END_RCPP
+}
 // iterate_matrix_square_cpp
 SEXP iterate_matrix_square_cpp(SEXP matrix);
 RcppExport SEXP _BPCells_iterate_matrix_square_cpp(SEXP matrixSEXP) {
@@ -1711,6 +1743,8 @@ static const R_CallMethodDef CallEntries[] = {
     {"_BPCells_open_bp128_d1z", (DL_FUNC) &_BPCells_open_bp128_d1z, 4},
     {"_BPCells_open_bp128_d1", (DL_FUNC) &_BPCells_open_bp128_d1, 4},
     {"_BPCells_open_bp128_for", (DL_FUNC) &_BPCells_open_bp128_for, 3},
+    {"_BPCells_simd_vec_version", (DL_FUNC) &_BPCells_simd_vec_version, 0},
+    {"_BPCells_sleef_vec_width", (DL_FUNC) &_BPCells_sleef_vec_width, 0},
     {"_BPCells_iterate_10x_fragments_cpp", (DL_FUNC) &_BPCells_iterate_10x_fragments_cpp, 2},
     {"_BPCells_write_10x_fragments_cpp", (DL_FUNC) &_BPCells_write_10x_fragments_cpp, 3},
     {"_BPCells_iterate_packed_fragments_cpp", (DL_FUNC) &_BPCells_iterate_packed_fragments_cpp, 1},
@@ -1801,6 +1835,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_BPCells_iterate_matrix_log1psimd_cpp", (DL_FUNC) &_BPCells_iterate_matrix_log1psimd_cpp, 1},
     {"_BPCells_iterate_matrix_min_cpp", (DL_FUNC) &_BPCells_iterate_matrix_min_cpp, 2},
     {"_BPCells_iterate_matrix_pow_cpp", (DL_FUNC) &_BPCells_iterate_matrix_pow_cpp, 2},
+    {"_BPCells_iterate_matrix_powsimd_cpp", (DL_FUNC) &_BPCells_iterate_matrix_powsimd_cpp, 2},
     {"_BPCells_iterate_matrix_square_cpp", (DL_FUNC) &_BPCells_iterate_matrix_square_cpp, 1},
     {"_BPCells_iterate_matrix_scale_cpp", (DL_FUNC) &_BPCells_iterate_matrix_scale_cpp, 3},
     {"_BPCells_iterate_matrix_row_shift_cpp", (DL_FUNC) &_BPCells_iterate_matrix_row_shift_cpp, 2},

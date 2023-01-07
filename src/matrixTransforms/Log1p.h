@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../lib/sleef/sleef_wrapper.h"
+#include "../lib/sleef_wrapper.h"
 #include "MatrixTransform.h"
 
 namespace BPCells {

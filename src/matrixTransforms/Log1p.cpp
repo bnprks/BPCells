@@ -20,14 +20,14 @@ bool Log1pSIMD::load() {
     double *val_data = valData();
     const uint32_t cap = capacity();
 
-    float buf[BPCELLS_F32_VEC_SIZE];
+    float buf[BPCELLS_VEC_FLOAT_SIZE];
     uint32_t i;
-    for (i = 0; i + BPCELLS_F32_VEC_SIZE <= cap; i += BPCELLS_F32_VEC_SIZE) {
-        for (uint32_t j = 0; j < BPCELLS_F32_VEC_SIZE; j++) {
+    for (i = 0; i + BPCELLS_VEC_FLOAT_SIZE <= cap; i += BPCELLS_VEC_FLOAT_SIZE) {
+        for (uint32_t j = 0; j < BPCELLS_VEC_FLOAT_SIZE; j++) {
             buf[j] = val_data[i + j];
         }
-        bpcells_log1pf_vec(buf, buf);
-        for (uint32_t j = 0; j < BPCELLS_F32_VEC_SIZE; j++) {
+        store_float(buf, log1p_f(load_float(buf)));
+        for (uint32_t j = 0; j < BPCELLS_VEC_FLOAT_SIZE; j++) {
             val_data[i + j] = buf[j];
         }
     }

@@ -21,6 +21,14 @@ open_bp128_for <- function(data, idx, count) {
     .Call(`_BPCells_open_bp128_for`, data, idx, count)
 }
 
+simd_vec_version <- function() {
+    .Call(`_BPCells_simd_vec_version`)
+}
+
+sleef_vec_width <- function() {
+    .Call(`_BPCells_sleef_vec_width`)
+}
+
 iterate_10x_fragments_cpp <- function(path, comment) {
     .Call(`_BPCells_iterate_10x_fragments_cpp`, path, comment)
 }
@@ -379,6 +387,10 @@ iterate_matrix_min_cpp <- function(matrix, min_val) {
 
 iterate_matrix_pow_cpp <- function(matrix, exponent) {
     .Call(`_BPCells_iterate_matrix_pow_cpp`, matrix, exponent)
+}
+
+iterate_matrix_powsimd_cpp <- function(matrix, exponent) {
+    .Call(`_BPCells_iterate_matrix_powsimd_cpp`, matrix, exponent)
 }
 
 iterate_matrix_square_cpp <- function(matrix) {

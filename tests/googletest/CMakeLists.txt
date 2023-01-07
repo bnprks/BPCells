@@ -55,6 +55,7 @@ add_library(
     ${SRC}/fragmentIterators/Rename.cpp
     ${SRC}/fragmentIterators/ShiftCoords.cpp
     ${SRC}/fragmentIterators/StoredFragments.cpp
+    ${SRC}/fragmentUtils/InsertionIterator.cpp
 )
 target_link_libraries(
     fragmentIterators 
@@ -65,24 +66,6 @@ target_include_directories(
     fragmentIterators 
     PUBLIC 
     ${ZLIB_INCLUDE_DIRS}
-    ${SRC}
-)
-
-add_library(
-    matrixTransforms
-    ${SRC}/matrixTransforms/MatrixTransform.cpp
-    ${SRC}/matrixTransforms/Log1p.cpp
-    ${SRC}/matrixTransforms/Min.cpp
-    ${SRC}/matrixTransforms/Scale.cpp
-    ${SRC}/matrixTransforms/Shift.cpp
-)
-target_link_libraries(
-    matrixTransforms
-    Eigen3::Eigen
-)
-target_include_directories(
-    matrixTransforms
-    PUBLIC
     ${SRC}
 )
 
@@ -105,46 +88,20 @@ include(GoogleTest)
 
 # Build bitpacking tests for all available SIMD modes
 if(TARGET_ARM)
-    add_executable(
-        bitpacking_test_fallback
-        test-bitpacking.cpp
-    )
-    target_link_libraries(bitpacking_test_fallback bitpacking gtest gmock)
-    target_compile_options(bitpacking_test_fallback PUBLIC -march=armv8-a+nofp)
-    gtest_discover_tests(bitpacking_test_fallback EXTRA_ARGS --arch 0)
-
-    add_executable(
-        bitpacking_test_neon
-        test-bitpacking.cpp
-    )
-    target_link_libraries(bitpacking_test_neon bitpacking gtest gmock)
-    target_compile_options(bitpacking_test_neon PUBLIC -march=native)
-    gtest_discover_tests(bitpacking_test_neon EXTRA_ARGS --arch 3)
+    list(APPEND BP128_ARCH_FLAG -march=native -march=armv8-a+nofp)
+    list(APPEND BP128_ARCH_NAME neon fallback)
+    list(APPEND BP128_ARCH_ENUM 3 0)
 else()
-    add_executable(
-        bitpacking_test_x86_full
-        test-bitpacking.cpp
-    )
-    target_link_libraries(bitpacking_test_x86_full bitpacking gtest gmock)
-    target_compile_options(bitpacking_test_x86_full PUBLIC -march=native)
-    gtest_discover_tests(bitpacking_test_x86_full EXTRA_ARGS --arch 1)
-
-    add_executable(
-        bitpacking_test_x86
-        test-bitpacking.cpp
-    )
-    target_link_libraries(bitpacking_test_x86 bitpacking gtest gmock)
-    target_compile_options(bitpacking_test_x86 PUBLIC -mno-sse4)
-    gtest_discover_tests(bitpacking_test_x86 EXTRA_ARGS --arch 2)
-
-    add_executable(
-        bitpacking_test_fallback
-        test-bitpacking.cpp
-    )
-    target_link_libraries(bitpacking_test_fallback bitpacking gtest gmock)
-    target_compile_options(bitpacking_test_fallback PUBLIC -mno-sse2)
-    gtest_discover_tests(bitpacking_test_fallback EXTRA_ARGS --arch 0)
+    list(APPEND BP128_ARCH_FLAG -march=native -mno-sse4 -mno-sse2)
+    list(APPEND BP128_ARCH_NAME x86_full x86 fallback)
+    list(APPEND BP128_ARCH_ENUM 1 2 0)
 endif()
+foreach(flag label enum IN ZIP_LISTS BP128_ARCH_FLAG BP128_ARCH_NAME BP128_ARCH_ENUM)
+    add_executable(bitpacking_test_${label} test-bitpacking.cpp)
+    target_link_libraries(bitpacking_test_${label} bitpacking gtest gmock)
+    target_compile_options(bitpacking_test_${label} PUBLIC ${flag})
+    gtest_discover_tests(bitpacking_test_${label} EXTRA_ARGS --arch ${enum})
+endforeach()
 
 add_executable(
     array_io_test
@@ -184,12 +141,32 @@ add_executable(
 target_link_libraries(matrix_transpose_test arrayIO Eigen3::Eigen gtest_main)
 gtest_discover_tests(matrix_transpose_test)
 
-add_executable(
-    matrix_math_test
-    test-matrixMath.cpp
-)
-target_link_libraries(matrix_math_test matrixTransforms gtest_main gmock)
-gtest_discover_tests(matrix_math_test)
+# Build matrix math test for all available SIMD backends
+if(TARGET_ARM)
+    list(APPEND SLEEF_ARCH_FLAG -march=native -march=armv8-a+nofp)
+    list(APPEND SLEEF_ARCH_NAME NEON FALLBACK)
+    list(APPEND SLEEF_ARCH_ENUM 4 0)
+else()
+    list(APPEND SLEEF_ARCH_FLAG -march=native -march=ivybridge -march=x86-64 -DBPCELLS_SLEEF_FALLBACK) # Warning: got rid of fallback implementation test
+    list(APPEND SLEEF_ARCH_NAME AVX2 AVX SSE2 FALLBACK)
+    list(APPEND SLEEF_ARCH_ENUM 3 2 1 0)
+endif()
+foreach(flag label enum IN ZIP_LISTS SLEEF_ARCH_FLAG SLEEF_ARCH_NAME SLEEF_ARCH_ENUM)
+    add_executable(matrix_math_test_${label} 
+        test-matrixMath.cpp
+        ${SRC}/matrixTransforms/MatrixTransform.cpp
+        ${SRC}/matrixTransforms/Log1p.cpp
+        ${SRC}/matrixTransforms/Pow.cpp
+        ${SRC}/matrixTransforms/Min.cpp
+        ${SRC}/matrixTransforms/Scale.cpp
+        ${SRC}/matrixTransforms/Shift.cpp
+    )
+    
+    target_include_directories(matrix_math_test_${label} PUBLIC ${SRC})
+    target_link_libraries(matrix_math_test_${label} Eigen3::Eigen gtest gmock)
+    target_compile_options(matrix_math_test_${label} PUBLIC ${flag})
+    gtest_discover_tests(matrix_math_test_${label} EXTRA_ARGS --arch ${enum})
+endforeach()
 
 add_executable(
     peak_matrix_test

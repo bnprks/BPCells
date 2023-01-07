@@ -91,7 +91,7 @@ setMethod("short_description", "TransformSquare", function(x) {
 setClass("TransformPow", contains="TransformedMatrix")
 setMethod("iterate_matrix", "TransformPow", function(x) {
   it <- iterate_matrix(x@matrix)
-  wrapMat_double(iterate_matrix_pow_cpp(ptr(it), x@global_params[1]), it)
+  wrapMat_double(iterate_matrix_powsimd_cpp(ptr(it), x@global_params[1]), it)
 })
 setMethod("short_description", "TransformPow", function(x) {
   c(
@@ -101,12 +101,30 @@ setMethod("short_description", "TransformPow", function(x) {
 })
 
 setMethod("^", signature(e1 = "IterableMatrix", e2 = "numeric"), function(e1, e2) {
+  assert_len(e2, 1)
+  assert_true(e2 != 0)
   if (e2 == 2) {
     wrapMatrix("TransformSquare", convert_matrix_type(e1, "double"))
   } else {
     wrapMatrix("TransformPow", convert_matrix_type(e1, "double"), global_params=e2)
   }
 })
+
+setClass("TransformPowSlow", contains="TransformedMatrix")
+setMethod("iterate_matrix", "TransformPowSlow", function(x) {
+  it <- iterate_matrix(x@matrix)
+  wrapMat_double(iterate_matrix_pow_cpp(ptr(it), x@global_params[1]), it)
+})
+setMethod("short_description", "TransformPowSlow", function(x) {
+  c(
+    short_description(x@matrix),
+    sprintf("Raise elements to the power of %.2g (non-SIMD implementation)", x@global_params[1])
+  )
+})
+
+pow_slow <- function(x, exponent) {
+  wrapMatrix("TransformPowSlow", convert_matrix_type(x, "double"), global_params=exponent)
+}
 
 setClass("TransformMin", contains = "TransformedMatrix")
 setMethod("iterate_matrix", "TransformMin", function(x) {

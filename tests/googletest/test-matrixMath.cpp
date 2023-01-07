@@ -13,6 +13,7 @@
 #include <matrixIterators/StoredMatrix.h>
 
 #include <matrixTransforms/Log1p.h>
+#include <matrixTransforms/Pow.h>
 #include <matrixTransforms/Min.h>
 #include <matrixTransforms/Scale.h>
 #include <matrixTransforms/Shift.h>
@@ -23,6 +24,25 @@ namespace fs = std::filesystem;
 using namespace BPCells;
 using namespace ::testing;
 using namespace Eigen;
+
+char **my_argv;
+int my_argc;
+
+int main(int argc, char **argv) {
+    ::testing::InitGoogleTest(&argc, argv);
+
+    my_argc = argc;
+    my_argv = argv;
+
+    return RUN_ALL_TESTS();
+}
+
+TEST(MatrixMath, ExpectedArchitechture) {
+    // Check that the test is being run on the expected simd mode
+    ASSERT_EQ(my_argc, 3);
+    ASSERT_STREQ(my_argv[1], "--arch");
+    ASSERT_EQ(my_argv[2][0] - '0', BPCELLS_SLEEF_MODE);
+}
 
 MatrixXd generate_dense_mat(uint32_t n_row, uint32_t n_col, uint32_t seed = 125124) {
     std::mt19937 gen(seed); // Standard mersenne_twister_engine
@@ -148,6 +168,70 @@ TEST(MatrixMath, Log1p) {
 
     CSparseMatrix mat_1(get_map(m1));
     Log1p mat_1_trans(mat_1);
+
+    CSparseMatrixWriter res;
+    res.write(mat_1_trans);
+
+    EXPECT_TRUE(MatrixXd(res.getMat()).isApprox(ans));
+}
+
+TEST(MatrixMath, Log1pSIMD) {
+    SparseMatrix<double> m1 = generate_mat(100, 50, 125123);
+    MatrixXd ans = MatrixXd(m1).array().log1p();
+
+    CSparseMatrix mat_1(get_map(m1));
+    Log1pSIMD mat_1_trans(mat_1);
+
+    CSparseMatrixWriter res;
+    res.write(mat_1_trans);
+
+    EXPECT_TRUE(MatrixXd(res.getMat()).isApprox(ans, Eigen::NumTraits<float>::dummy_precision()));
+}
+
+TEST(MatrixMath, Pow) {
+    double exp = 3.0;
+    
+    SparseMatrix<double> m1 = generate_mat(100, 50, 125123);
+    MatrixXd ans = MatrixXd(m1).array().pow(exp);
+
+    ArrayXd global_params(1);
+    global_params = exp;
+
+    CSparseMatrix mat_1(get_map(m1));
+    Pow mat_1_trans(mat_1, {{}, {}, global_params});
+
+    CSparseMatrixWriter res;
+    res.write(mat_1_trans);
+
+    EXPECT_TRUE(MatrixXd(res.getMat()).isApprox(ans));
+}
+
+TEST(MatrixMath, PowSIMD) {
+    double exp = 3.0;
+    
+    SparseMatrix<double> m1 = generate_mat(100, 50, 125123);
+    MatrixXd ans = MatrixXd(m1).array().pow(exp);
+
+    ArrayXd global_params(1);
+    global_params = exp;
+
+    CSparseMatrix mat_1(get_map(m1));
+    PowSIMD mat_1_trans(mat_1, {{}, {}, global_params});
+
+    CSparseMatrixWriter res;
+    res.write(mat_1_trans);
+
+    EXPECT_TRUE(MatrixXd(res.getMat()).isApprox(ans));
+}
+
+TEST(MatrixMath, Square) {
+    double exp = 2.0;
+    
+    SparseMatrix<double> m1 = generate_mat(100, 50, 125123);
+    MatrixXd ans = MatrixXd(m1).array().pow(exp);
+
+    CSparseMatrix mat_1(get_map(m1));
+    Square mat_1_trans(mat_1, {});
 
     CSparseMatrixWriter res;
     res.write(mat_1_trans);
