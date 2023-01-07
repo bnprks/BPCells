@@ -10,14 +10,21 @@
     #include <cstring>
 
     // This nonsense is to avoid getting -Wunused-function warnings from inside sleef
-    #pragma GCC diagnostic push
-    #pragma GCC diagnostic ignored "-Wunused-function"
-    #pragma GCC diagnostic ignored "-Wpedantic"
-    #pragma clang diagnostic push
-    #pragma clang diagnostic ignored "-Wunused-function"
+    #ifdef __GNU_C__
+        #pragma GCC diagnostic push
+        #pragma GCC diagnostic ignored "-Wunused-function"
+        #pragma GCC diagnostic ignored "-Wpedantic"
+    #elif defined(__clang__)
+        #pragma clang diagnostic push
+        #pragma clang diagnostic ignored "-Wunused-function"
+        #pragma clang diagnostic ignored "-Wc99-extensions"
+    #endif
     #include "sleefinline_avx2.h"
-    #pragma clang diagnostic pop
-    #pragma GCC diagnostic pop
+    #ifdef __clang__
+        #pragma clang diagnostic pop
+    #elif defined(__GNU_C__)
+        #pragma GCC diagnostic pop
+    #endif
 
     #define BPCELLS_F32_VEC_SIZE 8
     #define BPCELLS_F64_VEC_SIZE 4
@@ -39,14 +46,21 @@
     #include <cstring>
 
     // This nonsense is to avoid getting -Wunused-function warnings from inside sleef
-    #pragma GCC diagnostic push
-    #pragma GCC diagnostic ignored "-Wunused-function"
-    #pragma GCC diagnostic ignored "-Wpedantic"
-    #pragma clang diagnostic push
-    #pragma clang diagnostic ignored "-Wunused-function"
+    #ifdef __GNU_C__
+        #pragma GCC diagnostic push
+        #pragma GCC diagnostic ignored "-Wunused-function"
+        #pragma GCC diagnostic ignored "-Wpedantic"
+    #elif defined(__clang__)
+        #pragma clang diagnostic push
+        #pragma clang diagnostic ignored "-Wunused-function"
+        #pragma clang diagnostic ignored "-Wc99-extensions"
+    #endif
     #include "sleefinline_avx.h"
-    #pragma clang diagnostic pop
-    #pragma GCC diagnostic pop
+    #ifdef __clang__
+        #pragma clang diagnostic pop
+    #elif defined(__GNU_C__)
+        #pragma GCC diagnostic pop
+    #endif
     
 
     #define BPCELLS_F32_VEC_SIZE 8
@@ -68,14 +82,21 @@
     #include <cstring>
 
     // This nonsense is to avoid getting -Wunused-function warnings from inside sleef
-    #pragma GCC diagnostic push
-    #pragma GCC diagnostic ignored "-Wunused-function"
-    #pragma GCC diagnostic ignored "-Wpedantic"
-    #pragma clang diagnostic push
-    #pragma clang diagnostic ignored "-Wunused-function"
+    #ifdef __GNU_C__
+        #pragma GCC diagnostic push
+        #pragma GCC diagnostic ignored "-Wunused-function"
+        #pragma GCC diagnostic ignored "-Wpedantic"
+    #elif defined(__clang__)
+        #pragma clang diagnostic push
+        #pragma clang diagnostic ignored "-Wunused-function"
+        #pragma clang diagnostic ignored "-Wc99-extensions"
+    #endif
     #include "sleefinline_sse2.h"
-    #pragma clang diagnostic pop
-    #pragma GCC diagnostic pop
+    #ifdef __clang__
+        #pragma clang diagnostic pop
+    #elif defined(__GNU_C__)
+        #pragma GCC diagnostic pop
+    #endif
     
 
     #define BPCELLS_F32_VEC_SIZE 4
@@ -98,14 +119,21 @@
     #include <cstring>
 
     // This nonsense is to avoid getting -Wunused-function warnings from inside sleef
-    #pragma GCC diagnostic push
-    #pragma GCC diagnostic ignored "-Wunused-function"
-    #pragma GCC diagnostic ignored "-Wpedantic"
-    #pragma clang diagnostic push
-    #pragma clang diagnostic ignored "-Wunused-function"
+    #ifdef __GNU_C__
+        #pragma GCC diagnostic push
+        #pragma GCC diagnostic ignored "-Wunused-function"
+        #pragma GCC diagnostic ignored "-Wpedantic"
+    #elif defined(__clang__)
+        #pragma clang diagnostic push
+        #pragma clang diagnostic ignored "-Wunused-function"
+        #pragma clang diagnostic ignored "-Wc99-extensions"
+    #endif
     #include "sleefinline_advsimd.h"
-    #pragma clang diagnostic pop
-    #pragma GCC diagnostic pop
+    #ifdef __clang__
+        #pragma clang diagnostic pop
+    #elif defined(__GNU_C__)
+        #pragma GCC diagnostic pop
+    #endif
     
     
     #define BPCELLS_F32_VEC_SIZE 4

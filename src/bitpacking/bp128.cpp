@@ -20,6 +20,10 @@
 //     std::cout << std::bitset<B>(array[3]) << '\n';
 // }
 
+#ifdef __clang__
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wuninitialized-const-reference"
+#endif
 namespace BPCells {
 
 #define BP128_UNROLL_LOOP1(start, counter, body)                                                   \
@@ -591,3 +595,7 @@ void simdunpackFOR(uint32_t initvalue, const uint32_t *in, uint32_t *out, const 
 }
 
 } // end namespace BPCells
+
+#ifdef __clang__
+#pragma clang diagnostic pop
+#endif

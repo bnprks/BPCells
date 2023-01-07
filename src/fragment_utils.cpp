@@ -53,6 +53,7 @@ NumericVector scan_fragments_cpp(SEXP fragments) {
         (double)len,
         (double)start_sum,
         (double)end_sum,
+        (double)cell_sum,
         (double)(((start_sum % 104729) + (end_sum % 104729)) % 104729)};
 }
 
