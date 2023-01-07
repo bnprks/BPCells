@@ -76,6 +76,38 @@ log1p_slow <- function(x) {
   wrapMatrix("TransformLog1pSlow", convert_matrix_type(x, "double"))
 }
 
+setClass("TransformSquare", contains="TransformedMatrix")
+setMethod("iterate_matrix", "TransformSquare", function(x) {
+  it <- iterate_matrix(x@matrix)
+  wrapMat_double(iterate_matrix_square_cpp(ptr(it)), it)
+})
+setMethod("short_description", "TransformSquare", function(x) {
+  c(
+    short_description(x@matrix),
+    "Square elements"
+  )
+})
+
+setClass("TransformPow", contains="TransformedMatrix")
+setMethod("iterate_matrix", "TransformPow", function(x) {
+  it <- iterate_matrix(x@matrix)
+  wrapMat_double(iterate_matrix_pow_cpp(ptr(it), x@global_params[1]), it)
+})
+setMethod("short_description", "TransformPow", function(x) {
+  c(
+    short_description(x@matrix),
+    sprintf("Raise elements to the power of %.2g", x@global_params[1])
+  )
+})
+
+setMethod("^", signature(e1 = "IterableMatrix", e2 = "numeric"), function(e1, e2) {
+  if (e2 == 2) {
+    wrapMatrix("TransformSquare", convert_matrix_type(e1, "double"))
+  } else {
+    wrapMatrix("TransformPow", convert_matrix_type(e1, "double"), global_params=e2)
+  }
+})
+
 setClass("TransformMin", contains = "TransformedMatrix")
 setMethod("iterate_matrix", "TransformMin", function(x) {
   it <- iterate_matrix(x@matrix)

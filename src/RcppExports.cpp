@@ -1274,6 +1274,29 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// iterate_matrix_pow_cpp
+SEXP iterate_matrix_pow_cpp(SEXP matrix, double exponent);
+RcppExport SEXP _BPCells_iterate_matrix_pow_cpp(SEXP matrixSEXP, SEXP exponentSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type matrix(matrixSEXP);
+    Rcpp::traits::input_parameter< double >::type exponent(exponentSEXP);
+    rcpp_result_gen = Rcpp::wrap(iterate_matrix_pow_cpp(matrix, exponent));
+    return rcpp_result_gen;
+END_RCPP
+}
+// iterate_matrix_square_cpp
+SEXP iterate_matrix_square_cpp(SEXP matrix);
+RcppExport SEXP _BPCells_iterate_matrix_square_cpp(SEXP matrixSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type matrix(matrixSEXP);
+    rcpp_result_gen = Rcpp::wrap(iterate_matrix_square_cpp(matrix));
+    return rcpp_result_gen;
+END_RCPP
+}
 // iterate_matrix_scale_cpp
 SEXP iterate_matrix_scale_cpp(SEXP matrix, Eigen::Map<Eigen::ArrayXXd> row_scale, Eigen::Map<Eigen::ArrayXXd> col_scale);
 RcppExport SEXP _BPCells_iterate_matrix_scale_cpp(SEXP matrixSEXP, SEXP row_scaleSEXP, SEXP col_scaleSEXP) {
@@ -1777,6 +1800,8 @@ static const R_CallMethodDef CallEntries[] = {
     {"_BPCells_iterate_matrix_log1p_cpp", (DL_FUNC) &_BPCells_iterate_matrix_log1p_cpp, 1},
     {"_BPCells_iterate_matrix_log1psimd_cpp", (DL_FUNC) &_BPCells_iterate_matrix_log1psimd_cpp, 1},
     {"_BPCells_iterate_matrix_min_cpp", (DL_FUNC) &_BPCells_iterate_matrix_min_cpp, 2},
+    {"_BPCells_iterate_matrix_pow_cpp", (DL_FUNC) &_BPCells_iterate_matrix_pow_cpp, 2},
+    {"_BPCells_iterate_matrix_square_cpp", (DL_FUNC) &_BPCells_iterate_matrix_square_cpp, 1},
     {"_BPCells_iterate_matrix_scale_cpp", (DL_FUNC) &_BPCells_iterate_matrix_scale_cpp, 3},
     {"_BPCells_iterate_matrix_row_shift_cpp", (DL_FUNC) &_BPCells_iterate_matrix_row_shift_cpp, 2},
     {"_BPCells_iterate_matrix_col_shift_cpp", (DL_FUNC) &_BPCells_iterate_matrix_col_shift_cpp, 2},

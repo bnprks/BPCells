@@ -4,6 +4,7 @@
 #include <RcppEigen.h>
 
 #include "matrixTransforms/Log1p.h"
+#include "matrixTransforms/Pow.h"
 #include "matrixTransforms/MatrixTransform.h"
 #include "matrixTransforms/Min.h"
 #include "matrixTransforms/Scale.h"
@@ -32,6 +33,20 @@ SEXP iterate_matrix_min_cpp(SEXP matrix, double min_val) {
     return Rcpp::wrap(
         XPtr<MatrixLoader<double>>(new Min(*input, TransformFit{{}, {}, global_params}))
     );
+}
+
+// [[Rcpp::export]]
+SEXP iterate_matrix_pow_cpp(SEXP matrix, double exponent) {
+    XPtr<MatrixLoader<double>> input(matrix);
+    Eigen::ArrayXd global_params(1);
+    global_params = exponent;
+    return Rcpp::wrap(XPtr<MatrixLoader<double>>(new Pow(*input, TransformFit{{}, {}, global_params})));
+}
+
+// [[Rcpp::export]]
+SEXP iterate_matrix_square_cpp(SEXP matrix) {
+    XPtr<MatrixLoader<double>> input(matrix);
+    return Rcpp::wrap(XPtr<MatrixLoader<double>>(new Square(*input)));
 }
 
 // [[Rcpp::export]]
