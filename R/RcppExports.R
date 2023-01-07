@@ -25,8 +25,8 @@ simd_vec_version <- function() {
     .Call(`_BPCells_simd_vec_version`)
 }
 
-sleef_vec_width <- function() {
-    .Call(`_BPCells_sleef_vec_width`)
+simd_sleef_version <- function() {
+    .Call(`_BPCells_simd_sleef_version`)
 }
 
 iterate_10x_fragments_cpp <- function(path, comment) {
@@ -379,6 +379,14 @@ iterate_matrix_log1p_cpp <- function(matrix) {
 
 iterate_matrix_log1psimd_cpp <- function(matrix) {
     .Call(`_BPCells_iterate_matrix_log1psimd_cpp`, matrix)
+}
+
+iterate_matrix_expm1_cpp <- function(matrix) {
+    .Call(`_BPCells_iterate_matrix_expm1_cpp`, matrix)
+}
+
+iterate_matrix_expm1simd_cpp <- function(matrix) {
+    .Call(`_BPCells_iterate_matrix_expm1simd_cpp`, matrix)
 }
 
 iterate_matrix_min_cpp <- function(matrix, min_val) {

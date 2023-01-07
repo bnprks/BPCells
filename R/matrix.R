@@ -1584,7 +1584,7 @@ setAs("IterableMatrix", "matrix", function(from) {
   as(from, "dgCMatrix") %>% as.matrix()  
 })
 
-#' @export 
+#' @exportS3Method base::as.matrix
 as.matrix.IterableMatrix <- function(x, ...) as(x, "matrix")
 
 #' @export

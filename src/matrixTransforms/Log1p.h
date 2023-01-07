@@ -22,4 +22,20 @@ class Log1pSIMD : public MatrixTransform {
     bool load() override;
 };
 
+class Expm1 : public MatrixTransform {
+  public:
+    using MatrixTransform::MatrixTransform;
+
+    bool load() override;
+};
+
+// This class uses Sleef SIMD math function to speed up calculations
+// The one caveat is that this is done in single precision rather than double
+class Expm1SIMD : public MatrixTransform {
+  public:
+    using MatrixTransform::MatrixTransform;
+
+    bool load() override;
+};
+
 } // end namespace BPCells

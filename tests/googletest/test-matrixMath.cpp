@@ -188,6 +188,32 @@ TEST(MatrixMath, Log1pSIMD) {
     EXPECT_TRUE(MatrixXd(res.getMat()).isApprox(ans, Eigen::NumTraits<float>::dummy_precision()));
 }
 
+TEST(MatrixMath, Expm1) {
+    SparseMatrix<double> m1 = generate_mat(100, 50, 125123);
+    MatrixXd ans = MatrixXd(m1).array().expm1();
+
+    CSparseMatrix mat_1(get_map(m1));
+    Expm1 mat_1_trans(mat_1);
+
+    CSparseMatrixWriter res;
+    res.write(mat_1_trans);
+
+    EXPECT_TRUE(MatrixXd(res.getMat()).isApprox(ans));
+}
+
+TEST(MatrixMath, Expm1SIMD) {
+    SparseMatrix<double> m1 = generate_mat(100, 50, 125123);
+    MatrixXd ans = MatrixXd(m1).array().expm1();
+
+    CSparseMatrix mat_1(get_map(m1));
+    Expm1SIMD mat_1_trans(mat_1);
+
+    CSparseMatrixWriter res;
+    res.write(mat_1_trans);
+
+    EXPECT_TRUE(MatrixXd(res.getMat()).isApprox(ans, Eigen::NumTraits<float>::dummy_precision()));
+}
+
 TEST(MatrixMath, Pow) {
     double exp = 3.0;
     

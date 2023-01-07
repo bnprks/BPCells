@@ -42,6 +42,9 @@ setMethod("[", "TransformedMatrix", function(x, i, j, ...) {
   x
 })
 
+#################
+# Log1p and Expm1
+#################
 
 # log1p method support. The SIMD method may be ever so slightly less precise,
 # but it can be substantially faster depending on the CPU SIMD features
@@ -75,6 +78,42 @@ setMethod("short_description", "TransformLog1pSlow", function(x) {
 log1p_slow <- function(x) {
   wrapMatrix("TransformLog1pSlow", convert_matrix_type(x, "double"))
 }
+
+
+setClass("TransformExpm1", contains = "TransformedMatrix")
+setMethod("iterate_matrix", "TransformExpm1", function(x) {
+  it <- iterate_matrix(x@matrix)
+  wrapMat_double(iterate_matrix_expm1simd_cpp(ptr(it)), it)
+})
+setMethod("short_description", "TransformExpm1", function(x) {
+  c(
+    short_description(x@matrix),
+    "Transform expm1"
+  )
+})
+setMethod("expm1", "IterableMatrix", function(x) {
+  wrapMatrix("TransformExpm1", convert_matrix_type(x, "double"))
+})
+
+setClass("TransformExpm1Slow", contains = "TransformedMatrix")
+setMethod("iterate_matrix", "TransformExpm1Slow", function(x) {
+  it <- iterate_matrix(x@matrix)
+  wrapMat_double(iterate_matrix_expm1_cpp(ptr(it)), it)
+})
+setMethod("short_description", "TransformExpm1Slow", function(x) {
+  c(
+    short_description(x@matrix),
+    "Transform expm1 (non-SIMD implementation)"
+  )
+})
+expm1_slow <- function(x) {
+  wrapMatrix("TransformExpm1Slow", convert_matrix_type(x, "double"))
+}
+
+
+#################
+# Pow and Square
+#################
 
 setClass("TransformSquare", contains="TransformedMatrix")
 setMethod("iterate_matrix", "TransformSquare", function(x) {
@@ -126,6 +165,10 @@ pow_slow <- function(x, exponent) {
   wrapMatrix("TransformPowSlow", convert_matrix_type(x, "double"), global_params=exponent)
 }
 
+#################
+# Min
+#################
+
 setClass("TransformMin", contains = "TransformedMatrix")
 setMethod("iterate_matrix", "TransformMin", function(x) {
   it <- iterate_matrix(x@matrix)
@@ -154,6 +197,11 @@ min_scalar <- function(mat, val) {
   res@global_params <- val
   res
 }
+
+
+#################
+# Scale + Shift
+#################
 
 # Scaling + shifting support (Scale first, then shift)
 #
@@ -394,6 +442,10 @@ setMethod("+", signature(e1 = "numeric", e2 = "TransformScaleShift"), function(e
 })
 
 
+
+#################
+# Arithmetic helpers
+#################
 
 #' Broadcasting vector arithmetic
 #'

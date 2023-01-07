@@ -84,13 +84,13 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// sleef_vec_width
-int sleef_vec_width();
-RcppExport SEXP _BPCells_sleef_vec_width() {
+// simd_sleef_version
+std::string simd_sleef_version();
+RcppExport SEXP _BPCells_simd_sleef_version() {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    rcpp_result_gen = Rcpp::wrap(sleef_vec_width());
+    rcpp_result_gen = Rcpp::wrap(simd_sleef_version());
     return rcpp_result_gen;
 END_RCPP
 }
@@ -1282,6 +1282,28 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// iterate_matrix_expm1_cpp
+SEXP iterate_matrix_expm1_cpp(SEXP matrix);
+RcppExport SEXP _BPCells_iterate_matrix_expm1_cpp(SEXP matrixSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type matrix(matrixSEXP);
+    rcpp_result_gen = Rcpp::wrap(iterate_matrix_expm1_cpp(matrix));
+    return rcpp_result_gen;
+END_RCPP
+}
+// iterate_matrix_expm1simd_cpp
+SEXP iterate_matrix_expm1simd_cpp(SEXP matrix);
+RcppExport SEXP _BPCells_iterate_matrix_expm1simd_cpp(SEXP matrixSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type matrix(matrixSEXP);
+    rcpp_result_gen = Rcpp::wrap(iterate_matrix_expm1simd_cpp(matrix));
+    return rcpp_result_gen;
+END_RCPP
+}
 // iterate_matrix_min_cpp
 SEXP iterate_matrix_min_cpp(SEXP matrix, double min_val);
 RcppExport SEXP _BPCells_iterate_matrix_min_cpp(SEXP matrixSEXP, SEXP min_valSEXP) {
@@ -1744,7 +1766,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_BPCells_open_bp128_d1", (DL_FUNC) &_BPCells_open_bp128_d1, 4},
     {"_BPCells_open_bp128_for", (DL_FUNC) &_BPCells_open_bp128_for, 3},
     {"_BPCells_simd_vec_version", (DL_FUNC) &_BPCells_simd_vec_version, 0},
-    {"_BPCells_sleef_vec_width", (DL_FUNC) &_BPCells_sleef_vec_width, 0},
+    {"_BPCells_simd_sleef_version", (DL_FUNC) &_BPCells_simd_sleef_version, 0},
     {"_BPCells_iterate_10x_fragments_cpp", (DL_FUNC) &_BPCells_iterate_10x_fragments_cpp, 2},
     {"_BPCells_write_10x_fragments_cpp", (DL_FUNC) &_BPCells_write_10x_fragments_cpp, 3},
     {"_BPCells_iterate_packed_fragments_cpp", (DL_FUNC) &_BPCells_iterate_packed_fragments_cpp, 1},
@@ -1833,6 +1855,8 @@ static const R_CallMethodDef CallEntries[] = {
     {"_BPCells_read_hdf5_string_cpp", (DL_FUNC) &_BPCells_read_hdf5_string_cpp, 3},
     {"_BPCells_iterate_matrix_log1p_cpp", (DL_FUNC) &_BPCells_iterate_matrix_log1p_cpp, 1},
     {"_BPCells_iterate_matrix_log1psimd_cpp", (DL_FUNC) &_BPCells_iterate_matrix_log1psimd_cpp, 1},
+    {"_BPCells_iterate_matrix_expm1_cpp", (DL_FUNC) &_BPCells_iterate_matrix_expm1_cpp, 1},
+    {"_BPCells_iterate_matrix_expm1simd_cpp", (DL_FUNC) &_BPCells_iterate_matrix_expm1simd_cpp, 1},
     {"_BPCells_iterate_matrix_min_cpp", (DL_FUNC) &_BPCells_iterate_matrix_min_cpp, 2},
     {"_BPCells_iterate_matrix_pow_cpp", (DL_FUNC) &_BPCells_iterate_matrix_pow_cpp, 2},
     {"_BPCells_iterate_matrix_powsimd_cpp", (DL_FUNC) &_BPCells_iterate_matrix_powsimd_cpp, 2},

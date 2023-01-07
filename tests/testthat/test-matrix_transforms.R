@@ -12,6 +12,15 @@ test_that("log1p works", {
     expect_equal(log1p(m), res, tolerance=10*2^-23)
 })
 
+test_that("expm1 works", {
+    m <- generate_sparse_matrix(20, 10, max_val=100) * .01
+    res <- m %>%
+        as("IterableMatrix") %>%
+        expm1() %>%
+        as("dgCMatrix")
+    expect_equal(expm1(m), res, tolerance=10*2^-23)
+})
+
 test_that("scale row/col works", {
     m <- generate_sparse_matrix(20, 10, max_val=1e5)
     m2 <- as(m, "IterableMatrix")

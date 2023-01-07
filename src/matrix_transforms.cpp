@@ -26,6 +26,18 @@ SEXP iterate_matrix_log1psimd_cpp(SEXP matrix) {
 }
 
 // [[Rcpp::export]]
+SEXP iterate_matrix_expm1_cpp(SEXP matrix) {
+    XPtr<MatrixLoader<double>> input(matrix);
+    return Rcpp::wrap(XPtr<MatrixLoader<double>>(new Expm1(*input)));
+}
+
+// [[Rcpp::export]]
+SEXP iterate_matrix_expm1simd_cpp(SEXP matrix) {
+    XPtr<MatrixLoader<double>> input(matrix);
+    return Rcpp::wrap(XPtr<MatrixLoader<double>>(new Expm1SIMD(*input)));
+}
+
+// [[Rcpp::export]]
 SEXP iterate_matrix_min_cpp(SEXP matrix, double min_val) {
     XPtr<MatrixLoader<double>> input(matrix);
     Eigen::ArrayXd global_params(1);
