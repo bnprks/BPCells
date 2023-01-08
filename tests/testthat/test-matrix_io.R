@@ -175,3 +175,83 @@ test_that("AnnData subset hasn't regressed", {
   expect_identical(s$row_stats["mean",], c(1/3,2/3, 4/3, 5/3, 1))
   expect_identical(s$col_stats["mean",], c(1.2, 1, 0.8))
 })
+
+test_that("Matrix without names works", {
+  dir <- withr::local_tempdir()
+  m <- generate_sparse_matrix(nrow = 10, ncol = 9, fraction_nonzero = 0.2, max_val = 10)
+  rownames(m) <- NULL
+  colnames(m) <- NULL
+  m1 <- m %>% as("IterableMatrix") %>% write_matrix_hdf5(file.path(dir, "nameless.h5"), "mat")
+  m2 <- m %>% as("IterableMatrix") %>% write_matrix_dir(file.path(dir, "nameless-mat"))
+  expect_identical(m, as(m1, "dgCMatrix"))
+  expect_identical(m, as(m2, "dgCMatrix"))
+})
+
+test_that("H5 overwrite works", {
+  dir <- withr::local_tempdir()
+  m1 <- matrix(1:12, nrow=3)
+  m2 <- m1
+  m2[1,1] <- 5
+  m1 %>% 
+    as("dgCMatrix") %>% 
+    as("IterableMatrix") %>%
+    write_matrix_hdf5(file.path(dir, "overwrite.h5"), "mat")
+  # writing without "overwrite" set should result in an error, and no data changed
+  expect_error({
+    m2 %>% 
+      as("dgCMatrix") %>%
+      as("IterableMatrix") %>%
+      write_matrix_hdf5(file.path(dir, "overwrite.h5"), "mat")
+  })
+  expect_identical(
+    as(m1, "dgCMatrix"),
+    open_matrix_hdf5(file.path(dir, "overwrite.h5"), "mat") %>%
+      as("dgCMatrix")
+  )
+  # writing with "overwrite" set should run and result in data change
+  rlang::reset_message_verbosity("hdf5_overwrite")
+  expect_message({
+    m2 %>% 
+      as("dgCMatrix") %>%
+      as("IterableMatrix") %>%
+      write_matrix_hdf5(file.path(dir, "overwrite.h5"), "mat", overwrite=TRUE)
+  }, "dataset does not free old storage")
+  expect_identical(
+    as(m2, "dgCMatrix"),
+    open_matrix_hdf5(file.path(dir, "overwrite.h5"), "mat") %>%
+      as("dgCMatrix")
+  )
+})
+
+test_that("Dir overwrite works", {
+  dir <- withr::local_tempdir()
+  m1 <- matrix(1:12, nrow=3)
+  m2 <- m1
+  m2[1,1] <- 5
+  m1 %>% 
+    as("dgCMatrix") %>% 
+    as("IterableMatrix") %>%
+    write_matrix_dir(file.path(dir, "overwrite-mat"))
+  # writing without "overwrite" set should result in an error, and no data changed
+  expect_error({
+    m2 %>% 
+      as("dgCMatrix") %>%
+      as("IterableMatrix") %>%
+      write_matrix_dir(file.path(dir, "overwrite-mat"))
+  }, "exists")
+  expect_identical(
+    as(m1, "dgCMatrix"),
+    open_matrix_dir(file.path(dir, "overwrite-mat")) %>%
+      as("dgCMatrix")
+  )
+  # writing with "overwrite" set should run and result in data change
+  m2 %>% 
+    as("dgCMatrix") %>%
+    as("IterableMatrix") %>%
+    write_matrix_dir(file.path(dir, "overwrite-mat"), overwrite=TRUE)
+  expect_identical(
+    as(m2, "dgCMatrix"),
+    open_matrix_dir(file.path(dir, "overwrite-mat")) %>%
+      as("dgCMatrix")
+  )
+})

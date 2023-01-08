@@ -957,14 +957,16 @@ setMethod("short_description", "MatrixDir", function(x) {
 #' @param dir Directory to save the data into
 #' @param buffer_size For performance tuning only. The number of items to be buffered
 #' in memory before calling writes to disk.
+#' @param overwrite If `TRUE`, overwrite any pre-existing data
 #' @export
-write_matrix_dir <- function(mat, dir, compress = TRUE, buffer_size = 8192L) {
+write_matrix_dir <- function(mat, dir, compress = TRUE, buffer_size = 8192L, overwrite = FALSE) {
   assert_is(mat, c("IterableMatrix", "dgCMatrix"))
   if (is(mat, "dgCMatrix")) mat <- as(mat, "IterableMatrix")
 
   assert_is(dir, "character")
   assert_is(compress, "logical")
   assert_is(buffer_size, "integer")
+  assert_is(overwrite, "logical")
 
   assert_true(matrix_type(mat) %in% c("uint32_t", "float", "double"))
   if (compress && matrix_type(mat) != "uint32_t") {
@@ -978,7 +980,7 @@ write_matrix_dir <- function(mat, dir, compress = TRUE, buffer_size = 8192L) {
   it <- iterate_matrix(mat)
 
   write_function <- get(sprintf("write_%s_matrix_file_%s_cpp", ifelse(compress, "packed", "unpacked"), matrix_type(mat)))
-  write_function(ptr(it), dir, buffer_size, mat@transpose)
+  write_function(ptr(it), dir, buffer_size, overwrite, mat@transpose)
 
   open_matrix_dir(dir, buffer_size)
 }
@@ -1040,7 +1042,7 @@ setMethod("short_description", "MatrixH5", function(x) {
 #' @rdname matrix_io
 #' @inheritParams write_fragments_hdf5
 #' @export
-write_matrix_hdf5 <- function(mat, path, group, compress = TRUE, buffer_size = 8192L, chunk_size = 1024L) {
+write_matrix_hdf5 <- function(mat, path, group, compress = TRUE, buffer_size = 8192L, chunk_size = 1024L, overwrite=FALSE) {
   assert_is(mat, c("IterableMatrix", "dgCMatrix"))
   if (is(mat, "dgCMatrix")) mat <- as(mat, "IterableMatrix")
 
@@ -1049,6 +1051,7 @@ write_matrix_hdf5 <- function(mat, path, group, compress = TRUE, buffer_size = 8
   assert_is(compress, "logical")
   assert_is(buffer_size, "integer")
   assert_is(chunk_size, "integer")
+  assert_is(overwrite, "logical")
 
   assert_true(matrix_type(mat) %in% c("uint32_t", "float", "double"))
   if (compress && matrix_type(mat) != "uint32_t") {
@@ -1059,10 +1062,16 @@ write_matrix_hdf5 <- function(mat, path, group, compress = TRUE, buffer_size = 8
   }
 
   path <- normalizePath(path, mustWork = FALSE)
+  if (overwrite && hdf5_group_exists_cpp(path, group)) {
+    rlang::inform(c(
+      "Warning: Overwriting an hdf5 dataset does not free old storage"
+    ), .frequency = "regularly", .frequency_id = "hdf5_overwrite")
+  }
+
   it <- iterate_matrix(mat)
 
   write_function <- get(sprintf("write_%s_matrix_hdf5_%s_cpp", ifelse(compress, "packed", "unpacked"), matrix_type(mat)))
-  write_function(ptr(it), path, group, buffer_size, chunk_size, mat@transpose)
+  write_function(ptr(it), path, group, buffer_size, chunk_size, overwrite, mat@transpose)
 
   open_matrix_hdf5(path, group, buffer_size)
 }

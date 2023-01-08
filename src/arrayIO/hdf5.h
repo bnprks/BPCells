@@ -31,8 +31,13 @@ template <class T> class H5NumWriter : public BulkNumWriter<T> {
         // HighFive::DataSetAccessProps a_props;
         // a_props.add(HighFive::Caching(521, 50<<20));// 50MB cache for overkill
 
+        if (group.exist(group_path)) {
+          group.unlink(group_path);
+        } 
+       
         // Create the dataset
         return group.createDataSet<T>(group_path, dataspace, props);
+      
     }
 
   public:
@@ -103,7 +108,7 @@ class H5WriterBuilder final : public WriterBuilder {
 
   public:
     H5WriterBuilder(
-        std::string file, std::string group, uint32_t buffer_size = 8192, uint32_t chunk_size = 1024
+        std::string file, std::string group, uint32_t buffer_size = 8192, uint32_t chunk_size = 1024, bool allow_exists = false
     );
     UIntWriter createUIntWriter(std::string name) override;
     ULongWriter createULongWriter(std::string name) override;

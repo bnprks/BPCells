@@ -70,3 +70,80 @@ test_that("HDF5 File Fragments example data round-trip", {
   expect_identical(raw_fragments, write_fragments_memory(unpacked, compress = FALSE))
   expect_identical(raw_fragments, write_fragments_memory(packed, compress = FALSE))
 })
+
+test_that("H5 overwrite works", {
+  dir <- withr::local_tempdir()
+  frags1 <- tibble::tibble(
+    chr = c("chr1", "chr1", "chr2", "chr3", "chr3"),
+    start = c(10,20,30,40,50),
+    end = start + 5,
+    cell_id = 1:5
+  )
+  frags2 <- tibble::tibble(
+    chr = c("chr1", "chr1", "chr2", "chr3", "chr4"),
+    start = 10 + c(10,20,30,40,50),
+    end = start + 5,
+    cell_id = 1:5
+  )
+  f1 <- as(frags1, "IterableFragments")
+  f2 <- as(frags2, "IterableFragments")
+  
+  write_fragments_hdf5(f1, file.path(dir, "overwrite.h5"), "frags")
+  # writing without "overwrite" set should result in an error, and no data changed
+  expect_error({
+    write_fragments_hdf5(f2, file.path(dir, "overwrite.h5"), "frags")
+  })
+  expect_identical(
+    as.data.frame(f1),
+    open_fragments_hdf5(file.path(dir, "overwrite.h5"), "frags") %>%
+      as.data.frame()
+  )
+  # writing with "overwrite" set should run and result in data change
+  rlang::reset_message_verbosity("hdf5_overwrite")
+  expect_message(
+    write_fragments_hdf5(f2, file.path(dir, "overwrite.h5"), "frags", overwrite=TRUE),
+    "dataset does not free old storage"
+  )
+
+  expect_identical(
+    as.data.frame(f2),
+    open_fragments_hdf5(file.path(dir, "overwrite.h5"), "frags") %>%
+      as.data.frame()
+  )
+})
+
+test_that("Dir overwrite works", {
+  dir <- withr::local_tempdir()
+  frags1 <- tibble::tibble(
+    chr = c("chr1", "chr1", "chr2", "chr3", "chr3"),
+    start = c(10,20,30,40,50),
+    end = start + 5,
+    cell_id = 1:5
+  )
+  frags2 <- tibble::tibble(
+    chr = c("chr1", "chr1", "chr2", "chr3", "chr4"),
+    start = 10 + c(10,20,30,40,50),
+    end = start + 5,
+    cell_id = 1:5
+  )
+  f1 <- as(frags1, "IterableFragments")
+  f2 <- as(frags2, "IterableFragments")
+  
+  write_fragments_dir(f1, file.path(dir, "overwrite-frags"))
+  # writing without "overwrite" set should result in an error, and no data changed
+  expect_error({
+    write_fragments_dir(f2, file.path(dir, "overwrite-frags"))
+  })
+  expect_identical(
+    as.data.frame(f1),
+    open_fragments_dir(file.path(dir, "overwrite-frags")) %>%
+      as.data.frame()
+  )
+  # writing with "overwrite" set should run and result in data change
+  write_fragments_dir(f2, file.path(dir, "overwrite-frags"), overwrite=TRUE)
+  expect_identical(
+    as.data.frame(f2),
+    open_fragments_dir(file.path(dir, "overwrite-frags")) %>%
+      as.data.frame()
+  )
+})

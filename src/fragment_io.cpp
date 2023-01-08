@@ -145,10 +145,10 @@ SEXP iterate_unpacked_fragments_file_cpp(
 }
 
 // [[Rcpp::export]]
-void write_unpacked_fragments_file_cpp(SEXP fragments, std::string dir, uint32_t buffer_size) {
+void write_unpacked_fragments_file_cpp(SEXP fragments, std::string dir, uint32_t buffer_size, bool allow_overwrite) {
     XPtr<FragmentLoader> loader(fragments);
     FragmentIterator iter(*loader);
-    FileWriterBuilder wb(dir, buffer_size);
+    FileWriterBuilder wb(dir, buffer_size, allow_overwrite);
     StoredFragmentsWriter::createUnpacked(wb).write(iter, &Rcpp::checkUserInterrupt);
 }
 
@@ -168,10 +168,10 @@ SEXP iterate_packed_fragments_file_cpp(
 }
 
 // [[Rcpp::export]]
-void write_packed_fragments_file_cpp(SEXP fragments, std::string dir, uint32_t buffer_size) {
+void write_packed_fragments_file_cpp(SEXP fragments, std::string dir, uint32_t buffer_size, bool allow_overwrite) {
     XPtr<FragmentLoader> loader(fragments);
     FragmentIterator iter(*loader);
-    FileWriterBuilder wb(dir, buffer_size);
+    FileWriterBuilder wb(dir, buffer_size, allow_overwrite);
     StoredFragmentsWriter::createPacked(wb).write(iter, &Rcpp::checkUserInterrupt);
 }
 
@@ -199,12 +199,12 @@ SEXP iterate_unpacked_fragments_hdf5_cpp(
 
 // [[Rcpp::export]]
 void write_unpacked_fragments_hdf5_cpp(
-    SEXP fragments, std::string file, std::string group, uint32_t buffer_size, uint32_t chunk_size
+    SEXP fragments, std::string file, std::string group, uint32_t buffer_size, uint32_t chunk_size, bool allow_overwrite
 ) {
     XPtr<FragmentLoader> loader(fragments);
     FragmentIterator iter(*loader);
 
-    H5WriterBuilder wb(file, group, buffer_size, chunk_size);
+    H5WriterBuilder wb(file, group, buffer_size, chunk_size, allow_overwrite);
     StoredFragmentsWriter::createUnpacked(wb).write(iter, &Rcpp::checkUserInterrupt);
 }
 
@@ -229,12 +229,12 @@ SEXP iterate_packed_fragments_hdf5_cpp(
 
 // [[Rcpp::export]]
 void write_packed_fragments_hdf5_cpp(
-    SEXP fragments, std::string file, std::string group, uint32_t buffer_size, uint32_t chunk_size
+    SEXP fragments, std::string file, std::string group, uint32_t buffer_size, uint32_t chunk_size, bool allow_overwrite
 ) {
     XPtr<FragmentLoader> loader(fragments);
     FragmentIterator iter(*loader);
 
-    H5WriterBuilder wb(file, group, buffer_size, chunk_size);
+    H5WriterBuilder wb(file, group, buffer_size, chunk_size, allow_overwrite);
     StoredFragmentsWriter::createPacked(wb).write(iter, &Rcpp::checkUserInterrupt);
 }
 

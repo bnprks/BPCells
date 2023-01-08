@@ -366,44 +366,44 @@ SEXP iterate_packed_matrix_file_double_cpp(
 }
 // [[Rcpp::export]]
 void write_unpacked_matrix_file_uint32_t_cpp(
-    SEXP matrix, std::string dir, uint32_t buffer_size, bool row_major
+    SEXP matrix, std::string dir, uint32_t buffer_size, bool allow_overwrite, bool row_major
 ) {
-    FileWriterBuilder wb(dir, buffer_size);
+    FileWriterBuilder wb(dir, buffer_size, allow_overwrite);
     write_unpacked_matrix<uint32_t>(wb, matrix, row_major);
 }
 // [[Rcpp::export]]
 void write_packed_matrix_file_uint32_t_cpp(
-    SEXP matrix, std::string dir, uint32_t buffer_size, bool row_major
+    SEXP matrix, std::string dir, uint32_t buffer_size, bool allow_overwrite, bool row_major
 ) {
-    FileWriterBuilder wb(dir, buffer_size);
+    FileWriterBuilder wb(dir, buffer_size, allow_overwrite);
     write_packed_matrix<uint32_t>(wb, matrix, row_major);
 }
 // [[Rcpp::export]]
 void write_unpacked_matrix_file_float_cpp(
-    SEXP matrix, std::string dir, uint32_t buffer_size, bool row_major
+    SEXP matrix, std::string dir, uint32_t buffer_size, bool allow_overwrite, bool row_major
 ) {
-    FileWriterBuilder wb(dir, buffer_size);
+    FileWriterBuilder wb(dir, buffer_size, allow_overwrite);
     write_unpacked_matrix<float>(wb, matrix, row_major);
 }
 // [[Rcpp::export]]
 void write_packed_matrix_file_float_cpp(
-    SEXP matrix, std::string dir, uint32_t buffer_size, bool row_major
+    SEXP matrix, std::string dir, uint32_t buffer_size, bool allow_overwrite, bool row_major
 ) {
-    FileWriterBuilder wb(dir, buffer_size);
+    FileWriterBuilder wb(dir, buffer_size, allow_overwrite);
     write_packed_matrix<float>(wb, matrix, row_major);
 }
 // [[Rcpp::export]]
 void write_unpacked_matrix_file_double_cpp(
-    SEXP matrix, std::string dir, uint32_t buffer_size, bool row_major
+    SEXP matrix, std::string dir, uint32_t buffer_size, bool allow_overwrite, bool row_major
 ) {
-    FileWriterBuilder wb(dir, buffer_size);
+    FileWriterBuilder wb(dir, buffer_size, allow_overwrite);
     write_unpacked_matrix<double>(wb, matrix, row_major);
 }
 // [[Rcpp::export]]
 void write_packed_matrix_file_double_cpp(
-    SEXP matrix, std::string dir, uint32_t buffer_size, bool row_major
+    SEXP matrix, std::string dir, uint32_t buffer_size, bool allow_overwrite, bool row_major
 ) {
-    FileWriterBuilder wb(dir, buffer_size);
+    FileWriterBuilder wb(dir, buffer_size, allow_overwrite);
     write_packed_matrix<double>(wb, matrix, row_major);
 }
 
@@ -495,9 +495,10 @@ void write_unpacked_matrix_hdf5_uint32_t_cpp(
     std::string group,
     uint32_t buffer_size,
     uint32_t chunk_size,
+    bool allow_overwrite,
     bool row_major
 ) {
-    H5WriterBuilder wb(file, group, buffer_size, chunk_size);
+    H5WriterBuilder wb(file, group, buffer_size, chunk_size, allow_overwrite);
     write_unpacked_matrix<uint32_t>(wb, matrix, row_major);
 }
 // [[Rcpp::export]]
@@ -507,9 +508,10 @@ void write_packed_matrix_hdf5_uint32_t_cpp(
     std::string group,
     uint32_t buffer_size,
     uint32_t chunk_size,
+    bool allow_overwrite,
     bool row_major
 ) {
-    H5WriterBuilder wb(file, group, buffer_size, chunk_size);
+    H5WriterBuilder wb(file, group, buffer_size, chunk_size, allow_overwrite);
     write_packed_matrix<uint32_t>(wb, matrix, row_major);
 }
 // [[Rcpp::export]]
@@ -519,9 +521,10 @@ void write_unpacked_matrix_hdf5_float_cpp(
     std::string group,
     uint32_t buffer_size,
     uint32_t chunk_size,
+    bool allow_overwrite,
     bool row_major
 ) {
-    H5WriterBuilder wb(file, group, buffer_size, chunk_size);
+    H5WriterBuilder wb(file, group, buffer_size, chunk_size, allow_overwrite);
     write_unpacked_matrix<float>(wb, matrix, row_major);
 }
 // [[Rcpp::export]]
@@ -531,9 +534,10 @@ void write_packed_matrix_hdf5_float_cpp(
     std::string group,
     uint32_t buffer_size,
     uint32_t chunk_size,
+    bool allow_overwrite,
     bool row_major
 ) {
-    H5WriterBuilder wb(file, group, buffer_size, chunk_size);
+    H5WriterBuilder wb(file, group, buffer_size, chunk_size, allow_overwrite);
     write_packed_matrix<float>(wb, matrix, row_major);
 }
 // [[Rcpp::export]]
@@ -543,9 +547,10 @@ void write_unpacked_matrix_hdf5_double_cpp(
     std::string group,
     uint32_t buffer_size,
     uint32_t chunk_size,
+    bool allow_overwrite,
     bool row_major
 ) {
-    H5WriterBuilder wb(file, group, buffer_size, chunk_size);
+    H5WriterBuilder wb(file, group, buffer_size, chunk_size, allow_overwrite);
     write_unpacked_matrix<double>(wb, matrix, row_major);
 }
 // [[Rcpp::export]]
@@ -555,9 +560,10 @@ void write_packed_matrix_hdf5_double_cpp(
     std::string group,
     uint32_t buffer_size,
     uint32_t chunk_size,
+    bool allow_overwrite,
     bool row_major
 ) {
-    H5WriterBuilder wb(file, group, buffer_size, chunk_size);
+    H5WriterBuilder wb(file, group, buffer_size, chunk_size, allow_overwrite);
     write_packed_matrix<double>(wb, matrix, row_major);
 }
 
@@ -632,4 +638,10 @@ read_hdf5_string_cpp(std::string path, std::string group, uint32_t buffer_size) 
         res.push_back(reader->get(i));
     }
     return res;
+}
+
+// [[Rcpp::export]]
+bool hdf5_group_exists_cpp(std::string path, std::string group) {
+    H5ReaderBuilder rb(path, "/", 1);
+    return rb.getGroup().exist(group);
 }

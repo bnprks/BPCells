@@ -26,11 +26,11 @@ void FileStringWriter::write(const StringReader &reader) {
     }
 }
 
-FileWriterBuilder::FileWriterBuilder(std::string _dir, uint32_t buffer_size)
+FileWriterBuilder::FileWriterBuilder(std::string _dir, uint32_t buffer_size, bool allow_exists)
     : dir(_dir)
     , buffer_size(buffer_size) {
 
-    if (std::filesystem::exists(dir)) {
+    if (!allow_exists && std::filesystem::exists(dir)) {
         throw std::runtime_error(std::string("Path already exists: ") + _dir);
     }
 

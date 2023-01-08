@@ -423,21 +423,23 @@ setMethod("short_description", "FragmentsDir", function(x) {
 #' @param dir Directory to read/write the data from
 #' @param buffer_size For performance tuning only. The number of items to be bufferred
 #' in memory before calling writes to disk.
+#' @param overwrite If `TRUE`, delete any pre-existing data in the output location before writing
 #' @return Fragment object
 #' @rdname fragment_io
 #' @export
-write_fragments_dir <- function(fragments, dir, compress = TRUE, buffer_size = 1024L) {
+write_fragments_dir <- function(fragments, dir, compress = TRUE, buffer_size = 1024L, overwrite = FALSE) {
   assert_is(fragments, "IterableFragments")
   assert_is(dir, "character")
   assert_is(compress, "logical")
   assert_is(buffer_size, "integer")
+  assert_is(overwrite, "logical")
   dir <- path.expand(dir)
   it <- iterate_fragments(fragments)
   p <- ptr(it)
   if (compress) {
-    write_packed_fragments_file_cpp(p, dir, buffer_size)
+    write_packed_fragments_file_cpp(p, dir, buffer_size, overwrite)
   } else {
-    write_unpacked_fragments_file_cpp(p, dir, buffer_size)
+    write_unpacked_fragments_file_cpp(p, dir, buffer_size, overwrite)
   }
   open_fragments_dir(dir, buffer_size)
 }
@@ -508,20 +510,26 @@ setMethod("short_description", "FragmentsHDF5", function(x) {
 #' to an existing hdf5 file this group must not already be in use
 #' @param chunk_size For performance tuning only. The chunk size used for the HDF5 array storage.
 #' @export
-write_fragments_hdf5 <- function(fragments, path, group = "fragments", compress = TRUE, buffer_size = 8192L, chunk_size = 1024L) {
+write_fragments_hdf5 <- function(fragments, path, group = "fragments", compress = TRUE, buffer_size = 8192L, chunk_size = 1024L, overwrite=FALSE) {
   assert_is(fragments, "IterableFragments")
   assert_is(path, "character")
   assert_is(group, "character")
   assert_is(compress, "logical")
   assert_is(buffer_size, "integer")
   assert_is(chunk_size, "integer")
+  assert_is(compress, "logical")
   path <- path.expand(path)
+  if (overwrite && hdf5_group_exists_cpp(path, group)) {
+    rlang::inform(c(
+      "Warning: Overwriting an hdf5 dataset does not free old storage"
+    ), .frequency = "regularly", .frequency_id = "hdf5_overwrite")
+  }
   it <- iterate_fragments(fragments)
   p <- ptr(it)
   if (compress) {
-    write_packed_fragments_hdf5_cpp(p, path, group, buffer_size, chunk_size)
+    write_packed_fragments_hdf5_cpp(p, path, group, buffer_size, chunk_size, overwrite)
   } else {
-    write_unpacked_fragments_hdf5_cpp(p, path, group, buffer_size, chunk_size)
+    write_unpacked_fragments_hdf5_cpp(p, path, group, buffer_size, chunk_size, overwrite)
   }
   open_fragments_hdf5(path, group, buffer_size)
 }

@@ -132,7 +132,7 @@ class FileWriterBuilder final : public WriterBuilder {
 
   public:
     FileWriterBuilder() = default;
-    FileWriterBuilder(std::string dir, uint32_t buffer_size = 8192);
+    FileWriterBuilder(std::string dir, uint32_t buffer_size = 8192, bool allow_exists = false);
     FileWriterBuilder &operator=(FileWriterBuilder &&other) = default;
     UIntWriter createUIntWriter(std::string name) override;
     ULongWriter createULongWriter(std::string name) override;

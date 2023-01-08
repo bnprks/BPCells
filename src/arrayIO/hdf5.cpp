@@ -8,7 +8,12 @@ H5StringReader::H5StringReader(const HighFive::Group &group, std::string path) {
     HighFive::DataSet d(group.getDataSet(path));
     HighFive::DataType type = d.getDataType();
     if (type.isVariableStr()) {
-        d.read(data);
+        // Workaround for HighFive bug: don't try reading an empty string vector
+        if (d.getDimensions()[0] > 0) {
+            d.read(data);
+        } else {
+            data.resize(0);
+        }
     } else {
         uint32_t bytes = type.getSize();
         uint32_t elements = d.getDimensions()[0];
@@ -40,11 +45,14 @@ void H5StringWriter::write(const StringReader &reader) {
         i++;
     }
     HighFive::SilenceHDF5 s;
+    if (group.exist(path)) {
+        group.unlink(path);
+    }
     HighFive::DataSet ds = group.createDataSet<std::string>(path, HighFive::DataSpace::From(data));
     ds.write(data);
 }
 
-HighFive::Group createH5Group(std::string file_path, std::string group_path) {
+HighFive::Group createH5Group(std::string file_path, std::string group_path, bool allow_exists) {
     HighFive::SilenceHDF5 s;
     if (group_path == "") group_path = "/";
 
@@ -56,7 +64,7 @@ HighFive::Group createH5Group(std::string file_path, std::string group_path) {
     HighFive::File file(file_path, HighFive::File::OpenOrCreate);
     try {
         HighFive::Group ret(file.getGroup(group_path));
-        if (ret.getNumberObjects() != 0) {
+        if (!allow_exists && ret.getNumberObjects() != 0) {
             throw std::runtime_error("Requested hdf5 group is not empty");
         }
         return ret;
@@ -66,9 +74,9 @@ HighFive::Group createH5Group(std::string file_path, std::string group_path) {
 }
 
 H5WriterBuilder::H5WriterBuilder(
-    std::string file, std::string group, uint32_t buffer_size, uint32_t chunk_size
+    std::string file, std::string group, uint32_t buffer_size, uint32_t chunk_size, bool allow_exists
 )
-    : group(createH5Group(file, group))
+    : group(createH5Group(file, group, allow_exists))
     , buffer_size(buffer_size)
     , chunk_size(chunk_size) {}
 
@@ -99,8 +107,12 @@ std::unique_ptr<StringWriter> H5WriterBuilder::createStringWriter(std::string na
 }
 
 void H5WriterBuilder::writeVersion(std::string version) {
-    group.createAttribute<std::string>("version", HighFive::DataSpace::From(version))
+    if (group.hasAttribute("version")) {
+        group.getAttribute("version").write(version);
+    } else {
+        group.createAttribute<std::string>("version", HighFive::DataSpace::From(version))
         .write(version);
+    }
 }
 
 void H5WriterBuilder::deleteWriter(std::string name) {
