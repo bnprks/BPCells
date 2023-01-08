@@ -166,7 +166,10 @@ test_that("Transpose storage order works", {
 })
 
 test_that("AnnData subset hasn't regressed", {
-  x <- open_matrix_anndata_hdf5("../data/mini_mat.h5ad") %>%
+  dir <- withr::local_tempdir()
+  # Make a copy since apparently reading the test hdf5 file causes modifications that git detects
+  file.copy("../data/mini_mat.h5ad", file.path(dir, "mini_mat.h5ad"))
+  x <- open_matrix_anndata_hdf5(file.path(dir, "mini_mat.h5ad")) %>%
     .[1:nrow(.),1:ncol(.)]
 
   s <- matrix_stats(x, row_stats="mean", col_stats="mean")
