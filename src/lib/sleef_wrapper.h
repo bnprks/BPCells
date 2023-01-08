@@ -182,10 +182,10 @@ inline vec_float expm1_f(const vec_float &v) { return Sleef_expm1f4_u10advsimd(v
 inline vec_double expm1_d(const vec_double &v) { return Sleef_expm1d2_u10advsimd(v); }
 
 inline vec_float pow_f(const vec_float &v, const vec_float &exp) {
-    return Sleef_powf4_u10sadvsimd(v, exp);
+    return Sleef_powf4_u10advsimd(v, exp);
 }
 inline vec_double pow_d(const vec_double &v, const vec_double &exp) {
-    return Sleef_powd2_u10sadvsimd(v, exp);
+    return Sleef_powd2_u10advsimd(v, exp);
 }
 
 #else
