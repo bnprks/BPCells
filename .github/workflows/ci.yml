@@ -1,0 +1,282 @@
+name: HighFive_CI
+
+concurrency:
+  group: ${{ github.workflow }}#${{ github.ref }}
+  cancel-in-progress: true
+
+on:
+  push:
+    branches:
+      - ci_test
+      - release/**
+  pull_request:
+    branches:
+      - master
+      - release/**
+    paths-ignore:
+      - '**.md'
+      - '**.rst'
+      - 'doc/**'
+
+env:
+  HOMEBREW_NO_AUTO_UPDATE: 1  # for reproducibility, dont autoupdate
+  BUILD_TYPE: RelWithDebInfo
+  INSTALL_DIR: install
+
+jobs:
+
+  # Job testing compiling on several Ubuntu systems + MPI
+  # =========================================================
+  #
+  # For 18.04:  bare HighFive
+  # For 20.04:  activate Boost, OpenCV
+  # For latest: activate Boost, Eigen, OpenCV, with Ninja
+  #
+  # XTensor tests are run for conda/mamba and MacOS
+  Linux_MPI:
+    runs-on: ${{matrix.os}}
+    strategy:
+      matrix:
+        os: [ubuntu-18.04, ubuntu-20.04, ubuntu-latest]
+        include:
+          - os: ubuntu-18.04
+            pkgs: ''
+            flags: '-DHIGHFIVE_USE_BOOST:Bool=OFF'
+          - os: ubuntu-20.04
+            pkgs: 'libboost-all-dev libopencv-dev'
+            flags: '-DHIGHFIVE_USE_OPENCV:Bool=ON -GNinja'
+          - os: ubuntu-latest
+            pkgs: 'libboost-all-dev libeigen3-dev libopencv-dev'
+            flags: '-DHIGHFIVE_USE_EIGEN:Bool=ON -DHIGHFIVE_USE_OPENCV:Bool=ON -GNinja'
+
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        submodules: true
+
+    - name: "Setup MPI"
+      uses: mpi4py/setup-mpi@v1
+      with:
+        mpi: openmpi
+
+    - name: "Install libraries"
+      run: |
+        sudo apt-get -qq update
+        sudo apt-get -qq install libhdf5-openmpi-dev libsz2 ninja-build ${{ matrix.pkgs }}
+
+    - name: Build
+      run: |
+        CMAKE_OPTIONS=(-DHIGHFIVE_PARALLEL_HDF5:BOOL=ON ${{ matrix.flags }})
+        source $GITHUB_WORKSPACE/.github/build.sh
+
+    - name: Test
+      working-directory: ${{github.workspace}}/build
+      run: ctest --output-on-failure -C $BUILD_TYPE
+
+
+  # Job testing several versions of hdf5
+  # ===================================================
+  Linux_HDF5_Versions:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        hdf5_version : [ hdf5-1_8_22, hdf5-1_10_9, hdf5-1_12_2, hdf5-1_13_2 ]
+
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        submodules: true
+    - name: "Install libraries"
+      run: |
+        sudo apt-get -qq update
+        sudo apt-get -qq install ninja-build libsz2 zlib1g-dev libboost-all-dev
+
+    - name: Build HDF5
+      run: |
+        wget https://github.com/HDFGroup/hdf5/archive/refs/tags/${{ matrix.hdf5_version }}.tar.gz --output-document hdf5.tar.gz
+        tar xf hdf5.tar.gz
+        mkdir -p hdf5-${{ matrix.hdf5_version }}/BUILD && cd hdf5-${{ matrix.hdf5_version }}/BUILD
+        cmake .. -GNinja -DCMAKE_INSTALL_PREFIX=$HOME/${{ matrix.hdf5_version }} -DHDF5_ENABLE_Z_LIB_SUPPORT=ON -DUSE_LIBAEC=ON
+        ninja && ninja install
+
+    - name: Build
+      run: |
+        mkdir BUILD && cd BUILD
+        cmake -GNinja -DHDF5_ROOT=$HOME/${{ matrix.hdf5_version }} ..
+        ninja
+
+    - name: Test
+      run: |
+        cd BUILD && ctest --output-on-failure
+
+  # Job testing several compilers on a stable Linux
+  # ====================================================
+  Linux_Compilers:
+    runs-on: ubuntu-20.04
+    strategy:
+      matrix:
+        env: [
+          {CC: clang-10, CXX: clang++-10},
+          {CC: clang-12, CXX: clang++-12},
+          {CC: gcc-9, CXX: g++-9},
+          {CC: gcc-10, CXX: g++-10},
+        ]
+
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        submodules: true
+
+    - name: "Install libraries"
+      run: |
+        sudo apt-get -qq update
+        sudo apt-get -qq install libboost-all-dev libhdf5-dev libsz2 ninja-build
+
+    - name: Build
+      env: ${{matrix.env}}
+      run: |
+        CMAKE_OPTIONS=(-GNinja)
+        source $GITHUB_WORKSPACE/.github/build.sh
+
+    - name: Test
+      working-directory: ${{github.workspace}}/build
+      run: ctest --output-on-failure -C $BUILD_TYPE
+
+
+  # Job to check using HighFive from other CMake projects
+  # =====================================================
+  CMake_Project:
+    runs-on: ubuntu-20.04
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        submodules: true
+
+    - name: "Install libraries"
+      run: |
+        sudo apt-get -qq update
+        sudo apt-get -qq install libboost-all-dev libhdf5-dev libsz2 ninja-build
+
+    - name: "CMake Project Integration"
+      run: bash tests/test_project_integration.sh
+
+
+  # Job checking the benchmarks work
+  # ================================
+  Benchmarks:
+    runs-on: ubuntu-20.04
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        submodules: true
+
+    - name: "Install libraries"
+      run: |
+        sudo apt -y update
+        sudo apt -y  install --no-install-recommends  libhdf5-dev pkg-config
+
+    - name: "Build benchmarks"
+      working-directory: ${{github.workspace}}/src/benchmarks
+      run: make
+
+    - run: time ${{github.workspace}}/src/benchmarks/highfive_bench
+
+
+  # Job testing in OSX
+  # =======================
+  OSX:
+    runs-on: macOS-10.15
+
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        submodules: true
+
+    - name: "Install libraries (OSX)"
+      run: brew install boost eigen hdf5 ninja xtensor
+
+    - name: Build
+      run: |
+        CMAKE_OPTIONS=(
+          -GNinja
+          -DHIGHFIVE_USE_BOOST:BOOL=ON
+          -DHIGHFIVE_USE_EIGEN:BOOL=ON
+          -DHIGHFIVE_USE_XTENSOR:BOOL=ON
+          -DHIGHFIVE_BUILD_DOCS:BOOL=FALSE
+          -DHIGHFIVE_TEST_SINGLE_INCLUDES=ON
+          -DCMAKE_CXX_FLAGS="-coverage -O0"
+        )
+        source $GITHUB_WORKSPACE/.github/build.sh
+
+    - name: Test
+      working-directory: ${{github.workspace}}/build
+      run: ctest --output-on-failure -C $BUILD_TYPE
+
+
+  # Job testing in Windows
+  # ===========================
+  Windows:
+    runs-on: Windows-latest
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        submodules: true
+
+    - uses: mamba-org/provision-with-micromamba@main
+      with:
+        environment-file: doc/environment.yaml
+        environment-name: win-test
+
+    - name: Build
+      shell: bash -l {0}
+      run: |
+        CMAKE_OPTIONS=(
+          -DHIGHFIVE_UNIT_TESTS=ON
+          -DHIGHFIVE_USE_BOOST:BOOL=ON
+          -DHIGHFIVE_USE_EIGEN:BOOL=ON
+          -DHIGHFIVE_USE_XTENSOR:BOOL=ON
+          -DHIGHFIVE_TEST_SINGLE_INCLUDES=ON
+        )
+        source $GITHUB_WORKSPACE/.github/build.sh
+
+    - name: Test
+      working-directory: ${{github.workspace}}/build
+      shell: bash -l {0}
+      run: ctest --output-on-failure -C $BUILD_TYPE
+
+  # Job producing code coverage report
+  # ==================================
+  Code_coverage:
+    # When ubuntu version will be upgrade, you should look if xtensor is nowavailable
+    runs-on: ubuntu-20.04
+
+    steps:
+    - name: "Install libraries"
+      run: |
+        sudo apt-get update
+        sudo apt-get install lcov libboost-all-dev libhdf5-dev libeigen3-dev libopencv-dev libsz2 ninja-build
+
+    - uses: actions/checkout@v3
+      with:
+        fetch-depth: 2
+        submodules: true
+
+    - name: Build and test for code coverage
+      run: |
+        CMAKE_OPTIONS=(
+          -GNinja
+          -DHIGHFIVE_USE_BOOST:BOOL=ON
+          -DHIGHFIVE_USE_EIGEN:BOOL=ON
+          -DHIGHFIVE_USE_OPENCV:BOOL=ON
+          #-DHIGHFIVE_USE_XTENSOR:BOOL=ON
+          -DHIGHFIVE_TEST_SINGLE_INCLUDES=ON
+          -DHIGHFIVE_BUILD_DOCS:BOOL=FALSE
+          -DCMAKE_CXX_FLAGS="-coverage -O0"
+        )
+        source $GITHUB_WORKSPACE/.github/build.sh
+        cd $HIGHFIVE_BUILD
+        (cd $GITHUB_WORKSPACE;  lcov --capture  --initial --directory . --no-external --output-file build/coverage-base.info)
+        cmake --build $HIGHFIVE_BUILD --target test
+        (cd $GITHUB_WORKSPACE; lcov --capture  --directory . --no-external --output-file build/coverage-run.info)
+        lcov --add-tracefile coverage-base.info --add-tracefile coverage-run.info --output-file coverage-combined.info
+        bash <(curl -s https://codecov.io/bash) -f coverage-combined.info
