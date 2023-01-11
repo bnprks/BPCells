@@ -173,37 +173,49 @@ setMethod("t", signature(x = "IterableMatrix"), function(x) {
 setMethod("%*%", signature(x = "IterableMatrix", y = "matrix"), function(x, y) {
   iter <- iterate_matrix(convert_matrix_type(x, "double"))
   if (x@transpose) {
-    return(t(dense_multiply_left_cpp(ptr(iter), t(y))))
+    res <- (t(dense_multiply_left_cpp(ptr(iter), t(y))))
   } else {
-    return(dense_multiply_right_cpp(ptr(iter), y))
+    res <- (dense_multiply_right_cpp(ptr(iter), y))
   }
+  rownames(res) <- rownames(x)
+  colnames(res) <- colnames(y)
+  res
 })
 
 setMethod("%*%", signature(x = "matrix", y = "IterableMatrix"), function(x, y) {
   iter <- iterate_matrix(convert_matrix_type(y, "double"))
   if (y@transpose) {
-    return(t(dense_multiply_right_cpp(ptr(iter), t(x))))
+    res <- (t(dense_multiply_right_cpp(ptr(iter), t(x))))
   } else {
-    return(dense_multiply_left_cpp(ptr(iter), x))
+    res <- (dense_multiply_left_cpp(ptr(iter), x))
   }
+  rownames(res) <- rownames(x)
+  colnames(res) <- colnames(y)
+  res
 })
 
 setMethod("%*%", signature(x = "IterableMatrix", y = "numeric"), function(x, y) {
   iter <- iterate_matrix(convert_matrix_type(x, "double"))
   if (x@transpose) {
-    return(vec_multiply_left_cpp(ptr(iter), y))
+    res <- (vec_multiply_left_cpp(ptr(iter), y))
   } else {
-    return(vec_multiply_right_cpp(ptr(iter), y))
+    res <- (vec_multiply_right_cpp(ptr(iter), y))
   }
+  res <- matrix(res, ncol=1)
+  rownames(res) <- rownames(x)
+  res
 })
 
 setMethod("%*%", signature(x = "numeric", y = "IterableMatrix"), function(x, y) {
   iter <- iterate_matrix(convert_matrix_type(y, "double"))
   if (y@transpose) {
-    return(vec_multiply_right_cpp(ptr(iter), x))
+    res <- (vec_multiply_right_cpp(ptr(iter), x))
   } else {
-    return(vec_multiply_left_cpp(ptr(iter), x))
+    res <- (vec_multiply_left_cpp(ptr(iter), x))
   }
+  res <- matrix(res, nrow=1)
+  colnames(res) <- colnames(y)
+  res
 })
 
 #' Represent a sparse matrix-vector product operation
