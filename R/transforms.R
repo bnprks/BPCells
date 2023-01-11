@@ -180,12 +180,18 @@ setMethod("short_description", "TransformMin", function(x) {
     sprintf("Transform min(x, %d)", x@global_params[1])
   )
 })
-#' Take the elementwise min with a constant
+
+#' Elementwise minimum
+#'
+#' Take the minimum value of a matrix with a per-row, per-col, or global
+#' constant. This constant must be >0 to preserve sparsity of the matrix.
+#' This has the effect of capping the maximum value in the matrix.
+#'
 #' @param mat IterableMatrix
 #' @param val Single positive numeric value
 #' @return IterableMatrix
-#' @description Take the elementwise minimum with a positive value.
-#' This has the effect of capping the maximum value in the matrix
+#' @description **min_scalar**: Take minumum with a global constant
+#' @rdname min
 #' @export
 min_scalar <- function(mat, val) {
   assert_is(mat, "IterableMatrix")
@@ -197,6 +203,116 @@ min_scalar <- function(mat, val) {
   res@global_params <- val
   res
 }
+
+setClass("TransformMinByRow", contains = "TransformedMatrix")
+setMethod("iterate_matrix", "TransformMinByRow", function(x) {
+  it <- iterate_matrix(x@matrix)
+  wrapMat_double(iterate_matrix_min_by_row_cpp(ptr(it), x@row_params), it)
+})
+setMethod("short_description", "TransformMinByRow", function(x) {
+  # Subset the row + col params matrices for faster pretty printing of
+  # large parameter sets
+  print_entries <- 3
+  if (ncol(x@row_params) > print_entries + 1) {
+    x@row_params <- x@row_params[,c(1:print_entries, ncol(x@row_params))]
+  }
+  
+  c(
+    short_description(x@matrix),
+    sprintf("Transform min by row: %s", pretty_print_vector(sprintf("%.3g", x@row_params[1, ]), max_len = 3))
+  )
+})
+
+#' Take the elementwise min with a constant
+#' @param mat IterableMatrix
+#' @param vals Numeric vector of min values
+#' @return IterableMatrix
+#' @description **min_by_row**: Take the minimum with a per-row constant
+#' @export
+min_by_row <- function(mat, vals) {
+  assert_is(mat, "IterableMatrix")
+  assert_is(vals, "numeric")
+  assert_greater_than_zero(vals)
+  assert_len(vals, nrow(mat))
+
+  wrapMatrix("TransformMinByRow", convert_matrix_type(mat, "double"), row_params=matrix(vals, nrow=1))
+}
+
+setClass("TransformMinByCol", contains = "TransformedMatrix")
+setMethod("iterate_matrix", "TransformMinByCol", function(x) {
+  it <- iterate_matrix(x@matrix)
+  wrapMat_double(iterate_matrix_min_by_col_cpp(ptr(it), x@col_params), it)
+})
+setMethod("short_description", "TransformMinByCol", function(x) {
+  # Subset the row + col params matrices for faster pretty printing of
+  # large parameter sets
+  print_entries <- 3
+  if (ncol(x@col_params) > print_entries + 1) {
+    x@col_params <- x@col_params[,c(1:print_entries, ncol(x@col_params))]
+  }
+  
+  c(
+    short_description(x@matrix),
+    sprintf("Transform min by col: %s", pretty_print_vector(sprintf("%.3g", x@col_params[1, ]), max_len = 3))
+  )
+})
+
+#' Take the elementwise min with a constant
+#' @param mat IterableMatrix
+#' @param vals Numeric vector of min values
+#' @return IterableMatrix
+#' @description **min_by_col**: Take the minimum with a per-col constant
+#' @export
+min_by_col <- function(mat, vals) {
+  assert_is(mat, "IterableMatrix")
+  assert_is(vals, "numeric")
+  assert_greater_than_zero(vals)
+  assert_len(vals, ncol(mat))
+
+  wrapMatrix("TransformMinByCol", convert_matrix_type(mat, "double"), col_params=matrix(vals, nrow=1))
+}
+
+
+#################
+# SCTransform
+#################
+
+setClass("SCTransformPearson", contains = "TransformedMatrix")
+setMethod("iterate_matrix", "SCTransformPearson", function(x) {
+  it <- iterate_matrix(x@matrix)
+  wrapMat_double(iterate_matrix_sctransform_pearson_cpp(ptr(it), x@row_params, x@col_params), it)
+})
+setMethod("short_description", "SCTransformPearson", function(x) {
+  c(
+    short_description(x@matrix),
+    "SCTransform (Pearson Residuals)"
+  )
+})
+#' SCTransform Pearson Residuals
+#'
+#' Calculate pearson residuals of a negative binomial sctransform model.
+#' Normalized values are calculated as `(X - mu) / sqrt(mu + mu^2/theta)`
+#' mu is calculated as `exp(`
+#' 
+#' @param mat IterableMatrix
+#' @param thetas Vector of theta (overdispersion values)
+#' @return IterableMatrix
+#' @description Take the elementwise minimum with a positive value.
+#' This has the effect of capping the maximum value in the matrix
+#' @export
+sctransform_pearson <- function(mat, thetas, gene_factors, cell_factors) {
+  assert_is(mat, "IterableMatrix")
+  assert_is(thetas, "numeric")
+  assert_is(gene_factors, "numeric")
+  assert_is(cell_factors, "numeric")
+  
+  assert_true()
+
+  res <- wrapMatrix("SCTransformPearson", convert_matrix_type(mat, "double"))
+  res@global_params <- val
+  res
+}
+
 
 
 #################

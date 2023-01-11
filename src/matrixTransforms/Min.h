@@ -11,4 +11,19 @@ class Min : public MatrixTransform {
     bool load() override;
 };
 
+class MinByRow : public MatrixTransform {
+  public:
+    using MatrixTransform::MatrixTransform;
+
+    bool load() override;
+};
+
+class MinByCol : public MatrixTransform {
+  public:
+    using MatrixTransform::MatrixTransform;
+
+    bool load() override;
+};
+
+
 } // end namespace BPCells

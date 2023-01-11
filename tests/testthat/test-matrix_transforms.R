@@ -50,6 +50,20 @@ test_that("min_scalar works", {
     expect_equal(pmin(m, min_val), min_scalar(m2, min_val) %>% as("dgCMatrix"))
 })
 
+test_that("min_by_row works", {
+    m <- generate_sparse_matrix(20, 10, max_val=10)
+    m2 <- as(m, "IterableMatrix")
+    min_vals <- sample.int(10, size=nrow(m), replace=TRUE)
+    expect_equal(pmin(m, min_vals), min_by_row(m2, min_vals) %>% as("dgCMatrix"))
+})
+
+test_that("min_by_col works", {
+    m <- generate_sparse_matrix(20, 10, max_val=10)
+    m2 <- as(m, "IterableMatrix")
+    min_vals <- sample.int(10, size=ncol(m), replace=TRUE)
+    expect_equal(t(pmin(t(m), min_vals)), min_by_col(m2, min_vals) %>% as("dgCMatrix"))
+})
+
 test_that("pow works", {
     m <- generate_sparse_matrix(20, 10, max_val=10)
     m2 <- as(m, "IterableMatrix")

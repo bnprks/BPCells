@@ -1344,6 +1344,30 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// iterate_matrix_min_by_row_cpp
+SEXP iterate_matrix_min_by_row_cpp(SEXP matrix, Eigen::ArrayXXd row_min);
+RcppExport SEXP _BPCells_iterate_matrix_min_by_row_cpp(SEXP matrixSEXP, SEXP row_minSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type matrix(matrixSEXP);
+    Rcpp::traits::input_parameter< Eigen::ArrayXXd >::type row_min(row_minSEXP);
+    rcpp_result_gen = Rcpp::wrap(iterate_matrix_min_by_row_cpp(matrix, row_min));
+    return rcpp_result_gen;
+END_RCPP
+}
+// iterate_matrix_min_by_col_cpp
+SEXP iterate_matrix_min_by_col_cpp(SEXP matrix, Eigen::ArrayXXd col_min);
+RcppExport SEXP _BPCells_iterate_matrix_min_by_col_cpp(SEXP matrixSEXP, SEXP col_minSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type matrix(matrixSEXP);
+    Rcpp::traits::input_parameter< Eigen::ArrayXXd >::type col_min(col_minSEXP);
+    rcpp_result_gen = Rcpp::wrap(iterate_matrix_min_by_col_cpp(matrix, col_min));
+    return rcpp_result_gen;
+END_RCPP
+}
 // iterate_matrix_pow_cpp
 SEXP iterate_matrix_pow_cpp(SEXP matrix, double exponent);
 RcppExport SEXP _BPCells_iterate_matrix_pow_cpp(SEXP matrixSEXP, SEXP exponentSEXP) {
@@ -1887,6 +1911,8 @@ static const R_CallMethodDef CallEntries[] = {
     {"_BPCells_iterate_matrix_expm1_cpp", (DL_FUNC) &_BPCells_iterate_matrix_expm1_cpp, 1},
     {"_BPCells_iterate_matrix_expm1simd_cpp", (DL_FUNC) &_BPCells_iterate_matrix_expm1simd_cpp, 1},
     {"_BPCells_iterate_matrix_min_cpp", (DL_FUNC) &_BPCells_iterate_matrix_min_cpp, 2},
+    {"_BPCells_iterate_matrix_min_by_row_cpp", (DL_FUNC) &_BPCells_iterate_matrix_min_by_row_cpp, 2},
+    {"_BPCells_iterate_matrix_min_by_col_cpp", (DL_FUNC) &_BPCells_iterate_matrix_min_by_col_cpp, 2},
     {"_BPCells_iterate_matrix_pow_cpp", (DL_FUNC) &_BPCells_iterate_matrix_pow_cpp, 2},
     {"_BPCells_iterate_matrix_powsimd_cpp", (DL_FUNC) &_BPCells_iterate_matrix_powsimd_cpp, 2},
     {"_BPCells_iterate_matrix_square_cpp", (DL_FUNC) &_BPCells_iterate_matrix_square_cpp, 1},

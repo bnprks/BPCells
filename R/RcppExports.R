@@ -397,6 +397,14 @@ iterate_matrix_min_cpp <- function(matrix, min_val) {
     .Call(`_BPCells_iterate_matrix_min_cpp`, matrix, min_val)
 }
 
+iterate_matrix_min_by_row_cpp <- function(matrix, row_min) {
+    .Call(`_BPCells_iterate_matrix_min_by_row_cpp`, matrix, row_min)
+}
+
+iterate_matrix_min_by_col_cpp <- function(matrix, col_min) {
+    .Call(`_BPCells_iterate_matrix_min_by_col_cpp`, matrix, col_min)
+}
+
 iterate_matrix_pow_cpp <- function(matrix, exponent) {
     .Call(`_BPCells_iterate_matrix_pow_cpp`, matrix, exponent)
 }

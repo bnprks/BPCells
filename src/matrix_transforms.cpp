@@ -48,6 +48,24 @@ SEXP iterate_matrix_min_cpp(SEXP matrix, double min_val) {
 }
 
 // [[Rcpp::export]]
+SEXP iterate_matrix_min_by_row_cpp(SEXP matrix, Eigen::ArrayXXd row_min) {
+    XPtr<MatrixLoader<double>> input(matrix);
+    return Rcpp::wrap(
+        XPtr<MatrixLoader<double>>(new MinByRow(*input, TransformFit{row_min}))
+    );
+}
+
+
+// [[Rcpp::export]]
+SEXP iterate_matrix_min_by_col_cpp(SEXP matrix, Eigen::ArrayXXd col_min) {
+    XPtr<MatrixLoader<double>> input(matrix);
+    return Rcpp::wrap(
+        XPtr<MatrixLoader<double>>(new MinByCol(*input, TransformFit{{}, col_min}))
+    );
+}
+
+
+// [[Rcpp::export]]
 SEXP iterate_matrix_pow_cpp(SEXP matrix, double exponent) {
     XPtr<MatrixLoader<double>> input(matrix);
     Eigen::ArrayXd global_params(1);
