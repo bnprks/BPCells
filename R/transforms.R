@@ -214,7 +214,7 @@ setMethod("short_description", "TransformMinByRow", function(x) {
   # large parameter sets
   print_entries <- 3
   if (ncol(x@row_params) > print_entries + 1) {
-    x@row_params <- x@row_params[,c(1:print_entries, ncol(x@row_params))]
+    x@row_params <- x@row_params[,c(1:print_entries, ncol(x@row_params)),drop=FALSE]
   }
   
   c(
@@ -248,7 +248,7 @@ setMethod("short_description", "TransformMinByCol", function(x) {
   # large parameter sets
   print_entries <- 3
   if (ncol(x@col_params) > print_entries + 1) {
-    x@col_params <- x@col_params[,c(1:print_entries, ncol(x@col_params))]
+    x@col_params <- x@col_params[,c(1:print_entries, ncol(x@col_params)), drop=FALSE]
   }
   
   c(
