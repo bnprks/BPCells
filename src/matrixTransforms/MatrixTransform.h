@@ -3,6 +3,7 @@
 #include <array>
 #include <vector>
 
+#include "../matrixIterators/OrderRows.h"
 #include "../matrixIterators/MatrixIterator.h"
 
 namespace BPCells {
@@ -102,10 +103,12 @@ class MatrixTransformDense : public MatrixTransform {
     std::vector<double> rowSums(void (*checkInterrupt)(void) = NULL) override;
 
   protected:
+    OrderRows<double> ordered_loader; // Must wrap loader in OrderRows for load() to work
+
     // Perform a normal load from the underlying matrix, then subtract transform(0)
     // from each entry and return false if there are no more non-zero values to load
     // from the underlying matrix
-    virtual bool loadZeroSubtracted() = 0;
+    virtual bool loadZeroSubtracted(MatrixLoader<double> &loader) = 0;
     // Load a range of transform(0) values into an output vector.
     // The output values should represent rows `start_row` to `start_row + count`,
     // and come from column `col`

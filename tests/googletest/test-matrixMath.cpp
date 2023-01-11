@@ -345,7 +345,7 @@ class SimpleRowShift : public MatrixTransformDense {
   public:
     SimpleRowShift(MatrixLoader<double> &mat, TransformFit fit) : MatrixTransformDense(mat, fit) {}
 
-    bool loadZeroSubtracted() override { return loader.load(); }
+    bool loadZeroSubtracted(MatrixLoader<double> &loader) override { return loader.load(); }
     void loadZero(double *values, uint32_t count, uint32_t start_row, uint32_t col) override {
         for (uint32_t i = 0; i < count; i++) {
             values[i] = fit.row_params(0, start_row + i);
@@ -362,6 +362,35 @@ TEST(MatrixMath, TransformDense) {
     // Shift row
     MatrixXd ans1 = MatrixXd(m1).array().colwise() + shift_row.row(0).transpose();
     SimpleRowShift s1(mat_1, TransformFit{get_map<ArrayXXd>(shift_row), {}});
+
+    checkMultiplyOps(s1, ans1);
+
+    CSparseMatrixWriter r1;
+    s1.restart();
+    r1.write(s1);
+
+    EXPECT_TRUE(MatrixXd(r1.getMat()).isApprox(ans1));
+}
+
+TEST(MatrixMath, TransformDenseReorder) {
+    // Regression test for issue #4: segfault on transforms of reordered matrices
+    
+    // Make enough rows so that we'll have more than one read chunk per col
+    SparseMatrix<double> m1 = generate_mat(10000, 2, 125123);
+    CSparseMatrix mat_1(get_map(m1));
+
+    // Put in reverse order
+    std::vector<uint32_t> row_select;
+    for (int i = 0; i < mat_1.rows(); i++) {
+        row_select.push_back(mat_1.rows() - 1 - i);
+    }
+    MatrixRowSelect mat_2(mat_1, row_select);
+
+    ArrayXXd shift_row = generate_dense_vec(m1.rows(), 1513).transpose();
+    // Shift row 
+    SimpleRowShift s1(mat_2, TransformFit{get_map<ArrayXXd>(shift_row), {}});
+
+    MatrixXd ans1 = MatrixXd(m1).array().colwise().reverse().colwise() + shift_row.row(0).transpose();
 
     checkMultiplyOps(s1, ans1);
 

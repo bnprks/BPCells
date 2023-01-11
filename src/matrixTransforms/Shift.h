@@ -10,7 +10,7 @@ class ShiftRows : public MatrixTransformDense {
   public:
     ShiftRows(MatrixLoader<double> &mat, TransformFit fit);
 
-    bool loadZeroSubtracted() override;
+    bool loadZeroSubtracted(MatrixLoader<double> &loader) override;
     void loadZero(double *values, uint32_t count, uint32_t start_row, uint32_t col) override;
 
     Eigen::MatrixXd denseMultiplyRight(
@@ -32,7 +32,7 @@ class ShiftCols : public MatrixTransformDense {
   public:
     ShiftCols(MatrixLoader<double> &mat, TransformFit fit);
 
-    bool loadZeroSubtracted() override;
+    bool loadZeroSubtracted(MatrixLoader<double> &loader) override;
     void loadZero(double *values, uint32_t count, uint32_t start_row, uint32_t col) override;
 
     Eigen::MatrixXd denseMultiplyRight(

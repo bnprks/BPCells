@@ -7,7 +7,7 @@ namespace BPCells {
 ShiftRows::ShiftRows(MatrixLoader<double> &mat, TransformFit fit)
     : MatrixTransformDense(mat, fit) {}
 
-bool ShiftRows::loadZeroSubtracted() {
+bool ShiftRows::loadZeroSubtracted(MatrixLoader<double> &loader) {
     // shift(data) - shift(0) = data by definition
     return loader.load();
 }
@@ -51,7 +51,7 @@ ShiftRows::vecMultiplyLeft(const Eigen::Map<Eigen::VectorXd> v, void (*checkInte
 ShiftCols::ShiftCols(MatrixLoader<double> &mat, TransformFit fit)
     : MatrixTransformDense(mat, fit) {}
 
-bool ShiftCols::loadZeroSubtracted() {
+bool ShiftCols::loadZeroSubtracted(MatrixLoader<double> &loader) {
     // shift(data) - shift(0) = data by definition
     return loader.load();
 }

@@ -11,10 +11,10 @@ MatrixTransform::MatrixTransform(MatrixLoader<double> &loader, TransformFit fit)
 TransformFit MatrixTransform::getFit() { return fit; }
 
 MatrixTransformDense::MatrixTransformDense(MatrixLoader<double> &mat, TransformFit fit)
-    : MatrixTransform(mat, fit) {}
+    : MatrixTransform(mat, fit), ordered_loader(mat) {}
 
 void MatrixTransformDense::restart() {
-    loader.restart();
+    ordered_loader.restart();
     loader_idx = UINT32_MAX;
     loader_col = UINT32_MAX;
     loader_capacity = 0;
@@ -25,7 +25,7 @@ void MatrixTransformDense::restart() {
 void MatrixTransformDense::seekCol(uint32_t col) {
     current_col = col;
     current_row = 0;
-    loader.seekCol(col);
+    ordered_loader.seekCol(col);
     loader_capacity = UINT32_MAX;
     loader_idx = UINT32_MAX;
 }
@@ -35,8 +35,8 @@ bool MatrixTransformDense::nextCol() {
     loader_idx = 0;
     current_row = 0;
     if (current_col == loader_col) {
-        if (loader.nextCol()) {
-            loader_col = loader.currentCol();
+        if (ordered_loader.nextCol()) {
+            loader_col = ordered_loader.currentCol();
             loader_idx = UINT32_MAX;
             loader_capacity = UINT32_MAX;
         } else {
@@ -44,7 +44,7 @@ bool MatrixTransformDense::nextCol() {
         }
     }
     current_col += 1;
-    if (current_col >= loader.cols()) {
+    if (current_col >= ordered_loader.cols()) {
         current_col -= 1;
         return false;
     }
@@ -54,8 +54,8 @@ bool MatrixTransformDense::nextCol() {
 uint32_t MatrixTransformDense::currentCol() const { return current_col; }
 
 bool MatrixTransformDense::load() {
-    if (current_row >= loader.rows()) return false;
-    uint32_t load_size = std::min(buf_size, loader.rows() - current_row);
+    if (current_row >= ordered_loader.rows()) return false;
+    uint32_t load_size = std::min(buf_size, ordered_loader.rows() - current_row);
 
     // Load the dense values assuming the underlying data is all 0
     for (uint32_t i = 0; i < load_size; i++)
@@ -63,16 +63,16 @@ bool MatrixTransformDense::load() {
     loadZero(val_data.data(), load_size, current_row, current_col);
 
     // Correct the values at entries that are not actually 0
-    uint32_t *loader_row = loader.rowData();
-    double *loader_val = loader.valData();
+    uint32_t *loader_row = ordered_loader.rowData();
+    double *loader_val = ordered_loader.valData();
     while (loader_capacity > 0) {
         if (loader_idx >= loader_capacity) {
-            if (!loadZeroSubtracted()) loader_capacity = 0;
-            else loader_capacity = loader.capacity();
+            if (!loadZeroSubtracted(ordered_loader)) loader_capacity = 0;
+            else loader_capacity = ordered_loader.capacity();
             loader_idx = 0;
             if (loader_capacity == 0) break;
-            loader_row = loader.rowData();
-            loader_val = loader.valData();
+            loader_row = ordered_loader.rowData();
+            loader_val = ordered_loader.valData();
         }
         if (loader_row[loader_idx] >= current_row + load_size) break;
         val_data[loader_row[loader_idx] - current_row] += loader_val[loader_idx];
@@ -85,7 +85,7 @@ bool MatrixTransformDense::load() {
 uint32_t MatrixTransformDense::capacity() const {
     // Always buf_size capacity unless we're at the end of a column, in which case whatever the
     // remainder is of buf_size
-    return current_row != loader.rows() ? buf_size
+    return current_row != ordered_loader.rows() ? buf_size
                                         : current_row - ((current_row - 1) / buf_size) * buf_size;
 }
 uint32_t *MatrixTransformDense::rowData() { return row_data.data(); }
@@ -103,7 +103,8 @@ Eigen::MatrixXd MatrixTransformDense::denseMultiplyRight(
     while (nextCol()) {
         const uint32_t col = currentCol();
         if (checkInterrupt != NULL && col % 128 == 0) checkInterrupt();
-        while (loadZeroSubtracted()) {
+        // Don't need ordered loads here
+        while (loadZeroSubtracted(loader)) {
             const double *val_data = loader.valData();
             const uint32_t *row_data = loader.rowData();
             const uint32_t count = loader.capacity();
@@ -131,7 +132,8 @@ Eigen::MatrixXd MatrixTransformDense::denseMultiplyLeft(
     while (nextCol()) {
         const uint32_t col = currentCol();
         if (checkInterrupt != NULL && col % 128 == 0) checkInterrupt();
-        while (loadZeroSubtracted()) {
+        // Don't need ordered loads here
+        while (loadZeroSubtracted(loader)) {
             const double *val_data = loader.valData();
             const uint32_t *row_data = loader.rowData();
             const uint32_t count = loader.capacity();
@@ -159,7 +161,8 @@ Eigen::VectorXd MatrixTransformDense::vecMultiplyRight(
     while (nextCol()) {
         const uint32_t col = currentCol();
         if (checkInterrupt != NULL && col % 128 == 0) checkInterrupt();
-        while (loadZeroSubtracted()) {
+        // Don't need ordered loads here
+        while (loadZeroSubtracted(loader)) {
             const double *val_data = loader.valData();
             const uint32_t *row_data = loader.rowData();
             const uint32_t count = loader.capacity();
@@ -186,7 +189,8 @@ Eigen::VectorXd MatrixTransformDense::vecMultiplyLeft(
     while (nextCol()) {
         const uint32_t col = currentCol();
         if (checkInterrupt != NULL && col % 128 == 0) checkInterrupt();
-        while (loadZeroSubtracted()) {
+        // Don't need ordered loads here
+        while (loadZeroSubtracted(loader)) {
             const double *val_data = loader.valData();
             const uint32_t *row_data = loader.rowData();
             const uint32_t count = loader.capacity();

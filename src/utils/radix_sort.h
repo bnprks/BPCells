@@ -1,5 +1,5 @@
 #pragma once
-
+#include <cstdint>
 // Provide a templated radix_sort method that works on
 namespace BPCells {
 
