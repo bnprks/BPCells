@@ -1,17 +1,19 @@
 #include "SCTransform.h"
 
-namespace BPCells { 
+namespace BPCells {
 // bool SCTransformPearson::nextCol() {
 //     if (!MatrixTransformDense::nextCol()) return false;
 
-//     col_mu = fit.row_params.block(1, 0, fit.row_params.rows()-1, fit.row_params.cols()).matrix().transpose() *
+//     col_mu = fit.row_params.block(1, 0, fit.row_params.rows()-1,
+//     fit.row_params.cols()).matrix().transpose() *
 //         fit.col_params.matrix().col(currentCol());
 // }
 
 // void SCTransformPearson::seekCol(uint32_t col) {
 //     MatrixTransformDense::seekCol(col);
 //     if (currentCol() < cols()) {
-//         col_mu = fit.row_params.block(1, 0, fit.row_params.rows()-1, fit.row_params.cols()).matrix().transpose() *
+//         col_mu = fit.row_params.block(1, 0, fit.row_params.rows()-1,
+//         fit.row_params.cols()).matrix().transpose() *
 //             fit.col_params.matrix().col(currentCol());
 //     }
 
@@ -19,13 +21,14 @@ namespace BPCells {
 
 bool SCTransformPearson::loadZeroSubtracted(MatrixLoader<double> &loader) {
     if (!loader.load()) return false;
-    
+
     uint32_t *row_data = loader.rowData();
     double *val_data = loader.valData();
     uint32_t capacity = loader.capacity();
     for (uint32_t i = 0; i < capacity; i++) {
-        double mu = (fit.row_params.col(row_data[i]).tail(fit.row_params.rows()-1)).matrix()\
-            .dot(fit.col_params.matrix().col(currentCol()));
+        double mu = (fit.row_params.col(row_data[i]).tail(fit.row_params.rows() - 1))
+                        .matrix()
+                        .dot(fit.col_params.matrix().col(currentCol()));
         mu = exp(mu);
         double theta_inv = fit.row_params(0, row_data[i]);
         val_data[i] /= sqrt(mu + mu * mu * theta_inv);
@@ -33,15 +36,24 @@ bool SCTransformPearson::loadZeroSubtracted(MatrixLoader<double> &loader) {
     return true;
 }
 
-void SCTransformPearson::loadZero(double *values, uint32_t count, uint32_t start_row, uint32_t col) {
+void SCTransformPearson::loadZero(
+    double *values, uint32_t count, uint32_t start_row, uint32_t col
+) {
+    //Eigen::internal::set_is_malloc_allowed(false);
     Eigen::Map<Eigen::ArrayXd> out(values, count);
     // Assign mu to out
-    out = (fit.row_params.block(1, start_row, fit.row_params.rows()-1, count).matrix().transpose() *
-         fit.col_params.matrix().col(col)).array().exp().array();
-    auto theta_inv = fit.row_params.block(0, start_row, 1, count).transpose();
+    out =
+        (fit.row_params.block(1, start_row, fit.row_params.rows() - 1, count).matrix().transpose() *
+         fit.col_params.matrix().col(col))
+            .array()
+            .exp()
+            .array();
 
-    // Calculate values
-    out = -out * (out + out*out*theta_inv).rsqrt();
+    // Calculate values in floating point precision then cast back to double
+    auto theta_inv = fit.row_params.block(0, start_row, 1, count).transpose().cast<float>();
+    auto mu = out.cast<float>();
+    out = (-mu * (mu + mu * mu * theta_inv).rsqrt()).cast<double>();
+    //Eigen::internal::set_is_malloc_allowed(true);
 }
 
 } // end namespace BPCells
