@@ -34,16 +34,14 @@ bool SCTransformPearson::loadZeroSubtracted(MatrixLoader<double> &loader) {
 }
 
 void SCTransformPearson::loadZero(double *values, uint32_t count, uint32_t start_row, uint32_t col) {
-    Eigen::ArrayXd mu = (fit.row_params.block(1, start_row, fit.row_params.rows()-1, count).matrix().transpose() *
+    Eigen::Map<Eigen::ArrayXd> out(values, count);
+    // Assign mu to out
+    out = (fit.row_params.block(1, start_row, fit.row_params.rows()-1, count).matrix().transpose() *
          fit.col_params.matrix().col(col)).array().exp().array();
+    auto theta_inv = fit.row_params.block(0, start_row, 1, count).transpose();
 
-    
-    
-    for (uint32_t i = 0; i < count; i++) {
-        double m = mu(i);
-        double theta_inv = fit.row_params(0, start_row+i);
-        values[i] = -m / sqrt(m + m*m*theta_inv);
-    }
+    // Calculate values
+    out = -out * (out + out*out*theta_inv).rsqrt();
 }
 
 } // end namespace BPCells
