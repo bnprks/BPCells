@@ -1,6 +1,7 @@
 #pragma once
 
 #include "MatrixTransform.h"
+#include "../lib/sleef_wrapper.h"
 
 namespace BPCells {
 
@@ -10,14 +11,14 @@ namespace BPCells {
 // Transform = (X - mu) / sqrt(mu + mu^2/theta)
 class SCTransformPearson : public MatrixTransformDense {
   private:
-    //uint32_t cached_col = UINT32_MAX;
-    //Eigen::ArrayXf col_mu; // Cached values of mu for current column
+    uint32_t cached_col = UINT32_MAX;
+    Eigen::ArrayXf col_mu; // Cached values of mu for current column
     Eigen::ArrayXf theta_inv;
     Eigen::ArrayXXf col_mat;
     Eigen::ArrayXXf row_mat;
     Eigen::Array<float, 2048, 1> mu_tmp;
 
-    //void ensure_cached_mu(uint32_t col);
+    void ensure_cached_mu(uint32_t col);
   public:
     SCTransformPearson(MatrixLoader<double> &loader, TransformFit fit);
 
