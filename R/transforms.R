@@ -292,25 +292,34 @@ setMethod("short_description", "SCTransformPearson", function(x) {
 #'
 #' Calculate pearson residuals of a negative binomial sctransform model.
 #' Normalized values are calculated as `(X - mu) / sqrt(mu + mu^2/theta)`
-#' mu is calculated as `exp(`
+#' mu is calculated as `exp(gene_factors %*% t(cell_factors))`.
 #' 
 #' @param mat IterableMatrix
 #' @param thetas Vector of theta (overdispersion values)
+#' @param gene_factors genes x K matrix of gene parameters fit 
+#' @param cell_factors cells x K matrix of cell parameters fit
 #' @return IterableMatrix
 #' @description Take the elementwise minimum with a positive value.
 #' This has the effect of capping the maximum value in the matrix
 #' @export
 sctransform_pearson <- function(mat, thetas, gene_factors, cell_factors) {
   assert_is(mat, "IterableMatrix")
-  assert_is(thetas, "numeric")
-  assert_is(gene_factors, "numeric")
-  assert_is(cell_factors, "numeric")
-  
-  assert_true()
+  assert_is_numeric(thetas)
+  assert_is_numeric(gene_factors)
+  assert_is_numeric(cell_factors)
 
-  res <- wrapMatrix("SCTransformPearson", convert_matrix_type(mat, "double"))
-  res@global_params <- val
-  res
+  assert_greater_than_zero(thetas)
+  # Check dimensions
+  assert_true(ncol(gene_factors) == ncol(cell_factors))
+  assert_true(nrow(gene_factors) == nrow(mat))
+  assert_true(nrow(cell_factors) == ncol(mat))
+
+  wrapMatrix(
+    "SCTransformPearson", 
+    convert_matrix_type(mat, "double"),
+    row_params = rbind(1/thetas, t(gene_factors)),
+    col_params = t(cell_factors)
+  )
 }
 
 

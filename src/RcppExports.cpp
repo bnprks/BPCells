@@ -1403,6 +1403,19 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// iterate_matrix_sctransform_pearson_cpp
+SEXP iterate_matrix_sctransform_pearson_cpp(SEXP matrix, Eigen::Map<Eigen::ArrayXXd> gene_params, Eigen::Map<Eigen::ArrayXXd> cell_params);
+RcppExport SEXP _BPCells_iterate_matrix_sctransform_pearson_cpp(SEXP matrixSEXP, SEXP gene_paramsSEXP, SEXP cell_paramsSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type matrix(matrixSEXP);
+    Rcpp::traits::input_parameter< Eigen::Map<Eigen::ArrayXXd> >::type gene_params(gene_paramsSEXP);
+    Rcpp::traits::input_parameter< Eigen::Map<Eigen::ArrayXXd> >::type cell_params(cell_paramsSEXP);
+    rcpp_result_gen = Rcpp::wrap(iterate_matrix_sctransform_pearson_cpp(matrix, gene_params, cell_params));
+    return rcpp_result_gen;
+END_RCPP
+}
 // iterate_matrix_scale_cpp
 SEXP iterate_matrix_scale_cpp(SEXP matrix, Eigen::Map<Eigen::ArrayXXd> row_scale, Eigen::Map<Eigen::ArrayXXd> col_scale);
 RcppExport SEXP _BPCells_iterate_matrix_scale_cpp(SEXP matrixSEXP, SEXP row_scaleSEXP, SEXP col_scaleSEXP) {
@@ -1916,6 +1929,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_BPCells_iterate_matrix_pow_cpp", (DL_FUNC) &_BPCells_iterate_matrix_pow_cpp, 2},
     {"_BPCells_iterate_matrix_powsimd_cpp", (DL_FUNC) &_BPCells_iterate_matrix_powsimd_cpp, 2},
     {"_BPCells_iterate_matrix_square_cpp", (DL_FUNC) &_BPCells_iterate_matrix_square_cpp, 1},
+    {"_BPCells_iterate_matrix_sctransform_pearson_cpp", (DL_FUNC) &_BPCells_iterate_matrix_sctransform_pearson_cpp, 3},
     {"_BPCells_iterate_matrix_scale_cpp", (DL_FUNC) &_BPCells_iterate_matrix_scale_cpp, 3},
     {"_BPCells_iterate_matrix_row_shift_cpp", (DL_FUNC) &_BPCells_iterate_matrix_row_shift_cpp, 2},
     {"_BPCells_iterate_matrix_col_shift_cpp", (DL_FUNC) &_BPCells_iterate_matrix_col_shift_cpp, 2},

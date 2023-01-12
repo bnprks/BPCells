@@ -7,6 +7,7 @@
 #include "matrixTransforms/Pow.h"
 #include "matrixTransforms/MatrixTransform.h"
 #include "matrixTransforms/Min.h"
+#include "matrixTransforms/SCTransform.h"
 #include "matrixTransforms/Scale.h"
 #include "matrixTransforms/Shift.h"
 
@@ -85,6 +86,12 @@ SEXP iterate_matrix_powsimd_cpp(SEXP matrix, double exponent) {
 SEXP iterate_matrix_square_cpp(SEXP matrix) {
     XPtr<MatrixLoader<double>> input(matrix);
     return Rcpp::wrap(XPtr<MatrixLoader<double>>(new Square(*input)));
+}
+
+// [[Rcpp::export]]
+SEXP iterate_matrix_sctransform_pearson_cpp(SEXP matrix, Eigen::Map<Eigen::ArrayXXd> gene_params, Eigen::Map<Eigen::ArrayXXd> cell_params) {
+    XPtr<MatrixLoader<double>> input(matrix);
+    return Rcpp::wrap(XPtr<MatrixLoader<double>>(new SCTransformPearson(*input, TransformFit{gene_params, cell_params})));
 }
 
 // [[Rcpp::export]]
