@@ -86,6 +86,17 @@ inline vec_double load_double(double const *mem_addr) { return _mm256_loadu_pd(m
 inline void store_double(double *mem_addr, vec_double v) { _mm256_storeu_pd(mem_addr, v); }
 inline vec_double splat_double(double f) { return _mm256_set1_pd(f); }
 
+inline void store_float_to_double(double *mem_addr, vec_float v) {
+    // Write low floats
+    store_double(mem_addr, _mm256_cvtps_pd(_mm256_castps256_ps128(v)));
+    // Write high floats
+    store_double(mem_addr + 4, _mm256_cvtps_pd(_mm256_extractf128_ps(v, 1)));
+}
+
+inline void store_double_to_float(float *mem_addr, vec_double v) {
+    _mm_storeu_ps(mem_addr, _mm256_cvtpd_ps(v));
+}
+
 inline vec_float log1p_f(const vec_float &v) { return Sleef_log1pf8_u10avx2(v); }
 inline vec_double log1p_d(const vec_double &v) { return Sleef_log1pd4_u10avx2(v); }
 
@@ -153,6 +164,18 @@ inline vec_double load_double(double const *mem_addr) { return _mm256_loadu_pd(m
 inline void store_double(double *mem_addr, vec_double v) { _mm256_storeu_pd(mem_addr, v); }
 inline vec_double splat_double(double f) { return _mm256_set1_pd(f); }
 
+inline void store_float_to_double(double *mem_addr, vec_float v) {
+    // See: https://stackoverflow.com/a/66537016
+    // Write low floats
+    store_double(mem_addr, _mm256_cvtps_pd(_mm256_castps256_ps128(v)));
+    // Write high floats
+    store_double(mem_addr + 4, _mm256_cvtps_pd(_mm256_extractf128_ps(v, 1)));
+}
+
+inline void store_double_to_float(float *mem_addr, vec_double v) {
+    _mm_storeu_ps(mem_addr, _mm256_cvtpd_ps(v));
+}
+
 inline vec_float log1p_f(const vec_float &v) { return Sleef_log1pf8_u10avx(v); }
 inline vec_double log1p_d(const vec_double &v) { return Sleef_log1pd4_u10avx(v); }
 
@@ -219,6 +242,18 @@ inline vec_float splat_float(float f) { return _mm_set1_ps(f); }
 inline vec_double load_double(double const *mem_addr) { return _mm_loadu_pd(mem_addr); }
 inline void store_double(double *mem_addr, vec_double v) { _mm_storeu_pd(mem_addr, v); }
 inline vec_double splat_double(double f) { return _mm_set1_pd(f); }
+
+inline void store_float_to_double(double *mem_addr, vec_float v) {
+    // Write low floats
+    store_double(mem_addr, _mm_cvtps_pd(v));
+    
+    // Write high floats
+    store_double(mem_addr + 2, _mm_cvtps_pd(_mm_shuffle_ps(v, v, _MM_SHUFFLE(3,2,3,2))));
+}
+
+inline void store_double_to_float(float *mem_addr, vec_double v) {
+    _mm_storeu_si64(mem_addr, _mm_cvtpd_ps(v));
+}
 
 inline vec_float log1p_f(const vec_float &v) { return Sleef_log1pf4_u10sse2(v); }
 inline vec_double log1p_d(const vec_double &v) { return Sleef_log1pd2_u10sse2(v); }
@@ -288,6 +323,19 @@ inline vec_double load_double(double const *mem_addr) { return vld1q_f64(mem_add
 inline void store_double(double *mem_addr, vec_double v) { vst1q_f64(mem_addr, v); }
 inline vec_double splat_double(double f) { return vdupq_n_f64(f); }
 
+inline void store_float_to_double(double *mem_addr, vec_float v) {
+    // Write low floats
+    store_double(mem_addr, vcvt_high_f64_f32(vextq_f32(v, v, 2)));
+    
+    // Write high floats
+    store_double(mem_addr + 2, vcvt_high_f64_f32(v));
+}
+
+inline void store_double_to_float(float *mem_addr, vec_double v) {
+    vst1_f32(mem_addr, vcvt_f32_f64(v));
+}
+
+
 inline vec_float log1p_f(const vec_float &v) { return Sleef_log1pf4_u10advsimd(v); }
 inline vec_double log1p_d(const vec_double &v) { return Sleef_log1pd2_u10advsimd(v); }
 
@@ -327,7 +375,7 @@ inline vec_float rsqrt_f(const vec_float &a) {
 }
 inline vec_double rsqrt_d(const vec_double &a) {
     // Newton iter count from "Core/arch/NEON/MathFunctions.h"
-    return rsqrt_newton_d<3>(a, vrsqrteq_f32(a));
+    return rsqrt_newton_d<3>(a, vrsqrteq_f64(a));
 }
 
 #else
@@ -363,6 +411,21 @@ inline void store_double(double *mem_addr, vec_double v) {
     mem_addr[3] = v.x3;
 }
 inline vec_double splat_double(double f) { return {f, f, f, f}; }
+
+inline void store_float_to_double(double *mem_addr, vec_float v) {
+    mem_addr[0] = v.x0;
+    mem_addr[1] = v.x1;
+    mem_addr[2] = v.x2;
+    mem_addr[3] = v.x3;
+}
+
+inline void store_double_to_float(float *mem_addr, vec_double v) {
+    mem_addr[0] = v.x0;
+    mem_addr[1] = v.x1;
+    mem_addr[2] = v.x2;
+    mem_addr[3] = v.x3;
+}
+
 
 inline vec_float log1p_f(const vec_float &v) {
     return {log1pf(v.x0), log1pf(v.x1), log1pf(v.x2), log1pf(v.x3)};
@@ -408,7 +471,7 @@ inline vec_double mul_d(const vec_double &a, const vec_double &b) {
 }
 
 inline vec_float neg_f(const vec_float &a) { return {-a.x0, -a.x1, -a.x2, -a.x3}; }
-inline vec_float neg_d(const vec_double &a) { return {-a.x0, -a.x1, -a.x2, -a.x3}; }
+inline vec_double neg_d(const vec_double &a) { return {-a.x0, -a.x1, -a.x2, -a.x3}; }
 
 inline vec_float rsqrt_f(const vec_float &a) {
     return {1 / sqrtf(a.x0), 1 / sqrtf(a.x1), 1 / sqrtf(a.x2), 1 / sqrtf(a.x3)};
