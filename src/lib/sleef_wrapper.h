@@ -4,7 +4,6 @@
 #include <cmath>
 #include <cstdint>
 
-
 #define _BPCELLS_SLEEF_FALLBACK 0
 #define _BPCELLS_SLEEF_SSE2 1
 #define _BPCELLS_SLEEF_AVX 2
@@ -71,7 +70,6 @@
 
 namespace BPCells {
 
-// Note: may need to improve
 #if BPCELLS_SLEEF_MODE == _BPCELLS_SLEEF_AVX2
 
 #define BPCELLS_VEC_FLOAT_SIZE 8
@@ -99,6 +97,44 @@ inline vec_float pow_f(const vec_float &v, const vec_float &exp) {
 }
 inline vec_double pow_d(const vec_double &v, const vec_double &exp) {
     return Sleef_powd4_u10avx2(v, exp);
+}
+
+// Use dedicated FMA instruction. Returns (a*b) + c
+inline vec_float fma_f(const vec_float &a, const vec_float &b, const vec_float &c) {
+    return Sleef_fmaf8_avx2(a, b, c);
+}
+inline vec_double fma_d(const vec_double &a, const vec_double &b, const vec_double &c) {
+    return Sleef_fmad4_avx2(a, b, c);
+}
+
+inline vec_float add_f(const vec_float &a, const vec_float &b) { return _mm256_add_ps(a, b); }
+inline vec_double add_d(const vec_double &a, const vec_double &b) { return _mm256_add_pd(a, b); }
+
+inline vec_float mul_f(const vec_float &a, const vec_float &b) { return _mm256_mul_ps(a, b); }
+inline vec_double mul_d(const vec_double &a, const vec_double &b) { return _mm256_mul_pd(a, b); }
+
+inline vec_float neg_f(const vec_float &a) {
+    // Constant from Eigen "Core/arch/AVX/PacketMath.h"
+    vec_float mask = _mm256_castsi256_ps(_mm256_set1_epi32(0x80000000));
+    return _mm256_xor_ps(a, mask);
+}
+inline vec_double neg_d(const vec_double &a) {
+    // Constant from Eigen "Core/arch/AVX/PacketMath.h"
+    vec_double mask = _mm256_castsi256_pd(_mm256_set1_epi64x(0x8000000000000000ULL));
+    return _mm256_xor_pd(a, mask);
+}
+
+template <int It> inline vec_float rsqrt_newton_f(const vec_float &a, const vec_float &approx);
+template <int It> inline vec_double rsqrt_newton_d(const vec_double &a, const vec_double &approx);
+
+inline vec_float rsqrt_f(const vec_float &a) {
+    // Newton iter count from "Core/arch/AVX/MathFunctions.h"
+    return rsqrt_newton_f<1>(a, _mm256_rsqrt_ps(a));
+}
+inline vec_double rsqrt_d(const vec_double &a) {
+    // I don't think the newton iteration is worth it given the lack of fast approximation in double
+    // precision
+    return _mm256_div_pd(splat_double(1.0), _mm256_sqrt_pd(a));
 }
 
 #elif BPCELLS_SLEEF_MODE == _BPCELLS_SLEEF_AVX
@@ -130,6 +166,44 @@ inline vec_double pow_d(const vec_double &v, const vec_double &exp) {
     return Sleef_powd4_u10avx(v, exp);
 }
 
+// Use dedicated FMA instruction. Returns (a*b) + c
+inline vec_float fma_f(const vec_float &a, const vec_float &b, const vec_float &c) {
+    return Sleef_fmaf8_avx(a, b, c);
+}
+inline vec_double fma_d(const vec_double &a, const vec_double &b, const vec_double &c) {
+    return Sleef_fmad4_avx(a, b, c);
+}
+
+inline vec_float add_f(const vec_float &a, const vec_float &b) { return _mm256_add_ps(a, b); }
+inline vec_double add_d(const vec_double &a, const vec_double &b) { return _mm256_add_pd(a, b); }
+
+inline vec_float mul_f(const vec_float &a, const vec_float &b) { return _mm256_mul_ps(a, b); }
+inline vec_double mul_d(const vec_double &a, const vec_double &b) { return _mm256_mul_pd(a, b); }
+
+inline vec_float neg_f(const vec_float &a) {
+    // Constant from Eigen "Core/arch/AVX/PacketMath.h"
+    vec_float mask = _mm256_castsi256_ps(_mm256_set1_epi32(0x80000000));
+    return _mm256_xor_ps(a, mask);
+}
+inline vec_double neg_d(const vec_double &a) {
+    // Constant from Eigen "Core/arch/AVX/PacketMath.h"
+    vec_double mask = _mm256_castsi256_pd(_mm256_set1_epi64x(0x8000000000000000ULL));
+    return _mm256_xor_pd(a, mask);
+}
+
+template <int It> inline vec_float rsqrt_newton_f(const vec_float &a, const vec_float &approx);
+template <int It> inline vec_double rsqrt_newton_d(const vec_double &a, const vec_double &approx);
+
+inline vec_float rsqrt_f(const vec_float &a) {
+    // Newton iter count from "Core/arch/AVX/MathFunctions.h"
+    return rsqrt_newton_f<1>(a, _mm256_rsqrt_ps(a));
+}
+inline vec_double rsqrt_d(const vec_double &a) {
+    // I don't think the newton iteration is worth it given the lack of fast approximation in double
+    // precision
+    return _mm256_div_pd(splat_double(1.0), _mm256_sqrt_pd(a));
+}
+
 #elif BPCELLS_SLEEF_MODE == _BPCELLS_SLEEF_SSE2
 
 #define BPCELLS_VEC_FLOAT_SIZE 4
@@ -159,6 +233,45 @@ inline vec_double pow_d(const vec_double &v, const vec_double &exp) {
     return Sleef_powd2_u10sse2(v, exp);
 }
 
+// Use dedicated FMA instruction. Returns (a*b) + c
+inline vec_float fma_f(const vec_float &a, const vec_float &b, const vec_float &c) {
+    return Sleef_fmaf4_sse2(a, b, c);
+}
+inline vec_double fma_d(const vec_double &a, const vec_double &b, const vec_double &c) {
+    return Sleef_fmad2_sse2(a, b, c);
+}
+
+inline vec_float add_f(const vec_float &a, const vec_float &b) { return _mm_add_ps(a, b); }
+inline vec_double add_d(const vec_double &a, const vec_double &b) { return _mm_add_pd(a, b); }
+
+inline vec_float mul_f(const vec_float &a, const vec_float &b) { return _mm_mul_ps(a, b); }
+inline vec_double mul_d(const vec_double &a, const vec_double &b) { return _mm_mul_pd(a, b); }
+
+inline vec_float neg_f(const vec_float &a) {
+    // Constant from Eigen "Core/arch/SSE/PacketMath.h"
+    vec_float mask =
+        _mm_castsi128_ps(_mm_setr_epi32(0x80000000, 0x80000000, 0x80000000, 0x80000000));
+    return _mm_xor_ps(a, mask);
+}
+inline vec_double neg_d(const vec_double &a) {
+    // Constant from Eigen "Core/arch/SSE/PacketMath.h"
+    vec_double mask = _mm_castsi128_pd(_mm_setr_epi32(0x0, 0x80000000, 0x0, 0x80000000));
+    return _mm_xor_pd(a, mask);
+}
+
+template <int It> inline vec_float rsqrt_newton_f(const vec_float &a, const vec_float &approx);
+template <int It> inline vec_double rsqrt_newton_d(const vec_double &a, const vec_double &approx);
+
+inline vec_float rsqrt_f(const vec_float &a) {
+    // Newton iter count from "Core/arch/SSE/MathFunctions.h"
+    return rsqrt_newton_f<1>(a, _mm_rsqrt_ps(a));
+}
+inline vec_double rsqrt_d(const vec_double &a) {
+    // I don't think the newton iteration is worth it given the lack of fast approximation in double
+    // precision
+    return _mm_div_pd(splat_double(1.0), _mm_sqrt_pd(a));
+}
+
 #elif BPCELLS_SLEEF_MODE == _BPCELLS_SLEEF_NEON
 
 #define BPCELLS_VEC_FLOAT_SIZE 4
@@ -186,6 +299,35 @@ inline vec_float pow_f(const vec_float &v, const vec_float &exp) {
 }
 inline vec_double pow_d(const vec_double &v, const vec_double &exp) {
     return Sleef_powd2_u10advsimd(v, exp);
+}
+
+// Use dedicated FMA instruction. Returns (a*b) + c
+inline vec_float fma_f(const vec_float &a, const vec_float &b, const vec_float &c) {
+    return Sleef_fmaf4_advsimd(a, b, c);
+}
+inline vec_double fma_d(const vec_double &a, const vec_double &b, const vec_double &c) {
+    return Sleef_fmad2_advsimd(a, b, c);
+}
+
+inline vec_float add_f(const vec_float &a, const vec_float &b) { return vaddq_f32(a, b); }
+inline vec_double add_d(const vec_double &a, const vec_double &b) { return vaddq_f64(a, b); }
+
+inline vec_float mul_f(const vec_float &a, const vec_float &b) { return vmulq_f32(a, b); }
+inline vec_double mul_d(const vec_double &a, const vec_double &b) { return vmulq_f64(a, b); }
+
+inline vec_float neg_f(const vec_float &a) { return vnegq_f32(a); }
+inline vec_double neg_d(const vec_double &a) { return vnegq_f64(a); }
+
+template <int It> inline vec_float rsqrt_newton_f(const vec_float &a, const vec_float &approx);
+template <int It> inline vec_double rsqrt_newton_d(const vec_double &a, const vec_double &approx);
+
+inline vec_float rsqrt_f(const vec_float &a) {
+    // Newton iter count from "Core/arch/NEON/MathFunctions.h"
+    return rsqrt_newton_f<2>(a, vrsqrteq_f32(a));
+}
+inline vec_double rsqrt_d(const vec_double &a) {
+    // Newton iter count from "Core/arch/NEON/MathFunctions.h"
+    return rsqrt_newton_d<3>(a, vrsqrteq_f32(a));
 }
 
 #else
@@ -243,8 +385,75 @@ inline vec_double pow_d(const vec_double &v, const vec_double &exp) {
     return {pow(v.x0, exp.x0), pow(v.x1, exp.x1), pow(v.x2, exp.x2), pow(v.x3, exp.x3)};
 }
 
+// Use dedicated FMA instruction. Returns (a*b) + c
+inline vec_float fma_f(const vec_float &a, const vec_float &b, const vec_float &c) {
+    return {a.x0 * b.x0 + c.x0, a.x1 * b.x1 + c.x1, a.x2 * b.x2 + c.x2, a.x3 * b.x3 + c.x3};
+}
+inline vec_double fma_d(const vec_double &a, const vec_double &b, const vec_double &c) {
+    return {a.x0 * b.x0 + c.x0, a.x1 * b.x1 + c.x1, a.x2 * b.x2 + c.x2, a.x3 * b.x3 + c.x3};
+}
+
+inline vec_float add_f(const vec_float &a, const vec_float &b) {
+    return {a.x0 + b.x0, a.x1 + b.x1, a.x2 + b.x2, a.x3 + b.x3};
+}
+inline vec_double add_d(const vec_double &a, const vec_double &b) {
+    return {a.x0 + b.x0, a.x1 + b.x1, a.x2 + b.x2, a.x3 + b.x3};
+}
+
+inline vec_float mul_f(const vec_float &a, const vec_float &b) {
+    return {a.x0 * b.x0, a.x1 * b.x1, a.x2 * b.x2, a.x3 * b.x3};
+}
+inline vec_double mul_d(const vec_double &a, const vec_double &b) {
+    return {a.x0 * b.x0, a.x1 * b.x1, a.x2 * b.x2, a.x3 * b.x3};
+}
+
+inline vec_float neg_f(const vec_float &a) { return {-a.x0, -a.x1, -a.x2, -a.x3}; }
+inline vec_float neg_d(const vec_double &a) { return {-a.x0, -a.x1, -a.x2, -a.x3}; }
+
+inline vec_float rsqrt_f(const vec_float &a) {
+    return {1 / sqrtf(a.x0), 1 / sqrtf(a.x1), 1 / sqrtf(a.x2), 1 / sqrtf(a.x3)};
+}
+inline vec_double rsqrt_d(const vec_double &a) {
+    return {1 / sqrt(a.x0), 1 / sqrt(a.x1), 1 / sqrt(a.x2), 1 / sqrt(a.x3)};
+}
+
 #endif
 
+// Out-of-line definitions of rsqrt Netwon-Raphson iterations
 
+// Improve a sqrt estimate via Newton-Raphson iterations
+template <int It> inline vec_float rsqrt_newton_f(const vec_float &a, const vec_float &approx) {
+
+    // Comment from Eigen "Core/MathFunctionsImpl.h":
+    // Refine the approximation using one Newton-Raphson step:
+    //   x_{n+1} = x_n * (1.5 + (-0.5 * x_n) * (a * x_n)).
+    // The approximation is expressed this way to avoid over/under-flows.
+    const vec_float one_point_five = splat_float(1.5);
+    const vec_float minus_half = splat_float(-0.5);
+    vec_float newton =
+        mul_f(approx, fma_f(mul_f(minus_half, approx), mul_f(a, approx), one_point_five));
+
+    for (int i = 1; i < It; i++) {
+        newton = mul_f(newton, fma_f(mul_f(minus_half, newton), mul_f(a, newton), one_point_five));
+    }
+    return newton;
+}
+
+// Improve a sqrt estimate via Newton-Raphson iterations
+template <int It> inline vec_double rsqrt_newton_d(const vec_double &a, const vec_double &approx) {
+    // Comment from Eigen "Core/MathFunctionsImpl.h":
+    // Refine the approximation using one Newton-Raphson step:
+    //   x_{n+1} = x_n * (1.5 + (-0.5 * x_n) * (a * x_n)).
+    // The approximation is expressed this way to avoid over/under-flows.
+    const vec_double one_point_five = splat_double(1.5);
+    const vec_double minus_half = splat_double(-0.5);
+    vec_double newton =
+        mul_d(approx, fma_d(mul_d(minus_half, approx), mul_d(a, approx), one_point_five));
+
+    for (int i = 1; i < It; i++) {
+        newton = mul_d(newton, fma_d(mul_d(minus_half, newton), mul_d(a, newton), one_point_five));
+    }
+    return newton;
+}
 
 } // end namespace BPCells
