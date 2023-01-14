@@ -14,8 +14,8 @@ class SCTransformPearson : public MatrixTransformDense {
     uint32_t cached_col = UINT32_MAX;
     Eigen::ArrayXf col_mu; // Cached values of mu for current column
     Eigen::ArrayXf theta_inv;
-    Eigen::ArrayXXf col_mat;
-    Eigen::ArrayXXf row_mat;
+    Eigen::ArrayXf col_vec;
+    Eigen::ArrayXf row_vec;
     Eigen::Array<float, 2048, 1> mu_tmp;
 
     void ensure_cached_mu(uint32_t col);

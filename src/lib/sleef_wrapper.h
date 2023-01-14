@@ -86,6 +86,13 @@ inline vec_double load_double(double const *mem_addr) { return _mm256_loadu_pd(m
 inline void store_double(double *mem_addr, vec_double v) { _mm256_storeu_pd(mem_addr, v); }
 inline vec_double splat_double(double f) { return _mm256_set1_pd(f); }
 
+inline vec_float load_double_to_float(double *mem_addr) {
+    // See: https://stackoverflow.com/a/11117004
+    __m128 v1 = _mm256_cvtpd_ps(load_double(mem_addr));
+    __m128 v2 = _mm256_cvtpd_ps(load_double(mem_addr + 4));
+    return _mm256_insertf128_ps(_mm256_castps128_ps256(v1), v2, 1);
+}
+
 inline void store_float_to_double(double *mem_addr, vec_float v) {
     // Write low floats
     store_double(mem_addr, _mm256_cvtps_pd(_mm256_castps256_ps128(v)));
