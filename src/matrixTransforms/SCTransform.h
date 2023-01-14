@@ -1,7 +1,7 @@
 #pragma once
 
-#include "MatrixTransform.h"
 #include "../lib/sleef_wrapper.h"
+#include "MatrixTransform.h"
 
 namespace BPCells {
 
@@ -19,6 +19,7 @@ class SCTransformPearson : public MatrixTransformDense {
     Eigen::Array<float, 2048, 1> mu_tmp;
 
     void ensure_cached_mu(uint32_t col);
+
   public:
     SCTransformPearson(MatrixLoader<double> &loader, TransformFit fit);
 
@@ -28,6 +29,18 @@ class SCTransformPearson : public MatrixTransformDense {
 
     bool loadZeroSubtracted(MatrixLoader<double> &loader) override;
     void loadZero(double *values, uint32_t count, uint32_t start_row, uint32_t col) override;
+
+    void vecMultiplyRightZero(
+        Eigen::VectorXd &out,
+        const Eigen::Map<Eigen::VectorXd> v,
+        void (*checkInterrupt)(void) = NULL
+    ) override;
+
+    void vecMultiplyLeftZero(
+        Eigen::VectorXd &out,
+        const Eigen::Map<Eigen::VectorXd> v,
+        void (*checkInterrupt)(void) = NULL
+    ) override;
 };
 
 } // end namespace BPCells
