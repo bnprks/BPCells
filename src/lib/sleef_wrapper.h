@@ -58,6 +58,7 @@
 
 #else
 
+#include <algorithm>
 #define BPCELLS_SLEEF_MODE _BPCELLS_SLEEF_FALLBACK
 
 #endif
@@ -131,6 +132,12 @@ inline vec_double add_d(const vec_double &a, const vec_double &b) { return _mm25
 inline vec_float mul_f(const vec_float &a, const vec_float &b) { return _mm256_mul_ps(a, b); }
 inline vec_double mul_d(const vec_double &a, const vec_double &b) { return _mm256_mul_pd(a, b); }
 
+inline vec_float min_f(const vec_float &a, const vec_float &b) { return _mm256_min_ps(a, b); }
+inline vec_double min_d(const vec_double &a, const vec_double &b) { return _mm256_min_pd(a, b); }
+
+inline vec_float max_f(const vec_float &a, const vec_float &b) { return _mm256_max_ps(a, b); }
+inline vec_double max_d(const vec_double &a, const vec_double &b) { return _mm256_max_pd(a, b); }
+
 inline vec_float neg_f(const vec_float &a) {
     // Constant from Eigen "Core/arch/AVX/PacketMath.h"
     vec_float mask = _mm256_castsi256_ps(_mm256_set1_epi32(0x80000000));
@@ -171,6 +178,13 @@ inline vec_double load_double(double const *mem_addr) { return _mm256_loadu_pd(m
 inline void store_double(double *mem_addr, vec_double v) { _mm256_storeu_pd(mem_addr, v); }
 inline vec_double splat_double(double f) { return _mm256_set1_pd(f); }
 
+inline vec_float load_double_to_float(double *mem_addr) {
+    // See: https://stackoverflow.com/a/11117004
+    __m128 v1 = _mm256_cvtpd_ps(load_double(mem_addr));
+    __m128 v2 = _mm256_cvtpd_ps(load_double(mem_addr + 4));
+    return _mm256_insertf128_ps(_mm256_castps128_ps256(v1), v2, 1);
+}
+
 inline void store_float_to_double(double *mem_addr, vec_float v) {
     // See: https://stackoverflow.com/a/66537016
     // Write low floats
@@ -209,6 +223,12 @@ inline vec_double add_d(const vec_double &a, const vec_double &b) { return _mm25
 
 inline vec_float mul_f(const vec_float &a, const vec_float &b) { return _mm256_mul_ps(a, b); }
 inline vec_double mul_d(const vec_double &a, const vec_double &b) { return _mm256_mul_pd(a, b); }
+
+inline vec_float min_f(const vec_float &a, const vec_float &b) { return _mm256_min_ps(a, b); }
+inline vec_double min_d(const vec_double &a, const vec_double &b) { return _mm256_min_pd(a, b); }
+
+inline vec_float max_f(const vec_float &a, const vec_float &b) { return _mm256_max_ps(a, b); }
+inline vec_double max_d(const vec_double &a, const vec_double &b) { return _mm256_max_pd(a, b); }
 
 inline vec_float neg_f(const vec_float &a) {
     // Constant from Eigen "Core/arch/AVX/PacketMath.h"
@@ -250,12 +270,18 @@ inline vec_double load_double(double const *mem_addr) { return _mm_loadu_pd(mem_
 inline void store_double(double *mem_addr, vec_double v) { _mm_storeu_pd(mem_addr, v); }
 inline vec_double splat_double(double f) { return _mm_set1_pd(f); }
 
+inline vec_float load_double_to_float(double *mem_addr) {
+    __m128 v1 = _mm_cvtpd_ps(load_double(mem_addr));
+    __m128 v2 = _mm_cvtpd_ps(load_double(mem_addr + 2));
+    return _mm_shuffle_ps(v1, v2, _MM_SHUFFLE(1, 0, 1, 0));
+}
+
 inline void store_float_to_double(double *mem_addr, vec_float v) {
     // Write low floats
     store_double(mem_addr, _mm_cvtps_pd(v));
-    
+
     // Write high floats
-    store_double(mem_addr + 2, _mm_cvtps_pd(_mm_shuffle_ps(v, v, _MM_SHUFFLE(3,2,3,2))));
+    store_double(mem_addr + 2, _mm_cvtps_pd(_mm_shuffle_ps(v, v, _MM_SHUFFLE(3, 2, 3, 2))));
 }
 
 inline void store_double_to_float(float *mem_addr, vec_double v) {
@@ -288,6 +314,12 @@ inline vec_double add_d(const vec_double &a, const vec_double &b) { return _mm_a
 
 inline vec_float mul_f(const vec_float &a, const vec_float &b) { return _mm_mul_ps(a, b); }
 inline vec_double mul_d(const vec_double &a, const vec_double &b) { return _mm_mul_pd(a, b); }
+
+inline vec_float min_f(const vec_float &a, const vec_float &b) { return _mm_min_ps(a, b); }
+inline vec_double min_d(const vec_double &a, const vec_double &b) { return _mm_min_pd(a, b); }
+
+inline vec_float max_f(const vec_float &a, const vec_float &b) { return _mm_max_ps(a, b); }
+inline vec_double max_d(const vec_double &a, const vec_double &b) { return _mm_max_pd(a, b); }
 
 inline vec_float neg_f(const vec_float &a) {
     // Constant from Eigen "Core/arch/SSE/PacketMath.h"
@@ -330,10 +362,16 @@ inline vec_double load_double(double const *mem_addr) { return vld1q_f64(mem_add
 inline void store_double(double *mem_addr, vec_double v) { vst1q_f64(mem_addr, v); }
 inline vec_double splat_double(double f) { return vdupq_n_f64(f); }
 
+inline vec_float load_double_to_float(double *mem_addr) {
+    vec_float v1 = vcvt_f32_f64(load_double(mem_addr));
+    vec_float v2 = vcvt_f32_f64(load_double(mem_addr + 2));
+    return vcombine_f32(v1, v2);
+}
+
 inline void store_float_to_double(double *mem_addr, vec_float v) {
     // Write low floats
     store_double(mem_addr, vcvt_high_f64_f32(vextq_f32(v, v, 2)));
-    
+
     // Write high floats
     store_double(mem_addr + 2, vcvt_high_f64_f32(v));
 }
@@ -341,7 +379,6 @@ inline void store_float_to_double(double *mem_addr, vec_float v) {
 inline void store_double_to_float(float *mem_addr, vec_double v) {
     vst1_f32(mem_addr, vcvt_f32_f64(v));
 }
-
 
 inline vec_float log1p_f(const vec_float &v) { return Sleef_log1pf4_u10advsimd(v); }
 inline vec_double log1p_d(const vec_double &v) { return Sleef_log1pd2_u10advsimd(v); }
@@ -369,6 +406,12 @@ inline vec_double add_d(const vec_double &a, const vec_double &b) { return vaddq
 
 inline vec_float mul_f(const vec_float &a, const vec_float &b) { return vmulq_f32(a, b); }
 inline vec_double mul_d(const vec_double &a, const vec_double &b) { return vmulq_f64(a, b); }
+
+inline vec_float min_f(const vec_float &a, const vec_float &b) { return vminq_f32(a, b); }
+inline vec_double min_d(const vec_double &a, const vec_double &b) { return vminq_f64(a, b); }
+
+inline vec_float max_f(const vec_float &a, const vec_float &b) { return vmaxq_f32(a, b); }
+inline vec_double max_d(const vec_double &a, const vec_double &b) { return vmaxq_f64(a, b); }
 
 inline vec_float neg_f(const vec_float &a) { return vnegq_f32(a); }
 inline vec_double neg_d(const vec_double &a) { return vnegq_f64(a); }
@@ -419,6 +462,14 @@ inline void store_double(double *mem_addr, vec_double v) {
 }
 inline vec_double splat_double(double f) { return {f, f, f, f}; }
 
+inline vec_float load_double_to_float(double *mem_addr) {
+    return {
+        static_cast<float>(mem_addr[0]),
+        static_cast<float>(mem_addr[1]),
+        static_cast<float>(mem_addr[2]),
+        static_cast<float>(mem_addr[3])};
+}
+
 inline void store_float_to_double(double *mem_addr, vec_float v) {
     mem_addr[0] = v.x0;
     mem_addr[1] = v.x1;
@@ -432,7 +483,6 @@ inline void store_double_to_float(float *mem_addr, vec_double v) {
     mem_addr[2] = v.x2;
     mem_addr[3] = v.x3;
 }
-
 
 inline vec_float log1p_f(const vec_float &v) {
     return {log1pf(v.x0), log1pf(v.x1), log1pf(v.x2), log1pf(v.x3)};
@@ -475,6 +525,20 @@ inline vec_float mul_f(const vec_float &a, const vec_float &b) {
 }
 inline vec_double mul_d(const vec_double &a, const vec_double &b) {
     return {a.x0 * b.x0, a.x1 * b.x1, a.x2 * b.x2, a.x3 * b.x3};
+}
+
+inline vec_float min_f(const vec_float &a, const vec_float &b) {
+    return {std::min(a.x0, b.x0), std::min(a.x1, b.x1), std::min(a.x2, b.x2), std::min(a.x3, b.x3)};
+}
+inline vec_double min_d(const vec_double &a, const vec_double &b) {
+    return {std::min(a.x0, b.x0), std::min(a.x1, b.x1), std::min(a.x2, b.x2), std::min(a.x3, b.x3)};
+}
+
+inline vec_float max_f(const vec_float &a, const vec_float &b) {
+    return {std::max(a.x0, b.x0), std::max(a.x1, b.x1), std::max(a.x2, b.x2), std::max(a.x3, b.x3)};
+}
+inline vec_double max_d(const vec_double &a, const vec_double &b) {
+    return {std::max(a.x0, b.x0), std::max(a.x1, b.x1), std::max(a.x2, b.x2), std::max(a.x3, b.x3)};
 }
 
 inline vec_float neg_f(const vec_float &a) { return {-a.x0, -a.x1, -a.x2, -a.x3}; }
