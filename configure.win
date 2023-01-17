@@ -9,6 +9,11 @@ curl --silent https://plausible.benparks.net/flask-plausible/bpcells-configure >
 
 # Test compiling a simple hdf5 program to check for compatibility
 CC=$("${R_HOME}/bin/R" CMD config CC)
+CXX=$("${R_HOME}/bin/R" CMD config CXX)
+
+############################
+# HDF5 compatibility check
+############################
 
 echo "Testing hdf5 by compiling example program..."
 
@@ -25,6 +30,10 @@ echo "Found working hdf5"
 echo "HDF5_CFLAGS='${HDF5_CFLAGS}'"
 echo "HDF5_LIBS='${HDF5_LIBS}'"
  
+############################
+# Arch flag check
+############################
+
 ARCH_FLAG="-march=native"
 printf "\nTesting architecture flag support support..."
 ARCH_CANDIDATES=("-march=native" "")
@@ -38,9 +47,32 @@ for ARCH_FLAG in "${ARCH_CANDIDATES[@]}"; do
 done
 echo "ARCH_FLAG='$ARCH_FLAG'"
 
+
+############################
+# C++17 filesystem check
+############################
+CXX17_OK=""
+CXX_FS_FLAG=""
+$CXX tools/cxx17_filesystem.cc -std=c++17 $CXX_FS_FLAG -o tools/cxx17_filesystem 2>/dev/null && CXX17_OK="yes";
+if [ -z $CXX17_OK ]; then
+    CXX_FS_FLAG="-lstdc++fs"
+    $CXX tools/cxx17_filesystem.cc -std=c++17 $CXX_FS_FLAG -o tools/cxx17_filesystem 2>/dev/null && CXX17_OK="yes";
+    if [ ! -z $CXX17_OK ]; then
+        printf "\nWarning: your compiler version is old, and may run in to compile errors with BPCells.\n"
+        printf "Consider installing a newer compiler version and setting CC and CXX in ~/.R/Makevars\n"
+        printf "\nUsed fallback compatibility flags for C++17 std::filesystem support: $CXX_FS_FLAG\n"
+    fi
+fi
+if [ -z $CXX17_OK ]; then
+    printf "\n\nUnable to compile program with C++17 std::filesystem.\nPlease install a newer compiler version and set CC and CXX in ~/.R/Makevars\n"
+    exit 1
+fi
+
+
 # Make substitutions in Makevars.in
 sed \
     -e "s|%HDF5_CFLAGS%|${HDF5_CFLAGS}|g" \
     -e "s|%HDF5_LIBS%|${HDF5_LIBS}|g" \
     -e "s|%ARCH_FLAG%|${ARCH_FLAG}|g" \
+    -e "s|%CXX_FS_FLAG%|${CXX_FS_FLAG}|g" \
     src/Makevars.in > src/Makevars

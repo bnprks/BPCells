@@ -19,6 +19,6 @@ run_test.R
 .Rhistory
 rsync.sh
 src/Makevars
-tools/h5write
-tools/cxx17_filesystem
+tools/h5write*
+tools/cxx17_filesystem*
 vignettes/*.html
