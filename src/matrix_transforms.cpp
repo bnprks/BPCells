@@ -89,9 +89,27 @@ SEXP iterate_matrix_square_cpp(SEXP matrix) {
 }
 
 // [[Rcpp::export]]
-SEXP iterate_matrix_sctransform_pearson_cpp(SEXP matrix, Eigen::Map<Eigen::ArrayXXd> gene_params, Eigen::Map<Eigen::ArrayXXd> cell_params) {
+SEXP iterate_matrix_sctransform_pearson_cpp(SEXP matrix, Eigen::Map<Eigen::ArrayXXd> gene_params, Eigen::Map<Eigen::ArrayXXd> cell_params, Eigen::Map<Eigen::ArrayXd> global_params) {
     XPtr<MatrixLoader<double>> input(matrix);
-    return Rcpp::wrap(XPtr<MatrixLoader<double>>(new SCTransformPearson(*input, TransformFit{gene_params, cell_params})));
+    return Rcpp::wrap(XPtr<MatrixLoader<double>>(new SCTransformPearson(*input, TransformFit{gene_params, cell_params, global_params})));
+}
+
+// [[Rcpp::export]]
+SEXP iterate_matrix_sctransform_pearson_transpose_cpp(SEXP matrix, Eigen::Map<Eigen::ArrayXXd> cell_params, Eigen::Map<Eigen::ArrayXXd> gene_params, Eigen::Map<Eigen::ArrayXd> global_params) {
+    XPtr<MatrixLoader<double>> input(matrix);
+    return Rcpp::wrap(XPtr<MatrixLoader<double>>(new SCTransformPearsonTranspose(*input, TransformFit{cell_params, gene_params, global_params})));
+}
+
+// [[Rcpp::export]]
+SEXP iterate_matrix_sctransform_pearson_simd_cpp(SEXP matrix, Eigen::Map<Eigen::ArrayXXd> gene_params, Eigen::Map<Eigen::ArrayXXd> cell_params, Eigen::Map<Eigen::ArrayXd> global_params) {
+    XPtr<MatrixLoader<double>> input(matrix);
+    return Rcpp::wrap(XPtr<MatrixLoader<double>>(new SCTransformPearsonSIMD(*input, TransformFit{gene_params, cell_params, global_params})));
+}
+
+// [[Rcpp::export]]
+SEXP iterate_matrix_sctransform_pearson_transpose_simd_cpp(SEXP matrix, Eigen::Map<Eigen::ArrayXXd> cell_params, Eigen::Map<Eigen::ArrayXXd> gene_params, Eigen::Map<Eigen::ArrayXd> global_params) {
+    XPtr<MatrixLoader<double>> input(matrix);
+    return Rcpp::wrap(XPtr<MatrixLoader<double>>(new SCTransformPearsonTransposeSIMD(*input, TransformFit{cell_params, gene_params, global_params})));
 }
 
 // [[Rcpp::export]]

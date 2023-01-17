@@ -280,7 +280,7 @@ min_by_col <- function(mat, vals) {
 setClass("SCTransformPearson", contains = "TransformedMatrix")
 setMethod("iterate_matrix", "SCTransformPearson", function(x) {
   it <- iterate_matrix(x@matrix)
-  wrapMat_double(iterate_matrix_sctransform_pearson_cpp(ptr(it), x@row_params, x@col_params), it)
+  wrapMat_double(iterate_matrix_sctransform_pearson_simd_cpp(ptr(it), x@row_params, x@col_params, x@global_params), it)
 })
 setMethod("short_description", "SCTransformPearson", function(x) {
   c(
@@ -288,37 +288,124 @@ setMethod("short_description", "SCTransformPearson", function(x) {
     "SCTransform (Pearson Residuals)"
   )
 })
+
+setClass("SCTransformPearsonTranspose", contains = "TransformedMatrix")
+setMethod("iterate_matrix", "SCTransformPearsonTranspose", function(x) {
+  it <- iterate_matrix(x@matrix)
+  wrapMat_double(iterate_matrix_sctransform_pearson_transpose_simd_cpp(ptr(it), x@row_params, x@col_params, x@global_params), it)
+})
+setMethod("short_description", "SCTransformPearsonTranspose", function(x) {
+  c(
+    short_description(x@matrix),
+    "SCTransform (Pearson Residuals with transposed orientation)"
+  )
+})
+
+
+setClass("SCTransformPearsonSlow", contains = "TransformedMatrix")
+setMethod("iterate_matrix", "SCTransformPearsonSlow", function(x) {
+  it <- iterate_matrix(x@matrix)
+  wrapMat_double(iterate_matrix_sctransform_pearson_cpp(ptr(it), x@row_params, x@col_params, x@global_params), it)
+})
+setMethod("short_description", "SCTransformPearsonSlow", function(x) {
+  c(
+    short_description(x@matrix),
+    "SCTransform slow (Pearson Residuals)"
+  )
+})
+
+setClass("SCTransformPearsonTransposeSlow", contains = "TransformedMatrix")
+setMethod("iterate_matrix", "SCTransformPearsonTransposeSlow", function(x) {
+  it <- iterate_matrix(x@matrix)
+  wrapMat_double(iterate_matrix_sctransform_pearson_transpose_cpp(ptr(it), x@row_params, x@col_params, x@global_params), it)
+})
+setMethod("short_description", "SCTransformPearsonTransposeSlow", function(x) {
+  c(
+    short_description(x@matrix),
+    "SCTransform slow (Pearson Residuals with transposed orientation)"
+  )
+})
+
 #' SCTransform Pearson Residuals
 #'
 #' Calculate pearson residuals of a negative binomial sctransform model.
-#' Normalized values are calculated as `(X - mu) / sqrt(mu + mu^2/theta)`
-#' mu is calculated as `exp(gene_factors %*% t(cell_factors))`.
+#' Normalized values are calculated as `(X - mu) / sqrt(mu + mu^2/theta)`.
+#' mu is calculated as `cell_read_counts * gene_beta`.
 #' 
-#' @param mat IterableMatrix
-#' @param thetas Vector of theta (overdispersion values)
-#' @param gene_factors genes x K matrix of gene parameters fit 
-#' @param cell_factors cells x K matrix of cell parameters fit
+#' The parameterization used is somewhat simplified compared to the original 
+#' SCTransform paper, in particular it uses a linear-scale rather than
+#' log-scale to represent the cell_read_counts and gene_beta variables. It also
+#' does not support the addition of arbitrary cell metadata (e.g. batch) to add to the 
+#' negative binomial regression.
+#'
+#' @param mat IterableMatrix (raw counts)
+#' @param gene_theta Vector of per-gene thetas (overdispersion values)
+#' @param gene_beta Vector of per-gene betas (expression level values)
+#' @param cell_read_counts Vector of total reads per (umi count for RNA)
+#' @param min_var Minimum value for clipping variance
+#' @param clip_range Length 2 vector of min and max clipping range
+#' @param columns_are_cells Whether the columns of the matrix correspond to cells (default) or genes
+#' @param slow If TRUE, use a 10x slower but more precise implementation (default FALSE)
 #' @return IterableMatrix
-#' @description Take the elementwise minimum with a positive value.
-#' This has the effect of capping the maximum value in the matrix
 #' @export
-sctransform_pearson <- function(mat, thetas, gene_factors, cell_factors) {
+sctransform_pearson <- function(mat, gene_theta, gene_beta, cell_read_counts, min_var = -Inf, clip_range = c(-10, 10), columns_are_cells=TRUE, slow=FALSE) {
   assert_is(mat, "IterableMatrix")
-  assert_is_numeric(thetas)
-  assert_is_numeric(gene_factors)
-  assert_is_numeric(cell_factors)
+  assert_is_numeric(gene_theta)
+  assert_is_numeric(gene_beta)
+  assert_is_numeric(cell_read_counts)
+  assert_is_numeric(min_var)
+  assert_is_numeric(clip_range)
+  assert_is(columns_are_cells, "logical")
 
-  assert_greater_than_zero(thetas)
   # Check dimensions
-  assert_true(ncol(gene_factors) == ncol(cell_factors))
-  assert_true(nrow(gene_factors) == nrow(mat))
-  assert_true(nrow(cell_factors) == ncol(mat))
+  if (columns_are_cells) {
+    assert_true(length(gene_theta) == 1 || length(gene_theta) == nrow(mat))
+    assert_len(gene_beta, nrow(mat))
+    assert_len(cell_read_counts, ncol(mat))
+  } else {
+    assert_true(length(gene_theta) == 1 || length(gene_theta) == ncol(mat))
+    assert_len(gene_beta, ncol(mat))
+    assert_len(cell_read_counts, nrow(mat))
+  }
+  if (!is.null(clip_range)) {
+    assert_len(clip_range, 2)
+  } else {
+    clip_range <- c(-Inf, Inf)
+  }
+  if (!is.null(min_var)) {
+    assert_len(min_var, 1)
+  } else {
+    min_var <- -Inf
+  }
 
+  # Re-scale gene_beta and cell_read_counts to be similar magnitudes
+  ratio <- exp(0.5*(mean(log(gene_beta)) - mean(log(cell_read_counts))))
+  gene_beta <- gene_beta / ratio
+  cell_read_counts <- cell_read_counts * ratio
+
+  # Determine which implementation to use in the backend
+  matrix_class <- sprintf(
+    "SCTransformPearson%s%s", 
+    ifelse(mat@transpose == columns_are_cells, "Transpose", ""), 
+    ifelse(slow, "Slow", "")
+  )
+  
+  col_params <- matrix(cell_read_counts, nrow=1)
+  row_params <- rbind(1/gene_theta, t(gene_beta))
+
+  if (mat@transpose == columns_are_cells) {
+    # Transposed orientation
+    tmp <- row_params
+    row_params <- col_params
+    col_params <- tmp
+    rm(tmp)
+  }
   wrapMatrix(
-    "SCTransformPearson", 
+    matrix_class, 
     convert_matrix_type(mat, "double"),
-    row_params = rbind(1/thetas, t(gene_factors)),
-    col_params = t(cell_factors)
+    row_params = row_params,
+    col_params = col_params,
+    global_params = c(1/sqrt(min_var), clip_range)
   )
 }
 

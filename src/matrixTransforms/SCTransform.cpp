@@ -1,95 +1,84 @@
 #include "SCTransform.h"
 
 namespace BPCells {
-// bool SCTransformPearson::nextCol() {
-//     if (!MatrixTransformDense::nextCol()) return false;
 
-//     col_mu = fit.row_params.block(1, 0, fit.row_params.rows()-1,
-//     fit.row_params.cols()).matrix().transpose() *
-//         fit.col_params.matrix().col(currentCol());
-// }
-
-// void SCTransformPearson::seekCol(uint32_t col) {
-//     MatrixTransformDense::seekCol(col);
-//     if (currentCol() < cols()) {
-//         col_mu = fit.row_params.block(1, 0, fit.row_params.rows()-1,
-//         fit.row_params.cols()).matrix().transpose() *
-//             fit.col_params.matrix().col(currentCol());
-//     }
-
-// }
-
-inline vec_float sd_inv(const vec_float &mu, const vec_float &theta_inv) {
-    return rsqrt_f(fma_f(mul_f(mu, theta_inv), mu, mu));
+inline vec_float sd_inv(const vec_float &mu, const vec_float &theta_inv, const vec_float &max_val) {
+    // min(max_val, 1/sqrt(mu + mu*mu*theta_inv))
+    return min_f(rsqrt_f(fma_f(mul_f(mu, theta_inv), mu, mu)), max_val);
 }
 
-SCTransformPearson::SCTransformPearson(MatrixLoader<double> &loader, TransformFit fit)
+SCTransformPearsonSIMD::SCTransformPearsonSIMD(MatrixLoader<double> &loader, TransformFit fit)
     : MatrixTransformDense(loader, fit)
     , theta_inv(fit.row_params.row(0).cast<float>())
-    , col_vec((fit.row_params(2, 0) * fit.col_params.row(1)).exp().cast<float>())
-    , row_vec(fit.row_params.row(1).exp().cast<float>()) {}
+    , cell_read_counts(fit.col_params.row(0).cast<float>())
+    , gene_beta(fit.row_params.row(1).cast<float>())
+    , sd_inv_max(fit.global_params(0))
+    , clip_min(fit.global_params(1))
+    , clip_max(fit.global_params(2)) {}
 
-void SCTransformPearson::ensure_cached_mu(uint32_t col) {
-    if (cached_col == col || col >= col_vec.cols()) {
-        return;
-    }
-    col_mu = (row_vec.matrix() * col_vec.col(col).matrix()).array().exp();
-    cached_col = col;
-}
-
-bool SCTransformPearson::loadZeroSubtracted(MatrixLoader<double> &loader) {
+bool SCTransformPearsonSIMD::loadZeroSubtracted(MatrixLoader<double> &loader) {
     if (!loader.load()) return false;
-    // ensure_cached_mu(currentCol());
 
     uint32_t *row_data = loader.rowData();
     double *val_data = loader.valData();
     uint32_t capacity = loader.capacity();
 
-    vec_float col_factor = splat_float(col_vec(currentCol()));
+    vec_float col_factor = splat_float(cell_read_counts(currentCol()));
+    vec_float sd_inv_max = splat_float(this->sd_inv_max);
+    vec_float clip_max = splat_float(this->clip_max);
+
     float mu_buf[BPCELLS_VEC_FLOAT_SIZE];
     float theta_inv_buf[BPCELLS_VEC_FLOAT_SIZE];
 
     uint32_t i;
     for (i = 0; i + BPCELLS_VEC_FLOAT_SIZE <= capacity; i += BPCELLS_VEC_FLOAT_SIZE) {
         for (uint32_t j = 0; j < BPCELLS_VEC_FLOAT_SIZE; j++) {
-            mu_buf[j] = row_vec(row_data[i + j]);
+            mu_buf[j] = gene_beta(row_data[i + j]);
             theta_inv_buf[j] = this->theta_inv(row_data[i + j]);
         }
         vec_float mu = mul_f(col_factor, load_float(mu_buf));
         vec_float theta_inv = load_float(theta_inv_buf);
         vec_float val = load_double_to_float(val_data + i);
-        store_float_to_double(val_data + i, mul_f(val, sd_inv(mu, theta_inv)));
+        vec_float sd_i = sd_inv(mu, theta_inv, sd_inv_max);
+        // val = min(clip_max + mu/sd, val/sd)
+        val = min_f(add_f(clip_max, mul_f(mu, sd_i)), mul_f(val, sd_i));
+        store_float_to_double(val_data + i, val);
     }
     for (; i < capacity; i++) {
-        double mu = col_vec(currentCol()) * row_vec(row_data[i]);
+        double mu = cell_read_counts(currentCol()) * gene_beta(row_data[i]);
         double theta_inv = this->theta_inv(row_data[i]);
-        val_data[i] /= sqrt(mu + mu * mu * theta_inv);
+        double sd_i = std::min(this->sd_inv_max, 1 / sqrt(mu + mu * mu * theta_inv));
+        // val = min(clip_max + mu/sd, val/sd)
+        val_data[i] = std::min(val_data[i] * sd_i, this->clip_max + mu * sd_i);
     }
     return true;
 }
 
-void SCTransformPearson::loadZero(
+void SCTransformPearsonSIMD::loadZero(
     double *values, uint32_t count, uint32_t start_row, uint32_t col
 ) {
-    // ensure_cached_mu(col);
-
     uint32_t i;
-    vec_float col_factor = splat_float(col_vec(col));
+    vec_float col_factor = splat_float(cell_read_counts(col));
+    vec_float sd_inv_max = splat_float(this->sd_inv_max);
+    vec_float clip_min = splat_float(this->clip_min);
+
     for (i = 0; i + BPCELLS_VEC_FLOAT_SIZE <= count; i += BPCELLS_VEC_FLOAT_SIZE) {
-        vec_float mu = mul_f(col_factor, load_float(row_vec.data() + start_row + i));
+        vec_float mu = mul_f(col_factor, load_float(gene_beta.data() + start_row + i));
         vec_float theta_inv = load_float(this->theta_inv.data() + start_row + i);
-        store_float_to_double(values + i, mul_f(neg_f(mu), sd_inv(mu, theta_inv)));
+        // val = max(clip_min, -mu / sd)
+        vec_float val = mul_f(neg_f(mu), sd_inv(mu, theta_inv, sd_inv_max));
+        store_float_to_double(values + i, max_f(val, clip_min));
     }
     for (; i < count; i++) {
-        double mu = col_vec(col) * row_vec(start_row + i);
+        double mu = cell_read_counts(col) * gene_beta(start_row + i);
         double theta_inv = this->theta_inv(start_row + i);
-        values[i] = -mu / sqrt(mu + mu * mu * theta_inv);
+        double sd_i = std::min(this->sd_inv_max, 1 / sqrt(mu + mu * mu * theta_inv));
+        values[i] = std::max(this->clip_min, -mu * sd_i);
     }
-    // Eigen::internal::set_is_malloc_allowed(true);
 }
 
 // Calculate matrix-vector product A*v where A (this) is sparse and B is a dense matrix.
-void SCTransformPearson::vecMultiplyRightZero(
+void SCTransformPearsonSIMD::vecMultiplyRightZero(
     Eigen::VectorXd &out, const Eigen::Map<Eigen::VectorXd> v, void (*checkInterrupt)(void)
 ) {
     Eigen::VectorXf out_float(out.rows());
@@ -97,6 +86,9 @@ void SCTransformPearson::vecMultiplyRightZero(
 
     uint32_t nrows = rows();
     uint32_t ncols = cols();
+
+    vec_float sd_inv_max = splat_float(this->sd_inv_max);
+    vec_float clip_min = splat_float(this->clip_min);
 
     for (uint32_t col = 0; col < ncols; col++) {
         if (checkInterrupt != NULL && col % 128 == 0) checkInterrupt();
@@ -107,42 +99,52 @@ void SCTransformPearson::vecMultiplyRightZero(
             out_float.setZero();
         }
         uint32_t row;
-        vec_float col_factor = splat_float(col_vec(col));
+        vec_float col_factor = splat_float(cell_read_counts(col));
         vec_float v_vec = splat_float(v(col));
         for (row = 0; row + BPCELLS_VEC_FLOAT_SIZE <= nrows; row += BPCELLS_VEC_FLOAT_SIZE) {
-            vec_float mu = mul_f(col_factor, load_float(row_vec.data() + row));
+            vec_float mu = mul_f(col_factor, load_float(gene_beta.data() + row));
             vec_float theta_inv = load_float(this->theta_inv.data() + row);
-            vec_float val = mul_f(neg_f(mu), sd_inv(mu, theta_inv));
+            // val = max(clip_min, -mu / sd)
+            vec_float val = mul_f(neg_f(mu), sd_inv(mu, theta_inv, sd_inv_max));
+            val = max_f(val, clip_min);
 
             vec_float out_vec = fma_f(v_vec, val, load_float(out_float.data() + row));
             store_float(out_float.data() + row, out_vec);
         }
         for (; row < nrows; row++) {
-            double mu = col_vec(col) * row_vec(row);
+            double mu = cell_read_counts(col) * gene_beta(row);
             double theta_inv = this->theta_inv(row);
-            out_float(row) += v(col) * -mu / sqrt(mu + mu * mu * theta_inv);
+            double sd_i = std::min(this->sd_inv_max, 1 / sqrt(mu + mu * mu * theta_inv));
+            out_float(row) += v(col) * std::max(this->clip_min, -mu * sd_i);
         }
     }
     // Output final results
     out += out_float.cast<double>();
 }
 
-void SCTransformPearson::vecMultiplyLeftZero(
+void SCTransformPearsonSIMD::vecMultiplyLeftZero(
     Eigen::VectorXd &out, const Eigen::Map<Eigen::VectorXd> v, void (*checkInterrupt)(void)
 ) {
     Eigen::VectorXf v_float(v.cast<float>());
+
     uint32_t nrows = rows();
     uint32_t ncols = cols();
+
+    vec_float sd_inv_max = splat_float(this->sd_inv_max);
+    vec_float clip_min = splat_float(this->clip_min);
+
     float out_buf[BPCELLS_VEC_FLOAT_SIZE];
     for (uint32_t col = 0; col < ncols; col++) {
         if (checkInterrupt != NULL && col % 128 == 0) checkInterrupt();
         uint32_t row;
-        vec_float col_factor = splat_float(col_vec(col));
+        vec_float col_factor = splat_float(cell_read_counts(col));
         vec_float out_vec = splat_float(0.0);
         for (row = 0; row + BPCELLS_VEC_FLOAT_SIZE <= nrows; row += BPCELLS_VEC_FLOAT_SIZE) {
-            vec_float mu = mul_f(col_factor, load_float(row_vec.data() + row));
+            vec_float mu = mul_f(col_factor, load_float(gene_beta.data() + row));
             vec_float theta_inv = load_float(this->theta_inv.data() + row);
-            vec_float val = mul_f(neg_f(mu), sd_inv(mu, theta_inv));
+            // val = max(clip_min, -mu / sd)
+            vec_float val = mul_f(neg_f(mu), sd_inv(mu, theta_inv, sd_inv_max));
+            val = max_f(val, clip_min);
 
             vec_float v_vec = load_float(v_float.data() + row);
             out_vec = fma_f(v_vec, val, out_vec);
@@ -158,14 +160,272 @@ void SCTransformPearson::vecMultiplyLeftZero(
             }
         }
         for (; row < nrows; row++) {
-            double mu = col_vec(col) * row_vec(row);
+            double mu = cell_read_counts(col) * gene_beta(row);
             double theta_inv = this->theta_inv(row);
-            out(col) += v(row) * -mu / sqrt(mu + mu * mu * theta_inv);
+            double sd_i = std::min(this->sd_inv_max, 1 / sqrt(mu + mu * mu * theta_inv));
+            out(col) += v(row) * std::max(this->clip_min, -mu * sd_i);
         }
         store_float(out_buf, out_vec);
         for (int i = 0; i < BPCELLS_VEC_FLOAT_SIZE; i++) {
             out(col) += out_buf[i];
         }
+    }
+}
+
+
+
+// ###################################
+//  Transposed SIMD implementation
+// ###################################
+// Basically copy-paste from non-SIMD version with some small edits to account
+// for the transposition
+
+SCTransformPearsonTransposeSIMD::SCTransformPearsonTransposeSIMD(
+    MatrixLoader<double> &loader, TransformFit fit
+)
+    : MatrixTransformDense(loader, fit)
+    , theta_inv(fit.col_params.row(0).cast<float>())
+    , cell_read_counts(fit.row_params.row(0).cast<float>())
+    , gene_beta(fit.col_params.row(1).cast<float>())
+    , sd_inv_max(fit.global_params(0))
+    , clip_min(fit.global_params(1))
+    , clip_max(fit.global_params(2)) {}
+
+bool SCTransformPearsonTransposeSIMD::loadZeroSubtracted(MatrixLoader<double> &loader) {
+    if (!loader.load()) return false;
+
+    uint32_t *row_data = loader.rowData();
+    double *val_data = loader.valData();
+    uint32_t capacity = loader.capacity();
+
+    vec_float gene_beta = splat_float(this->gene_beta(currentCol()));
+    vec_float theta_inv = splat_float(this->theta_inv(currentCol()));
+
+    vec_float sd_inv_max = splat_float(this->sd_inv_max);
+    vec_float clip_max = splat_float(this->clip_max);
+
+    float cell_count_buf[BPCELLS_VEC_FLOAT_SIZE];
+
+    uint32_t i;
+    for (i = 0; i + BPCELLS_VEC_FLOAT_SIZE <= capacity; i += BPCELLS_VEC_FLOAT_SIZE) {
+        for (uint32_t j = 0; j < BPCELLS_VEC_FLOAT_SIZE; j++) {
+            cell_count_buf[j] = cell_read_counts(row_data[i + j]);
+        }
+        vec_float mu = mul_f(gene_beta, load_float(cell_count_buf));
+        vec_float val = load_double_to_float(val_data + i);
+        vec_float sd_i = sd_inv(mu, theta_inv, sd_inv_max);
+        // val = min(clip_max + mu/sd, val/sd)
+        val = min_f(add_f(clip_max, mul_f(mu, sd_i)), mul_f(val, sd_i));
+        store_float_to_double(val_data + i, val);
+    }
+    for (; i < capacity; i++) {
+        double mu = cell_read_counts(row_data[i]) * this->gene_beta(currentCol());
+        double theta_inv = this->theta_inv(currentCol());
+        double sd_i = std::min(this->sd_inv_max, 1 / sqrt(mu + mu * mu * theta_inv));
+        // val = min(clip_max + mu/sd, val/sd)
+        val_data[i] = std::min(val_data[i] * sd_i, this->clip_max + mu * sd_i);
+    }
+    return true;
+}
+
+void SCTransformPearsonTransposeSIMD::loadZero(
+    double *values, uint32_t count, uint32_t start_row, uint32_t col
+) {
+    uint32_t i;
+    vec_float gene_beta = splat_float(this->gene_beta(currentCol()));
+    vec_float theta_inv = splat_float(this->theta_inv(currentCol()));
+    vec_float sd_inv_max = splat_float(this->sd_inv_max);
+    vec_float clip_min = splat_float(this->clip_min);
+
+    for (i = 0; i + BPCELLS_VEC_FLOAT_SIZE <= count; i += BPCELLS_VEC_FLOAT_SIZE) {
+        vec_float mu = mul_f(gene_beta, load_float(cell_read_counts.data() + start_row + i));
+        // val = max(clip_min, -mu / sd)
+        vec_float val = mul_f(neg_f(mu), sd_inv(mu, theta_inv, sd_inv_max));
+        store_float_to_double(values + i, max_f(val, clip_min));
+    }
+    for (; i < count; i++) {
+        double mu = cell_read_counts(start_row + i) * this->gene_beta(col);
+        double theta_inv = this->theta_inv(col);
+        double sd_i = std::min(this->sd_inv_max, 1 / sqrt(mu + mu * mu * theta_inv));
+        values[i] = std::max(this->clip_min, -mu * sd_i);
+    }
+}
+
+void SCTransformPearsonTransposeSIMD::vecMultiplyLeftZero(
+    Eigen::VectorXd &out, const Eigen::Map<Eigen::VectorXd> v, void (*checkInterrupt)(void)
+) {
+    // To convert for transpose, all we need to do is flip the `row` and `col` variables
+    // and swap vecMultiplyLeftZero with vecMultiplyRightZero
+    Eigen::VectorXf out_float(out.rows());
+    out_float.setZero();
+
+    uint32_t nrows = rows();
+    uint32_t ncols = cols();
+
+    vec_float sd_inv_max = splat_float(this->sd_inv_max);
+    vec_float clip_min = splat_float(this->clip_min);
+
+    for (uint32_t row = 0; row < nrows; row++) {
+        if (checkInterrupt != NULL && row % 128 == 0) checkInterrupt();
+        // Periodically flush our single-precision accumulator to avoid
+        // excessive loss of precision during summation
+        if (row % 64 == 0) {
+            out += out_float.cast<double>();
+            out_float.setZero();
+        }
+        uint32_t col;
+        vec_float cell_reads = splat_float(cell_read_counts(row));
+        vec_float v_vec = splat_float(v(row));
+        for (col = 0; col + BPCELLS_VEC_FLOAT_SIZE <= ncols; col += BPCELLS_VEC_FLOAT_SIZE) {
+            vec_float mu = mul_f(cell_reads, load_float(gene_beta.data() + col));
+            vec_float theta_inv = load_float(this->theta_inv.data() + col);
+            // val = max(clip_min, -mu / sd)
+            vec_float val = mul_f(neg_f(mu), sd_inv(mu, theta_inv, sd_inv_max));
+            val = max_f(val, clip_min);
+
+            vec_float out_vec = fma_f(v_vec, val, load_float(out_float.data() + col));
+            store_float(out_float.data() + col, out_vec);
+        }
+        for (; col < ncols; col++) {
+            double mu = cell_read_counts(row) * gene_beta(col);
+            double theta_inv = this->theta_inv(col);
+            double sd_i = std::min(this->sd_inv_max, 1 / sqrt(mu + mu * mu * theta_inv));
+            out_float(col) += v(row) * std::max(this->clip_min, -mu * sd_i);
+        }
+    }
+    // Output final results
+    out += out_float.cast<double>();
+}
+
+void SCTransformPearsonTransposeSIMD::vecMultiplyRightZero(
+    Eigen::VectorXd &out, const Eigen::Map<Eigen::VectorXd> v, void (*checkInterrupt)(void)
+) {
+    // To convert for transpose, all we need to do is flip the `row` and `col` variables
+    // and swap vecMultiplyLeftZero with vecMultiplyRightZero
+    Eigen::VectorXf v_float(v.cast<float>());
+
+    uint32_t nrows = rows();
+    uint32_t ncols = cols();
+
+    vec_float sd_inv_max = splat_float(this->sd_inv_max);
+    vec_float clip_min = splat_float(this->clip_min);
+
+    float out_buf[BPCELLS_VEC_FLOAT_SIZE];
+    for (uint32_t row = 0; row < nrows; row++) {
+        if (checkInterrupt != NULL && row % 128 == 0) checkInterrupt();
+        uint32_t col;
+        vec_float cell_reads = splat_float(cell_read_counts(row));
+        vec_float out_vec = splat_float(0.0);
+        for (col = 0; col + BPCELLS_VEC_FLOAT_SIZE <= ncols; col += BPCELLS_VEC_FLOAT_SIZE) {
+            vec_float mu = mul_f(cell_reads, load_float(gene_beta.data() + col));
+            vec_float theta_inv = load_float(this->theta_inv.data() + col);
+            // val = max(clip_min, -mu / sd)
+            vec_float val = mul_f(neg_f(mu), sd_inv(mu, theta_inv, sd_inv_max));
+            val = max_f(val, clip_min);
+
+            vec_float v_vec = load_float(v_float.data() + col);
+            out_vec = fma_f(v_vec, val, out_vec);
+
+            // Periodically flush our single-precision accumulator to avoid
+            // excessive loss of precision during summation
+            if (col % (64 * BPCELLS_VEC_FLOAT_SIZE) == 0) {
+                store_float(out_buf, out_vec);
+                for (int i = 0; i < BPCELLS_VEC_FLOAT_SIZE; i++) {
+                    out(row) += out_buf[i];
+                }
+                out_vec = splat_float(0.0);
+            }
+        }
+        for (; col < ncols; col++) {
+            double mu = cell_read_counts(row) * gene_beta(col);
+            double theta_inv = this->theta_inv(col);
+            double sd_i = std::min(this->sd_inv_max, 1 / sqrt(mu + mu * mu * theta_inv));
+            out(row) += v(col) * std::max(this->clip_min, -mu * sd_i);
+        }
+        store_float(out_buf, out_vec);
+        for (int i = 0; i < BPCELLS_VEC_FLOAT_SIZE; i++) {
+            out(row) += out_buf[i];
+        }
+    }
+}
+
+
+// ###################################
+//  Non-SIMD variants
+// ###################################
+
+bool SCTransformPearson::loadZeroSubtracted(MatrixLoader<double> &loader) {
+    if (!loader.load()) return false;
+
+    uint32_t *row_data = loader.rowData();
+    double *val_data = loader.valData();
+    uint32_t capacity = loader.capacity();
+
+    double cell_reads = fit.col_params(0, currentCol());
+    double sd_inv_max = fit.global_params(0);
+    double clip_max = fit.global_params(2);
+
+    for (uint32_t i = 0; i < capacity; i ++) {
+        double mu = cell_reads * fit.row_params(1, row_data[i]);
+        double theta_inv = fit.row_params(0,row_data[i]);
+        double sd_i = std::min(sd_inv_max, 1 / sqrt(mu + mu * mu * theta_inv));
+        // val = min(clip_max + mu/sd, val/sd)
+        val_data[i] = std::min(val_data[i] * sd_i, clip_max + mu * sd_i);
+    }
+    return true;
+}
+
+void SCTransformPearson::loadZero(
+    double *values, uint32_t count, uint32_t start_row, uint32_t col
+) {
+    uint32_t i;
+    double cell_reads = fit.col_params(0, col);
+    double sd_inv_max = fit.global_params(0);
+    double clip_min = fit.global_params(1);
+
+    for (uint32_t i = 0; i < count; i++) {
+        double mu = cell_reads * fit.row_params(1, start_row + i);
+        double theta_inv = fit.row_params(0, start_row + i);
+        double sd_i = std::min(sd_inv_max, 1 / sqrt(mu + mu * mu * theta_inv));
+        values[i] = std::max(clip_min, -mu * sd_i);
+    }
+}
+
+bool SCTransformPearsonTranspose::loadZeroSubtracted(MatrixLoader<double> &loader) {
+    if (!loader.load()) return false;
+
+    uint32_t *row_data = loader.rowData();
+    double *val_data = loader.valData();
+    uint32_t capacity = loader.capacity();
+
+    double gene_beta = fit.col_params(1, currentCol());
+    double theta_inv = fit.col_params(0, currentCol());
+    
+    double sd_inv_max = fit.global_params(0);
+    double clip_max = fit.global_params(2);
+
+    for (uint32_t i = 0; i < capacity; i ++) {
+        double mu = fit.row_params(0, row_data[i]) * gene_beta;
+        double sd_i = std::min(sd_inv_max, 1 / sqrt(mu + mu * mu * theta_inv));
+        // val = min(clip_max + mu/sd, val/sd)
+        val_data[i] = std::min(val_data[i] * sd_i, clip_max + mu * sd_i);
+    }
+    return true;
+}
+
+void SCTransformPearsonTranspose::loadZero(
+    double *values, uint32_t count, uint32_t start_row, uint32_t col
+) {
+    uint32_t i;
+    double gene_beta = fit.col_params(1, col);
+    double theta_inv = fit.col_params(0, col);
+    double sd_inv_max = fit.global_params(0);
+    double clip_min = fit.global_params(1);
+
+    for (uint32_t i = 0; i < count; i++) {
+        double mu = fit.row_params(0, start_row + i) * gene_beta;
+        double sd_i = std::min(sd_inv_max, 1 / sqrt(mu + mu * mu * theta_inv));
+        values[i] = std::max(clip_min, -mu * sd_i);
     }
 }
 
