@@ -363,8 +363,8 @@ inline void store_double(double *mem_addr, vec_double v) { vst1q_f64(mem_addr, v
 inline vec_double splat_double(double f) { return vdupq_n_f64(f); }
 
 inline vec_float load_double_to_float(double *mem_addr) {
-    vec_float v1 = vcvt_f32_f64(load_double(mem_addr));
-    vec_float v2 = vcvt_f32_f64(load_double(mem_addr + 2));
+    float32x2_t v1 = vcvt_f32_f64(load_double(mem_addr));
+    float32x2_t v2 = vcvt_f32_f64(load_double(mem_addr + 2));
     return vcombine_f32(v1, v2);
 }
 
