@@ -160,6 +160,9 @@
     <loc>https://bnprks.github.io/BPCells/reference/merge_peaks_iterative.html</loc>
   </url>
   <url>
+    <loc>https://bnprks.github.io/BPCells/reference/min_elementwise.html</loc>
+  </url>
+  <url>
     <loc>https://bnprks.github.io/BPCells/reference/min_scalar.html</loc>
   </url>
   <url>
@@ -251,6 +254,9 @@
   </url>
   <url>
     <loc>https://bnprks.github.io/BPCells/reference/scan_fragments.html</loc>
+  </url>
+  <url>
+    <loc>https://bnprks.github.io/BPCells/reference/sctransform_pearson.html</loc>
   </url>
   <url>
     <loc>https://bnprks.github.io/BPCells/reference/selectRegions.html</loc>

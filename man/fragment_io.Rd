@@ -10,7 +10,13 @@
 \usage{
 write_fragments_memory(fragments, compress = TRUE)
 
-write_fragments_dir(fragments, dir, compress = TRUE, buffer_size = 1024L)
+write_fragments_dir(
+  fragments,
+  dir,
+  compress = TRUE,
+  buffer_size = 1024L,
+  overwrite = FALSE
+)
 
 open_fragments_dir(dir, buffer_size = 1024L)
 
@@ -20,7 +26,8 @@ write_fragments_hdf5(
   group = "fragments",
   compress = TRUE,
   buffer_size = 8192L,
-  chunk_size = 1024L
+  chunk_size = 1024L,
+  overwrite = FALSE
 )
 
 open_fragments_hdf5(path, group = "fragments", buffer_size = 16384L)
@@ -35,6 +42,8 @@ be about half the size of a gzip-compressed 10x fragments file.}
 
 \item{buffer_size}{For performance tuning only. The number of items to be bufferred
 in memory before calling writes to disk.}
+
+\item{overwrite}{If \code{TRUE}, delete any pre-existing data in the output location before writing}
 
 \item{path}{Path to the hdf5 file on disk}
 

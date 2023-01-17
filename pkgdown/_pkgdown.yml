@@ -72,6 +72,7 @@ reference:
   - matrix_stats
   - convert_matrix_type
   - transpose_storage_order
+  - sctransform_pearson
   - min_scalar
   - add_rows
   - IterableMatrix-methods

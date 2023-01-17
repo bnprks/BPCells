@@ -191,7 +191,7 @@ setMethod("short_description", "TransformMin", function(x) {
 #' @param val Single positive numeric value
 #' @return IterableMatrix
 #' @description **min_scalar**: Take minumum with a global constant
-#' @rdname min
+#' @rdname min_elementwise
 #' @export
 min_scalar <- function(mat, val) {
   assert_is(mat, "IterableMatrix")
@@ -223,10 +223,7 @@ setMethod("short_description", "TransformMinByRow", function(x) {
   )
 })
 
-#' Take the elementwise min with a constant
-#' @param mat IterableMatrix
-#' @param vals Numeric vector of min values
-#' @return IterableMatrix
+#' @rdname min_elementwise
 #' @description **min_by_row**: Take the minimum with a per-row constant
 #' @export
 min_by_row <- function(mat, vals) {
@@ -257,10 +254,7 @@ setMethod("short_description", "TransformMinByCol", function(x) {
   )
 })
 
-#' Take the elementwise min with a constant
-#' @param mat IterableMatrix
-#' @param vals Numeric vector of min values
-#' @return IterableMatrix
+#' @rdname min_elementwise
 #' @description **min_by_col**: Take the minimum with a per-col constant
 #' @export
 min_by_col <- function(mat, vals) {

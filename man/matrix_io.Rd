@@ -10,7 +10,13 @@
 \usage{
 write_matrix_memory(mat, compress = TRUE)
 
-write_matrix_dir(mat, dir, compress = TRUE, buffer_size = 8192L)
+write_matrix_dir(
+  mat,
+  dir,
+  compress = TRUE,
+  buffer_size = 8192L,
+  overwrite = FALSE
+)
 
 open_matrix_dir(dir, buffer_size = 8192L)
 
@@ -20,7 +26,8 @@ write_matrix_hdf5(
   group,
   compress = TRUE,
   buffer_size = 8192L,
-  chunk_size = 1024L
+  chunk_size = 1024L,
+  overwrite = FALSE
 )
 
 open_matrix_hdf5(path, group, buffer_size = 16384L)
@@ -32,6 +39,8 @@ open_matrix_hdf5(path, group, buffer_size = 16384L)
 
 \item{buffer_size}{For performance tuning only. The number of items to be buffered
 in memory before calling writes to disk.}
+
+\item{overwrite}{If \code{TRUE}, overwrite any pre-existing data}
 
 \item{path}{Path to the hdf5 file on disk}
 
