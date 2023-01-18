@@ -10,9 +10,6 @@
     <loc>https://bnprks.github.io/BPCells/articles/pbmc3k.html</loc>
   </url>
   <url>
-    <loc>https://bnprks.github.io/BPCells/articles/WindowsInstall.html</loc>
-  </url>
-  <url>
     <loc>https://bnprks.github.io/BPCells/authors.html</loc>
   </url>
   <url>
@@ -43,22 +40,13 @@
     <loc>https://bnprks.github.io/BPCells/reference/convert_to_fragments.html</loc>
   </url>
   <url>
-    <loc>https://bnprks.github.io/BPCells/reference/coordinates.html</loc>
-  </url>
-  <url>
     <loc>https://bnprks.github.io/BPCells/reference/discrete_palette.html</loc>
-  </url>
-  <url>
-    <loc>https://bnprks.github.io/BPCells/reference/distanceToNearestDirectional.html</loc>
   </url>
   <url>
     <loc>https://bnprks.github.io/BPCells/reference/draw_trackplot_grid.html</loc>
   </url>
   <url>
     <loc>https://bnprks.github.io/BPCells/reference/ensure_downloaded.html</loc>
-  </url>
-  <url>
-    <loc>https://bnprks.github.io/BPCells/reference/extendGenomicRanges.html</loc>
   </url>
   <url>
     <loc>https://bnprks.github.io/BPCells/reference/extend_ranges.html</loc>
@@ -73,12 +61,6 @@
     <loc>https://bnprks.github.io/BPCells/reference/fragment_io.html</loc>
   </url>
   <url>
-    <loc>https://bnprks.github.io/BPCells/reference/geneScoreTilesArchR.html</loc>
-  </url>
-  <url>
-    <loc>https://bnprks.github.io/BPCells/reference/geneScoreWeightsArchR.html</loc>
-  </url>
-  <url>
     <loc>https://bnprks.github.io/BPCells/reference/gene_mapping.html</loc>
   </url>
   <url>
@@ -91,13 +73,7 @@
     <loc>https://bnprks.github.io/BPCells/reference/gene_scores.html</loc>
   </url>
   <url>
-    <loc>https://bnprks.github.io/BPCells/reference/gene_score_tiles.html</loc>
-  </url>
-  <url>
     <loc>https://bnprks.github.io/BPCells/reference/gene_score_tiles_archr.html</loc>
-  </url>
-  <url>
-    <loc>https://bnprks.github.io/BPCells/reference/gene_score_weights_archr.html</loc>
   </url>
   <url>
     <loc>https://bnprks.github.io/BPCells/reference/genomic-ranges.html</loc>
@@ -121,16 +97,10 @@
     <loc>https://bnprks.github.io/BPCells/reference/knn_graph.html</loc>
   </url>
   <url>
-    <loc>https://bnprks.github.io/BPCells/reference/length_distribution.html</loc>
-  </url>
-  <url>
     <loc>https://bnprks.github.io/BPCells/reference/LinearOperator-class.html</loc>
   </url>
   <url>
     <loc>https://bnprks.github.io/BPCells/reference/linear_operator.html</loc>
-  </url>
-  <url>
-    <loc>https://bnprks.github.io/BPCells/reference/matrixStats.html</loc>
   </url>
   <url>
     <loc>https://bnprks.github.io/BPCells/reference/matrix_inputs.html</loc>
@@ -139,13 +109,7 @@
     <loc>https://bnprks.github.io/BPCells/reference/matrix_io.html</loc>
   </url>
   <url>
-    <loc>https://bnprks.github.io/BPCells/reference/matrix_is_transform.html</loc>
-  </url>
-  <url>
     <loc>https://bnprks.github.io/BPCells/reference/matrix_stats.html</loc>
-  </url>
-  <url>
-    <loc>https://bnprks.github.io/BPCells/reference/matrix_type.html</loc>
   </url>
   <url>
     <loc>https://bnprks.github.io/BPCells/reference/mat_norm.html</loc>
@@ -163,9 +127,6 @@
     <loc>https://bnprks.github.io/BPCells/reference/min_elementwise.html</loc>
   </url>
   <url>
-    <loc>https://bnprks.github.io/BPCells/reference/min_scalar.html</loc>
-  </url>
-  <url>
     <loc>https://bnprks.github.io/BPCells/reference/normalized_dimnames.html</loc>
   </url>
   <url>
@@ -178,28 +139,13 @@
     <loc>https://bnprks.github.io/BPCells/reference/open_fragments_10x.html</loc>
   </url>
   <url>
-    <loc>https://bnprks.github.io/BPCells/reference/open_fragments_dir.html</loc>
-  </url>
-  <url>
-    <loc>https://bnprks.github.io/BPCells/reference/open_fragments_hdf5.html</loc>
-  </url>
-  <url>
     <loc>https://bnprks.github.io/BPCells/reference/open_matrix_10x_hdf5.html</loc>
   </url>
   <url>
     <loc>https://bnprks.github.io/BPCells/reference/open_matrix_anndata_hdf5.html</loc>
   </url>
   <url>
-    <loc>https://bnprks.github.io/BPCells/reference/open_matrix_dir.html</loc>
-  </url>
-  <url>
-    <loc>https://bnprks.github.io/BPCells/reference/open_matrix_hdf5.html</loc>
-  </url>
-  <url>
     <loc>https://bnprks.github.io/BPCells/reference/order_ranges.html</loc>
-  </url>
-  <url>
-    <loc>https://bnprks.github.io/BPCells/reference/peakMatrix.html</loc>
   </url>
   <url>
     <loc>https://bnprks.github.io/BPCells/reference/peak_matrix.html</loc>
@@ -238,12 +184,6 @@
     <loc>https://bnprks.github.io/BPCells/reference/read_bed.html</loc>
   </url>
   <url>
-    <loc>https://bnprks.github.io/BPCells/reference/read_encode_blacklist.html</loc>
-  </url>
-  <url>
-    <loc>https://bnprks.github.io/BPCells/reference/read_gencode_genes.html</loc>
-  </url>
-  <url>
     <loc>https://bnprks.github.io/BPCells/reference/read_gtf.html</loc>
   </url>
   <url>
@@ -259,9 +199,6 @@
     <loc>https://bnprks.github.io/BPCells/reference/sctransform_pearson.html</loc>
   </url>
   <url>
-    <loc>https://bnprks.github.io/BPCells/reference/selectRegions.html</loc>
-  </url>
-  <url>
     <loc>https://bnprks.github.io/BPCells/reference/select_cells.html</loc>
   </url>
   <url>
@@ -275,9 +212,6 @@
   </url>
   <url>
     <loc>https://bnprks.github.io/BPCells/reference/subset_lengths.html</loc>
-  </url>
-  <url>
-    <loc>https://bnprks.github.io/BPCells/reference/tileMatrix.html</loc>
   </url>
   <url>
     <loc>https://bnprks.github.io/BPCells/reference/tile_matrix.html</loc>
@@ -299,30 +233,6 @@
   </url>
   <url>
     <loc>https://bnprks.github.io/BPCells/reference/wrapMatrix.html</loc>
-  </url>
-  <url>
-    <loc>https://bnprks.github.io/BPCells/reference/write_fragments_10x.html</loc>
-  </url>
-  <url>
-    <loc>https://bnprks.github.io/BPCells/reference/write_fragments_dir.html</loc>
-  </url>
-  <url>
-    <loc>https://bnprks.github.io/BPCells/reference/write_fragments_hdf5.html</loc>
-  </url>
-  <url>
-    <loc>https://bnprks.github.io/BPCells/reference/write_fragments_memory.html</loc>
-  </url>
-  <url>
-    <loc>https://bnprks.github.io/BPCells/reference/write_matrix_10x_hdf5.html</loc>
-  </url>
-  <url>
-    <loc>https://bnprks.github.io/BPCells/reference/write_matrix_dir.html</loc>
-  </url>
-  <url>
-    <loc>https://bnprks.github.io/BPCells/reference/write_matrix_hdf5.html</loc>
-  </url>
-  <url>
-    <loc>https://bnprks.github.io/BPCells/reference/write_matrix_memory.html</loc>
   </url>
   <url>
     <loc>https://bnprks.github.io/BPCells/reference/XPtrList-class.html</loc>
