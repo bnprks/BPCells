@@ -282,6 +282,11 @@ TEST(SimdSleef, Add) {
     test_binary_op_double(add_d, [](double a, double b) { return a + b; });
 }
 
+TEST(SimdSleef, Sub) {
+    test_binary_op_float(sub_f, [](float a, float b) { return a - b; });
+    test_binary_op_double(sub_d, [](double a, double b) { return a - b; });
+}
+
 TEST(SimdSleef, Mul) {
     test_binary_op_float(mul_f, [](float a, float b) { return a * b; });
     test_binary_op_double(mul_d, [](double a, double b) { return a * b; });

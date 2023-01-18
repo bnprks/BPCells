@@ -129,6 +129,9 @@ inline vec_double fma_d(const vec_double &a, const vec_double &b, const vec_doub
 inline vec_float add_f(const vec_float &a, const vec_float &b) { return _mm256_add_ps(a, b); }
 inline vec_double add_d(const vec_double &a, const vec_double &b) { return _mm256_add_pd(a, b); }
 
+inline vec_float sub_f(const vec_float &a, const vec_float &b) { return _mm256_sub_ps(a, b); }
+inline vec_double sub_d(const vec_double &a, const vec_double &b) { return _mm256_sub_pd(a, b); }
+
 inline vec_float mul_f(const vec_float &a, const vec_float &b) { return _mm256_mul_ps(a, b); }
 inline vec_double mul_d(const vec_double &a, const vec_double &b) { return _mm256_mul_pd(a, b); }
 
@@ -221,6 +224,9 @@ inline vec_double fma_d(const vec_double &a, const vec_double &b, const vec_doub
 inline vec_float add_f(const vec_float &a, const vec_float &b) { return _mm256_add_ps(a, b); }
 inline vec_double add_d(const vec_double &a, const vec_double &b) { return _mm256_add_pd(a, b); }
 
+inline vec_float sub_f(const vec_float &a, const vec_float &b) { return _mm256_sub_ps(a, b); }
+inline vec_double sub_d(const vec_double &a, const vec_double &b) { return _mm256_sub_pd(a, b); }
+
 inline vec_float mul_f(const vec_float &a, const vec_float &b) { return _mm256_mul_ps(a, b); }
 inline vec_double mul_d(const vec_double &a, const vec_double &b) { return _mm256_mul_pd(a, b); }
 
@@ -311,6 +317,9 @@ inline vec_double fma_d(const vec_double &a, const vec_double &b, const vec_doub
 
 inline vec_float add_f(const vec_float &a, const vec_float &b) { return _mm_add_ps(a, b); }
 inline vec_double add_d(const vec_double &a, const vec_double &b) { return _mm_add_pd(a, b); }
+
+inline vec_float sub_f(const vec_float &a, const vec_float &b) { return _mm_sub_ps(a, b); }
+inline vec_double sub_d(const vec_double &a, const vec_double &b) { return _mm_sub_pd(a, b); }
 
 inline vec_float mul_f(const vec_float &a, const vec_float &b) { return _mm_mul_ps(a, b); }
 inline vec_double mul_d(const vec_double &a, const vec_double &b) { return _mm_mul_pd(a, b); }
@@ -403,6 +412,9 @@ inline vec_double fma_d(const vec_double &a, const vec_double &b, const vec_doub
 
 inline vec_float add_f(const vec_float &a, const vec_float &b) { return vaddq_f32(a, b); }
 inline vec_double add_d(const vec_double &a, const vec_double &b) { return vaddq_f64(a, b); }
+
+inline vec_float sub_f(const vec_float &a, const vec_float &b) { return vsubq_f32(a, b); }
+inline vec_double sub_d(const vec_double &a, const vec_double &b) { return vsubq_f64(a, b); }
 
 inline vec_float mul_f(const vec_float &a, const vec_float &b) { return vmulq_f32(a, b); }
 inline vec_double mul_d(const vec_double &a, const vec_double &b) { return vmulq_f64(a, b); }
@@ -518,6 +530,13 @@ inline vec_float add_f(const vec_float &a, const vec_float &b) {
 }
 inline vec_double add_d(const vec_double &a, const vec_double &b) {
     return {a.x0 + b.x0, a.x1 + b.x1, a.x2 + b.x2, a.x3 + b.x3};
+}
+
+inline vec_float sub_f(const vec_float &a, const vec_float &b) {
+    return {a.x0 - b.x0, a.x1 - b.x1, a.x2 - b.x2, a.x3 - b.x3};
+}
+inline vec_double sub_d(const vec_double &a, const vec_double &b) {
+    return {a.x0 - b.x0, a.x1 - b.x1, a.x2 - b.x2, a.x3 - b.x3};
 }
 
 inline vec_float mul_f(const vec_float &a, const vec_float &b) {
