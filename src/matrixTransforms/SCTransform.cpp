@@ -26,6 +26,7 @@ bool SCTransformPearsonSIMD::loadZeroSubtracted(MatrixLoader<double> &loader) {
     vec_float col_factor = splat_float(cell_read_counts(currentCol()));
     vec_float sd_inv_max = splat_float(this->sd_inv_max);
     vec_float clip_max = splat_float(this->clip_max);
+    vec_float clip_min = splat_float(this->clip_min);
 
     float mu_buf[BPCELLS_VEC_FLOAT_SIZE];
     float theta_inv_buf[BPCELLS_VEC_FLOAT_SIZE];
@@ -40,16 +41,28 @@ bool SCTransformPearsonSIMD::loadZeroSubtracted(MatrixLoader<double> &loader) {
         vec_float theta_inv = load_float(theta_inv_buf);
         vec_float val = load_double_to_float(val_data + i);
         vec_float sd_i = sd_inv(mu, theta_inv, sd_inv_max);
-        // val = min(clip_max + mu/sd, val/sd)
-        val = min_f(add_f(clip_max, mul_f(mu, sd_i)), mul_f(val, sd_i));
+        vec_float zero_val = mul_f(neg_f(mu), sd_i);
+        // val = (X-mu)/sd 
+        val = add_f(mul_f(val, sd_i), zero_val);
+        // val = clamp(val, min, max)
+        val = max_f(min_f(val, clip_max), clip_min);
+        // val = val - max(-mu/sd, clip_min)
+        val = sub_f(val, max_f(zero_val, clip_min));
+        
         store_float_to_double(val_data + i, val);
     }
     for (; i < capacity; i++) {
         double mu = cell_read_counts(currentCol()) * gene_beta(row_data[i]);
         double theta_inv = this->theta_inv(row_data[i]);
         double sd_i = std::min(this->sd_inv_max, 1 / sqrt(mu + mu * mu * theta_inv));
-        // val = min(clip_max + mu/sd, val/sd)
-        val_data[i] = std::min(val_data[i] * sd_i, this->clip_max + mu * sd_i);
+
+        double zero_val = -mu*sd_i;
+        // val = (X-mu)/sd 
+        double val = val_data[i] * sd_i + zero_val;
+        // val = clamp(val, min, max)
+        val = std::max(std::min(val, this->clip_max), this->clip_min);
+        // val = val - max(-mu/sd, clip_min)
+        val_data[i] = val - std::max(zero_val, this->clip_min);
     }
     return true;
 }
@@ -203,6 +216,7 @@ bool SCTransformPearsonTransposeSIMD::loadZeroSubtracted(MatrixLoader<double> &l
 
     vec_float sd_inv_max = splat_float(this->sd_inv_max);
     vec_float clip_max = splat_float(this->clip_max);
+    vec_float clip_min = splat_float(this->clip_min);
 
     float cell_count_buf[BPCELLS_VEC_FLOAT_SIZE];
 
@@ -214,16 +228,26 @@ bool SCTransformPearsonTransposeSIMD::loadZeroSubtracted(MatrixLoader<double> &l
         vec_float mu = mul_f(gene_beta, load_float(cell_count_buf));
         vec_float val = load_double_to_float(val_data + i);
         vec_float sd_i = sd_inv(mu, theta_inv, sd_inv_max);
-        // val = min(clip_max + mu/sd, val/sd)
-        val = min_f(add_f(clip_max, mul_f(mu, sd_i)), mul_f(val, sd_i));
+        vec_float zero_val = mul_f(neg_f(mu), sd_i);
+        // val = (X-mu)/sd 
+        val = add_f(mul_f(val, sd_i), zero_val);
+        // val = clamp(val, min, max)
+        val = max_f(min_f(val, clip_max), clip_min);
+        // val = val - max(-mu/sd, clip_min)
+        val = sub_f(val, max_f(zero_val, clip_min));
         store_float_to_double(val_data + i, val);
     }
     for (; i < capacity; i++) {
         double mu = cell_read_counts(row_data[i]) * this->gene_beta(currentCol());
         double theta_inv = this->theta_inv(currentCol());
         double sd_i = std::min(this->sd_inv_max, 1 / sqrt(mu + mu * mu * theta_inv));
-        // val = min(clip_max + mu/sd, val/sd)
-        val_data[i] = std::min(val_data[i] * sd_i, this->clip_max + mu * sd_i);
+        double zero_val = -mu*sd_i;
+        // val = (X-mu)/sd 
+        double val = val_data[i] * sd_i + zero_val;
+        // val = clamp(val, min, max)
+        val = std::max(std::min(val, this->clip_max), this->clip_min);
+        // val = val - max(-mu/sd, clip_min)
+        val_data[i] = val - std::max(zero_val, this->clip_min);
     }
     return true;
 }
@@ -364,13 +388,20 @@ bool SCTransformPearson::loadZeroSubtracted(MatrixLoader<double> &loader) {
     double cell_reads = fit.col_params(0, currentCol());
     double sd_inv_max = fit.global_params(0);
     double clip_max = fit.global_params(2);
+    double clip_min = fit.global_params(1);
 
     for (uint32_t i = 0; i < capacity; i ++) {
         double mu = cell_reads * fit.row_params(1, row_data[i]);
         double theta_inv = fit.row_params(0,row_data[i]);
         double sd_i = std::min(sd_inv_max, 1 / sqrt(mu + mu * mu * theta_inv));
-        // val = min(clip_max + mu/sd, val/sd)
-        val_data[i] = std::min(val_data[i] * sd_i, clip_max + mu * sd_i);
+        
+        double zero_val = -mu*sd_i;
+        // val = (X-mu)/sd 
+        double val = val_data[i] * sd_i + zero_val;
+        // val = clamp(val, min, max)
+        val = std::max(std::min(val, clip_max), clip_min);
+        // val = val - max(-mu/sd, clip_min)
+        val_data[i] = val - std::max(zero_val, clip_min);
     }
     return true;
 }
@@ -403,12 +434,19 @@ bool SCTransformPearsonTranspose::loadZeroSubtracted(MatrixLoader<double> &loade
     
     double sd_inv_max = fit.global_params(0);
     double clip_max = fit.global_params(2);
+    double clip_min = fit.global_params(1);
 
     for (uint32_t i = 0; i < capacity; i ++) {
         double mu = fit.row_params(0, row_data[i]) * gene_beta;
         double sd_i = std::min(sd_inv_max, 1 / sqrt(mu + mu * mu * theta_inv));
-        // val = min(clip_max + mu/sd, val/sd)
-        val_data[i] = std::min(val_data[i] * sd_i, clip_max + mu * sd_i);
+
+        double zero_val = -mu*sd_i;
+        // val = (X-mu)/sd 
+        double val = val_data[i] * sd_i + zero_val;
+        // val = clamp(val, min, max)
+        val = std::max(std::min(val, clip_max), clip_min);
+        // val = val - max(-mu/sd, clip_min)
+        val_data[i] = val - std::max(zero_val, clip_min);
     }
     return true;
 }

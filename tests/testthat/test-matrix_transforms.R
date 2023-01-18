@@ -73,25 +73,41 @@ test_that("pow works", {
 })
 
 test_that("sctransform works", {
-    m <- generate_sparse_matrix(200, 100, max_val=10)
+    withr::local_seed(15123)
+    # Generate poisson-distributed data from randomized parameters
+    genes <- 201
+    cells <- 101
+    gene_means <- exp(rnorm(genes))
+    gene_means <- gene_means / sum(gene_means)
+    cell_counts <- exp(rnorm(cells)) * 1e3
+
+    mat_dense <- matrix(rpois(genes*cells, tcrossprod(gene_means, cell_counts)), nrow=genes)
+    m <- as(mat_dense, "dgCMatrix")
 
     mi <- as(m, "IterableMatrix")
     mi_t <- t(as(t(m), "IterableMatrix"))
 
-    # Make dummy model fit parameters
-    cell_counts <- Matrix::colSums(m)
-    gene_means <- Matrix::rowSums(m) / sum(m)
     gene_theta <- 1 / (runif(nrow(m)) * 3)
     gene_theta[runif(nrow(m)) < 0.1] <- Inf
 
-    clip_range <- c(-10, 10)
+    # Set a narrow clip range so we actually hit it on this test
+    clip_range <- c(-2, 2)
     min_var <- 1/25
 
     # Calculate desired sctransform result
     mu <- tcrossprod(gene_means, cell_counts)
     var <- mu + mu^2 / gene_theta
+    testthat::expect_true(any(var < min_var))
     var[var < min_var] <- min_var
     ans <- (as.matrix(m) - mu) / sqrt(var)
+
+    # Make sure clipping code will get exercised
+    testthat::expect_true(any(ans < min(clip_range)))
+    testthat::expect_true(any(ans > max(clip_range)))
+    # This condition is the trickiest to cover with clipping -- where
+    # we'll need to consider both the top and bottom clip range in a single entry
+    testthat::expect_true(any(-mu/sqrt(var) < min(clip_range) & ans > max(clip_range)))
+    
     ans[ans < clip_range[1]] <- clip_range[1]
     ans[ans > clip_range[2]] <- clip_range[2]
 
