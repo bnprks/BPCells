@@ -151,10 +151,10 @@ test_that("Region select works", {
   exclusive <- frags %>% select_regions(regions, invert_selection = TRUE)
 
   gregions <- as(regions, "GRanges")
-  end(gregions) <- regions$end - 1
+  GenomicRanges::end(gregions) <- regions$end - 1
 
-  ans_inclusive <- GenomicRanges::subsetByOverlaps(gfrags, gregions)
-  ans_exclusive <- GenomicRanges::subsetByOverlaps(gfrags, gregions, invert = TRUE)
+  ans_inclusive <- IRanges::subsetByOverlaps(gfrags, gregions)
+  ans_exclusive <- IRanges::subsetByOverlaps(gfrags, gregions, invert = TRUE)
 
   expect_identical(as(inclusive, "GRanges"), ans_inclusive)
   expect_identical(as(exclusive, "GRanges"), ans_exclusive)

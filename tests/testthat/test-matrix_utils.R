@@ -112,11 +112,11 @@ test_that("Dense matrix-vector multiply works", {
   expect_identical(to_matrix(t(b) %*% t(m2)), t(b) %*% t(i2))
 
   y <- as.numeric(generate_dense_matrix(5, 1))
-  expect_identical(to_vector(y %*% m1), y %*% i1)
-  expect_identical(to_vector(m2 %*% y), i2 %*% y)
+  expect_identical(y %*% as.matrix(m1), y %*% i1)
+  expect_identical(as.matrix(m2) %*% y, i2 %*% y)
 
-  expect_identical(to_vector(t(m1) %*% y), t(i1) %*% y)
-  expect_identical(to_vector(y %*% t(m2)), y %*% t(i2))
+  expect_identical(t(as.matrix(m1)) %*% y, t(i1) %*% y)
+  expect_identical(y %*% t(as.matrix(m2)), y %*% t(i2))
 
   # Check that everything works fine with integers
   i3 <- convert_matrix_type(i1, "uint32_t")
@@ -128,11 +128,11 @@ test_that("Dense matrix-vector multiply works", {
   expect_identical(to_matrix(t(m1) %*% b), t(i3) %*% b)
   expect_identical(to_matrix(t(b) %*% t(m2)), t(b) %*% t(i4))
 
-  expect_identical(to_vector(y %*% m1), y %*% i3)
-  expect_identical(to_vector(m2 %*% y), i4 %*% y)
+  expect_identical(y %*% as.matrix(m1), y %*% i3)
+  expect_identical(as.matrix(m2) %*% y, i4 %*% y)
 
-  expect_identical(to_vector(t(m1) %*% y), t(i3) %*% y)
-  expect_identical(to_vector(y %*% t(m2)), y %*% t(i4))
+  expect_identical(t(as.matrix(m1)) %*% y, t(i3) %*% y)
+  expect_identical(y %*% t(as.matrix(m2)), y %*% t(i4))
 })
 
 test_that("Row/Col sum/mean works", { #nolint
