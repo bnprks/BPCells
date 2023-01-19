@@ -35,14 +35,15 @@ echo "HDF5_LIBS='${HDF5_LIBS}'"
 ############################
 
 ARCH_FLAG="-march=native"
-printf "\nTesting architecture flag support support..."
-ARCH_CANDIDATES=("-march=native" "")
+printf "\nTesting architecture flag support support:\n"
+ARCH_CANDIDATES=("-march=native" "-march=native -Wa,-muse-unaligned-vector-move" "")
 for ARCH_FLAG in "${ARCH_CANDIDATES[@]}"; do
-    if $CC tools/h5write.c $ARCH_FLAG $HDF5_CFLAGS $HDF5_LIBS -o tools/h5write 2>/dev/null; then
-        printf "'%s' succeeded\n" $ARCH_FLAG
+    printf "Testing %s: " "$ARCH_FLAG"
+    if $CC tools/avx-test.cpp $ARCH_FLAG -o tools/avx-test 2>/dev/null && tools/avx-test ; then
+        printf "success\n" "$ARCH_FLAG"
         break;
     else
-        printf "'%s' failed..." $ARCH_FLAG
+        printf "failure\n" "$ARCH_FLAG"
     fi
 done
 echo "ARCH_FLAG='$ARCH_FLAG'"

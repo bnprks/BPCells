@@ -80,11 +80,11 @@ using vec_float = __m256;
 using vec_double = __m256d;
 
 inline vec_float load_float(float const *mem_addr) { return _mm256_loadu_ps(mem_addr); }
-inline void store_float(float *mem_addr, vec_float v) { _mm256_storeu_ps(mem_addr, v); }
+inline void store_float(float *mem_addr, const vec_float &v) { _mm256_storeu_ps(mem_addr, v); }
 inline vec_float splat_float(float f) { return _mm256_set1_ps(f); }
 
 inline vec_double load_double(double const *mem_addr) { return _mm256_loadu_pd(mem_addr); }
-inline void store_double(double *mem_addr, vec_double v) { _mm256_storeu_pd(mem_addr, v); }
+inline void store_double(double *mem_addr, const vec_double &v) { _mm256_storeu_pd(mem_addr, v); }
 inline vec_double splat_double(double f) { return _mm256_set1_pd(f); }
 
 inline vec_float load_double_to_float(double *mem_addr) {
@@ -94,14 +94,14 @@ inline vec_float load_double_to_float(double *mem_addr) {
     return _mm256_insertf128_ps(_mm256_castps128_ps256(v1), v2, 1);
 }
 
-inline void store_float_to_double(double *mem_addr, vec_float v) {
+inline void store_float_to_double(double *mem_addr, const vec_float &v) {
     // Write low floats
     store_double(mem_addr, _mm256_cvtps_pd(_mm256_castps256_ps128(v)));
     // Write high floats
     store_double(mem_addr + 4, _mm256_cvtps_pd(_mm256_extractf128_ps(v, 1)));
 }
 
-inline void store_double_to_float(float *mem_addr, vec_double v) {
+inline void store_double_to_float(float *mem_addr, const vec_double &v) {
     _mm_storeu_ps(mem_addr, _mm256_cvtpd_ps(v));
 }
 
@@ -174,11 +174,11 @@ using vec_float = __m256;
 using vec_double = __m256d;
 
 inline vec_float load_float(float const *mem_addr) { return _mm256_loadu_ps(mem_addr); }
-inline void store_float(float *mem_addr, vec_float v) { _mm256_storeu_ps(mem_addr, v); }
+inline void store_float(float *mem_addr, const vec_float &v) { _mm256_storeu_ps(mem_addr, v); }
 inline vec_float splat_float(float f) { return _mm256_set1_ps(f); }
 
 inline vec_double load_double(double const *mem_addr) { return _mm256_loadu_pd(mem_addr); }
-inline void store_double(double *mem_addr, vec_double v) { _mm256_storeu_pd(mem_addr, v); }
+inline void store_double(double *mem_addr, const vec_double &v) { _mm256_storeu_pd(mem_addr, v); }
 inline vec_double splat_double(double f) { return _mm256_set1_pd(f); }
 
 inline vec_float load_double_to_float(double *mem_addr) {
@@ -188,7 +188,7 @@ inline vec_float load_double_to_float(double *mem_addr) {
     return _mm256_insertf128_ps(_mm256_castps128_ps256(v1), v2, 1);
 }
 
-inline void store_float_to_double(double *mem_addr, vec_float v) {
+inline void store_float_to_double(double *mem_addr, const vec_float &v) {
     // See: https://stackoverflow.com/a/66537016
     // Write low floats
     store_double(mem_addr, _mm256_cvtps_pd(_mm256_castps256_ps128(v)));
@@ -196,7 +196,7 @@ inline void store_float_to_double(double *mem_addr, vec_float v) {
     store_double(mem_addr + 4, _mm256_cvtps_pd(_mm256_extractf128_ps(v, 1)));
 }
 
-inline void store_double_to_float(float *mem_addr, vec_double v) {
+inline void store_double_to_float(float *mem_addr, const vec_double &v) {
     _mm_storeu_ps(mem_addr, _mm256_cvtpd_ps(v));
 }
 
@@ -269,11 +269,11 @@ using vec_float = __m128;
 using vec_double = __m128d;
 
 inline vec_float load_float(float const *mem_addr) { return _mm_loadu_ps(mem_addr); }
-inline void store_float(float *mem_addr, vec_float v) { _mm_storeu_ps(mem_addr, v); }
+inline void store_float(float *mem_addr, const vec_float &v) { _mm_storeu_ps(mem_addr, v); }
 inline vec_float splat_float(float f) { return _mm_set1_ps(f); }
 
 inline vec_double load_double(double const *mem_addr) { return _mm_loadu_pd(mem_addr); }
-inline void store_double(double *mem_addr, vec_double v) { _mm_storeu_pd(mem_addr, v); }
+inline void store_double(double *mem_addr, const vec_double &v) { _mm_storeu_pd(mem_addr, v); }
 inline vec_double splat_double(double f) { return _mm_set1_pd(f); }
 
 inline vec_float load_double_to_float(double *mem_addr) {
@@ -282,7 +282,7 @@ inline vec_float load_double_to_float(double *mem_addr) {
     return _mm_shuffle_ps(v1, v2, _MM_SHUFFLE(1, 0, 1, 0));
 }
 
-inline void store_float_to_double(double *mem_addr, vec_float v) {
+inline void store_float_to_double(double *mem_addr, const vec_float &v) {
     // Write low floats
     store_double(mem_addr, _mm_cvtps_pd(v));
 
@@ -290,8 +290,8 @@ inline void store_float_to_double(double *mem_addr, vec_float v) {
     store_double(mem_addr + 2, _mm_cvtps_pd(_mm_shuffle_ps(v, v, _MM_SHUFFLE(3, 2, 3, 2))));
 }
 
-inline void store_double_to_float(float *mem_addr, vec_double v) {
-    _mm_storeu_si64(mem_addr, _mm_cvtpd_ps(v));
+inline void store_double_to_float(float *mem_addr, const vec_double &v) {
+    _mm_storeu_si64(mem_addr, _mm_castps_si128(_mm_cvtpd_ps(v)));
 }
 
 inline vec_float log1p_f(const vec_float &v) { return Sleef_log1pf4_u10sse2(v); }
@@ -364,11 +364,11 @@ using vec_float = float32x4_t;
 using vec_double = float64x2_t;
 
 inline vec_float load_float(float const *mem_addr) { return vld1q_f32(mem_addr); }
-inline void store_float(float *mem_addr, vec_float v) { vst1q_f32(mem_addr, v); }
+inline void store_float(float *mem_addr, const vec_float &v) { vst1q_f32(mem_addr, v); }
 inline vec_float splat_float(float f) { return vdupq_n_f32(f); }
 
 inline vec_double load_double(double const *mem_addr) { return vld1q_f64(mem_addr); }
-inline void store_double(double *mem_addr, vec_double v) { vst1q_f64(mem_addr, v); }
+inline void store_double(double *mem_addr, const vec_double &v) { vst1q_f64(mem_addr, v); }
 inline vec_double splat_double(double f) { return vdupq_n_f64(f); }
 
 inline vec_float load_double_to_float(double *mem_addr) {
@@ -377,7 +377,7 @@ inline vec_float load_double_to_float(double *mem_addr) {
     return vcombine_f32(v1, v2);
 }
 
-inline void store_float_to_double(double *mem_addr, vec_float v) {
+inline void store_float_to_double(double *mem_addr, const vec_float &v) {
     // Write low floats
     store_double(mem_addr, vcvt_high_f64_f32(vextq_f32(v, v, 2)));
 
@@ -385,7 +385,7 @@ inline void store_float_to_double(double *mem_addr, vec_float v) {
     store_double(mem_addr + 2, vcvt_high_f64_f32(v));
 }
 
-inline void store_double_to_float(float *mem_addr, vec_double v) {
+inline void store_double_to_float(float *mem_addr, const vec_double &v) {
     vst1_f32(mem_addr, vcvt_f32_f64(v));
 }
 
@@ -455,7 +455,7 @@ using vec_double = struct {
 inline vec_float load_float(float const *mem_addr) {
     return {mem_addr[0], mem_addr[1], mem_addr[2], mem_addr[3]};
 }
-inline void store_float(float *mem_addr, vec_float v) {
+inline void store_float(float *mem_addr, const vec_float &v) {
     mem_addr[0] = v.x0;
     mem_addr[1] = v.x1;
     mem_addr[2] = v.x2;
@@ -466,7 +466,7 @@ inline vec_float splat_float(float f) { return {f, f, f, f}; }
 inline vec_double load_double(double const *mem_addr) {
     return {mem_addr[0], mem_addr[1], mem_addr[2], mem_addr[3]};
 }
-inline void store_double(double *mem_addr, vec_double v) {
+inline void store_double(double *mem_addr, const vec_double &v) {
     mem_addr[0] = v.x0;
     mem_addr[1] = v.x1;
     mem_addr[2] = v.x2;
@@ -482,14 +482,14 @@ inline vec_float load_double_to_float(double *mem_addr) {
         static_cast<float>(mem_addr[3])};
 }
 
-inline void store_float_to_double(double *mem_addr, vec_float v) {
+inline void store_float_to_double(double *mem_addr, const vec_float &v) {
     mem_addr[0] = v.x0;
     mem_addr[1] = v.x1;
     mem_addr[2] = v.x2;
     mem_addr[3] = v.x3;
 }
 
-inline void store_double_to_float(float *mem_addr, vec_double v) {
+inline void store_double_to_float(float *mem_addr, const vec_double &v) {
     mem_addr[0] = v.x0;
     mem_addr[1] = v.x1;
     mem_addr[2] = v.x2;
