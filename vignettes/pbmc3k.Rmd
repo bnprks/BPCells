@@ -231,17 +231,23 @@ Since fetching the references involves downloading gtf and bed files, we provide
 the name of a directory to save the files in. This also allows us to skip re-downloading
 the same files next time.
 ```{r}
-genes <- read_gencode_genes(getwd())
+genes <- read_gencode_transcripts(
+  "./references", 
+  release="42", 
+  transcript_choice="MANE_Select",
+  annotation_set = "basic", 
+  features="transcript" # Make sure to set this so we don't get exons as well
+)
 head(genes)
 ```
 
 ```{r}
-blacklist <- read_encode_blacklist(getwd())
+blacklist <- read_encode_blacklist("./references", genome="hg38")
 head(blacklist)
 ```
 
 ```{r}
-chrom_sizes <- read_ucsc_chrom_sizes(getwd())
+chrom_sizes <- read_ucsc_chrom_sizes("./references", genome="hg38")
 head(chrom_sizes)
 ```
 
@@ -258,7 +264,17 @@ One of the key ways to identify high-quality cells in ATAC-seq data is to plot t
 number of fragments vs. TSS Enrichment. This plot puts empty droplets in the bottom-left
 quadrant, low-quality/dead cells in the bottom-right quadrant, and high-quality
 cells in the top-right quadrant. From a flow-cytometry perspective, we use the bottom-left
-group of empty droplets as a negative control to help set our cutoffs.
+group of empty droplets as a negative control to help set our cutoffs. 
+
+<details>
+  <summary>**Why is this TSS Enrichment number different from ArchR?**</summary>
+The TSS Enrichment number varies depending on the TSS annotation set used, as
+a stricter definition of what counts as a TSS will tend to give higher TSS enrichment.
+BPCells uses the exact same formula as ArchR to calculate TSS enrichment, so if you
+pass the ArchR TSS set to BPCells you'll get identical results. However, in this case
+we've used a somewhat more strict definition of TSS by taking just the MANE select transcripts
+from Gencode.
+</details>
 ```{r}
 plot_tss_scatter(atac_qc, min_frags=1000, min_tss=10)
 ```
@@ -540,7 +556,7 @@ bulk_plot
 This is much more useful with a gene annotation track added in. For this we'll
 get a set of canonical transcripts (one per gene) from Gencode
 ```{r}
-transcripts <- read_gencode_transcripts(getwd())
+transcripts <- read_gencode_transcripts("./references", release="42")
 head(transcripts)
 ```
 
