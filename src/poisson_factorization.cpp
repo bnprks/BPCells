@@ -32,9 +32,9 @@ class StepInputs {
   public:
     VectorXd XtY; // Dim p x 1
     // Logically, X is dim n x p with rows padded to 0 with a multiple of BPCELLS_VEC_FLOAT_SIZE
-    // For faster vectorized loading, take chunks of BPCELLS_VEC_FLOAT_SIZE rows and stack them
-    // horizontally Since we end up loading BPCELLS_VEC_FLOAT_SIZE rows at a time across all
-    // columns, this means our memory loads will be better localized.
+    // For faster vectorized loading, take chunks of BPCELLS_VEC_FLOAT_SIZE rows and stack them horizontally
+    // Since we end up loading BPCELLS_VEC_FLOAT_SIZE rows at a time across all columns, this means our memory loads
+    // will be better localized.
     Eigen::Matrix<float, BPCELLS_VEC_FLOAT_SIZE, Dynamic> X;
     VectorXd beta; // Dim p x 1
     int Xpadding;  // Number of padding rows added to X (to correct the loss calculation)
@@ -45,14 +45,11 @@ class StepInputs {
             ((n + BPCELLS_VEC_FLOAT_SIZE - 1) / BPCELLS_VEC_FLOAT_SIZE) * BPCELLS_VEC_FLOAT_SIZE;
         MatrixXf X_tmp = MatrixXf::Zero(padded_rows, p);
         X_tmp.topRows(n) = X.cast<float>();
-        x.X = Eigen::Matrix<float, BPCELLS_VEC_FLOAT_SIZE, Dynamic>(
-            BPCELLS_VEC_FLOAT_SIZE, p * padded_rows / BPCELLS_VEC_FLOAT_SIZE
-        );
+        x.X = Eigen::Matrix<float, BPCELLS_VEC_FLOAT_SIZE, Dynamic>(BPCELLS_VEC_FLOAT_SIZE, p * padded_rows / BPCELLS_VEC_FLOAT_SIZE);
         for (int i = 0; i < padded_rows / BPCELLS_VEC_FLOAT_SIZE; i++) {
-            x.X.block(0, i * p, BPCELLS_VEC_FLOAT_SIZE, p) =
-                X_tmp.block(i * BPCELLS_VEC_FLOAT_SIZE, 0, BPCELLS_VEC_FLOAT_SIZE, p);
+            x.X.block(0, i * p, BPCELLS_VEC_FLOAT_SIZE, p) = X_tmp.block(i * BPCELLS_VEC_FLOAT_SIZE, 0, BPCELLS_VEC_FLOAT_SIZE, p);
         }
-
+        
         x.beta = VectorXd::Zero(p);
         x.Xpadding = padded_rows - n;
         return x;
@@ -156,88 +153,13 @@ inline void loss_and_gradients(
             // gradient += t(lambda) * X
             // hessian += Xt * diag(lambda) * X
             float *hessian_tmp = out.hessian_scratch.data();
-            float *gradient_tmp = out.gradient_scratch.data();
-            // for (int p = 0; p < in.beta.rows(); p++) {
-            //     float *gradient_tmp = out.gradient_scratch.col(p).data();
-            //     vec_float XpLambda = mul_f(lambda, load_float(x + p * BPCELLS_VEC_FLOAT_SIZE));
-            //     store_float(gradient_tmp, add_f(XpLambda, load_float(gradient_tmp)));
-            //     for (int q = 0; q <= p; q++) {
-            //         vec_float Xq = load_float(x + q * BPCELLS_VEC_FLOAT_SIZE);
-            //         store_float(hessian_tmp, fma_f(XpLambda, Xq, load_float(hessian_tmp)));
-            //         hessian_tmp += BPCELLS_VEC_FLOAT_SIZE;
-            //     }
-            // }
-            int p;
-            for (p = 0; p + 2 <= in.beta.rows(); p += 2) {
-                vec_float p0 = load_float(x + (p + 0) * BPCELLS_VEC_FLOAT_SIZE);
-                vec_float p1 = load_float(x + (p + 1) * BPCELLS_VEC_FLOAT_SIZE);
-
-                vec_float q0 = p0;
-                vec_float q1 = p1;
-
-                p0 = mul_f(lambda, p0);
-                p1 = mul_f(lambda, p1);
-
-                // clang-format off
-                // Store gradients
-                store_float(gradient_tmp + 0 * BPCELLS_VEC_FLOAT_SIZE, add_f(p0, load_float(gradient_tmp + 0 * BPCELLS_VEC_FLOAT_SIZE)));
-                store_float(gradient_tmp + 1 * BPCELLS_VEC_FLOAT_SIZE, add_f(p1, load_float(gradient_tmp + 1 * BPCELLS_VEC_FLOAT_SIZE)));
-                gradient_tmp += 2 * BPCELLS_VEC_FLOAT_SIZE;
-
-                // Handle the diagonal block
-                vec_float h0 = load_float(hessian_tmp + 0 * BPCELLS_VEC_FLOAT_SIZE);
-                vec_float h1 = load_float(hessian_tmp + 1 * BPCELLS_VEC_FLOAT_SIZE);
-                vec_float h2 = load_float(hessian_tmp + 2 * BPCELLS_VEC_FLOAT_SIZE);
-                
-                vec_float r0 = fma_f(p0, q0, h0);
-                vec_float r1 = fma_f(p1, q0, h1);
-                vec_float r2 = fma_f(p1, q1, h2);
-
-                store_float(hessian_tmp + 0 * BPCELLS_VEC_FLOAT_SIZE, r0);
-                store_float(hessian_tmp + 1 * BPCELLS_VEC_FLOAT_SIZE, r1);
-                store_float(hessian_tmp + 2 * BPCELLS_VEC_FLOAT_SIZE, r2);
-                hessian_tmp += 3 * BPCELLS_VEC_FLOAT_SIZE;
-                // Handle the square blocks
-                int q;
-                for (q = p + 2; q + 2 <= in.beta.rows(); q += 2) {
-                    q0 = load_float(x + (q + 0) * BPCELLS_VEC_FLOAT_SIZE);
-                    q1 = load_float(x + (q + 1) * BPCELLS_VEC_FLOAT_SIZE);
-
-                    vec_float h0 = load_float(hessian_tmp + 0 * BPCELLS_VEC_FLOAT_SIZE);
-                    vec_float h1 = load_float(hessian_tmp + 1 * BPCELLS_VEC_FLOAT_SIZE);
-                    vec_float h2 = load_float(hessian_tmp + 2 * BPCELLS_VEC_FLOAT_SIZE);
-                    vec_float h3 = load_float(hessian_tmp + 3 * BPCELLS_VEC_FLOAT_SIZE);
-                    vec_float r0 = fma_f(p0, q0, h0);
-                    vec_float r1 = fma_f(p1, q0, h1);
-                    vec_float r2 = fma_f(p0, q1, h2);
-                    vec_float r3 = fma_f(p1, q1, h3);
-                    store_float(hessian_tmp + 0 * BPCELLS_VEC_FLOAT_SIZE, r0);
-                    store_float(hessian_tmp + 1 * BPCELLS_VEC_FLOAT_SIZE, r1);
-                    store_float(hessian_tmp + 2 * BPCELLS_VEC_FLOAT_SIZE, r2);
-                    store_float(hessian_tmp + 3 * BPCELLS_VEC_FLOAT_SIZE, r3);
-                    hessian_tmp += 4 * BPCELLS_VEC_FLOAT_SIZE;
-                }
-                for (; q < in.beta.rows(); q++) {
-                    q0 = load_float(x + (q + 0) * BPCELLS_VEC_FLOAT_SIZE);
-                    vec_float h0 = load_float(hessian_tmp + 0 * BPCELLS_VEC_FLOAT_SIZE);
-                    vec_float h1 = load_float(hessian_tmp + 1 * BPCELLS_VEC_FLOAT_SIZE);
-                    vec_float r0 = fma_f(p0, q0, h0);
-                    vec_float r1 = fma_f(p1, q0, h1);
-                    store_float(hessian_tmp + 0 * BPCELLS_VEC_FLOAT_SIZE, r0);
-                    store_float(hessian_tmp + 1 * BPCELLS_VEC_FLOAT_SIZE, r1);
-                    hessian_tmp += 2 * BPCELLS_VEC_FLOAT_SIZE;
-                }
-
-                // clang-format on
-            }
-            for (; p < in.beta.rows(); p++) {
-                vec_float p0 = load_float(x + p * BPCELLS_VEC_FLOAT_SIZE);
-                p0 = mul_f(lambda, p0);
-                store_float(gradient_tmp, add_f(p0, load_float(gradient_tmp)));
-                gradient_tmp += BPCELLS_VEC_FLOAT_SIZE;
-                for (int q = p; q < in.beta.rows(); q++) {
-                    vec_float q0 = load_float(x + q * BPCELLS_VEC_FLOAT_SIZE);
-                    store_float(hessian_tmp, fma_f(p0, q0, load_float(hessian_tmp)));
+            for (int p = 0; p < in.beta.rows(); p++) {
+                float *gradient_tmp = out.gradient_scratch.col(p).data();
+                vec_float XpLambda = mul_f(lambda, load_float(x + p * BPCELLS_VEC_FLOAT_SIZE));
+                store_float(gradient_tmp, add_f(XpLambda, load_float(gradient_tmp)));
+                for (int q = 0; q <= p; q++) {
+                    vec_float Xq = load_float(x + q * BPCELLS_VEC_FLOAT_SIZE);
+                    store_float(hessian_tmp, fma_f(XpLambda, Xq, load_float(hessian_tmp)));
                     hessian_tmp += BPCELLS_VEC_FLOAT_SIZE;
                 }
             }
@@ -270,11 +192,10 @@ inline void loss_and_gradients(
             out.hessian_scratch.cast<double>().colwise().sum().array();
         // Copy hessian accumulator to the actual lower triangle of the matrix
         int i = 0;
-        for (int qq = 0; qq < in.beta.rows(); qq += 2) {
-            for (int p = 0; p < in.beta.rows(); p++) {
-                for (int q = 0; q < 2 && qq + q <= p; q++) {
-                    out.hessian(p, qq + q) = out.hessian_accumulator(i++);
-                }
+        for (int p = 0; p < in.beta.rows(); p++) {
+            for (int q = 0; q <= p; q++) {
+                out.hessian(p, q) = out.hessian_accumulator(i);
+                i += 1;
             }
         }
         // Add ridge penalty
