@@ -573,8 +573,8 @@ glm_check_gradient_cpp <- function(X, XtY, beta_init, ridge_penalty) {
     .Call(`_BPCells_glm_check_gradient_cpp`, X, XtY, beta_init, ridge_penalty)
 }
 
-glm_fit_matrix_cpp <- function(X, XtY, beta_init, ridge_penalty, max_it, abstol, reltol) {
-    .Call(`_BPCells_glm_fit_matrix_cpp`, X, XtY, beta_init, ridge_penalty, max_it, abstol, reltol)
+glm_fit_matrix_cpp <- function(X, XtY, beta_init, ridge_penalty, max_it, abstol, reltol, threads) {
+    .Call(`_BPCells_glm_fit_matrix_cpp`, X, XtY, beta_init, ridge_penalty, max_it, abstol, reltol, threads)
 }
 
 poisson_glm_matrix_cpp <- function(X, Y, beta_init, ridge_penalty, max_it, abstol, reltol) {

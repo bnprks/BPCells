@@ -1,3 +1,5 @@
+#include <thread>
+
 #define RCPP_NO_RTTI
 #define RCPP_NO_SUGAR
 #include <Rcpp.h>
@@ -32,9 +34,9 @@ class StepInputs {
   public:
     VectorXd XtY; // Dim p x 1
     // Logically, X is dim n x p with rows padded to 0 with a multiple of BPCELLS_VEC_FLOAT_SIZE
-    // For faster vectorized loading, take chunks of BPCELLS_VEC_FLOAT_SIZE rows and stack them horizontally
-    // Since we end up loading BPCELLS_VEC_FLOAT_SIZE rows at a time across all columns, this means our memory loads
-    // will be better localized.
+    // For faster vectorized loading, take chunks of BPCELLS_VEC_FLOAT_SIZE rows and stack them
+    // horizontally Since we end up loading BPCELLS_VEC_FLOAT_SIZE rows at a time across all
+    // columns, this means our memory loads will be better localized.
     Eigen::Matrix<float, BPCELLS_VEC_FLOAT_SIZE, Dynamic> X;
     VectorXd beta; // Dim p x 1
     int Xpadding;  // Number of padding rows added to X (to correct the loss calculation)
@@ -45,11 +47,14 @@ class StepInputs {
             ((n + BPCELLS_VEC_FLOAT_SIZE - 1) / BPCELLS_VEC_FLOAT_SIZE) * BPCELLS_VEC_FLOAT_SIZE;
         MatrixXf X_tmp = MatrixXf::Zero(padded_rows, p);
         X_tmp.topRows(n) = X.cast<float>();
-        x.X = Eigen::Matrix<float, BPCELLS_VEC_FLOAT_SIZE, Dynamic>(BPCELLS_VEC_FLOAT_SIZE, p * padded_rows / BPCELLS_VEC_FLOAT_SIZE);
+        x.X = Eigen::Matrix<float, BPCELLS_VEC_FLOAT_SIZE, Dynamic>(
+            BPCELLS_VEC_FLOAT_SIZE, p * padded_rows / BPCELLS_VEC_FLOAT_SIZE
+        );
         for (int i = 0; i < padded_rows / BPCELLS_VEC_FLOAT_SIZE; i++) {
-            x.X.block(0, i * p, BPCELLS_VEC_FLOAT_SIZE, p) = X_tmp.block(i * BPCELLS_VEC_FLOAT_SIZE, 0, BPCELLS_VEC_FLOAT_SIZE, p);
+            x.X.block(0, i * p, BPCELLS_VEC_FLOAT_SIZE, p) =
+                X_tmp.block(i * BPCELLS_VEC_FLOAT_SIZE, 0, BPCELLS_VEC_FLOAT_SIZE, p);
         }
-        
+
         x.beta = VectorXd::Zero(p);
         x.Xpadding = padded_rows - n;
         return x;
@@ -304,6 +309,34 @@ void glm_fit_vector(
     stats.iterations = it;
 }
 
+void glm_fit_matrix(
+    const MatrixXd &X,
+    const MatrixXd &XtY,
+    const MatrixXd &beta_init,
+    const FitParams &fit_params,
+    MatrixXd &beta_transpose_out,
+    std::vector<FitStats> &stats_out
+) {
+    int p = X.cols();
+    int n = X.rows();
+    int m = beta_init.cols();
+
+    beta_transpose_out.setZero(p, m);
+
+    StepInputs step_in = StepInputs::init(n, p, X);
+
+    StepOutputs step_out = StepOutputs::init(p);
+    FitScratch fit_scratch = FitScratch::init(p);
+    for (int i = 0; i < m; i++) {
+        FitStats stats;
+        step_in.XtY = XtY.col(i);
+        step_in.beta = beta_init.col(i);
+        glm_fit_vector(step_in, step_out, fit_scratch, fit_params, stats);
+        beta_transpose_out.col(i) = step_in.beta;
+        stats_out.push_back(stats);
+    }
+}
+
 } // namespace BPCells::poisson
 
 // Return the loss, gradient, and hessian from the given beta
@@ -341,7 +374,7 @@ SEXP glm_check_gradient_cpp(
 // Fit a series of poisson GLM problems with a shared model matrix
 // Parameters:
 //   - X: Shared model matrix (dimension n x p)
-//   - YtX: XPtr<IterableMatrix> (dimension p x m), result of t(Y) * X
+//   - XtY: XPtr<IterableMatrix> (dimension p x m), result of t(Y) * X
 //   - beta_init: Initial guess for beta (dimension p x m)
 //   - ridge_penalty: multiplier for ridge penalty in loss function
 //   - max_it: Maximum number of Newton-Raphson iterations
@@ -359,13 +392,10 @@ SEXP glm_fit_matrix_cpp(
     double ridge_penalty,
     int max_it,
     double abstol,
-    double reltol
+    double reltol,
+    int threads
 ) {
     using namespace BPCells::poisson;
-
-    int p = X.cols();
-    int n = X.rows();
-    int m = beta_init.cols();
 
     FitParams fit_params;
     fit_params.max_it = max_it;
@@ -373,12 +403,31 @@ SEXP glm_fit_matrix_cpp(
     fit_params.reltol = reltol;
     fit_params.ridge_penalty = ridge_penalty;
 
-    StepInputs step_in = StepInputs::init(n, p, X);
+    std::vector<std::vector<FitStats>> stats_results(std::max(1, threads));
+    std::vector<Eigen::MatrixXd> beta_transpose_results(std::max(1, threads));
+    if (threads == 0) {
+        glm_fit_matrix(X, XtY, beta_init, fit_params, beta_transpose_results[0], stats_results[0]);
+    } else {
+        std::vector<std::thread> thread_vec;
+        int idx = 0;
 
-    StepOutputs step_out = StepOutputs::init(p);
-    FitScratch fit_scratch = FitScratch::init(p);
+        for (int i = 0; i < threads; i++) {
+            int beta_cols = (beta_init.cols() - idx) / (threads - i);
+            thread_vec.push_back(std::thread(
+                glm_fit_matrix,
+                X,
+                XtY.block(0, idx, XtY.rows(), beta_cols),
+                beta_init.block(0, idx, beta_init.rows(), beta_cols),
+                fit_params,
+                std::ref(beta_transpose_results[i]),
+                std::ref(stats_results[i])
+            ));
+            idx += beta_cols;
+        }
+        // Wait for work to finish
+        for (auto &th : thread_vec) th.join();
 
-    MatrixXd beta_transpose(p, m);
+    }
 
     // We'll return a vector for each fitting stat
     std::vector<int> iterations;
@@ -388,26 +437,29 @@ SEXP glm_fit_matrix_cpp(
     std::vector<int> compute_gradient;
     std::vector<int> compute_loss;
     std::vector<int> compute_both;
-
-    for (int i = 0; i < m; i++) {
-        FitStats stats;
-        step_in.XtY = XtY.col(i);
-        step_in.beta = beta_init.col(i);
-        glm_fit_vector(step_in, step_out, fit_scratch, fit_params, stats);
-        beta_transpose.col(i) = step_in.beta;
-        // Track all the stats
-        iterations.push_back(stats.iterations);
-        alpha_lower.push_back(stats.alpha_lower);
-        alpha_raise.push_back(stats.alpha_raise);
-        min_alpha.push_back(stats.min_alpha);
-        compute_gradient.push_back(stats.compute_gradient);
-        compute_loss.push_back(stats.compute_loss);
-        compute_both.push_back(stats.compute_both);
+    for (auto v : stats_results) {
+        for (auto s : v) {
+            iterations.push_back(s.iterations);
+            alpha_lower.push_back(s.alpha_lower);
+            alpha_raise.push_back(s.alpha_raise);
+            min_alpha.push_back(s.min_alpha);
+            compute_gradient.push_back(s.compute_gradient);
+            compute_loss.push_back(s.compute_loss);
+            compute_both.push_back(s.compute_both);
+        }
     }
+
+    MatrixXd beta(beta_init.cols(), beta_init.rows());
+    int idx = 0;
+    for (auto m : beta_transpose_results) {
+        beta.block(idx, 0, m.cols(), m.rows()) = m.transpose();
+        idx += m.cols();
+    }
+
 
     // Return fit with stats on fit computations
     return List::create(
-        Named("beta") = beta_transpose.transpose(),
+        Named("beta") = beta,
         Named("fit_stats") = DataFrame::create(
             Named("iterations") = iterations,
             Named("alpha_lower") = alpha_lower,
