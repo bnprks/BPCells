@@ -30,16 +30,26 @@ enum class compute_target {
 
 class StepInputs {
   public:
-    VectorXd XtY;  // Dim p x 1
-    MatrixXf X;    // Dim n x p, but pad rows with 0 to a multiple of BPCELLS_VEC_FLOAT_SIZE
+    VectorXd XtY; // Dim p x 1
+    // Logically, X is dim n x p with rows padded to 0 with a multiple of BPCELLS_VEC_FLOAT_SIZE
+    // For faster vectorized loading, take chunks of BPCELLS_VEC_FLOAT_SIZE rows and stack them horizontally
+    // Since we end up loading BPCELLS_VEC_FLOAT_SIZE rows at a time across all columns, this means our memory loads
+    // will be better localized.
+    Eigen::Matrix<float, BPCELLS_VEC_FLOAT_SIZE, Dynamic> X;
     VectorXd beta; // Dim p x 1
     int Xpadding;  // Number of padding rows added to X (to correct the loss calculation)
-    static StepInputs init(int n, int p) {
+    static StepInputs init(int n, int p, MatrixXd X) {
         StepInputs x;
         x.XtY = VectorXd::Zero(p);
         int padded_rows =
             ((n + BPCELLS_VEC_FLOAT_SIZE - 1) / BPCELLS_VEC_FLOAT_SIZE) * BPCELLS_VEC_FLOAT_SIZE;
-        x.X = MatrixXf::Zero(padded_rows, p);
+        MatrixXf X_tmp = MatrixXf::Zero(padded_rows, p);
+        X_tmp.topRows(n) = X.cast<float>();
+        x.X = Eigen::Matrix<float, BPCELLS_VEC_FLOAT_SIZE, Dynamic>(BPCELLS_VEC_FLOAT_SIZE, p * padded_rows / BPCELLS_VEC_FLOAT_SIZE);
+        for (int i = 0; i < padded_rows / BPCELLS_VEC_FLOAT_SIZE; i++) {
+            x.X.block(0, i * p, BPCELLS_VEC_FLOAT_SIZE, p) = X_tmp.block(i * BPCELLS_VEC_FLOAT_SIZE, 0, BPCELLS_VEC_FLOAT_SIZE, p);
+        }
+        
         x.beta = VectorXd::Zero(p);
         x.Xpadding = padded_rows - n;
         return x;
@@ -119,11 +129,14 @@ inline void loss_and_gradients(
         out.loss = -in.beta.dot(in.XtY) + params.ridge_penalty / 2 * in.beta.array().square().sum();
         out.loss_scratch.setZero();
     }
-    for (int i = 0; i + BPCELLS_VEC_FLOAT_SIZE <= in.X.rows(); i += BPCELLS_VEC_FLOAT_SIZE) {
+
+    // Note that in.X has been rearranged specifically to make this arrangement easy
+    for (int i = 0; i + in.beta.rows() <= in.X.cols(); i += in.beta.rows()) {
+        const float *x = in.X.col(i).data();
         // Calculate lambda = exp(X * beta)
         vec_float lambda = splat_float(0.0);
         for (int p = 0; p < in.beta.rows(); p++) {
-            vec_float Xp = load_float(in.X.col(p).data() + i);
+            vec_float Xp = load_float(x + p * BPCELLS_VEC_FLOAT_SIZE);
             lambda = fma_f(Xp, splat_float(in.beta(p)), lambda);
         }
         lambda = exp_f(lambda);
@@ -142,10 +155,10 @@ inline void loss_and_gradients(
             float *hessian_tmp = out.hessian_scratch.data();
             for (int p = 0; p < in.beta.rows(); p++) {
                 float *gradient_tmp = out.gradient_scratch.col(p).data();
-                vec_float XpLambda = mul_f(lambda, load_float(in.X.col(p).data() + i));
+                vec_float XpLambda = mul_f(lambda, load_float(x + p * BPCELLS_VEC_FLOAT_SIZE));
                 store_float(gradient_tmp, add_f(XpLambda, load_float(gradient_tmp)));
                 for (int q = 0; q <= p; q++) {
-                    vec_float Xq = load_float(in.X.col(q).data() + i);
+                    vec_float Xq = load_float(x + q * BPCELLS_VEC_FLOAT_SIZE);
                     store_float(hessian_tmp, fma_f(XpLambda, Xq, load_float(hessian_tmp)));
                     hessian_tmp += BPCELLS_VEC_FLOAT_SIZE;
                 }
@@ -308,8 +321,7 @@ SEXP glm_check_gradient_cpp(
     FitParams fit_params;
     fit_params.ridge_penalty = ridge_penalty;
 
-    StepInputs step_in = StepInputs::init(n, p);
-    step_in.X.topRows(n) = X.cast<float>();
+    StepInputs step_in = StepInputs::init(n, p, X);
     step_in.XtY = XtY.col(0);
     step_in.beta = beta_init.col(0);
 
@@ -361,8 +373,7 @@ SEXP glm_fit_matrix_cpp(
     fit_params.reltol = reltol;
     fit_params.ridge_penalty = ridge_penalty;
 
-    StepInputs step_in = StepInputs::init(n, p);
-    step_in.X.topRows(n) = X.cast<float>();
+    StepInputs step_in = StepInputs::init(n, p, X);
 
     StepOutputs step_out = StepOutputs::init(p);
     FitScratch fit_scratch = FitScratch::init(p);
