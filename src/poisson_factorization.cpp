@@ -168,58 +168,64 @@ inline void loss_and_gradients(
             //     }
             // }
             int p;
-            for (p = 0; p + 3 <= in.beta.rows(); p += 3) {
+            for (p = 0; p + 2 <= in.beta.rows(); p += 2) {
                 vec_float p0 = load_float(x + (p + 0) * BPCELLS_VEC_FLOAT_SIZE);
                 vec_float p1 = load_float(x + (p + 1) * BPCELLS_VEC_FLOAT_SIZE);
-                vec_float p2 = load_float(x + (p + 2) * BPCELLS_VEC_FLOAT_SIZE);
 
                 vec_float q0 = p0;
                 vec_float q1 = p1;
-                vec_float q2 = p2;
 
                 p0 = mul_f(lambda, p0);
                 p1 = mul_f(lambda, p1);
-                p2 = mul_f(lambda, p2);
 
                 // clang-format off
                 // Store gradients
                 store_float(gradient_tmp + 0 * BPCELLS_VEC_FLOAT_SIZE, add_f(p0, load_float(gradient_tmp + 0 * BPCELLS_VEC_FLOAT_SIZE)));
                 store_float(gradient_tmp + 1 * BPCELLS_VEC_FLOAT_SIZE, add_f(p1, load_float(gradient_tmp + 1 * BPCELLS_VEC_FLOAT_SIZE)));
-                store_float(gradient_tmp + 2 * BPCELLS_VEC_FLOAT_SIZE, add_f(p2, load_float(gradient_tmp + 2 * BPCELLS_VEC_FLOAT_SIZE)));
-                gradient_tmp += 3 * BPCELLS_VEC_FLOAT_SIZE;
+                gradient_tmp += 2 * BPCELLS_VEC_FLOAT_SIZE;
 
                 // Handle the diagonal block
-                store_float(hessian_tmp + 0 * BPCELLS_VEC_FLOAT_SIZE, fma_f(p0, q0, load_float(hessian_tmp + 0 * BPCELLS_VEC_FLOAT_SIZE)));
-                store_float(hessian_tmp + 1 * BPCELLS_VEC_FLOAT_SIZE, fma_f(p1, q0, load_float(hessian_tmp + 1 * BPCELLS_VEC_FLOAT_SIZE)));
-                store_float(hessian_tmp + 2 * BPCELLS_VEC_FLOAT_SIZE, fma_f(p1, q1, load_float(hessian_tmp + 2 * BPCELLS_VEC_FLOAT_SIZE)));
-                store_float(hessian_tmp + 3 * BPCELLS_VEC_FLOAT_SIZE, fma_f(p2, q0, load_float(hessian_tmp + 3 * BPCELLS_VEC_FLOAT_SIZE)));
-                store_float(hessian_tmp + 4 * BPCELLS_VEC_FLOAT_SIZE, fma_f(p2, q1, load_float(hessian_tmp + 4 * BPCELLS_VEC_FLOAT_SIZE)));
-                store_float(hessian_tmp + 5 * BPCELLS_VEC_FLOAT_SIZE, fma_f(p2, q2, load_float(hessian_tmp + 5 * BPCELLS_VEC_FLOAT_SIZE)));
-                hessian_tmp += 6 * BPCELLS_VEC_FLOAT_SIZE;
+                vec_float h0 = load_float(hessian_tmp + 0 * BPCELLS_VEC_FLOAT_SIZE);
+                vec_float h1 = load_float(hessian_tmp + 1 * BPCELLS_VEC_FLOAT_SIZE);
+                vec_float h2 = load_float(hessian_tmp + 2 * BPCELLS_VEC_FLOAT_SIZE);
+                
+                vec_float r0 = fma_f(p0, q0, h0);
+                vec_float r1 = fma_f(p1, q0, h1);
+                vec_float r2 = fma_f(p1, q1, h2);
+
+                store_float(hessian_tmp + 0 * BPCELLS_VEC_FLOAT_SIZE, r0);
+                store_float(hessian_tmp + 1 * BPCELLS_VEC_FLOAT_SIZE, r1);
+                store_float(hessian_tmp + 2 * BPCELLS_VEC_FLOAT_SIZE, r2);
+                hessian_tmp += 3 * BPCELLS_VEC_FLOAT_SIZE;
                 // Handle the square blocks
                 int q;
-                for (q = p + 3; q + 3 <= in.beta.rows(); q += 3) {
+                for (q = p + 2; q + 2 <= in.beta.rows(); q += 2) {
                     q0 = load_float(x + (q + 0) * BPCELLS_VEC_FLOAT_SIZE);
                     q1 = load_float(x + (q + 1) * BPCELLS_VEC_FLOAT_SIZE);
-                    q2 = load_float(x + (q + 2) * BPCELLS_VEC_FLOAT_SIZE);
 
-                    store_float(hessian_tmp + 0 * BPCELLS_VEC_FLOAT_SIZE, fma_f(p0, q0, load_float(hessian_tmp + 0 * BPCELLS_VEC_FLOAT_SIZE)));
-                    store_float(hessian_tmp + 1 * BPCELLS_VEC_FLOAT_SIZE, fma_f(p1, q0, load_float(hessian_tmp + 1 * BPCELLS_VEC_FLOAT_SIZE)));
-                    store_float(hessian_tmp + 2 * BPCELLS_VEC_FLOAT_SIZE, fma_f(p2, q0, load_float(hessian_tmp + 2 * BPCELLS_VEC_FLOAT_SIZE)));
-                    store_float(hessian_tmp + 3 * BPCELLS_VEC_FLOAT_SIZE, fma_f(p0, q1, load_float(hessian_tmp + 3 * BPCELLS_VEC_FLOAT_SIZE)));
-                    store_float(hessian_tmp + 4 * BPCELLS_VEC_FLOAT_SIZE, fma_f(p1, q1, load_float(hessian_tmp + 4 * BPCELLS_VEC_FLOAT_SIZE)));
-                    store_float(hessian_tmp + 5 * BPCELLS_VEC_FLOAT_SIZE, fma_f(p2, q1, load_float(hessian_tmp + 5 * BPCELLS_VEC_FLOAT_SIZE)));
-                    store_float(hessian_tmp + 6 * BPCELLS_VEC_FLOAT_SIZE, fma_f(p0, q2, load_float(hessian_tmp + 6 * BPCELLS_VEC_FLOAT_SIZE)));
-                    store_float(hessian_tmp + 7 * BPCELLS_VEC_FLOAT_SIZE, fma_f(p1, q2, load_float(hessian_tmp + 7 * BPCELLS_VEC_FLOAT_SIZE)));
-                    store_float(hessian_tmp + 8 * BPCELLS_VEC_FLOAT_SIZE, fma_f(p2, q2, load_float(hessian_tmp + 8 * BPCELLS_VEC_FLOAT_SIZE)));
-                    hessian_tmp += 9 * BPCELLS_VEC_FLOAT_SIZE;
+                    vec_float h0 = load_float(hessian_tmp + 0 * BPCELLS_VEC_FLOAT_SIZE);
+                    vec_float h1 = load_float(hessian_tmp + 1 * BPCELLS_VEC_FLOAT_SIZE);
+                    vec_float h2 = load_float(hessian_tmp + 2 * BPCELLS_VEC_FLOAT_SIZE);
+                    vec_float h3 = load_float(hessian_tmp + 3 * BPCELLS_VEC_FLOAT_SIZE);
+                    vec_float r0 = fma_f(p0, q0, h0);
+                    vec_float r1 = fma_f(p1, q0, h1);
+                    vec_float r2 = fma_f(p0, q1, h2);
+                    vec_float r3 = fma_f(p1, q1, h3);
+                    store_float(hessian_tmp + 0 * BPCELLS_VEC_FLOAT_SIZE, r0);
+                    store_float(hessian_tmp + 1 * BPCELLS_VEC_FLOAT_SIZE, r1);
+                    store_float(hessian_tmp + 2 * BPCELLS_VEC_FLOAT_SIZE, r2);
+                    store_float(hessian_tmp + 3 * BPCELLS_VEC_FLOAT_SIZE, r3);
+                    hessian_tmp += 4 * BPCELLS_VEC_FLOAT_SIZE;
                 }
                 for (; q < in.beta.rows(); q++) {
                     q0 = load_float(x + (q + 0) * BPCELLS_VEC_FLOAT_SIZE);
-                    store_float(hessian_tmp + 0 * BPCELLS_VEC_FLOAT_SIZE, fma_f(p0, q0, load_float(hessian_tmp + 0 * BPCELLS_VEC_FLOAT_SIZE)));
-                    store_float(hessian_tmp + 1 * BPCELLS_VEC_FLOAT_SIZE, fma_f(p1, q0, load_float(hessian_tmp + 1 * BPCELLS_VEC_FLOAT_SIZE)));
-                    store_float(hessian_tmp + 2 * BPCELLS_VEC_FLOAT_SIZE, fma_f(p2, q0, load_float(hessian_tmp + 2 * BPCELLS_VEC_FLOAT_SIZE)));
-                    hessian_tmp += 3 * BPCELLS_VEC_FLOAT_SIZE;
+                    vec_float h0 = load_float(hessian_tmp + 0 * BPCELLS_VEC_FLOAT_SIZE);
+                    vec_float h1 = load_float(hessian_tmp + 1 * BPCELLS_VEC_FLOAT_SIZE);
+                    vec_float r0 = fma_f(p0, q0, h0);
+                    vec_float r1 = fma_f(p1, q0, h1);
+                    store_float(hessian_tmp + 0 * BPCELLS_VEC_FLOAT_SIZE, r0);
+                    store_float(hessian_tmp + 1 * BPCELLS_VEC_FLOAT_SIZE, r1);
+                    hessian_tmp += 2 * BPCELLS_VEC_FLOAT_SIZE;
                 }
 
                 // clang-format on
@@ -264,9 +270,9 @@ inline void loss_and_gradients(
             out.hessian_scratch.cast<double>().colwise().sum().array();
         // Copy hessian accumulator to the actual lower triangle of the matrix
         int i = 0;
-        for (int qq = 0; qq < in.beta.rows(); qq += 3) {
+        for (int qq = 0; qq < in.beta.rows(); qq += 2) {
             for (int p = 0; p < in.beta.rows(); p++) {
-                for (int q = 0; q < 3 && qq + q <= p; q++) {
+                for (int q = 0; q < 2 && qq + q <= p; q++) {
                     out.hessian(p, qq + q) = out.hessian_accumulator(i++);
                 }
             }
