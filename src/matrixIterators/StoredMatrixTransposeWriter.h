@@ -220,7 +220,7 @@ template <typename T> class StoredMatrixTransposeWriter : public MatrixWriter<T>
             uint32_t reader_offset = 0; // Used to calculate offsets for reads
 
             // Merge up to `row_chunks` sorted chunks at a time, starting at index `chunk`
-            for (int chunk = 0; chunk < input_chunk_sizes.size();
+            for (size_t chunk = 0; chunk < input_chunk_sizes.size();
                  chunk += sort_buffer_elements / load_elements) {
                 output_chunk_sizes.push_back(0);
                 // Set up heap
@@ -228,7 +228,7 @@ template <typename T> class StoredMatrixTransposeWriter : public MatrixWriter<T>
                 row_chunks.clear();
                 col_chunks.clear();
                 val_chunks.clear();
-                for (int i = 0; chunk + i < input_chunk_sizes.size() &&
+                for (size_t i = 0; chunk + i < input_chunk_sizes.size() &&
                                 i < sort_buffer_elements / load_elements;
                      i++) {
                     row_chunks.push_back(SliceReader<uint32_t>(

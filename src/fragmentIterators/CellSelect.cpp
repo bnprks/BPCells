@@ -121,7 +121,7 @@ CellMerge::CellMerge(
     if (group_count > this->group_names->size()) {
         throw std::invalid_argument("CellMerge has more groups given than group_names");
     }
-    if (group_ids.size() != loader.cellCount()) {
+    if ((int64_t) group_ids.size() != loader.cellCount()) {
         throw std::invalid_argument("CellMerge number of input cells != length of group_ids");
     }
     group_count = this->group_names->size();
