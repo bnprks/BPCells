@@ -113,7 +113,7 @@ StringVector get_tile_names_cpp(
     }
     StringVector ret(total_tiles);
     size_t out_idx = 0;
-    for (int i = 0; i < chr_id.length(); i++) {
+    for (int64_t i = 0; i < chr_id.length(); i++) {
         for (int64_t base = start[i]; base < end[i]; base += tile_width[i]) {
             std::stringstream out;
             out << (const char *)chr_levels[chr_id[i]] << ":" << (base) << "-"

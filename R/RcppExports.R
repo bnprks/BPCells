@@ -569,3 +569,15 @@ matrix_identical_uint32_t_cpp <- function(mat1, mat2) {
     .Call(`_BPCells_matrix_identical_uint32_t_cpp`, mat1, mat2)
 }
 
+glm_check_gradient_cpp <- function(X, XtY, beta_init, ridge_penalty) {
+    .Call(`_BPCells_glm_check_gradient_cpp`, X, XtY, beta_init, ridge_penalty)
+}
+
+glm_fit_matrix_cpp <- function(X, XtY, beta_init, ridge_penalty, max_it, abstol, reltol) {
+    .Call(`_BPCells_glm_fit_matrix_cpp`, X, XtY, beta_init, ridge_penalty, max_it, abstol, reltol)
+}
+
+poisson_glm_matrix_cpp <- function(X, Y, beta_init, ridge_penalty, max_it, abstol, reltol) {
+    .Call(`_BPCells_poisson_glm_matrix_cpp`, X, Y, beta_init, ridge_penalty, max_it, abstol, reltol)
+}
+
