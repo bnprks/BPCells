@@ -1,3 +1,4 @@
+#include <memory>
 #include <thread>
 
 #define RCPP_NO_RTTI
@@ -30,33 +31,55 @@ enum class compute_target {
     all = (1 << 0) | (1 << 1)
 };
 
+class MatrixInputs {
+public:
+    MatrixXd XtY;         // Dim K x M
+    MatrixXd beta;        // Dim K x M
+    MatrixXd offset_beta; // Dim J x M
+};
+
 class StepInputs {
   public:
-    VectorXd XtY; // Dim p x 1
+    using MatRearranged = Eigen::Matrix<float, BPCELLS_VEC_FLOAT_SIZE, Dynamic>;
+    VectorXd XtY; // Dim K x 1
     // Logically, X is dim n x p with rows padded to 0 with a multiple of BPCELLS_VEC_FLOAT_SIZE
     // For faster vectorized loading, take chunks of BPCELLS_VEC_FLOAT_SIZE rows and stack them
-    // horizontally Since we end up loading BPCELLS_VEC_FLOAT_SIZE rows at a time across all
+    // horizontally. Since we end up loading BPCELLS_VEC_FLOAT_SIZE rows at a time across all
     // columns, this means our memory loads will be better localized.
-    Eigen::Matrix<float, BPCELLS_VEC_FLOAT_SIZE, Dynamic> X;
-    VectorXd beta; // Dim p x 1
-    int Xpadding;  // Number of padding rows added to X (to correct the loss calculation)
-    static StepInputs init(int n, int p, MatrixXd X) {
-        StepInputs x;
-        x.XtY = VectorXd::Zero(p);
+    std::shared_ptr<const MatRearranged> X; // Dim K x N
+    // offset_X is rearranged similarly to X to be optimized for vector loads of
+    // BPCELLS_VEC_FLOAT_SIZE
+    std::shared_ptr<const MatRearranged> offset_X; // Dim J x N
+    VectorXd beta;                                 // Dim K x 1
+    VectorXd offset_beta;                          // Dim J x 1
+    int Xpadding; // Number of padding rows added to X (to correct the loss calculation)
+    static std::shared_ptr<MatRearranged> rearrange_matrix(MatrixXd X) {
+        int n = X.rows();
+        int p = X.cols();
         int padded_rows =
             ((n + BPCELLS_VEC_FLOAT_SIZE - 1) / BPCELLS_VEC_FLOAT_SIZE) * BPCELLS_VEC_FLOAT_SIZE;
         MatrixXf X_tmp = MatrixXf::Zero(padded_rows, p);
         X_tmp.topRows(n) = X.cast<float>();
-        x.X = Eigen::Matrix<float, BPCELLS_VEC_FLOAT_SIZE, Dynamic>(
+
+        auto X_ptr = std::make_shared<MatRearranged>(
             BPCELLS_VEC_FLOAT_SIZE, p * padded_rows / BPCELLS_VEC_FLOAT_SIZE
         );
         for (int i = 0; i < padded_rows / BPCELLS_VEC_FLOAT_SIZE; i++) {
-            x.X.block(0, i * p, BPCELLS_VEC_FLOAT_SIZE, p) =
+            X_ptr->block(0, i * p, BPCELLS_VEC_FLOAT_SIZE, p) =
                 X_tmp.block(i * BPCELLS_VEC_FLOAT_SIZE, 0, BPCELLS_VEC_FLOAT_SIZE, p);
         }
+        return X_ptr;
+    }
+    static StepInputs init(MatrixXd X, MatrixXd offset_X) {
+        StepInputs x;
+        x.XtY = VectorXd::Zero(X.cols());
 
-        x.beta = VectorXd::Zero(p);
-        x.Xpadding = padded_rows - n;
+        x.X = rearrange_matrix(X);
+        x.offset_X = rearrange_matrix(offset_X);
+
+        x.beta = VectorXd::Zero(X.cols());
+        x.offset_beta = VectorXd::Zero(offset_X.cols());
+        x.Xpadding = x.X->rows() - X.rows();
         return x;
     }
 };
@@ -64,38 +87,38 @@ class StepInputs {
 class StepOutputs {
   public:
     double loss;
-    VectorXd gradient;                                            // Dim p x 1
-    MatrixXd hessian;                                             // Dim p x p
+    VectorXd gradient;                                            // Dim K x 1
+    MatrixXd hessian;                                             // Dim K x K
     Eigen::Matrix<float, BPCELLS_VEC_FLOAT_SIZE, 1> loss_scratch; // Dim BPCELLS_VEC_FLOAT_SIZE x 1
     Eigen::Matrix<float, BPCELLS_VEC_FLOAT_SIZE, Dynamic>
-        gradient_scratch; // Dim BPCELLS_VEC_FLOAT_SIZE x p
+        gradient_scratch; // Dim BPCELLS_VEC_FLOAT_SIZE x K
     Eigen::Matrix<float, BPCELLS_VEC_FLOAT_SIZE, Dynamic>
-        hessian_scratch;          // Dim BPCELLS_VEC_FLOAT_SIZE x p * (p + 1) / 2
-    VectorXd hessian_accumulator; // Dim p * (p + 1) / 2 x 1
-    static StepOutputs init(int p) {
+        hessian_scratch;          // Dim BPCELLS_VEC_FLOAT_SIZE x K * (K + 1) / 2
+    VectorXd hessian_accumulator; // Dim K * (K + 1) / 2 x 1
+    static StepOutputs init(int K) {
         StepOutputs x;
-        x.gradient = VectorXd::Zero(p);
-        x.hessian = MatrixXd::Zero(p, p);
+        x.gradient = VectorXd::Zero(K);
+        x.hessian = MatrixXd::Zero(K, K);
         x.gradient_scratch =
-            Eigen::Matrix<float, BPCELLS_VEC_FLOAT_SIZE, Dynamic>::Zero(BPCELLS_VEC_FLOAT_SIZE, p);
+            Eigen::Matrix<float, BPCELLS_VEC_FLOAT_SIZE, Dynamic>::Zero(BPCELLS_VEC_FLOAT_SIZE, K);
         x.hessian_scratch = Eigen::Matrix<float, BPCELLS_VEC_FLOAT_SIZE, Dynamic>::Zero(
-            BPCELLS_VEC_FLOAT_SIZE, (p * p + p) / 2
+            BPCELLS_VEC_FLOAT_SIZE, (K * K + K) / 2
         );
-        x.hessian_accumulator = VectorXd::Zero((p * p + p) / 2);
+        x.hessian_accumulator = VectorXd::Zero((K * K + K) / 2);
         return x;
     }
 };
 
 class FitScratch {
   public:
-    VectorXd update;    // Dim p x 1
-    VectorXd prev_beta; // Dim p x 1, output parameter for previous beta
+    VectorXd update;    // Dim K x 1
+    VectorXd prev_beta; // Dim K x 1, output parameter for previous beta
     LLT<MatrixXd> cholesky;
-    static FitScratch init(int p) {
+    static FitScratch init(int K) {
         FitScratch x;
-        x.update = VectorXd::Zero(p);
-        x.prev_beta = VectorXd::Zero(p);
-        x.cholesky = LLT<MatrixXd>(p);
+        x.update = VectorXd::Zero(K);
+        x.prev_beta = VectorXd::Zero(K);
+        x.cholesky = LLT<MatrixXd>(K);
         return x;
     }
 };
@@ -136,42 +159,48 @@ inline void loss_and_gradients(
     }
 
     // Note that in.X has been rearranged specifically to make this arrangement easy
-    for (int i = 0; i + in.beta.rows() <= in.X.cols(); i += in.beta.rows()) {
-        const float *x = in.X.col(i).data();
-        // Calculate lambda = exp(X * beta)
-        vec_float lambda = splat_float(0.0);
-        for (int p = 0; p < in.beta.rows(); p++) {
-            vec_float Xp = load_float(x + p * BPCELLS_VEC_FLOAT_SIZE);
-            lambda = fma_f(Xp, splat_float(in.beta(p)), lambda);
+    const int K = in.beta.rows();
+    const int J = in.offset_beta.rows();
+    const int N = in.X->cols() / K; // Math-wise this is really N / BPCELLS_VEC_FLOAT_SIZE
+    for (int i = 0; i < N; i += 1) {
+        const float *x = in.X->data() + i * K * BPCELLS_VEC_FLOAT_SIZE;
+        const float *x_off = in.offset_X->data() + i * J * BPCELLS_VEC_FLOAT_SIZE;
+        // Calculate mu = exp(X * beta + O_x * O_beta)
+        vec_float mu = splat_float(0.0);
+        for (int k = 0; k < K; k++) {
+            vec_float Xk = load_float(x + k * BPCELLS_VEC_FLOAT_SIZE);
+            mu = fma_f(Xk, splat_float(in.beta(k)), mu);
         }
-        lambda = exp_f(lambda);
+        for (int j = 0; j < J; j++) {
+            vec_float Oj = load_float(x_off + j * BPCELLS_VEC_FLOAT_SIZE);
+            mu = fma_f(Oj, splat_float(in.offset_beta(j)), mu);
+        }
+        mu = exp_f(mu);
 
         // Loss calculation
         if constexpr (int(Target) & int(compute_target::loss)) {
-            store_float(
-                out.loss_scratch.data(), add_f(lambda, load_float(out.loss_scratch.data()))
-            );
+            store_float(out.loss_scratch.data(), add_f(mu, load_float(out.loss_scratch.data())));
         }
 
         // Gradient + Hessian calculation
         if constexpr (int(Target) & int(compute_target::gradients)) {
-            // gradient += t(lambda) * X
-            // hessian += Xt * diag(lambda) * X
+            // gradient += t(mu) * X
+            // hessian += Xt * diag(mu) * X
             float *hessian_tmp = out.hessian_scratch.data();
-            for (int p = 0; p < in.beta.rows(); p++) {
-                float *gradient_tmp = out.gradient_scratch.col(p).data();
-                vec_float XpLambda = mul_f(lambda, load_float(x + p * BPCELLS_VEC_FLOAT_SIZE));
-                store_float(gradient_tmp, add_f(XpLambda, load_float(gradient_tmp)));
-                for (int q = 0; q <= p; q++) {
-                    vec_float Xq = load_float(x + q * BPCELLS_VEC_FLOAT_SIZE);
-                    store_float(hessian_tmp, fma_f(XpLambda, Xq, load_float(hessian_tmp)));
+            for (int k = 0; k < K; k++) {
+                float *gradient_tmp = out.gradient_scratch.col(k).data();
+                vec_float XkMu = mul_f(mu, load_float(x + k * BPCELLS_VEC_FLOAT_SIZE));
+                store_float(gradient_tmp, add_f(XkMu, load_float(gradient_tmp)));
+                for (int j = 0; j <= k; j++) {
+                    vec_float Xj = load_float(x + j * BPCELLS_VEC_FLOAT_SIZE);
+                    store_float(hessian_tmp, fma_f(XkMu, Xj, load_float(hessian_tmp)));
                     hessian_tmp += BPCELLS_VEC_FLOAT_SIZE;
                 }
             }
         }
 
         // Store to the main accumulators to mitigate some of the precision loss during summation
-        if (i % (64 * BPCELLS_VEC_FLOAT_SIZE) == 64 * BPCELLS_VEC_FLOAT_SIZE - 1) {
+        if (i % 64 == 64 - 1) {
             // if (true) {
             if constexpr (int(Target) & int(compute_target::loss)) {
                 out.loss += out.loss_scratch.sum();
@@ -197,9 +226,9 @@ inline void loss_and_gradients(
             out.hessian_scratch.cast<double>().colwise().sum().array();
         // Copy hessian accumulator to the actual lower triangle of the matrix
         int i = 0;
-        for (int p = 0; p < in.beta.rows(); p++) {
-            for (int q = 0; q <= p; q++) {
-                out.hessian(p, q) = out.hessian_accumulator(i);
+        for (int k = 0; k < K; k++) {
+            for (int j = 0; j <= k; j++) {
+                out.hessian(k, j) = out.hessian_accumulator(i);
                 i += 1;
             }
         }
@@ -310,27 +339,24 @@ void glm_fit_vector(
 }
 
 void glm_fit_matrix(
-    const MatrixXd &X,
-    const MatrixXd &XtY,
-    const MatrixXd &beta_init,
+    StepInputs step_in,
+    const MatrixInputs mat_inputs,
     const FitParams &fit_params,
     MatrixXd &beta_transpose_out,
     std::vector<FitStats> &stats_out
 ) {
-    int p = X.cols();
-    int n = X.rows();
-    int m = beta_init.cols();
+    int K = mat_inputs.beta.rows();
+    int M = mat_inputs.beta.cols();
 
-    beta_transpose_out.setZero(p, m);
+    beta_transpose_out.setZero(K, M);
 
-    StepInputs step_in = StepInputs::init(n, p, X);
-
-    StepOutputs step_out = StepOutputs::init(p);
-    FitScratch fit_scratch = FitScratch::init(p);
-    for (int i = 0; i < m; i++) {
+    StepOutputs step_out = StepOutputs::init(K);
+    FitScratch fit_scratch = FitScratch::init(K);
+    for (int i = 0; i < M; i++) {
         FitStats stats;
-        step_in.XtY = XtY.col(i);
-        step_in.beta = beta_init.col(i);
+        step_in.XtY = mat_inputs.XtY.col(i);
+        step_in.beta = mat_inputs.beta.col(i);
+        step_in.offset_beta = mat_inputs.offset_beta.col(i);
         glm_fit_vector(step_in, step_out, fit_scratch, fit_params, stats);
         beta_transpose_out.col(i) = step_in.beta;
         stats_out.push_back(stats);
@@ -345,20 +371,20 @@ SEXP glm_check_gradient_cpp(
     const Eigen::Map<Eigen::MatrixXd> X,
     const Eigen::Map<Eigen::MatrixXd> XtY,
     const Eigen::Map<Eigen::MatrixXd> beta_init,
+    const Eigen::Map<Eigen::MatrixXd> offset_X,
+    const Eigen::Map<Eigen::MatrixXd> offset_beta,
     double ridge_penalty
 ) {
     using namespace BPCells::poisson;
-    int p = X.cols();
-    int n = X.rows();
 
     FitParams fit_params;
     fit_params.ridge_penalty = ridge_penalty;
 
-    StepInputs step_in = StepInputs::init(n, p, X);
+    StepInputs step_in = StepInputs::init(X, offset_X);
     step_in.XtY = XtY.col(0);
     step_in.beta = beta_init.col(0);
 
-    StepOutputs step_out = StepOutputs::init(p);
+    StepOutputs step_out = StepOutputs::init(X.cols());
 
     FitStats stats;
 
@@ -389,6 +415,8 @@ SEXP glm_fit_matrix_cpp(
     const Eigen::Map<Eigen::MatrixXd> X,
     const Eigen::Map<Eigen::MatrixXd> XtY,
     const Eigen::Map<Eigen::MatrixXd> beta_init,
+    const Eigen::Map<Eigen::MatrixXd> offset_X,
+    const Eigen::Map<Eigen::MatrixXd> offset_beta,
     double ridge_penalty,
     int max_it,
     double abstol,
@@ -405,19 +433,32 @@ SEXP glm_fit_matrix_cpp(
 
     std::vector<std::vector<FitStats>> stats_results(std::max(1, threads));
     std::vector<Eigen::MatrixXd> beta_transpose_results(std::max(1, threads));
+
+    StepInputs step_in = StepInputs::init(X, offset_X);
     if (threads == 0) {
-        glm_fit_matrix(X, XtY, beta_init, fit_params, beta_transpose_results[0], stats_results[0]);
+        MatrixInputs mat_inputs;
+        mat_inputs.XtY = XtY;
+        mat_inputs.beta = beta_init;
+        mat_inputs.offset_beta = offset_beta;
+
+        glm_fit_matrix(
+            step_in, mat_inputs, fit_params, beta_transpose_results[0], stats_results[0]
+        );
     } else {
         std::vector<std::thread> thread_vec;
         int idx = 0;
 
         for (int i = 0; i < threads; i++) {
             int beta_cols = (beta_init.cols() - idx) / (threads - i);
+            MatrixInputs mat_inputs;
+            mat_inputs.XtY = XtY.block(0, idx, XtY.rows(), beta_cols);
+            mat_inputs.beta = beta_init.block(0, idx, beta_init.rows(), beta_cols);
+            mat_inputs.offset_beta = offset_beta.block(0, idx, offset_beta.rows(), beta_cols);
+
             thread_vec.push_back(std::thread(
                 glm_fit_matrix,
-                X,
-                XtY.block(0, idx, XtY.rows(), beta_cols),
-                beta_init.block(0, idx, beta_init.rows(), beta_cols),
+                step_in,
+                mat_inputs,
                 fit_params,
                 std::ref(beta_transpose_results[i]),
                 std::ref(stats_results[i])
@@ -425,8 +466,8 @@ SEXP glm_fit_matrix_cpp(
             idx += beta_cols;
         }
         // Wait for work to finish
-        for (auto &th : thread_vec) th.join();
-
+        for (auto &th : thread_vec)
+            th.join();
     }
 
     // We'll return a vector for each fitting stat
@@ -455,7 +496,6 @@ SEXP glm_fit_matrix_cpp(
         beta.block(idx, 0, m.cols(), m.rows()) = m.transpose();
         idx += m.cols();
     }
-
 
     // Return fit with stats on fit computations
     return List::create(
