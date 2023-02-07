@@ -1871,6 +1871,26 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// glm_trace_solve_cpp
+SEXP glm_trace_solve_cpp(const int idx, const Eigen::Map<Eigen::MatrixXd> X, const Eigen::Map<Eigen::MatrixXd> XtY, const Eigen::Map<Eigen::MatrixXd> beta_init, const Eigen::Map<Eigen::MatrixXd> offset_X, const Eigen::Map<Eigen::MatrixXd> offset_beta, double ridge_penalty, int max_it, double abstol, double reltol);
+RcppExport SEXP _BPCells_glm_trace_solve_cpp(SEXP idxSEXP, SEXP XSEXP, SEXP XtYSEXP, SEXP beta_initSEXP, SEXP offset_XSEXP, SEXP offset_betaSEXP, SEXP ridge_penaltySEXP, SEXP max_itSEXP, SEXP abstolSEXP, SEXP reltolSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const int >::type idx(idxSEXP);
+    Rcpp::traits::input_parameter< const Eigen::Map<Eigen::MatrixXd> >::type X(XSEXP);
+    Rcpp::traits::input_parameter< const Eigen::Map<Eigen::MatrixXd> >::type XtY(XtYSEXP);
+    Rcpp::traits::input_parameter< const Eigen::Map<Eigen::MatrixXd> >::type beta_init(beta_initSEXP);
+    Rcpp::traits::input_parameter< const Eigen::Map<Eigen::MatrixXd> >::type offset_X(offset_XSEXP);
+    Rcpp::traits::input_parameter< const Eigen::Map<Eigen::MatrixXd> >::type offset_beta(offset_betaSEXP);
+    Rcpp::traits::input_parameter< double >::type ridge_penalty(ridge_penaltySEXP);
+    Rcpp::traits::input_parameter< int >::type max_it(max_itSEXP);
+    Rcpp::traits::input_parameter< double >::type abstol(abstolSEXP);
+    Rcpp::traits::input_parameter< double >::type reltol(reltolSEXP);
+    rcpp_result_gen = Rcpp::wrap(glm_trace_solve_cpp(idx, X, XtY, beta_init, offset_X, offset_beta, ridge_penalty, max_it, abstol, reltol));
+    return rcpp_result_gen;
+END_RCPP
+}
 // glm_fit_matrix_cpp
 SEXP glm_fit_matrix_cpp(const Eigen::Map<Eigen::MatrixXd> X, const Eigen::Map<Eigen::MatrixXd> XtY, const Eigen::Map<Eigen::MatrixXd> beta_init, const Eigen::Map<Eigen::MatrixXd> offset_X, const Eigen::Map<Eigen::MatrixXd> offset_beta, double ridge_penalty, int max_it, double abstol, double reltol, int threads);
 RcppExport SEXP _BPCells_glm_fit_matrix_cpp(SEXP XSEXP, SEXP XtYSEXP, SEXP beta_initSEXP, SEXP offset_XSEXP, SEXP offset_betaSEXP, SEXP ridge_penaltySEXP, SEXP max_itSEXP, SEXP abstolSEXP, SEXP reltolSEXP, SEXP threadsSEXP) {
@@ -2053,6 +2073,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_BPCells_matrix_stats_cpp", (DL_FUNC) &_BPCells_matrix_stats_cpp, 3},
     {"_BPCells_matrix_identical_uint32_t_cpp", (DL_FUNC) &_BPCells_matrix_identical_uint32_t_cpp, 2},
     {"_BPCells_glm_check_gradient_cpp", (DL_FUNC) &_BPCells_glm_check_gradient_cpp, 6},
+    {"_BPCells_glm_trace_solve_cpp", (DL_FUNC) &_BPCells_glm_trace_solve_cpp, 10},
     {"_BPCells_glm_fit_matrix_cpp", (DL_FUNC) &_BPCells_glm_fit_matrix_cpp, 10},
     {"_BPCells_poisson_glm_matrix_cpp", (DL_FUNC) &_BPCells_poisson_glm_matrix_cpp, 7},
     {NULL, NULL, 0}

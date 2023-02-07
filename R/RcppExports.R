@@ -573,6 +573,10 @@ glm_check_gradient_cpp <- function(X, XtY, beta_init, offset_X, offset_beta, rid
     .Call(`_BPCells_glm_check_gradient_cpp`, X, XtY, beta_init, offset_X, offset_beta, ridge_penalty)
 }
 
+glm_trace_solve_cpp <- function(idx, X, XtY, beta_init, offset_X, offset_beta, ridge_penalty, max_it, abstol, reltol) {
+    .Call(`_BPCells_glm_trace_solve_cpp`, idx, X, XtY, beta_init, offset_X, offset_beta, ridge_penalty, max_it, abstol, reltol)
+}
+
 glm_fit_matrix_cpp <- function(X, XtY, beta_init, offset_X, offset_beta, ridge_penalty, max_it, abstol, reltol, threads) {
     .Call(`_BPCells_glm_fit_matrix_cpp`, X, XtY, beta_init, offset_X, offset_beta, ridge_penalty, max_it, abstol, reltol, threads)
 }

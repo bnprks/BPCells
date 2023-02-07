@@ -286,7 +286,7 @@ void glm_fit_vector(
 
         bool armijo = step_out.loss <= prev_loss + alpha * minimum_loss_change ||
                       abs(step_out.loss - prev_loss) / prev_loss < fit_params.armijo_tol;
-        if (it > 0 && (alpha != 1 || !armijo)) {
+        if (alpha != 1 || !armijo) {
             // Perform line search with Armijo condition
             // See: https://en.wikipedia.org/wiki/Backtracking_line_search and Armijo conditions
             // In most cases we will should skip this (alpha == 1 and Armijo condition is
@@ -376,7 +376,7 @@ SEXP glm_check_gradient_cpp(
     double ridge_penalty
 ) {
     using namespace BPCells::poisson;
-
+    
     FitParams fit_params;
     fit_params.ridge_penalty = ridge_penalty;
 
@@ -394,6 +394,70 @@ SEXP glm_check_gradient_cpp(
         Named("loss") = step_out.loss,
         Named("gradient") = step_out.gradient,
         Named("hessian") = step_out.hessian
+    );
+}
+
+// Trace the solving of a single Poisson GLM fit
+// Return history of beta, update, gradient, hessian, and loss
+// [[Rcpp::export]]
+SEXP glm_trace_solve_cpp(
+    const int idx,
+    const Eigen::Map<Eigen::MatrixXd> X,
+    const Eigen::Map<Eigen::MatrixXd> XtY,
+    const Eigen::Map<Eigen::MatrixXd> beta_init,
+    const Eigen::Map<Eigen::MatrixXd> offset_X,
+    const Eigen::Map<Eigen::MatrixXd> offset_beta,
+    double ridge_penalty,
+    int max_it,
+    double abstol,
+    double reltol
+) {
+    using namespace BPCells::poisson;
+    if (X.cols() != XtY.rows()) Rcpp::stop("Error: ncol(X) != nrow(XtY)");
+    if (XtY.rows() != beta_init.rows() || XtY.cols() != beta_init.cols()) Rcpp::stop("Error: dim(XtY) != dim(beta_init)");
+    if (offset_X.rows() != X.rows()) Rcpp::stop("Error: nrow(offset_X) != nrow(X)");
+    if (offset_beta.cols() != beta_init.cols()) Rcpp::stop("Error: ncol(offset_beta) != ncol(beta)");
+    if (offset_X.cols() != offset_beta.rows()) Rcpp::stop("Error: ncol(offset_X) != nrow(offset_beta)");
+
+    FitParams fit_params;
+    fit_params.max_it = 1;
+    fit_params.abstol = abstol;
+    fit_params.reltol = reltol;
+    fit_params.ridge_penalty = ridge_penalty;
+
+    StepOutputs step_out = StepOutputs::init(X.cols());
+    FitScratch fit_scratch = FitScratch::init(X.cols());
+
+    StepInputs step_in = StepInputs::init(X, offset_X);
+    step_in.XtY = XtY.col(idx);
+    step_in.beta = beta_init.col(idx);
+    step_in.offset_beta = offset_beta.col(idx);
+
+    
+    std::vector<double> loss, alpha;
+    std::vector<MatrixXd> beta, gradient, hessian, update, update_qr;
+
+    for (int i = 0; i < max_it; i++) {
+        FitStats stats;
+        poisson::loss_and_gradients<compute_target::all>(step_in, step_out, fit_params, stats);
+        loss.push_back(step_out.loss);
+        gradient.push_back(step_out.gradient);
+        hessian.push_back(step_out.hessian);
+        update.push_back(step_out.hessian.llt().solve(-step_out.gradient));
+        update_qr.push_back(step_out.hessian.colPivHouseholderQr().solve(-step_out.gradient));
+        glm_fit_vector(step_in, step_out, fit_scratch, fit_params, stats);
+        beta.push_back(step_in.beta);
+        alpha.push_back(stats.min_alpha);
+    }
+
+    return List::create(
+        Named("loss") = loss,
+        Named("alpha") = alpha,
+        Named("beta") = beta,
+        Named("gradient") = gradient,
+        Named("hessian") = hessian,
+        Named("update") = update,
+        Named("update_qr") = update_qr
     );
 }
 
@@ -424,6 +488,11 @@ SEXP glm_fit_matrix_cpp(
     int threads
 ) {
     using namespace BPCells::poisson;
+    if (X.cols() != XtY.rows()) Rcpp::stop("Error: ncol(X) != nrow(XtY)");
+    if (XtY.rows() != beta_init.rows() || XtY.cols() != beta_init.cols()) Rcpp::stop("Error: dim(XtY) != dim(beta_init)");
+    if (offset_X.rows() != X.rows()) Rcpp::stop("Error: nrow(offset_X) != nrow(X)");
+    if (offset_beta.cols() != beta_init.cols()) Rcpp::stop("Error: ncol(offset_beta) != ncol(beta)");
+    if (offset_X.cols() != offset_beta.rows()) Rcpp::stop("Error: ncol(offset_X) != nrow(offset_beta)");
 
     FitParams fit_params;
     fit_params.max_it = max_it;
