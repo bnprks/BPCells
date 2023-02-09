@@ -262,20 +262,27 @@ hg38.</p>
 we provide the name of a directory to save the files in. This also
 allows us to skip re-downloading the same files next time.</p>
 <div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">genes</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/read_gtf.html">read_gencode_genes</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/getwd.html" class="external-link">getwd</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="va">genes</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/read_gtf.html">read_gencode_transcripts</a></span><span class="op">(</span></span>
+<span>  <span class="st">"./references"</span>, </span>
+<span>  release<span class="op">=</span><span class="st">"42"</span>, </span>
+<span>  transcript_choice<span class="op">=</span><span class="st">"MANE_Select"</span>,</span>
+<span>  annotation_set <span class="op">=</span> <span class="st">"basic"</span>, </span>
+<span>  features<span class="op">=</span><span class="st">"transcript"</span> <span class="co"># Make sure to set this so we don't get exons as well</span></span>
+<span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">genes</span><span class="op">)</span></span></code></pre></div>
-<pre><code><span><span class="co">## <span style="color: #949494;"># A tibble: 6 × 11</span></span></span>
-<span><span class="co">##   chr   source feature start    end score strand frame gene_id   gene_…¹ gene_…²</span></span>
-<span><span class="co">##   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>  </span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">1</span> chr1  HAVANA gene    <span style="text-decoration: underline;">11</span>868  <span style="text-decoration: underline;">14</span>409 .     +      .     ENSG0000… lncRNA  DDX11L2</span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">2</span> chr1  HAVANA gene    <span style="text-decoration: underline;">29</span>553  <span style="text-decoration: underline;">31</span>109 .     +      .     ENSG0000… lncRNA  MIR130…</span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">3</span> chr1  HAVANA gene    <span style="text-decoration: underline;">34</span>553  <span style="text-decoration: underline;">36</span>081 .     -      .     ENSG0000… lncRNA  FAM138A</span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">4</span> chr1  HAVANA gene    <span style="text-decoration: underline;">57</span>597  <span style="text-decoration: underline;">64</span>116 .     +      .     ENSG0000… lncRNA  ENSG00…</span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">5</span> chr1  HAVANA gene    <span style="text-decoration: underline;">65</span>418  <span style="text-decoration: underline;">71</span>585 .     +      .     ENSG0000… protei… OR4F5  </span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">6</span> chr1  HAVANA gene    <span style="text-decoration: underline;">89</span>294 <span style="text-decoration: underline;">133</span>723 .     -      .     ENSG0000… lncRNA  ENSG00…</span></span>
-<span><span class="co">## <span style="color: #949494;"># … with abbreviated variable names ¹​gene_type, ²​gene_name</span></span></span></code></pre>
+<pre><code><span><span class="co">## <span style="color: #949494;"># A tibble: 6 × 13</span></span></span>
+<span><span class="co">##   chr   source feature   start    end score strand frame gene_id gene_…¹ gene_…²</span></span>
+<span><span class="co">##   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>  </span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">1</span> chr1  HAVANA transcr…  <span style="text-decoration: underline;">65</span>418  <span style="text-decoration: underline;">71</span>585 .     +      .     ENSG00… protei… OR4F5  </span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">2</span> chr1  HAVANA transcr… <span style="text-decoration: underline;">450</span>739 <span style="text-decoration: underline;">451</span>678 .     -      .     ENSG00… protei… OR4F29 </span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">3</span> chr1  HAVANA transcr… <span style="text-decoration: underline;">685</span>715 <span style="text-decoration: underline;">686</span>654 .     -      .     ENSG00… protei… OR4F16 </span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">4</span> chr1  HAVANA transcr… <span style="text-decoration: underline;">923</span>922 <span style="text-decoration: underline;">944</span>574 .     +      .     ENSG00… protei… SAMD11 </span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">5</span> chr1  HAVANA transcr… <span style="text-decoration: underline;">944</span>202 <span style="text-decoration: underline;">959</span>256 .     -      .     ENSG00… protei… NOC2L  </span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">6</span> chr1  HAVANA transcr… <span style="text-decoration: underline;">960</span>583 <span style="text-decoration: underline;">965</span>719 .     +      .     ENSG00… protei… KLHL17 </span></span>
+<span><span class="co">## <span style="color: #949494;"># … with 2 more variables: transcript_id &lt;chr&gt;, MANE_Select &lt;lgl&gt;, and</span></span></span>
+<span><span class="co">## <span style="color: #949494;">#   abbreviated variable names ¹​gene_type, ²​gene_name</span></span></span></code></pre>
 <div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">blacklist</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/read_bed.html">read_encode_blacklist</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/getwd.html" class="external-link">getwd</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="va">blacklist</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/read_bed.html">read_encode_blacklist</a></span><span class="op">(</span><span class="st">"./references"</span>, genome<span class="op">=</span><span class="st">"hg38"</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">blacklist</span><span class="op">)</span></span></code></pre></div>
 <pre><code><span><span class="co">## <span style="color: #949494;"># A tibble: 6 × 4</span></span></span>
 <span><span class="co">##   chr      start      end reason            </span></span>
@@ -287,7 +294,7 @@ allows us to skip re-downloading the same files next time.</p>
 <span><span class="co">## <span style="color: #BCBCBC;">5</span> chr10 41<span style="text-decoration: underline;">838</span>900 42<span style="text-decoration: underline;">107</span>300 High Signal Region</span></span>
 <span><span class="co">## <span style="color: #BCBCBC;">6</span> chr10 42<span style="text-decoration: underline;">279</span>400 42<span style="text-decoration: underline;">322</span>500 High Signal Region</span></span></code></pre>
 <div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">chrom_sizes</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/read_ucsc_chrom_sizes.html">read_ucsc_chrom_sizes</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/getwd.html" class="external-link">getwd</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="va">chrom_sizes</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/read_ucsc_chrom_sizes.html">read_ucsc_chrom_sizes</a></span><span class="op">(</span><span class="st">"./references"</span>, genome<span class="op">=</span><span class="st">"hg38"</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">chrom_sizes</span><span class="op">)</span></span></code></pre></div>
 <pre><code><span><span class="co">## <span style="color: #949494;"># A tibble: 6 × 3</span></span></span>
 <span><span class="co">##   chr   start       end</span></span>
@@ -312,12 +319,12 @@ control statistics.</p>
 <pre><code><span><span class="co">## <span style="color: #949494;"># A tibble: 6 × 10</span></span></span>
 <span><span class="co">##   cellN…¹ TSSEn…² nFrags subNu…³ monoN…⁴ multi…⁵ Reads…⁶ Reads…⁷ Reads…⁸ Reads…⁹</span></span>
 <span><span class="co">##   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">1</span> TTTAGC… 26.1     <span style="text-decoration: underline;">16</span>363    <span style="text-decoration: underline;">8</span>069    <span style="text-decoration: underline;">5</span>588    <span style="text-decoration: underline;">2</span>706    <span style="text-decoration: underline;">3</span>438     261   <span style="text-decoration: underline;">15</span>742     244</span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">2</span> GCCTTT…  0.099<span style="text-decoration: underline;">0</span>      3       1       2       0       1       0       8       2</span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">3</span> AGCCGG… 17.2     <span style="text-decoration: underline;">33</span>313   <span style="text-decoration: underline;">15</span>855   <span style="text-decoration: underline;">11</span>868    <span style="text-decoration: underline;">5</span>590    <span style="text-decoration: underline;">4</span>613     530   <span style="text-decoration: underline;">21</span>875     478</span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">4</span> TGATTA… 28.4     <span style="text-decoration: underline;">11</span>908    <span style="text-decoration: underline;">6</span>103    <span style="text-decoration: underline;">3</span>817    <span style="text-decoration: underline;">1</span>988    <span style="text-decoration: underline;">2</span>543     177   <span style="text-decoration: underline;">11</span>696     174</span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">5</span> ATTGAC… 27.7     <span style="text-decoration: underline;">13</span>075    <span style="text-decoration: underline;">6</span>932    <span style="text-decoration: underline;">4</span>141    <span style="text-decoration: underline;">2</span>002    <span style="text-decoration: underline;">2</span>980     213   <span style="text-decoration: underline;">13</span>232     190</span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">6</span> CGTTAG… 20.9     <span style="text-decoration: underline;">14</span>874    <span style="text-decoration: underline;">6</span>833    <span style="text-decoration: underline;">5</span>405    <span style="text-decoration: underline;">2</span>636    <span style="text-decoration: underline;">2</span>645     251   <span style="text-decoration: underline;">12</span>219     231</span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">1</span> TTTAGC…  45.1    <span style="text-decoration: underline;">16</span>363    <span style="text-decoration: underline;">8</span>069    <span style="text-decoration: underline;">5</span>588    <span style="text-decoration: underline;">2</span>706    <span style="text-decoration: underline;">2</span>964     130   <span style="text-decoration: underline;">13</span>820     244</span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">2</span> GCCTTT…   0.198      3       1       2       0       2       0       6       2</span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">3</span> AGCCGG…  30.9    <span style="text-decoration: underline;">33</span>313   <span style="text-decoration: underline;">15</span>855   <span style="text-decoration: underline;">11</span>868    <span style="text-decoration: underline;">5</span>590    <span style="text-decoration: underline;">3</span>992     256   <span style="text-decoration: underline;">18</span>665     478</span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">4</span> TGATTA…  41.9    <span style="text-decoration: underline;">11</span>908    <span style="text-decoration: underline;">6</span>103    <span style="text-decoration: underline;">3</span>817    <span style="text-decoration: underline;">1</span>988    <span style="text-decoration: underline;">2</span>158     102   <span style="text-decoration: underline;">10</span>259     174</span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">5</span> ATTGAC…  43.9    <span style="text-decoration: underline;">13</span>075    <span style="text-decoration: underline;">6</span>932    <span style="text-decoration: underline;">4</span>141    <span style="text-decoration: underline;">2</span>002    <span style="text-decoration: underline;">2</span>530     114   <span style="text-decoration: underline;">11</span>731     190</span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">6</span> CGTTAG…  31.5    <span style="text-decoration: underline;">14</span>874    <span style="text-decoration: underline;">6</span>833    <span style="text-decoration: underline;">5</span>405    <span style="text-decoration: underline;">2</span>636    <span style="text-decoration: underline;">2</span>244     141   <span style="text-decoration: underline;">10</span>470     231</span></span>
 <span><span class="co">## <span style="color: #949494;"># … with abbreviated variable names ¹​cellName, ²​TSSEnrichment, ³​subNucleosomal,</span></span></span>
 <span><span class="co">## <span style="color: #949494;">#   ⁴​monoNucleosomal, ⁵​multiNucleosomal, ⁶​ReadsInTSS, ⁷​ReadsFlankingTSS,</span></span></span>
 <span><span class="co">## <span style="color: #949494;">#   ⁸​ReadsInPromoter, ⁹​ReadsInBlacklist</span></span></span></code></pre>
@@ -328,7 +335,16 @@ the bottom-right quadrant, and high-quality cells in the top-right
 quadrant. From a flow-cytometry perspective, we use the bottom-left
 group of empty droplets as a negative control to help set our
 cutoffs.</p>
-<div class="sourceCode" id="cb20"><pre class="downlit sourceCode r">
+<details><summary><strong>Why is this TSS Enrichment number different from ArchR?</strong>
+</summary>
+The TSS Enrichment number varies depending on the TSS annotation set
+used, as a stricter definition of what counts as a TSS will tend to give
+higher TSS enrichment. BPCells uses the exact same formula as ArchR to
+calculate TSS enrichment, so if you pass the ArchR TSS set to BPCells
+you’ll get identical results. However, in this case we’ve used a
+somewhat more strict definition of TSS by taking just the MANE select
+transcripts from Gencode.
+</details><div class="sourceCode" id="cb20"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/plot_tss_scatter.html">plot_tss_scatter</a></span><span class="op">(</span><span class="va">atac_qc</span>, min_frags<span class="op">=</span><span class="fl">1000</span>, min_tss<span class="op">=</span><span class="fl">10</span><span class="op">)</span></span></code></pre></div>
 <p><img src="pbmc3k_files/figure-html/unnamed-chunk-15-1.png" width="700"></p>
 <p>We can also plot some sample-level quality control plots.</p>
@@ -352,7 +368,7 @@ and minimum TSS Enrichment cutoffs.</p>
 <code class="sourceCode R"><span><span class="va">pass_atac</span> <span class="op">&lt;-</span> <span class="va">atac_qc</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
 <span>    <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="va">nFrags</span> <span class="op">&gt;</span> <span class="fl">1000</span>, <span class="va">TSSEnrichment</span> <span class="op">&gt;</span> <span class="fl">10</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
 <span>    <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/pull.html" class="external-link">pull</a></span><span class="op">(</span><span class="va">cellName</span><span class="op">)</span></span>
-<span><span class="va">pass_rna</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/BiocGenerics/man/row_colnames.html" class="external-link">colnames</a></span><span class="op">(</span><span class="va">mat_raw</span><span class="op">)</span><span class="op">[</span><span class="fu">Matrix</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/Matrix/man/colSums.html" class="external-link">colSums</a></span><span class="op">(</span><span class="va">mat_raw</span><span class="op">)</span> <span class="op">&gt;</span> <span class="fl">1e3</span><span class="op">]</span></span>
+<span><span class="va">pass_rna</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">colnames</a></span><span class="op">(</span><span class="va">mat_raw</span><span class="op">)</span><span class="op">[</span><span class="fu">Matrix</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/Matrix/man/colSums.html" class="external-link">colSums</a></span><span class="op">(</span><span class="va">mat_raw</span><span class="op">)</span> <span class="op">&gt;</span> <span class="fl">1e3</span><span class="op">]</span></span>
 <span><span class="va">keeper_cells</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://generics.r-lib.org/reference/setops.html" class="external-link">intersect</a></span><span class="op">(</span><span class="va">pass_atac</span>, <span class="va">pass_rna</span><span class="op">)</span></span></code></pre></div>
 <p>We subset the RNA and ATAC input data to just the cells passing
 filter. And for RNA, we subset to genes with at least 3 reads. This
@@ -387,9 +403,9 @@ simplify the process.</p>
 <code class="sourceCode R"><span><span class="va">stats</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/matrix_stats.html">matrix_stats</a></span><span class="op">(</span><span class="va">mat</span>, row_stats<span class="op">=</span><span class="st">"variance"</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># To keep the example small, we'll do a very naive variable gene selection</span></span>
-<span><span class="va">variable_genes</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/BiocGenerics/man/order.html" class="external-link">order</a></span><span class="op">(</span><span class="va">stats</span><span class="op">$</span><span class="va">row_stats</span><span class="op">[</span><span class="st">"variance"</span>,<span class="op">]</span>, decreasing<span class="op">=</span><span class="cn">TRUE</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> </span>
+<span><span class="va">variable_genes</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/order.html" class="external-link">order</a></span><span class="op">(</span><span class="va">stats</span><span class="op">$</span><span class="va">row_stats</span><span class="op">[</span><span class="st">"variance"</span>,<span class="op">]</span>, decreasing<span class="op">=</span><span class="cn">TRUE</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> </span>
 <span>  <span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="fl">1000</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> </span>
-<span>  <span class="fu"><a href="https://rdrr.io/pkg/BiocGenerics/man/sort.html" class="external-link">sort</a></span><span class="op">(</span><span class="op">)</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/sort.html" class="external-link">sort</a></span><span class="op">(</span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">mat_norm</span> <span class="op">&lt;-</span> <span class="va">mat</span><span class="op">[</span><span class="va">variable_genes</span>,<span class="op">]</span></span></code></pre></div>
 <p>If we look at our normalized matrix object, we can see we have quite
@@ -397,20 +413,20 @@ a few math operations queued up which are performed on-the-fly as
 needed.</p>
 <div class="sourceCode" id="cb26"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">mat_norm</span></span></code></pre></div>
-<pre><code><span><span class="co">## 1000 x 2599 IterableMatrix object with class TransformLog1p</span></span>
+<pre><code><span><span class="co">## 1000 x 2600 IterableMatrix object with class TransformLog1p</span></span>
 <span><span class="co">## </span></span>
 <span><span class="co">## Row names: ENSG00000078369, ENSG00000116251 ... ENSG00000212907</span></span>
-<span><span class="co">## Col names: TTTAGCAAGGTAGCTT-1, AGCCGGTTCCGGAACC-1 ... AGTAGCTTCATAGACC-1</span></span>
+<span><span class="co">## Col names: TTTAGCAAGGTAGCTT-1, AGCCGGTTCCGGAACC-1 ... TACTAAGTCCAATAGC-1</span></span>
 <span><span class="co">## </span></span>
 <span><span class="co">## Data type: double</span></span>
 <span><span class="co">## Storage order: column major</span></span>
 <span><span class="co">## </span></span>
 <span><span class="co">## Queued Operations:</span></span>
 <span><span class="co">## 1. Load compressed matrix from directory C:\Users\Ben\Downloads\pbmc-3k\pbmc_3k_rna_raw</span></span>
-<span><span class="co">## 2. Select rows: 87, 171 ... 36568 and cols: 640783, 89020 ... 111122</span></span>
+<span><span class="co">## 2. Select rows: 87, 171 ... 36568 and cols: 640783, 89020 ... 504383</span></span>
 <span><span class="co">## 3. Convert type from uint32_t to double</span></span>
 <span><span class="co">## 4. Scale by 1e+04</span></span>
-<span><span class="co">## 5. Scale columns by 0.000221, 0.000118 ... 0.000407</span></span>
+<span><span class="co">## 5. Scale columns by 0.000221, 0.000118 ... 0.000177</span></span>
 <span><span class="co">## 6. Transform log1p</span></span></code></pre>
 <p>To improve performance of the downstream PCA, we save this sparse
 normalized matrix to a temporary file just prior to normalizations that
@@ -440,22 +456,22 @@ dense.</p>
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/sprintf.html" class="external-link">sprintf</a></span><span class="op">(</span><span class="st">"PCA dimensions: %s\n"</span>, <span class="fu"><a href="https://rdrr.io/r/base/toString.html" class="external-link">toString</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/dim.html" class="external-link">dim</a></span><span class="op">(</span><span class="va">pca</span><span class="op">)</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="va">pca</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">4</span>,<span class="fl">1</span><span class="op">:</span><span class="fl">3</span><span class="op">]</span></span></code></pre></div>
-<pre><code><span><span class="co">## PCA dimensions: 2599, 50</span></span>
-<span><span class="co">##            [,1]      [,2]      [,3]</span></span>
-<span><span class="co">## [1,] -15.168703 -0.813149 -2.381169</span></span>
-<span><span class="co">## [2,]  -6.607428 -7.203094  4.386106</span></span>
-<span><span class="co">## [3,] -14.605054  1.157472 -0.620746</span></span>
-<span><span class="co">## [4,]  -8.129926 -1.123073 -2.492770</span></span></code></pre>
+<pre><code><span><span class="co">## PCA dimensions: 2600, 50</span></span>
+<span><span class="co">##           [,1]       [,2]       [,3]</span></span>
+<span><span class="co">## [1,] 15.167732  0.8951488 -2.3650024</span></span>
+<span><span class="co">## [2,]  6.599774  7.2484738  4.4369183</span></span>
+<span><span class="co">## [3,] 14.621697 -1.1929478 -0.6439662</span></span>
+<span><span class="co">## [4,]  8.142875  1.0977225 -2.5066238</span></span></code></pre>
 <p>Next we calculate UMAP coordinates</p>
 <div class="sourceCode" id="cb32"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">12341512</span><span class="op">)</span></span>
 <span><span class="va">umap</span> <span class="op">&lt;-</span> <span class="fu">uwot</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/uwot/man/umap.html" class="external-link">umap</a></span><span class="op">(</span><span class="va">pca</span><span class="op">)</span></span>
 <span><span class="va">umap</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">4</span>,<span class="op">]</span></span></code></pre></div>
-<pre><code><span><span class="co">##          [,1]     [,2]</span></span>
-<span><span class="co">## [1,] 9.179734 4.413607</span></span>
-<span><span class="co">## [2,] 8.873083 2.023200</span></span>
-<span><span class="co">## [3,] 9.087115 4.160613</span></span>
-<span><span class="co">## [4,] 7.910529 1.611277</span></span></code></pre>
+<pre><code><span><span class="co">##            [,1]       [,2]</span></span>
+<span><span class="co">## [1,]  9.7961631 -2.6146609</span></span>
+<span><span class="co">## [2,] -0.5876571  8.7068003</span></span>
+<span><span class="co">## [3,]  9.7541175 -2.7564906</span></span>
+<span><span class="co">## [4,]  8.1886058 -0.1815591</span></span></code></pre>
 </div>
 <div class="section level3">
 <h3 id="clustering">Clustering<a class="anchor" aria-label="anchor" href="#clustering"></a>
@@ -469,7 +485,7 @@ coordinates.</p>
 <div class="sourceCode" id="cb35"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/sprintf.html" class="external-link">sprintf</a></span><span class="op">(</span><span class="st">"Clusts length: %s\n"</span>, <span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="va">clusts</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="va">clusts</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">10</span><span class="op">]</span></span></code></pre></div>
-<pre><code><span><span class="co">## Clusts length: 2599</span></span>
+<pre><code><span><span class="co">## Clusts length: 2600</span></span>
 <span><span class="co">##  [1] 1 2 1 2 2 3 2 2 4 5</span></span>
 <span><span class="co">## Levels: 1 2 3 4 5 6 7 8 9 10 11 12</span></span></code></pre>
 <p>And now we can visualize the clusters on a UMAP:</p>
@@ -542,12 +558,12 @@ resolution is approximately +/- 30bp.</p>
 <pre><code><span><span class="co">## <span style="color: #949494;"># A tibble: 6 × 7</span></span></span>
 <span><span class="co">##   chr       start       end group     p_val     q_val enrichment</span></span>
 <span><span class="co">##   <span style="color: #949494; font-style: italic;">&lt;fct&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>      <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">1</span> chr3   93<span style="text-decoration: underline;">470</span>533  93<span style="text-decoration: underline;">470</span>733 Mono  0   <span style="color: #949494;"> </span>     0   <span style="color: #949494;"> </span>          <span style="text-decoration: underline;">1</span>488.</span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">2</span> chr1   16<span style="text-decoration: underline;">644</span>600  16<span style="text-decoration: underline;">644</span>800 NK    1.84<span style="color: #949494;">e</span><span style="color: #BB0000;">-197</span> 2.84<span style="color: #949494;">e</span><span style="color: #BB0000;">-190</span>      <span style="text-decoration: underline;">1</span>018.</span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">3</span> chr17  81<span style="text-decoration: underline;">860</span>866  81<span style="text-decoration: underline;">861</span>066 DC    2.14<span style="color: #949494;">e</span><span style="color: #BB0000;">- 62</span> 3.30<span style="color: #949494;">e</span><span style="color: #BB0000;">- 55</span>       550.</span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">4</span> chr1  228<span style="text-decoration: underline;">140</span>000 228<span style="text-decoration: underline;">140</span>200 NK    8.26<span style="color: #949494;">e</span><span style="color: #BB0000;">-159</span> 6.37<span style="color: #949494;">e</span><span style="color: #BB0000;">-152</span>       818.</span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">5</span> chr1    1<span style="text-decoration: underline;">724</span>333   1<span style="text-decoration: underline;">724</span>533 T     0   <span style="color: #949494;"> </span>     0   <span style="color: #949494;"> </span>           801.</span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">6</span> chr8   30<span style="text-decoration: underline;">083</span>133  30<span style="text-decoration: underline;">083</span>333 CD8 T 7.31<span style="color: #949494;">e</span><span style="color: #BB0000;">-228</span> 1.13<span style="color: #949494;">e</span><span style="color: #BB0000;">-220</span>       736.</span></span></code></pre>
+<span><span class="co">## <span style="color: #BCBCBC;">1</span> chr3   93<span style="text-decoration: underline;">470</span>533  93<span style="text-decoration: underline;">470</span>733 Mono  0   <span style="color: #949494;"> </span>     0   <span style="color: #949494;"> </span>          <span style="text-decoration: underline;">1</span>525.</span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">2</span> chr1   16<span style="text-decoration: underline;">644</span>600  16<span style="text-decoration: underline;">644</span>800 NK    1.63<span style="color: #949494;">e</span><span style="color: #BB0000;">-190</span> 2.52<span style="color: #949494;">e</span><span style="color: #BB0000;">-183</span>      <span style="text-decoration: underline;">1</span>010.</span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">3</span> chr17  81<span style="text-decoration: underline;">860</span>866  81<span style="text-decoration: underline;">861</span>066 DC    7.87<span style="color: #949494;">e</span><span style="color: #BB0000;">- 63</span> 1.21<span style="color: #949494;">e</span><span style="color: #BB0000;">- 55</span>       548.</span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">4</span> chr1  228<span style="text-decoration: underline;">140</span>000 228<span style="text-decoration: underline;">140</span>200 NK    2.24<span style="color: #949494;">e</span><span style="color: #BB0000;">-158</span> 1.73<span style="color: #949494;">e</span><span style="color: #BB0000;">-151</span>       839.</span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">5</span> chr1    1<span style="text-decoration: underline;">724</span>333   1<span style="text-decoration: underline;">724</span>533 T     0   <span style="color: #949494;"> </span>     0   <span style="color: #949494;"> </span>           797.</span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">6</span> chr8   30<span style="text-decoration: underline;">083</span>133  30<span style="text-decoration: underline;">083</span>333 CD8 T 8.02<span style="color: #949494;">e</span><span style="color: #BB0000;">-225</span> 1.24<span style="color: #949494;">e</span><span style="color: #BB0000;">-217</span>       745.</span></span></code></pre>
 </div>
 <div class="section level2">
 <h2 id="motif-footprinting">Motif footprinting<a class="anchor" aria-label="anchor" href="#motif-footprinting"></a>
@@ -576,20 +592,20 @@ motifs-of-interest in peaks</p>
 <span><span class="va">motif_positions</span></span></code></pre></div>
 <pre><code><span><span class="co">## GRangesList object of length 4:</span></span>
 <span><span class="co">## $CEBPA</span></span>
-<span><span class="co">## GRanges object with 14030 ranges and 1 metadata column:</span></span>
+<span><span class="co">## GRanges object with 14082 ranges and 1 metadata column:</span></span>
 <span><span class="co">##           seqnames              ranges strand |     score</span></span>
 <span><span class="co">##              &lt;Rle&gt;           &lt;IRanges&gt;  &lt;Rle&gt; | &lt;numeric&gt;</span></span>
-<span><span class="co">##       [1]     chr1     1060191-1060200      + |   7.24561</span></span>
-<span><span class="co">##       [2]     chr1     1398356-1398365      - |   7.31852</span></span>
-<span><span class="co">##       [3]     chr1     1408228-1408237      - |   7.91966</span></span>
-<span><span class="co">##       [4]     chr1     1470604-1470613      + |   7.25964</span></span>
-<span><span class="co">##       [5]     chr1     1614370-1614379      - |   7.33056</span></span>
+<span><span class="co">##       [1]     chr1     1060191-1060200      + |   7.24761</span></span>
+<span><span class="co">##       [2]     chr1     1398356-1398365      - |   7.31923</span></span>
+<span><span class="co">##       [3]     chr1     1408228-1408237      - |   7.91967</span></span>
+<span><span class="co">##       [4]     chr1     1470604-1470613      + |   7.26009</span></span>
+<span><span class="co">##       [5]     chr1     1614370-1614379      - |   7.33072</span></span>
 <span><span class="co">##       ...      ...                 ...    ... .       ...</span></span>
-<span><span class="co">##   [14026]     chrX 154210171-154210180      + |   7.91966</span></span>
-<span><span class="co">##   [14027]     chrX 154247973-154247982      + |   7.91966</span></span>
-<span><span class="co">##   [14028]     chrX 154497506-154497515      + |   8.62273</span></span>
-<span><span class="co">##   [14029]     chrX 154734157-154734166      + |   7.33565</span></span>
-<span><span class="co">##   [14030]     chrX 155242494-155242503      - |   7.24195</span></span>
+<span><span class="co">##   [14078]     chrX 154247973-154247982      + |   7.91967</span></span>
+<span><span class="co">##   [14079]     chrX 154377819-154377828      - |   7.91967</span></span>
+<span><span class="co">##   [14080]     chrX 154497506-154497515      + |   8.62402</span></span>
+<span><span class="co">##   [14081]     chrX 154734157-154734166      + |   7.33694</span></span>
+<span><span class="co">##   [14082]     chrX 155242494-155242503      - |   7.24311</span></span>
 <span><span class="co">##   -------</span></span>
 <span><span class="co">##   seqinfo: 39 sequences from an unspecified genome; no seqlengths</span></span>
 <span><span class="co">## </span></span>
@@ -644,7 +660,7 @@ regions centered around a gene.</p>
 <span><span class="co">## [1] "chr16"</span></span>
 <span><span class="co">## </span></span>
 <span><span class="co">## $start</span></span>
-<span><span class="co">## [1] 28831964</span></span>
+<span><span class="co">## [1] 28831970</span></span>
 <span><span class="co">## </span></span>
 <span><span class="co">## $end</span></span>
 <span><span class="co">## [1] 29039342</span></span></code></pre>
@@ -673,7 +689,7 @@ relative to the B-cell marker CD19.</p>
 this we’ll get a set of canonical transcripts (one per gene) from
 Gencode</p>
 <div class="sourceCode" id="cb51"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">transcripts</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/read_gtf.html">read_gencode_transcripts</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/getwd.html" class="external-link">getwd</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="va">transcripts</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/read_gtf.html">read_gencode_transcripts</a></span><span class="op">(</span><span class="st">"./references"</span>, release<span class="op">=</span><span class="st">"42"</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">transcripts</span><span class="op">)</span></span></code></pre></div>
 <pre><code><span><span class="co">## <span style="color: #949494;"># A tibble: 6 × 13</span></span></span>
 <span><span class="co">##   chr   source feature   start    end score strand frame gene_id gene_…¹ gene_…²</span></span>
