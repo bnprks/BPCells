@@ -45,7 +45,7 @@ std::unique_ptr<BPCells::VecReaderWriterBuilder> writeFragmentTuple(
     uint32_t current_chr = 0;
     w_chr_ptr.write_one(0);
     uint32_t count = 0;
-    for (auto f : frag_vec) {
+    for (auto &f : frag_vec) {
         while (f.chr > current_chr) {
             w_chr_ptr.write_one(count);
             w_chr_ptr.write_one(count);
@@ -67,7 +67,7 @@ std::unique_ptr<BPCells::VecReaderWriterBuilder> writeFragmentTuple(
         chr_names.push_back("chr" + std::to_string(i));
     }
 
-    for (auto f : frag_vec)
+    for (auto &f : frag_vec)
         min_cell_count = std::max(min_cell_count, f.cell + 1);
     std::vector<std::string> cell_names;
     for (int i = 0; i < min_cell_count; i++) {

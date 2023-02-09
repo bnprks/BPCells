@@ -174,7 +174,7 @@ void readMember(HighFive::DataSet &&dataset, std::string name, std::vector<T> &o
     HighFive::DataType field_type = HighFive::create_datatype<T>();
     bool found = false;
     // Error checking that the type exists
-    for (auto t : base_type.getMembers()) {
+    for (auto &t : base_type.getMembers()) {
         if (t.name == name) {
             if (t.base_type.getClass() == field_type.getClass()) {
                 found = true;

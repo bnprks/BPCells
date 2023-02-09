@@ -228,7 +228,7 @@ template <typename T> class MatrixAccumulator_vec {
                 continue;
             }
             auto &counter = active_counters[i];
-            for (auto row : active_counters[i].rows)
+            for (auto &row : active_counters[i].rows)
                 counter.vals[row] = 0;
             counter_pool.push_back(std::move(counter));
             active_counters[i] = std::move(active_counters.back());
@@ -264,7 +264,7 @@ template <typename T> class MatrixAccumulator_vec {
         row_data.resize(row_vec.size());
         lsdRadixSortArrays(row_vec.size(), row_vec, row_data);
         std::swap(row_data, row_vec);
-        for (auto row : row_data) {
+        for (auto &row : row_data) {
             val_data.push_back(active_counters.back().vals[row]);
             active_counters.back().vals[row] = 0;
         }
