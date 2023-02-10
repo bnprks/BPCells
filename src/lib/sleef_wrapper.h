@@ -10,14 +10,16 @@
 #define _BPCELLS_SLEEF_AVX2 3
 #define _BPCELLS_SLEEF_NEON 4
 
-#if defined(__GNU_C__)
+#if defined(__clang__)
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunused-function"
+#pragma clang diagnostic ignored "-Wpedantic"
+#pragma clang diagnostic ignored "-Wc99-extensions"
+#elif defined(__GNUC__)
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-function"
 #pragma GCC diagnostic ignored "-Wpedantic"
-#elif defined(__clang__)
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wunused-function"
-#pragma clang diagnostic ignored "-Wc99-extensions"
+#pragma GCC diagnostic ignored "-Wunknown-pragmas"
 #endif
 
 // Decide what architecture to use
@@ -65,7 +67,7 @@
 
 #ifdef __clang__
 #pragma clang diagnostic pop
-#elif defined(__GNU_C__)
+#elif defined(__GNUC__)
 #pragma GCC diagnostic pop
 #endif
 

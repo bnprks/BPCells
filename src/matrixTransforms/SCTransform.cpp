@@ -409,7 +409,6 @@ bool SCTransformPearson::loadZeroSubtracted(MatrixLoader<double> &loader) {
 void SCTransformPearson::loadZero(
     double *values, uint32_t count, uint32_t start_row, uint32_t col
 ) {
-    uint32_t i;
     double cell_reads = fit.col_params(0, col);
     double sd_inv_max = fit.global_params(0);
     double clip_min = fit.global_params(1);
@@ -454,7 +453,6 @@ bool SCTransformPearsonTranspose::loadZeroSubtracted(MatrixLoader<double> &loade
 void SCTransformPearsonTranspose::loadZero(
     double *values, uint32_t count, uint32_t start_row, uint32_t col
 ) {
-    uint32_t i;
     double gene_beta = fit.col_params(1, col);
     double theta_inv = fit.col_params(0, col);
     double sd_inv_max = fit.global_params(0);

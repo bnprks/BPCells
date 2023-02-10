@@ -31,7 +31,7 @@ Eigen::MatrixXd footprintMatrix(
             "frags must have a known cell count. Consider using a cell selection to define the "
             "number of cells."
         );
-    if (frags.cellCount() != cell_groups.size() || frags.cellCount() != cell_weights.size()) {
+    if (frags.cellCount() != (int64_t) cell_groups.size() || frags.cellCount() != (int64_t) cell_weights.size()) {
         throw std::invalid_argument(
             "frags must have same cell count as cell_groups and cell_weights"
         );
