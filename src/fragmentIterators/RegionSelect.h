@@ -22,6 +22,7 @@ class RegionSelect : public FragmentLoaderWrapper {
     std::vector<Region> sorted_regions; // All regions sorted by (chr, start)
     uint32_t active_region = 0;         // Index in sorted_regions of current active region
     uint32_t loaded, current_chr_id;
+    bool did_seek_active_region = false; // Set to true once we have seeked to the active region
     bool invert_selection; // If true, exclude fragments overlapping regions rather than including
 
     std::unique_ptr<StringReader> chr_levels;

@@ -58,17 +58,22 @@ void RegionSelect::seek(uint32_t chr_id, uint32_t base) {
     loader.seek(chr_id, base);
     current_chr_id = findChrIDTranslation(loader.chrNames(loader.currentChr()));
     active_region = computeNextActiveRegion(current_chr_id, base);
+    did_seek_active_region = false;
 }
 
 void RegionSelect::restart() {
     active_region = 0;
+    did_seek_active_region = false;
     loader.restart();
 }
 
 bool RegionSelect::nextChr() {
     bool ret = loader.nextChr();
     current_chr_id = findChrIDTranslation(loader.chrNames(loader.currentChr()));
-    if (ret) active_region = computeNextActiveRegion(current_chr_id, 0);
+    if (ret) {
+        active_region = computeNextActiveRegion(current_chr_id, 0);
+        did_seek_active_region = false;
+    }
     return ret;
 }
 
@@ -78,7 +83,6 @@ bool RegionSelect::load() {
     //  2. Binary search for frag.start >= region.end to find all the remaining overlaps
     //  3. Increment active_region and continue scan from step 1
     loaded = 0;
-    uint32_t last_seek_region = UINT32_MAX;
     while (loaded == 0) {
         if (!loader.load()) return false;
         uint32_t capacity = loader.capacity();
@@ -124,15 +128,16 @@ bool RegionSelect::load() {
             //  3. Increment active_region and continue scan from step 1
             if (i < capacity) {
                 active_region++;
+                did_seek_active_region = false;
             }
         }
         // If loaded == 0, try seeking to get closer to viable fragments, assuming we haven't
         // already done a seek on the current region (to account for slop in the seeking process)
-        if (loaded == 0 && active_region != last_seek_region) {
+        if (loaded == 0 && !did_seek_active_region) {
             if (invert_selection)
                 loader.seek(loader.currentChr(), sorted_regions[active_region].end);
             else loader.seek(loader.currentChr(), sorted_regions[active_region].start);
-            last_seek_region = active_region;
+            did_seek_active_region = true;
         }
     }
     return loaded > 0;

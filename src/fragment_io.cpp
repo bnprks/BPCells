@@ -49,9 +49,13 @@ IntegerVector calculate_end_max_cpp(IntegerVector end, IntegerVector chr_ptr) {
             end_max.push_back(std::max(current_max, prev_max));
             prev_max = 0;
         }
-        if ((uint32_t)chr_ptr[current_chr * 2 + 1] >= i) {
+        if ((uint32_t)chr_ptr[current_chr * 2 + 1] <= i) {
             prev_max = std::max(prev_max, current_max);
             current_max = 0;
+            current_chr += 1;
+            if (current_chr * 2 < chr_ptr.size() && chr_ptr[current_chr * 2] != chr_ptr[current_chr * 2 - 1]) {
+                throw std::runtime_error("calculate_end_max_cpp: Found out-of-order chr_ptr (unsupported)");
+            }
         }
         current_max = std::max(current_max, (uint32_t)end[i]);
     }

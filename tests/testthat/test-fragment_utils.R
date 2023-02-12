@@ -160,6 +160,51 @@ test_that("Region select works", {
   expect_identical(as(exclusive, "GRanges"), ans_exclusive)
 })
 
+test_that("Region select regressions", {
+  # To hit the bug, we need to do region select where:
+  # - 1st we have a load with no hits (causes a seek)
+  # - 2nd we have a load with a hit
+  # - 3rd we have a load with no hit, but it's still in our region (causes repeat seek)
+
+  # Separately, there was a bug in conversion from data.frame to IterableFragments that
+  # was hit with this same input type. (The end_max calculation was completely wrong)
+  load_1 <- tibble::tibble(
+    chr = "chr1",
+    start = rep.int(1L, 1050),
+    end = 3L,
+    cell_id = paste0("cell1.", seq_len(1050))
+  )
+
+  load_2 <- tibble::tibble(
+    chr = "chr1",
+    start = rep.int(10L, 100),
+    end = 20L,
+    cell_id = paste0("cell2.", seq_len(100))
+  )
+
+  load_3 <- tibble::tibble(
+    chr = "chr1",
+    start = rep.int(11L, 2000),
+    end = 13L,
+    cell_id = paste0("cell3.", seq_len(2000))
+  )
+
+  frags <- dplyr::bind_rows(load_1, load_2, load_3) %>% as("IterableFragments")
+
+  expect_identical(
+    frags,
+    write_fragments_memory(frags, compress=FALSE)
+  )
+
+  expect_identical(
+    select_regions(frags, "chr1:15-25") %>% tibble::as_tibble() %>% dplyr::mutate(
+      chr = as.character(chr),
+      cell_id = as.character(cell_id)
+    ),
+    load_2
+  )
+})
+
 test_that("subset_lengths works", {
   frags <- open_fragments_10x("../data/mini_fragments.tsv.gz") %>% #nolint
     write_fragments_memory()
