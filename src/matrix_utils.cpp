@@ -5,6 +5,7 @@
 
 #include "matrixIterators/CSparseMatrix.h"
 #include "matrixIterators/ConcatenateMatrix.h"
+#include "matrixIterators/Mask.h"
 #include "matrixIterators/MatrixIndexSelect.h"
 #include "matrixIterators/MatrixIterator.h"
 #include "matrixIterators/MatrixMultiply.h"
@@ -201,6 +202,36 @@ SEXP iterate_matrix_multiply_double_cpp(SEXP left, SEXP right) {
     return make_unique_xptr<SparseMultiply<double>>(
         take_unique_xptr<MatrixLoader<double>>(left), take_unique_xptr<MatrixLoader<double>>(right)
     );
+}
+
+// [[Rcpp::export]]
+SEXP iterate_matrix_mask_uint32_t_cpp(SEXP s_mat, SEXP s_mask, bool invert) {
+    XPtr<MatrixLoader<uint32_t>> mat(s_mat);
+    XPtr<MatrixLoader<uint32_t>> mask(s_mask);
+    if (invert)
+        return Rcpp::wrap(XPtr<MatrixLoader<uint32_t>>(new Mask<uint32_t, true>(*mat, *mask)));
+    else
+        return Rcpp::wrap(XPtr<MatrixLoader<uint32_t>>(new Mask<uint32_t, false>(*mat, *mask)));
+}
+
+// [[Rcpp::export]]
+SEXP iterate_matrix_mask_float_cpp(SEXP s_mat, SEXP s_mask, bool invert) {
+    XPtr<MatrixLoader<float>> mat(s_mat);
+    XPtr<MatrixLoader<uint32_t>> mask(s_mask);
+    if (invert)
+        return Rcpp::wrap(XPtr<MatrixLoader<float>>(new Mask<float, true>(*mat, *mask)));
+    else
+        return Rcpp::wrap(XPtr<MatrixLoader<float>>(new Mask<float, false>(*mat, *mask)));
+}
+
+// [[Rcpp::export]]
+SEXP iterate_matrix_mask_double_cpp(SEXP s_mat, SEXP s_mask, bool invert) {
+    XPtr<MatrixLoader<double>> mat(s_mat);
+    XPtr<MatrixLoader<uint32_t>> mask(s_mask);
+    if (invert)
+        return Rcpp::wrap(XPtr<MatrixLoader<double>>(new Mask<double, true>(*mat, *mask)));
+    else
+        return Rcpp::wrap(XPtr<MatrixLoader<double>>(new Mask<double, false>(*mat, *mask)));
 }
 
 // [[Rcpp::export]]

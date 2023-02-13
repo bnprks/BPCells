@@ -195,6 +195,23 @@ test_that("Garbage collection between iterate_matrix doesn't mess things up", {
   expect_equal(m, res, tolerance=testthat_tolerance())
 })
 
+test_that("Matrix mask works", {
+  dims <- list(c(5, 1000), c(5000, 5))
+  for (d in dims) {
+    m1 <- generate_sparse_matrix(d[1], d[2])
+    mask <- generate_sparse_matrix(d[1], d[2], max_val = 1)
+    
+    res <- mask_matrix(as(m1, "IterableMatrix"), mask)
+    res2 <- mask_matrix(t(as(m1, "IterableMatrix")), t(mask))
+    res_inv <- mask_matrix(as(m1, "IterableMatrix"), mask, invert=TRUE)
+
+    expect_identical(as(res, "dgCMatrix"), as(m1 * (1 - mask), "dgCMatrix"))
+    expect_identical(as(res2, "dgCMatrix"), t(as(m1 * (1- mask), "dgCMatrix")))
+
+    expect_identical(as(res_inv, "dgCMatrix"), as(m1 * (mask), "dgCMatrix"))
+  }
+})
+
 test_that("Generic methods work", {
   # Generic methods to test:
   # - dim
@@ -232,6 +249,9 @@ test_that("Generic methods work", {
     multiply_left_1 = id_left %*% mi,
     multiply_types_1 = convert_matrix_type(mi, "uint32_t") %*% convert_matrix_type(as(id_right, "IterableMatrix"), "uint32_t"),
     multiply_types_2 = convert_matrix_type(mi, "float") %*% convert_matrix_type(as(id_right, "IterableMatrix"), "float"),
+    mask = mask_matrix(mi, Matrix::sparseMatrix(i=integer(0), j=integer(0), x=integer(0), dims=dim(mi))),
+    mask_float = convert_matrix_type(mi, "float") %>% mask_matrix(Matrix::sparseMatrix(i=integer(0), j=integer(0), x=integer(0), dims=dim(mi))),
+    mask_int = convert_matrix_type(mi, "uint32_t") %>% mask_matrix(Matrix::sparseMatrix(i=integer(0), j=integer(0), x=integer(0), dims=dim(mi))),
     min_1 = min_scalar(mi, 1e9),
     subset = mi[seq_len(nrow(m)), ][, seq_len(ncol(m))][seq_len(nrow(m)), seq_len(ncol(m))],
     rbind = rbind2(mi[1:2, ], mi[3:nrow(m)]),
