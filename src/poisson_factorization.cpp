@@ -6,6 +6,7 @@
 #include <Rcpp.h>
 #include <RcppEigen.h>
 
+#include "factorization/GLMFactorization.h"
 #include "lib/sleef_wrapper.h"
 #include "matrixIterators/MatrixIterator.h"
 
@@ -32,7 +33,7 @@ enum class compute_target {
 };
 
 class MatrixInputs {
-public:
+  public:
     MatrixXd XtY;         // Dim K x M
     MatrixXd beta;        // Dim K x M
     MatrixXd offset_beta; // Dim J x M
@@ -376,7 +377,7 @@ SEXP glm_check_gradient_cpp(
     double ridge_penalty
 ) {
     using namespace BPCells::poisson;
-    
+
     FitParams fit_params;
     fit_params.ridge_penalty = ridge_penalty;
 
@@ -414,10 +415,13 @@ SEXP glm_trace_solve_cpp(
 ) {
     using namespace BPCells::poisson;
     if (X.cols() != XtY.rows()) Rcpp::stop("Error: ncol(X) != nrow(XtY)");
-    if (XtY.rows() != beta_init.rows() || XtY.cols() != beta_init.cols()) Rcpp::stop("Error: dim(XtY) != dim(beta_init)");
+    if (XtY.rows() != beta_init.rows() || XtY.cols() != beta_init.cols())
+        Rcpp::stop("Error: dim(XtY) != dim(beta_init)");
     if (offset_X.rows() != X.rows()) Rcpp::stop("Error: nrow(offset_X) != nrow(X)");
-    if (offset_beta.cols() != beta_init.cols()) Rcpp::stop("Error: ncol(offset_beta) != ncol(beta)");
-    if (offset_X.cols() != offset_beta.rows()) Rcpp::stop("Error: ncol(offset_X) != nrow(offset_beta)");
+    if (offset_beta.cols() != beta_init.cols())
+        Rcpp::stop("Error: ncol(offset_beta) != ncol(beta)");
+    if (offset_X.cols() != offset_beta.rows())
+        Rcpp::stop("Error: ncol(offset_X) != nrow(offset_beta)");
 
     FitParams fit_params;
     fit_params.max_it = 1;
@@ -433,7 +437,6 @@ SEXP glm_trace_solve_cpp(
     step_in.beta = beta_init.col(idx);
     step_in.offset_beta = offset_beta.col(idx);
 
-    
     std::vector<double> loss, alpha;
     std::vector<MatrixXd> beta, gradient, hessian, update, update_qr;
 
@@ -489,10 +492,13 @@ SEXP glm_fit_matrix_cpp(
 ) {
     using namespace BPCells::poisson;
     if (X.cols() != XtY.rows()) Rcpp::stop("Error: ncol(X) != nrow(XtY)");
-    if (XtY.rows() != beta_init.rows() || XtY.cols() != beta_init.cols()) Rcpp::stop("Error: dim(XtY) != dim(beta_init)");
+    if (XtY.rows() != beta_init.rows() || XtY.cols() != beta_init.cols())
+        Rcpp::stop("Error: dim(XtY) != dim(beta_init)");
     if (offset_X.rows() != X.rows()) Rcpp::stop("Error: nrow(offset_X) != nrow(X)");
-    if (offset_beta.cols() != beta_init.cols()) Rcpp::stop("Error: ncol(offset_beta) != ncol(beta)");
-    if (offset_X.cols() != offset_beta.rows()) Rcpp::stop("Error: ncol(offset_X) != nrow(offset_beta)");
+    if (offset_beta.cols() != beta_init.cols())
+        Rcpp::stop("Error: ncol(offset_beta) != ncol(beta)");
+    if (offset_X.cols() != offset_beta.rows())
+        Rcpp::stop("Error: ncol(offset_X) != nrow(offset_beta)");
 
     FitParams fit_params;
     fit_params.max_it = max_it;
@@ -577,6 +583,114 @@ SEXP glm_fit_matrix_cpp(
             Named("compute_gradient") = compute_gradient,
             Named("compute_loss") = compute_loss,
             Named("compute_both") = compute_both
+        )
+    );
+}
+
+// Fit a series of poisson GLM problems with a shared model matrix
+// Parameters:
+//   - X: Shared model matrix (dimension n x p)
+//   - XtY: XPtr<IterableMatrix> (dimension p x m), result of t(Y) * X
+//   - beta_init: Initial guess for beta (dimension p x m)
+//   - ridge_penalty: multiplier for ridge penalty in loss function
+//   - max_it: Maximum number of Newton-Raphson iterations
+//   - abstol, reltol: Convergence criteria: test abs(beta_new - beta_old) <= (abstol + reltol *
+//   absolute(beta_old))
+//                     (this is like numpy.allclose)
+// Return list of:
+//   - "beta": Matrix of fit betas (dimension m x p)
+//   - "num_iters": Number of Netwon-Raphson iterations performed
+// [[Rcpp::export]]
+SEXP glm_fit_matrix_object_oriented_cpp(
+    const Eigen::Map<Eigen::MatrixXd> X,
+    const Eigen::Map<Eigen::MatrixXd> XtY,
+    const Eigen::Map<Eigen::MatrixXd> beta_init,
+    const std::vector<int> &fixed_dims,
+    double ridge_penalty,
+    int max_it,
+    double abstol,
+    double reltol,
+    int threads
+) {
+    using namespace BPCells::poisson2;
+    if (X.cols() != XtY.rows()) Rcpp::stop("Error: ncol(X) != nrow(XtY)");
+    if (XtY.rows() != beta_init.rows() || XtY.cols() != beta_init.cols())
+        Rcpp::stop("Error: dim(XtY) != dim(beta_init)");
+
+    FitParams fit_params;
+    fit_params.max_it = max_it;
+    fit_params.abstol = abstol;
+    fit_params.reltol = reltol;
+    fit_params.ridge_penalty = ridge_penalty;
+
+    MatrixXd X_tmp = X.transpose();
+
+    PoissonSolverSimd solver(
+        X_tmp,
+        std::make_shared<const MatrixXd>(XtY),
+        std::make_shared<const MatrixXd>(beta_init),
+        fixed_dims,
+        fit_params
+    );
+
+    std::vector<FitStats> stats_results(beta_init.cols());
+
+    MatrixXd beta(beta_init.rows(), beta_init.cols());
+
+    if (threads == 0) {
+        VectorXd out;
+        for (int i = 0; i < beta_init.cols(); i++) {
+            solver.fit_vector(i, out, stats_results[i]);
+            beta.col(i) = out;
+        }
+    } else {
+        std::vector<std::thread> thread_vec;
+        int idx = 0;
+
+        for (int i = 0; i < threads; i++) {
+            int beta_cols = (beta_init.cols() - idx) / (threads - i);
+
+            thread_vec.push_back(std::thread([=, &beta, &stats_results]() mutable {
+                // Copy solver by value
+                VectorXd out;
+                for (int i = idx; i < idx + beta_cols; i++) {
+                    solver.fit_vector(i, out, stats_results[i]);
+                    beta.col(i) = out;
+                }
+            }));
+            idx += beta_cols;
+        }
+        // Wait for work to finish
+        for (auto &th : thread_vec)
+            th.join();
+    }
+
+    // We'll return a vector for each fitting stat
+    std::vector<int> iterations;
+    std::vector<int> alpha_lower;
+    std::vector<int> alpha_raise;
+    std::vector<double> min_alpha;
+    std::vector<int> compute_derivatives;
+    std::vector<int> compute_loss;
+    for (auto s : stats_results) {
+        iterations.push_back(s.iterations);
+        alpha_lower.push_back(s.alpha_lower);
+        alpha_raise.push_back(s.alpha_raise);
+        min_alpha.push_back(s.min_alpha);
+        compute_derivatives.push_back(s.compute_derivatives);
+        compute_loss.push_back(s.compute_loss);
+    }
+
+    // Return fit with stats on fit computations
+    return List::create(
+        Named("beta") = MatrixXd(beta.transpose()),
+        Named("fit_stats") = DataFrame::create(
+            Named("iterations") = iterations,
+            Named("alpha_lower") = alpha_lower,
+            Named("alpha_raise") = alpha_raise,
+            Named("min_alpha") = min_alpha,
+            Named("compute_derivatives") = compute_derivatives,
+            Named("compute_loss") = compute_loss
         )
     );
 }
