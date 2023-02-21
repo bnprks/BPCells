@@ -157,5 +157,41 @@ class PoissonSolverSimd : public GlmSolver {
     }
 };
 
+class PoissonSolverEigen : public GlmSolver {
+  public:
+    PoissonSolverEigen(
+        const MatrixXd &X,                         // Dim (K + J) x N
+        std::shared_ptr<const MatrixXd> XY,        // Dim (K + J) x M
+        std::shared_ptr<const MatrixXd> beta_init, // Dim (K + J) x M
+        std::vector<int> fixed_dims,               // Length J
+        FitParams fit_params
+    );
+  private:
+    static std::vector<int> sorted_vector(std::vector<int> v);
+
+    const int J;
+    const int K;
+    const std::vector<int> fixed_dims;
+
+    VectorXd offset_beta; // Dim J x 1
+    VectorXd XtY;         // Dim K x 1
+    VectorXd offset_XtY;  // Dim J x 1
+
+    std::shared_ptr<const MatrixXf> X, offset_X;
+    std::shared_ptr<const MatrixXd> XY, beta_init;
+
+    VectorXf mu; // Dim N x 1
+
+  protected:
+    // Set active problem (e.g. which GLM loss and loss_and_derivatives affect)
+    // This should modify the value of `beta` along with other internal variables of the subclass
+    void set_problem(int i) override;
+    // Set `out` to the value of beta
+    void get_beta(VectorXd &out) override;
+    // Return loss for the current problem and `beta` value
+    double loss() override;
+    // Return loss while adding derivatives into `out` (for the current problem and `beta` value)
+    double loss_and_derivatives(Derivatives &out) override;
+};
 
 } // namespace BPCells

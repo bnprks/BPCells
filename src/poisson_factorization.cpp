@@ -610,7 +610,8 @@ SEXP glm_fit_matrix_object_oriented_cpp(
     int max_it,
     double abstol,
     double reltol,
-    int threads
+    int threads,
+    bool use_eigen_impl
 ) {
     using namespace BPCells::poisson2;
     if (X.cols() != XtY.rows()) Rcpp::stop("Error: ncol(X) != nrow(XtY)");
@@ -625,13 +626,24 @@ SEXP glm_fit_matrix_object_oriented_cpp(
 
     MatrixXd X_tmp = X.transpose();
 
-    PoissonSolverSimd solver(
-        X_tmp,
-        std::make_shared<const MatrixXd>(XtY),
-        std::make_shared<const MatrixXd>(beta_init),
-        fixed_dims,
-        fit_params
-    );
+    std::unique_ptr<GlmSolver> solver;
+    if (use_eigen_impl) {
+        solver = std::make_unique<PoissonSolverEigen>(
+            X_tmp,
+            std::make_shared<const MatrixXd>(XtY),
+            std::make_shared<const MatrixXd>(beta_init),
+            fixed_dims,
+            fit_params
+        );
+    } else {
+        solver = std::make_unique<PoissonSolverSimd>(
+            X_tmp,
+            std::make_shared<const MatrixXd>(XtY),
+            std::make_shared<const MatrixXd>(beta_init),
+            fixed_dims,
+            fit_params
+        );
+    }
 
     std::vector<FitStats> stats_results(beta_init.cols());
 
@@ -640,7 +652,7 @@ SEXP glm_fit_matrix_object_oriented_cpp(
     if (threads == 0) {
         VectorXd out;
         for (int i = 0; i < beta_init.cols(); i++) {
-            solver.fit_vector(i, out, stats_results[i]);
+            solver->fit_vector(i, out, stats_results[i]);
             beta.col(i) = out;
         }
     } else {
@@ -650,11 +662,18 @@ SEXP glm_fit_matrix_object_oriented_cpp(
         for (int i = 0; i < threads; i++) {
             int beta_cols = (beta_init.cols() - idx) / (threads - i);
 
-            thread_vec.push_back(std::thread([=, &beta, &stats_results]() mutable {
+            thread_vec.push_back(std::thread([&]() {
                 // Copy solver by value
+                std::unique_ptr<GlmSolver> thread_solver;
+                if (use_eigen_impl) {
+                    thread_solver = std::make_unique<PoissonSolverEigen>(dynamic_cast<PoissonSolverEigen &>(*solver));
+                } else {
+                    thread_solver = std::make_unique<PoissonSolverSimd>(dynamic_cast<PoissonSolverSimd &>(*solver));
+                }
+
                 VectorXd out;
                 for (int i = idx; i < idx + beta_cols; i++) {
-                    solver.fit_vector(i, out, stats_results[i]);
+                    thread_solver->fit_vector(i, out, stats_results[i]);
                     beta.col(i) = out;
                 }
             }));

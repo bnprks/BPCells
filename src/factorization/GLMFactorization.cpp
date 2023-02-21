@@ -151,8 +151,8 @@ PoissonSolverSimd::PoissonSolverSimd(
     // Split and re-order the X matrix
     MatrixXd X_var(K, X.cols());
     MatrixXd X_off(J, X.cols());
-    int k = 0;
-    int j = 0;
+    size_t k = 0;
+    size_t j = 0;
     for (int i = 0; i < K + J; i++) {
         if (j < this->fixed_dims.size() && this->fixed_dims[j] == i) {
             X_off.row(j) = X.row(i);
@@ -194,8 +194,8 @@ std::vector<int> PoissonSolverSimd::sorted_vector(std::vector<int> v) {
 // Set active problem (e.g. which GLM loss and loss_and_derivatives affect)
 // This should modify the value of `beta` along with other internal variables of the subclass
 void PoissonSolverSimd::set_problem(int i) {
-    int k = 0;
-    int j = 0;
+    size_t k = 0;
+    size_t j = 0;
     for (int d = 0; d < K + J; d++) {
         if (j < fixed_dims.size() && fixed_dims[j] == d) {
             offset_beta(j) = (*beta_init)(d, i);
@@ -211,8 +211,8 @@ void PoissonSolverSimd::set_problem(int i) {
 // Set `out` to the value of beta
 void PoissonSolverSimd::get_beta(VectorXd &out) {
     out.resize(K+J);
-    int k = 0;
-    int j = 0;
+    size_t k = 0;
+    size_t j = 0;
     for (int d = 0; d < K + J; d++) {
         if (j < fixed_dims.size() && fixed_dims[j] == d) {
             out(d) = offset_beta(j);
@@ -308,6 +308,110 @@ double PoissonSolverSimd::loss_and_derivatives_impl(Derivatives *out) {
         }
     }
     return loss;
+}
+
+PoissonSolverEigen::PoissonSolverEigen(
+    const MatrixXd &X,                         // Dim (K + J) x N
+    std::shared_ptr<const MatrixXd> XY,        // Dim (K + J) x M
+    std::shared_ptr<const MatrixXd> beta_init, // Dim (K + J) x M
+    std::vector<int> fixed_dims,               // Length J
+    FitParams fit_params
+)
+    : GlmSolver(X.rows() - fixed_dims.size(), fit_params)
+    , J(fixed_dims.size())
+    , K(X.rows() - fixed_dims.size())
+    , fixed_dims(sorted_vector(fixed_dims))
+    , offset_beta(J)
+    , XtY(K)
+    , offset_XtY(J)
+    , XY(XY)
+    , beta_init(beta_init)
+    , mu(X.cols()) {
+
+    // Check there aren't any duplicates in fixed_dims
+    for (size_t i = 1; i < fixed_dims.size(); i++) {
+        if (fixed_dims[i - 1] == fixed_dims[i]) {
+            throw std::runtime_error("Error in PoissonSolverEigen: repeated entries in fixed_dims");
+        }
+    }
+
+    // Split and re-order the X matrix
+    MatrixXf X_var(K, X.cols());
+    MatrixXf X_off(J, X.cols());
+    size_t k = 0;
+    size_t j = 0;
+    for (int i = 0; i < K + J; i++) {
+        if (j < this->fixed_dims.size() && this->fixed_dims[j] == i) {
+            X_off.row(j) = X.row(i).cast<float>();
+            j++;
+        } else {
+            X_var.row(k) = X.row(i).cast<float>();
+            k++;
+        }
+    }
+    this->X = std::make_shared<const MatrixXf>(X_var);
+    this->offset_X = std::make_shared<const MatrixXf>(X_off);
+}
+
+std::vector<int> PoissonSolverEigen::sorted_vector(std::vector<int> v) {
+    std::sort(v.begin(), v.end());
+    return v;
+}
+
+// Set active problem (e.g. which GLM loss and loss_and_derivatives affect)
+// This should modify the value of `beta` along with other internal variables of the subclass
+void PoissonSolverEigen::set_problem(int i) {
+    size_t k = 0;
+    size_t j = 0;
+    for (int d = 0; d < K + J; d++) {
+        if (j < fixed_dims.size() && fixed_dims[j] == d) {
+            offset_beta(j) = (*beta_init)(d, i);
+            offset_XtY(j) = (*XY)(d, i);
+            j++;
+        } else {
+            beta(k) = (*beta_init)(d, i);
+            XtY(k) = (*XY)(d, i);
+            k++;
+        }
+    }
+}
+// Set `out` to the value of beta
+void PoissonSolverEigen::get_beta(VectorXd &out) {
+    out.resize(K+J);
+    size_t k = 0;
+    size_t j = 0;
+    for (int d = 0; d < K + J; d++) {
+        if (j < fixed_dims.size() && fixed_dims[j] == d) {
+            out(d) = offset_beta(j);
+            j++;
+        } else {
+            out(d) = beta(k);
+            k++;
+        }
+    }
+}
+
+// Return loss for the current problem and `beta` value
+double PoissonSolverEigen::loss() {
+    mu.noalias() = X->transpose() * beta.cast<float>();
+    mu.noalias() += offset_X->transpose() * offset_beta.cast<float>();
+    mu = mu.array().exp().matrix();
+
+    return mu.sum() - beta.dot(XtY) - offset_beta.dot(offset_XtY);
+}
+
+// Return loss while adding derivatives into `out` (for the current problem and `beta` value)
+double PoissonSolverEigen::loss_and_derivatives(Derivatives &out) {
+    mu.noalias() = X->transpose() * beta.cast<float>();
+    mu.noalias() += offset_X->transpose() * offset_beta.cast<float>();
+    mu = mu.array().exp().matrix();
+
+    out.gradient -= XtY;
+    out.gradient.noalias() += ((*X) * mu).cast<double>();
+
+    out.hessian.noalias() += ((*X) * mu.asDiagonal() * X->transpose()).cast<double>();
+
+    return mu.sum() - beta.dot(XtY) - offset_beta.dot(offset_XtY);
 }
 
 } // namespace BPCells::poisson2
