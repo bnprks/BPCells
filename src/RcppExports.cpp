@@ -1951,8 +1951,8 @@ BEGIN_RCPP
 END_RCPP
 }
 // glm_fit_matrix_object_oriented_cpp
-SEXP glm_fit_matrix_object_oriented_cpp(const Eigen::Map<Eigen::MatrixXd> X, const Eigen::Map<Eigen::MatrixXd> XtY, const Eigen::Map<Eigen::MatrixXd> beta_init, const std::vector<int>& fixed_dims, double ridge_penalty, int max_it, double abstol, double reltol, int threads, bool use_eigen_impl);
-RcppExport SEXP _BPCells_glm_fit_matrix_object_oriented_cpp(SEXP XSEXP, SEXP XtYSEXP, SEXP beta_initSEXP, SEXP fixed_dimsSEXP, SEXP ridge_penaltySEXP, SEXP max_itSEXP, SEXP abstolSEXP, SEXP reltolSEXP, SEXP threadsSEXP, SEXP use_eigen_implSEXP) {
+SEXP glm_fit_matrix_object_oriented_cpp(const Eigen::Map<Eigen::MatrixXd> X, const Eigen::Map<Eigen::MatrixXd> XtY, const Eigen::Map<Eigen::MatrixXd> beta_init, const std::vector<int>& fixed_dims, double ridge_penalty, int max_it, double abstol, double reltol, int threads, std::string impl);
+RcppExport SEXP _BPCells_glm_fit_matrix_object_oriented_cpp(SEXP XSEXP, SEXP XtYSEXP, SEXP beta_initSEXP, SEXP fixed_dimsSEXP, SEXP ridge_penaltySEXP, SEXP max_itSEXP, SEXP abstolSEXP, SEXP reltolSEXP, SEXP threadsSEXP, SEXP implSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -1965,8 +1965,25 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< double >::type abstol(abstolSEXP);
     Rcpp::traits::input_parameter< double >::type reltol(reltolSEXP);
     Rcpp::traits::input_parameter< int >::type threads(threadsSEXP);
-    Rcpp::traits::input_parameter< bool >::type use_eigen_impl(use_eigen_implSEXP);
-    rcpp_result_gen = Rcpp::wrap(glm_fit_matrix_object_oriented_cpp(X, XtY, beta_init, fixed_dims, ridge_penalty, max_it, abstol, reltol, threads, use_eigen_impl));
+    Rcpp::traits::input_parameter< std::string >::type impl(implSEXP);
+    rcpp_result_gen = Rcpp::wrap(glm_fit_matrix_object_oriented_cpp(X, XtY, beta_init, fixed_dims, ridge_penalty, max_it, abstol, reltol, threads, impl));
+    return rcpp_result_gen;
+END_RCPP
+}
+// glm_gradient_check_object_oriented_cpp
+SEXP glm_gradient_check_object_oriented_cpp(int idx, const Eigen::Map<Eigen::MatrixXd> X, const Eigen::Map<Eigen::MatrixXd> XtY, const Eigen::Map<Eigen::MatrixXd> beta_init, const std::vector<int>& fixed_dims, double ridge_penalty, std::string impl);
+RcppExport SEXP _BPCells_glm_gradient_check_object_oriented_cpp(SEXP idxSEXP, SEXP XSEXP, SEXP XtYSEXP, SEXP beta_initSEXP, SEXP fixed_dimsSEXP, SEXP ridge_penaltySEXP, SEXP implSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< int >::type idx(idxSEXP);
+    Rcpp::traits::input_parameter< const Eigen::Map<Eigen::MatrixXd> >::type X(XSEXP);
+    Rcpp::traits::input_parameter< const Eigen::Map<Eigen::MatrixXd> >::type XtY(XtYSEXP);
+    Rcpp::traits::input_parameter< const Eigen::Map<Eigen::MatrixXd> >::type beta_init(beta_initSEXP);
+    Rcpp::traits::input_parameter< const std::vector<int>& >::type fixed_dims(fixed_dimsSEXP);
+    Rcpp::traits::input_parameter< double >::type ridge_penalty(ridge_penaltySEXP);
+    Rcpp::traits::input_parameter< std::string >::type impl(implSEXP);
+    rcpp_result_gen = Rcpp::wrap(glm_gradient_check_object_oriented_cpp(idx, X, XtY, beta_init, fixed_dims, ridge_penalty, impl));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -2138,6 +2155,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_BPCells_glm_trace_solve_cpp", (DL_FUNC) &_BPCells_glm_trace_solve_cpp, 10},
     {"_BPCells_glm_fit_matrix_cpp", (DL_FUNC) &_BPCells_glm_fit_matrix_cpp, 10},
     {"_BPCells_glm_fit_matrix_object_oriented_cpp", (DL_FUNC) &_BPCells_glm_fit_matrix_object_oriented_cpp, 10},
+    {"_BPCells_glm_gradient_check_object_oriented_cpp", (DL_FUNC) &_BPCells_glm_gradient_check_object_oriented_cpp, 7},
     {"_BPCells_poisson_glm_matrix_cpp", (DL_FUNC) &_BPCells_poisson_glm_matrix_cpp, 7},
     {NULL, NULL, 0}
 };

@@ -611,7 +611,7 @@ SEXP glm_fit_matrix_object_oriented_cpp(
     double abstol,
     double reltol,
     int threads,
-    bool use_eigen_impl
+    std::string impl
 ) {
     using namespace BPCells::poisson2;
     if (X.cols() != XtY.rows()) Rcpp::stop("Error: ncol(X) != nrow(XtY)");
@@ -627,15 +627,23 @@ SEXP glm_fit_matrix_object_oriented_cpp(
     MatrixXd X_tmp = X.transpose();
 
     std::unique_ptr<GlmSolver> solver;
-    if (use_eigen_impl) {
-        solver = std::make_unique<PoissonSolverEigen>(
+    if (impl == "Eigen_float") {
+        solver = std::make_unique<PoissonSolverEigen<float>>(
             X_tmp,
             std::make_shared<const MatrixXd>(XtY),
             std::make_shared<const MatrixXd>(beta_init),
             fixed_dims,
             fit_params
         );
-    } else {
+    } else if (impl == "Eigen_double") {
+        solver = std::make_unique<PoissonSolverEigen<double>>(
+            X_tmp,
+            std::make_shared<const MatrixXd>(XtY),
+            std::make_shared<const MatrixXd>(beta_init),
+            fixed_dims,
+            fit_params
+        );
+    } else if (impl == "simd") {
         solver = std::make_unique<PoissonSolverSimd>(
             X_tmp,
             std::make_shared<const MatrixXd>(XtY),
@@ -643,6 +651,8 @@ SEXP glm_fit_matrix_object_oriented_cpp(
             fixed_dims,
             fit_params
         );
+    } else {
+        throw std::runtime_error("Unknown impl: " + impl);
     }
 
     std::vector<FitStats> stats_results(beta_init.cols());
@@ -665,10 +675,14 @@ SEXP glm_fit_matrix_object_oriented_cpp(
             thread_vec.push_back(std::thread([&]() {
                 // Copy solver by value
                 std::unique_ptr<GlmSolver> thread_solver;
-                if (use_eigen_impl) {
-                    thread_solver = std::make_unique<PoissonSolverEigen>(dynamic_cast<PoissonSolverEigen &>(*solver));
-                } else {
+                if (impl == "Eigen_float") {
+                    thread_solver = std::make_unique<PoissonSolverEigen<float>>(dynamic_cast<PoissonSolverEigen<float> &>(*solver));
+                } else if (impl == "Eigen_double") {
+                    thread_solver = std::make_unique<PoissonSolverEigen<double>>(dynamic_cast<PoissonSolverEigen<double> &>(*solver));
+                } else if (impl == "simd") {
                     thread_solver = std::make_unique<PoissonSolverSimd>(dynamic_cast<PoissonSolverSimd &>(*solver));
+                } else {
+                    throw std::runtime_error("Unknown impl: " + impl);
                 }
 
                 VectorXd out;
@@ -713,6 +727,69 @@ SEXP glm_fit_matrix_object_oriented_cpp(
         )
     );
 }
+
+// [[Rcpp::export]]
+SEXP glm_gradient_check_object_oriented_cpp(
+    int idx,
+    const Eigen::Map<Eigen::MatrixXd> X,
+    const Eigen::Map<Eigen::MatrixXd> XtY,
+    const Eigen::Map<Eigen::MatrixXd> beta_init,
+    const std::vector<int> &fixed_dims,
+    double ridge_penalty,
+    std::string impl
+) {
+    using namespace BPCells::poisson2;
+    if (X.cols() != XtY.rows()) Rcpp::stop("Error: ncol(X) != nrow(XtY)");
+    if (XtY.rows() != beta_init.rows() || XtY.cols() != beta_init.cols())
+        Rcpp::stop("Error: dim(XtY) != dim(beta_init)");
+
+    FitParams fit_params;
+    fit_params.ridge_penalty = ridge_penalty;
+
+    MatrixXd X_tmp = X.transpose();
+
+    std::unique_ptr<GlmSolver> solver;
+    if (impl == "Eigen_float") {
+        solver = std::make_unique<PoissonSolverEigen<float>>(
+            X_tmp,
+            std::make_shared<const MatrixXd>(XtY),
+            std::make_shared<const MatrixXd>(beta_init),
+            fixed_dims,
+            fit_params
+        );
+    } else if (impl == "Eigen_double") {
+        solver = std::make_unique<PoissonSolverEigen<double>>(
+            X_tmp,
+            std::make_shared<const MatrixXd>(XtY),
+            std::make_shared<const MatrixXd>(beta_init),
+            fixed_dims,
+            fit_params
+        );
+    } else if (impl == "simd") {
+        solver = std::make_unique<PoissonSolverSimd>(
+            X_tmp,
+            std::make_shared<const MatrixXd>(XtY),
+            std::make_shared<const MatrixXd>(beta_init),
+            fixed_dims,
+            fit_params
+        );
+    } else {
+        throw std::runtime_error("Unknown impl: " + impl);
+    }
+
+    MatrixXd hessian;
+    VectorXd gradient;
+    double loss = solver->loss_and_derivatives(idx, gradient, hessian);
+    
+    // Return fit with stats on fit computations
+    return List::create(
+        Named("loss") = loss,
+        Named("gradient") = gradient,
+        Named("hessian") = hessian
+    );
+}
+
+
 
 // Fit a series of poisson GLM problems with a shared model matrix
 // Parameters:

@@ -52,6 +52,9 @@ class GlmSolver {
     // in `stats
     virtual void fit_vector(int i, VectorXd &out, FitStats &stats) final;
 
+    // Get loss and derivatives for problem `i`
+    virtual double loss_and_derivatives(int i, VectorXd &gradient_out, MatrixXd &hessian_out) final;
+
   protected:
     // Holds intermediate gradient results
     class Derivatives {
@@ -78,7 +81,6 @@ class GlmSolver {
     virtual double loss() = 0;
     // Return loss while adding derivatives into `out` (for the current problem and `beta` value)
     virtual double loss_and_derivatives(Derivatives &out) = 0;
-
 
     // Current value of beta for calculating loss/derivatives
     // Should not include any offset variables
@@ -110,7 +112,7 @@ class PoissonSolverSimd : public GlmSolver {
         FitParams fit_params
     );
 
-    // In a rearranged matrix, We take a K X N matrix and turn it into a 
+    // In a rearranged matrix, We take a K X N matrix and turn it into a
     // BPCELLS_VEC_FLOAT_SIZE x (K*N/BPCELLS_VEC_FLOAT_SIZE) matrix, padded out
     // with zeros until N is a multiple of BPCELLS_VEC_FLOAT_SIZE.
     // The end result has BPCELLS_VEC_FLOAT_SIZE chunks of each row stored contiguously
@@ -137,10 +139,10 @@ class PoissonSolverSimd : public GlmSolver {
     Eigen::Matrix<float, BPCELLS_VEC_FLOAT_SIZE, 1> loss_scratch; // Dim BPCELLS_VEC_FLOAT_SIZE x 1
     MatRearranged gradient_scratch;                               // Dim BPCELLS_VEC_FLOAT_SIZE x K
     MatRearranged hessian_scratch;                                // Dim K * (K + 1) / 2 x 1
-    VectorXd hessian_accumulator; // Dim K * (K + 1) / 2 x 1
-  
-    template <bool CalcDerivatives>
-    double loss_and_derivatives_impl(Derivatives *out);
+    VectorXd hessian_accumulator;                                 // Dim K * (K + 1) / 2 x 1
+
+    template <bool CalcDerivatives> double loss_and_derivatives_impl(Derivatives *out);
+
   protected:
     // Set active problem (e.g. which GLM loss and loss_and_derivatives affect)
     // This should modify the value of `beta` along with other internal variables of the subclass
@@ -148,16 +150,16 @@ class PoissonSolverSimd : public GlmSolver {
     // Set `out` to the value of beta
     void get_beta(VectorXd &out) override;
     // Return loss for the current problem and `beta` value
-    double loss() override {
-      return loss_and_derivatives_impl<false>(NULL);
-    }
+    double loss() override { return loss_and_derivatives_impl<false>(NULL); }
     // Return loss while adding derivatives into `out` (for the current problem and `beta` value)
     double loss_and_derivatives(Derivatives &out) override {
-      return loss_and_derivatives_impl<true>(&out);
+        return loss_and_derivatives_impl<true>(&out);
     }
 };
 
-class PoissonSolverEigen : public GlmSolver {
+template <typename T> class PoissonSolverEigen : public GlmSolver {
+    using MatrixXt = Matrix<T, Dynamic, Dynamic>;
+
   public:
     PoissonSolverEigen(
         const MatrixXd &X,                         // Dim (K + J) x N
@@ -165,9 +167,51 @@ class PoissonSolverEigen : public GlmSolver {
         std::shared_ptr<const MatrixXd> beta_init, // Dim (K + J) x M
         std::vector<int> fixed_dims,               // Length J
         FitParams fit_params
-    );
+    )
+        : GlmSolver(X.rows() - fixed_dims.size(), fit_params)
+        , J(fixed_dims.size())
+        , K(X.rows() - fixed_dims.size())
+        , fixed_dims(sorted_vector(fixed_dims))
+        , offset_beta(J)
+        , XtY(K)
+        , offset_XtY(J)
+        , XY(XY)
+        , beta_init(beta_init)
+        , mu(X.cols()) {
+
+        // Check there aren't any duplicates in fixed_dims
+        for (size_t i = 1; i < fixed_dims.size(); i++) {
+            if (fixed_dims[i - 1] == fixed_dims[i]) {
+                throw std::runtime_error(
+                    "Error in PoissonSolverEigen: repeated entries in fixed_dims"
+                );
+            }
+        }
+
+        // Split and re-order the X matrix
+        MatrixXt X_var(K, X.cols());
+        MatrixXt X_off(J, X.cols());
+        size_t k = 0;
+        size_t j = 0;
+        for (int i = 0; i < K + J; i++) {
+            if (j < this->fixed_dims.size() && this->fixed_dims[j] == i) {
+                X_off.row(j) = X.row(i).cast<T>();
+                j++;
+            } else {
+                X_var.row(k) = X.row(i).cast<T>();
+                k++;
+            }
+        }
+
+        this->X = std::make_shared<const MatrixXt>(X_var.transpose());
+        this->offset_X = std::make_shared<const MatrixXt>(X_off.transpose());
+    }
+
   private:
-    static std::vector<int> sorted_vector(std::vector<int> v);
+    static std::vector<int> sorted_vector(std::vector<int> v) {
+        std::sort(v.begin(), v.end());
+        return v;
+    }
 
     const int J;
     const int K;
@@ -177,21 +221,70 @@ class PoissonSolverEigen : public GlmSolver {
     VectorXd XtY;         // Dim K x 1
     VectorXd offset_XtY;  // Dim J x 1
 
-    std::shared_ptr<const MatrixXf> X, offset_X;
+    std::shared_ptr<const MatrixXt> X, offset_X;
     std::shared_ptr<const MatrixXd> XY, beta_init;
 
-    VectorXf mu; // Dim N x 1
+    Matrix<T, Dynamic, 1> mu; // Dim N x 1
+    MatrixXt hessian_tmp;
 
   protected:
     // Set active problem (e.g. which GLM loss and loss_and_derivatives affect)
     // This should modify the value of `beta` along with other internal variables of the subclass
-    void set_problem(int i) override;
+    void set_problem(int i) override {
+        size_t k = 0;
+        size_t j = 0;
+        for (int d = 0; d < K + J; d++) {
+            if (j < fixed_dims.size() && fixed_dims[j] == d) {
+                offset_beta(j) = (*beta_init)(d, i);
+                offset_XtY(j) = (*XY)(d, i);
+                j++;
+            } else {
+                beta(k) = (*beta_init)(d, i);
+                XtY(k) = (*XY)(d, i);
+                k++;
+            }
+        }
+    }
     // Set `out` to the value of beta
-    void get_beta(VectorXd &out) override;
+    void get_beta(VectorXd &out) override {
+        out.resize(K + J);
+        size_t k = 0;
+        size_t j = 0;
+        for (int d = 0; d < K + J; d++) {
+            if (j < fixed_dims.size() && fixed_dims[j] == d) {
+                out(d) = offset_beta(j);
+                j++;
+            } else {
+                out(d) = beta(k);
+                k++;
+            }
+        }
+    }
     // Return loss for the current problem and `beta` value
-    double loss() override;
-    // Return loss while adding derivatives into `out` (for the current problem and `beta` value)
-    double loss_and_derivatives(Derivatives &out) override;
+    double loss() override {
+        mu.noalias() = (*X) * beta.cast<T>();
+        mu.noalias() += (*offset_X) * offset_beta.cast<T>();
+        return mu.array().exp().sum() - beta.dot(XtY) - offset_beta.dot(offset_XtY);
+    }
+
+    double loss_and_derivatives(Derivatives &out) override {
+        mu.noalias() = (*X) * beta.cast<T>();
+        mu.noalias() += (*offset_X) * offset_beta.cast<T>();
+        mu = (mu*0.5).array().exp().matrix();
+
+        auto muX = mu.asDiagonal() * (*X);
+        hessian_tmp.setZero(out.hessian.rows(), out.hessian.cols());
+        hessian_tmp.template selfadjointView<Lower>().rankUpdate(muX.transpose());
+        out.hessian += hessian_tmp.template cast<double>();
+        
+        mu = mu.array().square().matrix();
+
+        out.gradient -= XtY;
+        out.gradient.noalias() += (X->transpose() * mu).template cast<double>();
+
+        return mu.sum() - beta.dot(XtY) - offset_beta.dot(offset_XtY);
+    }
 };
 
-} // namespace BPCells
+
+} // namespace BPCells::poisson2
