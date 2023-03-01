@@ -20,10 +20,11 @@ In this tutorial, we will will:
 
 - [Load RNA and ATAC-seq data from a 10x multiome experiment](#data-loading)
 - [Filter for high-quality cells](#filter-for-high-quality-cells)
-- [Perform PCA + UMAP dimensionality reduction](#normalization-pca-and-umap)
+- [RNA PCA + UMAP dimensionality reduction](#rna-normalization-pca-and-umap)
 - [Unbiased clustering](#clustering)
 - [Visualize marker genes to annotate clusters](#visualize-marker-genes)
 - [Call ATAC-seq peaks](#atac-seq-peaks)
+- [ATAC PCA + UMAP dimensionality reduction](#atac-normalization-pca-and-umap)
 - [Visualize transcription factor footprints](#motif-footprinting)
 - [Plot accessibility genome tracks](#genome-accessibility-tracks)
 
@@ -43,11 +44,10 @@ Install cran dependencies:
 - RcppHNSW (clustering)
 - igraph (clustering)
 - BiocManager (access bioconductor packages)
-- ggplot2 version 3.3.5 (before hexbin was broken)
+- ggplot2 version <=3.3.5 or >=3.4.1 (hexbin was broken for versions 3.3.6-3.4.0)
 
 ```{r, eval=FALSE}
-install.packages(c("irlba", "uwot", "RcppHNSW", "igraph", "BiocManager", "devtools"))
-devtools::install_version("ggplot2", "3.3.5")
+install.packages(c("irlba", "uwot", "RcppHNSW", "igraph", "BiocManager", "devtools", "ggplot2"))
 ```
 
 Bioconductor dependencies:
@@ -266,6 +266,10 @@ quadrant, low-quality/dead cells in the bottom-right quadrant, and high-quality
 cells in the top-right quadrant. From a flow-cytometry perspective, we use the bottom-left
 group of empty droplets as a negative control to help set our cutoffs. 
 
+```{r}
+plot_tss_scatter(atac_qc, min_frags=1000, min_tss=10)
+```
+
 <details>
   <summary>**Why is this TSS Enrichment number different from ArchR?**</summary>
 The TSS Enrichment number varies depending on the TSS annotation set used, as
@@ -275,9 +279,28 @@ pass the ArchR TSS set to BPCells you'll get identical results. However, in this
 we've used a somewhat more strict definition of TSS by taking just the MANE select transcripts
 from Gencode.
 </details>
+
+<details>
+<summary>**Why are there no cells in the top-left quadrant?**</summary>
+Due to a thresholding that ArchR's formula applies in the denominator of the TSS Enrichment
+calculation, low-read cells can't be assigned a very high TSS Enrichment value. 
+
+To plot the TSS enrichment without this thresholding, do the following:
+
 ```{r}
-plot_tss_scatter(atac_qc, min_frags=1000, min_tss=10)
+atac_qc %>%
+  dplyr::mutate(TSSEnrichment=ReadsInTSS/pmax(1,ReadsFlankingTSS) * 200/101) %>%
+  plot_tss_scatter(min_frags=2000, min_tss=20) +
+  ggplot2::labs(title="Raw TSS Enrichment")
 ```
+
+Note that the `200/101` fraction accounts for `ReadsInTSS` drawing from 101-bp windows, 
+and ReadsFlankingTSS drawing from 2x100-bp windows. This results in more low-read
+droplets measuring high TSS Enrichment, so we use slightly adjusted cutoffs.
+
+ArchR's formula is equivalent to replacing `pmax(1,ReadsFlankingTSS)` with
+`pmax(20,ReadsFlankingTSS)` in the above code.
+</details>
 
 We can also plot some sample-level quality control plots. 
 
@@ -314,7 +337,7 @@ keeper_genes <- Matrix::rowSums(mat_raw) > 3
 mat <- mat_raw[keeper_genes,keeper_cells]
 ```
 
-# Normalization, PCA and UMAP
+# RNA Normalization, PCA and UMAP
 
 ## Matrix normalization
 Here, we walk through the Seurat-style matrix normalization calculations manually, though soon
@@ -450,17 +473,206 @@ plot_dot(
 )
 ```
 
-# ATAC-seq peaks
+# ATAC Normalization, PCA and UMAP
 We start with tile-based peak calling, which tests pre-determined overlapping tile
 positions for significant enrichment of ATAC-seq signal over the genome-wide background
 in each cell type independently. This is faster than using a real peak-caller like
 MACS, though with the default parameters the peaks will always be 200bp wide and the positioning
 resolution is approximately +/- 30bp.
 ```{r, warning=FALSE, message=FALSE}
-peaks <- call_peaks_tile(frags, chrom_sizes, cell_groups=cell_types,
+frags_filter_blacklist <- frags %>%
+  select_regions(blacklist, invert_selection = TRUE)
+peaks <- call_peaks_tile(frags_filter_blacklist, chrom_sizes, cell_groups=cell_types,
                            effective_genome_size = 2.8e9)
 head(peaks)
 ```
+
+Next we compute a peak matrix counting how many ATAC-seq insertions overlap each
+peak. We again save it in memory rather than saving it to disk since our dataset
+is quite small.
+
+<details>
+  <summary>**Why do we calculate `ordered_peaks`?**</summary>
+For peak matrix calculation to run efficiently, peaks must be sorted in order by
+chromosome and end coordinate. Although `peak_matrix` can automatically reorder
+the peaks appropriately, we show how to perform the sorting manually for this example.
+</details>
+```{r}
+top_peaks <- head(peaks, 50000)
+top_peaks <- top_peaks[order_ranges(top_peaks, chrNames(frags)),]
+peak_mat <- peak_matrix(frags, top_peaks, mode="insertions")
+```
+
+
+Next we calculate the TF-IDF normalization. This formula is the TF-IDF variant from Stuart et al.
+```{r}
+mat_lsi <- peak_mat %>%
+  multiply_cols(1 / Matrix::colSums(peak_mat)) %>%
+  multiply_rows(1 / Matrix::rowMeans(peak_mat))
+
+mat_lsi <- log1p(10000 * mat_lsi)
+```
+
+Looking at this LSI matrix, we can see the power of BPCells performing matrix
+operations on-the-fly: the LSI normalization is in fact calculated at the same time
+as the fragment overlap calculations when we read this matrix. We don't need to
+store any intermediate matrices during these calculations, and even the peak
+matrix can be re-calculated on-the-fly based on the fragments object saved to disk.
+```{r}
+mat_lsi
+```
+Just like for the RNA, we save our matrix before running PCA. On a larger dataset,
+we would save to disk rather than to memory.
+
+```{r}
+mat_lsi <- write_matrix_memory(mat_lsi, compress=FALSE)
+```
+
+Finally, we will do a z-score normalization on the LSI matrix then run PCA. 
+This is standard practice for running a PCA, but is not commonly done on ATAC-seq datasets due to
+the fact that it greatly increases memory usage. In other methods, the 1st PC is 
+highly correlated to the number of reads per cell, and is thrown out as an empirical
+correction. 
+
+Luckily, BPCells can avoid this memory usage so we can just normalize our data and
+run PCA as usual
+
+```{r}
+# Compute colMean and colVariance in one pass
+cell_peak_stats <- matrix_stats(mat_lsi, col_stats="variance")$col_stats
+cell_means <- cell_peak_stats["mean",]
+cell_vars <- cell_peak_stats["variance",]
+mat_lsi_norm <- mat_lsi %>%
+  add_cols(-cell_means) %>%
+  multiply_cols(1 / cell_vars)
+  
+```
+
+```{r}
+svd_atac <- irlba::irlba(mat_lsi_norm, nv=10)
+pca_atac <- multiply_cols(svd_atac$v, svd_atac$d)
+pca_atac[1:4,1:4]
+```
+
+Next we calculate our UMAP
+```{r}
+set.seed(12341512)
+umap_atac <- uwot::umap(pca_atac)
+umap_atac[1:4,]
+```
+
+Then we cluster, just like for the RNA
+```{r, message=FALSE}
+clusts_atac <- knn_hnsw(pca_atac, ef=500) %>% # Find approximate nearest neighbors
+  knn_to_snn_graph() %>% # Convert to a SNN graph
+  cluster_graph_louvain() # Perform graph-based clustering
+```
+
+And we can plot our ATAC-seq embedding with ATAC-derived clusters, and easily
+compare that to the RNA-derived clusters from earlier.
+
+```{r}
+plot_embedding(clusts_atac, umap_atac, colors_discrete = discrete_palette("ironMan")) +
+  ggplot2::guides(color="none") + 
+  plot_embedding(cell_types, umap_atac)
+```
+
+<details>
+  <summary>**How did we combine the RNA clusters with the ATAC data?**</summary>
+BPCells works based on the order of cells in a matrix or fragment object. Since our
+ATAC PCA rows are in the same cell order as our RNA clusters, the datasets combine
+with no additional work. 
+
+It does take some effort at the beginning of your analysis to make sure the cell
+orders are consistent, which is what we did in our [cell filtering](#select-high-quality-cells) step.
+But after ordering the input RNA matrix and ATAC fragments, all downstream calculations
+should maintain the same cell ordering by default.
+</details>
+
+<details>
+  <summary>**What if we skip z-score normalization on the LSI matrix?**</summary>
+
+```{r, message=FALSE}
+svd_atac_no_norm <- irlba::irlba(mat_lsi, nv=10)
+pca_atac_no_norm <- multiply_cols(svd_atac_no_norm$v, svd_atac$d)
+```
+
+If we skip normalization, we first observe that we get very high correlation of our
+first PC to the reads-per-cell in our peak matrix
+```{r}
+cor_to_depth <- dplyr::bind_rows(
+  tibble::tibble(
+    method="z-score normalize",
+    abs_cor_to_depth = as.numeric(abs(cor(Matrix::colSums(mat_lsi), pca_atac))),
+    PC=seq_along(abs_cor_to_depth)
+  ),
+  tibble::tibble(
+    method="raw TF-IDF",
+    abs_cor_to_depth = as.numeric(abs(cor(Matrix::colSums(mat_lsi), pca_atac_no_norm))),
+    PC=seq_along(abs_cor_to_depth)
+  )
+)
+ggplot2::ggplot(cor_to_depth, ggplot2::aes(PC, abs_cor_to_depth, color=method)) +
+  ggplot2::geom_point() +
+  ggplot2::theme_bw() +
+  ggplot2::labs(title="Correlation to of PCs to read depth")
+```
+
+In terms of the actual PCA results, we can see that the cell embeddings have mostly
+1-to-1 correspondence across the first 6 PCs, though later PCs start to diverge.
+The first PC of the raw TF-IDF corresponds mostly to read depth, and the signal 
+is spread out across 2 PCs in the z-score normalized variant.
+```{r}
+cor_between_embeddings <- tidyr::expand_grid(
+  pca_atac_no_norm = seq_len(ncol(pca_atac_no_norm)),
+  pca_atac=seq_len(ncol(pca_atac))
+) %>% mutate(
+  cor = as.numeric(abs(cor(.env$pca_atac, .env$pca_atac_no_norm)))
+)
+
+ggplot2::ggplot(cor_between_embeddings, ggplot2::aes(pca_atac, pca_atac_no_norm, fill=abs(cor))) +
+  ggplot2::geom_tile() +
+  ggplot2::geom_text(mapping=ggplot2::aes(label=sprintf("%.2f", cor))) +
+  ggplot2::scale_x_continuous(breaks=1:10) +
+  ggplot2::scale_y_continuous(breaks=1:10) +
+  ggplot2::theme_classic() +
+  ggplot2::labs(title="Correlation between cell embeddings", 
+                x="z-score normalize PCs",
+                y ="raw TF-IDF PCs")
+```
+
+And if we look at the loading on each peak from the PCA, we see a similar result.
+```{r}
+cor_between_loadings <- tidyr::expand_grid(
+  pca_atac_no_norm = seq_len(ncol(svd_atac_no_norm$u)),
+  pca_atac=seq_len(ncol(svd_atac$u))
+) %>% mutate(
+  cor = as.numeric(abs(cor(.env$svd_atac$u, .env$svd_atac_no_norm$u)))
+)
+
+ggplot2::ggplot(cor_between_loadings, ggplot2::aes(pca_atac, pca_atac_no_norm, fill=abs(cor))) +
+  ggplot2::geom_tile() +
+  ggplot2::geom_text(mapping=ggplot2::aes(label=sprintf("%.2f", cor))) +
+  ggplot2::scale_x_continuous(breaks=1:10) +
+  ggplot2::scale_y_continuous(breaks=1:10) +
+  ggplot2::theme_classic() +
+  ggplot2::labs(title="Correlation between peak loadings",
+                x="z-score normalize PCs",
+                y ="raw TF-IDF PCs")
+  
+```
+
+Finally, the UMAP generated once we exclude the first PC is fairly similar, though
+with a notable difference in positioning for cluster 18 (subset of dendritic cells)
+```{r}
+set.seed(12341512)
+umap_atac_no_norm <- uwot::umap(pca_atac_no_norm[,-1])
+plot_embedding(clusts_atac, umap_atac_no_norm, colors_discrete = discrete_palette("ironMan")) +
+  ggplot2::guides(color="none") + 
+  plot_embedding(cell_types, umap_atac_no_norm)
+```
+
+</details>
 
 # Motif footprinting
 For motif footprinting, first we need to find all instances of our
