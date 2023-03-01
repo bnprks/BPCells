@@ -233,6 +233,28 @@ test_that("footprint works", {
   }
 })
 
+test_that("Concatenate seek works", {
+  # Regression test against incorrect tile/peak matrix subset with concatenated fragments
+  frags_a <- open_fragments_10x("../data/mini_fragments.tsv.gz") %>%
+    prefix_cell_names("A") %>%
+    write_fragments_memory()
+  frags_b <- open_fragments_10x("../data/mini_fragments.tsv.gz") %>%
+    prefix_cell_names("B") %>%
+    write_fragments_memory()
+
+  frags_merge <- c(frags_a, frags_b)
+
+  fragment_counts <- nucleosome_counts(frags_merge)$nFrags
+  keeper_cells <- order(-fragment_counts)[1:2]
+  frags_filt <- select_cells(frags_merge, keeper_cells)
+
+  tiles <- tile_matrix(frags_filt, list(chr="chr1", start=0L, end=248956422L, tile_width=100000))
+  tile_counts <- matrix_stats(tiles, row_stats = "nonzero")$row_stats
+  keeper_tiles <- order(-tile_counts)[1:3]
+  x <- as(tiles, "dgCMatrix")[keeper_tiles,]
+  y <- as(tiles[keeper_tiles,], "dgCMatrix")
+  expect_identical(x, y)
+})
 test_that("Generic methods work", {
   frags <- open_fragments_10x("../data/mini_fragments.tsv.gz") %>% #nolint
     write_fragments_memory()

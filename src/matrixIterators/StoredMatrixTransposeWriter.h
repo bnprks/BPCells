@@ -191,7 +191,7 @@ template <typename T> class StoredMatrixTransposeWriter : public MatrixWriter<T>
 
             std::swap(output_chunk_sizes, input_chunk_sizes);
         } // row_data, row_buf etc. get freed here
-        for (auto x : input_chunk_sizes)
+        for (auto &x : input_chunk_sizes)
             total_elements += x;
 
         // 2. Merge up to (sort_buffer_elements / load_elements) chunks at once into a single sorted

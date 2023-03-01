@@ -206,9 +206,9 @@ TEST(FragmentUtils, InsertionIterator) {
 
     std::vector<std::array<uint32_t, 3>> insert;
 
-    for (auto f : v)
+    for (const auto &f : v)
         insert.push_back({f.chr, f.start, f.cell});
-    for (auto f : v)
+    for (const auto &f : v)
         insert.push_back({f.chr, f.end - 1, f.cell});
 
     std::stable_sort(
@@ -248,7 +248,7 @@ TEST(FragmentUtils, CellSelect) {
     });
 
     std::vector<Testing::Frag> v2;
-    for (auto f : v) {
+    for (const auto &f : v) {
         if (f.cell > 15 || f.cell < 10) continue;
         f.cell = 15 - f.cell;
         v2.push_back(f);

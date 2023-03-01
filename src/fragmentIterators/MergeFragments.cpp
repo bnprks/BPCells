@@ -31,20 +31,20 @@ MergeFragments::MergeFragments(const std::vector<FragmentLoader *> &fragments, u
 }
 
 bool MergeFragments::isSeekable() const {
-    for (auto f : frags) {
+    for (auto &&f : frags) {
         if (!f.isSeekable()) return false;
     }
     return true;
 }
 
 void MergeFragments::seek(uint32_t chr_id, uint32_t base) {
-    for (auto f : frags)
+    for (auto &&f : frags)
         f.seek(chr_id, base);
     heap.clear();
 }
 
 void MergeFragments::restart() {
-    for (auto f : frags) {
+    for (auto &&f : frags) {
         f.restart();
         f.nextChr(); // Make sure this->nextChr doesn't get confused on the first chromosome
     }
@@ -56,7 +56,7 @@ void MergeFragments::restart() {
 
 int MergeFragments::chrCount() const {
     int count = frags.front().chrCount();
-    for (auto f : frags) {
+    for (auto &&f : frags) {
         if (f.chrCount() == -1) return -1;
         if (f.chrCount() != count)
             throw std::runtime_error(
@@ -74,7 +74,7 @@ int MergeFragments::cellCount() const {
 
 const char *MergeFragments::chrNames(uint32_t chr_id) {
     const char *name = NULL;
-    for (auto f : frags) {
+    for (auto &&f : frags) {
         const char *f_name = f.chrNames(chr_id);
         if (f_name == NULL) continue;
         if (name == NULL) name = f_name;
