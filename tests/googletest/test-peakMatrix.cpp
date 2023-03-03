@@ -82,13 +82,12 @@ TEST(PeakMatrix, PeakMatrix) {
     w_end.finalize();
     w_end_max.finalize();
     w_chr_ptr.finalize();
-    StoredFragments frags = StoredFragments::openUnpacked(v);
 
     std::vector<uint32_t> chr = {0, 0, 0, 0, 0, 1};
     std::vector<uint32_t> start = {2, 1002, 1004, 1000, 2000, 10};
     std::vector<uint32_t> end = {4, 1005, 1006, 1008, 2010, 20};
     PeakInsertionMatrix m(
-        frags,
+        std::make_unique<StoredFragments>(StoredFragments::openUnpacked(v)),
         chr,
         start,
         end,
@@ -124,8 +123,9 @@ TEST(PeakMatrix, PeakMatrix) {
     Eigen::SparseMatrix<double> eigen_mat(5, 6);
     eigen_mat.setFromTriplets(expected_triplets.begin(), expected_triplets.end());
 
-    CSparseMatrix expected_csparse(get_map(eigen_mat));
-    MatrixConverterLoader<double, uint32_t> expected_int(expected_csparse);
+    MatrixConverterLoader<double, uint32_t> expected_int(
+        std::make_unique<CSparseMatrix>(get_map(eigen_mat))
+    );
 
     EXPECT_TRUE(matrix_identical_cpp(expected_int, m));
 }
@@ -134,7 +134,6 @@ TEST(PeakMatrix, PeakMatrixSeek) {
     uint32_t chrs = 5;
     uint32_t max_coord = 1000;
     auto v = Testing::writeFragmentTuple(Testing::generateFrags(50000, chrs, max_coord, 50, 125));
-    StoredFragments frags = StoredFragments::openUnpacked(*v);
 
     std::vector<uint32_t> v_chr, v_start, v_end;
     std::vector<std::string> chr_levels;
@@ -147,16 +146,21 @@ TEST(PeakMatrix, PeakMatrixSeek) {
         }
     }
 
-    PeakInsertionMatrix peak_mat(
-        frags, v_chr, v_start, v_end, std::make_unique<VecStringReader>(chr_levels)
+    auto peak_mat = std::make_unique<PeakInsertionMatrix>(
+        std::make_unique<StoredFragments>(StoredFragments::openUnpacked(*v)),
+        v_chr,
+        v_start,
+        v_end,
+        std::make_unique<VecStringReader>(chr_levels)
     );
-    MatrixConverterLoader<uint32_t, double> peak_mat_double(peak_mat);
+    auto peak_mat_double =
+        std::make_unique<MatrixConverterLoader<uint32_t, double>>(std::move(peak_mat));
     CSparseMatrixWriter mat_writer;
-    mat_writer.write(peak_mat_double);
+    mat_writer.write(*peak_mat_double);
 
     Eigen::SparseMatrix<double> eigen_mat = mat_writer.getMat();
 
-    MatrixIterator peak_mat_it(peak_mat_double);
+    MatrixIterator<double> peak_mat_it(std::move(peak_mat_double));
     peak_mat_it.restart();
     // Check that the first column upon restart matches the sparse matrix first
     // column
@@ -283,7 +287,7 @@ TEST(PeakMatrix, TileMatrix) {
     StoredFragments frags = StoredFragments::openUnpacked(v);
 
     TileMatrix m(
-        frags,
+        std::make_unique<StoredFragments>(StoredFragments::openUnpacked(v)),
         chr,
         start,
         end,
@@ -320,8 +324,9 @@ TEST(PeakMatrix, TileMatrix) {
     Eigen::SparseMatrix<double> eigen_mat(5, 9);
     eigen_mat.setFromTriplets(expected_triplets.begin(), expected_triplets.end());
 
-    CSparseMatrix expected_csparse(get_map(eigen_mat));
-    MatrixConverterLoader<double, uint32_t> expected_int(expected_csparse);
+    MatrixConverterLoader<double, uint32_t> expected_int(
+        std::make_unique<CSparseMatrix>(get_map(eigen_mat))
+    );
 
     EXPECT_TRUE(matrix_identical_cpp(expected_int, m));
 }
@@ -330,7 +335,6 @@ TEST(PeakMatrix, TileMatrixSeek) {
     uint32_t chrs = 5;
     uint32_t max_coord = 1000;
     auto v = Testing::writeFragmentTuple(Testing::generateFrags(50000, chrs, max_coord, 50, 125));
-    StoredFragments frags = StoredFragments::openUnpacked(*v);
 
     std::vector<uint32_t> v_chr, v_start, v_end, v_width;
     std::vector<std::string> chr_levels;
@@ -343,16 +347,22 @@ TEST(PeakMatrix, TileMatrixSeek) {
         chr_levels.push_back(std::string("chr") + std::to_string(chr));
     }
 
-    TileMatrix tile_mat(
-        frags, v_chr, v_start, v_end, v_width, std::make_unique<VecStringReader>(chr_levels)
+    auto tile_mat = std::make_unique<TileMatrix>(
+        std::make_unique<StoredFragments>(StoredFragments::openUnpacked(*v)),
+        v_chr,
+        v_start,
+        v_end,
+        v_width,
+        std::make_unique<VecStringReader>(chr_levels)
     );
-    MatrixConverterLoader<uint32_t, double> tile_mat_double(tile_mat);
+    std::unique_ptr<MatrixLoader<double>> tile_mat_double =
+        std::make_unique<MatrixConverterLoader<uint32_t, double>>(std::move(tile_mat));
     CSparseMatrixWriter mat_writer;
 
-    mat_writer.write(tile_mat_double);
+    mat_writer.write(*tile_mat_double);
     Eigen::SparseMatrix<double> eigen_mat = mat_writer.getMat();
 
-    MatrixIterator tile_mat_it(tile_mat_double);
+    MatrixIterator<double> tile_mat_it(std::move(tile_mat_double));
     tile_mat_it.restart();
     // Check that the first column upon restart matches the sparse matrix first
     // column
@@ -389,8 +399,10 @@ TEST(PeakMatrix, TileMatrixSeek) {
 bool matrix_identical_cpp(MatrixLoader<uint32_t> &mat1, MatrixLoader<uint32_t> &mat2) {
     mat1.restart();
     mat2.restart();
-    MatrixIterator<uint32_t> i1(mat1);
-    MatrixIterator<uint32_t> i2(mat2);
+    MatrixIterator<uint32_t> i1((std::unique_ptr<MatrixLoader<uint32_t>>(&mat1)));
+    MatrixIterator<uint32_t> i2((std::unique_ptr<MatrixLoader<uint32_t>>(&mat2)));
+    i1.preserve_input_loader();
+    i2.preserve_input_loader();
 
     while (true) {
         bool res1 = i1.nextCol();

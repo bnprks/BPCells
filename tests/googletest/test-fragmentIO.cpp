@@ -121,7 +121,7 @@ TEST(FragmentIO, ChrSelectRoundTrip) {
     // Slight hack to get path of an input test data file via CMake config
     ASSERT_EQ(my_argc, 2);
     BedFragments in(my_argv[1]);
-    ChrNameSelect l1(in, {"chr1", "chr2", "chr3", "chrX", "chrY"});
+    ChrNameSelect l1(std::make_unique<BedFragments>(my_argv[1]), {"chr1", "chr2", "chr3", "chrX", "chrY"});
 
     VecReaderWriterBuilder v;
     StoredFragmentsWriter::createPacked(v).write(in);

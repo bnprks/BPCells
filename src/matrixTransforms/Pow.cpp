@@ -3,7 +3,7 @@
 namespace BPCells {
 
 bool Pow::load() {
-    if (!loader.load()) return false;
+    if (!loader->load()) return false;
 
     double *val_data = valData();
     const uint32_t cap = capacity();
@@ -16,7 +16,7 @@ bool Pow::load() {
 }
 
 bool PowSIMD::load() {
-    if (!loader.load()) return false;
+    if (!loader->load()) return false;
 
     double *val_data = valData();
     const uint32_t cap = capacity();
@@ -41,7 +41,7 @@ bool PowSIMD::load() {
 }
 
 bool Square::load() {
-    if (!loader.load()) return false;
+    if (!loader->load()) return false;
 
     double *val_data = valData();
     const uint32_t cap = capacity();

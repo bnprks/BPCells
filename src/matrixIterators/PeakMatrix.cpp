@@ -4,17 +4,17 @@ namespace BPCells {
 
 template <int MODE>
 PeakMatrixBase<MODE>::PeakMatrixBase(
-    FragmentLoader &frags,
+    std::unique_ptr<FragmentLoader> &&frags,
     const std::vector<uint32_t> &chr,
     const std::vector<uint32_t> &start,
     const std::vector<uint32_t> &end,
     std::unique_ptr<StringReader> &&chr_levels
 )
-    : frags(frags)
+    : frags(std::move(frags))
     , chr_levels(std::move(chr_levels))
     , end_sorted_lookup(start.size())
     , n_peaks(start.size()) {
-    if (frags.cellCount() < 0)
+    if (this->frags->cellCount() < 0)
         throw std::invalid_argument(
             "frags must have a known cell count. Consider using a cell selection to define the "
             "number of cells."
@@ -25,7 +25,7 @@ PeakMatrixBase<MODE>::PeakMatrixBase(
 
     // Check that chr name matches for all the available chrNames in frags
     for (uint32_t i = 0; i < this->chr_levels->size(); i++) {
-        const char *chr_name_frag = frags.chrNames(i);
+        const char *chr_name_frag = this->frags->chrNames(i);
         const char *chr_name_args = this->chr_levels->get(i);
         if (chr_name_frag != NULL &&
             (chr_name_args == NULL || strcmp(chr_name_frag, chr_name_args) != 0)) {
@@ -87,14 +87,14 @@ PeakMatrixBase<MODE>::PeakMatrixBase(
     sorted_peaks.push_back({UINT32_MAX, UINT32_MAX, UINT32_MAX});
 
     // Call nextChr to start fragments (analagous to what's done in loadFragments)
-    if (!frags.nextChr()) {
+    if (!this->frags->nextChr()) {
         next_completed_peak = sorted_peaks.size() - 1;
         active_peaks.clear();
         return;
     }
     // Check that chr name matches
-    const char *chr_name_frag = frags.chrNames(frags.currentChr());
-    const char *chr_name_args = this->chr_levels->get(frags.currentChr());
+    const char *chr_name_frag = this->frags->chrNames(this->frags->currentChr());
+    const char *chr_name_args = this->chr_levels->get(this->frags->currentChr());
     if (chr_name_frag == NULL || chr_name_args == NULL ||
         strcmp(chr_name_frag, chr_name_args) != 0) {
         throw std::runtime_error(
@@ -102,23 +102,23 @@ PeakMatrixBase<MODE>::PeakMatrixBase(
             std::string(chr_name_frag) + std::string(" expected: ") + std::string(chr_name_args)
         );
     }
-    while (sorted_peaks[next_completed_peak].chr < frags.currentChr()) {
+    while (sorted_peaks[next_completed_peak].chr < this->frags->currentChr()) {
         next_completed_peak++;
     }
     next_active_peak = next_completed_peak;
 }
 
-template <int MODE> uint32_t PeakMatrixBase<MODE>::rows() const { return frags.cellCount(); }
+template <int MODE> uint32_t PeakMatrixBase<MODE>::rows() const { return frags->cellCount(); }
 template <int MODE> uint32_t PeakMatrixBase<MODE>::cols() const { return n_peaks; }
 
 template <int MODE> const char *PeakMatrixBase<MODE>::rowNames(uint32_t row) {
-    return frags.cellNames(row);
+    return frags->cellNames(row);
 }
 template <int MODE> const char *PeakMatrixBase<MODE>::colNames(uint32_t col) {
     if (col >= n_peaks) return NULL;
     auto peak = sorted_peaks[end_sorted_lookup[col]];
     peak_name.clear();
-    peak_name += frags.chrNames(peak.chr);
+    peak_name += frags->chrNames(peak.chr);
     peak_name += ":";
     peak_name += std::to_string(peak.start);
     peak_name += "-";
@@ -134,14 +134,14 @@ template <int MODE> void PeakMatrixBase<MODE>::restart() {
     current_output_peak = UINT32_MAX;
 }
 template <int MODE> void PeakMatrixBase<MODE>::seekCol(uint32_t col) {
-    if (!frags.isSeekable())
+    if (!frags->isSeekable())
         throw std::runtime_error("Can't seek a PeakMatrix if the fragments aren't seekable");
     next_active_peak = end_sorted_lookup[col];
     next_completed_peak = 0;
     current_output_peak = col - 1;
     active_peaks.clear();
     accumulator.clear();
-    // Don't need to do any frags.seek call here since loadFragments will do it
+    // Don't need to do any frags->seek call here since loadFragments will do it
     nextCol();
 }
 
@@ -192,28 +192,28 @@ template <int MODE> void PeakMatrixBase<MODE>::loadFragments() {
 
     if (next_active_peak == sorted_peaks.size()) return;
 
-    if (active_peaks.size() == 0 && frags.isSeekable()) {
-        frags.seek(sorted_peaks[next_active_peak].chr, sorted_peaks[next_active_peak].start);
+    if (active_peaks.size() == 0 && frags->isSeekable()) {
+        frags->seek(sorted_peaks[next_active_peak].chr, sorted_peaks[next_active_peak].start);
     }
 
     while (true) {
         // Load fragments, and check for end of chromosomes
-        while (!frags.load()) {
-            uint32_t prev_chr_id = frags.currentChr();
-            if (!frags.nextChr()) {
+        while (!frags->load()) {
+            uint32_t prev_chr_id = frags->currentChr();
+            if (!frags->nextChr()) {
                 next_completed_peak = sorted_peaks.size() - 1;
                 active_peaks.clear();
                 return;
             }
-            if (frags.currentChr() <= prev_chr_id) {
+            if (frags->currentChr() <= prev_chr_id) {
                 throw std::runtime_error(
                     "PeakMatrix encountered fragments with out of order chromosome IDs. Please "
                     "save + load fragments before passing to PeakMatrix to fix this issue."
                 );
             }
             // Check that chr name matches
-            const char *chr_name_frag = frags.chrNames(frags.currentChr());
-            const char *chr_name_args = chr_levels->get(frags.currentChr());
+            const char *chr_name_frag = frags->chrNames(frags->currentChr());
+            const char *chr_name_args = chr_levels->get(frags->currentChr());
             if (chr_name_frag == NULL || chr_name_args == NULL ||
                 strcmp(chr_name_frag, chr_name_args) != 0) {
                 throw std::runtime_error(
@@ -222,16 +222,16 @@ template <int MODE> void PeakMatrixBase<MODE>::loadFragments() {
                     std::string(chr_name_args)
                 );
             }
-            while (sorted_peaks[next_completed_peak].chr < frags.currentChr()) {
+            while (sorted_peaks[next_completed_peak].chr < frags->currentChr()) {
                 next_completed_peak++;
             }
             next_active_peak = next_completed_peak;
             active_peaks.clear();
         }
-        uint32_t capacity = frags.capacity();
-        const uint32_t *start_data = frags.startData();
-        const uint32_t *end_data = frags.endData();
-        const uint32_t *cell_data = frags.cellData();
+        uint32_t capacity = frags->capacity();
+        const uint32_t *start_data = frags->startData();
+        const uint32_t *end_data = frags->endData();
+        const uint32_t *cell_data = frags->cellData();
 
         uint32_t i = 0;
         uint32_t end_max = 0;
@@ -245,7 +245,7 @@ template <int MODE> void PeakMatrixBase<MODE>::loadFragments() {
             }
 
             // Check for new peaks to activate
-            while (sorted_peaks[next_active_peak].chr == frags.currentChr() &&
+            while (sorted_peaks[next_active_peak].chr == frags->currentChr() &&
                    sorted_peaks[next_active_peak].start < end_max) {
 
                 active_peaks.push_back(sorted_peaks[next_active_peak]);
@@ -343,7 +343,7 @@ template <int MODE> void PeakMatrixBase<MODE>::loadFragments() {
                 // Remove the peak from active_peaks if we're done, and mark the
                 // next completed peak on our list
                 if (k < items) {
-                    while (sorted_peaks[next_completed_peak].chr == frags.currentChr() &&
+                    while (sorted_peaks[next_completed_peak].chr == frags->currentChr() &&
                            sorted_peaks[next_completed_peak].end <= p.end &&
                            sorted_peaks[next_completed_peak].start <= p.start) {
                         next_completed_peak += 1;

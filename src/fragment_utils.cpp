@@ -6,6 +6,7 @@
 #include <RcppEigen.h>
 
 #include "R_array_io.h"
+#include "R_xptr_wrapper.h"
 
 #include "fragmentIterators/CellSelect.h"
 #include "fragmentIterators/ChrSelect.h"
@@ -33,9 +34,9 @@ using namespace BPCells;
 
 // [[Rcpp::export]]
 NumericVector scan_fragments_cpp(SEXP fragments) {
-    XPtr<FragmentLoader> xptr(fragments);
-
-    FragmentIterator iter(*xptr);
+    FragmentIterator iter(std::unique_ptr<FragmentLoader>(peek_unique_xptr<FragmentLoader>(fragments
+    )));
+    iter.preserve_input_loader();
     uint64_t start_sum = 0;
     uint64_t end_sum = 0;
     uint64_t cell_sum = 0;
@@ -66,19 +67,14 @@ SEXP iterate_peak_matrix_cpp(
     StringVector chr_levels,
     std::string mode
 ) {
-    XPtr<FragmentLoader> loader(fragments);
+    auto loader = take_unique_xptr<FragmentLoader>(fragments);
+    std::unique_ptr<StringReader> chr_levels_reader = std::make_unique<RcppStringReader>(chr_levels);
     if (mode == "insertions") {
-        return Rcpp::wrap(XPtr<PeakInsertionMatrix>(new PeakInsertionMatrix(
-            *loader, chr, start, end, std::make_unique<RcppStringReader>(chr_levels)
-        )));
+        return make_unique_xptr<PeakInsertionMatrix>(std::move(loader), chr, start, end, std::move(chr_levels_reader));
     } else if (mode == "fragments") {
-        return Rcpp::wrap(XPtr<PeakFragmentMatrix>(new PeakFragmentMatrix(
-            *loader, chr, start, end, std::make_unique<RcppStringReader>(chr_levels)
-        )));
+        return make_unique_xptr<PeakFragmentMatrix>(std::move(loader), chr, start, end, std::move(chr_levels_reader));
     } else if (mode == "overlaps") {
-        return Rcpp::wrap(XPtr<PeakOverlapMatrix>(new PeakOverlapMatrix(
-            *loader, chr, start, end, std::make_unique<RcppStringReader>(chr_levels)
-        )));
+        return make_unique_xptr<PeakOverlapMatrix>(std::move(loader), chr, start, end, std::move(chr_levels_reader));
     } else {
         throw std::invalid_argument("mode must be one of insertions, fragments, or overlaps");
     }
@@ -93,10 +89,14 @@ SEXP iterate_tile_matrix_cpp(
     std::vector<uint32_t> width,
     StringVector chr_levels
 ) {
-    XPtr<FragmentLoader> loader(fragments);
-    return Rcpp::wrap(XPtr<TileMatrix>(new TileMatrix(
-        *loader, chr, start, end, width, std::make_unique<RcppStringReader>(chr_levels)
-    )));
+    return make_unique_xptr<TileMatrix>(
+        take_unique_xptr<FragmentLoader>(fragments),
+        chr,
+        start,
+        end,
+        width,
+        std::make_unique<RcppStringReader>(chr_levels)
+    );
 }
 
 // [[Rcpp::export]]
@@ -113,11 +113,11 @@ StringVector get_tile_names_cpp(
     }
     StringVector ret(total_tiles);
     size_t out_idx = 0;
-    for (size_t i = 0; i < chr_id.length(); i++) {
-        for (size_t base = start[i]; base < end[i]; base += tile_width[i]) {
+    for (int i = 0; i < chr_id.length(); i++) {
+        for (int64_t base = start[i]; base < end[i]; base += tile_width[i]) {
             std::stringstream out;
             out << (const char *)chr_levels[chr_id[i]] << ":" << (base) << "-"
-                << std::min((size_t)end[i], base + tile_width[i]);
+                << std::min((int64_t)end[i], base + tile_width[i]);
             ret[out_idx++] = out.str();
         }
     }
@@ -160,8 +160,9 @@ List get_tile_ranges_cpp(
 // Compute number of fragments like ArchR does for cell stats
 //  [[Rcpp::export]]
 List nucleosome_counts_cpp(SEXP fragments, uint32_t nuc_width = 147) {
-    FragmentLoader *loader = &(*XPtr<FragmentLoader>(fragments));
-    FragmentIterator iter(*loader);
+    FragmentIterator iter(std::unique_ptr<FragmentLoader>(peek_unique_xptr<FragmentLoader>(fragments
+    )));
+    iter.preserve_input_loader();
 
     std::vector<int> subNuc(0);
     std::vector<int> monoNuc(0);
@@ -200,8 +201,9 @@ List nucleosome_counts_cpp(SEXP fragments, uint32_t nuc_width = 147) {
 // Compute fragment length distribution
 // [[Rcpp::export]]
 std::vector<int> fragment_lengths_cpp(SEXP fragments) {
-    FragmentLoader *loader = &(*XPtr<FragmentLoader>(fragments));
-    FragmentIterator iter(*loader);
+    FragmentIterator iter(std::unique_ptr<FragmentLoader>(peek_unique_xptr<FragmentLoader>(fragments
+    )));
+    iter.preserve_input_loader();
 
     std::vector<int> lengths(0);
 
@@ -227,9 +229,8 @@ Eigen::MatrixXd footprint_matrix_cpp(
     std::vector<uint32_t> cell_groups,
     std::vector<double> cell_weights
 ) {
-    FragmentLoader *loader = &(*XPtr<FragmentLoader>(fragments));
     return footprintMatrix(
-        *loader,
+        *peek_unique_xptr<FragmentLoader>(fragments),
         chr,
         center,
         strand,
@@ -242,80 +243,74 @@ Eigen::MatrixXd footprint_matrix_cpp(
 
 // [[Rcpp::export]]
 SEXP iterate_shift_cpp(SEXP fragments, int32_t shift_start, int32_t shift_end) {
-    XPtr<FragmentLoader> loader(fragments);
-
-    return Rcpp::wrap(XPtr<FragmentLoader>(new ShiftCoords(*loader, shift_start, shift_end)));
+    return make_unique_xptr<ShiftCoords>(
+        take_unique_xptr<FragmentLoader>(fragments), shift_start, shift_end
+    );
 }
 
 // [[Rcpp::export]]
 SEXP iterate_length_select_cpp(SEXP fragments, uint32_t min_len, uint32_t max_len) {
-    XPtr<FragmentLoader> loader(fragments);
-
-    return Rcpp::wrap(XPtr<FragmentLoader>(new LengthSelect(*loader, min_len, max_len)));
+    return make_unique_xptr<LengthSelect>(
+        take_unique_xptr<FragmentLoader>(fragments), min_len, max_len
+    );
 }
 
 // [[Rcpp::export]]
 SEXP iterate_chr_index_select_cpp(SEXP fragments, std::vector<uint32_t> chr_selection) {
-    XPtr<FragmentLoader> loader(fragments);
-
-    return Rcpp::wrap(XPtr<FragmentLoader>(new ChrIndexSelect(*loader, chr_selection)));
+    return make_unique_xptr<ChrIndexSelect>(
+        take_unique_xptr<FragmentLoader>(fragments), chr_selection
+    );
 }
 
 // [[Rcpp::export]]
 SEXP iterate_chr_name_select_cpp(SEXP fragments, std::vector<std::string> chr_selection) {
-    XPtr<FragmentLoader> loader(fragments);
-
-    return Rcpp::wrap(XPtr<FragmentLoader>(new ChrNameSelect(*loader, chr_selection)));
+    return make_unique_xptr<ChrNameSelect>(
+        take_unique_xptr<FragmentLoader>(fragments), chr_selection
+    );
 }
 
 // [[Rcpp::export]]
 SEXP iterate_cell_index_select_cpp(SEXP fragments, std::vector<uint32_t> cell_selection) {
-    XPtr<FragmentLoader> loader(fragments);
-
-    return Rcpp::wrap(XPtr<FragmentLoader>(new CellIndexSelect(*loader, cell_selection)));
+    return make_unique_xptr<CellIndexSelect>(
+        take_unique_xptr<FragmentLoader>(fragments), cell_selection
+    );
 }
 
 // [[Rcpp::export]]
 SEXP iterate_cell_name_select_cpp(SEXP fragments, std::vector<std::string> cell_selection) {
-    XPtr<FragmentLoader> loader(fragments);
-
-    return Rcpp::wrap(XPtr<FragmentLoader>(new CellNameSelect(*loader, cell_selection)));
+    return make_unique_xptr<CellNameSelect>(
+        take_unique_xptr<FragmentLoader>(fragments), cell_selection
+    );
 }
 
 // [[Rcpp::export]]
 SEXP iterate_cell_merge_cpp(
     SEXP fragments, std::vector<uint32_t> group_ids, StringVector group_names
 ) {
-    XPtr<FragmentLoader> loader(fragments);
-
-    return Rcpp::wrap(XPtr<FragmentLoader>(
-        new CellMerge(*loader, group_ids, std::make_unique<RcppStringReader>(group_names))
-    ));
+    return make_unique_xptr<CellMerge>(
+        take_unique_xptr<FragmentLoader>(fragments),
+        group_ids,
+        std::make_unique<RcppStringReader>(group_names)
+    );
 }
 
 // [[Rcpp::export]]
 SEXP iterate_chr_rename_cpp(SEXP fragments, const StringVector &chr_names) {
-    XPtr<FragmentLoader> loader(fragments);
-
-    return Rcpp::wrap(
-        XPtr<FragmentLoader>(new RenameChrs(*loader, std::make_unique<RcppStringReader>(chr_names)))
+    return make_unique_xptr<RenameChrs>(
+        take_unique_xptr<FragmentLoader>(fragments), std::make_unique<RcppStringReader>(chr_names)
     );
 }
 
 // [[Rcpp::export]]
 SEXP iterate_cell_rename_cpp(SEXP fragments, const StringVector &cell_names) {
-    XPtr<FragmentLoader> loader(fragments);
-
-    return Rcpp::wrap(XPtr<FragmentLoader>(
-        new RenameCells(*loader, std::make_unique<RcppStringReader>(cell_names))
-    ));
+    return make_unique_xptr<RenameCells>(
+        take_unique_xptr<FragmentLoader>(fragments), std::make_unique<RcppStringReader>(cell_names)
+    );
 }
 
 // [[Rcpp::export]]
 SEXP iterate_cell_prefix_cpp(SEXP fragments, std::string &prefix) {
-    XPtr<FragmentLoader> loader(fragments);
-
-    return Rcpp::wrap(XPtr<FragmentLoader>(new PrefixCells(*loader, prefix)));
+    return make_unique_xptr<PrefixCells>(take_unique_xptr<FragmentLoader>(fragments), prefix);
 }
 
 // [[Rcpp::export]]
@@ -327,20 +322,24 @@ SEXP iterate_region_select_cpp(
     StringVector chr_levels,
     bool invert_selection
 ) {
-    XPtr<FragmentLoader> loader(fragments);
-    return Rcpp::wrap(XPtr<FragmentLoader>(new RegionSelect(
-        *loader, chr, start, end, std::make_unique<RcppStringReader>(chr_levels), invert_selection
-    )));
+    return make_unique_xptr<RegionSelect>(
+        take_unique_xptr<FragmentLoader>(fragments),
+        chr,
+        start,
+        end,
+        std::make_unique<RcppStringReader>(chr_levels),
+        invert_selection
+    );
 }
 
 // [[Rcpp::export]]
 SEXP iterate_merge_fragments_cpp(SEXP fragments_list) {
-    std::vector<FragmentLoader *> fragments_vec;
+    std::vector<std::unique_ptr<FragmentLoader>> fragments_vec;
     List l = fragments_list;
     for (uint32_t i = 0; i < l.size(); i++) {
-        XPtr<FragmentLoader> loader(Rcpp::as<XPtr<FragmentLoader>>(l[i]));
-        fragments_vec.push_back(&(*loader));
+        SEXP elem = l[i];
+        fragments_vec.push_back(take_unique_xptr<FragmentLoader>(elem));
     }
 
-    return Rcpp::wrap(XPtr<FragmentLoader>(new MergeFragments(fragments_vec)));
+    return make_unique_xptr<MergeFragments>(std::move(fragments_vec));
 }

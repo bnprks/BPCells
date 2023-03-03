@@ -11,7 +11,7 @@ class ShiftCoords : public FragmentLoaderWrapper {
     int32_t shift_start, shift_end;
 
   public:
-    ShiftCoords(FragmentLoader &loader, int32_t shift_start, int32_t shift_end);
+    ShiftCoords(std::unique_ptr<FragmentLoader> &&loader, int32_t shift_start, int32_t shift_end);
 
     ~ShiftCoords() = default;
 

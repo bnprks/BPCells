@@ -1,5 +1,6 @@
 #pragma once
 #include <cstdint>
+#include <memory>
 #include <stdexcept>
 #include <string>
 #include <vector>
@@ -81,10 +82,23 @@ class FragmentLoader {
 // loaders that perform transformations and filters on other loaders
 class FragmentLoaderWrapper : public FragmentLoader {
   protected:
-    FragmentLoader &loader;
-
+    std::unique_ptr<FragmentLoader> loader;
+    bool take_ownership = true;
   public:
-    FragmentLoaderWrapper(FragmentLoader &loader);
+    FragmentLoaderWrapper(std::unique_ptr<FragmentLoader> &&loader);
+    
+    ~FragmentLoaderWrapper() {
+      if (!take_ownership) loader.release();
+    }
+
+    FragmentLoaderWrapper() = default;
+    FragmentLoaderWrapper(FragmentLoaderWrapper&&) = default;
+    FragmentLoaderWrapper& operator=(FragmentLoaderWrapper&&) = default;
+
+    // Set the object so that the inner loader will be preserved
+    // rather than calling the destructor when this loader is destructed
+    void preserve_input_loader() {take_ownership = false;}
+    
     bool isSeekable() const override;
     void seek(uint32_t chr_id, uint32_t base) override;
 
@@ -116,11 +130,10 @@ class FragmentIterator : public FragmentLoaderWrapper {
     uint32_t *current_cell, *current_start, *current_end;
 
   public:
-    FragmentIterator(FragmentLoader &loader);
-    virtual ~FragmentIterator() = default;
+    FragmentIterator(std::unique_ptr<FragmentLoader> &&loader);
 
     inline void restart() override {
-        loader.restart();
+        loader->restart();
         idx = UINT32_MAX;
         current_capacity = 0;
     }
@@ -135,8 +148,8 @@ class FragmentIterator : public FragmentLoaderWrapper {
     }
     // Advance the iterator to the next chromosome. Return false if there are no more chromosomes
     inline bool nextChr() override {
-        bool res = loader.nextChr();
-        if (res) current_chr = loader.currentChr();
+        bool res = loader->nextChr();
+        if (res) current_chr = loader->currentChr();
         idx = UINT32_MAX;
         current_capacity = 0;
         return res;
@@ -151,7 +164,7 @@ class FragmentIterator : public FragmentLoaderWrapper {
     // It's possible that fragments returned after seek will end before "base",
     // but it's guaranteed that it won't skip over any fragments ending before "base"
     inline void seek(uint32_t chr_id, uint32_t base) override {
-        loader.seek(chr_id, base);
+        loader->seek(chr_id, base);
         idx = UINT32_MAX;
         current_capacity = 0;
     }

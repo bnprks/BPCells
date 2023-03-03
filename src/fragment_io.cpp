@@ -11,29 +11,26 @@
 #include "arrayIO/vector.h"
 
 #include "R_array_io.h"
+#include "R_xptr_wrapper.h"
 
 using namespace Rcpp;
 using namespace BPCells;
 
 // [[Rcpp::export]]
 SEXP iterate_10x_fragments_cpp(std::string path, std::string comment) {
-    return Rcpp::wrap(XPtr<FragmentLoader>(new BedFragments(path.c_str(), comment.c_str())));
+    return make_unique_xptr<BedFragments>(path.c_str(), comment.c_str());
 }
 
 // [[Rcpp::export]]
 void write_10x_fragments_cpp(std::string path, SEXP fragments, bool append_5th_column = false) {
-    XPtr<FragmentLoader> loader(fragments);
-    FragmentIterator iter(*loader);
     BedFragmentsWriter writer(path.c_str(), append_5th_column);
-    writer.write(iter, &Rcpp::checkUserInterrupt);
+    writer.write(*peek_unique_xptr<FragmentLoader>(fragments), &Rcpp::checkUserInterrupt);
 }
 
 // [[Rcpp::export]]
 SEXP iterate_packed_fragments_cpp(S4 s4) {
     S4ReaderBuilder rb(s4);
-    return Rcpp::wrap(
-        XPtr<FragmentLoader>(new StoredFragmentsPacked(StoredFragmentsPacked::openPacked(rb)))
-    );
+    return make_unique_xptr<StoredFragmentsPacked>(StoredFragmentsPacked::openPacked(rb));
 }
 
 // [[Rcpp::export]]
@@ -53,8 +50,11 @@ IntegerVector calculate_end_max_cpp(IntegerVector end, IntegerVector chr_ptr) {
             prev_max = std::max(prev_max, current_max);
             current_max = 0;
             current_chr += 1;
-            if (current_chr * 2 < chr_ptr.size() && chr_ptr[current_chr * 2] != chr_ptr[current_chr * 2 - 1]) {
-                throw std::runtime_error("calculate_end_max_cpp: Found out-of-order chr_ptr (unsupported)");
+            if (current_chr * 2 < chr_ptr.size() &&
+                chr_ptr[current_chr * 2] != chr_ptr[current_chr * 2 - 1]) {
+                throw std::runtime_error(
+                    "calculate_end_max_cpp: Found out-of-order chr_ptr (unsupported)"
+                );
             }
         }
         current_max = std::max(current_max, (uint32_t)end[i]);
@@ -67,11 +67,10 @@ IntegerVector calculate_end_max_cpp(IntegerVector end, IntegerVector chr_ptr) {
 
 // [[Rcpp::export]]
 List write_packed_fragments_cpp(SEXP fragments) {
-    XPtr<FragmentLoader> loader(fragments);
-    FragmentIterator iter(*loader);
-
     ListWriterBuilder wb;
-    StoredFragmentsWriter::createPacked(wb).write(iter, &Rcpp::checkUserInterrupt);
+    StoredFragmentsWriter::createPacked(wb).write(
+        *peek_unique_xptr<FragmentLoader>(fragments), &Rcpp::checkUserInterrupt
+    );
 
     return wb.getList();
 }
@@ -79,16 +78,15 @@ List write_packed_fragments_cpp(SEXP fragments) {
 // [[Rcpp::export]]
 SEXP iterate_unpacked_fragments_cpp(S4 s4) {
     S4ReaderBuilder rb(s4);
-    return Rcpp::wrap(XPtr<FragmentLoader>(new StoredFragments(StoredFragments::openUnpacked(rb))));
+    return make_unique_xptr<StoredFragments>(StoredFragments::openUnpacked(rb));
 }
 
 // [[Rcpp::export]]
 List write_unpacked_fragments_cpp(SEXP fragments) {
-    XPtr<FragmentLoader> loader(fragments);
-    FragmentIterator iter(*loader);
-
     ListWriterBuilder wb;
-    StoredFragmentsWriter::createUnpacked(wb).write(iter, &Rcpp::checkUserInterrupt);
+    StoredFragmentsWriter::createUnpacked(wb).write(
+        *peek_unique_xptr<FragmentLoader>(fragments), &Rcpp::checkUserInterrupt
+    );
 
     return wb.getList();
 }
@@ -141,19 +139,21 @@ SEXP iterate_unpacked_fragments_file_cpp(
     std::string dir, uint32_t buffer_size, StringVector chr_names, StringVector cell_names
 ) {
     FileReaderBuilder rb(dir, buffer_size);
-    return Rcpp::wrap(XPtr<FragmentLoader>(new StoredFragments(StoredFragments::openUnpacked(
+    return make_unique_xptr<StoredFragments>(StoredFragments::openUnpacked(
         rb,
         std::make_unique<RcppStringReader>(chr_names),
         std::make_unique<RcppStringReader>(cell_names)
-    ))));
+    ));
 }
 
 // [[Rcpp::export]]
-void write_unpacked_fragments_file_cpp(SEXP fragments, std::string dir, uint32_t buffer_size, bool allow_overwrite) {
-    XPtr<FragmentLoader> loader(fragments);
-    FragmentIterator iter(*loader);
+void write_unpacked_fragments_file_cpp(
+    SEXP fragments, std::string dir, uint32_t buffer_size, bool allow_overwrite
+) {
     FileWriterBuilder wb(dir, buffer_size, allow_overwrite);
-    StoredFragmentsWriter::createUnpacked(wb).write(iter, &Rcpp::checkUserInterrupt);
+    StoredFragmentsWriter::createUnpacked(wb).write(
+        *peek_unique_xptr<FragmentLoader>(fragments), &Rcpp::checkUserInterrupt
+    );
 }
 
 // [[Rcpp::export]]
@@ -161,22 +161,22 @@ SEXP iterate_packed_fragments_file_cpp(
     std::string dir, uint32_t buffer_size, StringVector chr_names, StringVector cell_names
 ) {
     FileReaderBuilder rb(dir, buffer_size);
-    return Rcpp::wrap(
-        XPtr<FragmentLoader>(new StoredFragmentsPacked(StoredFragmentsPacked::openPacked(
-            rb,
-            1024,
-            std::make_unique<RcppStringReader>(chr_names),
-            std::make_unique<RcppStringReader>(cell_names)
-        )))
-    );
+    return make_unique_xptr<StoredFragmentsPacked>(StoredFragmentsPacked::openPacked(
+        rb,
+        1024,
+        std::make_unique<RcppStringReader>(chr_names),
+        std::make_unique<RcppStringReader>(cell_names)
+    ));
 }
 
 // [[Rcpp::export]]
-void write_packed_fragments_file_cpp(SEXP fragments, std::string dir, uint32_t buffer_size, bool allow_overwrite) {
-    XPtr<FragmentLoader> loader(fragments);
-    FragmentIterator iter(*loader);
+void write_packed_fragments_file_cpp(
+    SEXP fragments, std::string dir, uint32_t buffer_size, bool allow_overwrite
+) {
     FileWriterBuilder wb(dir, buffer_size, allow_overwrite);
-    StoredFragmentsWriter::createPacked(wb).write(iter, &Rcpp::checkUserInterrupt);
+    StoredFragmentsWriter::createPacked(wb).write(
+        *peek_unique_xptr<FragmentLoader>(fragments), &Rcpp::checkUserInterrupt
+    );
 }
 
 // [[Rcpp::export]]
@@ -194,22 +194,26 @@ SEXP iterate_unpacked_fragments_hdf5_cpp(
     StringVector cell_names
 ) {
     H5ReaderBuilder rb(file, group, buffer_size);
-    return Rcpp::wrap(XPtr<FragmentLoader>(new StoredFragments(StoredFragments::openUnpacked(
+    return make_unique_xptr<StoredFragments>(StoredFragments::openUnpacked(
         rb,
         std::make_unique<RcppStringReader>(chr_names),
         std::make_unique<RcppStringReader>(cell_names)
-    ))));
+    ));
 }
 
 // [[Rcpp::export]]
 void write_unpacked_fragments_hdf5_cpp(
-    SEXP fragments, std::string file, std::string group, uint32_t buffer_size, uint32_t chunk_size, bool allow_overwrite
+    SEXP fragments,
+    std::string file,
+    std::string group,
+    uint32_t buffer_size,
+    uint32_t chunk_size,
+    bool allow_overwrite
 ) {
-    XPtr<FragmentLoader> loader(fragments);
-    FragmentIterator iter(*loader);
-
     H5WriterBuilder wb(file, group, buffer_size, chunk_size, allow_overwrite);
-    StoredFragmentsWriter::createUnpacked(wb).write(iter, &Rcpp::checkUserInterrupt);
+    StoredFragmentsWriter::createUnpacked(wb).write(
+        *peek_unique_xptr<FragmentLoader>(fragments), &Rcpp::checkUserInterrupt
+    );
 }
 
 // [[Rcpp::export]]
@@ -221,25 +225,27 @@ SEXP iterate_packed_fragments_hdf5_cpp(
     StringVector cell_names
 ) {
     H5ReaderBuilder rb(file, group, buffer_size);
-    return Rcpp::wrap(
-        XPtr<FragmentLoader>(new StoredFragmentsPacked(StoredFragmentsPacked::openPacked(
-            rb,
-            1024,
-            std::make_unique<RcppStringReader>(chr_names),
-            std::make_unique<RcppStringReader>(cell_names)
-        )))
-    );
+    return make_unique_xptr<StoredFragmentsPacked>(StoredFragmentsPacked::openPacked(
+        rb,
+        1024,
+        std::make_unique<RcppStringReader>(chr_names),
+        std::make_unique<RcppStringReader>(cell_names)
+    ));
 }
 
 // [[Rcpp::export]]
 void write_packed_fragments_hdf5_cpp(
-    SEXP fragments, std::string file, std::string group, uint32_t buffer_size, uint32_t chunk_size, bool allow_overwrite
+    SEXP fragments,
+    std::string file,
+    std::string group,
+    uint32_t buffer_size,
+    uint32_t chunk_size,
+    bool allow_overwrite
 ) {
-    XPtr<FragmentLoader> loader(fragments);
-    FragmentIterator iter(*loader);
-
     H5WriterBuilder wb(file, group, buffer_size, chunk_size, allow_overwrite);
-    StoredFragmentsWriter::createPacked(wb).write(iter, &Rcpp::checkUserInterrupt);
+    StoredFragmentsWriter::createPacked(wb).write(
+        *peek_unique_xptr<FragmentLoader>(fragments), &Rcpp::checkUserInterrupt
+    );
 }
 
 // [[Rcpp::export]]
@@ -247,12 +253,14 @@ int get_bp128_version_cpp() { return _SIMDBP128_MODE_; }
 
 // [[Rcpp::export]]
 bool fragments_identical_cpp(SEXP fragments1, SEXP fragments2) {
-    XPtr<FragmentLoader> l1(fragments1);
-    XPtr<FragmentLoader> l2(fragments2);
-    l1->restart();
-    l2->restart();
-    FragmentIterator i1(*l1);
-    FragmentIterator i2(*l2);
+    FragmentIterator i1(std::unique_ptr<FragmentLoader>(peek_unique_xptr<FragmentLoader>(fragments1
+    )));
+    FragmentIterator i2(std::unique_ptr<FragmentLoader>(peek_unique_xptr<FragmentLoader>(fragments2
+    )));
+    i1.preserve_input_loader();
+    i2.preserve_input_loader();
+    i1.restart();
+    i2.restart();
 
     while (true) {
         bool res1 = i1.nextChr();

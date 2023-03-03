@@ -114,9 +114,12 @@ std::vector<Frag> generateFrags(
 
 bool fragments_identical(BPCells::FragmentLoader &fragments1, BPCells::FragmentLoader &fragments2) {
     using namespace BPCells;
-
-    FragmentIterator i1(fragments1);
-    FragmentIterator i2(fragments2);
+    fragments1.restart();
+    fragments2.restart();
+    FragmentIterator i1((std::unique_ptr<FragmentLoader>(&fragments1)));
+    FragmentIterator i2((std::unique_ptr<FragmentLoader>(&fragments2)));
+    i1.preserve_input_loader();
+    i2.preserve_input_loader();
 
     while (true) {
         bool res1 = i1.nextChr();

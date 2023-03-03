@@ -2,16 +2,16 @@
 
 namespace BPCells {
 TileMatrix::TileMatrix(
-    FragmentLoader &frags,
+    std::unique_ptr<FragmentLoader> &&frags,
     const std::vector<uint32_t> &chr,
     const std::vector<uint32_t> &start,
     const std::vector<uint32_t> &end,
     const std::vector<uint32_t> &width,
     std::unique_ptr<StringReader> &&chr_levels
 )
-    : frags(frags)
+    : frags(std::move(frags))
     , chr_levels(std::move(chr_levels)) {
-    if (frags.cellCount() < 0)
+    if (this->frags->cellCount() < 0)
         throw std::invalid_argument(
             "frags must have a known cell count. Consider using a cell selection to define the "
             "number of cells."
@@ -22,7 +22,7 @@ TileMatrix::TileMatrix(
 
     // Check that chr name matches for all the available chrNames in frags
     for (uint32_t i = 0; i < this->chr_levels->size(); i++) {
-        const char *chr_name_frag = frags.chrNames(i);
+        const char *chr_name_frag = this->frags->chrNames(i);
         const char *chr_name_args = this->chr_levels->get(i);
         if (chr_name_frag != NULL &&
             (chr_name_args == NULL || strcmp(chr_name_frag, chr_name_args) != 0)) {
@@ -65,14 +65,14 @@ TileMatrix::TileMatrix(
     );
 
     // Call nextChr to start fragments (analagous to what's done in loadFragments)
-    if (!frags.nextChr()) {
+    if (!this->frags->nextChr()) {
         next_completed_tile = UINT32_MAX;
         active_tiles.clear();
         return;
     }
     // Check that chr name matches
-    const char *chr_name_frag = frags.chrNames(frags.currentChr());
-    const char *chr_name_args = this->chr_levels->get(frags.currentChr());
+    const char *chr_name_frag = this->frags->chrNames(this->frags->currentChr());
+    const char *chr_name_args = this->chr_levels->get(this->frags->currentChr());
     if (chr_name_frag == NULL || chr_name_args == NULL ||
         strcmp(chr_name_frag, chr_name_args) != 0) {
         throw std::runtime_error(
@@ -80,16 +80,16 @@ TileMatrix::TileMatrix(
             std::string(chr_name_frag) + std::string(" expected: ") + std::string(chr_name_args)
         );
     }
-    while (sorted_tiles[next_active_tile].chr < frags.currentChr()) {
+    while (sorted_tiles[next_active_tile].chr < this->frags->currentChr()) {
         next_active_tile++;
     }
     next_completed_tile = sorted_tiles[next_active_tile].output_idx;
 }
 
-uint32_t TileMatrix::rows() const { return frags.cellCount(); }
+uint32_t TileMatrix::rows() const { return frags->cellCount(); }
 uint32_t TileMatrix::cols() const { return n_tiles; }
 
-const char *TileMatrix::rowNames(uint32_t row) { return frags.cellNames(row); }
+const char *TileMatrix::rowNames(uint32_t row) { return frags->cellNames(row); }
 const char *TileMatrix::colNames(uint32_t col) {
     if (col >= cols()) return NULL;
     auto tile = std::upper_bound(
@@ -104,7 +104,7 @@ const char *TileMatrix::colNames(uint32_t col) {
     uint32_t start_base = tile->start + width * (col - tile->output_idx);
 
     tile_name.clear();
-    tile_name += frags.chrNames(tile->chr);
+    tile_name += frags->chrNames(tile->chr);
     tile_name += ":";
     tile_name += std::to_string(start_base);
     tile_name += "-";
@@ -120,7 +120,7 @@ void TileMatrix::restart() {
     next_active_tile = 0;
 }
 void TileMatrix::seekCol(uint32_t col) {
-    if (!frags.isSeekable())
+    if (!frags->isSeekable())
         throw std::runtime_error("Can't seek a TileMatrix if the fragments aren't seekable");
 
     // Binary search for the requested tile
@@ -135,7 +135,7 @@ void TileMatrix::seekCol(uint32_t col) {
     current_output_tile = col - 1;
     active_tiles.clear();
     accumulator.clear();
-    // LoadFragments will handle calling frags.seek appropriately
+    // LoadFragments will handle calling frags->seek appropriately
     nextCol();
 }
 
@@ -177,7 +177,7 @@ void TileMatrix::loadFragments() {
     //   4. break if we're ready to accumulate and have next_completed_tile > current_output_tile
     if (next_active_tile == sorted_tiles.size()) return;
 
-    if (active_tiles.size() == 0 && frags.isSeekable()) {
+    if (active_tiles.size() == 0 && frags->isSeekable()) {
         uint32_t seek_bp = sorted_tiles[next_active_tile].start;
         if (current_output_tile > sorted_tiles[next_active_tile].output_idx &&
             current_output_tile < sorted_tiles[next_active_tile + 1].output_idx) {
@@ -188,28 +188,28 @@ void TileMatrix::loadFragments() {
                           libdivide::libdivide_u32_recover(&sorted_tiles[next_active_tile].width);
         }
 
-        frags.seek(sorted_tiles[next_active_tile].chr, seek_bp);
+        frags->seek(sorted_tiles[next_active_tile].chr, seek_bp);
     }
 
     while (true) {
         // Load fragments, and check for end of chromosomes
-        while (!frags.load()) {
-            uint32_t prev_chr_id = frags.currentChr();
+        while (!frags->load()) {
+            uint32_t prev_chr_id = frags->currentChr();
 
-            if (!frags.nextChr()) {
+            if (!frags->nextChr()) {
                 next_completed_tile = UINT32_MAX;
                 active_tiles.clear();
                 return;
             }
-            if (frags.currentChr() <= prev_chr_id) {
+            if (frags->currentChr() <= prev_chr_id) {
                 throw std::runtime_error(
                     "TileMatrix encountered fragments with out of order chromosome IDs. Please "
                     "save + load fragments before passing to TileMatrix to fix this issue."
                 );
             }
             // Check that chr name matches
-            const char *chr_name_frag = frags.chrNames(frags.currentChr());
-            const char *chr_name_args = chr_levels->get(frags.currentChr());
+            const char *chr_name_frag = frags->chrNames(frags->currentChr());
+            const char *chr_name_args = chr_levels->get(frags->currentChr());
             if (chr_name_frag == NULL || chr_name_args == NULL ||
                 strcmp(chr_name_frag, chr_name_args) != 0) {
                 throw std::runtime_error(
@@ -218,16 +218,16 @@ void TileMatrix::loadFragments() {
                     std::string(chr_name_args)
                 );
             }
-            while (sorted_tiles[next_active_tile].chr < frags.currentChr()) {
+            while (sorted_tiles[next_active_tile].chr < frags->currentChr()) {
                 next_active_tile++;
             }
             next_completed_tile = sorted_tiles[next_active_tile].output_idx;
             active_tiles.clear();
         }
-        uint32_t capacity = frags.capacity();
-        uint32_t *start_data = frags.startData();
-        uint32_t *end_data = frags.endData();
-        uint32_t *cell_data = frags.cellData();
+        uint32_t capacity = frags->capacity();
+        uint32_t *start_data = frags->startData();
+        uint32_t *end_data = frags->endData();
+        uint32_t *cell_data = frags->cellData();
 
         uint32_t i = 0;
         uint32_t end_max = 0;
@@ -241,7 +241,7 @@ void TileMatrix::loadFragments() {
             }
 
             // Check for new peaks to activate
-            while (sorted_tiles[next_active_tile].chr == frags.currentChr() &&
+            while (sorted_tiles[next_active_tile].chr == frags->currentChr() &&
                    sorted_tiles[next_active_tile].start < end_max) {
 
                 active_tiles.push_back(sorted_tiles[next_active_tile]);
@@ -323,7 +323,7 @@ void TileMatrix::loadFragments() {
             auto max_region = std::upper_bound(
                 sorted_tiles.begin(),
                 sorted_tiles.end(),
-                std::pair{frags.currentChr(), start_data[capacity - 1]},
+                std::pair{frags->currentChr(), start_data[capacity - 1]},
                 [](std::pair<uint32_t, uint32_t> value, Tile t) {
                     if (value.first != t.chr) return value.first < t.chr;
                     return value.second < t.start;
@@ -333,7 +333,7 @@ void TileMatrix::loadFragments() {
             if (max_region != sorted_tiles.begin()) {
                 uint32_t new_completed_tile;
                 Tile t = *(max_region - 1);
-                if (t.chr == frags.currentChr() && t.start <= start_data[capacity - 1] &&
+                if (t.chr == frags->currentChr() && t.start <= start_data[capacity - 1] &&
                     t.end > start_data[capacity - 1]) {
                     // We overlap, so calculate the tile we're currently on
                     new_completed_tile =

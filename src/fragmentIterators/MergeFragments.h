@@ -30,7 +30,7 @@ class MergeFragments : public FragmentLoader {
     }
 
   public:
-    MergeFragments(const std::vector<FragmentLoader *> &fragments, uint32_t load_size = 1024);
+    MergeFragments(std::vector<std::unique_ptr<FragmentLoader>> &&fragments, uint32_t load_size = 1024);
 
     ~MergeFragments() = default;
 

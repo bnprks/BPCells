@@ -22,8 +22,8 @@ class MatrixTransform : public MatrixLoaderWrapper<double> {
   public:
     enum class RecalculateFit { None, Rows, Cols };
 
-    MatrixTransform(MatrixLoader<double> &loader);
-    MatrixTransform(MatrixLoader<double> &loader, TransformFit fit);
+    MatrixTransform(std::unique_ptr<MatrixLoader<double>> &&loader);
+    MatrixTransform(std::unique_ptr<MatrixLoader<double>> &&loader, TransformFit fit);
     // Constructor argument conventions:
     // MatrixTransform(MatrixLoader<double> &mat): Fit a transform, then iterate over mat
     // MatrixTransform(MatrixLoader<double> &mat, TransformFit fit, RecalculateFit recalculate =
@@ -60,7 +60,7 @@ class MatrixTransformDense : public MatrixTransform {
     uint32_t current_col = UINT32_MAX;
 
   public:
-    MatrixTransformDense(MatrixLoader<double> &mat, TransformFit fit);
+    MatrixTransformDense(std::unique_ptr<MatrixLoader<double>> &&mat, TransformFit fit);
 
     // Reset the iterator to start from the beginning
     void restart() override;
@@ -103,8 +103,6 @@ class MatrixTransformDense : public MatrixTransform {
     std::vector<double> rowSums(void (*checkInterrupt)(void) = NULL) override;
 
   protected:
-    OrderRows<double> ordered_loader; // Must wrap loader in OrderRows for load() to work
-
     // Perform a normal load from the underlying matrix, then subtract transform(0)
     // from each entry and return false if there are no more non-zero values to load
     // from the underlying matrix

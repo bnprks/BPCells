@@ -25,8 +25,10 @@ using namespace Eigen;
 template <typename T> bool matrix_identical(MatrixLoader<T> &mat1, MatrixLoader<T> &mat2) {
     mat1.restart();
     mat2.restart();
-    MatrixIterator<T> i1(mat1);
-    MatrixIterator<T> i2(mat2);
+    MatrixIterator<T> i1((std::unique_ptr<MatrixLoader<T>>(&mat1)));
+    MatrixIterator<T> i2((std::unique_ptr<MatrixLoader<T>>(&mat2)));
+    i1.preserve_input_loader();
+    i2.preserve_input_loader();
 
     while (true) {
         bool res1 = i1.nextCol();
@@ -86,16 +88,17 @@ Map<SparseMatrix<double>> get_map(const SparseMatrix<double> &mat) {
 
 TEST(MatrixIO, UnpackedVec) {
     const Eigen::SparseMatrix<double> orig_mat = generate_mat(10, 10);
-    CSparseMatrix mat_d(get_map(orig_mat));
 
-    MatrixConverterLoader<double, uint32_t> mat_i(mat_d);
+    MatrixConverterLoader<double, uint32_t> mat_i(std::make_unique<CSparseMatrix>(get_map(orig_mat))
+    );
 
     VecReaderWriterBuilder vb1(1024);
     auto w1 = StoredMatrixWriter<uint32_t>::createUnpacked(vb1);
     w1.write(mat_i);
 
-    auto loader = StoredMatrix<uint32_t>::openUnpacked(vb1);
-    auto loader_double = MatrixConverterLoader<uint32_t, double>(loader);
+    auto loader_double = MatrixConverterLoader<uint32_t, double>(
+        std::make_unique<StoredMatrix<uint32_t>>(StoredMatrix<uint32_t>::openUnpacked(vb1))
+    );
 
     CSparseMatrixWriter w2;
     w2.write(loader_double);
@@ -105,16 +108,17 @@ TEST(MatrixIO, UnpackedVec) {
 
 TEST(MatrixIO, PackedVec) {
     const Eigen::SparseMatrix<double> orig_mat = generate_mat(10, 10);
-    CSparseMatrix mat_d(get_map(orig_mat));
 
-    MatrixConverterLoader<double, uint32_t> mat_i(mat_d);
+    MatrixConverterLoader<double, uint32_t> mat_i(std::make_unique<CSparseMatrix>(get_map(orig_mat))
+    );
 
     VecReaderWriterBuilder vb1(1024);
     auto w1 = StoredMatrixWriter<uint32_t>::createPacked(vb1);
     w1.write(mat_i);
 
-    auto loader = StoredMatrix<uint32_t>::openPacked(vb1, 1024);
-    auto loader_double = MatrixConverterLoader<uint32_t, double>(loader);
+    auto loader_double = MatrixConverterLoader<uint32_t, double>(
+        std::make_unique<StoredMatrix<uint32_t>>(StoredMatrix<uint32_t>::openPacked(vb1))
+    );
 
     CSparseMatrixWriter w2;
     w2.write(loader_double);
@@ -135,8 +139,7 @@ TEST(MatrixIO, SeekCSparse) {
     SparseMatrix<double> mat(n_row, n_col);
     mat.setFromTriplets(triplets.begin(), triplets.end());
 
-    CSparseMatrix mat_l(get_map(mat));
-    MatrixIterator it(mat_l);
+    MatrixIterator<double> it(std::make_unique<CSparseMatrix>(get_map(mat)));
     for (auto j : {4, 1, 3, 0, 2}) {
         it.seekCol(j);
         EXPECT_TRUE(it.nextValue());
@@ -159,17 +162,18 @@ TEST(MatrixIO, SeekStoredVec) {
     SparseMatrix<double> mat(n_row, n_col);
     mat.setFromTriplets(triplets.begin(), triplets.end());
 
-    CSparseMatrix mat_double(get_map(mat));
-    MatrixConverterLoader<double, uint32_t> mat_int(mat_double);
+    MatrixConverterLoader<double, uint32_t> mat_int(std::make_unique<CSparseMatrix>(get_map(mat)));
 
     VecReaderWriterBuilder vb(1024);
     auto w = StoredMatrixWriter<uint32_t>::createUnpacked(vb);
     w.write(mat_int);
 
-    auto loader = StoredMatrix<uint32_t>::openUnpacked(vb);
-    auto loader_double = MatrixConverterLoader<uint32_t, double>(loader);
+    std::unique_ptr<MatrixLoader<uint32_t>> mat_int2 =
+        std::make_unique<StoredMatrix<uint32_t>>(StoredMatrix<uint32_t>::openUnpacked(vb));
+    std::unique_ptr<MatrixLoader<double>> mat_double =
+        std::make_unique<MatrixConverterLoader<uint32_t, double>>(std::move(mat_int2));
 
-    MatrixIterator it(loader_double);
+    MatrixIterator<double> it(std::move(mat_double));
     for (auto j : {4, 1, 3, 0, 2}) {
         it.seekCol(j);
         EXPECT_TRUE(it.nextValue());
@@ -192,16 +196,16 @@ TEST(MatrixIO, ColSelectCSparse) {
     SparseMatrix<double> mat(n_row, n_col);
     mat.setFromTriplets(triplets.begin(), triplets.end());
 
-    CSparseMatrix mat_l(get_map(mat));
-    MatrixColSelect<double> mat_col_select(mat_l, {0, 4, 2});
+    std::unique_ptr<MatrixLoader<double>> loader = std::make_unique<CSparseMatrix>(get_map(mat));
+    loader = std::make_unique<MatrixColSelect<double>>(std::move(loader), std::vector<uint32_t>{0,4,2});
 
     CSparseMatrixWriter writer;
-    writer.write(mat_col_select);
+    writer.write(*loader);
 
     // Test that the matrix is the same
     EXPECT_EQ(MatrixXd(writer.getMat()), MatrixXd(mat)(all, {0, 4, 2}));
 
-    MatrixIterator it(mat_col_select);
+    MatrixIterator<double> it(std::move(loader));
     // Check that seeking columns works
     for (auto j : {2, 0, 1}) {
         it.seekCol(j);
@@ -225,16 +229,14 @@ TEST(MatrixIO, RowSelectCSparse) {
     SparseMatrix<double> mat(n_row, n_col);
     mat.setFromTriplets(triplets.begin(), triplets.end());
 
-    CSparseMatrix mat_l(get_map(mat));
-    MatrixRowSelect<double> select_1(mat_l, {0, 4, 2});
+    MatrixRowSelect<double> select_1(std::make_unique<CSparseMatrix>(get_map(mat)), {0, 4, 2});
 
     CSparseMatrixWriter writer1;
     writer1.write(select_1);
 
     EXPECT_EQ(MatrixXd(writer1.getMat()), MatrixXd(mat)({0, 4, 2}, all));
 
-    CSparseMatrix mat_l_2(get_map(mat));
-    MatrixRowSelect<double> select_2(mat_l_2, {0, 2, 4});
+    MatrixRowSelect<double> select_2(std::make_unique<CSparseMatrix>(get_map(mat)), {0, 2, 4});
 
     CSparseMatrixWriter writer2;
     writer2.write(select_2);
@@ -253,15 +255,17 @@ TEST(MatrixIO, ConcatRows) {
     concat_dense << MatrixXd(m1), MatrixXd(m2), MatrixXd(m3);
     SparseMatrix<double> concat = concat_dense.sparseView();
 
-    CSparseMatrix mat_1(get_map(m1));
-    CSparseMatrix mat_2(get_map(m2));
-    CSparseMatrix mat_3(get_map(m3));
-    CSparseMatrix mat_x(get_map(mx));
-
-    EXPECT_ANY_THROW(ConcatRows<double>({&mat_1, &mat_x}));
+    std::vector<std::unique_ptr<MatrixLoader<double>>> error_mat_vec;
+    error_mat_vec.push_back(std::make_unique<CSparseMatrix>(get_map(m1)));
+    error_mat_vec.push_back(std::make_unique<CSparseMatrix>(get_map(mx)));
+    EXPECT_ANY_THROW(ConcatRows<double>(std::move(error_mat_vec)));
 
     CSparseMatrixWriter res;
-    ConcatRows<double> my_concat({&mat_1, &mat_2, &mat_3});
+    std::vector<std::unique_ptr<MatrixLoader<double>>> mat_vec;
+    mat_vec.push_back(std::make_unique<CSparseMatrix>(get_map(m1)));
+    mat_vec.push_back(std::make_unique<CSparseMatrix>(get_map(m2)));
+    mat_vec.push_back(std::make_unique<CSparseMatrix>(get_map(m3)));
+    ConcatRows<double> my_concat(std::move(mat_vec));
     res.write(my_concat);
 
     EXPECT_TRUE(res.getMat().isApprox(concat));
@@ -278,15 +282,18 @@ TEST(MatrixIO, ConcatCols) {
     concat_dense << MatrixXd(m1), MatrixXd(m2), MatrixXd(m3);
     SparseMatrix<double> concat = concat_dense.sparseView();
 
-    CSparseMatrix mat_1(get_map(m1));
-    CSparseMatrix mat_2(get_map(m2));
-    CSparseMatrix mat_3(get_map(m3));
-    CSparseMatrix mat_x(get_map(mx));
-
-    EXPECT_ANY_THROW(ConcatCols<double>({&mat_1, &mat_x}));
+    std::vector<std::unique_ptr<MatrixLoader<double>>> error_mat_vec;
+    error_mat_vec.push_back(std::make_unique<CSparseMatrix>(get_map(m1)));
+    error_mat_vec.push_back(std::make_unique<CSparseMatrix>(get_map(mx)));
+    EXPECT_ANY_THROW(ConcatCols<double>(std::move(error_mat_vec)));
 
     CSparseMatrixWriter res;
-    ConcatCols<double> my_concat({&mat_1, &mat_2, &mat_3});
+    std::vector<std::unique_ptr<MatrixLoader<double>>> mat_vec;
+    mat_vec.push_back(std::make_unique<CSparseMatrix>(get_map(m1)));
+    mat_vec.push_back(std::make_unique<CSparseMatrix>(get_map(m2)));
+    mat_vec.push_back(std::make_unique<CSparseMatrix>(get_map(m3)));
+    ConcatCols<double> my_concat(std::move(mat_vec));
+
     res.write(my_concat);
 
     EXPECT_TRUE(res.getMat().isApprox(concat));
@@ -309,16 +316,6 @@ void test_order_rows(SparseMatrix<double> m, uint32_t load_size) {
         std::shuffle(val.data() + col[i], val.data() + col[i + 1], gen);
 
     uint32_t row_count = m.rows();
-    StoredMatrix<double> unordered(
-        UIntReader(std::make_unique<VecUIntReader>(row.data(), row.size()), 16),
-        DoubleReader(std::make_unique<VecNumReader<double>>(val.data(), val.size()), 16),
-        UIntReader(std::make_unique<VecUIntReader>(col.data(), col.size()), 16),
-        row_count,
-        std::make_unique<VecStringReader>(std::vector<std::string>()),
-        std::make_unique<VecStringReader>(std::vector<std::string>())
-    );
-
-    OrderRows<double> ordered(unordered, load_size);
 
     StoredMatrix<double> orig(
         UIntReader(std::make_unique<VecUIntReader>(row_orig.data(), row_orig.size()), 16),
@@ -329,7 +326,19 @@ void test_order_rows(SparseMatrix<double> m, uint32_t load_size) {
         std::make_unique<VecStringReader>(std::vector<std::string>())
     );
 
+    StoredMatrix<double> unordered(
+        UIntReader(std::make_unique<VecUIntReader>(row.data(), row.size()), 16),
+        DoubleReader(std::make_unique<VecNumReader<double>>(val.data(), val.size()), 16),
+        UIntReader(std::make_unique<VecUIntReader>(col.data(), col.size()), 16),
+        row_count,
+        std::make_unique<VecStringReader>(std::vector<std::string>()),
+        std::make_unique<VecStringReader>(std::vector<std::string>())
+    );
     ASSERT_FALSE(matrix_identical(unordered, orig));
+
+    OrderRows<double> ordered(std::unique_ptr<StoredMatrix<double>>(&unordered), load_size);
+    ordered.preserve_input_loader();
+
     ASSERT_TRUE(matrix_identical(ordered, orig));
 }
 

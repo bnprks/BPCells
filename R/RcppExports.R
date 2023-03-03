@@ -525,20 +525,16 @@ iterate_matrix_col_bind_double_cpp <- function(matrix_list) {
     .Call(`_BPCells_iterate_matrix_col_bind_double_cpp`, matrix_list)
 }
 
-iterate_matrix_multiply_uint32_t_cpp <- function(s_left, s_right) {
-    .Call(`_BPCells_iterate_matrix_multiply_uint32_t_cpp`, s_left, s_right)
+iterate_matrix_multiply_uint32_t_cpp <- function(left, right) {
+    .Call(`_BPCells_iterate_matrix_multiply_uint32_t_cpp`, left, right)
 }
 
-iterate_matrix_multiply_float_cpp <- function(s_left, s_right) {
-    .Call(`_BPCells_iterate_matrix_multiply_float_cpp`, s_left, s_right)
+iterate_matrix_multiply_float_cpp <- function(left, right) {
+    .Call(`_BPCells_iterate_matrix_multiply_float_cpp`, left, right)
 }
 
-iterate_matrix_multiply_double_cpp <- function(s_left, s_right) {
-    .Call(`_BPCells_iterate_matrix_multiply_double_cpp`, s_left, s_right)
-}
-
-scan_matrix_double_cpp <- function(matrix) {
-    .Call(`_BPCells_scan_matrix_double_cpp`, matrix)
+iterate_matrix_multiply_double_cpp <- function(left, right) {
+    .Call(`_BPCells_iterate_matrix_multiply_double_cpp`, left, right)
 }
 
 dense_multiply_right_cpp <- function(matrix, B) {

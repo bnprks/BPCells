@@ -2,16 +2,16 @@
 
 namespace BPCells {
 
-ShiftCoords::ShiftCoords(FragmentLoader &loader, int32_t shift_start, int32_t shift_end)
-    : FragmentLoaderWrapper(loader)
+ShiftCoords::ShiftCoords(std::unique_ptr<FragmentLoader> &&loader, int32_t shift_start, int32_t shift_end)
+    : FragmentLoaderWrapper(std::move(loader))
     , shift_start(shift_start)
     , shift_end(shift_end) {}
 
 bool ShiftCoords::load() {
-    if (!loader.load()) return false;
-    uint32_t *start = loader.startData();
-    uint32_t *end = loader.endData();
-    uint32_t capacity = loader.capacity();
+    if (!loader->load()) return false;
+    uint32_t *start = loader->startData();
+    uint32_t *end = loader->endData();
+    uint32_t capacity = loader->capacity();
 
     vec start_vec = splat(shift_start);
     vec end_vec = splat(shift_end);
@@ -41,7 +41,7 @@ void ShiftCoords::seek(uint32_t chr_id, uint32_t base) {
     // Handle shifts causing underflow
     if (m < 0) base2 = std::min(base, base + m);
     else base2 = base + m;
-    loader.seek(chr_id, base2);
+    loader->seek(chr_id, base2);
 }
 
 } // end namespace BPCells

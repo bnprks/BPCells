@@ -104,7 +104,10 @@ class CSparseMatrixWriter : public MatrixWriter<double> {
 
   public:
     void write(MatrixLoader<double> &loader, void (*checkInterrupt)(void) = NULL) override {
-        MatrixIterator<double> mat(loader);
+        MatrixIterator<double> mat((std::unique_ptr<MatrixLoader<double>>(&loader)));
+        // Don't take ownership of our input loader
+        mat.preserve_input_loader();
+
         uint32_t count = 0;
         std::vector<Eigen::Triplet<double>> triplets;
 
@@ -128,7 +131,9 @@ class CSparseTransposeMatrixWriter : public MatrixWriter<double> {
 
   public:
     void write(MatrixLoader<double> &loader, void (*checkInterrupt)(void) = NULL) override {
-        MatrixIterator<double> mat(loader);
+        MatrixIterator<double> mat((std::unique_ptr<MatrixLoader<double>>(&loader)));
+        // Don't take ownership of our input loader
+        mat.preserve_input_loader();
         uint32_t count = 0;
         std::vector<Eigen::Triplet<double>> triplets;
 

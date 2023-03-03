@@ -4,14 +4,14 @@
 namespace BPCells {
 
 RegionSelect::RegionSelect(
-    FragmentLoader &loader,
+    std::unique_ptr<FragmentLoader> &&loader,
     const std::vector<uint32_t> &chr,
     const std::vector<uint32_t> &start,
     const std::vector<uint32_t> &end,
     std::unique_ptr<StringReader> &&chr_levels,
     bool invert_selection
 )
-    : FragmentLoaderWrapper(loader)
+    : FragmentLoaderWrapper(std::move(loader))
     , invert_selection(invert_selection)
     , chr_levels(std::move(chr_levels)) {
 
@@ -55,8 +55,8 @@ RegionSelect::RegionSelect(
 }
 
 void RegionSelect::seek(uint32_t chr_id, uint32_t base) {
-    loader.seek(chr_id, base);
-    current_chr_id = findChrIDTranslation(loader.chrNames(loader.currentChr()));
+    loader->seek(chr_id, base);
+    current_chr_id = findChrIDTranslation(loader->chrNames(loader->currentChr()));
     active_region = computeNextActiveRegion(current_chr_id, base);
     did_seek_active_region = false;
 }
@@ -64,12 +64,12 @@ void RegionSelect::seek(uint32_t chr_id, uint32_t base) {
 void RegionSelect::restart() {
     active_region = 0;
     did_seek_active_region = false;
-    loader.restart();
+    loader->restart();
 }
 
 bool RegionSelect::nextChr() {
-    bool ret = loader.nextChr();
-    current_chr_id = findChrIDTranslation(loader.chrNames(loader.currentChr()));
+    bool ret = loader->nextChr();
+    current_chr_id = findChrIDTranslation(loader->chrNames(loader->currentChr()));
     if (ret) {
         active_region = computeNextActiveRegion(current_chr_id, 0);
         did_seek_active_region = false;
@@ -84,11 +84,11 @@ bool RegionSelect::load() {
     //  3. Increment active_region and continue scan from step 1
     loaded = 0;
     while (loaded == 0) {
-        if (!loader.load()) return false;
-        uint32_t capacity = loader.capacity();
-        uint32_t *start = loader.startData();
-        uint32_t *end = loader.endData();
-        uint32_t *cell = loader.cellData();
+        if (!loader->load()) return false;
+        uint32_t capacity = loader->capacity();
+        uint32_t *start = loader->startData();
+        uint32_t *end = loader->endData();
+        uint32_t *cell = loader->cellData();
         uint32_t i = 0;
         while (i < capacity) {
             Region r = sorted_regions[active_region];
@@ -135,8 +135,8 @@ bool RegionSelect::load() {
         // already done a seek on the current region (to account for slop in the seeking process)
         if (loaded == 0 && !did_seek_active_region) {
             if (invert_selection)
-                loader.seek(loader.currentChr(), sorted_regions[active_region].end);
-            else loader.seek(loader.currentChr(), sorted_regions[active_region].start);
+                loader->seek(loader->currentChr(), sorted_regions[active_region].end);
+            else loader->seek(loader->currentChr(), sorted_regions[active_region].start);
             did_seek_active_region = true;
         }
     }

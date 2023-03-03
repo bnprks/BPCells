@@ -13,6 +13,7 @@
 #include "arrayIO/vector.h"
 
 #include "R_array_io.h"
+#include "R_xptr_wrapper.h"
 
 using namespace Rcpp;
 using namespace BPCells;
@@ -109,14 +110,13 @@ SEXP write_matrix_transpose_dir(
     uint64_t sort_buffer_bytes,
     bool row_major
 ) {
-    XPtr<MatrixLoader<T>> input(matrix);
     FileWriterBuilder wb(outdir);
     StoredMatrixTransposeWriter<T> transpose(
         wb, tmpdir.c_str(), load_bytes, sort_buffer_bytes, row_major
     );
-    transpose.write(*input);
+    transpose.write(*peek_unique_xptr<MatrixLoader<T>>(matrix));
     FileReaderBuilder rb(outdir);
-    return Rcpp::wrap(XPtr<StoredMatrix<T>>(new StoredMatrix<T>(StoredMatrix<T>::openPacked(rb))));
+    return make_unique_xptr<StoredMatrix<T>>(StoredMatrix<T>::openPacked(rb));
 }
 
 // [[Rcpp::export]]
@@ -169,13 +169,13 @@ SEXP iterate_packed_matrix(
     const StringVector col_names,
     uint32_t row_count
 ) {
-    return Rcpp::wrap(XPtr<MatrixLoader<T>>(new StoredMatrix<T>(StoredMatrix<T>::openPacked(
+    return make_unique_xptr<StoredMatrix<T>>(StoredMatrix<T>::openPacked(
         rb,
         1024,
         std::make_unique<RcppStringReader>(row_names),
         std::make_unique<RcppStringReader>(col_names),
         row_count
-    ))));
+    ));
 }
 
 template <typename T>
@@ -185,12 +185,12 @@ SEXP iterate_unpacked_matrix(
     const StringVector col_names,
     uint32_t row_count
 ) {
-    return Rcpp::wrap(XPtr<MatrixLoader<T>>(new StoredMatrix<T>(StoredMatrix<T>::openUnpacked(
+    return make_unique_xptr<StoredMatrix<T>>(StoredMatrix<T>::openUnpacked(
         rb,
         std::make_unique<RcppStringReader>(row_names),
         std::make_unique<RcppStringReader>(col_names),
         row_count
-    ))));
+    ));
 }
 
 // [[Rcpp::export]]
@@ -237,13 +237,13 @@ SEXP iterate_unpacked_matrix_mem_double_cpp(
 }
 
 template <typename T> void write_packed_matrix(WriterBuilder &wb, SEXP matrix, bool row_major) {
-    XPtr<MatrixLoader<T>> loader(matrix);
+    MatrixLoader<T> *loader = peek_unique_xptr<MatrixLoader<T>>(matrix);
     loader->restart();
     StoredMatrixWriter<T>::createPacked(wb, row_major).write(*loader, &Rcpp::checkUserInterrupt);
 }
 
 template <typename T> void write_unpacked_matrix(WriterBuilder &wb, SEXP matrix, bool row_major) {
-    XPtr<MatrixLoader<T>> loader(matrix);
+    MatrixLoader<T> *loader = peek_unique_xptr<MatrixLoader<T>>(matrix);
     loader->restart();
     StoredMatrixWriter<T>::createUnpacked(wb, row_major).write(*loader, &Rcpp::checkUserInterrupt);
 }
@@ -576,9 +576,7 @@ List dims_matrix_10x_hdf5_cpp(std::string file, uint32_t buffer_size) {
 
 // [[Rcpp::export]]
 SEXP iterate_matrix_10x_hdf5_cpp(std::string file, uint32_t buffer_size) {
-    return Rcpp::wrap(
-        XPtr<StoredMatrix<uint32_t>>(new StoredMatrix(open10xFeatureMatrix(file, buffer_size)))
-    );
+    return make_unique_xptr<StoredMatrix<uint32_t>>(open10xFeatureMatrix(file, buffer_size));
 }
 
 // [[Rcpp::export]]
@@ -593,7 +591,7 @@ void write_matrix_10x_hdf5_cpp(
     uint32_t buffer_size,
     uint32_t chunk_size
 ) {
-    XPtr<MatrixLoader<uint32_t>> loader(matrix);
+    MatrixLoader<uint32_t> *loader = peek_unique_xptr<MatrixLoader<uint32_t>>(matrix);
     loader->restart();
     std::map<std::string, std::unique_ptr<StringReader>> metadata;
     StringVector metadata_names = feature_metadata.names();
@@ -623,9 +621,7 @@ List dims_matrix_anndata_hdf5_cpp(std::string file, std::string group, uint32_t 
 
 // [[Rcpp::export]]
 SEXP iterate_matrix_anndata_hdf5_cpp(std::string file, std::string group, uint32_t buffer_size) {
-    return Rcpp::wrap(
-        XPtr<StoredMatrix<float>>(new StoredMatrix(openAnnDataMatrix(file, group, buffer_size)))
-    );
+    return make_unique_xptr<StoredMatrix<float>>(openAnnDataMatrix(file, group, buffer_size));
 }
 
 // [[Rcpp::export]]

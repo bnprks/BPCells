@@ -5,11 +5,8 @@ namespace BPCells {
 // Scale rows and/or columns of a matrix
 // out[i,j] = in[i,j] * row_params[0,i] * col_params[0,j]
 // If row_params or col_params have 0 rows, then skip scaling along that dimension
-
-Scale::Scale(MatrixLoader<double> &mat, TransformFit fit) : MatrixTransform(mat, fit) {}
-
 bool Scale::load() {
-    if (!loader.load()) return false;
+    if (!loader->load()) return false;
 
     double *val_data = valData();
     const uint32_t *row_data = rowData();
@@ -37,11 +34,11 @@ Scale::denseMultiplyRight(const Eigen::Map<Eigen::MatrixXd> B, void (*checkInter
     // Scale input by col scale
     if (fit.col_params.size() > 0) {
         Eigen::MatrixXd B2(B.array().colwise() * fit.col_params.row(0).transpose());
-        res = loader.denseMultiplyRight(
+        res = loader->denseMultiplyRight(
             Eigen::Map<Eigen::MatrixXd>(B2.data(), B2.rows(), B2.cols()), checkInterrupt
         );
     } else {
-        res = loader.denseMultiplyRight(B, checkInterrupt);
+        res = loader->denseMultiplyRight(B, checkInterrupt);
     }
 
     // Scale output by row scale
@@ -58,11 +55,11 @@ Scale::denseMultiplyLeft(const Eigen::Map<Eigen::MatrixXd> B, void (*checkInterr
     // Scale input by row scale
     if (fit.row_params.size() > 0) {
         Eigen::MatrixXd B2(B.array().rowwise() * fit.row_params.row(0));
-        res = loader.denseMultiplyLeft(
+        res = loader->denseMultiplyLeft(
             Eigen::Map<Eigen::MatrixXd>(B2.data(), B2.rows(), B2.cols()), checkInterrupt
         );
     } else {
-        res = loader.denseMultiplyLeft(B, checkInterrupt);
+        res = loader->denseMultiplyLeft(B, checkInterrupt);
     }
 
     // Scale output by col scale
@@ -79,11 +76,11 @@ Scale::vecMultiplyRight(const Eigen::Map<Eigen::VectorXd> v, void (*checkInterru
     // Scale input by col scale
     if (fit.col_params.size() > 0) {
         Eigen::VectorXd v2(v.array() * fit.col_params.row(0).transpose());
-        res = loader.vecMultiplyRight(
+        res = loader->vecMultiplyRight(
             Eigen::Map<Eigen::VectorXd>(v2.data(), v2.size()), checkInterrupt
         );
     } else {
-        res = loader.vecMultiplyRight(v, checkInterrupt);
+        res = loader->vecMultiplyRight(v, checkInterrupt);
     }
 
     // Scale output by row scale
@@ -100,11 +97,11 @@ Scale::vecMultiplyLeft(const Eigen::Map<Eigen::VectorXd> v, void (*checkInterrup
     // Scale input by row scale
     if (fit.row_params.size() > 0) {
         Eigen::VectorXd v2(v.array() * fit.row_params.row(0).transpose());
-        res = loader.vecMultiplyLeft(
+        res = loader->vecMultiplyLeft(
             Eigen::Map<Eigen::VectorXd>(v2.data(), v2.size()), checkInterrupt
         );
     } else {
-        res = loader.vecMultiplyLeft(v, checkInterrupt);
+        res = loader->vecMultiplyLeft(v, checkInterrupt);
     }
 
     // Scale output by col scale

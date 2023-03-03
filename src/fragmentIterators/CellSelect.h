@@ -18,7 +18,7 @@ class CellIndexSelect : public FragmentLoaderWrapper {
     // cell_indices -- vector with length <= the number of cells in the input
     //     FragmentIterator. The output cell `i` will come from input cell
     //     `cell_indices[i]`. The entries of cell_indices must be unique
-    CellIndexSelect(FragmentLoader &loader, const std::vector<uint32_t> cell_indices);
+    CellIndexSelect(std::unique_ptr<FragmentLoader> &&loader, const std::vector<uint32_t> cell_indices);
 
     ~CellIndexSelect() = default;
 
@@ -50,7 +50,7 @@ class CellNameSelect : public FragmentLoaderWrapper {
     // cell_names -- vector with length <= the number of chromosomes in the input
     //     FragmentLoader. The output cell `i` will come from input cell
     //     `chr_assignments[i]`. The entries of cell_names must be unique
-    CellNameSelect(FragmentLoader &loader, const std::vector<std::string> cell_names);
+    CellNameSelect(std::unique_ptr<FragmentLoader> &&loader, const std::vector<std::string> cell_names);
 
     ~CellNameSelect() = default;
 
@@ -74,7 +74,7 @@ class CellMerge : public FragmentLoaderWrapper {
     //     FragmentIterator. The input cell `i` will be turned into output cell
     //     `group_ids[i]`.
     CellMerge(
-        FragmentLoader &loader,
+        std::unique_ptr<FragmentLoader> &&loader,
         const std::vector<uint32_t> group_ids,
         std::unique_ptr<StringReader> &&group_names
     );

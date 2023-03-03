@@ -34,7 +34,7 @@ class SCTransformPearsonSIMD : public MatrixTransformDense {
 
     double sd_inv_max, clip_min, clip_max;
   public:
-    SCTransformPearsonSIMD(MatrixLoader<double> &loader, TransformFit fit);
+    SCTransformPearsonSIMD(std::unique_ptr<MatrixLoader<double>> &&loader, TransformFit fit);
 
     bool loadZeroSubtracted(MatrixLoader<double> &loader) override;
     void loadZero(double *values, uint32_t count, uint32_t start_row, uint32_t col) override;
@@ -63,7 +63,7 @@ class SCTransformPearsonTransposeSIMD : public MatrixTransformDense {
 
     double sd_inv_max, clip_min, clip_max;
   public:
-    SCTransformPearsonTransposeSIMD(MatrixLoader<double> &loader, TransformFit fit);
+    SCTransformPearsonTransposeSIMD(std::unique_ptr<MatrixLoader<double>> &&loader, TransformFit fit);
 
     bool loadZeroSubtracted(MatrixLoader<double> &loader) override;
     void loadZero(double *values, uint32_t count, uint32_t start_row, uint32_t col) override;

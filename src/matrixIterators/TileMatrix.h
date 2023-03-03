@@ -23,7 +23,7 @@ class TileMatrix : public MatrixLoader<uint32_t> {
         struct libdivide::libdivide_u32_t width;
     };
 
-    FragmentLoader &frags;
+    std::unique_ptr<FragmentLoader> frags;
     std::unique_ptr<StringReader> chr_levels;
     MatrixAccumulator<uint32_t> accumulator;
     std::vector<Tile> sorted_tiles;
@@ -43,7 +43,7 @@ class TileMatrix : public MatrixLoader<uint32_t> {
     // Note: It's the caller's responsibility to make sure that
     // the FragmentLoader will not be deleted while this TileMatrix is still alive
     TileMatrix(
-        FragmentLoader &frags,
+        std::unique_ptr<FragmentLoader> &&frags,
         const std::vector<uint32_t> &chr,
         const std::vector<uint32_t> &start,
         const std::vector<uint32_t> &end,

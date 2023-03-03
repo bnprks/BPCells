@@ -44,6 +44,8 @@ class StoredFragmentsBase : public FragmentLoader {
         std::unique_ptr<StringReader> &&cell_names
     );
 
+    StoredFragmentsBase(StoredFragmentsBase&&) = default;
+
     bool isSeekable() const override;
     void seek(uint32_t chr_id, uint32_t base) override;
 

@@ -7,6 +7,7 @@ namespace BPCells {
 
 // Re-order a MatixIterator so that each column gives entries sorted by row index
 template <class T> class OrderRows : public MatrixLoaderWrapper<T> {
+    friend class MatrixTransformDense;
   private:
     std::vector<uint32_t> row_data, row_buf;
     std::vector<T> val_data, val_buf;
@@ -16,13 +17,13 @@ template <class T> class OrderRows : public MatrixLoaderWrapper<T> {
     uint32_t load_size;
 
   public:
-    OrderRows(MatrixLoader<T> &loader, uint32_t load_size = 1024)
-        : MatrixLoaderWrapper<T>(loader)
+    OrderRows(std::unique_ptr<MatrixLoader<T>> &&loader, uint32_t load_size = 1024)
+        : MatrixLoaderWrapper<T>(std::move(loader))
         , load_size(load_size) {
-        row_data.resize(this->loader.rows());
-        row_buf.resize(this->loader.rows());
-        val_data.resize(this->loader.rows());
-        val_buf.resize(this->loader.rows());
+        row_data.resize(this->loader->rows());
+        row_buf.resize(this->loader->rows());
+        val_data.resize(this->loader->rows());
+        val_buf.resize(this->loader->rows());
     }
 
     ~OrderRows() = default;
@@ -30,18 +31,18 @@ template <class T> class OrderRows : public MatrixLoaderWrapper<T> {
     void restart() override {
         idx = 0;
         cap = 0;
-        this->loader.restart();
+        this->loader->restart();
     }
     void seekCol(uint32_t col) override {
         idx = 0;
         cap = 0;
-        this->loader.seekCol(col);
+        this->loader->seekCol(col);
     }
 
     bool nextCol() override {
         idx = 0;
         cap = 0;
-        return this->loader.nextCol();
+        return this->loader->nextCol();
     }
 
     bool load() override {
@@ -49,11 +50,11 @@ template <class T> class OrderRows : public MatrixLoaderWrapper<T> {
             bool needs_reorder = false;
             uint32_t prev_row = 0;
             // Load all the values for the column and sort
-            while (this->loader.load()) {
-                uint32_t loaded = this->loader.capacity();
+            while (this->loader->load()) {
+                uint32_t loaded = this->loader->capacity();
 
-                uint32_t *row_ptr = this->loader.rowData();
-                T *val_ptr = this->loader.valData();
+                uint32_t *row_ptr = this->loader->rowData();
+                T *val_ptr = this->loader->valData();
 
                 std::memmove(val_data.data() + cap, val_ptr, sizeof(T) * loaded);
 

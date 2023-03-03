@@ -11,7 +11,7 @@ class LengthSelect : public FragmentLoaderWrapper {
 
   public:
     // min_len and max_len provide inclusive limits on the size of fragments
-    LengthSelect(FragmentLoader &loader, uint32_t min_len, uint32_t max_len = UINT32_MAX);
+    LengthSelect(std::unique_ptr<FragmentLoader> &&loader, uint32_t min_len, uint32_t max_len = UINT32_MAX);
 
     ~LengthSelect() = default;
 

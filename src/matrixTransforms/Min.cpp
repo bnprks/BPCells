@@ -3,7 +3,7 @@
 namespace BPCells {
 
 bool Min::load() {
-    if (!loader.load()) return false;
+    if (!loader->load()) return false;
 
     double *val_data = valData();
     const uint32_t cap = capacity();
@@ -15,7 +15,7 @@ bool Min::load() {
 }
 
 bool MinByRow::load() {
-    if (!loader.load()) return false;
+    if (!loader->load()) return false;
 
     double *val_data = valData();
     uint32_t *row_data = rowData();
@@ -28,7 +28,7 @@ bool MinByRow::load() {
 }
 
 bool MinByCol::load() {
-    if (!loader.load()) return false;
+    if (!loader->load()) return false;
 
     double *val_data = valData();
     const uint32_t cap = capacity();

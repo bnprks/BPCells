@@ -166,8 +166,7 @@ TEST(MatrixMath, Log1p) {
     SparseMatrix<double> m1 = generate_mat(100, 50, 125123);
     MatrixXd ans = MatrixXd(m1).array().log1p();
 
-    CSparseMatrix mat_1(get_map(m1));
-    Log1p mat_1_trans(mat_1);
+    Log1p mat_1_trans(std::make_unique<CSparseMatrix>(get_map(m1)));
 
     CSparseMatrixWriter res;
     res.write(mat_1_trans);
@@ -179,8 +178,7 @@ TEST(MatrixMath, Log1pSIMD) {
     SparseMatrix<double> m1 = generate_mat(100, 50, 125123);
     MatrixXd ans = MatrixXd(m1).array().log1p();
 
-    CSparseMatrix mat_1(get_map(m1));
-    Log1pSIMD mat_1_trans(mat_1);
+    Log1pSIMD mat_1_trans(std::make_unique<CSparseMatrix>(get_map(m1)));
 
     CSparseMatrixWriter res;
     res.write(mat_1_trans);
@@ -192,8 +190,7 @@ TEST(MatrixMath, Expm1) {
     SparseMatrix<double> m1 = generate_mat(100, 50, 125123);
     MatrixXd ans = MatrixXd(m1).array().expm1();
 
-    CSparseMatrix mat_1(get_map(m1));
-    Expm1 mat_1_trans(mat_1);
+    Expm1 mat_1_trans(std::make_unique<CSparseMatrix>(get_map(m1)));
 
     CSparseMatrixWriter res;
     res.write(mat_1_trans);
@@ -205,8 +202,7 @@ TEST(MatrixMath, Expm1SIMD) {
     SparseMatrix<double> m1 = generate_mat(100, 50, 125123);
     MatrixXd ans = MatrixXd(m1).array().expm1();
 
-    CSparseMatrix mat_1(get_map(m1));
-    Expm1SIMD mat_1_trans(mat_1);
+    Expm1SIMD mat_1_trans(std::make_unique<CSparseMatrix>(get_map(m1)));
 
     CSparseMatrixWriter res;
     res.write(mat_1_trans);
@@ -223,8 +219,7 @@ TEST(MatrixMath, Pow) {
     ArrayXd global_params(1);
     global_params = exp;
 
-    CSparseMatrix mat_1(get_map(m1));
-    Pow mat_1_trans(mat_1, {{}, {}, global_params});
+    Pow mat_1_trans(std::make_unique<CSparseMatrix>(get_map(m1)), {{}, {}, global_params});
 
     CSparseMatrixWriter res;
     res.write(mat_1_trans);
@@ -241,8 +236,7 @@ TEST(MatrixMath, PowSIMD) {
     ArrayXd global_params(1);
     global_params = exp;
 
-    CSparseMatrix mat_1(get_map(m1));
-    PowSIMD mat_1_trans(mat_1, {{}, {}, global_params});
+    PowSIMD mat_1_trans(std::make_unique<CSparseMatrix>(get_map(m1)), {{}, {}, global_params});
 
     CSparseMatrixWriter res;
     res.write(mat_1_trans);
@@ -256,8 +250,7 @@ TEST(MatrixMath, Square) {
     SparseMatrix<double> m1 = generate_mat(100, 50, 125123);
     MatrixXd ans = MatrixXd(m1).array().pow(exp);
 
-    CSparseMatrix mat_1(get_map(m1));
-    Square mat_1_trans(mat_1, {});
+    Square mat_1_trans(std::make_unique<CSparseMatrix>(get_map(m1)), {});
 
     CSparseMatrixWriter res;
     res.write(mat_1_trans);
@@ -277,8 +270,7 @@ TEST(MatrixMath, Min) {
     ArrayXd global_params(1);
     global_params = c;
 
-    CSparseMatrix mat_1(get_map(m1));
-    Min mat_1_trans(mat_1, {{}, {}, global_params});
+    Min mat_1_trans(std::make_unique<CSparseMatrix>(get_map(m1)), {{}, {}, global_params});
 
     CSparseMatrixWriter res;
     res.write(mat_1_trans);
@@ -304,7 +296,6 @@ void checkMultiplyOps(MatrixLoader<double> &mat, MatrixXd res) {
 
 TEST(MatrixMath, Scale) {
     SparseMatrix<double> m1 = generate_mat(100, 50, 125123);
-    CSparseMatrix mat_1(get_map(m1));
 
     ArrayXXd scale_row = generate_dense_vec(m1.rows(), 1513).transpose();
     ArrayXXd scale_col = generate_dense_vec(m1.cols(), 14582).transpose();
@@ -312,7 +303,7 @@ TEST(MatrixMath, Scale) {
     // Scale row + col
     MatrixXd ans1 = (MatrixXd(m1).array().rowwise() * scale_col.row(0)).colwise() *
                     scale_row.row(0).transpose();
-    Scale s1(mat_1, TransformFit{scale_row, scale_col});
+    Scale s1(std::make_unique<CSparseMatrix>(get_map(m1)), TransformFit{scale_row, scale_col});
     checkMultiplyOps(s1, ans1);
 
     CSparseMatrixWriter r1;
@@ -322,7 +313,7 @@ TEST(MatrixMath, Scale) {
 
     // Scale just row
     MatrixXd ans2 = MatrixXd(m1).array().colwise() * scale_row.row(0).transpose();
-    Scale s2(mat_1, TransformFit{scale_row, {}});
+    Scale s2(std::make_unique<CSparseMatrix>(get_map(m1)), TransformFit{scale_row, {}});
     checkMultiplyOps(s2, ans2);
 
     CSparseMatrixWriter r2;
@@ -332,7 +323,7 @@ TEST(MatrixMath, Scale) {
 
     // Scale just col
     MatrixXd ans3 = MatrixXd(m1).array().rowwise() * scale_col.row(0);
-    Scale s3(mat_1, TransformFit{{}, get_map<ArrayXXd>(scale_col)});
+    Scale s3(std::make_unique<CSparseMatrix>(get_map(m1)), TransformFit{{}, get_map<ArrayXXd>(scale_col)});
     checkMultiplyOps(s3, ans3);
 
     CSparseMatrixWriter r3;
@@ -343,7 +334,7 @@ TEST(MatrixMath, Scale) {
 
 class SimpleRowShift : public MatrixTransformDense {
   public:
-    SimpleRowShift(MatrixLoader<double> &mat, TransformFit fit) : MatrixTransformDense(mat, fit) {}
+    SimpleRowShift(std::unique_ptr<MatrixLoader<double>> &&mat, TransformFit fit) : MatrixTransformDense(std::move(mat), fit) {}
 
     bool loadZeroSubtracted(MatrixLoader<double> &loader) override { return loader.load(); }
     void loadZero(double *values, uint32_t count, uint32_t start_row, uint32_t col) override {
@@ -355,13 +346,12 @@ class SimpleRowShift : public MatrixTransformDense {
 
 TEST(MatrixMath, TransformDense) {
     SparseMatrix<double> m1 = generate_mat(100, 50, 125123);
-    CSparseMatrix mat_1(get_map(m1));
 
     ArrayXXd shift_row = generate_dense_vec(m1.rows(), 1513).transpose();
 
     // Shift row
     MatrixXd ans1 = MatrixXd(m1).array().colwise() + shift_row.row(0).transpose();
-    SimpleRowShift s1(mat_1, TransformFit{get_map<ArrayXXd>(shift_row), {}});
+    SimpleRowShift s1(std::make_unique<CSparseMatrix>(get_map(m1)), TransformFit{get_map<ArrayXXd>(shift_row), {}});
 
     checkMultiplyOps(s1, ans1);
 
@@ -377,58 +367,60 @@ TEST(MatrixMath, TransformDenseReorder) {
     
     // Make enough rows so that we'll have more than one read chunk per col
     SparseMatrix<double> m1 = generate_mat(10000, 2, 125123);
-    CSparseMatrix mat_1(get_map(m1));
 
     // Put in reverse order
     std::vector<uint32_t> row_select;
-    for (int i = 0; i < mat_1.rows(); i++) {
-        row_select.push_back(mat_1.rows() - 1 - i);
+    for (int i = 0; i < m1.rows(); i++) {
+        row_select.push_back(m1.rows() - 1 - i);
     }
-    MatrixRowSelect mat_2(mat_1, row_select);
+
+    std::unique_ptr<MatrixLoader<double>> mat = std::make_unique<CSparseMatrix>(get_map(m1));
+    mat = std::make_unique<MatrixRowSelect<double>>(std::move(mat), row_select);
 
     ArrayXXd shift_row = generate_dense_vec(m1.rows(), 1513).transpose();
     // Shift row 
-    SimpleRowShift s1(mat_2, TransformFit{get_map<ArrayXXd>(shift_row), {}});
+    mat = std::make_unique<SimpleRowShift>(std::move(mat), TransformFit{get_map<ArrayXXd>(shift_row), {}});
 
     MatrixXd ans1 = MatrixXd(m1).array().colwise().reverse().colwise() + shift_row.row(0).transpose();
 
-    checkMultiplyOps(s1, ans1);
+    checkMultiplyOps(*mat, ans1);
 
     CSparseMatrixWriter r1;
-    s1.restart();
-    r1.write(s1);
+    mat->restart();
+    r1.write(*mat);
 
     EXPECT_TRUE(MatrixXd(r1.getMat()).isApprox(ans1));
 }
 
 TEST(MatrixMath, Shift) {
     SparseMatrix<double> m1 = generate_mat(100, 50, 125123);
-    CSparseMatrix mat_1(get_map(m1));
 
     ArrayXXd shift_row = generate_dense_vec(m1.rows(), 1513).transpose();
     ArrayXXd shift_col = generate_dense_vec(m1.cols(), 1242).transpose();
 
     // Shift row
     MatrixXd ans1 = MatrixXd(m1).array().colwise() + shift_row.row(0).transpose();
-    ShiftRows s1(mat_1, TransformFit{shift_row, {}});
+    std::unique_ptr<MatrixLoader<double>> mat = std::make_unique<CSparseMatrix>(get_map(m1));
+    mat = std::make_unique<ShiftRows>(std::move(mat), TransformFit{shift_row, {}});
 
-    checkMultiplyOps(s1, ans1);
+    checkMultiplyOps(*mat, ans1);
 
     CSparseMatrixWriter r1;
-    s1.restart();
-    r1.write(s1);
+    mat->restart();
+    r1.write(*mat);
 
     EXPECT_TRUE(MatrixXd(r1.getMat()).isApprox(ans1));
 
     // Shift col
     MatrixXd ans2 = MatrixXd(m1).array().rowwise() + shift_col.row(0);
-    ShiftCols s2(mat_1, TransformFit{{}, shift_col});
+    mat = std::make_unique<CSparseMatrix>(get_map(m1));
+    mat = std::make_unique<ShiftCols>(std::move(mat), TransformFit{{}, shift_col});
 
-    checkMultiplyOps(s2, ans2);
+    checkMultiplyOps(*mat, ans2);
 
     CSparseMatrixWriter r2;
-    s2.restart();
-    r2.write(s2);
+    mat->restart();
+    r2.write(*mat);
 
     EXPECT_TRUE(MatrixXd(r2.getMat()).isApprox(ans2));
 }

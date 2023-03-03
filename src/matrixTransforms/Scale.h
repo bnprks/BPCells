@@ -9,7 +9,7 @@ namespace BPCells {
 // If row_params or col_params have 0 rows, then skip scaling along that dimension
 class Scale : public MatrixTransform {
   public:
-    Scale(MatrixLoader<double> &mat, TransformFit fit);
+    using MatrixTransform::MatrixTransform;
 
     bool load() override;
 

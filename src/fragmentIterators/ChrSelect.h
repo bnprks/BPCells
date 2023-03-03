@@ -15,7 +15,7 @@ class ChrIndexSelect : public FragmentLoaderWrapper {
     // chr_assignments -- vector with length <= the number of chromosomes in the input
     //     FragmentLoader. The output chromosome `i` will come from input chromosome
     //     `chr_assignments[i]`. The entries of chr_assignments must be unique
-    ChrIndexSelect(FragmentLoader &loader, const std::vector<uint32_t> chr_assignments);
+    ChrIndexSelect(std::unique_ptr<FragmentLoader> &&loader, const std::vector<uint32_t> chr_assignments);
 
     ~ChrIndexSelect() = default;
 
@@ -46,7 +46,7 @@ class ChrNameSelect : public FragmentLoaderWrapper {
     // chr_names -- vector with length <= the number of chromosomes in the input
     //     FragmentsIterator. The output chromosome `i` will come from input chromosome with name
     //     `chr_names[i]`. The entries of chr_names must be unique
-    ChrNameSelect(FragmentLoader &loader, const std::vector<std::string> chr_names);
+    ChrNameSelect(std::unique_ptr<FragmentLoader> &&loader, const std::vector<std::string> chr_names);
 
     ~ChrNameSelect() = default;
 

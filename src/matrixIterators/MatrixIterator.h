@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstdint>
+#include <memory>
 #include <stdexcept>
 #include <vector>
 
@@ -107,35 +108,47 @@ template <typename T> class MatrixLoader {
 
 template <typename T> class MatrixLoaderWrapper : public MatrixLoader<T> {
   protected:
-    MatrixLoader<T> &loader;
+    std::unique_ptr<MatrixLoader<T>> loader;
     uint32_t current_col = UINT32_MAX - 1;
+    bool take_ownership = true;
 
   public:
-    MatrixLoaderWrapper(MatrixLoader<T> &loader) : loader(loader){};
+    MatrixLoaderWrapper(std::unique_ptr<MatrixLoader<T>> &&loader) : loader(std::move(loader)){};
+    
+    ~MatrixLoaderWrapper() {
+      if (!take_ownership) loader.release();
+    }
+    MatrixLoaderWrapper() = default;
+    MatrixLoaderWrapper(MatrixLoaderWrapper&&) = default;
+    MatrixLoaderWrapper& operator=(MatrixLoaderWrapper&&) = default;
 
-    uint32_t rows() const override { return loader.rows(); }
-    uint32_t cols() const override { return loader.cols(); }
+    // Set the object so that the inner loader will be preserved
+    // rather than calling the destructor when this loader is destructed
+    void preserve_input_loader() {take_ownership = false;}
 
-    const char *rowNames(uint32_t row) override { return loader.rowNames(row); }
-    const char *colNames(uint32_t col) override { return loader.colNames(col); }
+    uint32_t rows() const override { return loader->rows(); }
+    uint32_t cols() const override { return loader->cols(); }
 
-    void restart() override { loader.restart(); }
-    void seekCol(uint32_t col) override { loader.seekCol(col); }
+    const char *rowNames(uint32_t row) override { return loader->rowNames(row); }
+    const char *colNames(uint32_t col) override { return loader->colNames(col); }
+
+    void restart() override { loader->restart(); }
+    void seekCol(uint32_t col) override { loader->seekCol(col); }
 
     bool nextCol() override {
-        if (!this->loader.nextCol()) return false;
-        current_col = this->loader.currentCol();
+        if (!loader->nextCol()) return false;
+        current_col = loader->currentCol();
         return true;
     }
 
-    uint32_t currentCol() const override { return loader.currentCol(); }
+    uint32_t currentCol() const override { return loader->currentCol(); }
 
-    bool load() override { return loader.load(); }
+    bool load() override { return loader->load(); }
 
-    uint32_t capacity() const override { return loader.capacity(); }
+    uint32_t capacity() const override { return loader->capacity(); }
 
-    uint32_t *rowData() override { return loader.rowData(); }
-    T *valData() override { return loader.valData(); }
+    uint32_t *rowData() override { return loader->rowData(); }
+    T *valData() override { return loader->valData(); }
 };
 
 template <typename T> class MatrixIterator : public MatrixLoaderWrapper<T> {
@@ -145,27 +158,29 @@ template <typename T> class MatrixIterator : public MatrixLoaderWrapper<T> {
     uint32_t current_capacity = 0;
     uint32_t *current_row;
     T *current_val;
+    bool take_ownership;
 
   public:
-    MatrixIterator(MatrixLoader<T> &loader) : MatrixLoaderWrapper<T>(loader) {}
+    MatrixIterator(std::unique_ptr<MatrixLoader<T>> &&loader)
+        : MatrixLoaderWrapper<T>(std::move(loader)) {}
 
     // Reset the iterator to start from the beginning
     void restart() override {
-        this->loader.restart();
+        this->loader->restart();
         idx = UINT32_MAX;
         current_capacity = 0;
     }
 
     void seekCol(uint32_t col) override {
-        this->loader.seekCol(col);
+        this->loader->seekCol(col);
         idx = UINT32_MAX;
         current_capacity = 0;
     }
 
     // Return false if there isn't another column to access
     bool nextCol() override {
-        bool res = this->loader.nextCol();
-        if (res) current_col = this->loader.currentCol();
+        bool res = this->loader->nextCol();
+        if (res) current_col = this->loader->currentCol();
         idx = UINT32_MAX;
         current_capacity = 0;
         return res;
@@ -185,14 +200,14 @@ template <typename T> class MatrixIterator : public MatrixLoaderWrapper<T> {
     inline T val() const { return current_val[idx]; };
 
     bool load() override {
-        if (!this->loader.load()) {
+        if (!this->loader->load()) {
             current_capacity = 0;
             return false;
         }
         idx = 0;
-        current_capacity = this->loader.capacity();
-        current_row = this->loader.rowData();
-        current_val = this->loader.valData();
+        current_capacity = this->loader->capacity();
+        current_row = this->loader->rowData();
+        current_val = this->loader->valData();
         return true;
     };
     uint32_t capacity() const override { return current_capacity; }
@@ -206,31 +221,32 @@ template <typename T> class MatrixWriter {
 
 template <typename Tin, typename Tout> class MatrixConverterLoader : public MatrixLoader<Tout> {
   private:
-    MatrixLoader<Tin> &loader;
+    std::unique_ptr<MatrixLoader<Tin>> loader;
     std::vector<Tout> vals;
 
   public:
-    MatrixConverterLoader(MatrixLoader<Tin> &loader) : loader(loader) {}
+    MatrixConverterLoader(std::unique_ptr<MatrixLoader<Tin>> &&loader)
+        : loader(std::move(loader)) {}
 
-    uint32_t rows() const override { return loader.rows(); }
-    uint32_t cols() const override { return loader.cols(); }
+    uint32_t rows() const override { return loader->rows(); }
+    uint32_t cols() const override { return loader->cols(); }
 
-    const char *rowNames(uint32_t row) override { return loader.rowNames(row); }
-    const char *colNames(uint32_t col) override { return loader.colNames(col); }
+    const char *rowNames(uint32_t row) override { return loader->rowNames(row); }
+    const char *colNames(uint32_t col) override { return loader->colNames(col); }
 
-    void restart() override { loader.restart(); }
-    void seekCol(uint32_t col) override { loader.seekCol(col); }
+    void restart() override { loader->restart(); }
+    void seekCol(uint32_t col) override { loader->seekCol(col); }
 
-    bool nextCol() override { return loader.nextCol(); }
-    uint32_t currentCol() const override { return loader.currentCol(); }
+    bool nextCol() override { return loader->nextCol(); }
+    uint32_t currentCol() const override { return loader->currentCol(); }
 
     bool load() override {
-        if (!loader.load()) return false;
+        if (!loader->load()) return false;
 
-        uint32_t capacity = loader.capacity();
+        uint32_t capacity = loader->capacity();
         vals.resize(std::max(vals.size(), (size_t)capacity));
 
-        Tin *val_in = loader.valData();
+        Tin *val_in = loader->valData();
 
         for (uint32_t i = 0; i < capacity; i++) {
             vals[i] = val_in[i];
@@ -238,8 +254,8 @@ template <typename Tin, typename Tout> class MatrixConverterLoader : public Matr
         return true;
     };
 
-    uint32_t capacity() const override { return loader.capacity(); }
-    uint32_t *rowData() override { return loader.rowData(); }
+    uint32_t capacity() const override { return loader->capacity(); }
+    uint32_t *rowData() override { return loader->rowData(); }
     Tout *valData() override { return vals.data(); }
 };
 

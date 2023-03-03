@@ -5,8 +5,8 @@ namespace BPCells {
 // cell_indices -- vector with length <= the number of chromosomes in the input
 //     FragmentLoader. The output cell `i` will come from input cell
 //     `cell_indices[i]`. The entries of cell_indices must be unique
-CellIndexSelect::CellIndexSelect(FragmentLoader &loader, const std::vector<uint32_t> cell_indices)
-    : FragmentLoaderWrapper(loader)
+CellIndexSelect::CellIndexSelect(std::unique_ptr<FragmentLoader> &&loader, const std::vector<uint32_t> cell_indices)
+    : FragmentLoaderWrapper(std::move(loader))
     , cell_indices(cell_indices) {
     for (uint32_t i = 0; i < cell_indices.size(); i++) {
         if (reverse_indices.size() <= cell_indices[i])
@@ -21,19 +21,19 @@ int CellIndexSelect::cellCount() const { return cell_indices.size(); }
 
 const char *CellIndexSelect::cellNames(uint32_t cell_id) {
     if (cell_id >= cell_indices.size()) return NULL;
-    return loader.cellNames(cell_indices[cell_id]);
+    return loader->cellNames(cell_indices[cell_id]);
 }
 
 bool CellIndexSelect::load() {
     loaded = 0;
     // load and filter until we load without filtering out everything
     while (loaded == 0) {
-        if (!loader.load()) return false;
+        if (!loader->load()) return false;
 
-        uint32_t *cell = loader.cellData();
-        uint32_t *start = loader.startData();
-        uint32_t *end = loader.endData();
-        uint32_t capacity = loader.capacity();
+        uint32_t *cell = loader->cellData();
+        uint32_t *start = loader->startData();
+        uint32_t *end = loader->endData();
+        uint32_t capacity = loader->capacity();
         for (uint32_t i = 0; i < capacity; i++) {
             cell[loaded] = cell[i] < reverse_indices.size() ? reverse_indices[cell[i]] : UINT32_MAX;
             start[loaded] = start[i];
@@ -52,7 +52,7 @@ uint32_t CellNameSelect::getOutputCellID(uint32_t input_cell_id) {
         auto old_size = reverse_indices.size();
         reverse_indices.resize(input_cell_id + 1, UINT32_MAX);
         for (auto i = old_size; i < reverse_indices.size(); i++) {
-            auto res = output_index.find(loader.cellNames(i));
+            auto res = output_index.find(loader->cellNames(i));
             if (res != output_index.end()) {
                 reverse_indices[i] = res->second;
             }
@@ -64,8 +64,8 @@ uint32_t CellNameSelect::getOutputCellID(uint32_t input_cell_id) {
 // cell_names -- vector with length <= the number of chromosomes in the input
 //     FragmentLoader. The output cell `i` will come from input cell
 //     `cell_names[i]`. The entries of cell_names must be unique
-CellNameSelect::CellNameSelect(FragmentLoader &loader, const std::vector<std::string> cell_names)
-    : FragmentLoaderWrapper(loader)
+CellNameSelect::CellNameSelect(std::unique_ptr<FragmentLoader> &&loader, const std::vector<std::string> cell_names)
+    : FragmentLoaderWrapper(std::move(loader))
     , cell_names(cell_names) {
     for (uint32_t i = 0; i < cell_names.size(); i++) {
         if (output_index.find(cell_names[i]) != output_index.end())
@@ -85,12 +85,12 @@ bool CellNameSelect::load() {
     loaded = 0;
     // load and filter until we load without filtering out everything
     while (loaded == 0) {
-        if (!loader.load()) return false;
+        if (!loader->load()) return false;
 
-        uint32_t *cell = loader.cellData();
-        uint32_t *start = loader.startData();
-        uint32_t *end = loader.endData();
-        uint32_t capacity = loader.capacity();
+        uint32_t *cell = loader->cellData();
+        uint32_t *start = loader->startData();
+        uint32_t *end = loader->endData();
+        uint32_t capacity = loader->capacity();
         for (uint32_t i = 0; i < capacity; i++) {
             uint32_t new_cell_id = getOutputCellID(cell[i]);
             cell[loaded] = new_cell_id;
@@ -105,11 +105,11 @@ bool CellNameSelect::load() {
 uint32_t CellNameSelect::capacity() const { return loaded; }
 
 CellMerge::CellMerge(
-    FragmentLoader &loader,
+    std::unique_ptr<FragmentLoader> &&loader,
     const std::vector<uint32_t> group_ids,
     std::unique_ptr<StringReader> &&group_names
 )
-    : FragmentLoaderWrapper(loader)
+    : FragmentLoaderWrapper(std::move(loader))
     , group_ids(group_ids)
     , group_names(std::move(group_names)) {
 
@@ -121,7 +121,7 @@ CellMerge::CellMerge(
     if (group_count > this->group_names->size()) {
         throw std::invalid_argument("CellMerge has more groups given than group_names");
     }
-    if ((int64_t) group_ids.size() != loader.cellCount()) {
+    if ((int64_t) group_ids.size() != this->loader->cellCount()) {
         throw std::invalid_argument("CellMerge number of input cells != length of group_ids");
     }
     group_count = this->group_names->size();
@@ -132,9 +132,9 @@ int CellMerge::cellCount() const { return group_count; }
 const char *CellMerge::cellNames(uint32_t cell_id) { return group_names->get(cell_id); }
 
 bool CellMerge::load() {
-    if (!loader.load()) return false;
-    uint32_t capacity = loader.capacity();
-    uint32_t *cell = loader.cellData();
+    if (!loader->load()) return false;
+    uint32_t capacity = loader->capacity();
+    uint32_t *cell = loader->cellData();
     for (uint32_t i = 0; i < capacity; i++) {
         cell[i] = group_ids[cell[i]];
     }

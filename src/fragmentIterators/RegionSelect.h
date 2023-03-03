@@ -36,7 +36,7 @@ class RegionSelect : public FragmentLoaderWrapper {
 
   public:
     RegionSelect(
-        FragmentLoader &loader,
+        std::unique_ptr<FragmentLoader> &&loader,
         const std::vector<uint32_t> &chr,
         const std::vector<uint32_t> &start,
         const std::vector<uint32_t> &end,

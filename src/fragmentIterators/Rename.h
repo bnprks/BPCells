@@ -14,7 +14,7 @@ class RenameChrs : public FragmentLoaderWrapper {
     const std::unique_ptr<StringReader> chr_names;
 
   public:
-    RenameChrs(FragmentLoader &loader, std::unique_ptr<StringReader> &&chr_names);
+    RenameChrs(std::unique_ptr<FragmentLoader> &&loader, std::unique_ptr<StringReader> &&chr_names);
 
     const char *chrNames(uint32_t chr_id) override;
 };
@@ -27,7 +27,7 @@ class RenameCells : public FragmentLoaderWrapper {
     const std::unique_ptr<StringReader> cell_names;
 
   public:
-    RenameCells(FragmentLoader &loader, std::unique_ptr<StringReader> &&cell_names);
+    RenameCells(std::unique_ptr<FragmentLoader> &&loader, std::unique_ptr<StringReader> &&cell_names);
 
     const char *cellNames(uint32_t cell_id) override;
 };
@@ -41,7 +41,7 @@ class PrefixCells : public FragmentLoaderWrapper {
     std::vector<char> name_buffer;
 
   public:
-    PrefixCells(FragmentLoader &loader, std::string prefix);
+    PrefixCells(std::unique_ptr<FragmentLoader> &&loader, std::string prefix);
 
     const char *cellNames(uint32_t cell_id) override;
 };

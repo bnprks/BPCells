@@ -3,7 +3,7 @@
 namespace BPCells {
 
 bool Log1p::load() {
-    if (!loader.load()) return false;
+    if (!loader->load()) return false;
 
     double *val_data = valData();
     const uint32_t cap = capacity();
@@ -15,7 +15,7 @@ bool Log1p::load() {
 }
 
 bool Log1pSIMD::load() {
-    if (!loader.load()) return false;
+    if (!loader->load()) return false;
 
     double *val_data = valData();
     const uint32_t cap = capacity();
@@ -40,7 +40,7 @@ bool Log1pSIMD::load() {
 
 
 bool Expm1::load() {
-    if (!loader.load()) return false;
+    if (!loader->load()) return false;
 
     double *val_data = valData();
     const uint32_t cap = capacity();
@@ -52,7 +52,7 @@ bool Expm1::load() {
 }
 
 bool Expm1SIMD::load() {
-    if (!loader.load()) return false;
+    if (!loader->load()) return false;
 
     double *val_data = valData();
     const uint32_t cap = capacity();

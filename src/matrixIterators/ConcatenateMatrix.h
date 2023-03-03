@@ -8,18 +8,18 @@ namespace BPCells {
 // Column names will be taken from the first matrix in the list
 template <typename T> class ConcatRows : public MatrixLoader<T> {
   protected:
-    std::vector<MatrixLoader<T> *> mats;
+    std::vector<std::unique_ptr<MatrixLoader<T>>> mats;
     std::vector<uint32_t> row_offset;
     uint32_t cur_mat = 0;
 
   public:
-    ConcatRows(const std::vector<MatrixLoader<T> *> &mats) : mats(mats) {
+    ConcatRows(std::vector<std::unique_ptr<MatrixLoader<T>>> &&mats) : mats(std::move(mats)) {
 
-        if (mats.size() < 2) throw std::runtime_error("Must have >= 2 matrices to merge");
+        if (this->mats.size() < 2) throw std::runtime_error("Must have >= 2 matrices to merge");
 
         row_offset.push_back(0);
-        uint32_t cols = mats.front()->cols();
-        for (auto m : this->mats) {
+        uint32_t cols = this->mats.front()->cols();
+        for (const auto &m : this->mats) {
             row_offset.push_back(row_offset.back() + m->rows());
             if (m->cols() != cols)
                 throw std::runtime_error("ConcatRows: Matrices must have equal numbers of columns");
@@ -101,18 +101,18 @@ template <typename T> class ConcatRows : public MatrixLoader<T> {
 // Row names will be taken from the first matrix in the list
 template <typename T> class ConcatCols : public MatrixLoader<T> {
   protected:
-    std::vector<MatrixLoader<T> *> mats;
+    std::vector<std::unique_ptr<MatrixLoader<T>>> mats;
     std::vector<uint32_t> col_offset;
     uint32_t cur_mat = 0;
 
   public:
-    ConcatCols(const std::vector<MatrixLoader<T> *> &mats) : mats(mats) {
+    ConcatCols(std::vector<std::unique_ptr<MatrixLoader<T>>> &&mats) : mats(std::move(mats)) {
 
-        if (mats.size() < 2) throw std::runtime_error("Must have >= 2 matrices to merge");
+        if (this->mats.size() < 2) throw std::runtime_error("Must have >= 2 matrices to merge");
 
         col_offset.push_back(0);
-        uint32_t rows = mats.front()->rows();
-        for (auto m : this->mats) {
+        uint32_t rows = this->mats.front()->rows();
+        for (const auto &m : this->mats) {
             col_offset.push_back(col_offset.back() + m->cols());
             if (m->rows() != rows)
                 throw std::runtime_error("ConcatCols: Matrices must have equal numbers of rows");

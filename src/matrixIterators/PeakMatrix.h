@@ -35,7 +35,7 @@ template <int MODE> class PeakMatrixBase : public MatrixLoader<uint32_t> {
         uint32_t chr, start, end;
     };
 
-    FragmentLoader &frags;
+    std::unique_ptr<FragmentLoader> frags;
     std::unique_ptr<StringReader> chr_levels;
     MatrixAccumulator<uint32_t> accumulator;
     std::vector<uint32_t> end_sorted_lookup; // end_sorted_lookup[i] gives the index of end-sorted
@@ -61,7 +61,7 @@ template <int MODE> class PeakMatrixBase : public MatrixLoader<uint32_t> {
     // chr_levels - list of expected chr levels, for safety checking that peaks are coming from the
     //    correct chromosomes
     PeakMatrixBase(
-        FragmentLoader &frags,
+        std::unique_ptr<FragmentLoader> &&frags,
         const std::vector<uint32_t> &chr,
         const std::vector<uint32_t> &start,
         const std::vector<uint32_t> &end,

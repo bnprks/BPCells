@@ -1725,49 +1725,38 @@ BEGIN_RCPP
 END_RCPP
 }
 // iterate_matrix_multiply_uint32_t_cpp
-SEXP iterate_matrix_multiply_uint32_t_cpp(SEXP s_left, SEXP s_right);
-RcppExport SEXP _BPCells_iterate_matrix_multiply_uint32_t_cpp(SEXP s_leftSEXP, SEXP s_rightSEXP) {
+SEXP iterate_matrix_multiply_uint32_t_cpp(SEXP left, SEXP right);
+RcppExport SEXP _BPCells_iterate_matrix_multiply_uint32_t_cpp(SEXP leftSEXP, SEXP rightSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< SEXP >::type s_left(s_leftSEXP);
-    Rcpp::traits::input_parameter< SEXP >::type s_right(s_rightSEXP);
-    rcpp_result_gen = Rcpp::wrap(iterate_matrix_multiply_uint32_t_cpp(s_left, s_right));
+    Rcpp::traits::input_parameter< SEXP >::type left(leftSEXP);
+    Rcpp::traits::input_parameter< SEXP >::type right(rightSEXP);
+    rcpp_result_gen = Rcpp::wrap(iterate_matrix_multiply_uint32_t_cpp(left, right));
     return rcpp_result_gen;
 END_RCPP
 }
 // iterate_matrix_multiply_float_cpp
-SEXP iterate_matrix_multiply_float_cpp(SEXP s_left, SEXP s_right);
-RcppExport SEXP _BPCells_iterate_matrix_multiply_float_cpp(SEXP s_leftSEXP, SEXP s_rightSEXP) {
+SEXP iterate_matrix_multiply_float_cpp(SEXP left, SEXP right);
+RcppExport SEXP _BPCells_iterate_matrix_multiply_float_cpp(SEXP leftSEXP, SEXP rightSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< SEXP >::type s_left(s_leftSEXP);
-    Rcpp::traits::input_parameter< SEXP >::type s_right(s_rightSEXP);
-    rcpp_result_gen = Rcpp::wrap(iterate_matrix_multiply_float_cpp(s_left, s_right));
+    Rcpp::traits::input_parameter< SEXP >::type left(leftSEXP);
+    Rcpp::traits::input_parameter< SEXP >::type right(rightSEXP);
+    rcpp_result_gen = Rcpp::wrap(iterate_matrix_multiply_float_cpp(left, right));
     return rcpp_result_gen;
 END_RCPP
 }
 // iterate_matrix_multiply_double_cpp
-SEXP iterate_matrix_multiply_double_cpp(SEXP s_left, SEXP s_right);
-RcppExport SEXP _BPCells_iterate_matrix_multiply_double_cpp(SEXP s_leftSEXP, SEXP s_rightSEXP) {
+SEXP iterate_matrix_multiply_double_cpp(SEXP left, SEXP right);
+RcppExport SEXP _BPCells_iterate_matrix_multiply_double_cpp(SEXP leftSEXP, SEXP rightSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< SEXP >::type s_left(s_leftSEXP);
-    Rcpp::traits::input_parameter< SEXP >::type s_right(s_rightSEXP);
-    rcpp_result_gen = Rcpp::wrap(iterate_matrix_multiply_double_cpp(s_left, s_right));
-    return rcpp_result_gen;
-END_RCPP
-}
-// scan_matrix_double_cpp
-NumericVector scan_matrix_double_cpp(SEXP matrix);
-RcppExport SEXP _BPCells_scan_matrix_double_cpp(SEXP matrixSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< SEXP >::type matrix(matrixSEXP);
-    rcpp_result_gen = Rcpp::wrap(scan_matrix_double_cpp(matrix));
+    Rcpp::traits::input_parameter< SEXP >::type left(leftSEXP);
+    Rcpp::traits::input_parameter< SEXP >::type right(rightSEXP);
+    rcpp_result_gen = Rcpp::wrap(iterate_matrix_multiply_double_cpp(left, right));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -2002,7 +1991,6 @@ static const R_CallMethodDef CallEntries[] = {
     {"_BPCells_iterate_matrix_multiply_uint32_t_cpp", (DL_FUNC) &_BPCells_iterate_matrix_multiply_uint32_t_cpp, 2},
     {"_BPCells_iterate_matrix_multiply_float_cpp", (DL_FUNC) &_BPCells_iterate_matrix_multiply_float_cpp, 2},
     {"_BPCells_iterate_matrix_multiply_double_cpp", (DL_FUNC) &_BPCells_iterate_matrix_multiply_double_cpp, 2},
-    {"_BPCells_scan_matrix_double_cpp", (DL_FUNC) &_BPCells_scan_matrix_double_cpp, 1},
     {"_BPCells_dense_multiply_right_cpp", (DL_FUNC) &_BPCells_dense_multiply_right_cpp, 2},
     {"_BPCells_dense_multiply_left_cpp", (DL_FUNC) &_BPCells_dense_multiply_left_cpp, 2},
     {"_BPCells_vec_multiply_right_cpp", (DL_FUNC) &_BPCells_vec_multiply_right_cpp, 2},

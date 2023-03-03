@@ -7,7 +7,7 @@ namespace BPCells {
 // Chromosome names & IDs must match between fragments and come in the same ordering.
 //   (Use ChrSelect before merging if necessary to match ordering)
 
-MergeFragments::MergeFragments(const std::vector<FragmentLoader *> &fragments, uint32_t load_size)
+MergeFragments::MergeFragments(std::vector<std::unique_ptr<FragmentLoader>> &&fragments, uint32_t load_size)
     : frags_completed(fragments.size())
     , start(load_size)
     , end(load_size)
@@ -17,14 +17,15 @@ MergeFragments::MergeFragments(const std::vector<FragmentLoader *> &fragments, u
 
     cell_id_offset.push_back(0);
     for (uint32_t i = 0; i < fragments.size(); i++) {
-        frags.push_back(FragmentIterator(*fragments[i]));
+        auto f = FragmentIterator(std::move(fragments[i]));
+        frags.push_back(std::move(f));
 
-        if (i < fragments.size() - 1 && fragments[i]->cellCount() == -1)
+        if (i < fragments.size() - 1 && frags[i].cellCount() == -1)
             throw std::runtime_error(
                 "Cannot merge fragments where cell count is not known ahead-of-time. Select cells "
                 "first."
             );
-        cell_id_offset.push_back(cell_id_offset.back() + fragments[i]->cellCount());
+        cell_id_offset.push_back(cell_id_offset.back() + frags[i].cellCount());
 
         frags[i].nextChr(); // Make sure this->nextChr doesn't get confused on the first chromosome
     }

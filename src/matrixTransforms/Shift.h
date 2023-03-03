@@ -8,7 +8,7 @@ namespace BPCells {
 // out[i,j] = in[i,j] + row_params[0,i]
 class ShiftRows : public MatrixTransformDense {
   public:
-    ShiftRows(MatrixLoader<double> &mat, TransformFit fit);
+    using MatrixTransformDense::MatrixTransformDense;
 
     bool loadZeroSubtracted(MatrixLoader<double> &loader) override;
     void loadZero(double *values, uint32_t count, uint32_t start_row, uint32_t col) override;
@@ -30,7 +30,7 @@ class ShiftRows : public MatrixTransformDense {
 
 class ShiftCols : public MatrixTransformDense {
   public:
-    ShiftCols(MatrixLoader<double> &mat, TransformFit fit);
+    using MatrixTransformDense::MatrixTransformDense;
 
     bool loadZeroSubtracted(MatrixLoader<double> &loader) override;
     void loadZero(double *values, uint32_t count, uint32_t start_row, uint32_t col) override;

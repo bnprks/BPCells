@@ -111,7 +111,6 @@ TEST(FragmentUtils, RegionSelect) {
     both.insert(both.begin(), c1.begin(), c1.end());
 
     std::unique_ptr<VecReaderWriterBuilder> v_both = writeFragmentTuple(both);
-    StoredFragments frags_both = StoredFragments::openUnpacked(*v_both);
 
     std::unique_ptr<VecReaderWriterBuilder> v_c0 = writeFragmentTuple(c0, 2U);
     StoredFragments frags_c0 = StoredFragments::openUnpacked(*v_c0);
@@ -124,14 +123,23 @@ TEST(FragmentUtils, RegionSelect) {
     std::unique_ptr<StringReader> chr_levels2 =
         std::make_unique<VecStringReader>(region_chr_levels);
     RegionSelect inclusive(
-        frags_both, region_chr, region_start, region_end, std::move(chr_levels1), false
+        std::make_unique<StoredFragments>(StoredFragments::openUnpacked(*v_both)),
+        region_chr,
+        region_start,
+        region_end,
+        std::move(chr_levels1),
+        false
     );
     RegionSelect exclusive(
-        frags_both, region_chr, region_start, region_end, std::move(chr_levels2), true
+        std::make_unique<StoredFragments>(StoredFragments::openUnpacked(*v_both)),
+        region_chr,
+        region_start,
+        region_end,
+        std::move(chr_levels2),
+        true
     );
 
     EXPECT_TRUE(fragments_identical(frags_c1, inclusive));
-    frags_both.restart();
     EXPECT_TRUE(fragments_identical(frags_c0, exclusive));
 }
 
@@ -171,23 +179,25 @@ TEST(FragmentUtils, MergeFragments) {
     StoredFragments expected = StoredFragments::openUnpacked(*v_expect);
 
     std::unique_ptr<VecReaderWriterBuilder> v1_data = writeFragmentTuple(v1, max_cell, true);
-    StoredFragments v1_frags = StoredFragments::openUnpacked(*v1_data);
 
     std::unique_ptr<VecReaderWriterBuilder> v2_data = writeFragmentTuple(v2, max_cell, true);
     std::vector<std::string> &names_v2 = v2_data->getStringVecs().at("cell_names");
     for (uint32_t i = 0; i < max_cell; i++) {
         names_v2[i] = std::string("c") + std::to_string(i + max_cell);
     }
-    StoredFragments v2_frags = StoredFragments::openUnpacked(*v2_data);
 
     std::unique_ptr<VecReaderWriterBuilder> v3_data = writeFragmentTuple(v3, max_cell, true);
     std::vector<std::string> &names_v3 = v3_data->getStringVecs().at("cell_names");
     for (uint32_t i = 0; i < max_cell; i++) {
         names_v3[i] = std::string("c") + std::to_string(i + 2 * max_cell);
     }
-    StoredFragments v3_frags = StoredFragments::openUnpacked(*v3_data);
 
-    MergeFragments merge(std::vector<FragmentLoader *>{&v1_frags, &v2_frags, &v3_frags});
+    std::vector<std::unique_ptr<FragmentLoader>> merge_vec;
+    merge_vec.push_back(std::make_unique<StoredFragments>(StoredFragments::openUnpacked(*v1_data)));
+    merge_vec.push_back(std::make_unique<StoredFragments>(StoredFragments::openUnpacked(*v2_data)));
+    merge_vec.push_back(std::make_unique<StoredFragments>(StoredFragments::openUnpacked(*v3_data)));
+
+    MergeFragments merge(std::move(merge_vec));
 
     EXPECT_TRUE(Testing::fragments_identical(expected, merge));
 }
@@ -248,7 +258,7 @@ TEST(FragmentUtils, CellSelect) {
     });
 
     std::vector<Testing::Frag> v2;
-    for (const auto &f : v) {
+    for (auto f : v) {
         if (f.cell > 15 || f.cell < 10) continue;
         f.cell = 15 - f.cell;
         v2.push_back(f);
@@ -262,13 +272,17 @@ TEST(FragmentUtils, CellSelect) {
     }
     names_d2.resize(6);
 
-    StoredFragments in1 = StoredFragments::openUnpacked(*d1);
-    StoredFragments in2 = StoredFragments::openUnpacked(*d1);
     StoredFragments out = StoredFragments::openUnpacked(*d2);
-    CellNameSelect select1(in1, {"c15", "c14", "c13", "c12", "c11", "c10"});
+    CellNameSelect select1(
+        std::make_unique<StoredFragments>(StoredFragments::openUnpacked(*d1)),
+        {"c15", "c14", "c13", "c12", "c11", "c10"}
+    );
 
     ASSERT_TRUE(Testing::fragments_identical(select1, out));
-    CellIndexSelect select2(in2, {15, 14, 13, 12, 11, 10});
+    CellIndexSelect select2(
+        std::make_unique<StoredFragments>(StoredFragments::openUnpacked(*d1)),
+        {15, 14, 13, 12, 11, 10}
+    );
     out.restart();
     ASSERT_TRUE(Testing::fragments_identical(select2, out));
 }
@@ -285,8 +299,10 @@ TEST(FragmentUtils, CellPrefix) {
     names_d1.resize(6);
 
     StoredFragments in1 = StoredFragments::openUnpacked(*d1);
-    PrefixCells in2(in1, "prefix#");
-    PrefixCells in3(in1, "");
+    PrefixCells in2(
+        std::make_unique<StoredFragments>(StoredFragments::openUnpacked(*d1)), "prefix#"
+    );
+    PrefixCells in3(std::make_unique<StoredFragments>(StoredFragments::openUnpacked(*d1)), "");
 
     uint32_t i = 0;
     while (in1.cellNames(i) != NULL) {

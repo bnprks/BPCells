@@ -5,8 +5,8 @@ namespace BPCells {
 // chr_assignments -- vector with length <= the number of chromosomes in the input
 //     FragmentsIterator. The output chromosome `i` will come from input chromosome
 //     `chr_assignments[i]`. The entries of chr_assignments must be unique
-ChrIndexSelect::ChrIndexSelect(FragmentLoader &loader, const std::vector<uint32_t> chr_assignments)
-    : FragmentLoaderWrapper(loader)
+ChrIndexSelect::ChrIndexSelect(std::unique_ptr<FragmentLoader> &&loader, const std::vector<uint32_t> chr_assignments)
+    : FragmentLoaderWrapper(std::move(loader))
     , chr_assignments(chr_assignments) {
 
     std::vector<uint32_t> seen_id;
@@ -22,22 +22,22 @@ int ChrIndexSelect::chrCount() const { return chr_assignments.size(); }
 
 const char *ChrIndexSelect::chrNames(uint32_t chr_id) {
     if (chr_id >= chr_assignments.size()) return NULL;
-    return loader.chrNames(chr_assignments[chr_id]);
+    return loader->chrNames(chr_assignments[chr_id]);
 }
 
 bool ChrIndexSelect::nextChr() {
-    bool res = loader.nextChr();
+    bool res = loader->nextChr();
     while (res) {
-        uint32_t chr_id = loader.currentChr();
+        uint32_t chr_id = loader->currentChr();
         auto result = std::find(chr_assignments.begin(), chr_assignments.end(), chr_id);
         if (result != chr_assignments.end()) break;
-        res = loader.nextChr();
+        res = loader->nextChr();
     }
     return res;
 }
 
 uint32_t ChrIndexSelect::currentChr() const {
-    auto result = std::find(chr_assignments.begin(), chr_assignments.end(), loader.currentChr());
+    auto result = std::find(chr_assignments.begin(), chr_assignments.end(), loader->currentChr());
     if (result == chr_assignments.end())
         throw std::invalid_argument("ChrSelect does not have a chromosome assigned to requested ID"
         );
@@ -46,11 +46,11 @@ uint32_t ChrIndexSelect::currentChr() const {
 }
 
 void ChrIndexSelect::seek(uint32_t chr_id, uint32_t base) {
-    loader.seek(chr_assignments[chr_id], base);
+    loader->seek(chr_assignments[chr_id], base);
 }
 
-ChrNameSelect::ChrNameSelect(FragmentLoader &loader, const std::vector<std::string> chr_names)
-    : FragmentLoaderWrapper(loader)
+ChrNameSelect::ChrNameSelect(std::unique_ptr<FragmentLoader> &&loader, const std::vector<std::string> chr_names)
+    : FragmentLoaderWrapper(std::move(loader))
     , chr_names(chr_names) {
     for (uint32_t i = 0; i < chr_names.size(); i++) {
         if (output_index.find(chr_names[i]) != output_index.end())
@@ -58,12 +58,12 @@ ChrNameSelect::ChrNameSelect(FragmentLoader &loader, const std::vector<std::stri
         output_index[chr_names[i]] = i;
     }
 
-    if (loader.isSeekable()) {
+    if (this->loader->isSeekable()) {
         input_index.resize(chr_names.size());
-        int32_t chr_count = loader.chrCount();
+        int32_t chr_count = this->loader->chrCount();
         for (int i = 0; i < chr_count; i++) {
-            if (output_index.find(loader.chrNames(i)) != output_index.end()) {
-                input_index[output_index[loader.chrNames(i)]] = i;
+            if (output_index.find(this->loader->chrNames(i)) != output_index.end()) {
+                input_index[output_index[this->loader->chrNames(i)]] = i;
             }
         }
     }
@@ -77,22 +77,22 @@ const char *ChrNameSelect::chrNames(uint32_t chr_id) {
 }
 
 bool ChrNameSelect::nextChr() {
-    bool res = loader.nextChr();
+    bool res = loader->nextChr();
     ;
     while (res) {
-        uint32_t chr_id = loader.currentChr();
-        auto result = output_index.find(loader.chrNames(chr_id));
+        uint32_t chr_id = loader->currentChr();
+        auto result = output_index.find(loader->chrNames(chr_id));
         if (result != output_index.end()) break;
-        res = loader.nextChr();
+        res = loader->nextChr();
     }
     return res;
 }
 
 uint32_t ChrNameSelect::currentChr() const {
-    auto res = output_index.at(loader.chrNames(loader.currentChr()));
+    auto res = output_index.at(loader->chrNames(loader->currentChr()));
     return res;
 }
 
-void ChrNameSelect::seek(uint32_t chr_id, uint32_t base) { loader.seek(input_index[chr_id], base); }
+void ChrNameSelect::seek(uint32_t chr_id, uint32_t base) { loader->seek(input_index[chr_id], base); }
 
 } // end namespace BPCells

@@ -1,7 +1,6 @@
 #pragma once
 #include "../utils/radix_sort.h"
 #include "MatrixIterator.h"
-#include <unordered_map>
 
 namespace BPCells {
 
@@ -13,38 +12,38 @@ template <class T> class MatrixColSelect : public MatrixLoaderWrapper<T> {
 
   public:
     // col_indices -- vector of columns to select
-    MatrixColSelect(MatrixLoader<T> &loader, const std::vector<uint32_t> col_indices)
-        : MatrixLoaderWrapper<T>(loader)
+    MatrixColSelect(std::unique_ptr<MatrixLoader<T>> &&loader, const std::vector<uint32_t> col_indices)
+        : MatrixLoaderWrapper<T>(std::move(loader))
         , col_indices(col_indices) {}
 
     ~MatrixColSelect() = default;
 
     uint32_t cols() const override { return col_indices.size(); }
     const char *colNames(uint32_t col) override {
-        if (col < col_indices.size()) return this->loader.colNames(col_indices[col]);
+        if (col < col_indices.size()) return this->loader->colNames(col_indices[col]);
         return NULL;
     }
 
     void restart() override {
         current_col = UINT32_MAX;
-        this->loader.restart();
+        this->loader->restart();
     }
     void seekCol(uint32_t col) override {
         if (col >= col_indices.size())
             throw std::runtime_error("Requested column is greater than number of columns");
-        this->loader.seekCol(col_indices[col]);
+        this->loader->seekCol(col_indices[col]);
         current_col = col;
     }
 
     bool nextCol() override {
         current_col += 1;
         if (current_col > 0 && col_indices[current_col - 1] == col_indices[current_col] - 1) {
-            return this->loader.nextCol();
+            return this->loader->nextCol();
         } else if (current_col >= col_indices.size()) {
             current_col -= 1;
             return false;
         } else {
-            this->loader.seekCol(col_indices[current_col]);
+            this->loader->seekCol(col_indices[current_col]);
             return true;
         }
     }
@@ -65,11 +64,11 @@ template <class T> class MatrixRowSelect : public MatrixLoaderWrapper<T> {
 
   public:
     // cell_names -- vector with length <= the number of chromosomes in the input
-    //     FragmentLoader. The output cell `i` will come from input cell
+    //     FragmentLoader-> The output cell `i` will come from input cell
     //     `chr_assignments[i]`. The entries of cell_names must be unique
-    MatrixRowSelect(MatrixLoader<T> &loader, const std::vector<uint32_t> row_indices)
-        : MatrixLoaderWrapper<T>(loader)
-        , reverse_indices(loader.rows(), UINT32_MAX)
+    MatrixRowSelect(std::unique_ptr<MatrixLoader<T>> &&loader, const std::vector<uint32_t> row_indices)
+        : MatrixLoaderWrapper<T>(std::move(loader))
+        , reverse_indices(this->loader->rows(), UINT32_MAX)
         , row_indices(row_indices) {
         for (uint32_t i = 0; i < row_indices.size(); i++) {
             if (reverse_indices[row_indices[i]] != UINT32_MAX)
@@ -82,33 +81,33 @@ template <class T> class MatrixRowSelect : public MatrixLoaderWrapper<T> {
 
     uint32_t rows() const override { return row_indices.size(); }
     const char *rowNames(uint32_t row) override {
-        if (row < row_indices.size()) return this->loader.rowNames(row_indices[row]);
+        if (row < row_indices.size()) return this->loader->rowNames(row_indices[row]);
         return NULL;
     }
 
     void restart() override {
         loaded = 0;
-        this->loader.restart();
+        this->loader->restart();
     }
     void seekCol(uint32_t col) override {
         loaded = 0;
-        this->loader.seekCol(col);
+        this->loader->seekCol(col);
     }
 
     bool nextCol() override {
         loaded = 0;
-        return this->loader.nextCol();
+        return this->loader->nextCol();
     }
 
     bool load() override {
         // Just perform a straight filter and load incrementally
         loaded = 0;
         while (loaded == 0) {
-            if (!this->loader.load()) return false;
+            if (!this->loader->load()) return false;
 
-            uint32_t cap = this->loader.capacity();
-            uint32_t *row_ptr = this->loader.rowData();
-            T *val_ptr = this->loader.valData();
+            uint32_t cap = this->loader->capacity();
+            uint32_t *row_ptr = this->loader->rowData();
+            T *val_ptr = this->loader->valData();
 
             for (uint32_t i = 0; i < cap; i++) {
                 uint32_t new_row = reverse_indices[row_ptr[i]];
@@ -121,8 +120,8 @@ template <class T> class MatrixRowSelect : public MatrixLoaderWrapper<T> {
     }
 
     uint32_t capacity() const override { return loaded; }
-    uint32_t *rowData() override { return this->loader.rowData(); }
-    T *valData() override { return this->loader.valData(); }
+    uint32_t *rowData() override { return this->loader->rowData(); }
+    T *valData() override { return this->loader->valData(); }
 };
 
 } // end namespace BPCells

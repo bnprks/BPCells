@@ -7,8 +7,8 @@ inline vec_float sd_inv(const vec_float &mu, const vec_float &theta_inv, const v
     return min_f(rsqrt_f(fma_f(mul_f(mu, theta_inv), mu, mu)), max_val);
 }
 
-SCTransformPearsonSIMD::SCTransformPearsonSIMD(MatrixLoader<double> &loader, TransformFit fit)
-    : MatrixTransformDense(loader, fit)
+SCTransformPearsonSIMD::SCTransformPearsonSIMD(std::unique_ptr<MatrixLoader<double>> &&loader, TransformFit fit)
+    : MatrixTransformDense(std::move(loader), fit)
     , theta_inv(fit.row_params.row(0).cast<float>())
     , cell_read_counts(fit.col_params.row(0).cast<float>())
     , gene_beta(fit.row_params.row(1).cast<float>())
@@ -194,9 +194,9 @@ void SCTransformPearsonSIMD::vecMultiplyLeftZero(
 // for the transposition
 
 SCTransformPearsonTransposeSIMD::SCTransformPearsonTransposeSIMD(
-    MatrixLoader<double> &loader, TransformFit fit
+    std::unique_ptr<MatrixLoader<double>> &&loader, TransformFit fit
 )
-    : MatrixTransformDense(loader, fit)
+    : MatrixTransformDense(std::move(loader), fit)
     , theta_inv(fit.col_params.row(0).cast<float>())
     , cell_read_counts(fit.row_params.row(0).cast<float>())
     , gene_beta(fit.col_params.row(1).cast<float>())

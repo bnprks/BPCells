@@ -49,7 +49,7 @@ Map<SparseMatrix<double>> get_map(const SparseMatrix<double> &mat) {
 
 void test_transpose(const Eigen::SparseMatrix<double> orig_mat) {
     CSparseMatrix mat_d(get_map(orig_mat));
-    MatrixConverterLoader<double, uint32_t> mat_i(mat_d);
+    MatrixConverterLoader<double, uint32_t> mat_i(std::make_unique<CSparseMatrix>(get_map(orig_mat)));
 
     VecReaderWriterBuilder vb1(1024);
     VecReaderWriterBuilder vb2(1024);
@@ -68,8 +68,8 @@ void test_transpose(const Eigen::SparseMatrix<double> orig_mat) {
     mat_d.restart();
     w_uint.write(mat_i);
 
-    StoredMatrix<uint32_t> trans_i = StoredMatrix<uint32_t>::openPacked(vb1);
-    auto loader1 = MatrixConverterLoader<uint32_t, double>(trans_i);
+    auto trans_i = std::make_unique<StoredMatrix<uint32_t>>(StoredMatrix<uint32_t>::openPacked(vb1));
+    auto loader1 = MatrixConverterLoader<uint32_t, double>(std::move(trans_i));
 
     StoredMatrix<double> loader2 = StoredMatrix<double>::openPacked(vb2);
 

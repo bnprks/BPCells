@@ -89,7 +89,9 @@ template <typename T> class StoredMatrixWriter : public MatrixWriter<T> {
 
     void write(MatrixLoader<T> &mat_in, void (*checkInterrupt)(void) = NULL) override {
         // Ensure that we write matrices sorted by row
-        OrderRows<T> mat(mat_in);
+        OrderRows<T> mat((std::unique_ptr<MatrixLoader<T>>(&mat_in)));
+        // Don't delete our original matrix
+        mat.preserve_input_loader();
         uint32_t col = 0;
         uint32_t idx = 0; // Index of for col_ptr array
 

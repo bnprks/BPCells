@@ -232,7 +232,9 @@ BedFragmentsWriter::~BedFragmentsWriter() {
 }
 
 void BedFragmentsWriter::write(FragmentLoader &loader, void (*checkInterrupt)(void)) {
-    FragmentIterator fragments(loader);
+    FragmentIterator fragments((std::unique_ptr<FragmentLoader>(&loader)));
+    // Don't take ownership of the loader object
+    fragments.preserve_input_loader();
     uint32_t bytes_written;
 
     size_t total_fragments = 0;
