@@ -6,7 +6,15 @@ MatrixTransform::MatrixTransform(MatrixLoader<double> &loader)
     : MatrixLoaderWrapper<double>(loader) {}
 MatrixTransform::MatrixTransform(MatrixLoader<double> &loader, TransformFit fit)
     : MatrixLoaderWrapper<double>(loader)
-    , fit(fit) {}
+    , fit(fit) {
+    // Basic checks for dimensions
+    if (fit.row_params.cols() != this->loader.rows()) {
+        throw std::runtime_error("C++ error constructing MatrixTransform: fit.row_params.cols() != loader->rows()");
+    }
+    if (fit.col_params.cols() != this->loader.cols()) {
+        throw std::runtime_error("C++ error constructing MatrixTransform: fit.col_params.cols() != loader->cols()");
+    }
+}
 
 TransformFit MatrixTransform::getFit() { return fit; }
 

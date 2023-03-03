@@ -439,7 +439,7 @@ setMethod("iterate_matrix", "TransformScaleShift", function(x) {
       } else if (x@active_transforms["col", "scale"]) {
         scale_col <- scale_col * x@global_params[1]
       } else {
-        scale_row <- matrix(x@global_params[1], nrow = 1, ncol = nrow(x))
+        scale_row <- matrix(x@global_params[1], nrow = 1, ncol = ifelse(x@transpose, ncol(x), nrow(x)))
       }
     }
     res <- wrapMat_double(iterate_matrix_scale_cpp(ptr(res), scale_row, scale_col), res)
@@ -455,7 +455,7 @@ setMethod("iterate_matrix", "TransformScaleShift", function(x) {
       } else if (x@active_transforms["col", "shift"]) {
         shift_col <- shift_col + x@global_params[2]
       } else {
-        shift_row <- matrix(x@global_params[2], nrow = 1, ncol = nrow(x))
+        shift_row <- matrix(x@global_params[2], nrow = 1, ncol = ifelse(x@transpose, ncol(x), nrow(x)))
       }
     }
     if (nrow(shift_row) != 0) res <- wrapMat_double(iterate_matrix_row_shift_cpp(ptr(res), shift_row), res)
