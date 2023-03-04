@@ -535,36 +535,18 @@ iterate_matrix_multiply_float_cpp <- function(left, right) {
 
 iterate_matrix_multiply_double_cpp <- function(left, right) {
     .Call(`_BPCells_iterate_matrix_multiply_double_cpp`, left, right)
-
 }
 
-iterate_matrix_mask_uint32_t_cpp <- function(s_mat, s_mask, invert) {
-    .Call(`_BPCells_iterate_matrix_mask_uint32_t_cpp`, s_mat, s_mask, invert)
+iterate_matrix_mask_uint32_t_cpp <- function(mat, mask, invert) {
+    .Call(`_BPCells_iterate_matrix_mask_uint32_t_cpp`, mat, mask, invert)
 }
 
-iterate_matrix_mask_float_cpp <- function(s_mat, s_mask, invert) {
-    .Call(`_BPCells_iterate_matrix_mask_float_cpp`, s_mat, s_mask, invert)
+iterate_matrix_mask_float_cpp <- function(mat, mask, invert) {
+    .Call(`_BPCells_iterate_matrix_mask_float_cpp`, mat, mask, invert)
 }
 
-iterate_matrix_mask_double_cpp <- function(s_mat, s_mask, invert) {
-    .Call(`_BPCells_iterate_matrix_mask_double_cpp`, s_mat, s_mask, invert)
-}
-
-
-iterate_matrix_mask_uint32_t_cpp <- function(s_mat, s_mask, invert) {
-    .Call(`_BPCells_iterate_matrix_mask_uint32_t_cpp`, s_mat, s_mask, invert)
-}
-
-iterate_matrix_mask_float_cpp <- function(s_mat, s_mask, invert) {
-    .Call(`_BPCells_iterate_matrix_mask_float_cpp`, s_mat, s_mask, invert)
-}
-
-iterate_matrix_mask_double_cpp <- function(s_mat, s_mask, invert) {
-    .Call(`_BPCells_iterate_matrix_mask_double_cpp`, s_mat, s_mask, invert)
-}
-
-scan_matrix_double_cpp <- function(matrix) {
-    .Call(`_BPCells_scan_matrix_double_cpp`, matrix)
+iterate_matrix_mask_double_cpp <- function(mat, mask, invert) {
+    .Call(`_BPCells_iterate_matrix_mask_double_cpp`, mat, mask, invert)
 }
 
 dense_multiply_right_cpp <- function(matrix, B) {

@@ -393,13 +393,8 @@ setMethod("matrix_inputs<-", "MatrixMask", function(x, ..., value) {
 })
 
 setMethod("iterate_matrix", "MatrixMask", function(x) {
-  mat <- iterate_matrix(x@matrix)
-  mask <- iterate_matrix(x@mask)
-  inner_iterator <- new("XPtrList", pointers = c(mat@pointers, mask@pointers))
-
   iter_function <- get(sprintf("iterate_matrix_mask_%s_cpp", matrix_type(x)))
-  wrap_function <- get(sprintf("wrapMat_%s", matrix_type(x)))
-  wrap_function(iter_function(ptr(mat), ptr(mask), x@invert), inner_iterator)
+  iter_function(iterate_matrix(x@matrix), iterate_matrix(x@mask), x@invert)
 })
 
 setMethod("short_description", "MatrixMask", function(x) {

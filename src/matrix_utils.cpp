@@ -205,33 +205,27 @@ SEXP iterate_matrix_multiply_double_cpp(SEXP left, SEXP right) {
 }
 
 // [[Rcpp::export]]
-SEXP iterate_matrix_mask_uint32_t_cpp(SEXP s_mat, SEXP s_mask, bool invert) {
-    XPtr<MatrixLoader<uint32_t>> mat(s_mat);
-    XPtr<MatrixLoader<uint32_t>> mask(s_mask);
+SEXP iterate_matrix_mask_uint32_t_cpp(SEXP mat, SEXP mask, bool invert) {
     if (invert)
-        return Rcpp::wrap(XPtr<MatrixLoader<uint32_t>>(new Mask<uint32_t, true>(*mat, *mask)));
+        return make_unique_xptr<Mask<uint32_t, true>>(take_unique_xptr<MatrixLoader<uint32_t>>(mat), take_unique_xptr<MatrixLoader<uint32_t>>(mask));
     else
-        return Rcpp::wrap(XPtr<MatrixLoader<uint32_t>>(new Mask<uint32_t, false>(*mat, *mask)));
+        return make_unique_xptr<Mask<uint32_t, false>>(take_unique_xptr<MatrixLoader<uint32_t>>(mat), take_unique_xptr<MatrixLoader<uint32_t>>(mask));
 }
 
 // [[Rcpp::export]]
-SEXP iterate_matrix_mask_float_cpp(SEXP s_mat, SEXP s_mask, bool invert) {
-    XPtr<MatrixLoader<float>> mat(s_mat);
-    XPtr<MatrixLoader<uint32_t>> mask(s_mask);
+SEXP iterate_matrix_mask_float_cpp(SEXP mat, SEXP mask, bool invert) {
     if (invert)
-        return Rcpp::wrap(XPtr<MatrixLoader<float>>(new Mask<float, true>(*mat, *mask)));
+        return make_unique_xptr<Mask<float, true>>(take_unique_xptr<MatrixLoader<float>>(mat), take_unique_xptr<MatrixLoader<uint32_t>>(mask));
     else
-        return Rcpp::wrap(XPtr<MatrixLoader<float>>(new Mask<float, false>(*mat, *mask)));
+        return make_unique_xptr<Mask<float, false>>(take_unique_xptr<MatrixLoader<float>>(mat), take_unique_xptr<MatrixLoader<uint32_t>>(mask));
 }
 
 // [[Rcpp::export]]
-SEXP iterate_matrix_mask_double_cpp(SEXP s_mat, SEXP s_mask, bool invert) {
-    XPtr<MatrixLoader<double>> mat(s_mat);
-    XPtr<MatrixLoader<uint32_t>> mask(s_mask);
+SEXP iterate_matrix_mask_double_cpp(SEXP mat, SEXP mask, bool invert) {
     if (invert)
-        return Rcpp::wrap(XPtr<MatrixLoader<double>>(new Mask<double, true>(*mat, *mask)));
+        return make_unique_xptr<Mask<double, true>>(take_unique_xptr<MatrixLoader<double>>(mat), take_unique_xptr<MatrixLoader<uint32_t>>(mask));
     else
-        return Rcpp::wrap(XPtr<MatrixLoader<double>>(new Mask<double, false>(*mat, *mask)));
+        return make_unique_xptr<Mask<double, false>>(take_unique_xptr<MatrixLoader<double>>(mat), take_unique_xptr<MatrixLoader<uint32_t>>(mask));
 }
 
 // [[Rcpp::export]]

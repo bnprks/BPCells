@@ -15,11 +15,11 @@ template <typename T, bool Invert = false> class Mask : public MatrixLoader<T> {
     uint32_t mask_idx = UINT32_MAX;
     uint32_t loaded;
   public:
-    Mask(MatrixLoader<T> &mat, MatrixLoader<uint32_t> &mask)
-        : mat(mat)
-        , mask(mask, mask.rows()) {
+    Mask(std::unique_ptr<MatrixLoader<T>> &&mat, std::unique_ptr<MatrixLoader<uint32_t>> &&mask)
+        : mat(std::move(mat))
+        , mask(std::move(mask), this->mat.rows()) {
 
-        if (mat.cols() != mask.cols() || mat.rows() != mask.rows())
+        if (this->mat.cols() != this->mask.cols() || this->mat.rows() != this->mask.rows())
             throw std::runtime_error("Matrices have mismatched dimensions");
     }
 

@@ -1757,48 +1757,48 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< SEXP >::type left(leftSEXP);
     Rcpp::traits::input_parameter< SEXP >::type right(rightSEXP);
     rcpp_result_gen = Rcpp::wrap(iterate_matrix_multiply_double_cpp(left, right));
+    return rcpp_result_gen;
 END_RCPP
 }
 // iterate_matrix_mask_uint32_t_cpp
-SEXP iterate_matrix_mask_uint32_t_cpp(SEXP s_mat, SEXP s_mask, bool invert);
-RcppExport SEXP _BPCells_iterate_matrix_mask_uint32_t_cpp(SEXP s_matSEXP, SEXP s_maskSEXP, SEXP invertSEXP) {
+SEXP iterate_matrix_mask_uint32_t_cpp(SEXP mat, SEXP mask, bool invert);
+RcppExport SEXP _BPCells_iterate_matrix_mask_uint32_t_cpp(SEXP matSEXP, SEXP maskSEXP, SEXP invertSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< SEXP >::type s_mat(s_matSEXP);
-    Rcpp::traits::input_parameter< SEXP >::type s_mask(s_maskSEXP);
+    Rcpp::traits::input_parameter< SEXP >::type mat(matSEXP);
+    Rcpp::traits::input_parameter< SEXP >::type mask(maskSEXP);
     Rcpp::traits::input_parameter< bool >::type invert(invertSEXP);
-    rcpp_result_gen = Rcpp::wrap(iterate_matrix_mask_uint32_t_cpp(s_mat, s_mask, invert));
+    rcpp_result_gen = Rcpp::wrap(iterate_matrix_mask_uint32_t_cpp(mat, mask, invert));
     return rcpp_result_gen;
 END_RCPP
 }
 // iterate_matrix_mask_float_cpp
-SEXP iterate_matrix_mask_float_cpp(SEXP s_mat, SEXP s_mask, bool invert);
-RcppExport SEXP _BPCells_iterate_matrix_mask_float_cpp(SEXP s_matSEXP, SEXP s_maskSEXP, SEXP invertSEXP) {
+SEXP iterate_matrix_mask_float_cpp(SEXP mat, SEXP mask, bool invert);
+RcppExport SEXP _BPCells_iterate_matrix_mask_float_cpp(SEXP matSEXP, SEXP maskSEXP, SEXP invertSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< SEXP >::type s_mat(s_matSEXP);
-    Rcpp::traits::input_parameter< SEXP >::type s_mask(s_maskSEXP);
+    Rcpp::traits::input_parameter< SEXP >::type mat(matSEXP);
+    Rcpp::traits::input_parameter< SEXP >::type mask(maskSEXP);
     Rcpp::traits::input_parameter< bool >::type invert(invertSEXP);
-    rcpp_result_gen = Rcpp::wrap(iterate_matrix_mask_float_cpp(s_mat, s_mask, invert));
+    rcpp_result_gen = Rcpp::wrap(iterate_matrix_mask_float_cpp(mat, mask, invert));
     return rcpp_result_gen;
 END_RCPP
 }
 // iterate_matrix_mask_double_cpp
-SEXP iterate_matrix_mask_double_cpp(SEXP s_mat, SEXP s_mask, bool invert);
-RcppExport SEXP _BPCells_iterate_matrix_mask_double_cpp(SEXP s_matSEXP, SEXP s_maskSEXP, SEXP invertSEXP) {
+SEXP iterate_matrix_mask_double_cpp(SEXP mat, SEXP mask, bool invert);
+RcppExport SEXP _BPCells_iterate_matrix_mask_double_cpp(SEXP matSEXP, SEXP maskSEXP, SEXP invertSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< SEXP >::type s_mat(s_matSEXP);
-    Rcpp::traits::input_parameter< SEXP >::type s_mask(s_maskSEXP);
+    Rcpp::traits::input_parameter< SEXP >::type mat(matSEXP);
+    Rcpp::traits::input_parameter< SEXP >::type mask(maskSEXP);
     Rcpp::traits::input_parameter< bool >::type invert(invertSEXP);
-    rcpp_result_gen = Rcpp::wrap(iterate_matrix_mask_double_cpp(s_mat, s_mask, invert));
+    rcpp_result_gen = Rcpp::wrap(iterate_matrix_mask_double_cpp(mat, mask, invert));
     return rcpp_result_gen;
 END_RCPP
 }
-
 // dense_multiply_right_cpp
 Eigen::MatrixXd dense_multiply_right_cpp(SEXP matrix, Eigen::Map<Eigen::MatrixXd> B);
 RcppExport SEXP _BPCells_dense_multiply_right_cpp(SEXP matrixSEXP, SEXP BSEXP) {
