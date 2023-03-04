@@ -233,7 +233,7 @@ plot_fragment_length <- function(fragments, max_length = 500, return_data = FALS
   assert_is_wholenumber(max_length)
 
   iter <- iterate_fragments(fragments)
-  res <- fragment_lengths_cpp(ptr(iter))
+  res <- fragment_lengths_cpp(iter)
 
   data <- tibble::tibble(
     length = seq_along(res),

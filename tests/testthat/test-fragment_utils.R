@@ -344,5 +344,21 @@ test_that("Generic methods work", {
     n <- write_fragments_memory(trans)
     expect_identical(chrNames(n), paste0("new-", chrNames(frags)))
     expect_identical(cellNames(n), paste0("new-", cellNames(frags)))
+
+    # Test that garbage collection after creating the iterator doesn't cause issues
+    # Reset cell + chr names
+    chrNames(trans) <- chrNames(frags)
+    cellNames(trans) <- cellNames(frags)
+    # Create the C++ iterator
+    it <- iterate_fragments(trans) %>%
+      iterate_chr_index_select_cpp(seq_along(chrNames(frags)) - 1L) %>%
+      iterate_cell_index_select_cpp(seq_along(cellNames(frags)) - 1L) %>%
+      iterate_shift_cpp(0L, 0L)
+    expect_type(it, "externalptr")
+    # Delete any trailing XPtr references from R
+    gc()
+    # Check that the C++ iterator still works
+    res <- do.call(new, c("PackedMemFragments", write_packed_fragments_cpp(it)))
+    expect_identical(res, frags)
   }
 })

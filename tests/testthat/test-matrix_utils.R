@@ -167,6 +167,33 @@ test_that("Row/Col sum/mean works", { #nolint
   expect_identical(colMeans(i4), colMeans(m2))
 })
 
+test_that("LinearOperator works", {
+  m1 <- generate_sparse_matrix(5, 1000)
+  op <- linear_operator(as(m1, "IterableMatrix"))
+
+  b <- generate_dense_matrix(5, 12)
+  y <- as.numeric(generate_dense_matrix(5, 1))
+
+  expect_identical(to_matrix(t(b) %*% m1), t(b) %*% op)
+  expect_identical(as.numeric(y %*% as.matrix(m1)), as.numeric(y %*% op))
+})
+
+test_that("Garbage collection between iterate_matrix doesn't mess things up", {
+  m <- generate_sparse_matrix(20, 20) 
+  # Apply log1p %>% square %>% pow(0.5) %>% expm1
+  it <- m %>% 
+    as("IterableMatrix") %>% 
+    iterate_matrix() %>%
+    iterate_matrix_log1p_cpp() %>%
+    iterate_matrix_square_cpp() %>%
+    iterate_matrix_pow_cpp(0.5) %>%
+    iterate_matrix_expm1_cpp()
+  # Garbage collect so R will destroy any intermediate data it has on the pointers
+  gc()
+  # Make sure everything still works
+  res <- build_csparse_matrix_double_cpp(it)
+  expect_equal(m, res, tolerance=testthat_tolerance())
+})
 
 test_that("Generic methods work", {
   # Generic methods to test:
@@ -230,6 +257,28 @@ test_that("Generic methods work", {
       expect_identical(as.matrix(as(trans, "dgCMatrix")), as.matrix(m))
     } else {
       expect_identical(as(trans, "dgCMatrix"), m)
+    }
+
+    # Test that garbage collection after creating the iterator doesn't cause issues
+    # Create the C++ iterator
+    if (matrix_type(trans) != "double")
+      convert_function <- get(sprintf("convert_matrix_%s_%s_cpp", matrix_type(trans), "double"))
+    else
+      convert_function <- identity
+    it <- iterate_matrix(trans) %>%
+      convert_function() %>%
+      iterate_matrix_square_cpp() %>%
+      iterate_matrix_pow_cpp(0.5) 
+    expect_type(it, "externalptr")
+    # Delete any trailing XPtr references from R
+    gc()
+    # Check that the C++ iterator still works
+    res <- build_csparse_matrix_double_cpp(it)
+    res@Dimnames <- m@Dimnames
+    if (i %in% c("shift_scale_1", "shift_scale_2")) {
+      expect_identical(as.matrix(res), as.matrix(m))
+    } else {
+      expect_identical(res, m)
     }
   }
 })

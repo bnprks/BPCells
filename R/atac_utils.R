@@ -12,7 +12,7 @@ nucleosome_counts <- function(fragments, nucleosome_width = 147) {
   assert_len(nucleosome_width, 1)
 
   iter <- iterate_fragments(fragments)
-  res <- nucleosome_counts_cpp(ptr(iter), nucleosome_width)
+  res <- nucleosome_counts_cpp(iter, nucleosome_width)
   res[["nFrags"]] <- res[[1]] + res[[2]] + res[[3]]
   return(res)
 }
@@ -54,7 +54,7 @@ footprint <- function(fragments, ranges, zero_based_coords = !is(ranges, "GRange
 
   iter <- iterate_fragments(fragments)
   mat <- footprint_matrix_cpp(
-    ptr(iter),
+    iter,
     chr,
     ifelse(ranges$strand, ranges$start, ranges$end - 1),
     -1 + 2 * ranges$strand,

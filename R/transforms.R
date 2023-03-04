@@ -51,8 +51,7 @@ setMethod("[", "TransformedMatrix", function(x, i, j, ...) {
 # (Should still provide 32-bit float accuracy)
 setClass("TransformLog1p", contains = "TransformedMatrix")
 setMethod("iterate_matrix", "TransformLog1p", function(x) {
-  it <- iterate_matrix(x@matrix)
-  wrapMat_double(iterate_matrix_log1psimd_cpp(ptr(it)), it)
+  iterate_matrix_log1psimd_cpp(iterate_matrix(x@matrix))
 })
 setMethod("short_description", "TransformLog1p", function(x) {
   c(
@@ -66,8 +65,7 @@ setMethod("log1p", "IterableMatrix", function(x) {
 
 setClass("TransformLog1pSlow", contains = "TransformedMatrix")
 setMethod("iterate_matrix", "TransformLog1pSlow", function(x) {
-  it <- iterate_matrix(x@matrix)
-  wrapMat_double(iterate_matrix_log1p_cpp(ptr(it)), it)
+  iterate_matrix_log1p_cpp(iterate_matrix(x@matrix))
 })
 setMethod("short_description", "TransformLog1pSlow", function(x) {
   c(
@@ -82,8 +80,7 @@ log1p_slow <- function(x) {
 
 setClass("TransformExpm1", contains = "TransformedMatrix")
 setMethod("iterate_matrix", "TransformExpm1", function(x) {
-  it <- iterate_matrix(x@matrix)
-  wrapMat_double(iterate_matrix_expm1simd_cpp(ptr(it)), it)
+  iterate_matrix_expm1simd_cpp(iterate_matrix(x@matrix))
 })
 setMethod("short_description", "TransformExpm1", function(x) {
   c(
@@ -97,8 +94,7 @@ setMethod("expm1", "IterableMatrix", function(x) {
 
 setClass("TransformExpm1Slow", contains = "TransformedMatrix")
 setMethod("iterate_matrix", "TransformExpm1Slow", function(x) {
-  it <- iterate_matrix(x@matrix)
-  wrapMat_double(iterate_matrix_expm1_cpp(ptr(it)), it)
+  iterate_matrix_expm1_cpp(iterate_matrix(x@matrix))
 })
 setMethod("short_description", "TransformExpm1Slow", function(x) {
   c(
@@ -117,8 +113,7 @@ expm1_slow <- function(x) {
 
 setClass("TransformSquare", contains="TransformedMatrix")
 setMethod("iterate_matrix", "TransformSquare", function(x) {
-  it <- iterate_matrix(x@matrix)
-  wrapMat_double(iterate_matrix_square_cpp(ptr(it)), it)
+  iterate_matrix_square_cpp(iterate_matrix(x@matrix))
 })
 setMethod("short_description", "TransformSquare", function(x) {
   c(
@@ -129,8 +124,7 @@ setMethod("short_description", "TransformSquare", function(x) {
 
 setClass("TransformPow", contains="TransformedMatrix")
 setMethod("iterate_matrix", "TransformPow", function(x) {
-  it <- iterate_matrix(x@matrix)
-  wrapMat_double(iterate_matrix_powsimd_cpp(ptr(it), x@global_params[1]), it)
+  iterate_matrix_powsimd_cpp(iterate_matrix(x@matrix), x@global_params[1])
 })
 setMethod("short_description", "TransformPow", function(x) {
   c(
@@ -151,8 +145,7 @@ setMethod("^", signature(e1 = "IterableMatrix", e2 = "numeric"), function(e1, e2
 
 setClass("TransformPowSlow", contains="TransformedMatrix")
 setMethod("iterate_matrix", "TransformPowSlow", function(x) {
-  it <- iterate_matrix(x@matrix)
-  wrapMat_double(iterate_matrix_pow_cpp(ptr(it), x@global_params[1]), it)
+  iterate_matrix_pow_cpp(iterate_matrix(x@matrix), x@global_params[1])
 })
 setMethod("short_description", "TransformPowSlow", function(x) {
   c(
@@ -171,8 +164,7 @@ pow_slow <- function(x, exponent) {
 
 setClass("TransformMin", contains = "TransformedMatrix")
 setMethod("iterate_matrix", "TransformMin", function(x) {
-  it <- iterate_matrix(x@matrix)
-  wrapMat_double(iterate_matrix_min_cpp(ptr(it), x@global_params[1]), it)
+  iterate_matrix_min_cpp(iterate_matrix(x@matrix), x@global_params[1])
 })
 setMethod("short_description", "TransformMin", function(x) {
   c(
@@ -206,8 +198,7 @@ min_scalar <- function(mat, val) {
 
 setClass("TransformMinByRow", contains = "TransformedMatrix")
 setMethod("iterate_matrix", "TransformMinByRow", function(x) {
-  it <- iterate_matrix(x@matrix)
-  wrapMat_double(iterate_matrix_min_by_row_cpp(ptr(it), x@row_params), it)
+  iterate_matrix_min_by_row_cpp(iterate_matrix(x@matrix), x@row_params)
 })
 setMethod("short_description", "TransformMinByRow", function(x) {
   # Subset the row + col params matrices for faster pretty printing of
@@ -237,8 +228,7 @@ min_by_row <- function(mat, vals) {
 
 setClass("TransformMinByCol", contains = "TransformedMatrix")
 setMethod("iterate_matrix", "TransformMinByCol", function(x) {
-  it <- iterate_matrix(x@matrix)
-  wrapMat_double(iterate_matrix_min_by_col_cpp(ptr(it), x@col_params), it)
+  iterate_matrix_min_by_col_cpp(iterate_matrix(x@matrix), x@col_params)
 })
 setMethod("short_description", "TransformMinByCol", function(x) {
   # Subset the row + col params matrices for faster pretty printing of
@@ -273,8 +263,7 @@ min_by_col <- function(mat, vals) {
 
 setClass("SCTransformPearson", contains = "TransformedMatrix")
 setMethod("iterate_matrix", "SCTransformPearson", function(x) {
-  it <- iterate_matrix(x@matrix)
-  wrapMat_double(iterate_matrix_sctransform_pearson_simd_cpp(ptr(it), x@row_params, x@col_params, x@global_params), it)
+  iterate_matrix_sctransform_pearson_simd_cpp(iterate_matrix(x@matrix), x@row_params, x@col_params, x@global_params)
 })
 setMethod("short_description", "SCTransformPearson", function(x) {
   c(
@@ -285,8 +274,7 @@ setMethod("short_description", "SCTransformPearson", function(x) {
 
 setClass("SCTransformPearsonTranspose", contains = "TransformedMatrix")
 setMethod("iterate_matrix", "SCTransformPearsonTranspose", function(x) {
-  it <- iterate_matrix(x@matrix)
-  wrapMat_double(iterate_matrix_sctransform_pearson_transpose_simd_cpp(ptr(it), x@row_params, x@col_params, x@global_params), it)
+  iterate_matrix_sctransform_pearson_transpose_simd_cpp(iterate_matrix(x@matrix), x@row_params, x@col_params, x@global_params)
 })
 setMethod("short_description", "SCTransformPearsonTranspose", function(x) {
   c(
@@ -298,8 +286,7 @@ setMethod("short_description", "SCTransformPearsonTranspose", function(x) {
 
 setClass("SCTransformPearsonSlow", contains = "TransformedMatrix")
 setMethod("iterate_matrix", "SCTransformPearsonSlow", function(x) {
-  it <- iterate_matrix(x@matrix)
-  wrapMat_double(iterate_matrix_sctransform_pearson_cpp(ptr(it), x@row_params, x@col_params, x@global_params), it)
+  iterate_matrix_sctransform_pearson_cpp(iterate_matrix(x@matrix), x@row_params, x@col_params, x@global_params)
 })
 setMethod("short_description", "SCTransformPearsonSlow", function(x) {
   c(
@@ -310,8 +297,7 @@ setMethod("short_description", "SCTransformPearsonSlow", function(x) {
 
 setClass("SCTransformPearsonTransposeSlow", contains = "TransformedMatrix")
 setMethod("iterate_matrix", "SCTransformPearsonTransposeSlow", function(x) {
-  it <- iterate_matrix(x@matrix)
-  wrapMat_double(iterate_matrix_sctransform_pearson_transpose_cpp(ptr(it), x@row_params, x@col_params, x@global_params), it)
+  iterate_matrix_sctransform_pearson_transpose_cpp(iterate_matrix(x@matrix), x@row_params, x@col_params, x@global_params)
 })
 setMethod("short_description", "SCTransformPearsonTransposeSlow", function(x) {
   c(
@@ -442,7 +428,7 @@ setMethod("iterate_matrix", "TransformScaleShift", function(x) {
         scale_row <- matrix(x@global_params[1], nrow = 1, ncol = ifelse(x@transpose, ncol(x), nrow(x)))
       }
     }
-    res <- wrapMat_double(iterate_matrix_scale_cpp(ptr(res), scale_row, scale_col), res)
+    res <- iterate_matrix_scale_cpp(res, scale_row, scale_col)
   }
   if (any(x@active_transforms[, "shift"])) {
     shift_row <- matrix(0, 0, 0)
@@ -458,8 +444,8 @@ setMethod("iterate_matrix", "TransformScaleShift", function(x) {
         shift_row <- matrix(x@global_params[2], nrow = 1, ncol = ifelse(x@transpose, ncol(x), nrow(x)))
       }
     }
-    if (nrow(shift_row) != 0) res <- wrapMat_double(iterate_matrix_row_shift_cpp(ptr(res), shift_row), res)
-    if (nrow(shift_col) != 0) res <- wrapMat_double(iterate_matrix_col_shift_cpp(ptr(res), shift_col), res)
+    if (nrow(shift_row) != 0) res <- iterate_matrix_row_shift_cpp(res, shift_row)
+    if (nrow(shift_col) != 0) res <- iterate_matrix_col_shift_cpp(res, shift_col)
   }
   res
 })

@@ -8,51 +8,10 @@ NULL
 
 setClass("IterableFragments")
 
-#' This class is used to hold a list of external pointers.
-#' @keywords internal
-setClass("XPtrList", slots = c("pointers" = "list", "type" = "character"))
-ptr <- function(x) {
-  x@pointers[[1]]
-}
-#' Wrap an inner XPtrList with an outer externalptr object (Rcpp::XPtr)
-#'
-#' We also track the type of the current pointer to provide a little safety when converting
-#' to C++.
-#' WARNING: Always make sure to pass the correct inner object, because if it is not passed then
-#' the chain of pointers will be broken and C++ objects could be freed at random by the GC while we're
-#' still using them. ONLY pass inner=new("XPtrList") if the C++ object is not wrapping any other fragments/matrices
-#' @keywords internal
-wrapFragments <- function(outer, inner) {
-  inner@pointers <- c(outer, inner@pointers)
-  inner@type <- "fragments"
-  inner
-}
-wrapMat_uint32_t <- function(outer, inner) {
-  inner@pointers <- c(outer, inner@pointers)
-  inner@type <- "mat_uint32_t"
-  inner
-}
-wrapMat_double <- function(outer, inner) {
-  inner@pointers <- c(outer, inner@pointers)
-  inner@type <- "mat_double"
-  inner
-}
-wrapMat_float <- function(outer, inner) {
-  inner@pointers <- c(outer, inner@pointers)
-  inner@type <- "mat_float"
-  inner
-}
-setMethod("show", "XPtrList", function(object) {
-  cat(sprintf("C++ XPtrList with %d pointers\n", length(object@pointers)))
-})
 
 # Get an external pointer to a C++ FragmentsLoader object. This is only called
 # when an operation is actively ready to run
 setGeneric("iterate_fragments", function(x) standardGeneric("iterate_fragments"))
-setMethod("iterate_fragments", "XPtrList", function(x) {
-  stopifnot(x@type == "fragments")
-  x
-})
 
 # Provide a short description of the IterableFragments, used for
 # pretty-printing pipelines.
@@ -183,7 +142,7 @@ setMethod("cellNames<-", "FragmentsTsv", function(x, ..., value) {
   new("CellRename", x, cell_names = value)
 })
 
-setMethod("iterate_fragments", "FragmentsTsv", function(x) wrapFragments(iterate_10x_fragments_cpp(normalizePath(x@path), x@comment), new("XPtrList")))
+setMethod("iterate_fragments", "FragmentsTsv", function(x) iterate_10x_fragments_cpp(normalizePath(x@path), x@comment))
 setMethod("short_description", "FragmentsTsv", function(x) {
   sprintf("Load 10x fragments file from %s", x@path)
 })
@@ -231,11 +190,9 @@ write_fragments_10x <- function(fragments, path, end_inclusive = TRUE, append_5t
   if (end_inclusive) {
     fragments <- shift_fragments(fragments, shift_end = -1)
   }
-  it <- iterate_fragments(fragments)
-  p <- ptr(it)
   write_10x_fragments_cpp(
     normalizePath(path, mustWork = FALSE),
-    p,
+    iterate_fragments(fragments),
     append_5th_column
   )
 
@@ -282,7 +239,7 @@ setMethod("cellNames<-", "UnpackedMemFragments", function(x, ..., value) {
 })
 
 setMethod("iterate_fragments", "UnpackedMemFragments", function(x) {
-  wrapFragments(iterate_unpacked_fragments_cpp(x), new("XPtrList"))
+  iterate_unpacked_fragments_cpp(x)
 })
 setMethod("short_description", "UnpackedMemFragments", function(x) {
   "Read uncompressed fragments from memory"
@@ -335,7 +292,7 @@ setMethod("cellNames<-", "PackedMemFragments", function(x, ..., value) {
 })
 
 setMethod("iterate_fragments", "PackedMemFragments", function(x) {
-  wrapFragments(iterate_packed_fragments_cpp(x), new("XPtrList"))
+  iterate_packed_fragments_cpp(x)
 })
 setMethod("short_description", "PackedMemFragments", function(x) {
   "Read compressed fragments from memory"
@@ -363,12 +320,11 @@ write_fragments_memory <- function(fragments, compress = TRUE) {
   assert_is(fragments, "IterableFragments")
   assert_is(compress, "logical")
   it <- iterate_fragments(fragments)
-  p <- ptr(it)
   if (compress) {
-    res <- write_packed_fragments_cpp(p)
+    res <- write_packed_fragments_cpp(it)
     do.call(new, c("PackedMemFragments", res))
   } else {
-    res <- write_unpacked_fragments_cpp(p)
+    res <- write_unpacked_fragments_cpp(it)
     do.call(new, c("UnpackedMemFragments", res))
   }
 }
@@ -406,9 +362,9 @@ setMethod("cellNames<-", "FragmentsDir", function(x, ..., value) {
 })
 setMethod("iterate_fragments", "FragmentsDir", function(x) {
   if (x@compressed) {
-    wrapFragments(iterate_packed_fragments_file_cpp(x@dir, x@buffer_size, x@chr_names, x@cell_names), new("XPtrList"))
+    iterate_packed_fragments_file_cpp(x@dir, x@buffer_size, x@chr_names, x@cell_names)
   } else {
-    wrapFragments(iterate_unpacked_fragments_file_cpp(x@dir, x@buffer_size, x@chr_names, x@cell_names), new("XPtrList"))
+    iterate_unpacked_fragments_file_cpp(x@dir, x@buffer_size, x@chr_names, x@cell_names)
   }
 })
 setMethod("short_description", "FragmentsDir", function(x) {
@@ -435,11 +391,10 @@ write_fragments_dir <- function(fragments, dir, compress = TRUE, buffer_size = 1
   assert_is(overwrite, "logical")
   dir <- path.expand(dir)
   it <- iterate_fragments(fragments)
-  p <- ptr(it)
   if (compress) {
-    write_packed_fragments_file_cpp(p, dir, buffer_size, overwrite)
+    write_packed_fragments_file_cpp(it, dir, buffer_size, overwrite)
   } else {
-    write_unpacked_fragments_file_cpp(p, dir, buffer_size, overwrite)
+    write_unpacked_fragments_file_cpp(it, dir, buffer_size, overwrite)
   }
   open_fragments_dir(dir, buffer_size)
 }
@@ -490,9 +445,9 @@ setMethod("cellNames<-", "FragmentsHDF5", function(x, ..., value) {
 })
 setMethod("iterate_fragments", "FragmentsHDF5", function(x) {
   if (x@compressed) {
-    wrapFragments(iterate_packed_fragments_hdf5_cpp(x@path, x@group, x@buffer_size, x@chr_names, x@cell_names), new("XPtrList"))
+    iterate_packed_fragments_hdf5_cpp(x@path, x@group, x@buffer_size, x@chr_names, x@cell_names)
   } else {
-    wrapFragments(iterate_unpacked_fragments_hdf5_cpp(x@path, x@group, x@buffer_size, x@chr_names, x@cell_names), new("XPtrList"))
+    iterate_unpacked_fragments_hdf5_cpp(x@path, x@group, x@buffer_size, x@chr_names, x@cell_names)
   }
 })
 setMethod("short_description", "FragmentsHDF5", function(x) {
@@ -525,11 +480,10 @@ write_fragments_hdf5 <- function(fragments, path, group = "fragments", compress 
     ), .frequency = "regularly", .frequency_id = "hdf5_overwrite")
   }
   it <- iterate_fragments(fragments)
-  p <- ptr(it)
   if (compress) {
-    write_packed_fragments_hdf5_cpp(p, path, group, buffer_size, chunk_size, overwrite)
+    write_packed_fragments_hdf5_cpp(it, path, group, buffer_size, chunk_size, overwrite)
   } else {
-    write_unpacked_fragments_hdf5_cpp(p, path, group, buffer_size, chunk_size, overwrite)
+    write_unpacked_fragments_hdf5_cpp(it, path, group, buffer_size, chunk_size, overwrite)
   }
   open_fragments_hdf5(path, group, buffer_size)
 }
@@ -655,11 +609,7 @@ setClass("ShiftFragments",
   )
 )
 setMethod("iterate_fragments", "ShiftFragments", function(x) {
-  inner <- iterate_fragments(x@fragments)
-  wrapFragments(
-    iterate_shift_cpp(ptr(inner), x@shift_start, x@shift_end),
-    inner
-  )
+  iterate_shift_cpp(iterate_fragments(x@fragments), x@shift_start, x@shift_end)
 })
 setMethod("short_description", "ShiftFragments", function(x) {
   c(
@@ -704,12 +654,8 @@ setClass("SelectLength",
   )
 )
 setMethod("iterate_fragments", "SelectLength", function(x) {
-  inner <- iterate_fragments(x@fragments)
   max_len <- if (is.na(x@max_len)) .Machine$integer.max else x@max_len
-  wrapFragments(
-    iterate_length_select_cpp(ptr(inner), x@min_len, max_len),
-    inner
-  )
+  iterate_length_select_cpp(iterate_fragments(x@fragments), x@min_len, max_len)
 })
 setMethod("short_description", "SelectLength", function(x) {
   text_min <- if (!is.na(x@min_len)) sprintf("%d", x@min_len) else "0"
@@ -755,11 +701,7 @@ setMethod("chrNames<-", "ChrSelectName", function(x, ..., value) {
   x
 })
 setMethod("iterate_fragments", "ChrSelectName", function(x) {
-  inner <- iterate_fragments(x@fragments)
-  wrapFragments(
-    iterate_chr_name_select_cpp(ptr(inner), x@chr_names),
-    inner
-  )
+  iterate_chr_name_select_cpp(iterate_fragments(x@fragments), x@chr_names)
 })
 setMethod("short_description", "ChrSelectName", function(x) {
   c(
@@ -790,11 +732,7 @@ setMethod("chrNames<-", "ChrSelectIndex", function(x, ..., value) {
 })
 
 setMethod("iterate_fragments", "ChrSelectIndex", function(x) {
-  inner <- iterate_fragments(x@fragments)
-  wrapFragments(
-    iterate_chr_index_select_cpp(ptr(inner), x@chr_index_selection - 1),
-    inner
-  )
+  iterate_chr_index_select_cpp(iterate_fragments(x@fragments), x@chr_index_selection - 1)
 })
 setMethod("short_description", "ChrSelectIndex", function(x) {
   c(
@@ -855,11 +793,7 @@ setMethod("cellNames<-", "CellSelectName", function(x, ..., value) {
   x
 })
 setMethod("iterate_fragments", "CellSelectName", function(x) {
-  inner <- iterate_fragments(x@fragments)
-  wrapFragments(
-    iterate_cell_name_select_cpp(ptr(inner), x@cell_names),
-    inner
-  )
+  iterate_cell_name_select_cpp(iterate_fragments(x@fragments), x@cell_names)
 })
 setMethod("short_description", "CellSelectName", function(x) {
   c(
@@ -889,11 +823,7 @@ setMethod("cellNames<-", "CellSelectIndex", function(x, ..., value) {
   new("CellRename", fragments = x, cell_names = value)
 })
 setMethod("iterate_fragments", "CellSelectIndex", function(x) {
-  inner <- iterate_fragments(x@fragments)
-  wrapFragments(
-    iterate_cell_index_select_cpp(ptr(inner), x@cell_index_selection - 1),
-    inner
-  )
+  iterate_cell_index_select_cpp(iterate_fragments(x@fragments), x@cell_index_selection - 1)
 })
 setMethod("short_description", "CellSelectIndex", function(x) {
   c(
@@ -952,11 +882,7 @@ setMethod("cellNames<-", "CellMerge", function(x, ..., value) {
   x
 })
 setMethod("iterate_fragments", "CellMerge", function(x) {
-  inner <- iterate_fragments(x@fragments)
-  wrapFragments(
-    iterate_cell_merge_cpp(ptr(inner), x@group_ids, x@group_names),
-    inner
-  )
+  iterate_cell_merge_cpp(iterate_fragments(x@fragments), x@group_ids, x@group_names)
 })
 setMethod("short_description", "CellMerge", function(x) {
   c(
@@ -1006,11 +932,7 @@ setMethod("chrNames<-", "ChrRename", function(x, ..., value) {
   x
 })
 setMethod("iterate_fragments", "ChrRename", function(x) {
-  inner <- iterate_fragments(x@fragments)
-  wrapFragments(
-    iterate_chr_rename_cpp(ptr(inner), x@chr_names),
-    inner
-  )
+  iterate_chr_rename_cpp(iterate_fragments(x@fragments), x@chr_names)
 })
 setMethod("short_description", "ChrRename", function(x) {
   c(
@@ -1039,11 +961,7 @@ setMethod("cellNames<-", "CellRename", function(x, ..., value) {
   x
 })
 setMethod("iterate_fragments", "CellRename", function(x) {
-  inner <- iterate_fragments(x@fragments)
-  wrapFragments(
-    iterate_cell_rename_cpp(ptr(inner), x@cell_names),
-    inner
-  )
+  iterate_cell_rename_cpp(iterate_fragments(x@fragments), x@cell_names)
 })
 setMethod("short_description", "CellRename", function(x) {
   c(
@@ -1064,11 +982,7 @@ setClass("CellPrefix",
   )
 )
 setMethod("iterate_fragments", "CellPrefix", function(x) {
-  inner <- iterate_fragments(x@fragments)
-  wrapFragments(
-    iterate_cell_prefix_cpp(ptr(inner), x@prefix),
-    inner
-  )
+  iterate_cell_prefix_cpp(iterate_fragments(x@fragments), x@prefix)
 })
 setMethod("short_description", "CellPrefix", function(x) {
   c(
@@ -1110,11 +1024,7 @@ setClass("RegionSelect",
   )
 )
 setMethod("iterate_fragments", "RegionSelect", function(x) {
-  inner <- iterate_fragments(x@fragments)
-  wrapFragments(
-    iterate_region_select_cpp(ptr(inner), x@chr_id, x@start, x@end, x@chr_levels, x@invert_selection),
-    inner
-  )
+  iterate_region_select_cpp(iterate_fragments(x@fragments), x@chr_id, x@start, x@end, x@chr_levels, x@invert_selection)
 })
 setMethod("short_description", "RegionSelect", function(x) {
   # Subset strings first to avoid a very slow string concatenation process
@@ -1184,11 +1094,7 @@ setMethod("cellNames<-", "MergeFragments", function(x, ..., value) {
 })
 
 setMethod("iterate_fragments", "MergeFragments", function(x) {
-  inner <- lapply(x@fragments_list, iterate_fragments)
-  wrapFragments(
-    iterate_merge_fragments_cpp(lapply(inner, ptr)),
-    new("XPtrList", pointers = inner)
-  )
+  iterate_merge_fragments_cpp(lapply(x@fragments_list, iterate_fragments))
 })
 setMethod("short_description", "MergeFragments", function(x) {
   # Subset strings first to avoid a very slow string concatenation process
@@ -1236,7 +1142,7 @@ fragments_identical <- function(fragments1, fragments2) {
   assert_is(fragments2, "IterableFragments")
   i1 <- iterate_fragments(fragments1)
   i2 <- iterate_fragments(fragments2)
-  fragments_identical_cpp(ptr(i1), ptr(i2))
+  fragments_identical_cpp(i1, i2)
 }
 
 #' Scan through fragments without performing any operations (used for benchmarking)
@@ -1245,7 +1151,7 @@ fragments_identical <- function(fragments1, fragments2) {
 scan_fragments <- function(fragments) {
   assert_is(fragments, "IterableFragments")
   i <- iterate_fragments(fragments)
-  scan_fragments_cpp(ptr(i))
+  scan_fragments_cpp(i)
 }
 
 
