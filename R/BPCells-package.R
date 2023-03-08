@@ -1,10 +1,26 @@
 #' @useDynLib BPCells, .registration = TRUE
 #' @importFrom Rcpp sourceCpp
 #' @importClassesFrom Matrix dgCMatrix
-#' @importMethodsFrom Matrix t rowSums colSums rowMeans colMeans %*%
 #' @importFrom methods is new as
 #' @importFrom magrittr %>%
 NULL
+
+#' @importMethodsFrom Matrix t 
+#' @export 
+Matrix::t
+#' @importMethodsFrom Matrix rowSums
+#' @export
+Matrix::rowSums
+#' @importMethodsFrom Matrix colSums
+#' @export
+Matrix::colSums
+#' @importMethodsFrom Matrix rowMeans
+#' @export
+Matrix::rowMeans
+#' @importMethodsFrom Matrix colMeans
+#' @export
+Matrix::colMeans
+
 
 
 #' Genomic range formats
