@@ -178,3 +178,6 @@ fragments in memory.
     - LSI is not expected to be substantially faster than ArchR, although the C++
       implementation may provide a several-fold speedup, and bitpacking will provide
       a 4-6x memory savings.
+
+
+<img src="https://plausible.benparks.net/flask-plausible/bpcells-github-readme.png" style="position:absolute;" />
