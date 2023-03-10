@@ -94,6 +94,10 @@ assert_greater_than_zero <- function(vector, n = 1) {
   assert_is_numeric(vector, n + 1)
   if (any(vector <= 0)) pretty_error(vector, "must be greater than zero", n)
 }
+assert_not_negative <- function(vector, n = 0) {
+  assert_is_numeric(vector, n + 1)
+  if (any(vector < 0)) pretty_error(vector, "must be non-negative", n)
+}
 assert_is <- function(object, class, n = 1) {
   if (length(class) == 1) {
     if (!is(object, class)) pretty_error(object, sprintf("must have class \"%s\"", class), n)

@@ -445,6 +445,10 @@ iterate_matrix_col_shift_cpp <- function(matrix, col_shift) {
     .Call(`_BPCells_iterate_matrix_col_shift_cpp`, matrix, col_shift)
 }
 
+iterate_matrix_round_cpp <- function(matrix, digits) {
+    .Call(`_BPCells_iterate_matrix_round_cpp`, matrix, digits)
+}
+
 iterate_csparse_matrix_cpp <- function(matrix, row_names, col_names) {
     .Call(`_BPCells_iterate_csparse_matrix_cpp`, matrix, row_names, col_names)
 }

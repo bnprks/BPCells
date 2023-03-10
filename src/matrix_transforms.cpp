@@ -7,6 +7,7 @@
 #include "matrixTransforms/MatrixTransform.h"
 #include "matrixTransforms/Min.h"
 #include "matrixTransforms/Pow.h"
+#include "matrixTransforms/Round.h"
 #include "matrixTransforms/SCTransform.h"
 #include "matrixTransforms/Scale.h"
 #include "matrixTransforms/Shift.h"
@@ -154,5 +155,14 @@ SEXP iterate_matrix_row_shift_cpp(SEXP matrix, Eigen::Map<Eigen::ArrayXXd> row_s
 SEXP iterate_matrix_col_shift_cpp(SEXP matrix, Eigen::Map<Eigen::ArrayXXd> col_shift) {
     return make_unique_xptr<ShiftCols>(
         take_unique_xptr<MatrixLoader<double>>(matrix), TransformFit{Eigen::ArrayXXd(), col_shift}
+    );
+}
+
+// [[Rcpp::export]]
+SEXP iterate_matrix_round_cpp(SEXP matrix, double digits) {
+    Eigen::ArrayXd global_params(1);
+    global_params = digits;
+    return make_unique_xptr<Round>
+        (take_unique_xptr<MatrixLoader<double>>(matrix), TransformFit{{}, {}, global_params}
     );
 }
