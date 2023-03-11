@@ -76,6 +76,12 @@ setGeneric("iterate_matrix", function(x) standardGeneric("iterate_matrix"))
 #' @describeIn IterableMatrix-methods Get the matrix data type (mat_uint32_t, mat_float, or mat_double for now)
 setGeneric("matrix_type", function(x) standardGeneric("matrix_type"))
 
+#' @describeIn IterableMatrix-methods Get the matrix storage order ("row" or "col")
+#' @export
+setGeneric("storage_order", function(x) standardGeneric("storage_order"))
+
+setMethod("storage_order", "IterableMatrix", function(x) if(x@transpose) "row" else "col")
+
 #' Return a list of input matrices to the current matrix (experimental)
 #'
 #' File objects have 0 inputs. Most transforms have 1 input. Some transforms
@@ -437,6 +443,53 @@ mask_matrix <- function(mat, mask, invert=FALSE) {
   )
 }
 
+setClass("MatrixRankTransform",
+  contains = "IterableMatrix",
+  slots = c(
+    matrix = "IterableMatrix"
+  ),
+  prototype = list(
+    matrix = NULL
+  )
+)
+setMethod("matrix_type", signature(x = "MatrixRankTransform"), function(x) "double")
+setMethod("iterate_matrix", "MatrixRankTransform", function(x) {
+  iter_function <- get(sprintf("iterate_matrix_rank_%s_cpp", matrix_type(x@matrix)))
+  iter_function(iterate_matrix(x@matrix))
+})
+
+setMethod("short_description", "MatrixRankTransform", function(x) {
+  c(
+    short_description(x@matrix),
+    sprintf(
+      "Rank transform each matrix %s",
+      ifelse(x@transpose, "row", "col")
+    )
+  )
+})
+
+#' Rank-transform a matrix
+#' 
+#' Rank the values within each row/col of a matrix, and output
+#' the rank values as a new matrix. Rank values are offset such
+#' that the rank of a 0 value is 0, and ties are handled by
+#' averaging ranks.
+#'
+#' Note that efficient rank calculation depends on the storage order
+#' of a matrix, so it may be necessary to call transpose_storage_order()
+#'
+#' @param mat Data matrix (IterableMatrix)
+#' @param axis Axis to rank values within. "col" to rank values within each column,
+#'     and "row" to rank values within each row.
+rank_transform <- function(mat, axis) {
+  assert_is(mat, "IterableMatrix")
+  assert_is_character(axis)
+  assert_len(axis, 1)
+  assert_true(axis %in% c("row", "col"))
+  assert_true(storage_order(mat) == axis)
+
+  wrapMatrix("MatrixRankTransform", mat)
+}
 
 # Row sums and row means
 

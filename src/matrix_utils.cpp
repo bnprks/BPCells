@@ -4,6 +4,7 @@
 #include <RcppEigen.h>
 
 #include "matrixIterators/CSparseMatrix.h"
+#include "matrixIterators/ColwiseRank.h"
 #include "matrixIterators/ConcatenateMatrix.h"
 #include "matrixIterators/Mask.h"
 #include "matrixIterators/MatrixIndexSelect.h"
@@ -226,6 +227,21 @@ SEXP iterate_matrix_mask_double_cpp(SEXP mat, SEXP mask, bool invert) {
         return make_unique_xptr<Mask<double, true>>(take_unique_xptr<MatrixLoader<double>>(mat), take_unique_xptr<MatrixLoader<uint32_t>>(mask));
     else
         return make_unique_xptr<Mask<double, false>>(take_unique_xptr<MatrixLoader<double>>(mat), take_unique_xptr<MatrixLoader<uint32_t>>(mask));
+}
+
+// [[Rcpp::export]]
+SEXP iterate_matrix_rank_uint32_t_cpp(SEXP matrix) {
+    return make_unique_xptr<ColwiseRank<uint32_t>>(take_unique_xptr<MatrixLoader<uint32_t>>(matrix));
+}
+
+// [[Rcpp::export]]
+SEXP iterate_matrix_rank_float_cpp(SEXP matrix) {
+    return make_unique_xptr<ColwiseRank<float>>(take_unique_xptr<MatrixLoader<float>>(matrix));
+}
+
+// [[Rcpp::export]]
+SEXP iterate_matrix_rank_double_cpp(SEXP matrix) {
+    return make_unique_xptr<ColwiseRank<double>>(take_unique_xptr<MatrixLoader<double>>(matrix));
 }
 
 // [[Rcpp::export]]

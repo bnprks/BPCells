@@ -212,6 +212,39 @@ test_that("Matrix mask works", {
   }
 })
 
+test_that("Rank transform works", {
+  test_mats <- list(generate_sparse_matrix(4000, 10), generate_sparse_matrix(10, 10, max_val=100))
+  # Add offsets so we have explicit zeros and negative values
+  test_mats[[1]]@x <- test_mats[[1]]@x - 5
+  test_mats[[2]]@x <- test_mats[[2]]@x - 50
+  
+  for (m in test_mats) {
+    for (type in c("uint32_t", "float", "double")) {
+      if (type == "uint32_t") m@x <- m@x - min(m@x) # Get rid of negative value for uint32_t test
+      r_rank <- as.matrix(m)
+      for (i in seq_len(ncol(r_rank))) {
+        r_rank[,i] <- rank(as.numeric(m[,i]))
+      }
+
+      r <- m %>% as("IterableMatrix") %>%
+        convert_matrix_type(type) %>%
+        rank_transform("col")
+        
+      bp_rank <- as(r, "dgCMatrix") %>% as.matrix()
+
+      # Rank of 0 entries should map to 0
+      expect_true(all(bp_rank[as.matrix(m) == 0] == 0))
+
+      # When we undo the rank offset, we should match R
+      for (i in seq_len(ncol(r_rank))) {
+        bp_rank[,i] <- bp_rank[,i] + (nrow(r) + 1)/2 - mean(bp_rank[,i])
+      }
+
+      expect_identical(r_rank, bp_rank)
+    }
+  }
+})
+
 test_that("Generic methods work", {
   # Generic methods to test:
   # - dim
@@ -268,7 +301,8 @@ test_that("Generic methods work", {
     expect_identical(dim(trans), dim(m))
     expect_identical(dimnames(trans), dimnames(m))
     expect_true(matrix_type(trans) %in% c("uint32_t", "float", "double"))
-    matrix_is_transform(trans)
+    expect_type(matrix_is_transform(trans), "logical")
+    expect_true(storage_order(trans) %in% c("roww", "col"))
 
     expect_identical(rowSums(trans), rowSums(m))
     expect_identical(colSums(trans), colSums(m))

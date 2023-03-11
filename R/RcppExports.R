@@ -549,6 +549,18 @@ iterate_matrix_mask_double_cpp <- function(mat, mask, invert) {
     .Call(`_BPCells_iterate_matrix_mask_double_cpp`, mat, mask, invert)
 }
 
+iterate_matrix_rank_uint32_t_cpp <- function(matrix) {
+    .Call(`_BPCells_iterate_matrix_rank_uint32_t_cpp`, matrix)
+}
+
+iterate_matrix_rank_float_cpp <- function(matrix) {
+    .Call(`_BPCells_iterate_matrix_rank_float_cpp`, matrix)
+}
+
+iterate_matrix_rank_double_cpp <- function(matrix) {
+    .Call(`_BPCells_iterate_matrix_rank_double_cpp`, matrix)
+}
+
 dense_multiply_right_cpp <- function(matrix, B) {
     .Call(`_BPCells_dense_multiply_right_cpp`, matrix, B)
 }

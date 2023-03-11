@@ -229,7 +229,7 @@ void lsdRadixSortArrays(
 
     // Tally up which output index each byte combination should start at
     // So radix_counts[i][j] will turn into the sum of all radix_counts[i][k] where k < j
-    for (int i = 0; i < radix_bytes; i++)
+    for (uint32_t i = 0; i < radix_bytes; i++)
     {
         uint32_t running_sum = 0;
         for (int j = 0; j < 256; j++)
@@ -241,7 +241,7 @@ void lsdRadixSortArrays(
         }
     }
 
-    for (int i = 0; i < radix_bytes; i++)
+    for (uint32_t i = 0; i < radix_bytes; i++)
     {
         // Skip if this byte is all identical
         if (skip_byte[i])
