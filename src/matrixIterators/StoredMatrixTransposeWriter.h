@@ -144,7 +144,7 @@ template <typename T> class StoredMatrixTransposeWriter : public MatrixWriter<T>
 
                         // Sort by (col, row)
                         // Already sorted by row, because input is sorted by column
-                        lsdRadixSortArrays<uint32_t, T>(
+                        lsdRadixSortArrays<uint32_t, uint32_t, T>(
                             elems, col_data, row_data, val_data, col_buf, row_buf, val_buf
                         );
                         // Output to tmpStorage
@@ -175,7 +175,7 @@ template <typename T> class StoredMatrixTransposeWriter : public MatrixWriter<T>
                 if (checkInterrupt != NULL) checkInterrupt();
                 // Sort by (col, row)
                 // Already sorted by row, because input is sorted by column
-                lsdRadixSortArrays<uint32_t, T>(
+                lsdRadixSortArrays<uint32_t, uint32_t, T>(
                     elems, col_data, row_data, val_data, col_buf, row_buf, val_buf
                 );
                 // Output to tmpStorage

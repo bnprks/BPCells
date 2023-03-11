@@ -100,7 +100,7 @@ class InsertionIterator {
         end_cell.resize(end_size);
         end_data_buf.resize(end_size);
         end_cell_buf.resize(end_size);
-        lsdRadixSortArrays<uint32_t>(
+        lsdRadixSortArrays<uint32_t, uint32_t>(
             end_capacity + start_data.size(), end_data, end_cell, end_data_buf, end_cell_buf
         );
 
