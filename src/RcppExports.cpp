@@ -1915,6 +1915,42 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// wilcoxon_rank_sum_pval_uint32_t_cpp
+Eigen::MatrixXd wilcoxon_rank_sum_pval_uint32_t_cpp(SEXP matrix, std::vector<uint32_t> groups);
+RcppExport SEXP _BPCells_wilcoxon_rank_sum_pval_uint32_t_cpp(SEXP matrixSEXP, SEXP groupsSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type matrix(matrixSEXP);
+    Rcpp::traits::input_parameter< std::vector<uint32_t> >::type groups(groupsSEXP);
+    rcpp_result_gen = Rcpp::wrap(wilcoxon_rank_sum_pval_uint32_t_cpp(matrix, groups));
+    return rcpp_result_gen;
+END_RCPP
+}
+// wilcoxon_rank_sum_pval_float_cpp
+Eigen::MatrixXd wilcoxon_rank_sum_pval_float_cpp(SEXP matrix, std::vector<uint32_t> groups);
+RcppExport SEXP _BPCells_wilcoxon_rank_sum_pval_float_cpp(SEXP matrixSEXP, SEXP groupsSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type matrix(matrixSEXP);
+    Rcpp::traits::input_parameter< std::vector<uint32_t> >::type groups(groupsSEXP);
+    rcpp_result_gen = Rcpp::wrap(wilcoxon_rank_sum_pval_float_cpp(matrix, groups));
+    return rcpp_result_gen;
+END_RCPP
+}
+// wilcoxon_rank_sum_pval_double_cpp
+Eigen::MatrixXd wilcoxon_rank_sum_pval_double_cpp(SEXP matrix, std::vector<uint32_t> groups);
+RcppExport SEXP _BPCells_wilcoxon_rank_sum_pval_double_cpp(SEXP matrixSEXP, SEXP groupsSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type matrix(matrixSEXP);
+    Rcpp::traits::input_parameter< std::vector<uint32_t> >::type groups(groupsSEXP);
+    rcpp_result_gen = Rcpp::wrap(wilcoxon_rank_sum_pval_double_cpp(matrix, groups));
+    return rcpp_result_gen;
+END_RCPP
+}
 // matrix_identical_uint32_t_cpp
 bool matrix_identical_uint32_t_cpp(SEXP mat1, SEXP mat2);
 RcppExport SEXP _BPCells_matrix_identical_uint32_t_cpp(SEXP mat1SEXP, SEXP mat2SEXP) {
@@ -2186,6 +2222,9 @@ static const R_CallMethodDef CallEntries[] = {
     {"_BPCells_row_sums_double_cpp", (DL_FUNC) &_BPCells_row_sums_double_cpp, 1},
     {"_BPCells_col_sums_double_cpp", (DL_FUNC) &_BPCells_col_sums_double_cpp, 1},
     {"_BPCells_matrix_stats_cpp", (DL_FUNC) &_BPCells_matrix_stats_cpp, 3},
+    {"_BPCells_wilcoxon_rank_sum_pval_uint32_t_cpp", (DL_FUNC) &_BPCells_wilcoxon_rank_sum_pval_uint32_t_cpp, 2},
+    {"_BPCells_wilcoxon_rank_sum_pval_float_cpp", (DL_FUNC) &_BPCells_wilcoxon_rank_sum_pval_float_cpp, 2},
+    {"_BPCells_wilcoxon_rank_sum_pval_double_cpp", (DL_FUNC) &_BPCells_wilcoxon_rank_sum_pval_double_cpp, 2},
     {"_BPCells_matrix_identical_uint32_t_cpp", (DL_FUNC) &_BPCells_matrix_identical_uint32_t_cpp, 2},
     {"_BPCells_glm_check_gradient_cpp", (DL_FUNC) &_BPCells_glm_check_gradient_cpp, 6},
     {"_BPCells_glm_trace_solve_cpp", (DL_FUNC) &_BPCells_glm_trace_solve_cpp, 10},

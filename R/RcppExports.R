@@ -589,6 +589,18 @@ matrix_stats_cpp <- function(matrix, row_stats, col_stats) {
     .Call(`_BPCells_matrix_stats_cpp`, matrix, row_stats, col_stats)
 }
 
+wilcoxon_rank_sum_pval_uint32_t_cpp <- function(matrix, groups) {
+    .Call(`_BPCells_wilcoxon_rank_sum_pval_uint32_t_cpp`, matrix, groups)
+}
+
+wilcoxon_rank_sum_pval_float_cpp <- function(matrix, groups) {
+    .Call(`_BPCells_wilcoxon_rank_sum_pval_float_cpp`, matrix, groups)
+}
+
+wilcoxon_rank_sum_pval_double_cpp <- function(matrix, groups) {
+    .Call(`_BPCells_wilcoxon_rank_sum_pval_double_cpp`, matrix, groups)
+}
+
 matrix_identical_uint32_t_cpp <- function(mat1, mat2) {
     .Call(`_BPCells_matrix_identical_uint32_t_cpp`, mat1, mat2)
 }

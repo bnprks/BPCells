@@ -119,7 +119,7 @@ template <class T> class ColwiseRank : public MatrixLoader<double> {
             for (; i < cap && val_data[i] == 0; i += 1) {
                 ranks[i] = 0;
             }
-            uint32_t total_zeros = implicit_zeros_count + explicit_zeros_count;
+            double total_zeros = implicit_zeros_count + explicit_zeros_count;
             tie_statistic += total_zeros * total_zeros * total_zeros - total_zeros;
             // Loop over positives
             for (; i < cap; i += ties) {

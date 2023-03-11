@@ -13,6 +13,7 @@
 #include "matrixIterators/MatrixOps.h"
 #include "matrixIterators/MatrixStats.h"
 #include "matrixIterators/TSparseMatrixWriter.h"
+#include "matrixIterators/WilcoxonRankSum.h"
 
 #include "R_array_io.h"
 #include "R_xptr_wrapper.h"
@@ -289,6 +290,21 @@ List matrix_stats_cpp(SEXP matrix, int row_stats, int col_stats) {
     );
 
     return List::create(Named("row_stats") = res.row_stats, Named("col_stats") = res.col_stats);
+}
+
+// [[Rcpp::export]]
+Eigen::MatrixXd wilcoxon_rank_sum_pval_uint32_t_cpp(SEXP matrix, std::vector<uint32_t> groups) {
+    return wilcoxon_rank_sum(take_unique_xptr<MatrixLoader<uint32_t>>(matrix), groups);
+}
+
+// [[Rcpp::export]]
+Eigen::MatrixXd wilcoxon_rank_sum_pval_float_cpp(SEXP matrix, std::vector<uint32_t> groups) {
+    return wilcoxon_rank_sum(take_unique_xptr<MatrixLoader<float>>(matrix), groups);
+}
+
+// [[Rcpp::export]]
+Eigen::MatrixXd wilcoxon_rank_sum_pval_double_cpp(SEXP matrix, std::vector<uint32_t> groups) {
+    return wilcoxon_rank_sum(take_unique_xptr<MatrixLoader<double>>(matrix), groups);
 }
 
 // [[Rcpp::export]]
