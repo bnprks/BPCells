@@ -113,6 +113,9 @@ inline vec_double log1p_d(const vec_double &v) { return Sleef_log1pd4_u10avx2(v)
 inline vec_float expm1_f(const vec_float &v) { return Sleef_expm1f8_u10avx2(v); }
 inline vec_double expm1_d(const vec_double &v) { return Sleef_expm1d4_u10avx2(v); }
 
+inline vec_float exp_f(const vec_float &v) { return Sleef_expf8_u10avx2(v); }
+inline vec_double exp_d(const vec_double &v) { return Sleef_expd4_u10avx2(v); }
+
 inline vec_float pow_f(const vec_float &v, const vec_float &exp) {
     return Sleef_powf8_u10avx2(v, exp);
 }
@@ -208,6 +211,9 @@ inline vec_double log1p_d(const vec_double &v) { return Sleef_log1pd4_u10avx(v);
 inline vec_float expm1_f(const vec_float &v) { return Sleef_expm1f8_u10avx(v); }
 inline vec_double expm1_d(const vec_double &v) { return Sleef_expm1d4_u10avx(v); }
 
+inline vec_float exp_f(const vec_float &v) { return Sleef_expf8_u10avx(v); }
+inline vec_double exp_d(const vec_double &v) { return Sleef_expd4_u10avx(v); }
+
 inline vec_float pow_f(const vec_float &v, const vec_float &exp) {
     return Sleef_powf8_u10avx(v, exp);
 }
@@ -301,6 +307,9 @@ inline vec_double log1p_d(const vec_double &v) { return Sleef_log1pd2_u10sse2(v)
 
 inline vec_float expm1_f(const vec_float &v) { return Sleef_expm1f4_u10sse2(v); }
 inline vec_double expm1_d(const vec_double &v) { return Sleef_expm1d2_u10sse2(v); }
+
+inline vec_float exp_f(const vec_float &v) { return Sleef_expf4_u10sse2(v); }
+inline vec_double exp_d(const vec_double &v) { return Sleef_expd2_u10sse2(v); }
 
 inline vec_float pow_f(const vec_float &v, const vec_float &exp) {
     return Sleef_powf4_u10sse2(v, exp);
@@ -396,6 +405,9 @@ inline vec_double log1p_d(const vec_double &v) { return Sleef_log1pd2_u10advsimd
 
 inline vec_float expm1_f(const vec_float &v) { return Sleef_expm1f4_u10advsimd(v); }
 inline vec_double expm1_d(const vec_double &v) { return Sleef_expm1d2_u10advsimd(v); }
+
+inline vec_float exp_f(const vec_float &v) { return Sleef_expf4_u10advsimd(v); }
+inline vec_double exp_d(const vec_double &v) { return Sleef_expd2_u10advsimd(v); }
 
 inline vec_float pow_f(const vec_float &v, const vec_float &exp) {
     return Sleef_powf4_u10advsimd(v, exp);
@@ -510,6 +522,13 @@ inline vec_float expm1_f(const vec_float &v) {
 }
 inline vec_double expm1_d(const vec_double &v) {
     return {expm1(v.x0), expm1(v.x1), expm1(v.x2), expm1(v.x3)};
+}
+
+inline vec_float exp_f(const vec_float &v) {
+    return {expf(v.x0), expf(v.x1), expf(v.x2), expf(v.x3)};
+}
+inline vec_double exp_d(const vec_double &v) {
+    return {exp(v.x0), exp(v.x1), exp(v.x2), exp(v.x3)};
 }
 
 inline vec_float pow_f(const vec_float &v, const vec_float &exp) {

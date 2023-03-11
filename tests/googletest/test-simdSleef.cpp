@@ -267,6 +267,11 @@ TEST(SimdSleef, Expm1) {
     test_unary_op_double(expm1_d, expm1);
 }
 
+TEST(SimdSleef, Exp) {
+    test_unary_op_float(exp_f, expf);
+    test_unary_op_double(exp_d, exp);
+}
+
 TEST(SimdSleef, Pow) {
     test_binary_op_float(pow_f, pow);
     test_binary_op_double(pow_d, pow);

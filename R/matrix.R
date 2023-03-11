@@ -314,7 +314,7 @@ setMethod("short_description", "MatrixMultiply", function(x) {
 })
 
 setMethod("%*%", signature(x = "IterableMatrix", y = "IterableMatrix"), function(x, y) {
-  if (x@transpose != y@transpose) stop("Cannot multiply matrices with different interal transpose states.\nPlease convert one matrix to dgCMatrix, transpose, then re-convert to IterableMatrix.")
+  if (x@transpose != y@transpose) stop("Cannot multiply matrices with different interal transpose states.\nPlease use transpose_storage_order().")
   if (x@transpose) {
     return(t(t(y) %*% t(x)))
   }
@@ -367,6 +367,75 @@ setMethod("[", "MatrixMultiply", function(x, i, j, ...) {
 
   x
 })
+
+setClass("MatrixMask",
+  contains = "IterableMatrix",
+  slots = c(
+    matrix = "IterableMatrix",
+    mask = "IterableMatrix",
+    invert = "logical"
+  ),
+  prototype = list(
+    matrix = NULL,
+    mask = NULL,
+    invert = FALSE
+  )
+)
+setMethod("matrix_type", signature(x = "MatrixMask"), function(x) matrix_type(x@matrix))
+setMethod("matrix_inputs", "MatrixMask", function(x) list(x@matrix, x@mask))
+setMethod("matrix_inputs<-", "MatrixMask", function(x, ..., value) {
+  assert_is(value, "list")
+  assert_len(value, 2)
+  for (v in value) assert_is(v, "IterableMatrix")
+  x@matrix <- value[[1]]
+  x@mask <- value[[2]]
+  x
+})
+
+setMethod("iterate_matrix", "MatrixMask", function(x) {
+  iter_function <- get(sprintf("iterate_matrix_mask_%s_cpp", matrix_type(x)))
+  iter_function(iterate_matrix(x@matrix), iterate_matrix(x@mask), x@invert)
+})
+
+setMethod("short_description", "MatrixMask", function(x) {
+  c(
+    short_description(x@matrix),
+    sprintf(
+      "Mask entries according to matrix %s %s",
+      class(x@mask),
+      ifelse(x@invert, "(inverted)", "")
+    )
+  )
+})
+
+#' Mask matrix entries to zero
+#' Set matrix entries to zero given a mask matrix of the 
+#' same dimensions. Normally, non-zero values in the mask
+#' will set the matrix entry to zero. If inverted, zero
+#' values in the mask matrix will set the matrix entry to zero.
+#' @param mat Data matrix (IterableMatrix)
+#' @param mask Mask matrix (IterableMatrix or dgCMatrix)
+mask_matrix <- function(mat, mask, invert=FALSE) {
+  assert_is(mat, "IterableMatrix")
+  assert_is(invert, "logical")
+  assert_is(mask, c("IterableMatrix", "dgCMatrix"))
+  assert_true(nrow(mat) == nrow(mask) && ncol(mat) == ncol(mask))
+  if (is(mask, "dgCMatrix")) {
+    if (mat@transpose)
+      mask <- t(as(t(mask), "IterableMatrix"))
+    else
+      mask <- as(mask, "IterableMatrix")
+  }
+  
+  if (mat@transpose != mask@transpose) stop("Cannot mask matrices with different interal transpose states.\nPlease use transpose_storage_order().")
+  mask <- convert_matrix_type(mask, "uint32_t")
+
+  wrapMatrix("MatrixMask",
+    mat,
+    mask = mask,
+    invert = invert
+  )
+}
 
 
 # Row sums and row means
@@ -602,7 +671,7 @@ setMethod("short_description", "RowBindMatrices", function(x) {
 })
 
 setMethod("rbind2", signature(x = "IterableMatrix", y = "IterableMatrix"), function(x, y, ...) {
-  if (x@transpose != y@transpose) stop("Cannot merge matrices with different interal transpose states.\nPlease convert one matrix to dgCMatrix, transpose, then re-convert to IterableMatrix.")
+  if (x@transpose != y@transpose) stop("Cannot merge matrices with different interal transpose states.\nPlease use transpose_storage_order().")
   if (x@transpose) {
     return(t(cbind2(t(x), t(y))))
   }
@@ -665,7 +734,7 @@ setMethod("short_description", "ColBindMatrices", function(x) {
 })
 
 setMethod("cbind2", signature(x = "IterableMatrix", y = "IterableMatrix"), function(x, y, ...) {
-  if (x@transpose != y@transpose) stop("Cannot merge matrices with different interal transpose states.\nPlease convert one matrix to dgCMatrix, transpose, then re-convert to IterableMatrix.")
+  if (x@transpose != y@transpose) stop("Cannot merge matrices with different interal transpose states.\nPlease use transpose_storage_order().")
   if (x@transpose) {
     return(t(rbind2(t(x), t(y))))
   }
