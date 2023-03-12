@@ -7,6 +7,7 @@
 #include "matrixTransforms/MatrixTransform.h"
 #include "matrixTransforms/Min.h"
 #include "matrixTransforms/Pow.h"
+#include "matrixTransforms/Round.h"
 #include "matrixTransforms/SCTransform.h"
 #include "matrixTransforms/Scale.h"
 #include "matrixTransforms/Shift.h"
@@ -37,6 +38,29 @@ SEXP iterate_matrix_expm1simd_cpp(SEXP matrix) {
 }
 
 // [[Rcpp::export]]
+SEXP iterate_matrix_pow_cpp(SEXP matrix, double exponent) {
+    Eigen::ArrayXd global_params(1);
+    global_params = exponent;
+    return make_unique_xptr<Pow>(
+        take_unique_xptr<MatrixLoader<double>>(matrix), TransformFit{{}, {}, global_params}
+    );
+}
+
+// [[Rcpp::export]]
+SEXP iterate_matrix_powsimd_cpp(SEXP matrix, double exponent) {
+    Eigen::ArrayXd global_params(1);
+    global_params = exponent;
+    return make_unique_xptr<PowSIMD>(
+        take_unique_xptr<MatrixLoader<double>>(matrix), TransformFit{{}, {}, global_params}
+    );
+}
+
+// [[Rcpp::export]]
+SEXP iterate_matrix_square_cpp(SEXP matrix) {
+    return make_unique_xptr<Square>(take_unique_xptr<MatrixLoader<double>>(matrix));
+}
+
+// [[Rcpp::export]]
 SEXP iterate_matrix_min_cpp(SEXP matrix, double min_val) {
     Eigen::ArrayXd global_params(1);
     global_params = min_val;
@@ -60,26 +84,8 @@ SEXP iterate_matrix_min_by_col_cpp(SEXP matrix, Eigen::ArrayXXd col_min) {
 }
 
 // [[Rcpp::export]]
-SEXP iterate_matrix_pow_cpp(SEXP matrix, double exponent) {
-    Eigen::ArrayXd global_params(1);
-    global_params = exponent;
-    return make_unique_xptr<Pow>(
-        take_unique_xptr<MatrixLoader<double>>(matrix), TransformFit{{}, {}, global_params}
-    );
-}
-
-// [[Rcpp::export]]
-SEXP iterate_matrix_powsimd_cpp(SEXP matrix, double exponent) {
-    Eigen::ArrayXd global_params(1);
-    global_params = exponent;
-    return make_unique_xptr<PowSIMD>(
-        take_unique_xptr<MatrixLoader<double>>(matrix), TransformFit{{}, {}, global_params}
-    );
-}
-
-// [[Rcpp::export]]
-SEXP iterate_matrix_square_cpp(SEXP matrix) {
-    return make_unique_xptr<Square>(take_unique_xptr<MatrixLoader<double>>(matrix));
+SEXP iterate_matrix_round_cpp(SEXP matrix) {
+    return make_unique_xptr<Round>(take_unique_xptr<MatrixLoader<double>>(matrix));
 }
 
 // [[Rcpp::export]]
