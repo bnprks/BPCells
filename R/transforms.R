@@ -275,12 +275,12 @@ setMethod("short_description", "TransformRound", function(x) {
 })
 
 # Initially, allow only digits=0.
-setMethod("round", "IterableMatrix", function(mat, digits=0) {
-  assert_is(mat, "IterableMatrix")
+setMethod("round", "IterableMatrix", function(x, digits=0) {
+  assert_is(x, "IterableMatrix")
   assert_is(digits, "numeric")
   if (digits != 0) stop("BPCells only supports round() with digits=0")
 
-  wrapMatrix("TransformRound", convert_matrix_type(mat, "double"))
+  wrapMatrix("TransformRound", convert_matrix_type(x, "double"))
 })
 
 

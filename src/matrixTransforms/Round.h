@@ -1,7 +1,5 @@
 #pragma once
 
-#include <cmath>
-#include "../lib/sleef_wrapper.h"
 #include "MatrixTransform.h"
 
 namespace BPCells {
