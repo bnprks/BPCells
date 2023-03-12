@@ -1332,6 +1332,41 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// iterate_matrix_pow_cpp
+SEXP iterate_matrix_pow_cpp(SEXP matrix, double exponent);
+RcppExport SEXP _BPCells_iterate_matrix_pow_cpp(SEXP matrixSEXP, SEXP exponentSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type matrix(matrixSEXP);
+    Rcpp::traits::input_parameter< double >::type exponent(exponentSEXP);
+    rcpp_result_gen = Rcpp::wrap(iterate_matrix_pow_cpp(matrix, exponent));
+    return rcpp_result_gen;
+END_RCPP
+}
+// iterate_matrix_powsimd_cpp
+SEXP iterate_matrix_powsimd_cpp(SEXP matrix, double exponent);
+RcppExport SEXP _BPCells_iterate_matrix_powsimd_cpp(SEXP matrixSEXP, SEXP exponentSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type matrix(matrixSEXP);
+    Rcpp::traits::input_parameter< double >::type exponent(exponentSEXP);
+    rcpp_result_gen = Rcpp::wrap(iterate_matrix_powsimd_cpp(matrix, exponent));
+    return rcpp_result_gen;
+END_RCPP
+}
+// iterate_matrix_square_cpp
+SEXP iterate_matrix_square_cpp(SEXP matrix);
+RcppExport SEXP _BPCells_iterate_matrix_square_cpp(SEXP matrixSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type matrix(matrixSEXP);
+    rcpp_result_gen = Rcpp::wrap(iterate_matrix_square_cpp(matrix));
+    return rcpp_result_gen;
+END_RCPP
+}
 // iterate_matrix_min_cpp
 SEXP iterate_matrix_min_cpp(SEXP matrix, double min_val);
 RcppExport SEXP _BPCells_iterate_matrix_min_cpp(SEXP matrixSEXP, SEXP min_valSEXP) {
@@ -1368,38 +1403,14 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// iterate_matrix_pow_cpp
-SEXP iterate_matrix_pow_cpp(SEXP matrix, double exponent);
-RcppExport SEXP _BPCells_iterate_matrix_pow_cpp(SEXP matrixSEXP, SEXP exponentSEXP) {
+// iterate_matrix_round_cpp
+SEXP iterate_matrix_round_cpp(SEXP matrix);
+RcppExport SEXP _BPCells_iterate_matrix_round_cpp(SEXP matrixSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< SEXP >::type matrix(matrixSEXP);
-    Rcpp::traits::input_parameter< double >::type exponent(exponentSEXP);
-    rcpp_result_gen = Rcpp::wrap(iterate_matrix_pow_cpp(matrix, exponent));
-    return rcpp_result_gen;
-END_RCPP
-}
-// iterate_matrix_powsimd_cpp
-SEXP iterate_matrix_powsimd_cpp(SEXP matrix, double exponent);
-RcppExport SEXP _BPCells_iterate_matrix_powsimd_cpp(SEXP matrixSEXP, SEXP exponentSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< SEXP >::type matrix(matrixSEXP);
-    Rcpp::traits::input_parameter< double >::type exponent(exponentSEXP);
-    rcpp_result_gen = Rcpp::wrap(iterate_matrix_powsimd_cpp(matrix, exponent));
-    return rcpp_result_gen;
-END_RCPP
-}
-// iterate_matrix_square_cpp
-SEXP iterate_matrix_square_cpp(SEXP matrix);
-RcppExport SEXP _BPCells_iterate_matrix_square_cpp(SEXP matrixSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< SEXP >::type matrix(matrixSEXP);
-    rcpp_result_gen = Rcpp::wrap(iterate_matrix_square_cpp(matrix));
+    rcpp_result_gen = Rcpp::wrap(iterate_matrix_round_cpp(matrix));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -2104,12 +2115,13 @@ static const R_CallMethodDef CallEntries[] = {
     {"_BPCells_iterate_matrix_log1psimd_cpp", (DL_FUNC) &_BPCells_iterate_matrix_log1psimd_cpp, 1},
     {"_BPCells_iterate_matrix_expm1_cpp", (DL_FUNC) &_BPCells_iterate_matrix_expm1_cpp, 1},
     {"_BPCells_iterate_matrix_expm1simd_cpp", (DL_FUNC) &_BPCells_iterate_matrix_expm1simd_cpp, 1},
-    {"_BPCells_iterate_matrix_min_cpp", (DL_FUNC) &_BPCells_iterate_matrix_min_cpp, 2},
-    {"_BPCells_iterate_matrix_min_by_row_cpp", (DL_FUNC) &_BPCells_iterate_matrix_min_by_row_cpp, 2},
-    {"_BPCells_iterate_matrix_min_by_col_cpp", (DL_FUNC) &_BPCells_iterate_matrix_min_by_col_cpp, 2},
     {"_BPCells_iterate_matrix_pow_cpp", (DL_FUNC) &_BPCells_iterate_matrix_pow_cpp, 2},
     {"_BPCells_iterate_matrix_powsimd_cpp", (DL_FUNC) &_BPCells_iterate_matrix_powsimd_cpp, 2},
     {"_BPCells_iterate_matrix_square_cpp", (DL_FUNC) &_BPCells_iterate_matrix_square_cpp, 1},
+    {"_BPCells_iterate_matrix_min_cpp", (DL_FUNC) &_BPCells_iterate_matrix_min_cpp, 2},
+    {"_BPCells_iterate_matrix_min_by_row_cpp", (DL_FUNC) &_BPCells_iterate_matrix_min_by_row_cpp, 2},
+    {"_BPCells_iterate_matrix_min_by_col_cpp", (DL_FUNC) &_BPCells_iterate_matrix_min_by_col_cpp, 2},
+    {"_BPCells_iterate_matrix_round_cpp", (DL_FUNC) &_BPCells_iterate_matrix_round_cpp, 1},
     {"_BPCells_iterate_matrix_sctransform_pearson_cpp", (DL_FUNC) &_BPCells_iterate_matrix_sctransform_pearson_cpp, 4},
     {"_BPCells_iterate_matrix_sctransform_pearson_transpose_cpp", (DL_FUNC) &_BPCells_iterate_matrix_sctransform_pearson_transpose_cpp, 4},
     {"_BPCells_iterate_matrix_sctransform_pearson_simd_cpp", (DL_FUNC) &_BPCells_iterate_matrix_sctransform_pearson_simd_cpp, 4},

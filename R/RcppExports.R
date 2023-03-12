@@ -393,6 +393,18 @@ iterate_matrix_expm1simd_cpp <- function(matrix) {
     .Call(`_BPCells_iterate_matrix_expm1simd_cpp`, matrix)
 }
 
+iterate_matrix_pow_cpp <- function(matrix, exponent) {
+    .Call(`_BPCells_iterate_matrix_pow_cpp`, matrix, exponent)
+}
+
+iterate_matrix_powsimd_cpp <- function(matrix, exponent) {
+    .Call(`_BPCells_iterate_matrix_powsimd_cpp`, matrix, exponent)
+}
+
+iterate_matrix_square_cpp <- function(matrix) {
+    .Call(`_BPCells_iterate_matrix_square_cpp`, matrix)
+}
+
 iterate_matrix_min_cpp <- function(matrix, min_val) {
     .Call(`_BPCells_iterate_matrix_min_cpp`, matrix, min_val)
 }
@@ -405,16 +417,8 @@ iterate_matrix_min_by_col_cpp <- function(matrix, col_min) {
     .Call(`_BPCells_iterate_matrix_min_by_col_cpp`, matrix, col_min)
 }
 
-iterate_matrix_pow_cpp <- function(matrix, exponent) {
-    .Call(`_BPCells_iterate_matrix_pow_cpp`, matrix, exponent)
-}
-
-iterate_matrix_powsimd_cpp <- function(matrix, exponent) {
-    .Call(`_BPCells_iterate_matrix_powsimd_cpp`, matrix, exponent)
-}
-
-iterate_matrix_square_cpp <- function(matrix) {
-    .Call(`_BPCells_iterate_matrix_square_cpp`, matrix)
+iterate_matrix_round_cpp <- function(matrix) {
+    .Call(`_BPCells_iterate_matrix_round_cpp`, matrix)
 }
 
 iterate_matrix_sctransform_pearson_cpp <- function(matrix, gene_params, cell_params, global_params) {

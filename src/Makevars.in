@@ -42,6 +42,7 @@ matrixTransforms/Log1p.o \
 matrixTransforms/Min.o \
 matrixTransforms/MatrixTransform.o \
 matrixTransforms/Pow.o \
+matrixTransforms/Round.o \
 matrixTransforms/SCTransform.o \
 matrixTransforms/Scale.o \
 matrixTransforms/Shift.o 

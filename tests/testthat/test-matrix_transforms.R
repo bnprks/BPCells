@@ -72,6 +72,16 @@ test_that("pow works", {
     expect_equal(m^3, m2^3 %>% as("dgCMatrix"))
 })
 
+test_that("round works", {
+    v <- c(0.1, 0.5, 0.7, 1.3, 1.5, 1.9, -0.1, -0.5, -0.7, -1.3, -1.5, -1.9)
+    m <- matrix(v, nrow=2, byrow=TRUE)
+    vr <- c(0, 0, 1, 1, 2, 2, 0, 0, -1, -1, -2, -2)
+    mr <- matrix(vr, nrow=2, byrow=TRUE)
+    m2 <- as(as(m, 'dgCMatrix'), 'IterableMatrix')
+    m3 <- as(round(m2), 'matrix')
+    expect_identical(m3, mr)
+})
+
 test_that("sctransform works", {
     withr::local_seed(15123)
     # Generate poisson-distributed data from randomized parameters
