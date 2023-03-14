@@ -76,11 +76,10 @@ devtools::install_github(c("bnprks/BPCells"))
 ```
 
 </details>
-
 ## Set up analysis folder
 ```{r "setup", include=FALSE}
 data_dir <- file.path(tempdir(), "pbmc-3k")
-data_dir <- file.path("C:/Users/Ben/Downloads/pbmc-3k")
+data_dir <- file.path("pbmc-3k-data")
 dir.create(data_dir, recursive = TRUE, showWarnings = FALSE)
 knitr::opts_knit$set(root.dir = data_dir)
 ```

@@ -206,7 +206,7 @@ data.</p>
 <span><span class="co">## Storage order: column major</span></span>
 <span><span class="co">## </span></span>
 <span><span class="co">## Queued Operations:</span></span>
-<span><span class="co">## 1. Load compressed matrix from directory C:\Users\Ben\Downloads\pbmc-3k\pbmc_3k_rna_raw</span></span></code></pre>
+<span><span class="co">## 1. Load compressed matrix from directory /home/ben/dev/github/bnprks/BPCells/vignettes/pbmc-3k-data/pbmc_3k_rna_raw</span></span></code></pre>
 <p>Convert the ATAC-seq fragments</p>
 <div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Check if we already ran import</span></span>
@@ -229,8 +229,8 @@ compression?</strong>
 </summary><p>ATAC storage space dropped from 468 MB for the gzipped 10x file to
 209 MB for the bitpacked storage.</p>
 <p>RNA storage space dropped from 51.2 MB for the 10x hdf5 file with
-gzip compression to 31.5 MB using bitpacking compression. In this case,
-the storage space is a little misleading since 43% of the bitpacked
+gzip compression to 33.5 MB using bitpacking compression. In this case,
+the storage space is a little misleading since 39% of the bitpacked
 storage is spent on the gene + cell names. In this case both 10x
 compressed hdf5 and bitpacking compression are 4-6x smaller than an
 uncompressed sparse matrix format such as AnnData.</p>
@@ -358,7 +358,7 @@ very high TSS Enrichment value.</p>
 following:</p>
 <div class="sourceCode" id="cb21"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">atac_qc</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
-<span>  <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html" class="external-link">mutate</a></span><span class="op">(</span>TSSEnrichment<span class="op">=</span><span class="va">ReadsInTSS</span><span class="op">/</span><span class="fu"><a href="https://rdrr.io/pkg/BiocGenerics/man/Extremes.html" class="external-link">pmax</a></span><span class="op">(</span><span class="fl">1</span>,<span class="va">ReadsFlankingTSS</span><span class="op">)</span> <span class="op">*</span> <span class="fl">200</span><span class="op">/</span><span class="fl">101</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
+<span>  <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html" class="external-link">mutate</a></span><span class="op">(</span>TSSEnrichment<span class="op">=</span><span class="va">ReadsInTSS</span><span class="op">/</span><span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">pmax</a></span><span class="op">(</span><span class="fl">1</span>,<span class="va">ReadsFlankingTSS</span><span class="op">)</span> <span class="op">*</span> <span class="fl">200</span><span class="op">/</span><span class="fl">101</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
 <span>  <span class="fu"><a href="../reference/plot_tss_scatter.html">plot_tss_scatter</a></span><span class="op">(</span>min_frags<span class="op">=</span><span class="fl">2000</span>, min_tss<span class="op">=</span><span class="fl">20</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">labs</a></span><span class="op">(</span>title<span class="op">=</span><span class="st">"Raw TSS Enrichment"</span><span class="op">)</span></span></code></pre></div>
 <p><img src="pbmc3k_files/figure-html/unnamed-chunk-16-1.png" width="700"></p>
@@ -391,7 +391,7 @@ and minimum TSS Enrichment cutoffs.</p>
 <code class="sourceCode R"><span><span class="va">pass_atac</span> <span class="op">&lt;-</span> <span class="va">atac_qc</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
 <span>    <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="va">nFrags</span> <span class="op">&gt;</span> <span class="fl">1000</span>, <span class="va">TSSEnrichment</span> <span class="op">&gt;</span> <span class="fl">10</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
 <span>    <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/pull.html" class="external-link">pull</a></span><span class="op">(</span><span class="va">cellName</span><span class="op">)</span></span>
-<span><span class="va">pass_rna</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/BiocGenerics/man/row_colnames.html" class="external-link">colnames</a></span><span class="op">(</span><span class="va">mat_raw</span><span class="op">)</span><span class="op">[</span><span class="fu">Matrix</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/Matrix/man/colSums.html" class="external-link">colSums</a></span><span class="op">(</span><span class="va">mat_raw</span><span class="op">)</span> <span class="op">&gt;</span> <span class="fl">1e3</span><span class="op">]</span></span>
+<span><span class="va">pass_rna</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">colnames</a></span><span class="op">(</span><span class="va">mat_raw</span><span class="op">)</span><span class="op">[</span><span class="fu">Matrix</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/Matrix/man/colSums.html" class="external-link">colSums</a></span><span class="op">(</span><span class="va">mat_raw</span><span class="op">)</span> <span class="op">&gt;</span> <span class="fl">1e3</span><span class="op">]</span></span>
 <span><span class="va">keeper_cells</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://generics.r-lib.org/reference/setops.html" class="external-link">intersect</a></span><span class="op">(</span><span class="va">pass_atac</span>, <span class="va">pass_rna</span><span class="op">)</span></span></code></pre></div>
 <p>We subset the RNA and ATAC input data to just the cells passing
 filter. And for RNA, we subset to genes with at least 3 reads. This
@@ -426,9 +426,9 @@ simplify the process.</p>
 <code class="sourceCode R"><span><span class="va">stats</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/matrix_stats.html">matrix_stats</a></span><span class="op">(</span><span class="va">mat</span>, row_stats<span class="op">=</span><span class="st">"variance"</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># To keep the example small, we'll do a very naive variable gene selection</span></span>
-<span><span class="va">variable_genes</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/BiocGenerics/man/order.html" class="external-link">order</a></span><span class="op">(</span><span class="va">stats</span><span class="op">$</span><span class="va">row_stats</span><span class="op">[</span><span class="st">"variance"</span>,<span class="op">]</span>, decreasing<span class="op">=</span><span class="cn">TRUE</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> </span>
+<span><span class="va">variable_genes</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/order.html" class="external-link">order</a></span><span class="op">(</span><span class="va">stats</span><span class="op">$</span><span class="va">row_stats</span><span class="op">[</span><span class="st">"variance"</span>,<span class="op">]</span>, decreasing<span class="op">=</span><span class="cn">TRUE</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> </span>
 <span>  <span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="fl">1000</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> </span>
-<span>  <span class="fu"><a href="https://rdrr.io/pkg/BiocGenerics/man/sort.html" class="external-link">sort</a></span><span class="op">(</span><span class="op">)</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/sort.html" class="external-link">sort</a></span><span class="op">(</span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">mat_norm</span> <span class="op">&lt;-</span> <span class="va">mat</span><span class="op">[</span><span class="va">variable_genes</span>,<span class="op">]</span></span></code></pre></div>
 <p>If we look at our normalized matrix object, we can see we have quite
@@ -445,7 +445,7 @@ needed.</p>
 <span><span class="co">## Storage order: column major</span></span>
 <span><span class="co">## </span></span>
 <span><span class="co">## Queued Operations:</span></span>
-<span><span class="co">## 1. Load compressed matrix from directory C:\Users\Ben\Downloads\pbmc-3k\pbmc_3k_rna_raw</span></span>
+<span><span class="co">## 1. Load compressed matrix from directory /home/ben/dev/github/bnprks/BPCells/vignettes/pbmc-3k-data/pbmc_3k_rna_raw</span></span>
 <span><span class="co">## 2. Select rows: 87, 171 ... 36568 and cols: 640783, 89020 ... 504383</span></span>
 <span><span class="co">## 3. Convert type from uint32_t to double</span></span>
 <span><span class="co">## 4. Scale by 1e+04</span></span>
@@ -490,11 +490,11 @@ dense.</p>
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">12341512</span><span class="op">)</span></span>
 <span><span class="va">umap</span> <span class="op">&lt;-</span> <span class="fu">uwot</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/uwot/man/umap.html" class="external-link">umap</a></span><span class="op">(</span><span class="va">pca</span><span class="op">)</span></span>
 <span><span class="va">umap</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">4</span>,<span class="op">]</span></span></code></pre></div>
-<pre><code><span><span class="co">##           [,1]      [,2]</span></span>
-<span><span class="co">## [1,] -9.162323  3.794497</span></span>
-<span><span class="co">## [2,]  0.667874 -9.646635</span></span>
-<span><span class="co">## [3,] -9.052120  3.629623</span></span>
-<span><span class="co">## [4,] -8.002550  1.038983</span></span></code></pre>
+<pre><code><span><span class="co">##          [,1]     [,2]</span></span>
+<span><span class="co">## [1,] 2.687344 3.767314</span></span>
+<span><span class="co">## [2,] 3.657373 1.574747</span></span>
+<span><span class="co">## [3,] 2.682953 4.241100</span></span>
+<span><span class="co">## [4,] 4.685019 1.510879</span></span></code></pre>
 </div>
 <div class="section level3">
 <h3 id="clustering">Clustering<a class="anchor" aria-label="anchor" href="#clustering"></a>
@@ -661,21 +661,21 @@ our data and run PCA as usual</p>
 <code class="sourceCode R"><span><span class="va">svd_atac</span> <span class="op">&lt;-</span> <span class="fu">irlba</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/irlba/man/irlba.html" class="external-link">irlba</a></span><span class="op">(</span><span class="va">mat_lsi_norm</span>, nv<span class="op">=</span><span class="fl">10</span><span class="op">)</span></span>
 <span><span class="va">pca_atac</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/mat_norm.html">multiply_cols</a></span><span class="op">(</span><span class="va">svd_atac</span><span class="op">$</span><span class="va">v</span>, <span class="va">svd_atac</span><span class="op">$</span><span class="va">d</span><span class="op">)</span></span>
 <span><span class="va">pca_atac</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">4</span>,<span class="fl">1</span><span class="op">:</span><span class="fl">4</span><span class="op">]</span></span></code></pre></div>
-<pre><code><span><span class="co">##            [,1]       [,2]      [,3]      [,4]</span></span>
-<span><span class="co">## [1,] -103.71572   1.534167 -1.888150 -21.53969</span></span>
-<span><span class="co">## [2,]  -44.89571 -28.935112 12.594339  10.48701</span></span>
-<span><span class="co">## [3,]  -90.58360   3.491546 -3.446055 -12.95166</span></span>
-<span><span class="co">## [4,]  -90.75934  -6.305334 -7.256461  15.68518</span></span></code></pre>
+<pre><code><span><span class="co">##            [,1]      [,2]      [,3]      [,4]</span></span>
+<span><span class="co">## [1,] -103.71572 -1.534167 -1.888150  21.53969</span></span>
+<span><span class="co">## [2,]  -44.89571 28.935112 12.594339 -10.48701</span></span>
+<span><span class="co">## [3,]  -90.58360 -3.491546 -3.446055  12.95166</span></span>
+<span><span class="co">## [4,]  -90.75934  6.305334 -7.256461 -15.68518</span></span></code></pre>
 <p>Next we calculate our UMAP</p>
 <div class="sourceCode" id="cb52"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">12341512</span><span class="op">)</span></span>
 <span><span class="va">umap_atac</span> <span class="op">&lt;-</span> <span class="fu">uwot</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/uwot/man/umap.html" class="external-link">umap</a></span><span class="op">(</span><span class="va">pca_atac</span><span class="op">)</span></span>
 <span><span class="va">umap_atac</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">4</span>,<span class="op">]</span></span></code></pre></div>
-<pre><code><span><span class="co">##            [,1]       [,2]</span></span>
-<span><span class="co">## [1,]  -7.435479 -3.3507659</span></span>
-<span><span class="co">## [2,]   8.193659  0.8944971</span></span>
-<span><span class="co">## [3,] -11.674641 -1.7427078</span></span>
-<span><span class="co">## [4,]  -3.727918 -2.7302980</span></span></code></pre>
+<pre><code><span><span class="co">##           [,1]       [,2]</span></span>
+<span><span class="co">## [1,]  6.951925  3.7862649</span></span>
+<span><span class="co">## [2,] -6.479058 -0.9224716</span></span>
+<span><span class="co">## [3,]  7.559237  8.5150462</span></span>
+<span><span class="co">## [4,]  7.571649  0.0625151</span></span></code></pre>
 <p>Then we cluster, just like for the RNA</p>
 <div class="sourceCode" id="cb54"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">clusts_atac</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/knn.html">knn_hnsw</a></span><span class="op">(</span><span class="va">pca_atac</span>, ef<span class="op">=</span><span class="fl">500</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> <span class="co"># Find approximate nearest neighbors</span></span>
@@ -704,7 +704,7 @@ matrix?</strong>
 <p>If we skip normalization, we first observe that we get very high
 correlation of our first PC to the reads-per-cell in our peak matrix</p>
 <div class="sourceCode" id="cb57"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">cor_to_depth</span> <span class="op">&lt;-</span> <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/bind.html" class="external-link">bind_rows</a></span><span class="op">(</span></span>
+<code class="sourceCode R"><span><span class="va">cor_to_depth</span> <span class="op">&lt;-</span> <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/bind_rows.html" class="external-link">bind_rows</a></span><span class="op">(</span></span>
 <span>  <span class="fu">tibble</span><span class="fu">::</span><span class="fu"><a href="https://tibble.tidyverse.org/reference/tibble.html" class="external-link">tibble</a></span><span class="op">(</span></span>
 <span>    method<span class="op">=</span><span class="st">"z-score normalize"</span>,</span>
 <span>    abs_cor_to_depth <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/numeric.html" class="external-link">as.numeric</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/MathFun.html" class="external-link">abs</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/cor.html" class="external-link">cor</a></span><span class="op">(</span><span class="fu">Matrix</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/Matrix/man/colSums.html" class="external-link">colSums</a></span><span class="op">(</span><span class="va">mat_lsi</span><span class="op">)</span>, <span class="va">pca_atac</span><span class="op">)</span><span class="op">)</span><span class="op">)</span>,</span>
@@ -728,8 +728,8 @@ corresponds mostly to read depth, and the signal is spread out across 2
 PCs in the z-score normalized variant.</p>
 <div class="sourceCode" id="cb58"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">cor_between_embeddings</span> <span class="op">&lt;-</span> <span class="fu">tidyr</span><span class="fu">::</span><span class="fu"><a href="https://tidyr.tidyverse.org/reference/expand_grid.html" class="external-link">expand_grid</a></span><span class="op">(</span></span>
-<span>  pca_atac_no_norm <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq_len</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/pkg/BiocGenerics/man/nrow.html" class="external-link">ncol</a></span><span class="op">(</span><span class="va">pca_atac_no_norm</span><span class="op">)</span><span class="op">)</span>,</span>
-<span>  pca_atac<span class="op">=</span><span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq_len</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/pkg/BiocGenerics/man/nrow.html" class="external-link">ncol</a></span><span class="op">(</span><span class="va">pca_atac</span><span class="op">)</span><span class="op">)</span></span>
+<span>  pca_atac_no_norm <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq_len</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">ncol</a></span><span class="op">(</span><span class="va">pca_atac_no_norm</span><span class="op">)</span><span class="op">)</span>,</span>
+<span>  pca_atac<span class="op">=</span><span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq_len</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">ncol</a></span><span class="op">(</span><span class="va">pca_atac</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> <span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html" class="external-link">mutate</a></span><span class="op">(</span></span>
 <span>  cor <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/numeric.html" class="external-link">as.numeric</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/MathFun.html" class="external-link">abs</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/cor.html" class="external-link">cor</a></span><span class="op">(</span><span class="va">.env</span><span class="op">$</span><span class="va">pca_atac</span>, <span class="va">.env</span><span class="op">$</span><span class="va">pca_atac_no_norm</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="op">)</span></span>
@@ -748,8 +748,8 @@ PCs in the z-score normalized variant.</p>
 similar result.</p>
 <div class="sourceCode" id="cb59"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">cor_between_loadings</span> <span class="op">&lt;-</span> <span class="fu">tidyr</span><span class="fu">::</span><span class="fu"><a href="https://tidyr.tidyverse.org/reference/expand_grid.html" class="external-link">expand_grid</a></span><span class="op">(</span></span>
-<span>  pca_atac_no_norm <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq_len</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/pkg/BiocGenerics/man/nrow.html" class="external-link">ncol</a></span><span class="op">(</span><span class="va">svd_atac_no_norm</span><span class="op">$</span><span class="va">u</span><span class="op">)</span><span class="op">)</span>,</span>
-<span>  pca_atac<span class="op">=</span><span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq_len</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/pkg/BiocGenerics/man/nrow.html" class="external-link">ncol</a></span><span class="op">(</span><span class="va">svd_atac</span><span class="op">$</span><span class="va">u</span><span class="op">)</span><span class="op">)</span></span>
+<span>  pca_atac_no_norm <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq_len</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">ncol</a></span><span class="op">(</span><span class="va">svd_atac_no_norm</span><span class="op">$</span><span class="va">u</span><span class="op">)</span><span class="op">)</span>,</span>
+<span>  pca_atac<span class="op">=</span><span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq_len</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">ncol</a></span><span class="op">(</span><span class="va">svd_atac</span><span class="op">$</span><span class="va">u</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> <span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html" class="external-link">mutate</a></span><span class="op">(</span></span>
 <span>  cor <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/numeric.html" class="external-link">as.numeric</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/MathFun.html" class="external-link">abs</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/cor.html" class="external-link">cor</a></span><span class="op">(</span><span class="va">.env</span><span class="op">$</span><span class="va">svd_atac</span><span class="op">$</span><span class="va">u</span>, <span class="va">.env</span><span class="op">$</span><span class="va">svd_atac_no_norm</span><span class="op">$</span><span class="va">u</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="op">)</span></span>

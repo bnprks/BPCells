@@ -421,6 +421,7 @@ setMethod("short_description", "MatrixMask", function(x) {
 #' values in the mask matrix will set the matrix entry to zero.
 #' @param mat Data matrix (IterableMatrix)
 #' @param mask Mask matrix (IterableMatrix or dgCMatrix)
+#' @keywords internal
 mask_matrix <- function(mat, mask, invert=FALSE) {
   assert_is(mat, "IterableMatrix")
   assert_is(invert, "logical")
@@ -481,6 +482,7 @@ setMethod("short_description", "MatrixRankTransform", function(x) {
 #' @param mat Data matrix (IterableMatrix)
 #' @param axis Axis to rank values within. "col" to rank values within each column,
 #'     and "row" to rank values within each row.
+#' @keywords internal
 rank_transform <- function(mat, axis) {
   assert_is(mat, "IterableMatrix")
   assert_is_character(axis)

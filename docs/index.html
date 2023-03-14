@@ -158,7 +158,7 @@
 <span>  <span class="fu"><a href="reference/select_cells.html">select_cells</a></span><span class="op">(</span><span class="va">keeper_cells</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
 <span>  <span class="fu"><a href="reference/shift_fragments.html">shift_fragments</a></span><span class="op">(</span>shift_start<span class="op">=</span><span class="fl">4</span>, shift_end<span class="op">=</span><span class="op">-</span><span class="fl">5</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
 <span>  <span class="fu"><a href="reference/peak_matrix.html">peak_matrix</a></span><span class="op">(</span><span class="va">peaks</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
-<span>  <span class="fu"><a href="https://rdrr.io/r/base/colSums.html" class="external-link">colMeans</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
+<span>  <span class="fu">colMeans</span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
 <p>Note that if we knew the cell names ahead of time, we could even perform this operation directly on our orignal 10x fragments without ever saving the fragments into memory. This would be fairly slow because 10x fragment files are slow to decompress. With upcoming support for storing packed fragments directly on disk, this can become a much faster operation without ever needing to store fragments in memory.</p>
 </div>
 </div>

@@ -3,6 +3,7 @@
 \name{IterableMatrix-methods}
 \alias{IterableMatrix-methods}
 \alias{matrix_type}
+\alias{storage_order}
 \alias{show,IterableMatrix-method}
 \alias{t,IterableMatrix-method}
 \alias{\%*\%,IterableMatrix,matrix-method}
@@ -13,6 +14,8 @@
 \title{IterableMatrix methods}
 \usage{
 matrix_type(x)
+
+storage_order(x)
 
 \S4method{show}{IterableMatrix}(object)
 
@@ -66,6 +69,8 @@ Methods for IterableMatrix objects
 \section{Functions}{
 \itemize{
 \item \code{matrix_type()}: Get the matrix data type (mat_uint32_t, mat_float, or mat_double for now)
+
+\item \code{storage_order()}: Get the matrix storage order ("row" or "col")
 
 \item \code{show(IterableMatrix)}: Display an IterableMatrix
 

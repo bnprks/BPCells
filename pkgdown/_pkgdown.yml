@@ -69,6 +69,7 @@ reference:
 
 - subtitle: "Matrix Operations"
 - contents:
+  - marker_features
   - matrix_stats
   - convert_matrix_type
   - transpose_storage_order

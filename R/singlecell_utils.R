@@ -4,9 +4,9 @@
 #' tests to find markers.
 #' 
 #' Tips for using the values from this function:  
-#' - Use dplyr::mutate() to add columns for e.g. adjusted p-value and log fold change.
-#' - Use dplyr::filter() to get only differential genes above some given threshold
-#' - To get adjusted p-values, use R p.adjust(), recommended method is "BH"
+#' - Use `dplyr::mutate()` to add columns for e.g. adjusted p-value and log fold change.
+#' - Use `dplyr::filter()` to get only differential genes above some given threshold
+#' - To get adjusted p-values, use R `p.adjust()`, recommended method is "BH"
 #' - To get log2 fold change: if your input matrix was already log-transformed,
 #'   calculate `(foreground_mean - background_mean)/log(2)`. If your input
 #'   matrix was not log-transformed, calculate `log2(forground_mean/background_mean)`
@@ -16,12 +16,12 @@
 #' @param method Test method to use. Current options are:  
 #'   - `wilcoxon`: Wilconxon rank-sum test a.k.a Mann-Whitney U test
 #' @return tibble with the following columns:  
-#'  - foreground: Group ID used for the foreground
-#'  - background: Group ID used for the background (or NA if comparing to rest of cells)
-#'  - feature: ID of the feature
-#'  - p_val_raw: Unadjusted p-value for differential test
-#'  - foreground_mean: Average value in the foreground group
-#'  - background_mean: Average value in the background group
+#'  - **foreground**: Group ID used for the foreground
+#'  - **background**: Group ID used for the background (or NA if comparing to rest of cells)
+#'  - **feature**: ID of the feature
+#'  - **p_val_raw**: Unadjusted p-value for differential test
+#'  - **foreground_mean**: Average value in the foreground group
+#'  - **background_mean**: Average value in the background group
 #' @export
 marker_features <- function(mat, groups, method="wilcoxon") {
     assert_is(mat, "IterableMatrix")
