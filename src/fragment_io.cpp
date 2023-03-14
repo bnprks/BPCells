@@ -113,11 +113,11 @@ List fragments_get_names(StoredFragmentsBase &&frags) {
 
 List info_fragments_reader_builder(ReaderBuilder &rb) {
     std::string version = rb.readVersion();
-    if (version == "unpacked-fragments-v1") {
+    if (version == "unpacked-fragments-v1" || version == "unpacked-fragments-v2") {
         List l = fragments_get_names(StoredFragments::openUnpacked(rb));
         l["compressed"] = false;
         return l;
-    } else if (version == "packed-fragments-v1") {
+    } else if (version == "packed-fragments-v1" || version == "packed-fragments-v2") {
         List l = fragments_get_names(StoredFragmentsPacked::openPacked(rb));
         l["compressed"] = true;
         return l;
@@ -248,8 +248,6 @@ void write_packed_fragments_hdf5_cpp(
     );
 }
 
-// [[Rcpp::export]]
-int get_bp128_version_cpp() { return _SIMDBP128_MODE_; }
 
 // [[Rcpp::export]]
 bool fragments_identical_cpp(SEXP fragments1, SEXP fragments2) {

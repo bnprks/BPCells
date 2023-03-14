@@ -6,6 +6,7 @@
 #include "arrayIO/bp128.h"
 #include "arrayIO/hdf5.h"
 #include "arrayIO/vector.h"
+#include "bitpacking/bp128.h"
 
 #include "lib/sleef_wrapper.h"
 
@@ -30,11 +31,12 @@ SEXP open_file_reader(std::string path) {
 }
 
 // [[Rcpp::export]]
-SEXP open_bp128_d1z(SEXP data, SEXP idx, SEXP starts, uint32_t count) {
+SEXP open_bp128_d1z(SEXP data, SEXP idx, SEXP idx_offsets, SEXP starts, uint32_t count) {
     XPtr<UIntReader> data_ptr(data), idx_ptr(idx), starts_ptr(starts);
+    XPtr<ULongReader> idx_offsets_ptr(idx_offsets);
     return Rcpp::wrap(XPtr<UIntReader>(new UIntReader(
         std::make_unique<BP128_D1Z_UIntReader>(
-            std::move(*data_ptr), std::move(*idx_ptr), std::move(*starts_ptr), count
+            std::move(*data_ptr), std::move(*idx_ptr), std::move(*idx_offsets_ptr), std::move(*starts_ptr), count
         ),
         1024,
         1024
@@ -42,11 +44,12 @@ SEXP open_bp128_d1z(SEXP data, SEXP idx, SEXP starts, uint32_t count) {
 }
 
 // [[Rcpp::export]]
-SEXP open_bp128_d1(SEXP data, SEXP idx, SEXP starts, uint32_t count) {
+SEXP open_bp128_d1(SEXP data, SEXP idx, SEXP idx_offsets, SEXP starts, uint32_t count) {
     XPtr<UIntReader> data_ptr(data), idx_ptr(idx), starts_ptr(starts);
+    XPtr<ULongReader> idx_offsets_ptr(idx_offsets);
     return Rcpp::wrap(XPtr<UIntReader>(new UIntReader(
         std::make_unique<BP128_D1_UIntReader>(
-            std::move(*data_ptr), std::move(*idx_ptr), std::move(*starts_ptr), count
+            std::move(*data_ptr), std::move(*idx_ptr), std::move(*idx_offsets_ptr), std::move(*starts_ptr), count
         ),
         1024,
         1024
@@ -54,10 +57,11 @@ SEXP open_bp128_d1(SEXP data, SEXP idx, SEXP starts, uint32_t count) {
 }
 
 // [[Rcpp::export]]
-SEXP open_bp128_for(SEXP data, SEXP idx, uint32_t count) {
+SEXP open_bp128_for(SEXP data, SEXP idx, SEXP idx_offsets, uint32_t count) {
     XPtr<UIntReader> data_ptr(data), idx_ptr(idx);
+    XPtr<ULongReader> idx_offsets_ptr(idx_offsets);
     return Rcpp::wrap(XPtr<UIntReader>(new UIntReader(
-        std::make_unique<BP128_FOR_UIntReader>(std::move(*data_ptr), std::move(*idx_ptr), count),
+        std::make_unique<BP128_FOR_UIntReader>(std::move(*data_ptr), std::move(*idx_ptr), std::move(*idx_offsets_ptr), count),
         1024,
         1024
     )));

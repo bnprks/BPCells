@@ -12,8 +12,8 @@ namespace BPCells {
 class StringReader {
   public:
     virtual ~StringReader() = default;
-    virtual const char *get(uint32_t idx) const = 0;
-    virtual uint32_t size() const = 0;
+    virtual const char *get(uint64_t idx) const = 0;
+    virtual uint64_t size() const = 0;
 };
 
 class StringWriter {
@@ -30,8 +30,8 @@ class VecStringReader : public StringReader {
 
   public:
     VecStringReader(std::vector<std::string> data);
-    const char *get(uint32_t idx) const override;
-    uint32_t size() const override;
+    const char *get(uint64_t idx) const override;
+    uint64_t size() const override;
 };
 
 class NullStringWriter : public StringWriter {
@@ -44,16 +44,16 @@ template <class T> class BulkNumReader {
     virtual ~BulkNumReader() = default;
 
     // Return total number of integers in the reader
-    virtual uint32_t size() const = 0;
+    virtual uint64_t size() const = 0;
 
     // Change the next load to start at index pos
-    virtual void seek(uint32_t pos) = 0;
+    virtual void seek(uint64_t pos) = 0;
 
     // Copy up to `count` integers into `out`, returning the actual number copied.
     // Will always load >0 if count is >0
     // Note: It is the caller's responsibility to ensure there is no data overflow, i.e.
     // that a load does not try to read past size() total elements
-    virtual uint32_t load(T *out, uint32_t count) = 0;
+    virtual uint64_t load(T *out, uint64_t count) = 0;
 };
 
 template <class From, class To> class BulkNumReaderConverter : public BulkNumReader<To> {
@@ -64,12 +64,12 @@ template <class From, class To> class BulkNumReaderConverter : public BulkNumRea
   public:
     BulkNumReaderConverter(std::unique_ptr<BulkNumReader<From>> &&reader)
         : reader(std::move(reader)) {}
-    uint32_t size() const override { return reader->size(); }
-    void seek(uint32_t pos) override { return reader->seek(pos); }
-    uint32_t load(To *out, uint32_t count) override {
+    uint64_t size() const override { return reader->size(); }
+    void seek(uint64_t pos) override { return reader->seek(pos); }
+    uint64_t load(To *out, uint64_t count) override {
         if (buffer.size() < count) buffer.resize(count);
-        uint32_t loaded = reader->load(buffer.data(), count);
-        for (uint32_t i = 0; i < loaded; i++) {
+        uint64_t loaded = reader->load(buffer.data(), count);
+        for (uint64_t i = 0; i < loaded; i++) {
             out[i] = (To)buffer[i];
         }
         return loaded;
@@ -86,7 +86,7 @@ template <class T> class BulkNumWriter {
     // Will always write >0, otherwise throwing an exception for an error
     // Note: The writer is allowed to modify the input data, so it might be
     // modified after calling write()
-    virtual uint32_t write(T *in, uint32_t count) = 0;
+    virtual uint64_t write(T *in, uint64_t count) = 0;
 
     // Flush any remaining data to disk. No more write calls will be made after
     // calling fiinalize. By default a no-op.
@@ -102,9 +102,9 @@ template <class From, class To> class BulkNumWriterConverter : public BulkNumWri
     BulkNumWriterConverter(std::unique_ptr<BulkNumWriter<From>> writer)
         : writer(std::move(writer)) {}
 
-    uint32_t write(To *in, uint32_t count) override {
+    uint64_t write(To *in, uint64_t count) override {
         if (count > buffer.size()) buffer.resize(count);
-        for (uint32_t i = 0; i < count; i++) {
+        for (uint64_t i = 0; i < count; i++) {
             buffer[i] = (From)in[i];
         }
         return writer->write(buffer.data(), count);
@@ -130,21 +130,21 @@ using UIntBulkWriter = BulkNumWriter<uint32_t>;
 template <class T> class NumReader {
   protected:
     std::vector<T> buffer;
-    uint32_t idx = 0;       // Index of read data in buffer
-    uint32_t available = 0; // Amount of read data in buffer
-    uint32_t loaded = 0;    // Amount of data loaded currently in buffer (note idx + available <=
+    uint64_t idx = 0;       // Index of read data in buffer
+    uint64_t available = 0; // Amount of read data in buffer
+    uint64_t loaded = 0;    // Amount of data loaded currently in buffer (note idx + available <=
                             // loaded as an invariant)
-    uint32_t pos = 0;       // Position of next integer that would be read
+    uint64_t pos = 0;       // Position of next integer that would be read
 
     std::unique_ptr<BulkNumReader<T>> reader;
-    uint32_t total_size; // total size of reader
+    uint64_t total_size; // total size of reader
 
-    uint32_t read_size; // Amount to provide users by default
+    uint64_t read_size; // Amount to provide users by default
 
   public:
     NumReader() = default;
     NumReader(
-        std::unique_ptr<BulkNumReader<T>> &&reader, uint32_t buffer_size, uint32_t read_size = 1024
+        std::unique_ptr<BulkNumReader<T>> &&reader, uint64_t buffer_size, uint64_t read_size = 1024
     )
         : buffer(buffer_size)
         , reader(std::move(reader))
@@ -162,14 +162,14 @@ template <class T> class NumReader {
     // Pointer to data in buffer start
     inline T *data() { return buffer.data() + idx; }
     // Number of available entries in data() buffer
-    inline uint32_t capacity() const { return available; };
+    inline uint64_t capacity() const { return available; };
 
     // Try to ensure there are at least `new_capacity` items available to read
     // (i.e. capacity() > new_capacity). Return false if there was not enough
     // data left to fill out the requested capacity.
     // Any remaining data between data() and data()+capacity() will be readable
     // at the value of data() after the call.
-    inline bool requestCapacity(uint32_t new_capacity) {
+    inline bool requestCapacity(uint64_t new_capacity) {
         if (new_capacity > read_size) return false;
 
         if (loaded - idx >= new_capacity) {
@@ -187,10 +187,10 @@ template <class T> class NumReader {
         }
 
         while (loaded < read_size) {
-            uint32_t load_size = std::min((uint32_t)buffer.size() - loaded, total_size - pos);
+            uint64_t load_size = std::min((uint64_t)buffer.size() - loaded, total_size - pos);
             if (load_size == 0) break;
 
-            uint32_t newly_loaded = reader->load(buffer.data() + loaded, load_size);
+            uint64_t newly_loaded = reader->load(buffer.data() + loaded, load_size);
             loaded += newly_loaded;
             pos += newly_loaded;
         }
@@ -204,7 +204,7 @@ template <class T> class NumReader {
 
     // A variant of requestCapacity that throws an error if the requested capacity
     // could not be loaded.
-    inline void ensureCapacity(uint32_t new_capacity) {
+    inline void ensureCapacity(uint64_t new_capacity) {
         if (requestCapacity(new_capacity)) return;
         if (new_capacity > read_size)
             throw std::invalid_argument("new_capacity can't be larger than load_size");
@@ -212,11 +212,11 @@ template <class T> class NumReader {
     }
 
     // Total number of ints in the reader
-    inline uint32_t size() const { return total_size; }
+    inline uint64_t size() const { return total_size; }
 
     // Seek to a different position in the stream (first integer is position 0),
     // resetting data() and capacity() pointers to have 0 capacity.
-    inline void seek(uint32_t new_pos) {
+    inline void seek(uint64_t new_pos) {
         // Note: previous code allowed for re-using the existing loaded data buffer
         // upon seek, but this could cause bugs when downstream code had already modified
         // the data buffer but expected clean data after seek+load. Look at file
@@ -239,7 +239,7 @@ template <class T> class NumReader {
     }
 
     // Advance the data buffer by count without reading more of the underlying stream
-    inline void advance(uint32_t count) {
+    inline void advance(uint64_t count) {
         idx += count;
         available -= count;
     }
@@ -249,6 +249,27 @@ using UIntReader = NumReader<uint32_t>;
 using ULongReader = NumReader<uint64_t>;
 using FloatReader = NumReader<float>;
 using DoubleReader = NumReader<double>;
+
+template <typename T> class ConstNumReader : public BulkNumReader<T> {
+    const std::vector<T> data;
+    uint64_t pos = 0;
+
+  public:
+    ConstNumReader(std::vector<T> &data) : data(data) {}
+    uint64_t size() const override { return data.size(); }
+    void seek(uint64_t pos) override { this->pos = pos; }
+    uint64_t load(T *out, uint64_t count) override {
+        uint64_t i;
+        for (i = 0; i < count && pos + i < size(); i++) {
+            out[i] = data[pos + i];
+        }
+        pos += i;
+        return i;
+    }
+    static NumReader<T> create(std::vector<T> data) {
+        return NumReader<T>(std::make_unique<ConstNumReader<T>>(data), data.size(), data.size());
+    }
+};
 
 // Writer -- Write a stream of numbers, providing a conveinient
 // interface to a BulkWriter.
@@ -265,13 +286,13 @@ using DoubleReader = NumReader<double>;
 template <class T> class NumWriter {
   protected:
     std::vector<T> buffer;
-    uint32_t idx = 0; // Index of buffer for next write
+    uint64_t idx = 0; // Index of buffer for next write
     std::unique_ptr<BulkNumWriter<T>> writer;
 
   private:
     // Write all data up to idx+available, and copy any stragglers to the beginning
     inline void flush() {
-        uint32_t written = writer->write(buffer.data(), idx);
+        uint64_t written = writer->write(buffer.data(), idx);
         if (written == 0) throw std::runtime_error("No data written after write request");
         idx = idx - written;
         if (idx != 0) {
@@ -281,7 +302,7 @@ template <class T> class NumWriter {
     }
 
   public:
-    NumWriter(std::unique_ptr<BulkNumWriter<T>> &&writer, uint32_t buffer_size)
+    NumWriter(std::unique_ptr<BulkNumWriter<T>> &&writer, uint64_t buffer_size)
         : buffer(buffer_size)
         , writer(std::move(writer)) {}
     NumWriter() = default;
@@ -299,13 +320,13 @@ template <class T> class NumWriter {
     // Pointer to data in buffer start
     inline T *data() { return buffer.data() + idx; }
     // Number of available entries in data() buffer
-    inline uint32_t capacity() const { return buffer.size() - idx; };
+    inline uint64_t capacity() const { return buffer.size() - idx; };
 
     // Ensure that there are at least `capacity` items available to write.
     // throw an error if the requested capacity is larger than the write_size set at construction
     // time. May result in flushing data that has been passed using `advance`, but will not flush
     // any data from the existing entries betweeen `data()` and `data() + capacity()`
-    inline void ensureCapacity(uint32_t new_capacity) {
+    inline void ensureCapacity(uint64_t new_capacity) {
         if (new_capacity > buffer.size())
             throw std::invalid_argument("new_capacity can't be larger than load_size");
 
@@ -316,7 +337,7 @@ template <class T> class NumWriter {
 
     inline void ensureCapacity() { ensureCapacity(1); }
 
-    inline uint32_t maxCapacity() const { return buffer.size(); }
+    inline uint64_t maxCapacity() const { return buffer.size(); }
 
     // Read one element of the input stream, throwing an exception if there are
     // no more entries to read
@@ -327,7 +348,7 @@ template <class T> class NumWriter {
     }
 
     // Advance the data buffer by count without reading more of the underlying stream
-    inline void advance(uint32_t count) { idx += count; }
+    inline void advance(uint64_t count) { idx += count; }
 
     inline void finalize() {
         while (idx != 0)

@@ -13,7 +13,8 @@ namespace BPCells {
 // column-major inputs
 template <typename T> class StoredMatrixWriter : public MatrixWriter<T> {
   private:
-    UIntWriter row, col_ptr, shape;
+    UIntWriter row, shape;
+    ULongWriter col_ptr;
     NumWriter<T> val;
     std::unique_ptr<StringWriter> row_names, col_names, storage_order;
     bool row_major;
@@ -22,7 +23,7 @@ template <typename T> class StoredMatrixWriter : public MatrixWriter<T> {
     StoredMatrixWriter(
         UIntWriter &&row,
         NumWriter<T> &&val,
-        UIntWriter &&col_ptr,
+        ULongWriter &&col_ptr,
         UIntWriter &&shape,
         std::unique_ptr<StringWriter> &&row_names,
         std::unique_ptr<StringWriter> &&col_names,
@@ -30,8 +31,8 @@ template <typename T> class StoredMatrixWriter : public MatrixWriter<T> {
         bool row_major = false
     )
         : row(std::move(row))
-        , col_ptr(std::move(col_ptr))
         , shape(std::move(shape))
+        , col_ptr(std::move(col_ptr))
         , val(std::move(val))
         , row_names(std::move(row_names))
         , col_names(std::move(col_names))
@@ -39,11 +40,11 @@ template <typename T> class StoredMatrixWriter : public MatrixWriter<T> {
         , row_major(row_major) {}
 
     static StoredMatrixWriter createUnpacked(WriterBuilder &wb, bool row_major = false) {
-        wb.writeVersion(StoredMatrix<T>::versionString(false));
+        wb.writeVersion(StoredMatrix<T>::versionString(false, 2));
         return StoredMatrixWriter(
             wb.createUIntWriter("index"),
             wb.create<T>("val"),
-            wb.createUIntWriter("idxptr"),
+            wb.createULongWriter("idxptr"),
             wb.createUIntWriter("shape"),
             wb.createStringWriter("row_names"),
             wb.createStringWriter("col_names"),
@@ -54,13 +55,15 @@ template <typename T> class StoredMatrixWriter : public MatrixWriter<T> {
 
     static StoredMatrixWriter
     createPacked(WriterBuilder &wb, bool row_major = false, uint32_t buffer_size = 1024) {
-        wb.writeVersion(StoredMatrix<T>::versionString(true));
+        wb.writeVersion(StoredMatrix<T>::versionString(true, 2));
         NumWriter<T> val;
 
         if constexpr (std::is_same_v<T, uint32_t>) {
             val = UIntWriter(
                 std::make_unique<BP128_FOR_UIntWriter>(
-                    wb.createUIntWriter("val_data"), wb.createUIntWriter("val_idx")
+                    wb.createUIntWriter("val_data"),
+                    wb.createUIntWriter("val_idx"),
+                    wb.createULongWriter("val_idx_offsets")
                 ),
                 buffer_size
             );
@@ -73,12 +76,13 @@ template <typename T> class StoredMatrixWriter : public MatrixWriter<T> {
                 std::make_unique<BP128_D1Z_UIntWriter>(
                     wb.createUIntWriter("index_data"),
                     wb.createUIntWriter("index_idx"),
+                    wb.createULongWriter("index_idx_offsets"),
                     wb.createUIntWriter("index_starts")
                 ),
                 buffer_size
             ),
             std::move(val),
-            wb.createUIntWriter("idxptr"),
+            wb.createULongWriter("idxptr"),
             wb.createUIntWriter("shape"),
             wb.createStringWriter("row_names"),
             wb.createStringWriter("col_names"),
@@ -93,9 +97,9 @@ template <typename T> class StoredMatrixWriter : public MatrixWriter<T> {
         // Don't delete our original matrix
         mat.preserve_input_loader();
         uint32_t col = 0;
-        uint32_t idx = 0; // Index of for col_ptr array
+        uint64_t idx = 0; // Index of for col_ptr array
 
-        uint32_t max_capacity = std::max(row.maxCapacity(), val.maxCapacity());
+        uint64_t max_capacity = std::max(row.maxCapacity(), val.maxCapacity());
 
         col_ptr.write_one(idx);
 
@@ -110,7 +114,7 @@ template <typename T> class StoredMatrixWriter : public MatrixWriter<T> {
             while (mat.load()) {
                 uint32_t i = 0;
                 while (i < mat.capacity()) {
-                    uint32_t capacity = std::min(max_capacity, mat.capacity() - i);
+                    uint32_t capacity = std::min((uint32_t)max_capacity, mat.capacity() - i);
 
                     row.ensureCapacity(capacity);
                     val.ensureCapacity(capacity);

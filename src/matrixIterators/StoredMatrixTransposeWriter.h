@@ -17,8 +17,8 @@ namespace BPCells {
 // matrix on disk. Optionally, if saving as row-major the matrix will be logically
 // the same as the input, though the storage order will physically be transposed.
 template <typename T> class StoredMatrixTransposeWriter : public MatrixWriter<T> {
-    const size_t load_elements, sort_buffer_elements;
-    size_t round = 0, total_elements = 0;
+    const uint64_t load_elements, sort_buffer_elements;
+    uint64_t round = 0, total_elements = 0;
 
   private:
     UIntReader row_reader, col_reader;
@@ -32,8 +32,8 @@ template <typename T> class StoredMatrixTransposeWriter : public MatrixWriter<T>
 
     // Track which round reader/writer were opened so we can close
     // open file handles prior to delete (Windows doesn't like closing files with open handles)
-    size_t reader_round = SIZE_MAX;
-    size_t writer_round = SIZE_MAX;
+    uint64_t reader_round = SIZE_MAX;
+    uint64_t writer_round = SIZE_MAX;
 
     bool row_major;
 
@@ -45,10 +45,10 @@ template <typename T> class StoredMatrixTransposeWriter : public MatrixWriter<T>
 
     template <typename S> NumWriter<S> openReader(WriterBuilder &wb, std::string name);
 
-    static size_t bytesPerElement() { return 2 * sizeof(uint32_t) + sizeof(T); }
+    static uint64_t bytesPerElement() { return 2 * sizeof(uint32_t) + sizeof(T); }
 
     template <typename V>
-    static void flushToNumWriter(const V *vals, size_t count, NumWriter<V> &writer);
+    static void flushToNumWriter(const V *vals, uint64_t count, NumWriter<V> &writer);
 
     // Helper class to handle reading from a slice of a NumReader
     // Allow sharing NumReader between multiple SliceReaders, meaning that a
@@ -73,8 +73,8 @@ template <typename T> class StoredMatrixTransposeWriter : public MatrixWriter<T>
     StoredMatrixTransposeWriter(
         WriterBuilder &output,
         const char *tmpdir,
-        size_t load_bytes,
-        size_t sort_buffer_bytes,
+        uint64_t load_bytes,
+        uint64_t sort_buffer_bytes,
         bool row_major = false
     )
         : load_elements(load_bytes / sizeof(uint32_t))
@@ -104,8 +104,8 @@ template <typename T> class StoredMatrixTransposeWriter : public MatrixWriter<T>
             throw std::runtime_error(
                 "StoredMatrixTransposeWriter: can't write more than once to same temporary location"
             );
-        std::vector<size_t> output_chunk_sizes;
-        std::vector<size_t> input_chunk_sizes;
+        std::vector<uint64_t> output_chunk_sizes;
+        std::vector<uint64_t> input_chunk_sizes;
 
         // 1. Read in data + sort in max possible chunks
         {
@@ -116,7 +116,7 @@ template <typename T> class StoredMatrixTransposeWriter : public MatrixWriter<T>
                 row_buf(sort_buffer_elements / 2), col_data(sort_buffer_elements / 2),
                 col_buf(sort_buffer_elements / 2);
             std::vector<T> val_data(sort_buffer_elements / 2), val_buf(sort_buffer_elements / 2);
-            size_t elems = 0;
+            uint64_t elems = 0;
 
             while (mat.nextCol()) {
                 uint32_t current_col = mat.currentCol();
@@ -220,7 +220,7 @@ template <typename T> class StoredMatrixTransposeWriter : public MatrixWriter<T>
             uint32_t reader_offset = 0; // Used to calculate offsets for reads
 
             // Merge up to `row_chunks` sorted chunks at a time, starting at index `chunk`
-            for (size_t chunk = 0; chunk < input_chunk_sizes.size();
+            for (uint64_t chunk = 0; chunk < input_chunk_sizes.size();
                  chunk += sort_buffer_elements / load_elements) {
                 output_chunk_sizes.push_back(0);
                 // Set up heap
@@ -228,7 +228,7 @@ template <typename T> class StoredMatrixTransposeWriter : public MatrixWriter<T>
                 row_chunks.clear();
                 col_chunks.clear();
                 val_chunks.clear();
-                for (size_t i = 0; chunk + i < input_chunk_sizes.size() &&
+                for (uint64_t i = 0; chunk + i < input_chunk_sizes.size() &&
                                 i < sort_buffer_elements / load_elements;
                      i++) {
                     row_chunks.push_back(SliceReader<uint32_t>(
@@ -256,8 +256,8 @@ template <typename T> class StoredMatrixTransposeWriter : public MatrixWriter<T>
                 auto get_second_to_top =
                     [](const std::vector<std::tuple<uint32_t, uint32_t, uint32_t>> &heap) {
                         auto ret = std::make_tuple(UINT32_MAX, UINT32_MAX, UINT32_MAX);
-                        size_t child_1 = dary_heap::dary_heap_helpers::first_child_index<2>(0);
-                        size_t child_2 = dary_heap::dary_heap_helpers::last_child_index<2>(0);
+                        uint64_t child_1 = dary_heap::dary_heap_helpers::first_child_index<2>(0);
+                        uint64_t child_2 = dary_heap::dary_heap_helpers::last_child_index<2>(0);
                         if (child_1 < heap.size()) ret = std::min(heap[child_1], ret);
                         if (child_2 < heap.size()) ret = std::min(heap[child_2], ret);
                         return ret;
@@ -314,9 +314,9 @@ template <typename T> class StoredMatrixTransposeWriter : public MatrixWriter<T>
         openReaders(round, true); // Open just the col_reader as needed
 
         // Store the col_ptr vector
-        UIntWriter col_ptr = out_writer_builder.createUIntWriter("idxptr");
+        ULongWriter col_ptr = out_writer_builder.createULongWriter("idxptr");
         uint32_t cols_seen = 0;
-        for (size_t i = 0; i < total_elements; i++) {
+        for (uint64_t i = 0; i < total_elements; i++) {
             uint32_t next_col = col_reader.read_one();
             while (next_col >= cols_seen) {
                 col_ptr.write_one(i);
@@ -364,7 +364,7 @@ template <typename T> class StoredMatrixTransposeWriter : public MatrixWriter<T>
         out_writer_builder.createStringWriter("storage_order")
             ->write(VecStringReader(storage_order));
 
-        out_writer_builder.writeVersion(StoredMatrix<T>::versionString(true));
+        out_writer_builder.writeVersion(StoredMatrix<T>::versionString(true, 2));
     }
 };
 
@@ -380,6 +380,7 @@ void StoredMatrixTransposeWriter<T>::openWriters(uint32_t round, bool last_round
         std::make_unique<BP128_D1Z_UIntWriter>(
             wb.createUIntWriter(prefix + "index_data"),
             wb.createUIntWriter(prefix + "index_idx"),
+            wb.createULongWriter(prefix + "index_idx_offsets"),
             wb.createUIntWriter(prefix + "index_starts")
         ),
         1024
@@ -389,6 +390,7 @@ void StoredMatrixTransposeWriter<T>::openWriters(uint32_t round, bool last_round
         std::make_unique<BP128_D1_UIntWriter>(
             file_writer_builder.createUIntWriter(std::to_string(round) + "_col_data"),
             file_writer_builder.createUIntWriter(std::to_string(round) + "_col_idx"),
+            file_writer_builder.createULongWriter(std::to_string(round) + "_col_idx_offsets"),
             file_writer_builder.createUIntWriter(std::to_string(round) + "_col_starts")
         ),
         1024
@@ -397,7 +399,7 @@ void StoredMatrixTransposeWriter<T>::openWriters(uint32_t round, bool last_round
     if constexpr (std::is_same_v<T, uint32_t>) {
         val_writer = UIntWriter(
             std::make_unique<BP128_FOR_UIntWriter>(
-                wb.createUIntWriter(prefix + "val_data"), wb.createUIntWriter(prefix + "val_idx")
+                wb.createUIntWriter(prefix + "val_data"), wb.createUIntWriter(prefix + "val_idx"), wb.createULongWriter(prefix + "val_idx_offsets")
             ),
             1024
         );
@@ -416,6 +418,7 @@ void StoredMatrixTransposeWriter<T>::openReaders(uint32_t round, bool last_round
         std::make_unique<BP128_D1_UIntReader>(
             file_reader_builder.openUIntReader(std::to_string(round) + "_col_data"),
             file_reader_builder.openUIntReader(std::to_string(round) + "_col_idx"),
+            file_reader_builder.openULongReader(std::to_string(round) + "_col_idx_offsets"),
             file_reader_builder.openUIntReader(std::to_string(round) + "_col_starts"),
             total_elements
         ),
@@ -431,6 +434,7 @@ void StoredMatrixTransposeWriter<T>::openReaders(uint32_t round, bool last_round
         std::make_unique<BP128_D1Z_UIntReader>(
             file_reader_builder.openUIntReader(prefix + "index_data"),
             file_reader_builder.openUIntReader(prefix + "index_idx"),
+            file_reader_builder.openULongReader(prefix + "index_idx_offsets"),
             file_reader_builder.openUIntReader(prefix + "index_starts"),
             total_elements
         ),
@@ -444,6 +448,7 @@ void StoredMatrixTransposeWriter<T>::openReaders(uint32_t round, bool last_round
             std::make_unique<BP128_FOR_UIntReader>(
                 file_reader_builder.openUIntReader(prefix + "val_data"),
                 file_reader_builder.openUIntReader(prefix + "val_idx"),
+                file_reader_builder.openULongReader(prefix + "val_idx_offsets"),
                 total_elements
             ),
             1024,
@@ -467,6 +472,7 @@ void StoredMatrixTransposeWriter<T>::deleteWriters(uint32_t round, bool last_rou
     // D1 for cols
     file_writer_builder.deleteWriter(std::to_string(round) + "_col_data");
     file_writer_builder.deleteWriter(std::to_string(round) + "_col_idx");
+    file_writer_builder.deleteWriter(std::to_string(round) + "_col_idx_offsets");
     file_writer_builder.deleteWriter(std::to_string(round) + "_col_starts");
 
     if (last_round) return; // Don't delete the actually needed data
@@ -484,12 +490,14 @@ void StoredMatrixTransposeWriter<T>::deleteWriters(uint32_t round, bool last_rou
     // D1Z for rows
     file_writer_builder.deleteWriter(prefix + "index_data");
     file_writer_builder.deleteWriter(prefix + "index_idx");
+    file_writer_builder.deleteWriter(prefix + "index_idx_offsets");
     file_writer_builder.deleteWriter(prefix + "index_starts");
 
     // BP128 if vals is uint32_t, otherwise uncompressed
     if constexpr (std::is_same_v<T, uint32_t>) {
         file_writer_builder.deleteWriter(prefix + "val_data");
         file_writer_builder.deleteWriter(prefix + "val_idx");
+        file_writer_builder.deleteWriter(prefix + "val_idx_offsets");
     } else {
         file_writer_builder.deleteWriter(prefix + "val");
     }
@@ -498,11 +506,11 @@ void StoredMatrixTransposeWriter<T>::deleteWriters(uint32_t round, bool last_rou
 template <typename T>
 template <typename V>
 void StoredMatrixTransposeWriter<T>::flushToNumWriter(
-    const V *vals, size_t count, NumWriter<V> &writer
+    const V *vals, uint64_t count, NumWriter<V> &writer
 ) {
-    size_t chunk_size = writer.maxCapacity();
-    for (size_t i = 0; i < count; i += chunk_size) {
-        size_t write_size = std::min(chunk_size, count - i);
+    uint64_t chunk_size = writer.maxCapacity();
+    for (uint64_t i = 0; i < count; i += chunk_size) {
+        uint64_t write_size = std::min(chunk_size, count - i);
         writer.ensureCapacity(write_size);
         std::memmove(writer.data(), vals + i, sizeof(V) * write_size);
         writer.advance(write_size);
@@ -532,7 +540,7 @@ bool StoredMatrixTransposeWriter<T>::SliceReader<V>::advance() {
         num_loaded = 0;
         while (num_loaded < data.size()) {
             if (!reader.requestCapacity()) break;
-            uint32_t copy_size = std::min(reader.capacity(), (uint32_t)data.size() - num_loaded);
+            uint64_t copy_size = std::min(reader.capacity(), data.size() - num_loaded);
             std::memmove(data.data() + num_loaded, reader.data(), sizeof(V) * copy_size);
             reader.advance(copy_size);
             num_loaded += copy_size;

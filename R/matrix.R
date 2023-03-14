@@ -822,7 +822,8 @@ setClass("PackedMatrixMemBase",
     index_data = "integer",
     index_starts = "integer",
     index_idx = "integer",
-    idxptr = "integer",
+    index_idx_offsets = "numeric",
+    idxptr = "numeric",
     version = "character"
   ),
   prototype = list(
@@ -830,7 +831,8 @@ setClass("PackedMatrixMemBase",
     index_data = integer(0),
     index_starts = integer(0),
     index_idx = integer(0),
-    idxptr = integer(0),
+    index_idx_offsets = numeric(0),
+    idxptr = numeric(0),
     version = character(0)
   )
 )
@@ -843,11 +845,13 @@ setClass("PackedMatrixMem_uint32_t",
   contains = "PackedMatrixMemBase",
   slots = c(
     val_data = "integer",
-    val_idx = "integer"
+    val_idx = "integer",
+    val_idx_offsets = "numeric"
   ),
   prototype = list(
     val_data = integer(0),
-    val_idx = integer(0)
+    val_idx = integer(0),
+    val_idx_offsets = numeric(0)
   )
 )
 setMethod("matrix_type", "PackedMatrixMem_uint32_t", function(x) "uint32_t")
@@ -886,12 +890,12 @@ setClass("UnpackedMatrixMemBase",
   slots = c(
     # Leave out val storage since it's data-type dependent
     index = "integer",
-    idxptr = "integer",
+    idxptr = "numeric",
     version = "character"
   ),
   prototype = list(
     index = integer(0),
-    idxptr = integer(0),
+    idxptr = numeric(0),
     version = character(0)
   )
 )

@@ -207,7 +207,7 @@ setClass("UnpackedMemFragments",
     start = "integer",
     end = "integer",
     end_max = "integer",
-    chr_ptr = "integer",
+    chr_ptr = "numeric",
     chr_names = "character",
     cell_names = "character",
     version = "character"
@@ -217,7 +217,7 @@ setClass("UnpackedMemFragments",
     start = integer(0),
     end = integer(0),
     end_max = integer(0),
-    chr_ptr = integer(0),
+    chr_ptr = numeric(0),
     chr_names = character(0),
     cell_names = character(0),
     version = character(0)
@@ -250,13 +250,16 @@ setClass("PackedMemFragments",
   slots = c(
     cell_data = "integer",
     cell_idx = "integer",
+    cell_idx_offsets = "numeric",
     start_data = "integer",
     start_idx = "integer",
+    start_idx_offsets = "numeric",
     start_starts = "integer",
     end_data = "integer",
     end_idx = "integer",
+    end_idx_offsets = "numeric",
     end_max = "integer",
-    chr_ptr = "integer",
+    chr_ptr = "numeric",
     chr_names = "character",
     cell_names = "character",
     version = "character"
@@ -264,13 +267,16 @@ setClass("PackedMemFragments",
   prototype = list(
     cell_data = integer(0),
     cell_idx = integer(0),
+    cell_idx_offsets = numeric(0),
     start_data = integer(0),
     start_idx = integer(0),
+    start_idx_offsets = numeric(0),
     start_starts = integer(0),
     end_data = integer(0),
     end_idx = integer(0),
+    end_idx_offsets = numeric(0),
     end_max = integer(0),
-    chr_ptr = integer(0),
+    chr_ptr = numeric(0),
     chr_names = character(0),
     cell_names = character(0),
     version = character(0)
@@ -524,6 +530,7 @@ convert_to_fragments <- function(x, zero_based_coords = !is(x, "GRanges")) {
 
   chr_ptr <- rep(cumsum(table(x$chr)), each = 2)
   chr_ptr <- c(0, chr_ptr[-length(chr_ptr)])
+  names(chr_ptr) <- NULL
 
   end_max <- calculate_end_max_cpp(as.integer(x$end), chr_ptr)
   new("UnpackedMemFragments",
@@ -531,10 +538,10 @@ convert_to_fragments <- function(x, zero_based_coords = !is(x, "GRanges")) {
     start = as.integer(x$start),
     end = as.integer(x$end),
     end_max = end_max,
-    chr_ptr = as.integer(chr_ptr),
+    chr_ptr = chr_ptr,
     cell_names = levels(x$cell_id),
     chr_names = levels(x$chr),
-    version = "unpacked-fragments-v1"
+    version = "unpacked-fragments-v2"
   )
 }
 

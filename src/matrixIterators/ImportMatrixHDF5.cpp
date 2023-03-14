@@ -15,7 +15,7 @@ open10xFeatureMatrix(std::string file, uint32_t buffer_size, uint32_t read_size)
         return StoredMatrix(
             rb.openULongReader("indices").convert<uint32_t>(),
             rb.openUIntReader("data"),
-            rb.openULongReader("indptr").convert<uint32_t>(),
+            rb.openULongReader("indptr"),
             rows,
             rb.openStringReader("features/id"),
             rb.openStringReader("barcodes")
@@ -35,7 +35,7 @@ open10xFeatureMatrix(std::string file, uint32_t buffer_size, uint32_t read_size)
     return StoredMatrix(
         rb.openULongReader("indices").convert<uint32_t>(),
         rb.openUIntReader("data"),
-        rb.openULongReader("indptr").convert<uint32_t>(),
+        rb.openULongReader("indptr"),
         rows,
         rb.openStringReader("genes"),
         rb.openStringReader("barcodes")
@@ -68,7 +68,7 @@ StoredMatrixWriter<uint32_t> create10xFeatureMatrix(
     return StoredMatrixWriter(
         wb.createULongWriter("indices").convert<uint32_t>(),
         wb.createUIntWriter("data"),
-        wb.createULongWriter("indptr").convert<uint32_t>(),
+        wb.createULongWriter("indptr"),
         wb.createUIntWriter("shape"),
         std::make_unique<NullStringWriter>(),
         std::make_unique<NullStringWriter>(),
@@ -131,7 +131,7 @@ openAnnDataMatrix(std::string file, std::string group, uint32_t buffer_size, uin
     return StoredMatrix<float>(
         rb.openUIntReader("indices"),
         rb.openFloatReader("data"),
-        rb.openUIntReader("indptr"),
+        rb.openULongReader("indptr"),
         rows,
         std::move(row_names),
         std::move(col_names)

@@ -64,32 +64,32 @@ List dims_matrix_reader_builder(ReaderBuilder &rb) {
     auto storage_order = storage_order_reader->get(0);
     bool row_major = storage_order == std::string_view("row");
 
-    if (version == "unpacked-uint-matrix-v1") {
+    if (version == "unpacked-uint-matrix-v1" || version == "unpacked-uint-matrix-v2") {
         List l = dims_matrix(StoredMatrix<uint32_t>::openUnpacked(rb), row_major);
         l["compressed"] = false;
         l["type"] = "uint32_t";
         return l;
-    } else if (version == "packed-uint-matrix-v1") {
+    } else if (version == "packed-uint-matrix-v1" || version == "packed-uint-matrix-v2") {
         List l = dims_matrix(StoredMatrix<uint32_t>::openPacked(rb), row_major);
         l["compressed"] = true;
         l["type"] = "uint32_t";
         return l;
-    } else if (version == "unpacked-float-matrix-v1") {
+    } else if (version == "unpacked-float-matrix-v1" || version == "unpacked-float-matrix-v2") {
         List l = dims_matrix(StoredMatrix<float>::openUnpacked(rb), row_major);
         l["compressed"] = false;
         l["type"] = "float";
         return l;
-    } else if (version == "packed-float-matrix-v1") {
+    } else if (version == "packed-float-matrix-v1" || version == "packed-float-matrix-v2") {
         List l = dims_matrix(StoredMatrix<float>::openPacked(rb), row_major);
         l["compressed"] = true;
         l["type"] = "float";
         return l;
-    } else if (version == "unpacked-double-matrix-v1") {
+    } else if (version == "unpacked-double-matrix-v1" || version == "unpacked-double-matrix-v2") {
         List l = dims_matrix(StoredMatrix<double>::openUnpacked(rb), row_major);
         l["compressed"] = false;
         l["type"] = "double";
         return l;
-    } else if (version == "packed-double-matrix-v1") {
+    } else if (version == "packed-double-matrix-v1" || version == "packed-double-matrix-v2") {
         List l = dims_matrix(StoredMatrix<double>::openPacked(rb), row_major);
         l["compressed"] = true;
         l["type"] = "double";

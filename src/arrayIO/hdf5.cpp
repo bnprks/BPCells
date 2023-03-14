@@ -15,21 +15,21 @@ H5StringReader::H5StringReader(const HighFive::Group &group, std::string path) {
             data.resize(0);
         }
     } else {
-        uint32_t bytes = type.getSize();
-        uint32_t elements = d.getDimensions()[0];
+        uint64_t bytes = type.getSize();
+        uint64_t elements = d.getDimensions()[0];
         std::vector<char> char_data(bytes * elements);
         d.read(char_data.data(), type);
         data.resize(elements);
-        for (uint32_t i = 0; i < elements; i++) {
+        for (uint64_t i = 0; i < elements; i++) {
             data[i] = std::string(char_data.data() + bytes * i, char_data.data() + bytes * (i + 1));
         }
     }
 }
-const char *H5StringReader::get(uint32_t idx) const {
+const char *H5StringReader::get(uint64_t idx) const {
     if (idx < data.size()) return data[idx].c_str();
     return NULL;
 }
-uint32_t H5StringReader::size() const { return data.size(); }
+uint64_t H5StringReader::size() const { return data.size(); }
 
 H5StringWriter::H5StringWriter(const HighFive::Group &group, std::string path)
     : group(group)
@@ -37,7 +37,7 @@ H5StringWriter::H5StringWriter(const HighFive::Group &group, std::string path)
 
 void H5StringWriter::write(const StringReader &reader) {
     std::vector<std::string> data;
-    uint32_t i = 0;
+    uint64_t i = 0;
     while (true) {
         const char *s = reader.get(i);
         if (s == NULL) break;
@@ -74,7 +74,7 @@ HighFive::Group createH5Group(std::string file_path, std::string group_path, boo
 }
 
 H5WriterBuilder::H5WriterBuilder(
-    std::string file, std::string group, uint32_t buffer_size, uint32_t chunk_size, bool allow_exists
+    std::string file, std::string group, uint64_t buffer_size, uint64_t chunk_size, bool allow_exists
 )
     : group(createH5Group(file, group, allow_exists))
     , buffer_size(buffer_size)
@@ -120,7 +120,7 @@ void H5WriterBuilder::deleteWriter(std::string name) {
 }
 
 H5ReaderBuilder::H5ReaderBuilder(
-    std::string file, std::string group, uint32_t buffer_size, uint32_t read_size
+    std::string file, std::string group, uint64_t buffer_size, uint64_t read_size
 )
     : group(HighFive::File(file, HighFive::File::ReadWrite)
                 .getGroup(group == "" ? std::string("/") : group))

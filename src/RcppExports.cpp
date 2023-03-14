@@ -11,6 +11,17 @@ Rcpp::Rostream<true>&  Rcpp::Rcout = Rcpp::Rcpp_cout_get();
 Rcpp::Rostream<false>& Rcpp::Rcerr = Rcpp::Rcpp_cerr_get();
 #endif
 
+// convert_ulong_to_numeric
+NumericVector convert_ulong_to_numeric(const NumericVector& ulong_vec);
+RcppExport SEXP _BPCells_convert_ulong_to_numeric(SEXP ulong_vecSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const NumericVector& >::type ulong_vec(ulong_vecSEXP);
+    rcpp_result_gen = Rcpp::wrap(convert_ulong_to_numeric(ulong_vec));
+    return rcpp_result_gen;
+END_RCPP
+}
 // read_integer_vector
 IntegerVector read_integer_vector(SEXP input);
 RcppExport SEXP _BPCells_read_integer_vector(SEXP inputSEXP) {
@@ -34,43 +45,46 @@ BEGIN_RCPP
 END_RCPP
 }
 // open_bp128_d1z
-SEXP open_bp128_d1z(SEXP data, SEXP idx, SEXP starts, uint32_t count);
-RcppExport SEXP _BPCells_open_bp128_d1z(SEXP dataSEXP, SEXP idxSEXP, SEXP startsSEXP, SEXP countSEXP) {
+SEXP open_bp128_d1z(SEXP data, SEXP idx, SEXP idx_offsets, SEXP starts, uint32_t count);
+RcppExport SEXP _BPCells_open_bp128_d1z(SEXP dataSEXP, SEXP idxSEXP, SEXP idx_offsetsSEXP, SEXP startsSEXP, SEXP countSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< SEXP >::type data(dataSEXP);
     Rcpp::traits::input_parameter< SEXP >::type idx(idxSEXP);
+    Rcpp::traits::input_parameter< SEXP >::type idx_offsets(idx_offsetsSEXP);
     Rcpp::traits::input_parameter< SEXP >::type starts(startsSEXP);
     Rcpp::traits::input_parameter< uint32_t >::type count(countSEXP);
-    rcpp_result_gen = Rcpp::wrap(open_bp128_d1z(data, idx, starts, count));
+    rcpp_result_gen = Rcpp::wrap(open_bp128_d1z(data, idx, idx_offsets, starts, count));
     return rcpp_result_gen;
 END_RCPP
 }
 // open_bp128_d1
-SEXP open_bp128_d1(SEXP data, SEXP idx, SEXP starts, uint32_t count);
-RcppExport SEXP _BPCells_open_bp128_d1(SEXP dataSEXP, SEXP idxSEXP, SEXP startsSEXP, SEXP countSEXP) {
+SEXP open_bp128_d1(SEXP data, SEXP idx, SEXP idx_offsets, SEXP starts, uint32_t count);
+RcppExport SEXP _BPCells_open_bp128_d1(SEXP dataSEXP, SEXP idxSEXP, SEXP idx_offsetsSEXP, SEXP startsSEXP, SEXP countSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< SEXP >::type data(dataSEXP);
     Rcpp::traits::input_parameter< SEXP >::type idx(idxSEXP);
+    Rcpp::traits::input_parameter< SEXP >::type idx_offsets(idx_offsetsSEXP);
     Rcpp::traits::input_parameter< SEXP >::type starts(startsSEXP);
     Rcpp::traits::input_parameter< uint32_t >::type count(countSEXP);
-    rcpp_result_gen = Rcpp::wrap(open_bp128_d1(data, idx, starts, count));
+    rcpp_result_gen = Rcpp::wrap(open_bp128_d1(data, idx, idx_offsets, starts, count));
     return rcpp_result_gen;
 END_RCPP
 }
 // open_bp128_for
-SEXP open_bp128_for(SEXP data, SEXP idx, uint32_t count);
-RcppExport SEXP _BPCells_open_bp128_for(SEXP dataSEXP, SEXP idxSEXP, SEXP countSEXP) {
+SEXP open_bp128_for(SEXP data, SEXP idx, SEXP idx_offsets, uint32_t count);
+RcppExport SEXP _BPCells_open_bp128_for(SEXP dataSEXP, SEXP idxSEXP, SEXP idx_offsetsSEXP, SEXP countSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< SEXP >::type data(dataSEXP);
     Rcpp::traits::input_parameter< SEXP >::type idx(idxSEXP);
+    Rcpp::traits::input_parameter< SEXP >::type idx_offsets(idx_offsetsSEXP);
     Rcpp::traits::input_parameter< uint32_t >::type count(countSEXP);
-    rcpp_result_gen = Rcpp::wrap(open_bp128_for(data, idx, count));
+    rcpp_result_gen = Rcpp::wrap(open_bp128_for(data, idx, idx_offsets, count));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -311,16 +325,6 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< bool >::type allow_overwrite(allow_overwriteSEXP);
     write_packed_fragments_hdf5_cpp(fragments, file, group, buffer_size, chunk_size, allow_overwrite);
     return R_NilValue;
-END_RCPP
-}
-// get_bp128_version_cpp
-int get_bp128_version_cpp();
-RcppExport SEXP _BPCells_get_bp128_version_cpp() {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    rcpp_result_gen = Rcpp::wrap(get_bp128_version_cpp());
-    return rcpp_result_gen;
 END_RCPP
 }
 // fragments_identical_cpp
@@ -2086,11 +2090,12 @@ END_RCPP
 }
 
 static const R_CallMethodDef CallEntries[] = {
+    {"_BPCells_convert_ulong_to_numeric", (DL_FUNC) &_BPCells_convert_ulong_to_numeric, 1},
     {"_BPCells_read_integer_vector", (DL_FUNC) &_BPCells_read_integer_vector, 1},
     {"_BPCells_open_file_reader", (DL_FUNC) &_BPCells_open_file_reader, 1},
-    {"_BPCells_open_bp128_d1z", (DL_FUNC) &_BPCells_open_bp128_d1z, 4},
-    {"_BPCells_open_bp128_d1", (DL_FUNC) &_BPCells_open_bp128_d1, 4},
-    {"_BPCells_open_bp128_for", (DL_FUNC) &_BPCells_open_bp128_for, 3},
+    {"_BPCells_open_bp128_d1z", (DL_FUNC) &_BPCells_open_bp128_d1z, 5},
+    {"_BPCells_open_bp128_d1", (DL_FUNC) &_BPCells_open_bp128_d1, 5},
+    {"_BPCells_open_bp128_for", (DL_FUNC) &_BPCells_open_bp128_for, 4},
     {"_BPCells_simd_vec_version", (DL_FUNC) &_BPCells_simd_vec_version, 0},
     {"_BPCells_simd_sleef_version", (DL_FUNC) &_BPCells_simd_sleef_version, 0},
     {"_BPCells_iterate_10x_fragments_cpp", (DL_FUNC) &_BPCells_iterate_10x_fragments_cpp, 2},
@@ -2110,7 +2115,6 @@ static const R_CallMethodDef CallEntries[] = {
     {"_BPCells_write_unpacked_fragments_hdf5_cpp", (DL_FUNC) &_BPCells_write_unpacked_fragments_hdf5_cpp, 6},
     {"_BPCells_iterate_packed_fragments_hdf5_cpp", (DL_FUNC) &_BPCells_iterate_packed_fragments_hdf5_cpp, 5},
     {"_BPCells_write_packed_fragments_hdf5_cpp", (DL_FUNC) &_BPCells_write_packed_fragments_hdf5_cpp, 6},
-    {"_BPCells_get_bp128_version_cpp", (DL_FUNC) &_BPCells_get_bp128_version_cpp, 0},
     {"_BPCells_fragments_identical_cpp", (DL_FUNC) &_BPCells_fragments_identical_cpp, 2},
     {"_BPCells_scan_fragments_cpp", (DL_FUNC) &_BPCells_scan_fragments_cpp, 1},
     {"_BPCells_iterate_peak_matrix_cpp", (DL_FUNC) &_BPCells_iterate_peak_matrix_cpp, 6},

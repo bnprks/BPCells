@@ -300,7 +300,7 @@ TEST(MatrixIO, ConcatCols) {
 }
 
 void test_order_rows(SparseMatrix<double> m, uint32_t load_size) {
-    std::vector<uint32_t> col(m.outerIndexPtr(), m.outerIndexPtr() + m.cols() + 1);
+    std::vector<uint64_t> col(m.outerIndexPtr(), m.outerIndexPtr() + m.cols() + 1);
     std::vector<uint32_t> row(m.innerIndexPtr(), m.innerIndexPtr() + m.nonZeros());
     std::vector<uint32_t> row_orig(row);
     std::vector<double> val(m.valuePtr(), m.valuePtr() + m.nonZeros());
@@ -320,7 +320,7 @@ void test_order_rows(SparseMatrix<double> m, uint32_t load_size) {
     StoredMatrix<double> orig(
         UIntReader(std::make_unique<VecUIntReader>(row_orig.data(), row_orig.size()), 16),
         DoubleReader(std::make_unique<VecNumReader<double>>(val_orig.data(), val_orig.size()), 16),
-        UIntReader(std::make_unique<VecUIntReader>(col.data(), col.size()), 16),
+        ULongReader(std::make_unique<VecNumReader<uint64_t>>(col.data(), col.size()), 16),
         row_count,
         std::make_unique<VecStringReader>(std::vector<std::string>()),
         std::make_unique<VecStringReader>(std::vector<std::string>())
@@ -329,7 +329,7 @@ void test_order_rows(SparseMatrix<double> m, uint32_t load_size) {
     StoredMatrix<double> unordered(
         UIntReader(std::make_unique<VecUIntReader>(row.data(), row.size()), 16),
         DoubleReader(std::make_unique<VecNumReader<double>>(val.data(), val.size()), 16),
-        UIntReader(std::make_unique<VecUIntReader>(col.data(), col.size()), 16),
+        ULongReader(std::make_unique<VecNumReader<uint64_t>>(col.data(), col.size()), 16),
         row_count,
         std::make_unique<VecStringReader>(std::vector<std::string>()),
         std::make_unique<VecStringReader>(std::vector<std::string>())
