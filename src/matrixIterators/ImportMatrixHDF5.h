@@ -15,9 +15,9 @@ template <class T> class SingletonNumReader : public BulkNumReader<T> {
 
   public:
     SingletonNumReader(T num) : num(num) {}
-    uint32_t size() const override { return 1; }
-    void seek(uint32_t pos) override { read = pos > 0; }
-    uint32_t load(T *out, uint32_t count) override {
+    uint64_t size() const override { return 1; }
+    void seek(uint64_t pos) override { read = pos > 0; }
+    uint64_t load(T *out, uint64_t count) override {
         if (read) return 0;
         out[0] = num;
         return 1;

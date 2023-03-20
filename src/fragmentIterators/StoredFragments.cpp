@@ -33,7 +33,7 @@ void StoredFragmentsBase::readEndMaxBuf(uint64_t start_idx, uint64_t end_idx) {
     uint32_t i = 0;
     while (true) {
         end_max.ensureCapacity(1);
-        uint32_t load_amount = std::min(end_max.capacity(), end_max_buf.size() - i);
+        uint64_t load_amount = std::min(end_max.capacity(), (uint64_t) end_max_buf.size() - i);
 
         std::memmove(&end_max_buf[i], end_max.data(), load_amount * sizeof(uint32_t));
         i += load_amount;

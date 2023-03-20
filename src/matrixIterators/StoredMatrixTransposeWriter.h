@@ -540,7 +540,7 @@ bool StoredMatrixTransposeWriter<T>::SliceReader<V>::advance() {
         num_loaded = 0;
         while (num_loaded < data.size()) {
             if (!reader.requestCapacity()) break;
-            uint64_t copy_size = std::min(reader.capacity(), data.size() - num_loaded);
+            uint64_t copy_size = std::min(reader.capacity(), (uint64_t) data.size() - num_loaded);
             std::memmove(data.data() + num_loaded, reader.data(), sizeof(V) * copy_size);
             reader.advance(copy_size);
             num_loaded += copy_size;
