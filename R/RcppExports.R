@@ -609,27 +609,3 @@ matrix_identical_uint32_t_cpp <- function(mat1, mat2) {
     .Call(`_BPCells_matrix_identical_uint32_t_cpp`, mat1, mat2)
 }
 
-glm_check_gradient_cpp <- function(X, XtY, beta_init, offset_X, offset_beta, ridge_penalty) {
-    .Call(`_BPCells_glm_check_gradient_cpp`, X, XtY, beta_init, offset_X, offset_beta, ridge_penalty)
-}
-
-glm_trace_solve_cpp <- function(idx, X, XtY, beta_init, offset_X, offset_beta, ridge_penalty, max_it, abstol, reltol) {
-    .Call(`_BPCells_glm_trace_solve_cpp`, idx, X, XtY, beta_init, offset_X, offset_beta, ridge_penalty, max_it, abstol, reltol)
-}
-
-glm_fit_matrix_cpp <- function(X, XtY, beta_init, offset_X, offset_beta, ridge_penalty, max_it, abstol, reltol, threads) {
-    .Call(`_BPCells_glm_fit_matrix_cpp`, X, XtY, beta_init, offset_X, offset_beta, ridge_penalty, max_it, abstol, reltol, threads)
-}
-
-glm_fit_matrix_object_oriented_cpp <- function(X, XtY, beta_init, fixed_dims, ridge_penalty, max_it, abstol, reltol, threads, impl) {
-    .Call(`_BPCells_glm_fit_matrix_object_oriented_cpp`, X, XtY, beta_init, fixed_dims, ridge_penalty, max_it, abstol, reltol, threads, impl)
-}
-
-glm_gradient_check_object_oriented_cpp <- function(idx, X, XtY, beta_init, fixed_dims, ridge_penalty, impl) {
-    .Call(`_BPCells_glm_gradient_check_object_oriented_cpp`, idx, X, XtY, beta_init, fixed_dims, ridge_penalty, impl)
-}
-
-poisson_glm_matrix_cpp <- function(X, Y, beta_init, ridge_penalty, max_it, abstol, reltol) {
-    .Call(`_BPCells_poisson_glm_matrix_cpp`, X, Y, beta_init, ridge_penalty, max_it, abstol, reltol)
-}
-

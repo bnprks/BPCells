@@ -13,7 +13,6 @@ fragment_utils.o \
 matrix_io.o \
 matrix_transforms.o \
 matrix_utils.o \
-poisson_factorization.o \
 R_array_io.o \
 RcppExports.o \
 arrayIO/array_interfaces.o \
