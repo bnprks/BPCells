@@ -43,7 +43,8 @@ be about half the size of a gzip-compressed 10x fragments file.}
 \item{buffer_size}{For performance tuning only. The number of items to be bufferred
 in memory before calling writes to disk.}
 
-\item{overwrite}{If \code{TRUE}, delete any pre-existing data in the output location before writing}
+\item{overwrite}{If \code{TRUE}, write to a temp dir then overwrite existing data. Alternatively,
+pass a temp path as a string to customize the temp dir location.}
 
 \item{path}{Path to the hdf5 file on disk}
 
