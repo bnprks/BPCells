@@ -169,7 +169,7 @@ setMethod("iterate_matrix", "TransformMin", function(x) {
 setMethod("short_description", "TransformMin", function(x) {
   c(
     short_description(x@matrix),
-    sprintf("Transform min(x, %d)", x@global_params[1])
+    sprintf("Transform min(x, %.3g)", x@global_params[1])
   )
 })
 

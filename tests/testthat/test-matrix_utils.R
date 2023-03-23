@@ -285,9 +285,9 @@ test_that("Generic methods work", {
     mask = mask_matrix(mi, Matrix::sparseMatrix(i=integer(0), j=integer(0), x=integer(0), dims=dim(mi))),
     mask_float = convert_matrix_type(mi, "float") %>% mask_matrix(Matrix::sparseMatrix(i=integer(0), j=integer(0), x=integer(0), dims=dim(mi))),
     mask_int = convert_matrix_type(mi, "uint32_t") %>% mask_matrix(Matrix::sparseMatrix(i=integer(0), j=integer(0), x=integer(0), dims=dim(mi))),
-    min_1 = min_scalar(mi, 1e9),
-    min_row = min_by_row(mi, rep.int(1e9, nrow(mi))),
-    min_col = min_by_col(mi, rep.int(1e9, ncol(mi))),
+    min_1 = min_scalar(mi, 1e9 + 0.1),
+    min_row = min_by_row(mi, rep.int(1e9 + 0.1, nrow(mi))),
+    min_col = min_by_col(mi, rep.int(1e9 + 0.1, ncol(mi))),
     round = round(mi),
     subset = mi[seq_len(nrow(m)), ][, seq_len(ncol(m))][seq_len(nrow(m)), seq_len(ncol(m))],
     rbind = rbind2(mi[1:2, ], mi[3:nrow(m)]),
@@ -300,7 +300,7 @@ test_that("Generic methods work", {
 
   for (i in names(ident_transforms)) {
     trans <- ident_transforms[[i]]
-    short_description(trans)
+    expect_no_error(short_description(trans))
     expect_identical(dim(trans), dim(m))
     expect_identical(dimnames(trans), dimnames(m))
     expect_true(matrix_type(trans) %in% c("uint32_t", "float", "double"))

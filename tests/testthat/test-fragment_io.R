@@ -110,6 +110,14 @@ test_that("H5 overwrite works", {
     open_fragments_hdf5(file.path(dir, "overwrite.h5"), "frags") %>%
       as.data.frame()
   )
+  # Overwriting from the same source data should work
+  expect_identical(
+    as.data.frame(select_cells(f2, c(1,3,5))),
+    open_fragments_hdf5(file.path(dir, "overwrite.h5"), "frags") %>%
+      select_cells(c(1,3,5)) %>%
+      write_fragments_hdf5(file.path(dir, "overwrite.h5"), "frags", overwrite=TRUE) %>%
+      as.data.frame()
+  )
 })
 
 test_that("Dir overwrite works", {
@@ -144,6 +152,14 @@ test_that("Dir overwrite works", {
   expect_identical(
     as.data.frame(f2),
     open_fragments_dir(file.path(dir, "overwrite-frags")) %>%
+      as.data.frame()
+  )
+  # Overwriting from the same source data should work
+  expect_identical(
+    as.data.frame(select_cells(f2, c(1,3,5))),
+    open_fragments_dir(file.path(dir, "overwrite-frags")) %>%
+      select_cells(c(1,3,5)) %>%
+      write_fragments_dir(file.path(dir, "overwrite-frags"), overwrite=TRUE) %>%
       as.data.frame()
   )
 })

@@ -385,7 +385,8 @@ setMethod("short_description", "FragmentsDir", function(x) {
 #' @param dir Directory to read/write the data from
 #' @param buffer_size For performance tuning only. The number of items to be bufferred
 #' in memory before calling writes to disk.
-#' @param overwrite If `TRUE`, delete any pre-existing data in the output location before writing
+#' @param overwrite If `TRUE`, write to a temp dir then overwrite existing data. Alternatively,
+#'   pass a temp path as a string to customize the temp dir location.
 #' @return Fragment object
 #' @rdname fragment_io
 #' @export
@@ -394,13 +395,31 @@ write_fragments_dir <- function(fragments, dir, compress = TRUE, buffer_size = 1
   assert_is(dir, "character")
   assert_is(compress, "logical")
   assert_is(buffer_size, "integer")
-  assert_is(overwrite, "logical")
+  assert_is(overwrite, c("logical", "character"))
+  if (is(overwrite, "character")) {
+    assert_true(dir.exists(overwrite))
+    overwrite_path <- tempfile("overwrite", tmpdir=overwrite)
+    overwrite <- TRUE
+  } else if (overwrite) {
+    overwrite_path <- tempfile("overwrite")
+  }
+
   dir <- path.expand(dir)
+  did_tmp_copy <- FALSE
+  if (overwrite && dir.exists(dir)) {
+    fragments <- write_fragments_dir(fragments, overwrite_path, compress, buffer_size)
+    did_tmp_copy <- TRUE
+  }
+
   it <- iterate_fragments(fragments)
   if (compress) {
     write_packed_fragments_file_cpp(it, dir, buffer_size, overwrite)
   } else {
     write_unpacked_fragments_file_cpp(it, dir, buffer_size, overwrite)
+  }
+
+  if (did_tmp_copy) {
+    unlink(overwrite_path, recursive=TRUE)
   }
   open_fragments_dir(dir, buffer_size)
 }
@@ -478,18 +497,33 @@ write_fragments_hdf5 <- function(fragments, path, group = "fragments", compress 
   assert_is(compress, "logical")
   assert_is(buffer_size, "integer")
   assert_is(chunk_size, "integer")
-  assert_is(compress, "logical")
+  assert_is(overwrite, c("logical", "character"))
+  if (is(overwrite, "character")) {
+    assert_true(dir.exists(overwrite))
+    overwrite_path <- tempfile("overwrite", tmpdir=overwrite)
+    overwrite <- TRUE
+  } else if (overwrite) {
+    overwrite_path <- tempfile("overwrite")
+  }
+
   path <- path.expand(path)
+  did_tmp_copy <- FALSE
   if (overwrite && hdf5_group_exists_cpp(path, group)) {
     rlang::inform(c(
       "Warning: Overwriting an hdf5 dataset does not free old storage"
     ), .frequency = "regularly", .frequency_id = "hdf5_overwrite")
+    did_tmp_copy <- TRUE
+    fragments <- write_fragments_dir(fragments, overwrite_path, compress, buffer_size)
   }
   it <- iterate_fragments(fragments)
   if (compress) {
     write_packed_fragments_hdf5_cpp(it, path, group, buffer_size, chunk_size, overwrite)
   } else {
     write_unpacked_fragments_hdf5_cpp(it, path, group, buffer_size, chunk_size, overwrite)
+  }
+
+  if (did_tmp_copy) {
+    unlink(overwrite_path, recursive=TRUE)
   }
   open_fragments_hdf5(path, group, buffer_size)
 }
