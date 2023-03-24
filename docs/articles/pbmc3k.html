@@ -480,21 +480,21 @@ dense.</p>
 <span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/sprintf.html" class="external-link">sprintf</a></span><span class="op">(</span><span class="st">"PCA dimensions: %s\n"</span>, <span class="fu"><a href="https://rdrr.io/r/base/toString.html" class="external-link">toString</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/dim.html" class="external-link">dim</a></span><span class="op">(</span><span class="va">pca</span><span class="op">)</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="va">pca</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">4</span>,<span class="fl">1</span><span class="op">:</span><span class="fl">3</span><span class="op">]</span></span></code></pre></div>
 <pre><code><span><span class="co">## PCA dimensions: 2600, 50</span></span>
-<span><span class="co">##           [,1]       [,2]       [,3]</span></span>
-<span><span class="co">## [1,] 15.167732 -0.8951488 -2.3650024</span></span>
-<span><span class="co">## [2,]  6.599774 -7.2484738  4.4369183</span></span>
-<span><span class="co">## [3,] 14.621697  1.1929478 -0.6439662</span></span>
-<span><span class="co">## [4,]  8.142875 -1.0977225 -2.5066238</span></span></code></pre>
+<span><span class="co">##            [,1]       [,2]       [,3]</span></span>
+<span><span class="co">## [1,] -15.167732 -0.8951488  2.3650024</span></span>
+<span><span class="co">## [2,]  -6.599774 -7.2484738 -4.4369183</span></span>
+<span><span class="co">## [3,] -14.621697  1.1929478  0.6439662</span></span>
+<span><span class="co">## [4,]  -8.142875 -1.0977225  2.5066238</span></span></code></pre>
 <p>Next we calculate UMAP coordinates</p>
 <div class="sourceCode" id="cb33"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">12341512</span><span class="op">)</span></span>
 <span><span class="va">umap</span> <span class="op">&lt;-</span> <span class="fu">uwot</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/uwot/man/umap.html" class="external-link">umap</a></span><span class="op">(</span><span class="va">pca</span><span class="op">)</span></span>
 <span><span class="va">umap</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">4</span>,<span class="op">]</span></span></code></pre></div>
-<pre><code><span><span class="co">##           [,1]      [,2]</span></span>
-<span><span class="co">## [1,] 10.446446 2.8931689</span></span>
-<span><span class="co">## [2,]  9.205374 0.7363640</span></span>
-<span><span class="co">## [3,] 10.257319 3.1390910</span></span>
-<span><span class="co">## [4,]  8.226255 0.6962447</span></span></code></pre>
+<pre><code><span><span class="co">##          [,1]     [,2]</span></span>
+<span><span class="co">## [1,] 3.542316 3.877324</span></span>
+<span><span class="co">## [2,] 3.384134 1.737598</span></span>
+<span><span class="co">## [3,] 3.607069 3.860014</span></span>
+<span><span class="co">## [4,] 4.091158 1.408833</span></span></code></pre>
 </div>
 <div class="section level3">
 <h3 id="clustering">Clustering<a class="anchor" aria-label="anchor" href="#clustering"></a>
@@ -588,7 +588,7 @@ resolution is approximately +/- 30bp.</p>
 <span><span class="co">## <span style="color: #BCBCBC;">3</span> chr17  81<span style="text-decoration: underline;">860</span>866  81<span style="text-decoration: underline;">861</span>066 DC    7.87<span style="color: #949494;">e</span><span style="color: #BB0000;">- 63</span> 1.21<span style="color: #949494;">e</span><span style="color: #BB0000;">- 55</span>       552.</span></span>
 <span><span class="co">## <span style="color: #BCBCBC;">4</span> chr1    1<span style="text-decoration: underline;">724</span>333   1<span style="text-decoration: underline;">724</span>533 Mono  0   <span style="color: #949494;"> </span>     0   <span style="color: #949494;"> </span>           511.</span></span>
 <span><span class="co">## <span style="color: #BCBCBC;">5</span> chr1  228<span style="text-decoration: underline;">140</span>000 228<span style="text-decoration: underline;">140</span>200 NK    2.24<span style="color: #949494;">e</span><span style="color: #BB0000;">-158</span> 1.73<span style="color: #949494;">e</span><span style="color: #BB0000;">-151</span>       845.</span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">6</span> chr8   30<span style="text-decoration: underline;">083</span>133  30<span style="text-decoration: underline;">083</span>333 CD8 T 2.95<span style="color: #949494;">e</span><span style="color: #BB0000;">-225</span> 4.55<span style="color: #949494;">e</span><span style="color: #BB0000;">-218</span>       749.</span></span></code></pre>
+<span><span class="co">## <span style="color: #BCBCBC;">6</span> chr8   30<span style="text-decoration: underline;">083</span>133  30<span style="text-decoration: underline;">083</span>333 CD8 T 8.02<span style="color: #949494;">e</span><span style="color: #BB0000;">-225</span> 1.24<span style="color: #949494;">e</span><span style="color: #BB0000;">-217</span>       750.</span></span></code></pre>
 <p>Next we compute a peak matrix counting how many ATAC-seq insertions
 overlap each peak. We again save it in memory rather than saving it to
 disk since our dataset is quite small.</p>
@@ -634,7 +634,7 @@ disk.</p>
 <span><span class="co">## 3. Calculate 2600 peaks over 50000 ranges: chr1:817201-817400 ... chrX:155881201-155881400</span></span>
 <span><span class="co">## 4. Convert type from uint32_t to double</span></span>
 <span><span class="co">## 5. Scale by 1e+04</span></span>
-<span><span class="co">## 6. Scale columns by 6.72e-05, 5.18e-05 ... 0.000807</span></span>
+<span><span class="co">## 6. Scale columns by 6.72e-05, 5.18e-05 ... 0.000806</span></span>
 <span><span class="co">## 7. Scale rows by 11.1, 2.78 ... 3.77</span></span>
 <span><span class="co">## 8. Transform log1p</span></span></code></pre>
 <p>Just like for the RNA, we save our matrix before running PCA. On a
@@ -662,20 +662,20 @@ our data and run PCA as usual</p>
 <span><span class="va">pca_atac</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/mat_norm.html">multiply_cols</a></span><span class="op">(</span><span class="va">svd_atac</span><span class="op">$</span><span class="va">v</span>, <span class="va">svd_atac</span><span class="op">$</span><span class="va">d</span><span class="op">)</span></span>
 <span><span class="va">pca_atac</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">4</span>,<span class="fl">1</span><span class="op">:</span><span class="fl">4</span><span class="op">]</span></span></code></pre></div>
 <pre><code><span><span class="co">##            [,1]      [,2]       [,3]      [,4]</span></span>
-<span><span class="co">## [1,] -103.80285 -1.442493   1.771851 -21.48437</span></span>
-<span><span class="co">## [2,]  -44.87028 28.931331 -12.668194  10.50600</span></span>
-<span><span class="co">## [3,]  -90.63232 -3.478272   3.462969 -13.01293</span></span>
-<span><span class="co">## [4,]  -90.64986  6.356748   7.264226  15.85167</span></span></code></pre>
+<span><span class="co">## [1,] -103.71572 -1.534167   1.888150 -21.53969</span></span>
+<span><span class="co">## [2,]  -44.89571 28.935112 -12.594339  10.48701</span></span>
+<span><span class="co">## [3,]  -90.58360 -3.491546   3.446055 -12.95166</span></span>
+<span><span class="co">## [4,]  -90.75934  6.305334   7.256461  15.68518</span></span></code></pre>
 <p>Next we calculate our UMAP</p>
 <div class="sourceCode" id="cb52"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">12341512</span><span class="op">)</span></span>
 <span><span class="va">umap_atac</span> <span class="op">&lt;-</span> <span class="fu">uwot</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/uwot/man/umap.html" class="external-link">umap</a></span><span class="op">(</span><span class="va">pca_atac</span><span class="op">)</span></span>
 <span><span class="va">umap_atac</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">4</span>,<span class="op">]</span></span></code></pre></div>
 <pre><code><span><span class="co">##          [,1]       [,2]</span></span>
-<span><span class="co">## [1,] 7.185965  3.9483922</span></span>
-<span><span class="co">## [2,] 6.403921 -1.6545079</span></span>
-<span><span class="co">## [3,] 8.259476  8.6176779</span></span>
-<span><span class="co">## [4,] 7.970819  0.7561425</span></span></code></pre>
+<span><span class="co">## [1,] 7.195456  3.1271017</span></span>
+<span><span class="co">## [2,] 5.259174 -0.6750506</span></span>
+<span><span class="co">## [3,] 4.386508  7.5413287</span></span>
+<span><span class="co">## [4,] 8.526675 -0.3553999</span></span></code></pre>
 <p>Then we cluster, just like for the RNA</p>
 <div class="sourceCode" id="cb54"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">clusts_atac</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/knn.html">knn_hnsw</a></span><span class="op">(</span><span class="va">pca_atac</span>, ef<span class="op">=</span><span class="fl">500</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> <span class="co"># Find approximate nearest neighbors</span></span>
@@ -803,20 +803,20 @@ motifs-of-interest in peaks</p>
 <span><span class="va">motif_positions</span></span></code></pre></div>
 <pre><code><span><span class="co">## GRangesList object of length 4:</span></span>
 <span><span class="co">## $CEBPA</span></span>
-<span><span class="co">## GRanges object with 13977 ranges and 1 metadata column:</span></span>
+<span><span class="co">## GRanges object with 13984 ranges and 1 metadata column:</span></span>
 <span><span class="co">##           seqnames              ranges strand |     score</span></span>
 <span><span class="co">##              &lt;Rle&gt;           &lt;IRanges&gt;  &lt;Rle&gt; | &lt;numeric&gt;</span></span>
-<span><span class="co">##       [1]     chr1     1060191-1060200      + |   7.24911</span></span>
-<span><span class="co">##       [2]     chr1     1398356-1398365      - |   7.31986</span></span>
-<span><span class="co">##       [3]     chr1     1408228-1408237      - |   7.91989</span></span>
-<span><span class="co">##       [4]     chr1     1470604-1470613      + |   7.26087</span></span>
-<span><span class="co">##       [5]     chr1     1614370-1614379      - |   7.33086</span></span>
+<span><span class="co">##       [1]     chr1     1060191-1060200      + |   7.24921</span></span>
+<span><span class="co">##       [2]     chr1     1398356-1398365      - |   7.31985</span></span>
+<span><span class="co">##       [3]     chr1     1408228-1408237      - |   7.91982</span></span>
+<span><span class="co">##       [4]     chr1     1470604-1470613      + |   7.26081</span></span>
+<span><span class="co">##       [5]     chr1     1614370-1614379      - |   7.33085</span></span>
 <span><span class="co">##       ...      ...                 ...    ... .       ...</span></span>
-<span><span class="co">##   [13973]     chrX 154247973-154247982      + |   7.91989</span></span>
-<span><span class="co">##   [13974]     chrX 154377819-154377828      - |   7.91989</span></span>
-<span><span class="co">##   [13975]     chrX 154497506-154497515      + |   8.62512</span></span>
-<span><span class="co">##   [13976]     chrX 154734157-154734166      + |   7.33804</span></span>
-<span><span class="co">##   [13977]     chrX 155242494-155242503      - |   7.24429</span></span>
+<span><span class="co">##   [13980]     chrX 154247973-154247982      + |   7.91982</span></span>
+<span><span class="co">##   [13981]     chrX 154377819-154377828      - |   7.91982</span></span>
+<span><span class="co">##   [13982]     chrX 154497506-154497515      + |   8.62515</span></span>
+<span><span class="co">##   [13983]     chrX 154734157-154734166      + |   7.33808</span></span>
+<span><span class="co">##   [13984]     chrX 155242494-155242503      - |   7.24429</span></span>
 <span><span class="co">##   -------</span></span>
 <span><span class="co">##   seqinfo: 39 sequences from an unspecified genome; no seqlengths</span></span>
 <span><span class="co">## </span></span>

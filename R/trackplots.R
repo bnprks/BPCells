@@ -143,6 +143,7 @@ trackplot_bulk <- function(fragments, region, groups,
   assert_true(length(colors) >= length(unique(groups)))
   assert_is(legend_label, "character")
 
+  groups <- as.factor(groups)
   assert_true(length(cellNames(fragments)) == length(groups))
   assert_true(length(cellNames(fragments)) == length(cell_read_counts))
 
@@ -171,7 +172,7 @@ trackplot_bulk <- function(fragments, region, groups,
 
   data <- tibble::tibble(
     pos = rep(bin_centers, ncol(mat)),
-    group = rep(colnames(mat), each = nrow(mat)),
+    group = factor(rep(colnames(mat), each = nrow(mat)), levels=levels(groups)),
     insertions = as.vector(mat),
     # Normalized insertions are "IPKM" - insertions per kilobase per million mapped reads
     normalized_insertions = as.vector(multiply_cols(mat, group_norm_factors))
