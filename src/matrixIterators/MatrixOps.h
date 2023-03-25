@@ -1,5 +1,6 @@
 #pragma once
 
+#include <atomic>
 #include <stdexcept>
 
 #include "MatrixIterator.h"
@@ -9,7 +10,7 @@ namespace BPCells {
 // Calculate matrix-matrix product A*B where A (this) is sparse and B is a dense matrix.
 template <typename T>
 Eigen::MatrixXd MatrixLoader<T>::denseMultiplyRight(
-    const Eigen::Map<Eigen::MatrixXd> B, void (*checkInterrupt)(void)
+    const Eigen::Map<Eigen::MatrixXd> B, std::atomic<bool> *user_interrupt
 ) {
     // Use transposed output so that results write contiguously in memory.
     // Note that left multiply will have better performance properties due
@@ -22,7 +23,7 @@ Eigen::MatrixXd MatrixLoader<T>::denseMultiplyRight(
     restart();
     while (nextCol()) {
         const uint32_t col = currentCol();
-        if (checkInterrupt != NULL && col % 128 == 0) checkInterrupt();
+        if (user_interrupt != NULL && *user_interrupt) return res;
         while (load()) {
             const T *val_data = valData();
             const uint32_t *row_data = rowData();
@@ -36,7 +37,7 @@ Eigen::MatrixXd MatrixLoader<T>::denseMultiplyRight(
 }
 template <typename T>
 Eigen::MatrixXd MatrixLoader<T>::denseMultiplyLeft(
-    const Eigen::Map<Eigen::MatrixXd> B, void (*checkInterrupt)(void)
+    const Eigen::Map<Eigen::MatrixXd> B, std::atomic<bool> *user_interrupt
 ) {
     if (rows() != B.cols()) throw std::runtime_error("Incompatible dimensions for matrix multiply");
     Eigen::MatrixXd res(B.rows(), cols());
@@ -44,7 +45,7 @@ Eigen::MatrixXd MatrixLoader<T>::denseMultiplyLeft(
     restart();
     while (nextCol()) {
         const uint32_t col = currentCol();
-        if (checkInterrupt != NULL && col % 128 == 0) checkInterrupt();
+        if (user_interrupt != NULL && *user_interrupt) return res;
         while (load()) {
             const T *val_data = valData();
             const uint32_t *row_data = rowData();
@@ -59,7 +60,7 @@ Eigen::MatrixXd MatrixLoader<T>::denseMultiplyLeft(
 // Calculate matrix-vector product A*v where A (this) is sparse and B is a dense matrix.
 template <typename T>
 Eigen::VectorXd MatrixLoader<T>::vecMultiplyRight(
-    const Eigen::Map<Eigen::VectorXd> v, void (*checkInterrupt)(void)
+    const Eigen::Map<Eigen::VectorXd> v, std::atomic<bool> *user_interrupt
 ) {
     if (cols() != v.rows()) throw std::runtime_error("Incompatible dimensions for vector multiply");
     Eigen::VectorXd res(rows());
@@ -68,7 +69,7 @@ Eigen::VectorXd MatrixLoader<T>::vecMultiplyRight(
     while (nextCol()) {
         const uint32_t col = currentCol();
         double v_col = v(col);
-        if (checkInterrupt != NULL && col % 128 == 0) checkInterrupt();
+        if (user_interrupt != NULL && *user_interrupt) return res;
         while (load()) {
             const T *val_data = valData();
             const uint32_t *row_data = rowData();
@@ -84,7 +85,7 @@ Eigen::VectorXd MatrixLoader<T>::vecMultiplyRight(
 }
 template <typename T>
 Eigen::VectorXd MatrixLoader<T>::vecMultiplyLeft(
-    const Eigen::Map<Eigen::VectorXd> v, void (*checkInterrupt)(void)
+    const Eigen::Map<Eigen::VectorXd> v, std::atomic<bool> *user_interrupt
 ) {
     if (rows() != v.rows()) throw std::runtime_error("Incompatible dimensions for vector multiply");
     Eigen::VectorXd res(cols());
@@ -92,7 +93,7 @@ Eigen::VectorXd MatrixLoader<T>::vecMultiplyLeft(
     restart();
     while (nextCol()) {
         const uint32_t col = currentCol();
-        if (checkInterrupt != NULL && col % 128 == 0) checkInterrupt();
+        if (user_interrupt != NULL && *user_interrupt) return res;
         while (load()) {
             const T *val_data = valData();
             const uint32_t *row_data = rowData();
@@ -117,12 +118,12 @@ Eigen::VectorXd MatrixLoader<T>::vecMultiplyLeft(
 }
 
 // Calculate row/column sums of the matrix
-template <typename T> std::vector<T> MatrixLoader<T>::colSums(void (*checkInterrupt)(void)) {
+template <typename T> std::vector<T> MatrixLoader<T>::colSums(std::atomic<bool> *user_interrupt) {
     std::vector<T> sums(cols());
     restart();
     while (nextCol()) {
         const uint32_t col = currentCol();
-        if (checkInterrupt != NULL && col % 128 == 0) checkInterrupt();
+        if (user_interrupt != NULL && *user_interrupt) return sums;
         while (load()) {
             const T *val_data = valData();
             const uint32_t count = capacity();
@@ -133,12 +134,11 @@ template <typename T> std::vector<T> MatrixLoader<T>::colSums(void (*checkInterr
     }
     return sums;
 }
-template <typename T> std::vector<T> MatrixLoader<T>::rowSums(void (*checkInterrupt)(void)) {
+template <typename T> std::vector<T> MatrixLoader<T>::rowSums(std::atomic<bool> *user_interrupt) {
     std::vector<T> sums(rows());
     restart();
     while (nextCol()) {
-        const uint32_t col = currentCol();
-        if (checkInterrupt != NULL && col % 128 == 0) checkInterrupt();
+        if (user_interrupt != NULL && *user_interrupt) return sums;
         while (load()) {
             const uint32_t *row_data = rowData();
             const T *val_data = valData();
@@ -179,7 +179,7 @@ inline void update_mean_and_variance(
 // with one column per # rows or # columns as appropriate, and one row per output statistic
 template <typename T>
 StatsResult MatrixLoader<T>::computeMatrixStats(
-    Stats row_stats, Stats col_stats, void (*checkInterrupt)(void)
+    Stats row_stats, Stats col_stats, std::atomic<bool> *user_interrupt
 ) {
     restart();
     StatsResult res{
@@ -189,7 +189,7 @@ StatsResult MatrixLoader<T>::computeMatrixStats(
 
     while (nextCol()) {
         const uint32_t col = currentCol();
-        if (checkInterrupt != NULL && col % 128 == 0) checkInterrupt();
+        if (user_interrupt != NULL && *user_interrupt) return res;
         while (load()) {
             const uint32_t *row_data = rowData();
             const T *val_data = valData();

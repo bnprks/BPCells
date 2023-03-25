@@ -1,5 +1,6 @@
 #pragma once
 
+#include <atomic>
 #include <cstdint>
 #include <cstring>
 #include <memory>
@@ -115,7 +116,7 @@ class StoredFragmentsWriter : public FragmentWriter {
         bool subtract_start_from_end
     );
 
-    void write(FragmentLoader &fragments, void (*checkInterrupt)(void) = NULL) override;
+    void write(FragmentLoader &fragments, std::atomic<bool> *user_interrupt = NULL) override;
 };
 
 } // end namespace BPCells

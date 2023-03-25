@@ -1,5 +1,7 @@
 #pragma once
 
+#include <atomic>
+
 #include "../arrayIO/array_interfaces.h"
 #include "../arrayIO/bp128.h"
 #include "MatrixIterator.h"
@@ -91,7 +93,7 @@ template <typename T> class StoredMatrixWriter : public MatrixWriter<T> {
         );
     }
 
-    void write(MatrixLoader<T> &mat_in, void (*checkInterrupt)(void) = NULL) override {
+    void write(MatrixLoader<T> &mat_in, std::atomic<bool> *user_interrupt = NULL) override {
         // Ensure that we write matrices sorted by row
         OrderRows<T> mat((std::unique_ptr<MatrixLoader<T>>(&mat_in)));
         // Don't delete our original matrix
@@ -104,7 +106,7 @@ template <typename T> class StoredMatrixWriter : public MatrixWriter<T> {
         col_ptr.write_one(idx);
 
         while (mat.nextCol()) {
-            if (checkInterrupt != NULL) checkInterrupt();
+            if (user_interrupt != NULL && *user_interrupt) return;
             if (mat.currentCol() < col)
                 throw std::runtime_error("StoredMatrixWriter encountered out-of-order columns");
             while (col < mat.currentCol()) {
@@ -128,7 +130,7 @@ template <typename T> class StoredMatrixWriter : public MatrixWriter<T> {
                     i += capacity;
                 }
 
-                if (checkInterrupt != NULL) checkInterrupt();
+                if (user_interrupt != NULL && *user_interrupt) return;
             }
         }
         if (row_major) {

@@ -1,4 +1,5 @@
 #pragma once
+#include <atomic>
 #include <cstdint>
 #include <memory>
 #include <stdexcept>
@@ -176,9 +177,8 @@ class FragmentIterator : public FragmentLoaderWrapper {
 class FragmentWriter {
   public:
     // Write fragments
-    // During progress, call checkInterrupt which will raise an exception if there's
-    // a user-requested interrupt
-    virtual void write(FragmentLoader &fragments, void (*checkInterrupt)(void) = NULL) = 0;
+    // During progress, quit eraly if user_interrupt becomes true
+    virtual void write(FragmentLoader &fragments, std::atomic<bool> *user_interrupt = NULL) = 0;
 };
 
 } // end namespace BPCells

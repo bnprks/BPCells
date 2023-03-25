@@ -1,3 +1,5 @@
+#include <atomic>
+
 #include "StoredFragments.h"
 #include "../bitpacking/bp128.h"
 
@@ -348,7 +350,7 @@ StoredFragmentsWriter StoredFragmentsWriter::createPacked(WriterBuilder &wb, uin
     );
 }
 
-void StoredFragmentsWriter::write(FragmentLoader &fragments, void (*checkInterrupt)(void)) {
+void StoredFragmentsWriter::write(FragmentLoader &fragments, std::atomic<bool> *user_interrupt) {
     uint32_t cur_end_max = 0;
     uint32_t prev_end_max = 0;
     uint64_t idx = 0;
@@ -434,7 +436,7 @@ void StoredFragmentsWriter::write(FragmentLoader &fragments, void (*checkInterru
 
             idx += capacity;
 
-            if (checkInterrupt != NULL) checkInterrupt();
+            if (user_interrupt != NULL && *user_interrupt) return;
         }
         chr_ptr_buf[chr_id * 2 + 1] = idx;
     }

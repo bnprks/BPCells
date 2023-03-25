@@ -17,6 +17,7 @@
 
 #include "R_array_io.h"
 #include "R_xptr_wrapper.h"
+#include "R_interrupts.h"
 
 using namespace BPCells;
 using namespace Rcpp;
@@ -66,7 +67,7 @@ SEXP convert_matrix_float_double_cpp(SEXP matrix) {
 // [[Rcpp::export]]
 SEXP build_csparse_matrix_double_cpp(SEXP matrix) {
     CSparseMatrixWriter writer;
-    writer.write(*peek_unique_xptr<MatrixLoader<double>>(matrix), &Rcpp::checkUserInterrupt);
+    run_with_R_interrupt_check(&CSparseMatrixWriter::write, &writer, std::ref(*peek_unique_xptr<MatrixLoader<double>>(matrix)));
     return Rcpp::wrap(writer.getMat());
 }
 
@@ -209,30 +210,49 @@ SEXP iterate_matrix_multiply_double_cpp(SEXP left, SEXP right) {
 // [[Rcpp::export]]
 SEXP iterate_matrix_mask_uint32_t_cpp(SEXP mat, SEXP mask, bool invert) {
     if (invert)
-        return make_unique_xptr<Mask<uint32_t, true>>(take_unique_xptr<MatrixLoader<uint32_t>>(mat), take_unique_xptr<MatrixLoader<uint32_t>>(mask));
+        return make_unique_xptr<Mask<uint32_t, true>>(
+            take_unique_xptr<MatrixLoader<uint32_t>>(mat),
+            take_unique_xptr<MatrixLoader<uint32_t>>(mask)
+        );
     else
-        return make_unique_xptr<Mask<uint32_t, false>>(take_unique_xptr<MatrixLoader<uint32_t>>(mat), take_unique_xptr<MatrixLoader<uint32_t>>(mask));
+        return make_unique_xptr<Mask<uint32_t, false>>(
+            take_unique_xptr<MatrixLoader<uint32_t>>(mat),
+            take_unique_xptr<MatrixLoader<uint32_t>>(mask)
+        );
 }
 
 // [[Rcpp::export]]
 SEXP iterate_matrix_mask_float_cpp(SEXP mat, SEXP mask, bool invert) {
     if (invert)
-        return make_unique_xptr<Mask<float, true>>(take_unique_xptr<MatrixLoader<float>>(mat), take_unique_xptr<MatrixLoader<uint32_t>>(mask));
+        return make_unique_xptr<Mask<float, true>>(
+            take_unique_xptr<MatrixLoader<float>>(mat),
+            take_unique_xptr<MatrixLoader<uint32_t>>(mask)
+        );
     else
-        return make_unique_xptr<Mask<float, false>>(take_unique_xptr<MatrixLoader<float>>(mat), take_unique_xptr<MatrixLoader<uint32_t>>(mask));
+        return make_unique_xptr<Mask<float, false>>(
+            take_unique_xptr<MatrixLoader<float>>(mat),
+            take_unique_xptr<MatrixLoader<uint32_t>>(mask)
+        );
 }
 
 // [[Rcpp::export]]
 SEXP iterate_matrix_mask_double_cpp(SEXP mat, SEXP mask, bool invert) {
     if (invert)
-        return make_unique_xptr<Mask<double, true>>(take_unique_xptr<MatrixLoader<double>>(mat), take_unique_xptr<MatrixLoader<uint32_t>>(mask));
+        return make_unique_xptr<Mask<double, true>>(
+            take_unique_xptr<MatrixLoader<double>>(mat),
+            take_unique_xptr<MatrixLoader<uint32_t>>(mask)
+        );
     else
-        return make_unique_xptr<Mask<double, false>>(take_unique_xptr<MatrixLoader<double>>(mat), take_unique_xptr<MatrixLoader<uint32_t>>(mask));
+        return make_unique_xptr<Mask<double, false>>(
+            take_unique_xptr<MatrixLoader<double>>(mat),
+            take_unique_xptr<MatrixLoader<uint32_t>>(mask)
+        );
 }
 
 // [[Rcpp::export]]
 SEXP iterate_matrix_rank_uint32_t_cpp(SEXP matrix) {
-    return make_unique_xptr<ColwiseRank<uint32_t>>(take_unique_xptr<MatrixLoader<uint32_t>>(matrix));
+    return make_unique_xptr<ColwiseRank<uint32_t>>(take_unique_xptr<MatrixLoader<uint32_t>>(matrix)
+    );
 }
 
 // [[Rcpp::export]]
@@ -247,46 +267,48 @@ SEXP iterate_matrix_rank_double_cpp(SEXP matrix) {
 
 // [[Rcpp::export]]
 Eigen::MatrixXd dense_multiply_right_cpp(SEXP matrix, Eigen::Map<Eigen::MatrixXd> B) {
-    return peek_unique_xptr<MatrixLoader<double>>(matrix)->denseMultiplyRight(
-        B, &Rcpp::checkUserInterrupt
+    return run_with_R_interrupt_check(
+        &MatrixLoader<double>::denseMultiplyRight, peek_unique_xptr<MatrixLoader<double>>(matrix), B
     );
 }
 
 // [[Rcpp::export]]
 Eigen::MatrixXd dense_multiply_left_cpp(SEXP matrix, Eigen::Map<Eigen::MatrixXd> B) {
-    return peek_unique_xptr<MatrixLoader<double>>(matrix)->denseMultiplyLeft(
-        B, &Rcpp::checkUserInterrupt
+    return run_with_R_interrupt_check(
+        &MatrixLoader<double>::denseMultiplyLeft, peek_unique_xptr<MatrixLoader<double>>(matrix), B
     );
 }
 
 // [[Rcpp::export]]
 Eigen::VectorXd vec_multiply_right_cpp(SEXP matrix, Eigen::Map<Eigen::VectorXd> v) {
-    return peek_unique_xptr<MatrixLoader<double>>(matrix)->vecMultiplyRight(
-        v, &Rcpp::checkUserInterrupt
+    return run_with_R_interrupt_check(
+        &MatrixLoader<double>::vecMultiplyRight, peek_unique_xptr<MatrixLoader<double>>(matrix), v
     );
 }
 
 // [[Rcpp::export]]
 Eigen::VectorXd vec_multiply_left_cpp(SEXP matrix, Eigen::Map<Eigen::VectorXd> v) {
-    return peek_unique_xptr<MatrixLoader<double>>(matrix)->vecMultiplyLeft(
-        v, &Rcpp::checkUserInterrupt
+    return run_with_R_interrupt_check(
+        &MatrixLoader<double>::vecMultiplyLeft, peek_unique_xptr<MatrixLoader<double>>(matrix), v
     );
 }
 
 // [[Rcpp::export]]
 std::vector<double> row_sums_double_cpp(SEXP matrix) {
-    return peek_unique_xptr<MatrixLoader<double>>(matrix)->rowSums(&Rcpp::checkUserInterrupt);
+    return run_with_R_interrupt_check(&MatrixLoader<double>::rowSums, peek_unique_xptr<MatrixLoader<double>>(matrix));
 }
 
 // [[Rcpp::export]]
 std::vector<double> col_sums_double_cpp(SEXP matrix) {
-    return peek_unique_xptr<MatrixLoader<double>>(matrix)->colSums(&Rcpp::checkUserInterrupt);
+    return run_with_R_interrupt_check(&MatrixLoader<double>::colSums, peek_unique_xptr<MatrixLoader<double>>(matrix));
 }
 
 // [[Rcpp::export]]
 List matrix_stats_cpp(SEXP matrix, int row_stats, int col_stats) {
-    StatsResult res = peek_unique_xptr<MatrixLoader<double>>(matrix)->computeMatrixStats(
-        (Stats)row_stats, (Stats)col_stats, &Rcpp::checkUserInterrupt
+    StatsResult res = run_with_R_interrupt_check(
+        &MatrixLoader<double>::computeMatrixStats, peek_unique_xptr<MatrixLoader<double>>(matrix),
+        (Stats)row_stats,
+        (Stats)col_stats
     );
 
     return List::create(Named("row_stats") = res.row_stats, Named("col_stats") = res.col_stats);

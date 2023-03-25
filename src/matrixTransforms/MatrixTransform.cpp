@@ -1,3 +1,4 @@
+#include <atomic>
 #include "MatrixTransform.h"
 
 namespace BPCells {
@@ -100,7 +101,7 @@ uint32_t *MatrixTransformDense::rowData() { return row_data.data(); }
 double *MatrixTransformDense::valData() { return val_data.data(); }
 
 Eigen::MatrixXd MatrixTransformDense::denseMultiplyRight(
-    const Eigen::Map<Eigen::MatrixXd> B, void (*checkInterrupt)(void)
+    const Eigen::Map<Eigen::MatrixXd> B, std::atomic<bool> *user_interrupt
 ) {
     // Perform the denseMultiplyRight operation like in MatrixOps.h, but using
     // loadZeroSubtracted in place of load
@@ -111,7 +112,7 @@ Eigen::MatrixXd MatrixTransformDense::denseMultiplyRight(
     restart();
     while (nextCol()) {
         const uint32_t col = currentCol();
-        if (checkInterrupt != NULL && col % 128 == 0) checkInterrupt();
+        if (user_interrupt != NULL && *user_interrupt) return res;
         // Don't need ordered loads here
         while (loadZeroSubtracted(unordered_loader)) {
             const double *val_data = unordered_loader.valData();
@@ -125,12 +126,12 @@ Eigen::MatrixXd MatrixTransformDense::denseMultiplyRight(
 
     // Make adjustments for the zero entries
     res.transposeInPlace();
-    denseMultiplyRightZero(res, B, checkInterrupt);
+    denseMultiplyRightZero(res, B, user_interrupt);
     return res;
 }
 
 Eigen::MatrixXd MatrixTransformDense::denseMultiplyLeft(
-    const Eigen::Map<Eigen::MatrixXd> B, void (*checkInterrupt)(void)
+    const Eigen::Map<Eigen::MatrixXd> B, std::atomic<bool> *user_interrupt
 ) {
     // Perform the denseMultiplyRight operation like in MatrixOps.h, but using
     // loadZeroSubtracted in place of load
@@ -141,7 +142,7 @@ Eigen::MatrixXd MatrixTransformDense::denseMultiplyLeft(
     restart();
     while (nextCol()) {
         const uint32_t col = currentCol();
-        if (checkInterrupt != NULL && col % 128 == 0) checkInterrupt();
+        if (user_interrupt != NULL && *user_interrupt) return res;
         // Don't need ordered loads here
         while (loadZeroSubtracted(unordered_loader)) {
             const double *val_data = unordered_loader.valData();
@@ -154,13 +155,13 @@ Eigen::MatrixXd MatrixTransformDense::denseMultiplyLeft(
     }
 
     // Make adjustments for the zero entries
-    denseMultiplyLeftZero(res, B, checkInterrupt);
+    denseMultiplyLeftZero(res, B, user_interrupt);
     return res;
 }
 
 // Calculate matrix-vector product A*v where A (this) is sparse and B is a dense matrix.
 Eigen::VectorXd MatrixTransformDense::vecMultiplyRight(
-    const Eigen::Map<Eigen::VectorXd> v, void (*checkInterrupt)(void)
+    const Eigen::Map<Eigen::VectorXd> v, std::atomic<bool> *user_interrupt
 ) {
     // Perform the vecMultiplyRight operation like in MatrixOps.h, but using
     // loadZeroSubtracted in place of load
@@ -171,7 +172,7 @@ Eigen::VectorXd MatrixTransformDense::vecMultiplyRight(
     restart();
     while (nextCol()) {
         const uint32_t col = currentCol();
-        if (checkInterrupt != NULL && col % 128 == 0) checkInterrupt();
+        if (user_interrupt != NULL && *user_interrupt) return res;
         // Don't need ordered loads here
         while (loadZeroSubtracted(unordered_loader)) {
             const double *val_data = unordered_loader.valData();
@@ -184,12 +185,12 @@ Eigen::VectorXd MatrixTransformDense::vecMultiplyRight(
     }
 
     // Make adjustments for the zero entries
-    vecMultiplyRightZero(res, v, checkInterrupt);
+    vecMultiplyRightZero(res, v, user_interrupt);
     return res;
 }
 
 Eigen::VectorXd MatrixTransformDense::vecMultiplyLeft(
-    const Eigen::Map<Eigen::VectorXd> v, void (*checkInterrupt)(void)
+    const Eigen::Map<Eigen::VectorXd> v, std::atomic<bool> *user_interrupt
 ) {
     // Perform the vecMultiplyLeft operation like in MatrixOps.h, but using
     // loadZeroSubtracted in place of load
@@ -200,7 +201,7 @@ Eigen::VectorXd MatrixTransformDense::vecMultiplyLeft(
     restart();
     while (nextCol()) {
         const uint32_t col = currentCol();
-        if (checkInterrupt != NULL && col % 128 == 0) checkInterrupt();
+        if (user_interrupt != NULL && *user_interrupt) return res;
         // Don't need ordered loads here
         while (loadZeroSubtracted(unordered_loader)) {
             const double *val_data = unordered_loader.valData();
@@ -212,12 +213,12 @@ Eigen::VectorXd MatrixTransformDense::vecMultiplyLeft(
         }
     }
 
-    vecMultiplyLeftZero(res, v, checkInterrupt);
+    vecMultiplyLeftZero(res, v, user_interrupt);
     return res;
 }
 
 void MatrixTransformDense::denseMultiplyRightZero(
-    Eigen::MatrixXd &out, const Eigen::Map<Eigen::MatrixXd> B, void (*checkInterrupt)(void)
+    Eigen::MatrixXd &out, const Eigen::Map<Eigen::MatrixXd> B, std::atomic<bool> *user_interrupt
 ) {
     // Key invariants for this block processing: for L*R = O: colL=rowR, rowO=rowL, colO=colR
     Eigen::Matrix<double, buf_size, 1> values;
@@ -226,7 +227,7 @@ void MatrixTransformDense::denseMultiplyRightZero(
     restart();
 
     for (uint32_t col = 0; col < ncols; col++) {
-        if (checkInterrupt != NULL && col % 128 == 0) checkInterrupt();
+        if (user_interrupt != NULL && *user_interrupt) return;
         uint32_t row;
         for (row = 0; row + buf_size <= nrows; row += buf_size) {
             loadZero(values.data(), buf_size, row, col);
@@ -240,7 +241,7 @@ void MatrixTransformDense::denseMultiplyRightZero(
 }
 
 void MatrixTransformDense::denseMultiplyLeftZero(
-    Eigen::MatrixXd &out, const Eigen::Map<Eigen::MatrixXd> B, void (*checkInterrupt)(void)
+    Eigen::MatrixXd &out, const Eigen::Map<Eigen::MatrixXd> B, std::atomic<bool> *user_interrupt
 ) {
     // Key invariants for this block processing: for L*R = O: colL=rowR, rowO=rowL, colO=colR
     Eigen::Matrix<double, buf_size, 1> values;
@@ -249,7 +250,7 @@ void MatrixTransformDense::denseMultiplyLeftZero(
     restart();
 
     for (uint32_t col = 0; col < ncols; col++) {
-        if (checkInterrupt != NULL && col % 128 == 0) checkInterrupt();
+        if (user_interrupt != NULL && *user_interrupt) return;
         uint32_t row;
         for (row = 0; row + buf_size <= nrows; row += buf_size) {
             loadZero(values.data(), buf_size, row, col);
@@ -263,7 +264,7 @@ void MatrixTransformDense::denseMultiplyLeftZero(
 }
 
 void MatrixTransformDense::vecMultiplyRightZero(
-    Eigen::VectorXd &out, const Eigen::Map<Eigen::VectorXd> v, void (*checkInterrupt)(void)
+    Eigen::VectorXd &out, const Eigen::Map<Eigen::VectorXd> v, std::atomic<bool> *user_interrupt
 ) {
     // Key invariants for this block processing: for L*R = O: colL=rowR, rowO=rowL, colO=colR
     Eigen::Matrix<double, buf_size, 1> values;
@@ -272,7 +273,7 @@ void MatrixTransformDense::vecMultiplyRightZero(
     restart();
 
     for (uint32_t col = 0; col < ncols; col++) {
-        if (checkInterrupt != NULL && col % 128 == 0) checkInterrupt();
+        if (user_interrupt != NULL && *user_interrupt) return;
         uint32_t row;
         for (row = 0; row + buf_size <= nrows; row += buf_size) {
             loadZero(values.data(), buf_size, row, col);
@@ -286,7 +287,7 @@ void MatrixTransformDense::vecMultiplyRightZero(
 }
 
 void MatrixTransformDense::vecMultiplyLeftZero(
-    Eigen::VectorXd &out, const Eigen::Map<Eigen::VectorXd> v, void (*checkInterrupt)(void)
+    Eigen::VectorXd &out, const Eigen::Map<Eigen::VectorXd> v, std::atomic<bool> *user_interrupt
 ) {
     Eigen::Matrix<double, buf_size, 1> values;
     uint32_t nrows = rows();
@@ -294,7 +295,7 @@ void MatrixTransformDense::vecMultiplyLeftZero(
     restart();
 
     for (uint32_t col = 0; col < ncols; col++) {
-        if (checkInterrupt != NULL && col % 128 == 0) checkInterrupt();
+        if (user_interrupt != NULL && *user_interrupt) return;
         uint32_t row;
         for (row = 0; row + buf_size <= nrows; row += buf_size) {
             loadZero(values.data(), buf_size, row, col);
@@ -307,25 +308,25 @@ void MatrixTransformDense::vecMultiplyLeftZero(
     }
 }
 
-std::vector<double> MatrixTransformDense::colSums(void (*checkInterrupt)(void)) {
+std::vector<double> MatrixTransformDense::colSums(std::atomic<bool> *user_interrupt) {
     std::vector<double> out(cols());
 
     Eigen::VectorXd v(rows());
     v.setOnes();
     Eigen::VectorXd res =
-        vecMultiplyLeft(Eigen::Map<Eigen::VectorXd>(v.data(), v.rows(), v.cols()), checkInterrupt);
+        vecMultiplyLeft(Eigen::Map<Eigen::VectorXd>(v.data(), v.rows(), v.cols()), user_interrupt);
     for (uint32_t i = 0; i < out.size(); i++) {
         out[i] = res(i);
     }
     return out;
 }
-std::vector<double> MatrixTransformDense::rowSums(void (*checkInterrupt)(void)) {
+std::vector<double> MatrixTransformDense::rowSums(std::atomic<bool> *user_interrupt) {
     std::vector<double> out(rows());
 
     Eigen::VectorXd v(cols());
     v.setOnes();
     Eigen::VectorXd res =
-        vecMultiplyRight(Eigen::Map<Eigen::VectorXd>(v.data(), v.rows(), v.cols()), checkInterrupt);
+        vecMultiplyRight(Eigen::Map<Eigen::VectorXd>(v.data(), v.rows(), v.cols()), user_interrupt);
     for (uint32_t i = 0; i < out.size(); i++) {
         out[i] = res(i);
     }

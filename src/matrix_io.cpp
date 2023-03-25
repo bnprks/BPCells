@@ -14,6 +14,7 @@
 
 #include "R_array_io.h"
 #include "R_xptr_wrapper.h"
+#include "R_interrupts.h"
 
 using namespace Rcpp;
 using namespace BPCells;
@@ -239,13 +240,13 @@ SEXP iterate_unpacked_matrix_mem_double_cpp(
 template <typename T> void write_packed_matrix(WriterBuilder &wb, SEXP matrix, bool row_major) {
     MatrixLoader<T> *loader = peek_unique_xptr<MatrixLoader<T>>(matrix);
     loader->restart();
-    StoredMatrixWriter<T>::createPacked(wb, row_major).write(*loader, &Rcpp::checkUserInterrupt);
+    run_with_R_interrupt_check(&StoredMatrixWriter<T>::write, StoredMatrixWriter<T>::createPacked(wb, row_major), std::ref(*loader));
 }
 
 template <typename T> void write_unpacked_matrix(WriterBuilder &wb, SEXP matrix, bool row_major) {
     MatrixLoader<T> *loader = peek_unique_xptr<MatrixLoader<T>>(matrix);
     loader->restart();
-    StoredMatrixWriter<T>::createUnpacked(wb, row_major).write(*loader, &Rcpp::checkUserInterrupt);
+    run_with_R_interrupt_check(&StoredMatrixWriter<T>::write, StoredMatrixWriter<T>::createUnpacked(wb, row_major), std::ref(*loader));
 }
 
 // [[Rcpp::export]]
@@ -619,7 +620,7 @@ void write_matrix_10x_hdf5_cpp(
         buffer_size,
         chunk_size
     );
-    w.write(*loader, &Rcpp::checkUserInterrupt);
+    run_with_R_interrupt_check(&StoredMatrixWriter<uint32_t>::write, &w, std::ref(*loader));
 }
 
 // [[Rcpp::export]]

@@ -1,5 +1,6 @@
 #pragma once
 
+#include <atomic>
 #include <filesystem>
 #include <string>
 
@@ -99,7 +100,7 @@ template <typename T> class StoredMatrixTransposeWriter : public MatrixWriter<T>
         }
     }
 
-    void write(MatrixLoader<T> &mat, void (*checkInterrupt)(void) = NULL) override {
+    void write(MatrixLoader<T> &mat, std::atomic<bool> *user_interrupt = NULL) override {
         if (round != 0)
             throw std::runtime_error(
                 "StoredMatrixTransposeWriter: can't write more than once to same temporary location"
@@ -125,7 +126,7 @@ template <typename T> class StoredMatrixTransposeWriter : public MatrixWriter<T>
                     uint32_t read = 0;
                     // Write out sort buffers if they get full
                     while (elems + capacity - read > row_data.size()) {
-                        if (checkInterrupt != NULL) checkInterrupt();
+                        if (user_interrupt != NULL && *user_interrupt) return;
                         // Fill out the rest of the buffer size
                         std::memmove(
                             val_data.data() + elems,
@@ -172,7 +173,7 @@ template <typename T> class StoredMatrixTransposeWriter : public MatrixWriter<T>
             // Write out final elements in sort buffers
             if (elems > 0) {
                 if (output_chunk_sizes.size() == 0) openWriters(0, true);
-                if (checkInterrupt != NULL) checkInterrupt();
+                if (user_interrupt != NULL && *user_interrupt) return;
                 // Sort by (col, row)
                 // Already sorted by row, because input is sorted by column
                 lsdRadixSortArrays<uint32_t, uint32_t, T>(
@@ -264,8 +265,7 @@ template <typename T> class StoredMatrixTransposeWriter : public MatrixWriter<T>
                     };
                 auto second_to_top = get_second_to_top(heap);
                 while (heap.size() > 0) {
-                    if (output_chunk_sizes.back() % (1 << 14) == 0 && checkInterrupt != NULL)
-                        checkInterrupt();
+                    if (output_chunk_sizes.back() % (1 << 14) == 0 && user_interrupt != NULL && *user_interrupt) return;
                     // Output element
                     uint32_t idx = std::get<2>(heap.front());
                     col_writer.write_one(std::get<0>(heap.front()));

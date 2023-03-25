@@ -1,3 +1,4 @@
+#include <atomic>
 #include "SCTransform.h"
 
 namespace BPCells {
@@ -92,7 +93,7 @@ void SCTransformPearsonSIMD::loadZero(
 
 // Calculate matrix-vector product A*v where A (this) is sparse and B is a dense matrix.
 void SCTransformPearsonSIMD::vecMultiplyRightZero(
-    Eigen::VectorXd &out, const Eigen::Map<Eigen::VectorXd> v, void (*checkInterrupt)(void)
+    Eigen::VectorXd &out, const Eigen::Map<Eigen::VectorXd> v, std::atomic<bool> *user_interrupt
 ) {
     Eigen::VectorXf out_float(out.rows());
     out_float.setZero();
@@ -104,7 +105,7 @@ void SCTransformPearsonSIMD::vecMultiplyRightZero(
     vec_float clip_min = splat_float(this->clip_min);
 
     for (uint32_t col = 0; col < ncols; col++) {
-        if (checkInterrupt != NULL && col % 128 == 0) checkInterrupt();
+        if (user_interrupt != NULL && *user_interrupt) return;
         // Periodically flush our single-precision accumulator to avoid
         // excessive loss of precision during summation
         if (col % 64 == 0) {
@@ -136,7 +137,7 @@ void SCTransformPearsonSIMD::vecMultiplyRightZero(
 }
 
 void SCTransformPearsonSIMD::vecMultiplyLeftZero(
-    Eigen::VectorXd &out, const Eigen::Map<Eigen::VectorXd> v, void (*checkInterrupt)(void)
+    Eigen::VectorXd &out, const Eigen::Map<Eigen::VectorXd> v, std::atomic<bool> *user_interrupt
 ) {
     Eigen::VectorXf v_float(v.cast<float>());
 
@@ -148,7 +149,7 @@ void SCTransformPearsonSIMD::vecMultiplyLeftZero(
 
     float out_buf[BPCELLS_VEC_FLOAT_SIZE];
     for (uint32_t col = 0; col < ncols; col++) {
-        if (checkInterrupt != NULL && col % 128 == 0) checkInterrupt();
+        if (user_interrupt != NULL && *user_interrupt) return;
         uint32_t row;
         vec_float col_factor = splat_float(cell_read_counts(col));
         vec_float out_vec = splat_float(0.0);
@@ -276,7 +277,7 @@ void SCTransformPearsonTransposeSIMD::loadZero(
 }
 
 void SCTransformPearsonTransposeSIMD::vecMultiplyLeftZero(
-    Eigen::VectorXd &out, const Eigen::Map<Eigen::VectorXd> v, void (*checkInterrupt)(void)
+    Eigen::VectorXd &out, const Eigen::Map<Eigen::VectorXd> v, std::atomic<bool> *user_interrupt
 ) {
     // To convert for transpose, all we need to do is flip the `row` and `col` variables
     // and swap vecMultiplyLeftZero with vecMultiplyRightZero
@@ -290,7 +291,7 @@ void SCTransformPearsonTransposeSIMD::vecMultiplyLeftZero(
     vec_float clip_min = splat_float(this->clip_min);
 
     for (uint32_t row = 0; row < nrows; row++) {
-        if (checkInterrupt != NULL && row % 128 == 0) checkInterrupt();
+        if (user_interrupt != NULL && row % 128 == 0 && *user_interrupt) return;
         // Periodically flush our single-precision accumulator to avoid
         // excessive loss of precision during summation
         if (row % 64 == 0) {
@@ -322,7 +323,7 @@ void SCTransformPearsonTransposeSIMD::vecMultiplyLeftZero(
 }
 
 void SCTransformPearsonTransposeSIMD::vecMultiplyRightZero(
-    Eigen::VectorXd &out, const Eigen::Map<Eigen::VectorXd> v, void (*checkInterrupt)(void)
+    Eigen::VectorXd &out, const Eigen::Map<Eigen::VectorXd> v, std::atomic<bool> *user_interrupt
 ) {
     // To convert for transpose, all we need to do is flip the `row` and `col` variables
     // and swap vecMultiplyLeftZero with vecMultiplyRightZero
@@ -336,7 +337,7 @@ void SCTransformPearsonTransposeSIMD::vecMultiplyRightZero(
 
     float out_buf[BPCELLS_VEC_FLOAT_SIZE];
     for (uint32_t row = 0; row < nrows; row++) {
-        if (checkInterrupt != NULL && row % 128 == 0) checkInterrupt();
+        if (user_interrupt != NULL && row % 128 == 0 && *user_interrupt) return;
         uint32_t col;
         vec_float cell_reads = splat_float(cell_read_counts(row));
         vec_float out_vec = splat_float(0.0);
