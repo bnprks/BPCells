@@ -179,6 +179,47 @@ test_that("AnnData subset hasn't regressed", {
   expect_identical(s$col_stats["mean",], c(1.2, 1, 0.8))
 })
 
+test_that("AnnData and 10x row/col rename works", {
+  dir <- withr::local_tempdir()
+  # Make a copy since apparently reading the test hdf5 file causes modifications that git detects
+  file.copy("../data/mini_mat.h5ad", file.path(dir, "mini_mat.h5ad"))
+
+  # Test change row+col names on hdf5
+  x <- open_matrix_anndata_hdf5(file.path(dir, "mini_mat.h5ad"))
+  
+  orig_colnames <- colnames(x)
+  orig_rownames <- rownames(x)
+  rownames(x) <- paste0("row", rownames(x))
+  colnames(x) <- paste0("col", colnames(x))
+  expect_false(identical(orig_colnames, colnames(x)))
+  expect_false(identical(orig_rownames, rownames(x)))
+
+  x2 <- write_matrix_memory(x, compress=FALSE)
+  expect_identical(rownames(x2), rownames(x))
+  expect_identical(colnames(x2), colnames(x))
+
+  x2_t <- write_matrix_memory(t(x), compress=FALSE)
+  expect_identical(colnames(x2_t), rownames(x))
+  expect_identical(rownames(x2_t), colnames(x))
+
+  # Test change row+col names on 10x
+  x_10x <- open_matrix_anndata_hdf5(file.path(dir, "mini_mat.h5ad")) %>%
+    convert_matrix_type("uint32_t") %>%
+    write_matrix_10x_hdf5(file.path(dir, "mini_mat.h5"))
+  rownames(x_10x) <- paste0("2row", rownames(x_10x))
+  colnames(x_10x) <- paste0("2col", colnames(x_10x))
+  expect_false(identical(orig_colnames, colnames(x_10x)))
+  expect_false(identical(orig_rownames, rownames(x_10x)))
+
+  x2 <- write_matrix_memory(x_10x, compress=FALSE)
+  expect_identical(rownames(x2), rownames(x_10x))
+  expect_identical(colnames(x2), colnames(x_10x))
+
+  x2_t <- write_matrix_memory(t(x_10x), compress=FALSE)
+  expect_identical(colnames(x2_t), rownames(x_10x))
+  expect_identical(rownames(x2_t), colnames(x_10x))
+})
+
 test_that("Matrix without names works", {
   dir <- withr::local_tempdir()
   m <- generate_sparse_matrix(nrow = 10, ncol = 9, fraction_nonzero = 0.2, max_val = 10)

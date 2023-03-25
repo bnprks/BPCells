@@ -353,8 +353,8 @@ dims_matrix_10x_hdf5_cpp <- function(file, buffer_size) {
     .Call(`_BPCells_dims_matrix_10x_hdf5_cpp`, file, buffer_size)
 }
 
-iterate_matrix_10x_hdf5_cpp <- function(file, buffer_size) {
-    .Call(`_BPCells_iterate_matrix_10x_hdf5_cpp`, file, buffer_size)
+iterate_matrix_10x_hdf5_cpp <- function(file, buffer_size, row_names, col_names) {
+    .Call(`_BPCells_iterate_matrix_10x_hdf5_cpp`, file, buffer_size, row_names, col_names)
 }
 
 write_matrix_10x_hdf5_cpp <- function(matrix, path, barcodes, feature_ids, feature_names, feature_types, feature_metadata, buffer_size, chunk_size) {
@@ -365,8 +365,8 @@ dims_matrix_anndata_hdf5_cpp <- function(file, group, buffer_size) {
     .Call(`_BPCells_dims_matrix_anndata_hdf5_cpp`, file, group, buffer_size)
 }
 
-iterate_matrix_anndata_hdf5_cpp <- function(file, group, buffer_size) {
-    .Call(`_BPCells_iterate_matrix_anndata_hdf5_cpp`, file, group, buffer_size)
+iterate_matrix_anndata_hdf5_cpp <- function(file, group, buffer_size, row_names, col_names) {
+    .Call(`_BPCells_iterate_matrix_anndata_hdf5_cpp`, file, group, buffer_size, row_names, col_names)
 }
 
 read_hdf5_string_cpp <- function(path, group, buffer_size) {

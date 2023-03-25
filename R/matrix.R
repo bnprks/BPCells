@@ -1255,7 +1255,9 @@ setClass("10xMatrixH5",
 setMethod("matrix_type", "10xMatrixH5", function(x) "uint32_t")
 setMethod("matrix_inputs", "10xMatrixH5", function(x) list())
 setMethod("iterate_matrix", "10xMatrixH5", function(x) {
-  iterate_matrix_10x_hdf5_cpp(x@path, x@buffer_size)
+  if (x@transpose) x <- t(x)
+  x@dimnames <- denormalize_dimnames(x@dimnames)
+  iterate_matrix_10x_hdf5_cpp(x@path, x@buffer_size, x@dimnames[[1]], x@dimnames[[2]])
 })
 setMethod("short_description", "10xMatrixH5", function(x) {
   sprintf("10x HDF5 feature matrix in file %s", x@path)
@@ -1345,6 +1347,8 @@ write_matrix_10x_hdf5 <- function(mat,
       assert_len(feature_metadata[[name]], nrow(mat))
       assert_is(feature_metadata[[name]], "character")
     }
+  } else {
+    names(feature_metadata) <- character(0)
   }
   assert_is(buffer_size, "integer")
   assert_is(chunk_size, "integer")
@@ -1362,7 +1366,7 @@ write_matrix_10x_hdf5 <- function(mat,
     buffer_size,
     chunk_size
   )
-  open_matrix_10x_hdf5(path, buffer_size)
+  open_matrix_10x_hdf5(path, buffer_size=buffer_size)
 }
 
 setClass("AnnDataMatrixH5",
@@ -1370,18 +1374,22 @@ setClass("AnnDataMatrixH5",
   slots = c(
     path = "character",
     group = "character",
-    buffer_size = "integer"
+    buffer_size = "integer",
+    storage_transpose = "logical"
   ),
   prototype = list(
     path = character(0),
     group = "matrix",
-    buffer_size = integer(0)
+    buffer_size = integer(0),
+    storage_transpose = logical(0)
   )
 )
 setMethod("matrix_type", "AnnDataMatrixH5", function(x) "float")
 setMethod("matrix_inputs", "AnnDataMatrixH5", function(x) list())
 setMethod("iterate_matrix", "AnnDataMatrixH5", function(x) {
-  iterate_matrix_anndata_hdf5_cpp(x@path, x@group, x@buffer_size)
+  if (x@storage_transpose != x@transpose) x <- t(x)
+  x@dimnames <- denormalize_dimnames(x@dimnames)
+  iterate_matrix_anndata_hdf5_cpp(x@path, x@group, x@buffer_size, x@dimnames[[1]], x@dimnames[[2]])
 })
 setMethod("short_description", "AnnDataMatrixH5", function(x) {
   sprintf(
@@ -1408,17 +1416,11 @@ open_matrix_anndata_hdf5 <- function(path, group = "X", buffer_size = 16384L) {
   res <- new("AnnDataMatrixH5",
     path = path, dim = info$dims, buffer_size = buffer_size,
     group = group, dimnames = normalized_dimnames(info$row_names, info$col_names),
-    transpose = info$transpose
+    transpose = info$transpose,
+    storage_transpose = info$transpose
   )
 
-  # We do the reverse of what transpose says, because anndata files are usually
-  # stored row-major with cells as rows, whereas BPCells will work best with
-  # col-major with cells as cols.
-  if (info[["transpose"]]) {
-    return(t(res))
-  } else {
-    return(res)
-  }
+  return(t(res))
 }
 
 # Overlap matrix from fragments

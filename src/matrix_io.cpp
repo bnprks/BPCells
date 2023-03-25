@@ -575,8 +575,18 @@ List dims_matrix_10x_hdf5_cpp(std::string file, uint32_t buffer_size) {
 }
 
 // [[Rcpp::export]]
-SEXP iterate_matrix_10x_hdf5_cpp(std::string file, uint32_t buffer_size) {
-    return make_unique_xptr<StoredMatrix<uint32_t>>(open10xFeatureMatrix(file, buffer_size));
+SEXP iterate_matrix_10x_hdf5_cpp(
+    std::string file,
+    uint32_t buffer_size,
+    const StringVector row_names,
+    const StringVector col_names
+) {
+    return make_unique_xptr<StoredMatrix<uint32_t>>(open10xFeatureMatrix(
+        file,
+        buffer_size,
+        std::make_unique<RcppStringReader>(row_names),
+        std::make_unique<RcppStringReader>(col_names)
+    ));
 }
 
 // [[Rcpp::export]]
@@ -620,8 +630,20 @@ List dims_matrix_anndata_hdf5_cpp(std::string file, std::string group, uint32_t 
 }
 
 // [[Rcpp::export]]
-SEXP iterate_matrix_anndata_hdf5_cpp(std::string file, std::string group, uint32_t buffer_size) {
-    return make_unique_xptr<StoredMatrix<float>>(openAnnDataMatrix(file, group, buffer_size));
+SEXP iterate_matrix_anndata_hdf5_cpp(
+    std::string file,
+    std::string group,
+    uint32_t buffer_size,
+    const StringVector row_names,
+    const StringVector col_names
+) {
+    return make_unique_xptr<StoredMatrix<float>>(openAnnDataMatrix(
+        file,
+        group,
+        buffer_size,
+        std::make_unique<RcppStringReader>(row_names),
+        std::make_unique<RcppStringReader>(col_names)
+    ));
 }
 
 // [[Rcpp::export]]

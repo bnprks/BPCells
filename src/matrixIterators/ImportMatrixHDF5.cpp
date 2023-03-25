@@ -4,21 +4,32 @@ namespace BPCells {
 
 // Reader interfaces for 10x and AnnData matrices
 
-StoredMatrix<uint32_t>
-open10xFeatureMatrix(std::string file, uint32_t buffer_size, uint32_t read_size) {
+StoredMatrix<uint32_t> open10xFeatureMatrix(
+    std::string file,
+    uint32_t buffer_size,
+    std::unique_ptr<StringReader> &&row_names,
+    std::unique_ptr<StringReader> &&col_names,
+    uint32_t read_size
+) {
     HighFive::File f(file, HighFive::File::ReadWrite);
 
     // Most up-to-date matrix format
     if (f.exist("matrix")) {
         H5ReaderBuilder rb(file, "matrix", buffer_size, read_size);
         uint32_t rows = rb.openUIntReader("shape").read_one();
+        if (row_names.get() == nullptr) {
+            row_names = rb.openStringReader("features/id");
+        }
+        if (col_names.get() == nullptr) {
+            col_names = rb.openStringReader("barcodes");
+        }
         return StoredMatrix(
             rb.openULongReader("indices").convert<uint32_t>(),
             rb.openUIntReader("data"),
             rb.openULongReader("indptr"),
             rows,
-            rb.openStringReader("features/id"),
-            rb.openStringReader("barcodes")
+            std::move(row_names),
+            std::move(col_names)
         );
     }
 
@@ -32,13 +43,30 @@ open10xFeatureMatrix(std::string file, uint32_t buffer_size, uint32_t read_size)
 
     H5ReaderBuilder rb(file, genomes[0], buffer_size, read_size);
     uint32_t rows = rb.openUIntReader("shape").read_one();
+    if (row_names.get() == nullptr) {
+        row_names = rb.openStringReader("genes");
+    }
+    if (col_names.get() == nullptr) {
+        col_names = rb.openStringReader("barcodes");
+    }
     return StoredMatrix(
         rb.openULongReader("indices").convert<uint32_t>(),
         rb.openUIntReader("data"),
         rb.openULongReader("indptr"),
         rows,
-        rb.openStringReader("genes"),
-        rb.openStringReader("barcodes")
+        std::move(row_names),
+        std::move(col_names)
+    );
+}
+
+StoredMatrix<uint32_t>
+open10xFeatureMatrix(std::string file, uint32_t buffer_size, uint32_t read_size) {
+    return open10xFeatureMatrix(
+        file,
+        buffer_size,
+        std::unique_ptr<StringReader>(nullptr),
+        std::unique_ptr<StringReader>(nullptr),
+        read_size
     );
 }
 
@@ -78,8 +106,14 @@ StoredMatrixWriter<uint32_t> create10xFeatureMatrix(
 
 // Read AnnData sparse matrix, with an implicit transpose to CSC format for
 // any data stored in CSR format
-StoredMatrix<float>
-openAnnDataMatrix(std::string file, std::string group, uint32_t buffer_size, uint32_t read_size) {
+StoredMatrix<float> openAnnDataMatrix(
+    std::string file,
+    std::string group,
+    uint32_t buffer_size,
+    std::unique_ptr<StringReader> &&row_names,
+    std::unique_ptr<StringReader> &&col_names,
+    uint32_t read_size
+) {
     H5ReaderBuilder rb(file, group, buffer_size, read_size);
 
     HighFive::SilenceHDF5 s;
@@ -88,7 +122,6 @@ openAnnDataMatrix(std::string file, std::string group, uint32_t buffer_size, uin
     std::vector<uint32_t> dims;
 
     HighFive::Group root = g.getFile().getGroup("/");
-    std::unique_ptr<StringReader> col_names, row_names;
 
     if (g.hasAttribute("h5sparse_format")) {
         // Support for legacy format
@@ -98,22 +131,31 @@ openAnnDataMatrix(std::string file, std::string group, uint32_t buffer_size, uin
 
         auto dt = root.getDataSet("var").getDataType();
 
-        std::vector<std::string> row_name_data, col_name_data;
-        readMember(root.getDataSet("var"), "index", col_name_data);
-        readMember(root.getDataSet("obs"), "index", row_name_data);
-        col_names = std::make_unique<VecStringReader>(col_name_data);
-        row_names = std::make_unique<VecStringReader>(row_name_data);
+        if (row_names.get() == nullptr) {
+            std::vector<std::string> row_name_data;
+            readMember(root.getDataSet("obs"), "index", row_name_data);
+            row_names = std::make_unique<VecStringReader>(row_name_data);
+        }
+        if (col_names.get() == nullptr) {
+            std::vector<std::string> col_name_data;
+            readMember(root.getDataSet("var"), "index", col_name_data);
+            col_names = std::make_unique<VecStringReader>(col_name_data);
+        }
     } else if (g.hasAttribute("encoding-type")) {
         g.getAttribute("encoding-type").read(encoding);
         g.getAttribute("shape").read(dims);
-
-        std::string row_ids, col_ids;
-        root.getGroup("var").getAttribute("_index").read(col_ids);
-        root.getGroup("obs").getAttribute("_index").read(row_ids);
-        col_ids = "var/" + col_ids;
-        row_ids = "obs/" + row_ids;
-        col_names = std::make_unique<H5StringReader>(root, col_ids);
-        row_names = std::make_unique<H5StringReader>(root, row_ids);
+        if (row_names.get() == nullptr) {
+            std::string row_ids;
+            root.getGroup("obs").getAttribute("_index").read(row_ids);
+            row_ids = "obs/" + row_ids;
+            row_names = std::make_unique<H5StringReader>(root, row_ids);
+        }
+        if (col_names.get() == nullptr) {
+            std::string col_ids;
+            root.getGroup("var").getAttribute("_index").read(col_ids);
+            col_ids = "var/" + col_ids;
+            col_names = std::make_unique<H5StringReader>(root, col_ids);
+        }
     } else {
         throw std::runtime_error(
             "h5ad could not be read - missing attribute 'encoding-type' on sparse matrix"
@@ -135,6 +177,18 @@ openAnnDataMatrix(std::string file, std::string group, uint32_t buffer_size, uin
         rows,
         std::move(row_names),
         std::move(col_names)
+    );
+}
+
+StoredMatrix<float>
+openAnnDataMatrix(std::string file, std::string group, uint32_t buffer_size, uint32_t read_size) {
+    return openAnnDataMatrix(
+        file,
+        group,
+        buffer_size,
+        std::unique_ptr<StringReader>(nullptr),
+        std::unique_ptr<StringReader>(nullptr),
+        read_size
     );
 }
 
