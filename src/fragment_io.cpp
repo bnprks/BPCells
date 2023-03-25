@@ -25,12 +25,9 @@ SEXP iterate_10x_fragments_cpp(std::string path, std::string comment) {
 // [[Rcpp::export]]
 void write_10x_fragments_cpp(std::string path, SEXP fragments, bool append_5th_column = false) {
     BedFragmentsWriter writer(path.c_str(), append_5th_column);
-    
-    run_with_R_interrupt_check(
-        &BedFragmentsWriter::write,
-        &writer,
-        std::ref(*peek_unique_xptr<FragmentLoader>(fragments))
-    );
+
+    auto frags = take_unique_xptr<FragmentLoader>(fragments);
+    run_with_R_interrupt_check(&BedFragmentsWriter::write, &writer, std::ref(*frags));
 }
 
 // [[Rcpp::export]]
@@ -74,10 +71,9 @@ IntegerVector calculate_end_max_cpp(IntegerVector end, IntegerVector chr_ptr) {
 // [[Rcpp::export]]
 List write_packed_fragments_cpp(SEXP fragments) {
     ListWriterBuilder wb;
+    auto frags = take_unique_xptr<FragmentLoader>(fragments);
     run_with_R_interrupt_check(
-        &StoredFragmentsWriter::write,
-        StoredFragmentsWriter::createPacked(wb),
-        std::ref(*peek_unique_xptr<FragmentLoader>(fragments))
+        &StoredFragmentsWriter::write, StoredFragmentsWriter::createPacked(wb), std::ref(*frags)
     );
 
     return wb.getList();
@@ -92,10 +88,9 @@ SEXP iterate_unpacked_fragments_cpp(S4 s4) {
 // [[Rcpp::export]]
 List write_unpacked_fragments_cpp(SEXP fragments) {
     ListWriterBuilder wb;
+    auto frags = take_unique_xptr<FragmentLoader>(fragments);
     run_with_R_interrupt_check(
-        &StoredFragmentsWriter::write,
-        StoredFragmentsWriter::createUnpacked(wb),
-        std::ref(*peek_unique_xptr<FragmentLoader>(fragments))
+        &StoredFragmentsWriter::write, StoredFragmentsWriter::createUnpacked(wb), std::ref(*frags)
     );
 
     return wb.getList();
@@ -161,10 +156,9 @@ void write_unpacked_fragments_file_cpp(
     SEXP fragments, std::string dir, uint32_t buffer_size, bool allow_overwrite
 ) {
     FileWriterBuilder wb(dir, buffer_size, allow_overwrite);
+    auto frags = take_unique_xptr<FragmentLoader>(fragments);
     run_with_R_interrupt_check(
-        &StoredFragmentsWriter::write,
-        StoredFragmentsWriter::createUnpacked(wb),
-        std::ref(*peek_unique_xptr<FragmentLoader>(fragments))
+        &StoredFragmentsWriter::write, StoredFragmentsWriter::createUnpacked(wb), std::ref(*frags)
     );
 }
 
@@ -186,10 +180,9 @@ void write_packed_fragments_file_cpp(
     SEXP fragments, std::string dir, uint32_t buffer_size, bool allow_overwrite
 ) {
     FileWriterBuilder wb(dir, buffer_size, allow_overwrite);
+    auto frags = take_unique_xptr<FragmentLoader>(fragments);
     run_with_R_interrupt_check(
-        &StoredFragmentsWriter::write,
-        StoredFragmentsWriter::createPacked(wb),
-        std::ref(*peek_unique_xptr<FragmentLoader>(fragments))
+        &StoredFragmentsWriter::write, StoredFragmentsWriter::createPacked(wb), std::ref(*frags)
     );
 }
 
@@ -225,10 +218,9 @@ void write_unpacked_fragments_hdf5_cpp(
     bool allow_overwrite
 ) {
     H5WriterBuilder wb(file, group, buffer_size, chunk_size, allow_overwrite);
+    auto frags = take_unique_xptr<FragmentLoader>(fragments);
     run_with_R_interrupt_check(
-        &StoredFragmentsWriter::write,
-        StoredFragmentsWriter::createUnpacked(wb),
-        std::ref(*peek_unique_xptr<FragmentLoader>(fragments))
+        &StoredFragmentsWriter::write, StoredFragmentsWriter::createUnpacked(wb), std::ref(*frags)
     );
 }
 
@@ -259,21 +251,16 @@ void write_packed_fragments_hdf5_cpp(
     bool allow_overwrite
 ) {
     H5WriterBuilder wb(file, group, buffer_size, chunk_size, allow_overwrite);
+    auto frags = take_unique_xptr<FragmentLoader>(fragments);
     run_with_R_interrupt_check(
-        &StoredFragmentsWriter::write,
-        StoredFragmentsWriter::createPacked(wb),
-        std::ref(*peek_unique_xptr<FragmentLoader>(fragments))
+        &StoredFragmentsWriter::write, StoredFragmentsWriter::createPacked(wb), std::ref(*frags)
     );
 }
 
 // [[Rcpp::export]]
 bool fragments_identical_cpp(SEXP fragments1, SEXP fragments2) {
-    FragmentIterator i1(std::unique_ptr<FragmentLoader>(peek_unique_xptr<FragmentLoader>(fragments1)
-    ));
-    FragmentIterator i2(std::unique_ptr<FragmentLoader>(peek_unique_xptr<FragmentLoader>(fragments2)
-    ));
-    i1.preserve_input_loader();
-    i2.preserve_input_loader();
+    FragmentIterator i1(take_unique_xptr<FragmentLoader>(fragments1));
+    FragmentIterator i2(take_unique_xptr<FragmentLoader>(fragments2));
     i1.restart();
     i2.restart();
 

@@ -13,8 +13,8 @@
 #include "arrayIO/vector.h"
 
 #include "R_array_io.h"
-#include "R_xptr_wrapper.h"
 #include "R_interrupts.h"
+#include "R_xptr_wrapper.h"
 
 using namespace Rcpp;
 using namespace BPCells;
@@ -115,7 +115,8 @@ SEXP write_matrix_transpose_dir(
     StoredMatrixTransposeWriter<T> transpose(
         wb, tmpdir.c_str(), load_bytes, sort_buffer_bytes, row_major
     );
-    transpose.write(*peek_unique_xptr<MatrixLoader<T>>(matrix));
+    auto mat = take_unique_xptr<MatrixLoader<T>>(matrix);
+    transpose.write(*mat);
     FileReaderBuilder rb(outdir);
     return make_unique_xptr<StoredMatrix<T>>(StoredMatrix<T>::openPacked(rb));
 }
@@ -238,15 +239,23 @@ SEXP iterate_unpacked_matrix_mem_double_cpp(
 }
 
 template <typename T> void write_packed_matrix(WriterBuilder &wb, SEXP matrix, bool row_major) {
-    MatrixLoader<T> *loader = peek_unique_xptr<MatrixLoader<T>>(matrix);
+    auto loader = take_unique_xptr<MatrixLoader<T>>(matrix);
     loader->restart();
-    run_with_R_interrupt_check(&StoredMatrixWriter<T>::write, StoredMatrixWriter<T>::createPacked(wb, row_major), std::ref(*loader));
+    run_with_R_interrupt_check(
+        &StoredMatrixWriter<T>::write,
+        StoredMatrixWriter<T>::createPacked(wb, row_major),
+        std::ref(*loader)
+    );
 }
 
 template <typename T> void write_unpacked_matrix(WriterBuilder &wb, SEXP matrix, bool row_major) {
-    MatrixLoader<T> *loader = peek_unique_xptr<MatrixLoader<T>>(matrix);
+    auto loader = take_unique_xptr<MatrixLoader<T>>(matrix);
     loader->restart();
-    run_with_R_interrupt_check(&StoredMatrixWriter<T>::write, StoredMatrixWriter<T>::createUnpacked(wb, row_major), std::ref(*loader));
+    run_with_R_interrupt_check(
+        &StoredMatrixWriter<T>::write,
+        StoredMatrixWriter<T>::createUnpacked(wb, row_major),
+        std::ref(*loader)
+    );
 }
 
 // [[Rcpp::export]]
@@ -602,7 +611,7 @@ void write_matrix_10x_hdf5_cpp(
     uint32_t buffer_size,
     uint32_t chunk_size
 ) {
-    MatrixLoader<uint32_t> *loader = peek_unique_xptr<MatrixLoader<uint32_t>>(matrix);
+    auto loader = take_unique_xptr<MatrixLoader<uint32_t>>(matrix);
     loader->restart();
     std::map<std::string, std::unique_ptr<StringReader>> metadata;
     StringVector metadata_names = feature_metadata.names();

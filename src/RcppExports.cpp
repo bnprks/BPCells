@@ -1899,6 +1899,54 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// dense_multiply_right_preserve_loader_cpp
+Eigen::MatrixXd dense_multiply_right_preserve_loader_cpp(SEXP matrix, Eigen::Map<Eigen::MatrixXd> B);
+RcppExport SEXP _BPCells_dense_multiply_right_preserve_loader_cpp(SEXP matrixSEXP, SEXP BSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type matrix(matrixSEXP);
+    Rcpp::traits::input_parameter< Eigen::Map<Eigen::MatrixXd> >::type B(BSEXP);
+    rcpp_result_gen = Rcpp::wrap(dense_multiply_right_preserve_loader_cpp(matrix, B));
+    return rcpp_result_gen;
+END_RCPP
+}
+// dense_multiply_left_preserve_loader_cpp
+Eigen::MatrixXd dense_multiply_left_preserve_loader_cpp(SEXP matrix, Eigen::Map<Eigen::MatrixXd> B);
+RcppExport SEXP _BPCells_dense_multiply_left_preserve_loader_cpp(SEXP matrixSEXP, SEXP BSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type matrix(matrixSEXP);
+    Rcpp::traits::input_parameter< Eigen::Map<Eigen::MatrixXd> >::type B(BSEXP);
+    rcpp_result_gen = Rcpp::wrap(dense_multiply_left_preserve_loader_cpp(matrix, B));
+    return rcpp_result_gen;
+END_RCPP
+}
+// vec_multiply_right_preserve_loader_cpp
+Eigen::VectorXd vec_multiply_right_preserve_loader_cpp(SEXP matrix, Eigen::Map<Eigen::VectorXd> v);
+RcppExport SEXP _BPCells_vec_multiply_right_preserve_loader_cpp(SEXP matrixSEXP, SEXP vSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type matrix(matrixSEXP);
+    Rcpp::traits::input_parameter< Eigen::Map<Eigen::VectorXd> >::type v(vSEXP);
+    rcpp_result_gen = Rcpp::wrap(vec_multiply_right_preserve_loader_cpp(matrix, v));
+    return rcpp_result_gen;
+END_RCPP
+}
+// vec_multiply_left_preserve_loader_cpp
+Eigen::VectorXd vec_multiply_left_preserve_loader_cpp(SEXP matrix, Eigen::Map<Eigen::VectorXd> v);
+RcppExport SEXP _BPCells_vec_multiply_left_preserve_loader_cpp(SEXP matrixSEXP, SEXP vSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type matrix(matrixSEXP);
+    Rcpp::traits::input_parameter< Eigen::Map<Eigen::VectorXd> >::type v(vSEXP);
+    rcpp_result_gen = Rcpp::wrap(vec_multiply_left_preserve_loader_cpp(matrix, v));
+    return rcpp_result_gen;
+END_RCPP
+}
 // row_sums_double_cpp
 std::vector<double> row_sums_double_cpp(SEXP matrix);
 RcppExport SEXP _BPCells_row_sums_double_cpp(SEXP matrixSEXP) {
@@ -2129,6 +2177,10 @@ static const R_CallMethodDef CallEntries[] = {
     {"_BPCells_dense_multiply_left_cpp", (DL_FUNC) &_BPCells_dense_multiply_left_cpp, 2},
     {"_BPCells_vec_multiply_right_cpp", (DL_FUNC) &_BPCells_vec_multiply_right_cpp, 2},
     {"_BPCells_vec_multiply_left_cpp", (DL_FUNC) &_BPCells_vec_multiply_left_cpp, 2},
+    {"_BPCells_dense_multiply_right_preserve_loader_cpp", (DL_FUNC) &_BPCells_dense_multiply_right_preserve_loader_cpp, 2},
+    {"_BPCells_dense_multiply_left_preserve_loader_cpp", (DL_FUNC) &_BPCells_dense_multiply_left_preserve_loader_cpp, 2},
+    {"_BPCells_vec_multiply_right_preserve_loader_cpp", (DL_FUNC) &_BPCells_vec_multiply_right_preserve_loader_cpp, 2},
+    {"_BPCells_vec_multiply_left_preserve_loader_cpp", (DL_FUNC) &_BPCells_vec_multiply_left_preserve_loader_cpp, 2},
     {"_BPCells_row_sums_double_cpp", (DL_FUNC) &_BPCells_row_sums_double_cpp, 1},
     {"_BPCells_col_sums_double_cpp", (DL_FUNC) &_BPCells_col_sums_double_cpp, 1},
     {"_BPCells_matrix_stats_cpp", (DL_FUNC) &_BPCells_matrix_stats_cpp, 3},

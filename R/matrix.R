@@ -243,33 +243,33 @@ linear_operator <- function(mat) {
 
 setMethod("%*%", signature(x = "LinearOperator", y = "matrix"), function(x, y) {
   if (x@transpose) {
-    return(t(dense_multiply_left_cpp(x@xptr, t(y))))
+    return(t(dense_multiply_left_preserve_loader_cpp(x@xptr, t(y))))
   } else {
-    return(dense_multiply_right_cpp(x@xptr, y))
+    return(dense_multiply_right_preserve_loader_cpp(x@xptr, y))
   }
 })
 
 setMethod("%*%", signature(x = "matrix", y = "LinearOperator"), function(x, y) {
   if (y@transpose) {
-    return(t(dense_multiply_right_cpp(y@xptr, t(x))))
+    return(t(dense_multiply_right_preserve_loader_cpp(y@xptr, t(x))))
   } else {
-    return(dense_multiply_left_cpp(y@xptr, x))
+    return(dense_multiply_left_preserve_loader_cpp(y@xptr, x))
   }
 })
 
 setMethod("%*%", signature(x = "LinearOperator", y = "numeric"), function(x, y) {
   if (x@transpose) {
-    return(vec_multiply_left_cpp(x@xptr, y))
+    return(vec_multiply_left_preserve_loader_cpp(x@xptr, y))
   } else {
-    return(vec_multiply_right_cpp(x@xptr, y))
+    return(vec_multiply_right_preserve_loader_cpp(x@xptr, y))
   }
 })
 
 setMethod("%*%", signature(x = "numeric", y = "LinearOperator"), function(x, y) {
   if (y@transpose) {
-    return(vec_multiply_right_cpp(y@xptr, x))
+    return(vec_multiply_right_preserve_loader_cpp(y@xptr, x))
   } else {
-    return(vec_multiply_left_cpp(y@xptr, x))
+    return(vec_multiply_left_preserve_loader_cpp(y@xptr, x))
   }
 })
 

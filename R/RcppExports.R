@@ -581,6 +581,22 @@ vec_multiply_left_cpp <- function(matrix, v) {
     .Call(`_BPCells_vec_multiply_left_cpp`, matrix, v)
 }
 
+dense_multiply_right_preserve_loader_cpp <- function(matrix, B) {
+    .Call(`_BPCells_dense_multiply_right_preserve_loader_cpp`, matrix, B)
+}
+
+dense_multiply_left_preserve_loader_cpp <- function(matrix, B) {
+    .Call(`_BPCells_dense_multiply_left_preserve_loader_cpp`, matrix, B)
+}
+
+vec_multiply_right_preserve_loader_cpp <- function(matrix, v) {
+    .Call(`_BPCells_vec_multiply_right_preserve_loader_cpp`, matrix, v)
+}
+
+vec_multiply_left_preserve_loader_cpp <- function(matrix, v) {
+    .Call(`_BPCells_vec_multiply_left_preserve_loader_cpp`, matrix, v)
+}
+
 row_sums_double_cpp <- function(matrix) {
     .Call(`_BPCells_row_sums_double_cpp`, matrix)
 }

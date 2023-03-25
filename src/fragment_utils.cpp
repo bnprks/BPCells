@@ -34,9 +34,7 @@ using namespace BPCells;
 
 // [[Rcpp::export]]
 NumericVector scan_fragments_cpp(SEXP fragments) {
-    FragmentIterator iter(std::unique_ptr<FragmentLoader>(peek_unique_xptr<FragmentLoader>(fragments
-    )));
-    iter.preserve_input_loader();
+    FragmentIterator iter(take_unique_xptr<FragmentLoader>(fragments));
     uint64_t start_sum = 0;
     uint64_t end_sum = 0;
     uint64_t cell_sum = 0;
@@ -68,13 +66,20 @@ SEXP iterate_peak_matrix_cpp(
     std::string mode
 ) {
     auto loader = take_unique_xptr<FragmentLoader>(fragments);
-    std::unique_ptr<StringReader> chr_levels_reader = std::make_unique<RcppStringReader>(chr_levels);
+    std::unique_ptr<StringReader> chr_levels_reader =
+        std::make_unique<RcppStringReader>(chr_levels);
     if (mode == "insertions") {
-        return make_unique_xptr<PeakInsertionMatrix>(std::move(loader), chr, start, end, std::move(chr_levels_reader));
+        return make_unique_xptr<PeakInsertionMatrix>(
+            std::move(loader), chr, start, end, std::move(chr_levels_reader)
+        );
     } else if (mode == "fragments") {
-        return make_unique_xptr<PeakFragmentMatrix>(std::move(loader), chr, start, end, std::move(chr_levels_reader));
+        return make_unique_xptr<PeakFragmentMatrix>(
+            std::move(loader), chr, start, end, std::move(chr_levels_reader)
+        );
     } else if (mode == "overlaps") {
-        return make_unique_xptr<PeakOverlapMatrix>(std::move(loader), chr, start, end, std::move(chr_levels_reader));
+        return make_unique_xptr<PeakOverlapMatrix>(
+            std::move(loader), chr, start, end, std::move(chr_levels_reader)
+        );
     } else {
         throw std::invalid_argument("mode must be one of insertions, fragments, or overlaps");
     }
@@ -160,9 +165,7 @@ List get_tile_ranges_cpp(
 // Compute number of fragments like ArchR does for cell stats
 //  [[Rcpp::export]]
 List nucleosome_counts_cpp(SEXP fragments, uint32_t nuc_width = 147) {
-    FragmentIterator iter(std::unique_ptr<FragmentLoader>(peek_unique_xptr<FragmentLoader>(fragments
-    )));
-    iter.preserve_input_loader();
+    FragmentIterator iter(take_unique_xptr<FragmentLoader>(fragments));
 
     std::vector<int> subNuc(0);
     std::vector<int> monoNuc(0);
@@ -201,9 +204,7 @@ List nucleosome_counts_cpp(SEXP fragments, uint32_t nuc_width = 147) {
 // Compute fragment length distribution
 // [[Rcpp::export]]
 std::vector<int> fragment_lengths_cpp(SEXP fragments) {
-    FragmentIterator iter(std::unique_ptr<FragmentLoader>(peek_unique_xptr<FragmentLoader>(fragments
-    )));
-    iter.preserve_input_loader();
+    FragmentIterator iter(take_unique_xptr<FragmentLoader>(fragments));
 
     std::vector<int> lengths(0);
 
@@ -229,8 +230,9 @@ Eigen::MatrixXd footprint_matrix_cpp(
     std::vector<uint32_t> cell_groups,
     std::vector<double> cell_weights
 ) {
+    auto frags = take_unique_xptr<FragmentLoader>(fragments);
     return footprintMatrix(
-        *peek_unique_xptr<FragmentLoader>(fragments),
+        *frags,
         chr,
         center,
         strand,

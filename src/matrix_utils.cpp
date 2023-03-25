@@ -16,8 +16,8 @@
 #include "matrixIterators/WilcoxonRankSum.h"
 
 #include "R_array_io.h"
-#include "R_xptr_wrapper.h"
 #include "R_interrupts.h"
+#include "R_xptr_wrapper.h"
 
 using namespace BPCells;
 using namespace Rcpp;
@@ -67,7 +67,8 @@ SEXP convert_matrix_float_double_cpp(SEXP matrix) {
 // [[Rcpp::export]]
 SEXP build_csparse_matrix_double_cpp(SEXP matrix) {
     CSparseMatrixWriter writer;
-    run_with_R_interrupt_check(&CSparseMatrixWriter::write, &writer, std::ref(*peek_unique_xptr<MatrixLoader<double>>(matrix)));
+    auto mat = take_unique_xptr<MatrixLoader<double>>(matrix);
+    run_with_R_interrupt_check(&CSparseMatrixWriter::write, &writer, std::ref(*mat));
     return Rcpp::wrap(writer.getMat());
 }
 
@@ -267,27 +268,53 @@ SEXP iterate_matrix_rank_double_cpp(SEXP matrix) {
 
 // [[Rcpp::export]]
 Eigen::MatrixXd dense_multiply_right_cpp(SEXP matrix, Eigen::Map<Eigen::MatrixXd> B) {
+    auto mat = take_unique_xptr<MatrixLoader<double>>(matrix);
+    return run_with_R_interrupt_check(&MatrixLoader<double>::denseMultiplyRight, mat.get(), B);
+}
+
+// [[Rcpp::export]]
+Eigen::MatrixXd dense_multiply_left_cpp(SEXP matrix, Eigen::Map<Eigen::MatrixXd> B) {
+    auto mat = take_unique_xptr<MatrixLoader<double>>(matrix);
+    return run_with_R_interrupt_check(&MatrixLoader<double>::denseMultiplyLeft, mat.get(), B);
+}
+
+// [[Rcpp::export]]
+Eigen::VectorXd vec_multiply_right_cpp(SEXP matrix, Eigen::Map<Eigen::VectorXd> v) {
+    auto mat = take_unique_xptr<MatrixLoader<double>>(matrix);
+    return run_with_R_interrupt_check(&MatrixLoader<double>::vecMultiplyRight, mat.get(), v);
+}
+
+// [[Rcpp::export]]
+Eigen::VectorXd vec_multiply_left_cpp(SEXP matrix, Eigen::Map<Eigen::VectorXd> v) {
+    auto mat = take_unique_xptr<MatrixLoader<double>>(matrix);
+    return run_with_R_interrupt_check(&MatrixLoader<double>::vecMultiplyLeft, mat.get(), v);
+}
+
+// [[Rcpp::export]]
+Eigen::MatrixXd
+dense_multiply_right_preserve_loader_cpp(SEXP matrix, Eigen::Map<Eigen::MatrixXd> B) {
     return run_with_R_interrupt_check(
         &MatrixLoader<double>::denseMultiplyRight, peek_unique_xptr<MatrixLoader<double>>(matrix), B
     );
 }
 
 // [[Rcpp::export]]
-Eigen::MatrixXd dense_multiply_left_cpp(SEXP matrix, Eigen::Map<Eigen::MatrixXd> B) {
+Eigen::MatrixXd
+dense_multiply_left_preserve_loader_cpp(SEXP matrix, Eigen::Map<Eigen::MatrixXd> B) {
     return run_with_R_interrupt_check(
         &MatrixLoader<double>::denseMultiplyLeft, peek_unique_xptr<MatrixLoader<double>>(matrix), B
     );
 }
 
 // [[Rcpp::export]]
-Eigen::VectorXd vec_multiply_right_cpp(SEXP matrix, Eigen::Map<Eigen::VectorXd> v) {
+Eigen::VectorXd vec_multiply_right_preserve_loader_cpp(SEXP matrix, Eigen::Map<Eigen::VectorXd> v) {
     return run_with_R_interrupt_check(
         &MatrixLoader<double>::vecMultiplyRight, peek_unique_xptr<MatrixLoader<double>>(matrix), v
     );
 }
 
 // [[Rcpp::export]]
-Eigen::VectorXd vec_multiply_left_cpp(SEXP matrix, Eigen::Map<Eigen::VectorXd> v) {
+Eigen::VectorXd vec_multiply_left_preserve_loader_cpp(SEXP matrix, Eigen::Map<Eigen::VectorXd> v) {
     return run_with_R_interrupt_check(
         &MatrixLoader<double>::vecMultiplyLeft, peek_unique_xptr<MatrixLoader<double>>(matrix), v
     );
@@ -295,20 +322,21 @@ Eigen::VectorXd vec_multiply_left_cpp(SEXP matrix, Eigen::Map<Eigen::VectorXd> v
 
 // [[Rcpp::export]]
 std::vector<double> row_sums_double_cpp(SEXP matrix) {
-    return run_with_R_interrupt_check(&MatrixLoader<double>::rowSums, peek_unique_xptr<MatrixLoader<double>>(matrix));
+    auto mat = take_unique_xptr<MatrixLoader<double>>(matrix);
+    return run_with_R_interrupt_check(&MatrixLoader<double>::rowSums, mat.get());
 }
 
 // [[Rcpp::export]]
 std::vector<double> col_sums_double_cpp(SEXP matrix) {
-    return run_with_R_interrupt_check(&MatrixLoader<double>::colSums, peek_unique_xptr<MatrixLoader<double>>(matrix));
+    auto mat = take_unique_xptr<MatrixLoader<double>>(matrix);
+    return run_with_R_interrupt_check(&MatrixLoader<double>::colSums, mat.get());
 }
 
 // [[Rcpp::export]]
 List matrix_stats_cpp(SEXP matrix, int row_stats, int col_stats) {
+    auto mat = take_unique_xptr<MatrixLoader<double>>(matrix);
     StatsResult res = run_with_R_interrupt_check(
-        &MatrixLoader<double>::computeMatrixStats, peek_unique_xptr<MatrixLoader<double>>(matrix),
-        (Stats)row_stats,
-        (Stats)col_stats
+        &MatrixLoader<double>::computeMatrixStats, mat.get(), (Stats)row_stats, (Stats)col_stats
     );
 
     return List::create(Named("row_stats") = res.row_stats, Named("col_stats") = res.col_stats);
@@ -331,14 +359,8 @@ Eigen::MatrixXd wilcoxon_rank_sum_pval_double_cpp(SEXP matrix, std::vector<uint3
 
 // [[Rcpp::export]]
 bool matrix_identical_uint32_t_cpp(SEXP mat1, SEXP mat2) {
-    MatrixIterator<uint32_t> i1(
-        std::unique_ptr<MatrixLoader<uint32_t>>(peek_unique_xptr<MatrixLoader<uint32_t>>(mat1))
-    );
-    MatrixIterator<uint32_t> i2(
-        std::unique_ptr<MatrixLoader<uint32_t>>(peek_unique_xptr<MatrixLoader<uint32_t>>(mat2))
-    );
-    i1.preserve_input_loader();
-    i2.preserve_input_loader();
+    MatrixIterator<uint32_t> i1(take_unique_xptr<MatrixLoader<uint32_t>>(mat1));
+    MatrixIterator<uint32_t> i2(take_unique_xptr<MatrixLoader<uint32_t>>(mat2));
     i1.restart();
     i2.restart();
 
