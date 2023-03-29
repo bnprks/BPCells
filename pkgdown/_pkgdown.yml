@@ -12,6 +12,17 @@ template:
     after_body: |
        <img src="https://plausible.benparks.net/flask-plausible/bpcells-docs.png" style="position:absolute;" />
 
+navbar:
+  structure:
+    left: [introduction, reference, articles, news]
+    right: [search, github]
+  components:
+    introduction:
+      text: "Get Started"
+      href: "articles/pbmc3k.html"
+    news:
+      text: "News"
+      href: "news/index.html"
 
 # cosmo, flatly, united, sandstone all look reasonable
 # pulse, lumen, zephyr

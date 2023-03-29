@@ -33,7 +33,7 @@
     
     <a class="navbar-brand me-2" href="index.html">BPCells</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.0.0.9000</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.0</small>
 
     
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -43,13 +43,23 @@
     <div id="navbar" class="collapse navbar-collapse ms-3">
       <ul class="navbar-nav me-auto">
 <li class="nav-item">
+  <a class="nav-link" href="articles/pbmc3k.html">Get Started</a>
+</li>
+<li class="nav-item">
   <a class="nav-link" href="reference/index.html">Reference</a>
 </li>
 <li class="nav-item dropdown">
   <a href="#" class="nav-link dropdown-toggle" data-bs-toggle="dropdown" role="button" aria-expanded="false" aria-haspopup="true" id="dropdown-articles">Articles</a>
   <div class="dropdown-menu" aria-labelledby="dropdown-articles">
     <a class="dropdown-item" href="articles/pbmc3k.html">Basic tutorial</a>
+    <a class="dropdown-item" href="articles/web-only/benchmarks.html">Performance Benchmarks</a>
+    <a class="dropdown-item" href="articles/web-only/how-it-works.html">How BPCells works</a>
+    <a class="dropdown-item" href="articles/web-only/programming-efficiency.html">Efficiency tips</a>
+    <a class="dropdown-item" href="articles/web-only/programming-philosopy.html">Programming Philosophy</a>
   </div>
+</li>
+<li class="nav-item">
+  <a class="nav-link" href="news/index.html">News</a>
 </li>
       </ul>
 <form class="form-inline my-2 my-lg-0" role="search">
@@ -73,20 +83,34 @@
   <main id="main" class="col-md-9"><div class="section level1">
 <div class="page-header"><h1 id="bpcells">BPCells<a class="anchor" aria-label="anchor" href="#bpcells"></a>
 </h1></div>
-<p>BPCells is a package for high performance single cell analysis. It is designed to cover the processing pipeline from ATAC fragments or RNA counts matrices through to normalization, basic QC, and PCA.</p>
-<p>Three of the key distinguishing features that allow for high performance in BPCells are:</p>
-<ol style="list-style-type: decimal">
-<li>Bit-packing compression to allow for extremely compact storage of fragments or counts matrices on-disk or in memory.</li>
-<li>C++ code that operates on all data in a streaming fashion to support low memory usage and efficient use of CPU cache.</li>
-<li>Matrix-free SVD solvers in combination with implicit normalization calculations to support computing the PCA of a normalized matrix while only ever storing the original counts matrix in memory.</li>
-</ol>
+<p>BPCells is a package for high performance single cell analysis on RNA-seq and ATAC-seq datasets. It can analyze a 1.3M cell dataset with 2GB of RAM in around 5 minutes (<a href="articles/web-only/benchmarks.html">benchmarks</a>). This makes analysis of million-cell datasets practical on a laptop.</p>
+<p>BPCells provides:</p>
+<ul>
+<li>Efficient storage of single cell datasets via bitpacking compression</li>
+<li>Fast, disk-backed RNA-seq and ATAC-seq data processing powered by C++</li>
+<li>Downstream analysis such as marker genes, and clustering</li>
+<li>Interoperability with AnnData, 10x datasets, R sparse matrices, and GRanges</li>
+</ul>
+<p>Additionally, BPCells exposes its optimized data processing infrastructure for use in scaling 3rd party single cell tools (e.g. Seurat)</p>
+<div class="section level2">
+<h2 id="learn-more">Learn more<a class="anchor" aria-label="anchor" href="#learn-more"></a>
+</h2>
+<ul>
+<li><a href="articles/web-only/benchmarks.html">Benchmarks</a></li>
+<li><a href="articles/pbmc3k.html">Multiomic analysis example</a></li>
+<li><a href="articles/web-only/how-it-works.html">How BPCells works</a></li>
+<li><a href="articles/index.html">Additional articles</a></li>
+<li><a href="reference/index.html">Function documentation</a></li>
+<li><a href="news/index.html">News</a></li>
+</ul>
+</div>
 <div class="section level2">
 <h2 id="installation">Installation<a class="anchor" aria-label="anchor" href="#installation"></a>
 </h2>
 <p>BPCells is easiest to install directly from github:</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu">devtools</span><span class="fu">::</span><span class="fu"><a href="https://remotes.r-lib.org/reference/install_github.html" class="external-link">install_github</a></span><span class="op">(</span><span class="st">"bnprks/BPCells"</span><span class="op">)</span></span></code></pre></div>
-<p>Before installing, you must have the HDF5 library installed on your system. HDF5 can be installed from your choice of package manager:</p>
+<code class="sourceCode R"><span><span class="fu">remotes</span><span class="fu">::</span><span class="fu"><a href="https://remotes.r-lib.org/reference/install_github.html" class="external-link">install_github</a></span><span class="op">(</span><span class="st">"bnprks/BPCells"</span><span class="op">)</span></span></code></pre></div>
+<p>Before installing, you must have the HDF5 library installed and accessible on your system. HDF5 can be installed from your choice of package manager:</p>
 <ul>
 <li>conda: <code>conda install -c anaconda hdf5</code>
 </li>
@@ -97,151 +121,12 @@
 </ul>
 </div>
 <div class="section level2">
-<h2 id="getting-started">Getting started<a class="anchor" aria-label="anchor" href="#getting-started"></a>
+<h2 id="contributing">Contributing<a class="anchor" aria-label="anchor" href="#contributing"></a>
 </h2>
-<p>Two key principles to understand about using BPCells is that all operations are <em>streaming</em> and <em>lazy</em>.</p>
-<p>Streaming means that only a minimal amount of data is stored in memory while a computation is happening. There is almost no memory used storing intermediate results. Hence, we can compute operations on large matrices without ever loading them into memory.</p>
-<p>Lazy means that no real work is performed on matrix or fragment objects until the result needs to be returned as an R object or written to disk. This helps support the streaming computation, since otherwise we would be forced to compute intermediate results and use additional memory.</p>
-<div class="section level3">
-<h3 id="basic-usage">Basic usage<a class="anchor" aria-label="anchor" href="#basic-usage"></a>
-</h3>
-<p>We begin with a basic example of loading ATAC fragments from a 10x fragments file, reading a peak set from a bed file, then calculating a cell x peak matrix.</p>
-<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="st"><a href="https://bnprks.github.io/BPCells">"BPCells"</a></span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># File reading is lazy, so this is instantaneous</span></span>
-<span><span class="va">fragments</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/open_fragments_10x.html">open_fragments_10x</a></span><span class="op">(</span><span class="st">"atac_fragments.tsv.gz"</span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># This is when we actually read the file, should take 1-2 minutes to scan</span></span>
-<span><span class="co"># since we bottleneck on gzip decompression.</span></span>
-<span><span class="va">packed_fragments</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/fragment_io.html">write_fragments_memory</a></span><span class="op">(</span><span class="va">fragments</span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># Important to set compress=FALSE for speed. Should take a few seconds</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/readRDS.html" class="external-link">saveRDS</a></span><span class="op">(</span><span class="va">packed_fragments</span>, <span class="st">"fragments.rds"</span>, compress<span class="op">=</span><span class="cn">FALSE</span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># Reloading from disk is only a few seconds now.</span></span>
-<span><span class="va">packed_fragments</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/readRDS.html" class="external-link">readRDS</a></span><span class="op">(</span><span class="st">"fragments.rds"</span><span class="op">)</span></span>
-<span></span>
-<span><span class="va">peaks</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/read_bed.html">read_bed</a></span><span class="op">(</span><span class="st">"peaks.bed"</span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># This is fast because the peak matrix calculation is lazy.</span></span>
-<span><span class="co"># It will be computed on-the-fly when we actually need results from it.</span></span>
-<span><span class="va">peak_matrix</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/peak_matrix.html">peak_matrix</a></span><span class="op">(</span><span class="va">packed_fragments</span>, <span class="va">peaks</span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># Here is where the peak matrix calculation happens. Should take</span></span>
-<span><span class="co"># under 10 seconds.</span></span>
-<span><span class="va">R_matrix</span> <span class="op">&lt;-</span> <span class="fu">as</span><span class="op">(</span><span class="va">peak_matrix</span>, <span class="st">"dgCMatrix"</span><span class="op">)</span></span></code></pre></div>
-</div>
-<div class="section level3">
-<h3 id="streaming-operations">Streaming operations<a class="anchor" aria-label="anchor" href="#streaming-operations"></a>
-</h3>
-<p>The lazy, stream-oriented design means that we can calculate more complicated transformations in a single pass. This is both faster and more memory-efficient than calculating several intermediate results in a sequential manner.</p>
-<p>As an example, we will perform the following pipeline: 1. Exclude fragments from non-standard chromosomes 2. Subset our cells 3. Add a Tn5 offset 4. Calculate the peak matrix 5. Calculate the mean-accessibility per peak</p>
-<p>If this were done using e.g. GRanges or sparse matrices, we would need to do 3 passes through the fragments while saving intermediate results, and 2 passes over the peak matrix.</p>
-<p>With BPCell’s streaming operations, this can all be done directly from the fragments in a single pass, and the memory usage is limited to a few bytes per cell for iterating over the peak matrix and returning the colMeans.</p>
-<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># Here I make use of the pipe operator (%&gt;%) for better readability</span></span>
-<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="st"><a href="https://tidyverse.tidyverse.org" class="external-link">"tidyverse"</a></span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># We'll subset to just the standard chromosomes</span></span>
-<span><span class="va">standard_chr</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/which.html" class="external-link">which</a></span><span class="op">(</span></span>
-<span>  <span class="fu">stringr</span><span class="fu">::</span><span class="fu"><a href="https://stringr.tidyverse.org/reference/str_detect.html" class="external-link">str_detect</a></span><span class="op">(</span><span class="fu"><a href="reference/IterableFragments-methods.html">chrNames</a></span><span class="op">(</span><span class="va">packed_fragments</span><span class="op">)</span>, <span class="st">"^chr[0-9XY]+$"</span><span class="op">)</span></span>
-<span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># Pick a random subset of 100 cells to consider</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">1337</span><span class="op">)</span></span>
-<span><span class="va">keeper_cells</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/sample.html" class="external-link">sample</a></span><span class="op">(</span><span class="fu"><a href="reference/IterableFragments-methods.html">cellNames</a></span><span class="op">(</span><span class="va">packed_fragments</span><span class="op">)</span>, <span class="fl">100</span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># Run the pipeline, and save the average accessibility per peak</span></span>
-<span><span class="va">peak_accessibility</span> <span class="op">&lt;-</span> <span class="va">packed_fragments</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
-<span>  <span class="fu"><a href="reference/select_chromosomes.html">select_chromosomes</a></span><span class="op">(</span><span class="va">standard_chr</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
-<span>  <span class="fu"><a href="reference/select_cells.html">select_cells</a></span><span class="op">(</span><span class="va">keeper_cells</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
-<span>  <span class="fu"><a href="reference/shift_fragments.html">shift_fragments</a></span><span class="op">(</span>shift_start<span class="op">=</span><span class="fl">4</span>, shift_end<span class="op">=</span><span class="op">-</span><span class="fl">5</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
-<span>  <span class="fu"><a href="reference/peak_matrix.html">peak_matrix</a></span><span class="op">(</span><span class="va">peaks</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
-<span>  <span class="fu">colMeans</span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
-<p>Note that if we knew the cell names ahead of time, we could even perform this operation directly on our orignal 10x fragments without ever saving the fragments into memory. This would be fairly slow because 10x fragment files are slow to decompress. With upcoming support for storing packed fragments directly on disk, this can become a much faster operation without ever needing to store fragments in memory.</p>
-</div>
-</div>
-<div class="section level2">
-<h2 id="roadmap">Roadmap<a class="anchor" aria-label="anchor" href="#roadmap"></a>
-</h2>
-<div class="section level3">
-<h3 id="current-support">Current support:<a class="anchor" aria-label="anchor" href="#current-support"></a>
-</h3>
-<ul>
-<li>Fragments
-<ul>
-<li>Reading/writing 10x fragment files on disk</li>
-<li>Reading/writing packed fragment objects in memory or directly from disk</li>
-<li>Interconversion of fragments objects with GRanges</li>
-<li>Calculation of Cell x Peak matrices</li>
-</ul>
-</li>
-<li>Matrices
-<ul>
-<li>Conversion to/from R sparse matrices</li>
-<li>Read-write access to 10x hdf5 feature matrices, and read-only access to AnnData files, and</li>
-<li>Reading/writing of packed sparse matrices in memory or directly from disk</li>
-<li>Multiplication by dense matrices or vectors</li>
-<li>Calculation of statistics like rowSums, colSums, rowMeans, and colMeans</li>
-<li>Transparent handling of vector <code>+</code>, <code>-</code>, <code>*</code>, <code>/</code>, and <code>log1p</code> for streaming normalization. This allows implementation of ATAC-seq LSI and Seurat default normalization.</li>
-</ul>
-</li>
-</ul>
-</div>
-<div class="section level3">
-<h3 id="upcoming-additions">Upcoming additions:<a class="anchor" aria-label="anchor" href="#upcoming-additions"></a>
-</h3>
-<ul>
-<li>Support for additional fragment formats:
-<ul>
-<li>Read fragments from bam files</li>
-<li>Support direct download of files from URLs</li>
-</ul>
-</li>
-<li>Support for additional matrix formats:
-<ul>
-<li>Write hdf5 AnnData matrices</li>
-</ul>
-</li>
-<li>Support for additional matrix normalizations:
-<ul>
-<li>sctransform normalization</li>
-</ul>
-</li>
-</ul>
-</div>
-<div class="section level3">
-<h3 id="performance-estimates">Performance estimates<a class="anchor" aria-label="anchor" href="#performance-estimates"></a>
-</h3>
-<ul>
-<li>Bit-packed storage:
-<ul>
-<li><p>Packed fragments are about 2x smaller than ArchR fragments and gzipped 10x fragment files</p></li>
-<li><p>Packed fragments can be decompressed at &gt;5GB/s, and so decoding is disk-limited on SSDs or RAID arrays while remaining competitive with reading directly from uncompressed RAM</p></li>
-<li>
-<p>Packed matrices are 4-6x smaller than the equivalent sparse matrices, with similarly excellent decompression speed.</p>
-<p>(Note: compared to R dgCMatrices, the numbers are more like 6-8x smaller due to dgCMatrices always storing double-precision floats)</p>
-</li>
-</ul>
-</li>
-<li>Comparison to ArchR:
-<ul>
-<li>Fragment import speed is about 10-fold faster</li>
-<li>Peak and tile matrix calculations are about 10-fold faster than ArchR</li>
-<li>BPCells usually uses less memory than ArchR, though ArchR’s memory usage is never excessive</li>
-</ul>
-</li>
-<li>PCA calculation:
-<ul>
-<li>Compared to Seurat/Scanpy’s default normalization + PCA, BPCells can be nearly 100x more memory efficient for large datasets (1M cells), even when subsetting to just 2,000 genes.</li>
-<li>The time for PCA calculation is faster than Seurat, but about 2x slower than Scanpy (BPCells) takes about 5 minutes to run PCA on a 1M cell matrix</li>
-<li>Compared to Seurat’s default normalization + PCA, BPCells will likely be about 10x more efficient in memory and CPU. It is unclear if this will multiply with the 4-6x memory savings from bitpacking counts matrices.</li>
-<li>LSI is not expected to be substantially faster than ArchR, although the C++ implementation may provide a several-fold speedup, and bitpacking will provide a 4-6x memory savings.</li>
-</ul>
-</li>
-</ul>
-</div>
+<p>BPCells is an open source project, and we welcome quality contributions. If you are interested in contributing and have experience with C++, along with Python or R, feel free to reach out with ideas you would like to implement yourself. I’m happy to provide pointers for how to get started, my time permitting.</p>
+<p>If you are unfamiliar with C++ it will be difficult for you to contribute code, but detailed bug reports with <a href="https://reprex.tidyverse.org/articles/reprex-dos-and-donts.html" class="external-link">reproducible examples</a> are still a useful way to help out. Github issues are the best forum for this.</p>
+<p>If you maintain a single cell analysis package and want to use BPCells to improve your scalability, I’m happy to provide advice. We have had a couple of labs try this so far, with promising success. Email is the best way to get in touch for this (look in the <code>DESCRIPTION</code> file on github for contact info). Python developers welcome, though the full python package will likely not be available until mid-summer 2023.</p>
+<p>AnnData maintainers: would love to talk about putting bitpacking compression in AnnData. The <a href="https://bnprks.github.io/BPCells/articles/web-only/benchmarks.html#counts-matrices-rna-or-atac">benchmarks</a> look promising.</p>
 </div>
 </div>
   </main><aside class="col-md-3"><div class="links">

@@ -1,0 +1,100 @@
+---
+title: "How BPCells works"
+output: 
+  html_document:
+    toc: true
+    toc_depth: 2
+    toc_float: true
+    theme: simplex
+---
+## Operating Principles
+
+Two key principles to understand about using BPCells is that all operations are
+*streaming* and *lazy*. 
+
+Streaming means that only a minimal amount of data is 
+stored in memory while a computation is happening. There is almost no
+memory used storing intermediate results. Hence, we can compute operations 
+on large matrices without ever loading them fully into memory.
+
+Lazy means that no real work is performed on matrix or fragment objects until
+the result needs to be returned as an R object or written to disk. This helps support
+the streaming computation, since otherwise we would be forced to compute intermediate
+results and use additional memory.
+
+### Basic usage
+We begin with a basic example of loading ATAC fragments from a 10x fragments file,
+reading a peak set from a bed file, then calculating a cell x peak matrix.
+```R
+library("BPCells")
+
+# File reading is lazy, so this is instantaneous
+fragments <- open_fragments_10x("atac_fragments.tsv.gz")
+
+# This is when we actually read the file, should take 1-2 minutes to scan
+# since we bottleneck on gzip decompression.
+packed_fragments <- write_fragments_dir(fragments, "pbmc-3k-fragments")
+```
+The bitpacked compressed fragment file is about half the size of the 10x file,
+and much faster to read.
+
+```R
+# Later, we can re-open these fragments
+packed_fragments <- open_fragments_dir("pbmc-3k_fragments")
+
+peaks <- read_bed("peaks.bed")
+
+# This is fast because the peak matrix calculation is lazy.
+# It will be computed on-the-fly when we actually need results from it.
+peak_matrix <- peak_matrix(packed_fragments, peaks)
+
+# Here is where the peak matrix calculation happens. Runs over 10-times
+# faster than ArchR, which utilizes IRanges to perform overlap calculations.
+R_matrix <- as(peak_matrix, "dgCMatrix")
+```
+
+### Streaming operations
+
+The lazy, stream-oriented design means that we can calculate more complicated
+transformations in a single pass. This is both faster and more memory-efficient
+than calculating several intermediate results in a sequential manner.
+
+As an example, we will perform the following pipeline:
+1. Exclude fragments from non-standard chromosomes
+2. Subset our cells
+3. Add a Tn5 offset
+4. Calculate the peak matrix
+5. Calculate the mean-accessibility per peak
+
+If this were done using e.g. GRanges or sparse matrices, we would need to do 3
+passes through the fragments while saving intermediate results, and 2 passes over
+the peak matrix.
+
+With BPCell's streaming operations, this can all be done directly from the fragments in a single pass, and the memory
+usage is limited to a few bytes per cell for iterating over the peak matrix 
+and returning the colMeans.
+```R
+# Here I make use of the new pipe operator |> for better readability
+
+# We'll subset to just the standard chromosomes
+standard_chr <- which(
+  stringr::str_detect(chrNames(packed_fragments), "^chr[0-9XY]+$")
+)
+
+# Pick a random subset of 100 cells to consider
+set.seed(1337)
+keeper_cells <- sample(cellNames(packed_fragments), 100)
+
+# Run the pipeline, and save the average accessibility per peak
+peak_accessibility <- packed_fragments |>
+  select_chromosomes(standard_chr) |>
+  select_cells(keeper_cells) |>
+  shift_fragments(shift_start=4, shift_end=-5) |>
+  peak_matrix(peaks) |>
+  colMeans()
+```
+
+Note that if we knew the cell names ahead of time, we could even perform this
+operation directly on our orignal 10x fragments without ever saving the
+fragments into memory. This would be fairly slow because 10x fragment files are
+slow to decompress, so it's recommended to convert to the BPCells format.

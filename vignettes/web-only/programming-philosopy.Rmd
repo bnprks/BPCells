@@ -1,0 +1,53 @@
+---
+title: "Programming Philosophy"
+output: 
+  html_document:
+    toc: true
+    toc_depth: 2
+    toc_float: true
+    theme: simplex
+---
+
+# Programming philosopy
+BPCells operates according to a somewhat different programming philosophy from
+other tools. In particular:
+
+- BPCells aims to perform most analysis directly from raw data matrices or aligned fragments
+  - It does not modify input data files, instead preferring to write a copy to a new location when needed.
+  - Analysis code that runs quickly from raw counts provides clear reproducibility and data provenance
+- BPCells generally avoids storing normalized matrix copies (sometimes referred to
+  as layers), instead preferring to re-calculate normalized values on-the-fly. This
+  helps to avoid wasteful storage use.
+- BPCells does not (currently) have a concept of a "project" object that combines data + metadata in a complex structure. 
+
+## Working without a project object
+Imagine you want to plot a UMAP of your cells colored by cluster. In BPCells,
+the way you do this is by providing:
+
+  1, The matrix of cells x UMAP coordinates
+  2. A vector listing which cells belong to which cluster
+
+The correspondence of cells and clusters is determined based on ordering. So the
+rows of the UMAP matrix should have the same order as the cluster membership vector.
+
+To keep this simple, we recommend the following approach:
+
+  1. At the start of your analysis, establish a consistent cell ordering when
+    you perform quality filtering 
+      - See the [tutorial](../pbmc3k.html#select-high-quality-cells) for an
+        example, where we make a `keeper_cells` vector and order our data
+        consistently according to that list of cell IDs.
+  2. For all downstream operations (PCA, clustering, etc.), this cell order will
+    be preserved unless you explicitly change it. So things will "just work"
+  3. To keep track of per-cell metadata, it can be helpful to make a data frame
+    tracking sample IDs, cluster membership, and other metadata yourself
+
+Working without a project object provides a lot of flexibility, since as the
+user you can easily swap UMAP embeddings, cluster assignments, etc. by just
+providing a different variable as input. There's also no need to "export"
+your metadata since there wasn't an import step to begin with.
+
+Of course, this power does come with additional responsibility to keep track of
+metadata. Keeping BPCells flexible for power users while retaining ease-of-use
+for newbies is an ongoing effort, but BPCells currently falls more on the side
+of power users
