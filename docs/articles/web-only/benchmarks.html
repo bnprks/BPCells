@@ -127,12 +127,14 @@ traditional formats like AnnData or 10x hdf5 feature matrices, there is
 an inherent tradeoff between storage size and speed of loading.
 Gzip-compressed files are small, but slow to read.</p>
 <p>BPCells uses bitpacking compression to provide 4-6x smaller storage
-for counts matrices compared to an uncompressed binary format like
-AnnData. A single thread can load the matrix data faster than reading
-uncompressed data in many cases, due to the smaller data size and
-extremely fast decompression<a class="footnote-ref" tabindex="0" data-bs-toggle="popover" data-bs-content="&lt;p&gt;This holds true for file storage that loads at under
+for counts matrices compared to an uncompressed binary format
+(e.g. AnnData’s default h5ad settings<a class="footnote-ref" tabindex="0" data-bs-toggle="popover" data-bs-content="&lt;p&gt;Note that AnnData supports a wide variety compression
+algorithms, though for counts matrices BPCells bitpacking is also faster
+than lz4 and zstd read/write.&lt;/p&gt;"><sup>2</sup></a>). A single thread can load the matrix data
+faster than reading uncompressed data in many cases, due to the smaller
+data size and extremely fast decompression<a class="footnote-ref" tabindex="0" data-bs-toggle="popover" data-bs-content="&lt;p&gt;This holds true for file storage that loads at under
 ~2GB/s, which is ~8x faster than a hard drive, and 16x faster than a
-gigabit ethernet connection.&lt;/p&gt;"><sup>2</sup></a>.</p>
+gigabit ethernet connection.&lt;/p&gt;"><sup>3</sup></a>.</p>
 <p>Benchmark storing + loading a 1.3M cell RNA-seq experiment from 10x
 Genomics. <img src="benchmark-plots/compression-1M-example.png"></p>
 </div>

@@ -46,12 +46,16 @@ between storage size and speed of loading. Gzip-compressed files are small, but
 slow to read.
 
 BPCells uses bitpacking compression to provide 4-6x smaller storage for counts
-matrices compared to an uncompressed binary format like AnnData. A single thread
-can load the matrix data faster than reading uncompressed data in many cases,
-due to the smaller data size and extremely fast decompression[^1].
+matrices compared to an uncompressed binary format (e.g. AnnData's default h5ad
+settings[^3]). A single thread can load the matrix data faster than reading
+uncompressed data in many cases, due to the smaller data size and extremely fast
+decompression[^1].
 
 [^1]: This holds true for file storage that loads at under ~2GB/s, which is ~8x 
 faster than a hard drive, and 16x faster than a gigabit ethernet connection.
+
+[^3]: Note that AnnData supports a wide variety compression algorithms, though
+for counts matrices BPCells bitpacking is also faster than lz4 and zstd read/write.
 
 Benchmark storing + loading a 1.3M cell RNA-seq experiment from 10x Genomics.
 ![](benchmark-plots/compression-1M-example.png)
