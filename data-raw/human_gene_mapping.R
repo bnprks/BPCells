@@ -2,7 +2,10 @@ library(magrittr)
 
 # Pull data from HGNC, and make a named vector that maps non-canonical gene names/
 # symbols to their canonical names. Only unambiguous mappings will be stored
-hgnc <- readr::read_tsv("http://ftp.ebi.ac.uk/pub/databases/genenames/hgnc/tsv/non_alt_loci_set.txt")
+hgnc <- readr::read_tsv(
+  "http://ftp.ebi.ac.uk/pub/databases/genenames/hgnc/tsv/non_alt_loci_set.txt",
+  col_types=readr::cols(.default=readr::col_character())
+)
 
 human_gene_mapping <- dplyr::bind_rows(
   alias = dplyr::select(hgnc, symbol, alt = alias_symbol) %>% tidyr::separate_rows(alt, sep = "\\|"),
@@ -20,4 +23,4 @@ human_gene_mapping <- dplyr::bind_rows(
   dplyr::arrange(alt) %>%
   dplyr::pull(symbol, alt)
 
-usethis::use_data(human_gene_mapping, overwrite = TRUE)
+usethis::use_data(human_gene_mapping, overwrite = TRUE, compress="xz")
