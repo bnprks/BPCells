@@ -2,8 +2,8 @@
 
 
 # This curl request helps count daily installs prior to CRAN release:
-# No identifiable information or IP addresses are saved once server logs are 
-# deleted after 14 days. More information on data privacy policy: https://plausible.io/data-policy
+# No identifiable information or IP addresses are saved, and server logs are 
+# deleted every 14 days. More information on data privacy policy: https://plausible.io/data-policy
 # You can safely comment out this line if you do not want your installation counted.
 curl --silent https://plausible.benparks.net/flask-plausible/bpcells-configure > /dev/null 2> /dev/null
 
