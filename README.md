@@ -34,9 +34,10 @@ HDF5 can be installed from your choice of package manager:
 - yum: `yum install hdf5-devel`
 
 For troubleshooting tips, see these github issues:
- - Windows ([Issue #9](https://github.com/bnprks/BPCells/issues/9#issuecomment-1489741180))
- - M1 Macs ([Issue #6](https://github.com/bnprks/BPCells/issues/6#issuecomment-1476976677))
- - Macs running MacOS 10.14 (Mojave) or older ([Issue #3](https://github.com/bnprks/BPCells/issues/3#issuecomment-1375238635))
+
+- Windows ([Issue #9](https://github.com/bnprks/BPCells/issues/9#issuecomment-1489741180))
+- M1 Macs ([Issue #6](https://github.com/bnprks/BPCells/issues/6#issuecomment-1476976677))
+- Macs running MacOS 10.14 (Mojave) or older ([Issue #3](https://github.com/bnprks/BPCells/issues/3#issuecomment-1375238635))
 
 
 ## Contributing
