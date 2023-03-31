@@ -83,7 +83,6 @@ test_that("Subsetting matrix multiply works", {
   m <- as(m1, "IterableMatrix") %*% as(m2, "IterableMatrix")
   res <- m1 %*% m2
 
-
   expect_equal(as(m[c(2, 4, 9, 5), ], "dgCMatrix"), res[c(2, 4, 9, 5), ], tolerance=testthat_tolerance())
   expect_s4_class(m[c(2, 4, 9, 5), ], "MatrixMultiply")
 
@@ -94,7 +93,40 @@ test_that("Subsetting matrix multiply works", {
   expect_s4_class(m[c(2, 4, 9, 5), c(4, 3, 6)], "MatrixMultiply")
 })
 
-test_that("Dense matrix-vector multiply works", {
+test_that("Subsetting to 0 dimensions works", {
+  m1 <- generate_dense_matrix(10, 5) %>% as("dgCMatrix")
+  m2 <- as(m1, "IterableMatrix")
+  expect_identical(
+    m2[rep_len(FALSE, nrow(m1)),] %>% as("dgCMatrix"),
+    m1[rep_len(FALSE, nrow(m1)),]
+  )
+
+  expect_identical(
+    m2[,rep_len(FALSE, ncol(m1))] %>% as("dgCMatrix"),
+    m1[,rep_len(FALSE, ncol(m1))]
+  )
+
+  expect_identical(
+    m2[1:3,][integer(0),] %>% as("dgCMatrix"),
+    m1[1:3,][integer(0),]
+  )
+
+  expect_identical(
+    m2[1:3,][,integer(0)] %>% as("dgCMatrix"),
+    m1[1:3,][,integer(0)]
+  )
+
+  expect_identical(
+    m2[,1:3][integer(0),] %>% as("dgCMatrix"),
+    m1[,1:3][integer(0),]
+  )
+
+  expect_identical(
+    m2[,1:3][,integer(0)] %>% as("dgCMatrix"),
+    m1[,1:3][,integer(0)]
+  )
+})
+
   withr::local_seed(195123)
 
   m1 <- generate_sparse_matrix(5, 1000)

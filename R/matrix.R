@@ -540,11 +540,13 @@ setClass("MatrixSubset",
   slots = c(
     matrix = "IterableMatrix",
     row_selection = "integer",
-    col_selection = "integer"
+    col_selection = "integer",
+    zero_dims = "logical"
   ),
   prototype = list(
     row_selection = integer(0),
-    col_selection = integer(0)
+    col_selection = integer(0),
+    zero_dims = c(FALSE, FALSE)
   )
 )
 setMethod("matrix_type", signature(x = "MatrixSubset"), function(x) matrix_type(x@matrix))
@@ -589,8 +591,14 @@ setMethod("[", "IterableMatrix", function(x, i, j, ...) {
     i <- rlang::maybe_missing(j)
     j <- rlang::maybe_missing(tmp)
   }
-  if (!rlang::is_missing(i)) ret@row_selection <- i
-  if (!rlang::is_missing(j)) ret@col_selection <- j
+  if (!rlang::is_missing(i)) {
+    ret@row_selection <- i
+    ret@zero_dims[1] <- length(i) == 0
+  }
+  if (!rlang::is_missing(j)) {
+    ret@col_selection <- j
+    ret@zero_dims[2] <- length(j) == 0
+  }
   ret
 })
 
@@ -606,18 +614,20 @@ setMethod("[", "MatrixSubset", function(x, i, j, ...) {
     j <- rlang::maybe_missing(tmp)
   }
   if (!rlang::is_missing(i)) {
-    if (length(x@row_selection) == 0) {
+    if (length(x@row_selection) == 0 && !x@zero_dims[1]) {
       x@row_selection <- i
     } else {
       x@row_selection <- x@row_selection[i]
     }
+    x@zero_dims[1] <- length(i) == 0
   }
   if (!rlang::is_missing(j)) {
-    if (length(x@col_selection) == 0) {
+    if (length(x@col_selection) == 0 && !x@zero_dims[2]) {
       x@col_selection <- j
     } else {
       x@col_selection <- x@col_selection[j]
     }
+    x@zero_dims[2] <- length(j) == 0
   }
   x
 })
@@ -631,19 +641,19 @@ setMethod("iterate_matrix", "MatrixSubset", function(x) {
 
   ret <- iterate_matrix(x@matrix)
 
-  if (length(x@row_selection) != 0) ret <- iter_row_function(ret, x@row_selection - 1L)
-  if (length(x@col_selection) != 0) ret <- iter_col_function(ret, x@col_selection - 1L)
+  if (length(x@row_selection) != 0 || x@zero_dims[1]) ret <- iter_row_function(ret, x@row_selection - 1L)
+  if (length(x@col_selection) != 0 || x@zero_dims[2]) ret <- iter_col_function(ret, x@col_selection - 1L)
   
   ret
 })
 
 setMethod("short_description", "MatrixSubset", function(x) {
   if (x@transpose) {
-    rows <- x@col_selection
-    cols <- x@row_selection
+    rows <- if (x@zero_dims[2]) "none" else x@col_selection
+    cols <- if (x@zero_dims[1]) "none" else x@row_selection
   } else {
-    rows <- x@row_selection
-    cols <- x@col_selection
+    rows <- if (x@zero_dims[1]) "none" else x@row_selection
+    cols <- if (x@zero_dims[2]) "none" else x@col_selection
   }
   c(
     short_description(x@matrix),
