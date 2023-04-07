@@ -11,6 +11,8 @@ curl --silent https://plausible.benparks.net/flask-plausible/bpcells-configure >
 CC=$("${R_HOME}/bin/R" CMD config CC)
 CXX=$("${R_HOME}/bin/R" CMD config CXX)
 
+CFLAGS=$("${R_HOME}/bin/R" CMD config CFLAGS)
+LDFLAGS=$("${R_HOME}/bin/R" CMD config LDFLAGS)
 ############################
 # HDF5 compatibility check
 ############################
@@ -21,14 +23,14 @@ echo "Testing hdf5 by compiling example program..."
 HDF5_CFLAGS=""
 HDF5_LIBS="-lhdf5"
 HDF5_OK=""
-$CC tools/h5write.c $HDF5_CFLAGS $HDF5_LIBS -o tools/h5write 2>/dev/null && HDF5_OK="yes";
+$CC tools/h5write.c $CFLAGS $LDFLAGS $HDF5_CFLAGS $HDF5_LIBS -o tools/h5write 2>/dev/null && HDF5_OK="yes";
 
 # pkg-config flags
 if [ -z $HDF5_OK ]; then
     printf "\n\nRetrying with pkg-config flags...\n"
     if HDF5_CFLAGS="$(pkg-config hdf5 --cflags 2>/dev/null)" && \
         HDF5_LIBS="$(pkg-config hdf5 --libs 2>/dev/null)"; then
-        $CC tools/h5write.c $HDF5_CFLAGS $HDF5_LIBS -o tools/h5write && HDF5_OK="yes";
+        $CC tools/h5write.c $CFLAGS $LDFLAGS $HDF5_CFLAGS $HDF5_LIBS -o tools/h5write && HDF5_OK="yes";
     else
         echo "Error running 'pkg-config hdf5 --cflags --libs'"
     fi
@@ -42,7 +44,7 @@ if [ -z $HDF5_OK ]; then
     else
         HDF5_CFLAGS="-I$CONDA_PREFIX/include"
         HDF5_LIBS="-Wl,-rpath,$CONDA_PREFIX/lib -L$CONDA_PREFIX/lib -lhdf5"
-        $CC tools/h5write.c $HDF5_CFLAGS $HDF5_LIBS -o tools/h5write && HDF5_OK="yes";
+        $CC tools/h5write.c $CFLAGS $LDFLAGS $HDF5_CFLAGS $HDF5_LIBS -o tools/h5write && HDF5_OK="yes";
     fi
 fi
 
@@ -62,7 +64,7 @@ echo "HDF5_LIBS='${HDF5_LIBS}'"
 ARCH_FLAG="-march=native"
 printf "\nTesting architecture flag support support..."
 for ARCH_FLAG in "-march=native" ""; do
-    if $CC tools/h5write.c $ARCH_FLAG $HDF5_CFLAGS $HDF5_LIBS -o tools/h5write 2>/dev/null; then
+    if $CC tools/h5write.c $ARCH_FLAG $CFLAGS $LDFLAGS $HDF5_CFLAGS $HDF5_LIBS -o tools/h5write 2>/dev/null; then
         printf "'%s' succeeded\n" $ARCH_FLAG
         break;
     else
