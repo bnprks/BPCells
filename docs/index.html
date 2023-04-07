@@ -112,11 +112,14 @@
 <code class="sourceCode R"><span><span class="fu">remotes</span><span class="fu">::</span><span class="fu"><a href="https://remotes.r-lib.org/reference/install_github.html" class="external-link">install_github</a></span><span class="op">(</span><span class="st">"bnprks/BPCells"</span><span class="op">)</span></span></code></pre></div>
 <p>Before installing, you must have the HDF5 library installed and accessible on your system. HDF5 can be installed from your choice of package manager:</p>
 <ul>
-<li>conda: <code>conda install -c anaconda hdf5</code>
-</li>
 <li>apt: <code>sudo apt-get install libhdf5-dev</code>
 </li>
-<li>yum: <code>yum install hdf5-devel</code>
+<li>yum: <code>sudo yum install hdf5-devel</code>
+</li>
+<li>conda: <code>conda install -c anaconda hdf5</code>
+<ul>
+<li>Note: Linux users should prefer their distro’s package manager (e.g. <code>apt</code> or <code>yum</code>) when possible, as it appears to give a slightly more reliable installation experience.</li>
+</ul>
 </li>
 </ul>
 <p>You will also need a C/C++ compiler either gcc &gt;=8.0 (&gt;=9.1 recommended), or clang &gt;= 7.0 (&gt;= 9.0 recommended). This corresponds to versions from late-2018 and newer.</p>

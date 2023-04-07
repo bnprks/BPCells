@@ -30,9 +30,11 @@ remotes::install_github("bnprks/BPCells")
 Before installing, you must have the HDF5 library installed and accessible on your system.
 HDF5 can be installed from your choice of package manager:
 
-- conda: `conda install -c anaconda hdf5` 
 - apt: `sudo apt-get install libhdf5-dev` 
-- yum: `yum install hdf5-devel`
+- yum: `sudo yum install hdf5-devel`
+- conda: `conda install -c anaconda hdf5` 
+  - Note: Linux users should prefer their distro's package manager (e.g. `apt` or `yum`) when possible,
+    as it appears to give a slightly more reliable installation experience.
 
 You will also need a C/C++ compiler either gcc >=8.0 (>=9.1 recommended), or clang >= 7.0 (>= 9.0 recommended).
 This corresponds to versions from late-2018 and newer.
