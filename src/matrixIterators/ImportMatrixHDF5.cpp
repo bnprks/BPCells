@@ -104,6 +104,18 @@ StoredMatrixWriter<uint32_t> create10xFeatureMatrix(
     );
 }
 
+void assertAnnDataSparse(std::string file, std::string group) {
+    // Check for a dense matrix where we expect a sparse matrix
+    HighFive::File f(file, HighFive::File::ReadWrite);
+    auto node_type = f.getObjectType(group);
+    if (node_type == HighFive::ObjectType::Dataset) {
+        throw std::runtime_error(
+            "Error in opening AnnData matrix: \"" + group +
+            "\" is a dataset rather than a group. This likely indicates a dense matrix which "
+            "is not yet supported by BPCells."
+        );
+    }
+}
 // Read AnnData sparse matrix, with an implicit transpose to CSC format for
 // any data stored in CSR format
 StoredMatrix<float> openAnnDataMatrix(
@@ -114,6 +126,7 @@ StoredMatrix<float> openAnnDataMatrix(
     std::unique_ptr<StringReader> &&col_names,
     uint32_t read_size
 ) {
+    assertAnnDataSparse(file, group);
     H5ReaderBuilder rb(file, group, buffer_size, read_size);
 
     HighFive::SilenceHDF5 s;
@@ -193,6 +206,7 @@ openAnnDataMatrix(std::string file, std::string group, uint32_t buffer_size, uin
 }
 
 bool isRowOrientedAnnDataMatrix(std::string file, std::string group) {
+    assertAnnDataSparse(file, group);
     H5ReaderBuilder rb(file, group, 1024, 1024);
 
     HighFive::SilenceHDF5 s;
