@@ -33,7 +33,10 @@ HDF5 can be installed from your choice of package manager:
 - apt: `sudo apt-get install libhdf5-dev` 
 - yum: `yum install hdf5-devel`
 
-For troubleshooting tips, see these github issues:
+You will also need a C/C++ compiler either gcc >=8.0 (>=9.1 recommended), or clang >= 7.0 (>= 9.0 recommended).
+This corresponds to versions from late-2018 and newer.
+
+**Installation troubleshooting** -- see these github issues:
 
 - Windows ([Issue #9](https://github.com/bnprks/BPCells/issues/9#issuecomment-1489741180))
 - M1 Macs ([Issue #6](https://github.com/bnprks/BPCells/issues/6#issuecomment-1476976677))
