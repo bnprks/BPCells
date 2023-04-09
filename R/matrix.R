@@ -813,10 +813,12 @@ merge_dimnames <- function(x, y, warning_prefix, dim_type) {
 setClass("RowBindMatrices",
   contains = "IterableMatrix",
   slots = c(
-    matrix_list = "list"
+    matrix_list = "list",
+    threads = "integer"
   ),
   prototype = list(
-    matrix_list = list()
+    matrix_list = list(),
+    threads = 0L
   )
 )
 setMethod("matrix_type", signature(x = "RowBindMatrices"), function(x) matrix_type(x@matrix_list[[1]]))
@@ -824,7 +826,7 @@ setMethod("matrix_type", signature(x = "RowBindMatrices"), function(x) matrix_ty
 setMethod("iterate_matrix", "RowBindMatrices", function(x) {
   iter_function <- get(sprintf("iterate_matrix_row_bind_%s_cpp", matrix_type(x)))
   iterators <- lapply(x@matrix_list, iterate_matrix)
-  iter_function(iterators)
+  iter_function(iterators, x@threads)
 })
 
 setMethod("matrix_inputs", "RowBindMatrices", function(x) x@matrix_list)
@@ -838,9 +840,11 @@ setMethod("matrix_inputs<-", "RowBindMatrices", function(x, ..., value) {
 
 setMethod("short_description", "RowBindMatrices", function(x) {
   sprintf(
-    "Concatenate rows of %d matrix objects with classes%s",
+    "Concatenate %s of %d matrix objects with classes%s (threads=%d)",
+    ifelse(x@transpose, "cols", "rows"),
     length(x@matrix_list),
-    pretty_print_vector(vapply(x@matrix_list, class, character(1)), prefix = ": ", max_len = 3)
+    pretty_print_vector(vapply(x@matrix_list, class, character(1)), prefix = ": ", max_len = 3),
+    x@threads
   )
 })
 
@@ -872,13 +876,31 @@ setMethod("rbind2", signature(x = "IterableMatrix", y = "IterableMatrix"), funct
   new("RowBindMatrices", matrix_list = matrix_list, dim = c(nrow(x) + nrow(y), ncol(x)), dimnames = list(row_names, col_names), transpose = FALSE)
 })
 
+#' Set matrix op thread count
+#'
+#' Set number of threads to use for sparse-dense multiply and matrix_stats.
+#'
+#' Only valid for concatenated matrices
+#' @param mat IterableMatrix, product of rbind or cbind
+#' @param threads Number of threads to use for execution
+#' @keywords internal
+set_threads <- function(mat, threads=0L) {
+  assert_is(mat, c("RowBindMatrices", "ColBindMatrices"))
+  assert_is_wholenumber(threads)
+  assert_true(threads >= 0)
+  mat@threads <- as.integer(threads)
+  mat
+}
+
 setClass("ColBindMatrices",
   contains = "IterableMatrix",
   slots = c(
-    matrix_list = "list"
+    matrix_list = "list",
+    threads = "integer"
   ),
   prototype = list(
-    matrix_list = list()
+    matrix_list = list(),
+    threads = 0L
   )
 )
 setMethod("matrix_type", signature(x = "ColBindMatrices"), function(x) matrix_type(x@matrix_list[[1]]))
@@ -886,7 +908,7 @@ setMethod("matrix_type", signature(x = "ColBindMatrices"), function(x) matrix_ty
 setMethod("iterate_matrix", "ColBindMatrices", function(x) {
   iter_function <- get(sprintf("iterate_matrix_col_bind_%s_cpp", matrix_type(x)))
   iterators <- lapply(x@matrix_list, iterate_matrix)
-  iter_function(iterators)
+  iter_function(iterators, x@threads)
 })
 
 setMethod("matrix_inputs", "ColBindMatrices", function(x) x@matrix_list)
@@ -901,9 +923,11 @@ setMethod("matrix_inputs<-", "ColBindMatrices", function(x, ..., value) {
 
 setMethod("short_description", "ColBindMatrices", function(x) {
   sprintf(
-    "Concatenate columns of %d matrix objects with classes%s",
+    "Concatenate %s of %d matrix objects with classes%s (threads=%d)",
+    ifelse(x@transpose, "rows", "cols"),
     length(x@matrix_list),
-    pretty_print_vector(vapply(x@matrix_list, class, character(1)), prefix = ": ", max_len = 3)
+    pretty_print_vector(vapply(x@matrix_list, class, character(1)), prefix = ": ", max_len = 3),
+    x@threads
   )
 })
 
@@ -934,6 +958,43 @@ setMethod("cbind2", signature(x = "IterableMatrix", y = "IterableMatrix"), funct
 
   new("ColBindMatrices", matrix_list = matrix_list, dim = c(nrow(x), ncol(x) + ncol(y)), dimnames = list(row_names, col_names), transpose = FALSE)
 })
+
+#' Prepare a matrix for multi-threaded operation
+#' 
+#' Transforms a matrix such that `matrix_stats` or matrix multiplies with
+#' a vector/dense matrix will be evaluated in parallel. This only speeds up
+#' those specific operations, not reading or writing the matrix in general.
+#' The parallelism is not guaranteed to work if additional operations are
+#' applied after the parallel split.
+#'
+#' @param mat IterableMatrix
+#' @param threads Number of execution threads
+#' @param chunks Number of chunks to use (>= threads)
+#' @return IterableMatrix which will perform certain operations in parallel
+#' @keywords internal
+parallel_split <- function(mat, threads, chunks=threads) {
+  assert_is(mat, "IterableMatrix")
+  assert_is_wholenumber(threads)
+  assert_is_wholenumber(chunks)
+  assert_true(chunks >= threads)
+
+  if (mat@transpose) {
+    return(t(parallel_split(t(mat), threads, chunks)))
+  }
+
+  start_col <- 1
+  mats <- list()
+  for (i in seq_len(chunks)) {
+    col_count <- (ncol(mat) - start_col + 1) %/% (chunks - i + 1)
+    indices <- seq(start_col, start_col + col_count - 1)
+    start_col <- start_col + col_count
+    subset <- mat[,indices]
+    mats <- c(mats, list(mat[,indices]))
+  }
+  ret <- do.call(cbind, mats)
+  ret@threads <- as.integer(threads)
+  return(ret)
+}
 
 # Packed integer matrix
 setClass("PackedMatrixMemBase",
@@ -1725,6 +1786,40 @@ setMethod("short_description", "PeakMatrix", function(x) {
   )
 })
 
+setMethod("[", "PeakMatrix", function(x, i, j, ...) {
+    if (missing(x)) stop("x is missing in matrix selection")
+  # Handle transpose via recursive call
+  if (x@transpose) {
+    return(t(t(x)[rlang::maybe_missing(j), rlang::maybe_missing(i)]))
+  }
+
+  i <- selection_index(i, nrow(x), rownames(x))
+  j <- selection_index(j, ncol(x), colnames(x))
+
+  if (rlang::is_missing(i) && !rlang::is_missing(j) && all(sort(j) == seq_along(j))) {
+    # If we're just reordering columns, do a standard matrix selection
+    return(callNextMethod())
+  }
+
+  x <- selection_fix_dims(x, rlang::maybe_missing(i), rlang::maybe_missing(j))
+
+  if (!rlang::is_missing(i)) {
+    x@fragments <- select_cells(x@fragments, i)
+  }
+  if (!rlang::is_missing(j)) {
+    subset_j <- sort(j)
+    shuffle_j <- rank(j)
+    x@chr_id <- x@chr_id[subset_j]
+    x@start <- x@start[subset_j]
+    x@end <- x@end[subset_j]
+    real_colnames <- colnames(x)
+    x <- x[,shuffle_j]
+    colnames(x) <- real_colnames
+  }
+
+  x
+})
+
 
 # Overlap matrix from fragments
 setClass("TileMatrix",
@@ -1816,7 +1911,7 @@ tile_matrix <- function(fragments, ranges, zero_based_coords = !is(ranges, "GRan
 tile_ranges <- function(tile_matrix, selection) {
   # Handle manually transposed tile_matrix objects
   if (!tile_matrix@transpose) {
-    tile_matrix <- tile_matrix@transpose
+    tile_matrix <- t(tile_matrix)
   }
   indices <- seq_len(nrow(tile_matrix))
   selection <- vctrs::vec_slice(indices, selection) - 1
@@ -1846,6 +1941,55 @@ setMethod("short_description", "TileMatrix", function(x) {
       pretty_print_vector(labels, prefix = ": ", max_len = 2)
     )
   )
+})
+
+setMethod("[", "TileMatrix", function(x, i, j, ...) {
+    if (missing(x)) stop("x is missing in matrix selection")
+
+  # Handle transpose via recursive call
+  if (x@transpose) {
+    return(t(t(x)[rlang::maybe_missing(j), rlang::maybe_missing(i)]))
+  }
+  
+  i <- selection_index(i, nrow(x), rownames(x))
+  j <- selection_index(j, ncol(x), colnames(x))
+
+  if (rlang::is_missing(i) && !rlang::is_missing(j) && all(sort(j) == seq_along(j))) {
+    # If we're just reordering columns, do a standard matrix selection
+    return(callNextMethod())
+  }
+
+  x_orig <- x
+  x <- selection_fix_dims(x, rlang::maybe_missing(i), rlang::maybe_missing(j))
+
+  if (!rlang::is_missing(i)) {
+    x@fragments <- select_cells(x@fragments, i)
+  }
+  if (!rlang::is_missing(j)) {
+    subset_j <- sort(j)
+    shuffle_j <- rank(j)
+    if (mean(diff(subset_j) == 1) > .9) {
+      # If 90% contiguous, then use a slice
+      new_tiles <- subset_tiles_cpp(
+        x@chr_id, x@start, x@end, x@tile_width, x@chr_levels,
+        subset_j - 1
+      )
+      x@chr_id <- new_tiles$chr_id
+      x@start <- new_tiles$start
+      x@end <- new_tiles$end
+      x@tile_width <- new_tiles$tile_width
+      
+      real_colnames <- colnames(x)
+      x <- x[,shuffle_j]
+      x@dimnames[2] <- list(real_colnames)
+    } else {
+      # Otherwise, convert to a peak matrix
+      peaks <- tile_ranges(x_orig, subset_j)
+      x <- t(peak_matrix(x@fragments, peaks))
+      x <- x[,shuffle_j]
+    }
+  }
+  x
 })
 
 # Convert matrix types
@@ -1984,17 +2128,25 @@ setMethod("as.matrix", signature(x = "IterableMatrix"), function(x, ...) as(x, "
 #' @param matrix Input matrix object
 #' @param row_stats Which row statistics to compute
 #' @param col_stats Which col statistics to compute
+#' @param threads Number of threads to use during execution
 #' @return List of row_stats: matrix of n_stats x n_rows,
 #'          col_stats: matrix of n_stats x n_cols
 #' @details The statistics will be calculated in a single pass over the matrix,
 #' so this method is desirable to use for efficiency purposes compared to
 #' the more standard rowMeans or colMeans if multiple statistics are needed.
-#' If variance is calculated, then mean and nonzero count will be included in the
-#' output, and if mean is calculated then nonzero count will be included in the output.
+#' The stats are ordered by complexity: nonzero, mean, then variance. All
+#' less complex stats are calculated in the process of calculating a more complicated stat.
+#' So to calculate mean and variance simultaneously, just ask for variance,
+#' which will compute mean and nonzero counts as a side-effect
 #' @export
 matrix_stats <- function(matrix,
                          row_stats = c("none", "nonzero", "mean", "variance"),
-                         col_stats = c("none", "nonzero", "mean", "variance")) {
+                         col_stats = c("none", "nonzero", "mean", "variance"),
+                         threads = 0L
+                         ) {
+  assert_is(matrix, "IterableMatrix")
+  assert_is_wholenumber(threads)
+
   stat_options <- c("none", "nonzero", "mean", "variance")
   row_stats <- match.arg(row_stats)
   col_stats <- match.arg(col_stats)
@@ -2008,7 +2160,14 @@ matrix_stats <- function(matrix,
   row_stats_number <- match(row_stats, stat_options) - 1
   col_stats_number <- match(col_stats, stat_options) - 1
 
-  it <- iterate_matrix(convert_matrix_type(matrix, "double"))
+  matrix <- convert_matrix_type(matrix, "double")
+  if (threads == 0L) {
+    it <- iterate_matrix(matrix)
+  } else {
+    it <- iterate_matrix(
+      parallel_split(matrix, threads, threads*4)
+    )
+  }
   res <- matrix_stats_cpp(it, row_stats_number, col_stats_number)
   rownames(res$row_stats) <- stat_options[seq_len(row_stats_number) + 1]
   rownames(res$col_stats) <- stat_options[seq_len(col_stats_number) + 1]
@@ -2023,3 +2182,108 @@ matrix_stats <- function(matrix,
 
   return(res)
 }
+
+#' Calculate svds
+#'
+#' Use the C++ Spectra solver (same as RSpectra package), in order to
+#' compute the largest k values and corresponding singular vectors.
+#' Empirically, memory usage is much lower than using irlba::irlba, likely
+#' due to avoiding R garbage creation while solving due to the pure-C++ solver.
+#'
+#' @param A The matrix whose truncated SVD is to be computed.
+#' @param k Number of singular values requested.
+#' @param nu Number of left singular vectors to be computed. This must be between 0 and 'k'. (Must be equal to 'k' for BPCells IterableMatrix) 
+#' @param nu Number of right singular vectors to be computed. This must be between 0 and 'k'. (Must be equal to 'k' for BPCells IterableMatrix) 
+#' @param opts Control parameters related to computing algorithm. See *Details* below
+#' @param threads Control threads to use calculating mat-vec producs (BPCells specific)
+#' @return A list with the following components:
+##' \item{d}{A vector of the computed singular values.}
+##' \item{u}{An \code{m} by \code{nu} matrix whose columns contain
+##'          the left singular vectors. If \code{nu == 0}, \code{NULL}
+##'          will be returned.}
+##' \item{v}{An \code{n} by \code{nv} matrix whose columns contain
+##'          the right singular vectors. If \code{nv == 0}, \code{NULL}
+##'          will be returned.}
+##' \item{nconv}{Number of converged singular values.}
+##' \item{niter}{Number of iterations used.}
+##' \item{nops}{Number of matrix-vector multiplications used.}
+#' @details
+#' When RSpectra is installed, this function will just add a method to
+#' `RSpectra::svds()` for the `IterableMatrix` class. This
+#' documentation is a slightly-edited version of the `RSpectra::svds()` 
+#' documentation.
+#' 
+#' The \code{opts} argument is a list that can supply any of the
+#' following parameters:
+#'
+#' \describe{
+#' \item{\code{ncv}}{Number of Lanzcos basis vectors to use. More vectors
+#'                   will result in faster convergence, but with greater
+#'                   memory use. \code{ncv} must be satisfy
+#'                   \eqn{k < ncv \le p}{k < ncv <= p} where
+#'                   \code{p = min(m, n)}.
+#'                   Default is \code{min(p, max(2*k+1, 20))}.}
+#' \item{\code{tol}}{Precision parameter. Default is 1e-10.}
+#' \item{\code{maxitr}}{Maximum number of iterations. Default is 1000.}
+#' \item{\code{center}}{Either a logical value (\code{TRUE}/\code{FALSE}), or a numeric
+#'                      vector of length \eqn{n}. If a vector \eqn{c} is supplied, then
+#'                      SVD is computed on the matrix \eqn{A - 1c'}{A - 1 * c'},
+#'                      in an implicit way without actually forming this matrix.
+#'                      \code{center = TRUE} has the same effect as
+#'                      \code{center = colMeans(A)}. Default is \code{FALSE}. Ignored in BPCells}
+#' \item{\code{scale}}{Either a logical value (\code{TRUE}/\code{FALSE}), or a numeric
+#'                     vector of length \eqn{n}. If a vector \eqn{s} is supplied, then
+#'                     SVD is computed on the matrix \eqn{(A - 1c')S}{(A - 1 * c')S},
+#'                     where \eqn{c} is the centering vector and \eqn{S = diag(1/s)}.
+#'                     If \code{scale = TRUE}, then the vector \eqn{s} is computed as
+#'                     the column norm of \eqn{A - 1c'}{A - 1 * c'}.
+#'                     Default is \code{FALSE}. Ignored in BPCells}
+#' }
+#' @references Qiu Y, Mei J (2022). _RSpectra: Solvers for Large-Scale Eigenvalue and SVD Problems_. R package version 0.16-1, <https://CRAN.R-project.org/package=RSpectra>.
+#' @usage svds(A, k, nu = k, nv = k, opts = list(), threads=0L, ...)
+#' @name svds
+NULL
+
+# Use this trickery to re-use the svds generic from RSpectra if available
+if (requireNamespace("RSpectra", quietly = TRUE)) {
+  svds <- RSpectra::svds
+} else {
+  svds <- function (A, k, nu = k, nv = k, opts = list(), ...) UseMethod("svds")
+}
+
+#' @export
+setMethod("svds", signature(A="IterableMatrix"), function (A, k, nu = k, nv = k, opts = list(), threads=0) {
+  assert_is_wholenumber(threads)
+  assert_is_wholenumber(k)
+  assert_true(k == nu)
+  assert_true(k == nv)
+  assert_true(k < min(nrow(A), ncol(A)))
+  if (min(nrow(A), ncol(A)) < 3) stop("Must have at least 3 rows and cols")
+
+  assert_true(!("center" %in% names(opts)))
+  assert_true(!("scale" %in% names(opts)))
+
+  solver_params <- list(
+    ncv = min(min(nrow(A), ncol(A)), max(2*k+1, 20)),
+    tol = 1e-5,
+    maxitr = 1000
+  )
+  solver_params[names(opts)] <- opts
+
+  A <- convert_matrix_type(A, "double")
+  if (threads == 0L) {
+    it <- iterate_matrix(A)
+  } else {
+    it <- iterate_matrix(
+      parallel_split(A, threads, threads*4)
+    )
+  }
+  
+  svds_cpp(
+    it, 
+    k, 
+    solver_params[["ncv"]],
+    solver_params[["maxitr"]],
+    solver_params[["tol"]]
+  )
+})

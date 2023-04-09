@@ -1,5 +1,5 @@
 # BPCells 1.0 Roadmap
-- Parallelization
+- ~~Parallelization~~ (basic support complete. See below)
 - Native python library (re-using C++ backend)
 - Peak-gene correlations
 - MACS peak calling
@@ -8,6 +8,14 @@ Contributions welcome :)
 
 # BPCells 0.2.0 (github main branch - in progress)
 ## Features
+- New `svds()` function, based on the excellent Spectra C++ library (used in RSpectra) by Yixuan Qiu.
+  This should ensure lower memory usage compared to `irlba`, while achieving similar speed + accuracy.
+- Limited parallelization is now supported. This is easiest to use via the `threads` argument to 
+  `matrix_stats()` and `svds()`.
+    - All normalizations are supported, but a few operations like `marker_features()` and writing a
+      matrix to disk remain single-threaded.
+    - Running `svds()` with many threads on gene-major matrices can result in high memory usage for now.
+      This problem is not present for cell-major matrices.
 - Reading text-based MatrixMarket inputs (e.g. from 10x or Parse) is now supported via
   `import_matrix_market()` and the convenience function `import_matrix_market_10x()`. Our
   implementation uses disk-backed sorting to allow importing large files with low memory usage.
@@ -26,6 +34,9 @@ Contributions welcome :)
   of clusters to compare.
 - On Windows, increased the maximum number of files that can be simultaneously open. Previously, opening >63 compressed
   counts matrices simultaneously would hit the limit. Now at least 1,000 simultaneous matrices should be possible.
+- Subsetting peak or tile matrices with `[` now propagates through so we always avoid computing parts of
+  the peak/tile matrix that have been discarded by our subset. Subsetting a tile matrix will automatically
+  convert into a peak matrix when possible for improved efficiency.
 
 ## Bug-fixes
 - Fixed a few fragment transforms where using `chrNames(frags) <- val` or `cellNames(frags) <- val` could cause

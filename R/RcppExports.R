@@ -169,6 +169,10 @@ get_tile_ranges_cpp <- function(chr_id, start, end, tile_width, chr_levels, sele
     .Call(`_BPCells_get_tile_ranges_cpp`, chr_id, start, end, tile_width, chr_levels, selection)
 }
 
+subset_tiles_cpp <- function(chr_id, start, end, tile_width, chr_levels, selection) {
+    .Call(`_BPCells_subset_tiles_cpp`, chr_id, start, end, tile_width, chr_levels, selection)
+}
+
 nucleosome_counts_cpp <- function(fragments, nuc_width = 147L) {
     .Call(`_BPCells_nucleosome_counts_cpp`, fragments, nuc_width)
 }
@@ -569,28 +573,28 @@ iterate_matrix_rename_dims_double_cpp <- function(matrix, row_names, col_names, 
     .Call(`_BPCells_iterate_matrix_rename_dims_double_cpp`, matrix, row_names, col_names, clear_row_names, clear_col_names)
 }
 
-iterate_matrix_row_bind_uint32_t_cpp <- function(matrix_list) {
-    .Call(`_BPCells_iterate_matrix_row_bind_uint32_t_cpp`, matrix_list)
+iterate_matrix_row_bind_uint32_t_cpp <- function(matrix_list, threads) {
+    .Call(`_BPCells_iterate_matrix_row_bind_uint32_t_cpp`, matrix_list, threads)
 }
 
-iterate_matrix_row_bind_float_cpp <- function(matrix_list) {
-    .Call(`_BPCells_iterate_matrix_row_bind_float_cpp`, matrix_list)
+iterate_matrix_row_bind_float_cpp <- function(matrix_list, threads) {
+    .Call(`_BPCells_iterate_matrix_row_bind_float_cpp`, matrix_list, threads)
 }
 
-iterate_matrix_row_bind_double_cpp <- function(matrix_list) {
-    .Call(`_BPCells_iterate_matrix_row_bind_double_cpp`, matrix_list)
+iterate_matrix_row_bind_double_cpp <- function(matrix_list, threads) {
+    .Call(`_BPCells_iterate_matrix_row_bind_double_cpp`, matrix_list, threads)
 }
 
-iterate_matrix_col_bind_uint32_t_cpp <- function(matrix_list) {
-    .Call(`_BPCells_iterate_matrix_col_bind_uint32_t_cpp`, matrix_list)
+iterate_matrix_col_bind_uint32_t_cpp <- function(matrix_list, threads) {
+    .Call(`_BPCells_iterate_matrix_col_bind_uint32_t_cpp`, matrix_list, threads)
 }
 
-iterate_matrix_col_bind_float_cpp <- function(matrix_list) {
-    .Call(`_BPCells_iterate_matrix_col_bind_float_cpp`, matrix_list)
+iterate_matrix_col_bind_float_cpp <- function(matrix_list, threads) {
+    .Call(`_BPCells_iterate_matrix_col_bind_float_cpp`, matrix_list, threads)
 }
 
-iterate_matrix_col_bind_double_cpp <- function(matrix_list) {
-    .Call(`_BPCells_iterate_matrix_col_bind_double_cpp`, matrix_list)
+iterate_matrix_col_bind_double_cpp <- function(matrix_list, threads) {
+    .Call(`_BPCells_iterate_matrix_col_bind_double_cpp`, matrix_list, threads)
 }
 
 iterate_matrix_multiply_uint32_t_cpp <- function(left, right) {
@@ -683,6 +687,10 @@ wilcoxon_rank_sum_pval_float_cpp <- function(matrix, groups) {
 
 wilcoxon_rank_sum_pval_double_cpp <- function(matrix, groups) {
     .Call(`_BPCells_wilcoxon_rank_sum_pval_double_cpp`, matrix, groups)
+}
+
+svds_cpp <- function(matrix, k, n_cv, maxit, tol) {
+    .Call(`_BPCells_svds_cpp`, matrix, k, n_cv, maxit, tol)
 }
 
 matrix_value_histogram_cpp <- function(matrix, max_value) {

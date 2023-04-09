@@ -59,7 +59,8 @@
 
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="1.0" id="bpcells-10-roadmap">BPCells 1.0 Roadmap<a class="anchor" aria-label="anchor" href="#bpcells-10-roadmap"></a></h2>
-<ul><li>Parallelization</li>
+<ul><li>
+<del>Parallelization</del> (basic support complete. See below)</li>
 <li>Native python library (re-using C++ backend)</li>
 <li>Peak-gene correlations</li>
 <li>MACS peak calling</li>
@@ -69,7 +70,12 @@
 <h2 class="pkg-version" data-toc-text="0.2.0" id="bpcells-020-github-main-branch---in-progress">BPCells 0.2.0 (github main branch - in progress)<a class="anchor" aria-label="anchor" href="#bpcells-020-github-main-branch---in-progress"></a></h2>
 <div class="section level3">
 <h3 id="features-0-2-0">Features<a class="anchor" aria-label="anchor" href="#features-0-2-0"></a></h3>
-<ul><li>Reading text-based MatrixMarket inputs (e.g. from 10x or Parse) is now supported via <code><a href="../reference/import_matrix_market.html">import_matrix_market()</a></code> and the convenience function <code><a href="../reference/import_matrix_market.html">import_matrix_market_10x()</a></code>. Our implementation uses disk-backed sorting to allow importing large files with low memory usage.</li>
+<ul><li>New <code><a href="../reference/svds.html">svds()</a></code> function, based on the excellent Spectra C++ library (used in RSpectra) by Yixuan Qiu. This should ensure lower memory usage compared to <code>irlba</code>, while achieving similar speed + accuracy.</li>
+<li>Limited parallelization is now supported. This is easiest to use via the <code>threads</code> argument to <code><a href="../reference/matrix_stats.html">matrix_stats()</a></code> and <code><a href="../reference/svds.html">svds()</a></code>.
+<ul><li>All normalizations are supported, but a few operations like <code><a href="../reference/marker_features.html">marker_features()</a></code> and writing a matrix to disk remain single-threaded.</li>
+<li>Running <code><a href="../reference/svds.html">svds()</a></code> with many threads on gene-major matrices can result in high memory usage for now. This problem is not present for cell-major matrices.</li>
+</ul></li>
+<li>Reading text-based MatrixMarket inputs (e.g. from 10x or Parse) is now supported via <code><a href="../reference/import_matrix_market.html">import_matrix_market()</a></code> and the convenience function <code><a href="../reference/import_matrix_market.html">import_matrix_market_10x()</a></code>. Our implementation uses disk-backed sorting to allow importing large files with low memory usage.</li>
 <li>Added <code><a href="../reference/binarize.html">binarize()</a></code> function and associated generics <code>&lt;</code>, <code>&lt;=</code>, <code>&gt;</code>, and <code>&gt;=</code>. This only supports comparison with non-negative numbers currently. (Thanks to contribution from <a href="https://github.com/brgew" class="external-link">@brgew</a>)</li>
 <li>Added <code><a href="https://rdrr.io/r/base/Round.html" class="external-link">round()</a></code> matrix transformation (Thanks to contributions from <a href="https://github.com/brgew" class="external-link">@brgew</a>)</li>
 <li>Add experimental internal getter/setter function <code><a href="../reference/all_matrix_inputs.html">all_matrix_inputs()</a></code> to help enable relocating the underlying storage for BPCells matrix transform objects.</li>
@@ -81,6 +87,7 @@
 <li>SNN graph construction in <code><a href="../reference/knn_graph.html">knn_to_snn_graph()</a></code> should work more smoothly on large datasets due to C++ implementation</li>
 <li>Reduced memory usage in <code><a href="../reference/marker_features.html">marker_features()</a></code> for samples with millions of cells and a large number of clusters to compare.</li>
 <li>On Windows, increased the maximum number of files that can be simultaneously open. Previously, opening &gt;63 compressed counts matrices simultaneously would hit the limit. Now at least 1,000 simultaneous matrices should be possible.</li>
+<li>Subsetting peak or tile matrices with <code>[</code> now propagates through so we always avoid computing parts of the peak/tile matrix that have been discarded by our subset. Subsetting a tile matrix will automatically convert into a peak matrix when possible for improved efficiency.</li>
 </ul></div>
 <div class="section level3">
 <h3 id="bug-fixes-0-2-0">Bug-fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-0-2-0"></a></h3>
@@ -151,7 +158,7 @@
 </div>
 
 <div class="pkgdown-footer-right">
-  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.7.</p>
+  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.7.9000.</p>
 </div>
 
     </footer></div>

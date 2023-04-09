@@ -96,6 +96,7 @@ reference:
 - contents:
   - marker_features
   - matrix_stats
+  - svds
   - convert_matrix_type
   - transpose_storage_order
   - sctransform_pearson

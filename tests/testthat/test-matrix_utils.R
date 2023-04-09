@@ -146,52 +146,69 @@ test_that("Transposing a 0 dimension matrix works", {
   )
 })
 
-test_that("Dense matrix-vector multiply works", {
-  withr::local_seed(195123)
-
-  m1 <- generate_sparse_matrix(5, 1000)
+# Test dense multiplication ops given dgCMatrix m1 and equivalent iterable matrix i1
+test_dense_multiply_ops <- function(m1, i1) {
+  withr::local_seed(195123) 
   m2 <- t(m1)
-
-  i1 <- as(m1, "IterableMatrix")
   i2 <- t(i1)
+  b1 <- generate_dense_matrix(nrow(m1), 12)
+  b2 <- generate_dense_matrix(ncol(m1), 12)
 
-  b <- generate_dense_matrix(5, 12)
+  expect_identical(to_matrix(t(b1) %*% m1), t(b1) %*% i1)
+  expect_identical(to_matrix(m2 %*% b1), i2 %*% b1)
 
-  expect_identical(to_matrix(t(b) %*% m1), t(b) %*% i1)
-  expect_identical(to_matrix(m2 %*% b), i2 %*% b)
+  expect_identical(to_matrix(t(m1) %*% b1), t(i1) %*% b1)
+  expect_identical(to_matrix(t(b1) %*% t(m2)), t(b1) %*% t(i2))
 
-  expect_identical(to_matrix(t(m1) %*% b), t(i1) %*% b)
-  expect_identical(to_matrix(t(b) %*% t(m2)), t(b) %*% t(i2))
+  expect_identical(to_matrix(t(b2) %*% m2), t(b2) %*% i2)
+  expect_identical(to_matrix(m1 %*% b2), i1 %*% b2)
 
-  y <- as.numeric(generate_dense_matrix(5, 1))
-  expect_identical(y %*% as.matrix(m1), y %*% i1)
-  expect_identical(as.matrix(m2) %*% y, i2 %*% y)
+  expect_identical(to_matrix(t(m2) %*% b2), t(i2) %*% b2)
+  expect_identical(to_matrix(t(b2) %*% t(m1)), t(b2) %*% t(i1))
 
-  expect_identical(t(as.matrix(m1)) %*% y, t(i1) %*% y)
-  expect_identical(y %*% t(as.matrix(m2)), y %*% t(i2))
+  y1 <- as.numeric(generate_dense_matrix(nrow(m1), 1))
+  y2 <- as.numeric(generate_dense_matrix(ncol(m1), 1))
+  expect_identical(y1 %*% as.matrix(m1), y1 %*% i1)
+  expect_identical(as.matrix(m2) %*% y1, i2 %*% y1)
+
+  expect_identical(y2 %*% as.matrix(m2), y2 %*% i2)
+  expect_identical(as.matrix(m1) %*% y2, i1 %*% y2)
 
   # Check that everything works fine with integers
   i3 <- convert_matrix_type(i1, "uint32_t")
   i4 <- convert_matrix_type(i2, "uint32_t")
 
-  expect_identical(to_matrix(t(b) %*% m1), t(b) %*% i3)
-  expect_identical(to_matrix(m2 %*% b), i4 %*% b)
+  expect_identical(to_matrix(t(b1) %*% m1), t(b1) %*% i3)
+  expect_identical(to_matrix(m2 %*% b1), i4 %*% b1)
 
-  expect_identical(to_matrix(t(m1) %*% b), t(i3) %*% b)
-  expect_identical(to_matrix(t(b) %*% t(m2)), t(b) %*% t(i4))
+  expect_identical(to_matrix(t(m1) %*% b1), t(i3) %*% b1)
+  expect_identical(to_matrix(t(b1) %*% t(m2)), t(b1) %*% t(i4))
 
-  expect_identical(y %*% as.matrix(m1), y %*% i3)
-  expect_identical(as.matrix(m2) %*% y, i4 %*% y)
+  expect_identical(to_matrix(t(b2) %*% m2), t(b2) %*% i4)
+  expect_identical(to_matrix(m1 %*% b2), i3 %*% b2)
 
-  expect_identical(t(as.matrix(m1)) %*% y, t(i3) %*% y)
-  expect_identical(y %*% t(as.matrix(m2)), y %*% t(i4))
+  expect_identical(to_matrix(t(m2) %*% b2), t(i4) %*% b2)
+  expect_identical(to_matrix(t(b2) %*% t(m1)), t(b2) %*% t(i3))
+
+  expect_identical(y1 %*% as.matrix(m1), y1 %*% i3)
+  expect_identical(as.matrix(m2) %*% y1, i4 %*% y1)
+
+  expect_identical(y2 %*% as.matrix(m2), y2 %*% i4)
+  expect_identical(as.matrix(m1) %*% y2, i3 %*% y2)
+}
+
+test_that("Dense matrix-vector multiply works", {
+  withr::local_seed(195123)
+
+  m1 <- generate_sparse_matrix(5, 1000)
+  i1 <- as(m1, "IterableMatrix")
+
+  test_dense_multiply_ops(m1, i1)
 })
 
-test_that("Row/Col sum/mean works", { #nolint
-  m1 <- generate_sparse_matrix(5, 1000)
+# Test rows/col sum/mean given dgCMatrix m1 and equivalent iterable matrix i1
+test_rowsum_colsum_rowmean_colmean <- function(m1, i1) {
   m2 <- t(m1)
-
-  i1 <- as(m1, "IterableMatrix")
   i2 <- t(i1)
 
   expect_identical(rowSums(i1), rowSums(m1))
@@ -217,6 +234,45 @@ test_that("Row/Col sum/mean works", { #nolint
   expect_identical(rowMeans(i4), rowMeans(m2))
   expect_identical(colMeans(i3), colMeans(m1))
   expect_identical(colMeans(i4), colMeans(m2))
+}
+
+test_that("Row/Col sum/mean works", { #nolint
+  m1 <- generate_sparse_matrix(5, 1000)
+  i1 <- as(m1, "IterableMatrix")
+  test_rowsum_colsum_rowmean_colmean(m1, i1)
+})
+
+test_that("rbind Math works", {
+  m1 <- generate_sparse_matrix(1000, 10)
+
+  mat_list <- lapply(1:10, function(i) {
+    as(m1, "IterableMatrix")[(i-1)*100 + 1:100,]
+  })
+
+  i1 <- do.call(rbind, mat_list)
+
+  test_dense_multiply_ops(m1, i1)
+  test_rowsum_colsum_rowmean_colmean(m1, i1)
+
+  i1 <- set_threads(i1, 3)
+  test_dense_multiply_ops(m1, i1)
+  test_rowsum_colsum_rowmean_colmean(m1, i1)
+})
+
+test_that("cbind Math works", {
+  m1 <- generate_sparse_matrix(10, 1000)
+
+  mat_list <- lapply(1:10, function(i) {
+    as(m1, "IterableMatrix")[,(i-1)*100 + 1:100]
+  })
+
+  i1 <- do.call(cbind, mat_list)
+  test_dense_multiply_ops(m1, i1)
+  test_rowsum_colsum_rowmean_colmean(m1, i1)
+
+  i1 <- set_threads(i1, 3)
+  test_dense_multiply_ops(m1, i1)
+  test_rowsum_colsum_rowmean_colmean(m1, i1)
 })
 
 test_that("LinearOperator works", {

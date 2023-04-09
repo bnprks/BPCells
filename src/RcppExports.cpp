@@ -566,6 +566,22 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// subset_tiles_cpp
+List subset_tiles_cpp(IntegerVector chr_id, IntegerVector start, IntegerVector end, IntegerVector tile_width, StringVector chr_levels, NumericVector selection);
+RcppExport SEXP _BPCells_subset_tiles_cpp(SEXP chr_idSEXP, SEXP startSEXP, SEXP endSEXP, SEXP tile_widthSEXP, SEXP chr_levelsSEXP, SEXP selectionSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< IntegerVector >::type chr_id(chr_idSEXP);
+    Rcpp::traits::input_parameter< IntegerVector >::type start(startSEXP);
+    Rcpp::traits::input_parameter< IntegerVector >::type end(endSEXP);
+    Rcpp::traits::input_parameter< IntegerVector >::type tile_width(tile_widthSEXP);
+    Rcpp::traits::input_parameter< StringVector >::type chr_levels(chr_levelsSEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type selection(selectionSEXP);
+    rcpp_result_gen = Rcpp::wrap(subset_tiles_cpp(chr_id, start, end, tile_width, chr_levels, selection));
+    return rcpp_result_gen;
+END_RCPP
+}
 // nucleosome_counts_cpp
 List nucleosome_counts_cpp(SEXP fragments, uint32_t nuc_width);
 RcppExport SEXP _BPCells_nucleosome_counts_cpp(SEXP fragmentsSEXP, SEXP nuc_widthSEXP) {
@@ -1908,68 +1924,74 @@ BEGIN_RCPP
 END_RCPP
 }
 // iterate_matrix_row_bind_uint32_t_cpp
-SEXP iterate_matrix_row_bind_uint32_t_cpp(SEXP matrix_list);
-RcppExport SEXP _BPCells_iterate_matrix_row_bind_uint32_t_cpp(SEXP matrix_listSEXP) {
+SEXP iterate_matrix_row_bind_uint32_t_cpp(SEXP matrix_list, int threads);
+RcppExport SEXP _BPCells_iterate_matrix_row_bind_uint32_t_cpp(SEXP matrix_listSEXP, SEXP threadsSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< SEXP >::type matrix_list(matrix_listSEXP);
-    rcpp_result_gen = Rcpp::wrap(iterate_matrix_row_bind_uint32_t_cpp(matrix_list));
+    Rcpp::traits::input_parameter< int >::type threads(threadsSEXP);
+    rcpp_result_gen = Rcpp::wrap(iterate_matrix_row_bind_uint32_t_cpp(matrix_list, threads));
     return rcpp_result_gen;
 END_RCPP
 }
 // iterate_matrix_row_bind_float_cpp
-SEXP iterate_matrix_row_bind_float_cpp(SEXP matrix_list);
-RcppExport SEXP _BPCells_iterate_matrix_row_bind_float_cpp(SEXP matrix_listSEXP) {
+SEXP iterate_matrix_row_bind_float_cpp(SEXP matrix_list, int threads);
+RcppExport SEXP _BPCells_iterate_matrix_row_bind_float_cpp(SEXP matrix_listSEXP, SEXP threadsSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< SEXP >::type matrix_list(matrix_listSEXP);
-    rcpp_result_gen = Rcpp::wrap(iterate_matrix_row_bind_float_cpp(matrix_list));
+    Rcpp::traits::input_parameter< int >::type threads(threadsSEXP);
+    rcpp_result_gen = Rcpp::wrap(iterate_matrix_row_bind_float_cpp(matrix_list, threads));
     return rcpp_result_gen;
 END_RCPP
 }
 // iterate_matrix_row_bind_double_cpp
-SEXP iterate_matrix_row_bind_double_cpp(SEXP matrix_list);
-RcppExport SEXP _BPCells_iterate_matrix_row_bind_double_cpp(SEXP matrix_listSEXP) {
+SEXP iterate_matrix_row_bind_double_cpp(SEXP matrix_list, int threads);
+RcppExport SEXP _BPCells_iterate_matrix_row_bind_double_cpp(SEXP matrix_listSEXP, SEXP threadsSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< SEXP >::type matrix_list(matrix_listSEXP);
-    rcpp_result_gen = Rcpp::wrap(iterate_matrix_row_bind_double_cpp(matrix_list));
+    Rcpp::traits::input_parameter< int >::type threads(threadsSEXP);
+    rcpp_result_gen = Rcpp::wrap(iterate_matrix_row_bind_double_cpp(matrix_list, threads));
     return rcpp_result_gen;
 END_RCPP
 }
 // iterate_matrix_col_bind_uint32_t_cpp
-SEXP iterate_matrix_col_bind_uint32_t_cpp(SEXP matrix_list);
-RcppExport SEXP _BPCells_iterate_matrix_col_bind_uint32_t_cpp(SEXP matrix_listSEXP) {
+SEXP iterate_matrix_col_bind_uint32_t_cpp(SEXP matrix_list, int threads);
+RcppExport SEXP _BPCells_iterate_matrix_col_bind_uint32_t_cpp(SEXP matrix_listSEXP, SEXP threadsSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< SEXP >::type matrix_list(matrix_listSEXP);
-    rcpp_result_gen = Rcpp::wrap(iterate_matrix_col_bind_uint32_t_cpp(matrix_list));
+    Rcpp::traits::input_parameter< int >::type threads(threadsSEXP);
+    rcpp_result_gen = Rcpp::wrap(iterate_matrix_col_bind_uint32_t_cpp(matrix_list, threads));
     return rcpp_result_gen;
 END_RCPP
 }
 // iterate_matrix_col_bind_float_cpp
-SEXP iterate_matrix_col_bind_float_cpp(SEXP matrix_list);
-RcppExport SEXP _BPCells_iterate_matrix_col_bind_float_cpp(SEXP matrix_listSEXP) {
+SEXP iterate_matrix_col_bind_float_cpp(SEXP matrix_list, int threads);
+RcppExport SEXP _BPCells_iterate_matrix_col_bind_float_cpp(SEXP matrix_listSEXP, SEXP threadsSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< SEXP >::type matrix_list(matrix_listSEXP);
-    rcpp_result_gen = Rcpp::wrap(iterate_matrix_col_bind_float_cpp(matrix_list));
+    Rcpp::traits::input_parameter< int >::type threads(threadsSEXP);
+    rcpp_result_gen = Rcpp::wrap(iterate_matrix_col_bind_float_cpp(matrix_list, threads));
     return rcpp_result_gen;
 END_RCPP
 }
 // iterate_matrix_col_bind_double_cpp
-SEXP iterate_matrix_col_bind_double_cpp(SEXP matrix_list);
-RcppExport SEXP _BPCells_iterate_matrix_col_bind_double_cpp(SEXP matrix_listSEXP) {
+SEXP iterate_matrix_col_bind_double_cpp(SEXP matrix_list, int threads);
+RcppExport SEXP _BPCells_iterate_matrix_col_bind_double_cpp(SEXP matrix_listSEXP, SEXP threadsSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< SEXP >::type matrix_list(matrix_listSEXP);
-    rcpp_result_gen = Rcpp::wrap(iterate_matrix_col_bind_double_cpp(matrix_list));
+    Rcpp::traits::input_parameter< int >::type threads(threadsSEXP);
+    rcpp_result_gen = Rcpp::wrap(iterate_matrix_col_bind_double_cpp(matrix_list, threads));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -2248,6 +2270,21 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// svds_cpp
+SEXP svds_cpp(SEXP matrix, int k, int n_cv, int maxit, double tol);
+RcppExport SEXP _BPCells_svds_cpp(SEXP matrixSEXP, SEXP kSEXP, SEXP n_cvSEXP, SEXP maxitSEXP, SEXP tolSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type matrix(matrixSEXP);
+    Rcpp::traits::input_parameter< int >::type k(kSEXP);
+    Rcpp::traits::input_parameter< int >::type n_cv(n_cvSEXP);
+    Rcpp::traits::input_parameter< int >::type maxit(maxitSEXP);
+    Rcpp::traits::input_parameter< double >::type tol(tolSEXP);
+    rcpp_result_gen = Rcpp::wrap(svds_cpp(matrix, k, n_cv, maxit, tol));
+    return rcpp_result_gen;
+END_RCPP
+}
 // matrix_value_histogram_cpp
 NumericVector matrix_value_histogram_cpp(SEXP matrix, uint32_t max_value);
 RcppExport SEXP _BPCells_matrix_value_histogram_cpp(SEXP matrixSEXP, SEXP max_valueSEXP) {
@@ -2316,6 +2353,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_BPCells_iterate_tile_matrix_cpp", (DL_FUNC) &_BPCells_iterate_tile_matrix_cpp, 6},
     {"_BPCells_get_tile_names_cpp", (DL_FUNC) &_BPCells_get_tile_names_cpp, 5},
     {"_BPCells_get_tile_ranges_cpp", (DL_FUNC) &_BPCells_get_tile_ranges_cpp, 6},
+    {"_BPCells_subset_tiles_cpp", (DL_FUNC) &_BPCells_subset_tiles_cpp, 6},
     {"_BPCells_nucleosome_counts_cpp", (DL_FUNC) &_BPCells_nucleosome_counts_cpp, 2},
     {"_BPCells_fragment_lengths_cpp", (DL_FUNC) &_BPCells_fragment_lengths_cpp, 1},
     {"_BPCells_footprint_matrix_cpp", (DL_FUNC) &_BPCells_footprint_matrix_cpp, 8},
@@ -2416,12 +2454,12 @@ static const R_CallMethodDef CallEntries[] = {
     {"_BPCells_iterate_matrix_rename_dims_uint32_t_cpp", (DL_FUNC) &_BPCells_iterate_matrix_rename_dims_uint32_t_cpp, 5},
     {"_BPCells_iterate_matrix_rename_dims_float_cpp", (DL_FUNC) &_BPCells_iterate_matrix_rename_dims_float_cpp, 5},
     {"_BPCells_iterate_matrix_rename_dims_double_cpp", (DL_FUNC) &_BPCells_iterate_matrix_rename_dims_double_cpp, 5},
-    {"_BPCells_iterate_matrix_row_bind_uint32_t_cpp", (DL_FUNC) &_BPCells_iterate_matrix_row_bind_uint32_t_cpp, 1},
-    {"_BPCells_iterate_matrix_row_bind_float_cpp", (DL_FUNC) &_BPCells_iterate_matrix_row_bind_float_cpp, 1},
-    {"_BPCells_iterate_matrix_row_bind_double_cpp", (DL_FUNC) &_BPCells_iterate_matrix_row_bind_double_cpp, 1},
-    {"_BPCells_iterate_matrix_col_bind_uint32_t_cpp", (DL_FUNC) &_BPCells_iterate_matrix_col_bind_uint32_t_cpp, 1},
-    {"_BPCells_iterate_matrix_col_bind_float_cpp", (DL_FUNC) &_BPCells_iterate_matrix_col_bind_float_cpp, 1},
-    {"_BPCells_iterate_matrix_col_bind_double_cpp", (DL_FUNC) &_BPCells_iterate_matrix_col_bind_double_cpp, 1},
+    {"_BPCells_iterate_matrix_row_bind_uint32_t_cpp", (DL_FUNC) &_BPCells_iterate_matrix_row_bind_uint32_t_cpp, 2},
+    {"_BPCells_iterate_matrix_row_bind_float_cpp", (DL_FUNC) &_BPCells_iterate_matrix_row_bind_float_cpp, 2},
+    {"_BPCells_iterate_matrix_row_bind_double_cpp", (DL_FUNC) &_BPCells_iterate_matrix_row_bind_double_cpp, 2},
+    {"_BPCells_iterate_matrix_col_bind_uint32_t_cpp", (DL_FUNC) &_BPCells_iterate_matrix_col_bind_uint32_t_cpp, 2},
+    {"_BPCells_iterate_matrix_col_bind_float_cpp", (DL_FUNC) &_BPCells_iterate_matrix_col_bind_float_cpp, 2},
+    {"_BPCells_iterate_matrix_col_bind_double_cpp", (DL_FUNC) &_BPCells_iterate_matrix_col_bind_double_cpp, 2},
     {"_BPCells_iterate_matrix_multiply_uint32_t_cpp", (DL_FUNC) &_BPCells_iterate_matrix_multiply_uint32_t_cpp, 2},
     {"_BPCells_iterate_matrix_multiply_float_cpp", (DL_FUNC) &_BPCells_iterate_matrix_multiply_float_cpp, 2},
     {"_BPCells_iterate_matrix_multiply_double_cpp", (DL_FUNC) &_BPCells_iterate_matrix_multiply_double_cpp, 2},
@@ -2445,6 +2483,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_BPCells_wilcoxon_rank_sum_pval_uint32_t_cpp", (DL_FUNC) &_BPCells_wilcoxon_rank_sum_pval_uint32_t_cpp, 2},
     {"_BPCells_wilcoxon_rank_sum_pval_float_cpp", (DL_FUNC) &_BPCells_wilcoxon_rank_sum_pval_float_cpp, 2},
     {"_BPCells_wilcoxon_rank_sum_pval_double_cpp", (DL_FUNC) &_BPCells_wilcoxon_rank_sum_pval_double_cpp, 2},
+    {"_BPCells_svds_cpp", (DL_FUNC) &_BPCells_svds_cpp, 5},
     {"_BPCells_matrix_value_histogram_cpp", (DL_FUNC) &_BPCells_matrix_value_histogram_cpp, 2},
     {"_BPCells_matrix_identical_uint32_t_cpp", (DL_FUNC) &_BPCells_matrix_identical_uint32_t_cpp, 2},
     {NULL, NULL, 0}

@@ -162,6 +162,56 @@ List get_tile_ranges_cpp(
     );
 }
 
+// [[Rcpp::export]]
+List subset_tiles_cpp(
+    IntegerVector chr_id,
+    IntegerVector start,
+    IntegerVector end,
+    IntegerVector tile_width,
+    StringVector chr_levels,
+    NumericVector selection
+) {
+    // Check that selection is sorted
+    double prev = -1;
+    for (double &x : selection) {
+        if (x < 0 || x <= prev) {
+            stop("subset_tiles_cpp: Selection must be non-negative and sorted in increasing order");
+        }
+    }
+
+    // Calculate starting index for each tile range
+    std::vector<int64_t> starting_idx;
+    int64_t total_tiles = 0;
+    for (int64_t i = 0; i < chr_id.length(); i++) {
+        starting_idx.push_back(total_tiles);
+        total_tiles += (end[i] - start[i] + tile_width[i] - 1) / tile_width[i];
+    }
+
+    // Calculate coordinates for each selection
+    std::vector<int32_t> ret_chr_id, ret_start, ret_end, ret_width;
+    
+    int64_t prev_idx = -100; 
+    int64_t prev_range = -100;
+    for (int64_t i = 0; i < selection.length(); i++) {
+        int64_t idx = (int64_t)selection[i];
+        int64_t range = std::upper_bound(starting_idx.begin(), starting_idx.end(), idx) - 1 -
+                        starting_idx.begin();
+        if (idx - 1 == prev_idx && range == prev_range) {
+            ret_end.back() += tile_width[range];
+        } else {
+            ret_chr_id.push_back(chr_id[range]);
+            ret_start.push_back(start[range] + tile_width[range] * (idx - starting_idx[range]));
+            ret_end.push_back(std::min(ret_start.back() + tile_width[range], end[range]));
+            ret_width.push_back(tile_width[range]);
+        }
+        prev_idx = idx;
+        prev_range = range;
+    }
+     return List::create(
+        Named("chr_id") = ret_chr_id, Named("start") = ret_start, Named("end") = ret_end, Named("tile_width") = ret_width
+    );
+}
+
 // Compute number of fragments like ArchR does for cell stats
 //  [[Rcpp::export]]
 List nucleosome_counts_cpp(SEXP fragments, uint32_t nuc_width = 147) {

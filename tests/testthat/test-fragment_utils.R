@@ -323,7 +323,7 @@ test_that("Concatenate seek works", {
   keeper_cells <- order(-fragment_counts)[1:2]
   frags_filt <- select_cells(frags_merge, keeper_cells)
 
-  tiles <- tile_matrix(frags_filt, list(chr="chr1", start=0L, end=248956422L, tile_width=100000))
+  tiles <- tile_matrix(frags_filt, list(chr="chr1", start=0L, end=248956422L, tile_width=100000), explicit_tile_names=TRUE)
   tile_counts <- matrix_stats(tiles, row_stats = "nonzero")$row_stats
   keeper_tiles <- order(-tile_counts)[1:3]
   x <- as(tiles, "dgCMatrix")[keeper_tiles,]

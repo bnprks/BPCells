@@ -10,7 +10,7 @@ namespace BPCells {
 // of p-values with dimensions (# groups) x (# columns)
 template <typename T>
 Eigen::MatrixXd
-wilcoxon_rank_sum(std::unique_ptr<MatrixLoader<T>> &&mat, const std::vector<uint32_t> &groups) {
+wilcoxon_rank_sum(std::unique_ptr<MatrixLoader<T>> &&mat, const std::vector<uint32_t> &groups, std::atomic<bool> *user_interrupt) {
     if (groups.size() != mat->rows()) {
         throw std::runtime_error("Error in wilcoxon_rank_sum: groups length != mat.rows()");
     }
@@ -34,6 +34,7 @@ wilcoxon_rank_sum(std::unique_ptr<MatrixLoader<T>> &&mat, const std::vector<uint
     }
 
     while (ranks.nextCol()) {
+        if (user_interrupt != NULL && *user_interrupt) break;
         uint32_t col = ranks.currentCol();
         rank_sum.setZero();
         double total_rank = 0;
@@ -77,8 +78,8 @@ wilcoxon_rank_sum(std::unique_ptr<MatrixLoader<T>> &&mat, const std::vector<uint
     return pval;
 }
 
-template Eigen::MatrixXd wilcoxon_rank_sum<uint32_t>(std::unique_ptr<MatrixLoader<uint32_t>> &&mat, const std::vector<uint32_t> &groups);
-template Eigen::MatrixXd wilcoxon_rank_sum<float>(std::unique_ptr<MatrixLoader<float>> &&mat, const std::vector<uint32_t> &groups);
-template Eigen::MatrixXd wilcoxon_rank_sum<uint64_t>(std::unique_ptr<MatrixLoader<uint64_t>> &&mat, const std::vector<uint32_t> &groups);
-template Eigen::MatrixXd wilcoxon_rank_sum<double>(std::unique_ptr<MatrixLoader<double>> &&mat, const std::vector<uint32_t> &groups);
+template Eigen::MatrixXd wilcoxon_rank_sum<uint32_t>(std::unique_ptr<MatrixLoader<uint32_t>> &&mat, const std::vector<uint32_t> &groups, std::atomic<bool> *user_interrupt);
+template Eigen::MatrixXd wilcoxon_rank_sum<float>(std::unique_ptr<MatrixLoader<float>> &&mat, const std::vector<uint32_t> &groups, std::atomic<bool> *user_interrupt);
+template Eigen::MatrixXd wilcoxon_rank_sum<uint64_t>(std::unique_ptr<MatrixLoader<uint64_t>> &&mat, const std::vector<uint32_t> &groups, std::atomic<bool> *user_interrupt);
+template Eigen::MatrixXd wilcoxon_rank_sum<double>(std::unique_ptr<MatrixLoader<double>> &&mat, const std::vector<uint32_t> &groups, std::atomic<bool> *user_interrupt);
 } // namespace BPCells

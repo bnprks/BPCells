@@ -15,6 +15,6 @@ namespace BPCells {
 // Given the groupings specified by `groups`, perform a 1-vs-rest test, and return a matrix
 // of p-values with dimensions (# groups) x (# columns)
 template<typename T>
-Eigen::MatrixXd wilcoxon_rank_sum(std::unique_ptr<MatrixLoader<T>> &&mat, const std::vector<uint32_t> &groups);
+Eigen::MatrixXd wilcoxon_rank_sum(std::unique_ptr<MatrixLoader<T>> &&mat, const std::vector<uint32_t> &groups, std::atomic<bool> *user_interrupt);
 
 }

@@ -7,7 +7,8 @@
 matrix_stats(
   matrix,
   row_stats = c("none", "nonzero", "mean", "variance"),
-  col_stats = c("none", "nonzero", "mean", "variance")
+  col_stats = c("none", "nonzero", "mean", "variance"),
+  threads = 0L
 )
 }
 \arguments{
@@ -16,6 +17,8 @@ matrix_stats(
 \item{row_stats}{Which row statistics to compute}
 
 \item{col_stats}{Which col statistics to compute}
+
+\item{threads}{Number of threads to use during execution}
 }
 \value{
 List of row_stats: matrix of n_stats x n_rows,
@@ -28,6 +31,8 @@ Calculate matrix stats
 The statistics will be calculated in a single pass over the matrix,
 so this method is desirable to use for efficiency purposes compared to
 the more standard rowMeans or colMeans if multiple statistics are needed.
-If variance is calculated, then mean and nonzero count will be included in the
-output, and if mean is calculated then nonzero count will be included in the output.
+The stats are ordered by complexity: nonzero, mean, then variance. All
+less complex stats are calculated in the process of calculating a more complicated stat.
+So to calculate mean and variance simultaneously, just ask for variance,
+which will compute mean and nonzero counts as a side-effect
 }

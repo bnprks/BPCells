@@ -67,7 +67,8 @@
     <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">matrix_stats</span><span class="op">(</span></span>
 <span>  <span class="va">matrix</span>,</span>
 <span>  row_stats <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"none"</span>, <span class="st">"nonzero"</span>, <span class="st">"mean"</span>, <span class="st">"variance"</span><span class="op">)</span>,</span>
-<span>  col_stats <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"none"</span>, <span class="st">"nonzero"</span>, <span class="st">"mean"</span>, <span class="st">"variance"</span><span class="op">)</span></span>
+<span>  col_stats <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"none"</span>, <span class="st">"nonzero"</span>, <span class="st">"mean"</span>, <span class="st">"variance"</span><span class="op">)</span>,</span>
+<span>  threads <span class="op">=</span> <span class="fl">0L</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -84,6 +85,10 @@
 <dt>col_stats</dt>
 <dd><p>Which col statistics to compute</p></dd>
 
+
+<dt>threads</dt>
+<dd><p>Number of threads to use during execution</p></dd>
+
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
@@ -97,8 +102,10 @@ col_stats: matrix of n_stats x n_cols</p>
     <p>The statistics will be calculated in a single pass over the matrix,
 so this method is desirable to use for efficiency purposes compared to
 the more standard rowMeans or colMeans if multiple statistics are needed.
-If variance is calculated, then mean and nonzero count will be included in the
-output, and if mean is calculated then nonzero count will be included in the output.</p>
+The stats are ordered by complexity: nonzero, mean, then variance. All
+less complex stats are calculated in the process of calculating a more complicated stat.
+So to calculate mean and variance simultaneously, just ask for variance,
+which will compute mean and nonzero counts as a side-effect</p>
     </div>
 
   </main><aside class="col-md-3"><nav id="toc"><h2>On this page</h2>
