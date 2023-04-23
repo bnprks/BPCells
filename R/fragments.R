@@ -1009,14 +1009,14 @@ setClass("MergeFragments",
   )
 )
 setMethod("chrNames", "MergeFragments", function(x) {
-  chrNames(x@fragments_list[[1]])
+  Reduce(union, lapply(x@fragments_list, chrNames))
 })
 setMethod("cellNames", "MergeFragments", function(x) {
   do.call(c, lapply(x@fragments_list, cellNames))
 })
 
 setMethod("iterate_fragments", "MergeFragments", function(x) {
-  iterate_merge_fragments_cpp(lapply(x@fragments_list, iterate_fragments))
+  iterate_merge_fragments_cpp(lapply(x@fragments_list, iterate_fragments), chrNames(x))
 })
 setMethod("short_description", "MergeFragments", function(x) {
   # Subset strings first to avoid a very slow string concatenation process
@@ -1038,20 +1038,27 @@ setMethod("c", "IterableFragments", function(x, ...) {
   chr_names <- chrNames(x)
   assert_not_null(chr_names)
   fragments_list <- list()
+  seen_cells <- c()
+  duplicate_cells <- FALSE
   for (i in seq_along(args)) {
     assert_is(args[[i]], "IterableFragments")
     assert_not_null(chrNames(args[[i]]))
-    if (!all(chr_names == chrNames(args[[i]]))) {
-      stop("To concatenate fragments, all chrNames must be identical")
-    }
     if (is(args[[i]], "MergeFragments")) {
       fragments_list <- c(fragments_list, args[[i]]@fragments_list)
     } else {
       fragments_list <- c(fragments_list, args[[i]])
     }
+    if (!is.null(cellNames(args[[i]]))) {
+      if (any(cellNames(args[[i]]) %in% seen_cells)) {
+        duplicate_cells <- TRUE
+      }
+      seen_cells <- union(seen_cells, cellNames(args[[i]]))
+    }
+  }
+  if (duplicate_cells) {
+    rlang::inform(c("Warning: duplicicate cell names detected when merging fragments.", "Try using prefix_cell_names() to disambiguate"))
   }
   new("MergeFragments", fragments_list = fragments_list)
-  # TODO: check that cellNames are unique
 })
 
 

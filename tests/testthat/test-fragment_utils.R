@@ -330,6 +330,26 @@ test_that("Concatenate seek works", {
   y <- as(tiles[keeper_tiles,], "dgCMatrix")
   expect_identical(x, y)
 })
+
+test_that("Concatenate/merge different chromosome sets works", {
+  frags_a <- open_fragments_10x("../data/mini_fragments.tsv.gz") %>%
+    prefix_cell_names("A") %>%
+    select_chromosomes(c("chr1", "chr3", "chr2", "chr5")) %>%
+    write_fragments_memory()
+  frags_b <- open_fragments_10x("../data/mini_fragments.tsv.gz") %>%
+    prefix_cell_names("B") %>%
+    select_chromosomes(c("chr1", "chr2", "chr5", "chr4", "chr9")) %>%
+    write_fragments_memory()
+
+  frags_merge <- c(frags_a, frags_b)
+
+  expect_identical(
+    as.data.frame(frags_merge) ,
+    dplyr::bind_rows(as.data.frame(frags_a), as.data.frame(frags_b)) %>%
+      dplyr::arrange(chr, start, cell_id)
+  )
+})
+
 test_that("Generic methods work", {
   frags <- open_fragments_10x("../data/mini_fragments.tsv.gz") %>% #nolint
     write_fragments_memory()

@@ -7,8 +7,12 @@ namespace BPCells {
 // Chromosome names & IDs must match between fragments and come in the same ordering.
 //   (Use ChrSelect before merging if necessary to match ordering)
 
-MergeFragments::MergeFragments(std::vector<std::unique_ptr<FragmentLoader>> &&fragments, uint32_t load_size)
-    : frags_completed(fragments.size())
+MergeFragments::MergeFragments(
+    std::vector<std::unique_ptr<FragmentLoader>> &&fragments,
+    const std::vector<std::string> &chr_order,
+    uint32_t load_size
+)
+    : chr_order(chr_order)
     , start(load_size)
     , end(load_size)
     , cell(load_size) {
@@ -20,27 +24,50 @@ MergeFragments::MergeFragments(std::vector<std::unique_ptr<FragmentLoader>> &&fr
         auto f = FragmentIterator(std::move(fragments[i]));
         frags.push_back(std::move(f));
 
-        if (i < fragments.size() - 1 && frags[i].cellCount() == -1)
+        if (frags[i].cellCount() == -1 || frags[i].chrCount() == -1 || !frags[i].isSeekable())
             throw std::runtime_error(
-                "Cannot merge fragments where cell count is not known ahead-of-time. Select cells "
-                "first."
+                "MergeFragments Error: all input fragments to merge must have known cell + chr "
+                "counts and be seekable. Convert inputs to BPCells format first if needed."
             );
         cell_id_offset.push_back(cell_id_offset.back() + frags[i].cellCount());
+    }
 
-        frags[i].nextChr(); // Make sure this->nextChr doesn't get confused on the first chromosome
+    std::unordered_map<std::string, uint32_t> chr_order_lookup;
+    for (uint32_t j = 0; j < chr_order.size(); j++) {
+        chr_order_lookup[chr_order[j]] = j;
+    }
+    source_chr.resize(fragments.size());
+    for (uint32_t i = 0; i < fragments.size(); i++) {
+        auto &f = frags[i];
+        source_chr[i].resize(chr_order.size());
+        for (auto &x : source_chr[i]) {
+            x = UINT32_MAX;
+        }
+        int32_t chr_count = f.chrCount();
+        for (int32_t j = 0; j < chr_count; j++) {
+            if (chr_order_lookup.find(f.chrNames(j)) != chr_order_lookup.end()) {
+                source_chr[i][chr_order_lookup[f.chrNames(j)]] = j;
+            } else {
+                throw std::runtime_error(
+                    "MergeFragments Error: Input index " + std::to_string(i) + " has chromosome " +
+                    std::string(f.chrNames(j)) + " which is not included in the output ordering."
+                );
+            }
+        }
     }
 }
 
-bool MergeFragments::isSeekable() const {
-    for (auto &&f : frags) {
-        if (!f.isSeekable()) return false;
-    }
-    return true;
-}
+bool MergeFragments::isSeekable() const { return true; }
 
 void MergeFragments::seek(uint32_t chr_id, uint32_t base) {
-    for (auto &&f : frags)
-        f.seek(chr_id, base);
+    for (uint32_t i = 0; i < frags.size(); i++) {
+        if (chr_id < chr_order.size()) {
+            frags[i].seek(source_chr[i][chr_id], base);
+        } else {
+            frags[i].seek(UINT32_MAX, base);
+        }
+    }
+
     heap.clear();
     current_chr = chr_id;
 }
@@ -48,25 +75,13 @@ void MergeFragments::seek(uint32_t chr_id, uint32_t base) {
 void MergeFragments::restart() {
     for (auto &&f : frags) {
         f.restart();
-        f.nextChr(); // Make sure this->nextChr doesn't get confused on the first chromosome
     }
     heap.clear();
     current_chr = UINT32_MAX;
-    for (auto &c : frags_completed)
-        c = 0;
 }
 
 int MergeFragments::chrCount() const {
-    int count = frags.front().chrCount();
-    for (auto &&f : frags) {
-        if (f.chrCount() == -1) return -1;
-        if (f.chrCount() != count)
-            throw std::runtime_error(
-                "Not all merged fragments have the same chrCount. Select identical chromosomes "
-                "before merging."
-            );
-    }
-    return count;
+    return chr_order.size();
 }
 
 int MergeFragments::cellCount() const {
@@ -75,21 +90,10 @@ int MergeFragments::cellCount() const {
 }
 
 const char *MergeFragments::chrNames(uint32_t chr_id) {
-    const char *name = NULL;
-    for (auto &&f : frags) {
-        const char *f_name = f.chrNames(chr_id);
-        if (f_name == NULL) continue;
-        if (name == NULL) name = f_name;
-        if (strcmp(name, f_name) != 0) {
-            throw std::runtime_error(
-                std::string("MergeFragments: Names for chromosome ID ") + std::to_string(chr_id) +
-                std::string(" mismatch: ") + std::string(f_name) + std::string(" vs. ") +
-                std::string(name)
-            );
-        }
-    }
-    return name;
+    if (chr_id >= chr_order.size()) return NULL;
+    return chr_order[chr_id].c_str();
 }
+
 const char *MergeFragments::cellNames(uint32_t cell_id) {
     auto it = std::upper_bound(cell_id_offset.begin(), cell_id_offset.end(), cell_id);
     uint32_t idx = it - cell_id_offset.begin() - 1;
@@ -102,58 +106,17 @@ const char *MergeFragments::cellNames(uint32_t cell_id) {
 bool MergeFragments::nextChr() {
     heap.clear();
 
-    // Needed checks:
-    //  - Each of frags[i] increases chrID in order
-    //  - Each of frags[i] agrees about the current chrName
-    // Curveballs:
-    //   - It's okay if some of frags[i] *skip* chromosomes, and we need to
-    //     handle that gracefully
-
-    bool any_ready =
-        false; // Check that we have some fragments ready to read from the current chromosome
-    while (!any_ready) {
-        current_chr += 1;
-
-        bool any_remaining = false; // Check that we have some fragments that aren't completed
-        for (uint32_t i = 0; i < frags.size(); i++) {
-            if (frags_completed[i]) continue;
-            any_remaining = true;
-            if (frags[i].currentChr() > current_chr) continue;
-            if (frags[i].currentChr() == current_chr) {
-                any_ready = true;
-                continue;
-            }
-            // frags[i].currentChr() < current_chr
-            uint32_t prev_chr = frags[i].currentChr();
-            if (!frags[i].nextChr()) {
-                frags_completed[i] = 1;
-                continue;
-            }
-            if (prev_chr >= frags[i].currentChr())
-                throw std::runtime_error(
-                    "Fragments to merge have out-of-order chromosomes: " + std::to_string(i)
-                );
-            if (frags[i].currentChr() == current_chr) any_ready = true;
-        }
-        if (!any_remaining) {
-            current_chr -= 1;
-            return false;
-        }
+    current_chr += 1;
+    if ((int64_t) current_chr >= chrCount()) {
+        current_chr -= 1;
+        return false;
     }
 
-    // Check that all the chrNames agree
-    const char *chr_name = frags.front().chrNames(current_chr);
     for (uint32_t i = 0; i < frags.size(); i++) {
-        const char *f_name = frags[i].chrNames(current_chr);
-        if (f_name == NULL || chr_name == NULL || strcmp(chr_name, f_name) != 0) {
-            throw std::runtime_error(
-                std::string("MergeFragments: Names for chromosome ID ") +
-                std::to_string(current_chr) + std::string(" mismatch: ") + std::string(f_name) +
-                std::string(" vs. ") + std::string(chr_name)
-            );
-        }
+        if (source_chr[i][current_chr] != UINT32_MAX) {
+            frags[i].seek(source_chr[i][current_chr], 0);
+        } 
     }
-
     return true;
 }
 
@@ -161,9 +124,10 @@ uint32_t MergeFragments::currentChr() const { return current_chr; }
 
 bool MergeFragments::load() {
     if (heap.empty()) {
+        if (current_chr >= chr_order.size()) { return false; }
         // Either initialize heap, or we are done loading
         for (uint32_t i = 0; i < frags.size(); i++) {
-            if (frags[i].currentChr() == current_chr && frags[i].nextFrag()) {
+            if (source_chr[i][current_chr] != UINT32_MAX && frags[i].nextFrag()) {
                 heap.push_back(i);
             }
         }

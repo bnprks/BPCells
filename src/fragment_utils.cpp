@@ -335,7 +335,7 @@ SEXP iterate_region_select_cpp(
 }
 
 // [[Rcpp::export]]
-SEXP iterate_merge_fragments_cpp(SEXP fragments_list) {
+SEXP iterate_merge_fragments_cpp(SEXP fragments_list, std::vector<std::string> chr_order) {
     std::vector<std::unique_ptr<FragmentLoader>> fragments_vec;
     List l = fragments_list;
     for (uint32_t i = 0; i < l.size(); i++) {
@@ -343,5 +343,5 @@ SEXP iterate_merge_fragments_cpp(SEXP fragments_list) {
         fragments_vec.push_back(take_unique_xptr<FragmentLoader>(elem));
     }
 
-    return make_unique_xptr<MergeFragments>(std::move(fragments_vec));
+    return make_unique_xptr<MergeFragments>(std::move(fragments_vec), chr_order);
 }

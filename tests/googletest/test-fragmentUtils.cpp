@@ -197,7 +197,7 @@ TEST(FragmentUtils, MergeFragments) {
     merge_vec.push_back(std::make_unique<StoredFragments>(StoredFragments::openUnpacked(*v2_data)));
     merge_vec.push_back(std::make_unique<StoredFragments>(StoredFragments::openUnpacked(*v3_data)));
 
-    MergeFragments merge(std::move(merge_vec));
+    MergeFragments merge(std::move(merge_vec), v_expect->getStringVecs().at("chr_names"));
 
     EXPECT_TRUE(Testing::fragments_identical(expected, merge));
 }

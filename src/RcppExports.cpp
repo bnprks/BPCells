@@ -594,13 +594,14 @@ BEGIN_RCPP
 END_RCPP
 }
 // iterate_merge_fragments_cpp
-SEXP iterate_merge_fragments_cpp(SEXP fragments_list);
-RcppExport SEXP _BPCells_iterate_merge_fragments_cpp(SEXP fragments_listSEXP) {
+SEXP iterate_merge_fragments_cpp(SEXP fragments_list, std::vector<std::string> chr_order);
+RcppExport SEXP _BPCells_iterate_merge_fragments_cpp(SEXP fragments_listSEXP, SEXP chr_orderSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< SEXP >::type fragments_list(fragments_listSEXP);
-    rcpp_result_gen = Rcpp::wrap(iterate_merge_fragments_cpp(fragments_list));
+    Rcpp::traits::input_parameter< std::vector<std::string> >::type chr_order(chr_orderSEXP);
+    rcpp_result_gen = Rcpp::wrap(iterate_merge_fragments_cpp(fragments_list, chr_order));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -2077,7 +2078,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_BPCells_iterate_cell_rename_cpp", (DL_FUNC) &_BPCells_iterate_cell_rename_cpp, 2},
     {"_BPCells_iterate_cell_prefix_cpp", (DL_FUNC) &_BPCells_iterate_cell_prefix_cpp, 2},
     {"_BPCells_iterate_region_select_cpp", (DL_FUNC) &_BPCells_iterate_region_select_cpp, 6},
-    {"_BPCells_iterate_merge_fragments_cpp", (DL_FUNC) &_BPCells_iterate_merge_fragments_cpp, 1},
+    {"_BPCells_iterate_merge_fragments_cpp", (DL_FUNC) &_BPCells_iterate_merge_fragments_cpp, 2},
     {"_BPCells_write_matrix_transpose_uint32_t_cpp", (DL_FUNC) &_BPCells_write_matrix_transpose_uint32_t_cpp, 6},
     {"_BPCells_write_matrix_transpose_float_cpp", (DL_FUNC) &_BPCells_write_matrix_transpose_float_cpp, 6},
     {"_BPCells_write_matrix_transpose_double_cpp", (DL_FUNC) &_BPCells_write_matrix_transpose_double_cpp, 6},
