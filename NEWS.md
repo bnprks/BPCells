@@ -6,6 +6,14 @@
 
 Contributions welcome :)
 
+# BPCells 0.2.0 (unreleased - github main branch)
+## Features
+- Merging fragments with `c()` now handles inputs with mismatched chromosome names.
+
+## Bug-fixes
+- Fixed a few fragment transforms where using `chrNames(frags) <- val` or `cellNames(frags) <- val` could cause
+  downstream errors.
+
 # BPCells 0.1.0
 
 ## Features
