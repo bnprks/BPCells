@@ -29,7 +29,7 @@ test_that("Chromosome name/index select works", { #nolint
     paste0("cell", 1:500)
   )
 
-  chr_selection <- sample.int(500, 250, replace = FALSE)
+  chr_selection <- sort(sample.int(500, 250, replace = FALSE))
 
   short_chrs_ans <- as(short_chrs, "data.frame")
   short_chrs_ans <- short_chrs_ans[as.character(short_chrs_ans$chr) %in% paste0("chr", chr_selection),] %>%
@@ -43,6 +43,36 @@ test_that("Chromosome name/index select works", { #nolint
 
   expect_equal(short_chrs_ans, short_chrs_2, check.attributes = FALSE)
   expect_equal(short_chrs_ans, short_chrs_3, check.attributes = FALSE)
+})
+
+test_that("Chromosome select reordering works", {
+  x1 <- open_fragments_10x("../data/mini_fragments.tsv.gz")
+  x2 <- write_fragments_memory(x1)
+
+  chr_order <- c("chr2", "chr1", "chr3")
+  y1 <- select_chromosomes(x1, chr_order)
+  y2 <- select_chromosomes(x2, chr_order)
+
+  expect_identical(
+    as.data.frame(y1) %>% dplyr::arrange(chr),
+    as.data.frame(y2) %>% dplyr::arrange(chr)
+  )
+  expect_identical(
+    as.data.frame(y2)$chr %>% as.character() %>% rle() %>% {.$values},
+    chr_order
+  )
+
+  z1 <- select_chromosomes(x1, c(2,1,3))
+  z2 <- select_chromosomes(x2, c(2,1,3))
+
+  expect_identical(
+    as.data.frame(z1) %>% dplyr::arrange(chr),
+    as.data.frame(z2) %>% dplyr::arrange(chr)
+  )
+  expect_identical(
+    as.data.frame(z2)$chr %>% as.character() %>% rle() %>% {.$values},
+    chr_order
+  )
 })
 
 test_that("Cell name/index select works", { #nolint

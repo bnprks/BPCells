@@ -5,7 +5,9 @@ namespace BPCells {
 // chr_assignments -- vector with length <= the number of chromosomes in the input
 //     FragmentsIterator. The output chromosome `i` will come from input chromosome
 //     `chr_assignments[i]`. The entries of chr_assignments must be unique
-ChrIndexSelect::ChrIndexSelect(std::unique_ptr<FragmentLoader> &&loader, const std::vector<uint32_t> chr_assignments)
+ChrIndexSelect::ChrIndexSelect(
+    std::unique_ptr<FragmentLoader> &&loader, const std::vector<uint32_t> chr_assignments
+)
     : FragmentLoaderWrapper(std::move(loader))
     , chr_assignments(chr_assignments) {
 
@@ -18,6 +20,11 @@ ChrIndexSelect::ChrIndexSelect(std::unique_ptr<FragmentLoader> &&loader, const s
     }
 }
 
+void ChrIndexSelect::restart() {
+    current_chr = UINT32_MAX;
+    loader->restart();
+}
+
 int ChrIndexSelect::chrCount() const { return chr_assignments.size(); }
 
 const char *ChrIndexSelect::chrNames(uint32_t chr_id) {
@@ -26,6 +33,17 @@ const char *ChrIndexSelect::chrNames(uint32_t chr_id) {
 }
 
 bool ChrIndexSelect::nextChr() {
+    // If input is seekable, just load chromosomes in output order
+    if (loader->isSeekable()) {
+        current_chr += 1;
+        if ((int64_t)current_chr >= chrCount()) {
+            current_chr -= 1;
+            return false;
+        }
+        loader->seek(chr_assignments[current_chr], 0);
+        return true;
+    }
+    // Otherwise, just load from input order and say the right chromosome IDs going out
     bool res = loader->nextChr();
     while (res) {
         uint32_t chr_id = loader->currentChr();
@@ -46,10 +64,13 @@ uint32_t ChrIndexSelect::currentChr() const {
 }
 
 void ChrIndexSelect::seek(uint32_t chr_id, uint32_t base) {
+    current_chr = chr_id;
     loader->seek(chr_assignments[chr_id], base);
 }
 
-ChrNameSelect::ChrNameSelect(std::unique_ptr<FragmentLoader> &&loader, const std::vector<std::string> chr_names)
+ChrNameSelect::ChrNameSelect(
+    std::unique_ptr<FragmentLoader> &&loader, const std::vector<std::string> chr_names
+)
     : FragmentLoaderWrapper(std::move(loader))
     , chr_names(chr_names) {
     for (uint32_t i = 0; i < chr_names.size(); i++) {
@@ -69,6 +90,11 @@ ChrNameSelect::ChrNameSelect(std::unique_ptr<FragmentLoader> &&loader, const std
     }
 }
 
+void ChrNameSelect::restart() {
+    current_chr = UINT32_MAX;
+    loader->restart();
+}
+
 int ChrNameSelect::chrCount() const { return chr_names.size(); }
 
 const char *ChrNameSelect::chrNames(uint32_t chr_id) {
@@ -77,8 +103,18 @@ const char *ChrNameSelect::chrNames(uint32_t chr_id) {
 }
 
 bool ChrNameSelect::nextChr() {
+    // If input is seekable, just load chromosomes in output order
+    if (loader->isSeekable()) {
+        current_chr += 1;
+        if ((int64_t)current_chr >= chrCount()) {
+            current_chr -= 1;
+            return false;
+        }
+        loader->seek(input_index[current_chr], 0);
+        return true;
+    }
+    // Otherwise, just load from input order and say the right chromosome IDs going out
     bool res = loader->nextChr();
-    ;
     while (res) {
         uint32_t chr_id = loader->currentChr();
         auto result = output_index.find(loader->chrNames(chr_id));
@@ -93,6 +129,9 @@ uint32_t ChrNameSelect::currentChr() const {
     return res;
 }
 
-void ChrNameSelect::seek(uint32_t chr_id, uint32_t base) { loader->seek(input_index[chr_id], base); }
+void ChrNameSelect::seek(uint32_t chr_id, uint32_t base) {
+    current_chr = chr_id;
+    loader->seek(input_index[chr_id], base);
+}
 
 } // end namespace BPCells
