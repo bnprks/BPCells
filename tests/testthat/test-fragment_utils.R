@@ -382,15 +382,26 @@ test_that("Generic methods work", {
 
   for (i in seq_along(ident_transforms)) {
     trans <- ident_transforms[[i]]
+    
+    # Test that basic operations work
     short_description(trans)
     expect_identical(chrNames(trans), chrNames(frags))
     expect_identical(cellNames(trans), cellNames(frags))
     expect_identical(write_fragments_memory(trans), frags)
 
+    # Test that selecting a non-existent chromosome is fine
+    expect_identical(
+      as.data.frame(frags) %>% dplyr::mutate(chr=as.character(chr)), 
+      trans %>% 
+        select_chromosomes(c(chrNames(frags)[1:5], "NOT_A_CHROMOSOME", chrNames(frags)[-(1:5)])) %>%
+        as.data.frame() %>%
+        dplyr::mutate(chr=as.character(chr))
+    )
+
+    # Test that renaming chromosomes/cells works
     expected_rename <- as.data.frame(trans)
     levels(expected_rename$chr) <- paste0("new-", levels(expected_rename$chr))
     levels(expected_rename$cell_id) <- paste0("new-", levels(expected_rename$cell_id))
-
     chrNames(trans) <- paste0("new-", chrNames(frags))
     cellNames(trans) <- paste0("new-", cellNames(frags))
     expect_identical(chrNames(trans), paste0("new-", chrNames(frags)))
@@ -399,11 +410,11 @@ test_that("Generic methods work", {
     expect_identical(chrNames(n), paste0("new-", chrNames(frags)))
     expect_identical(cellNames(n), paste0("new-", cellNames(frags)))
     expect_identical(as.data.frame(n), expected_rename)
-
-    # Test that garbage collection after creating the iterator doesn't cause issues
     # Reset cell + chr names
     chrNames(trans) <- chrNames(frags)
     cellNames(trans) <- cellNames(frags)
+
+    # Test that garbage collection after creating the iterator doesn't cause issues
     # Create the C++ iterator
     it <- iterate_fragments(trans) %>%
       iterate_chr_index_select_cpp(seq_along(chrNames(frags)) - 1L) %>%

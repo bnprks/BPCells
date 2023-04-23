@@ -919,6 +919,10 @@ setClass("CellPrefix",
     prefix = ""
   )
 )
+setMethod("cellNames", "CellPrefix", function(x) {
+  if (is.null(cellNames(x@fragments))) return(NULL)
+  paste0(x@prefix, cellNames(x@fragments))
+})
 setMethod("iterate_fragments", "CellPrefix", function(x) {
   iterate_cell_prefix_cpp(iterate_fragments(x@fragments), x@prefix)
 })

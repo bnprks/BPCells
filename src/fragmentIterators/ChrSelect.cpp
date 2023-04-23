@@ -65,7 +65,11 @@ uint32_t ChrIndexSelect::currentChr() const {
 
 void ChrIndexSelect::seek(uint32_t chr_id, uint32_t base) {
     current_chr = chr_id;
-    loader->seek(chr_assignments[chr_id], base);
+    if (chr_id < chr_assignments.size()) {
+        loader->seek(chr_assignments[chr_id], base);
+    } else {
+        loader->seek(UINT32_MAX, base);
+    }
 }
 
 ChrNameSelect::ChrNameSelect(
@@ -81,6 +85,11 @@ ChrNameSelect::ChrNameSelect(
 
     if (this->loader->isSeekable()) {
         input_index.resize(chr_names.size());
+        // An important assumption here is that if we seek to UINT32_MAX then the loader will just
+        // return false on next load() call
+        for (auto &i : input_index) {
+            i = UINT32_MAX;
+        }
         int32_t chr_count = this->loader->chrCount();
         for (int i = 0; i < chr_count; i++) {
             if (output_index.find(this->loader->chrNames(i)) != output_index.end()) {
@@ -125,13 +134,20 @@ bool ChrNameSelect::nextChr() {
 }
 
 uint32_t ChrNameSelect::currentChr() const {
+    if (loader->isSeekable()) {
+        return current_chr;
+    }
     auto res = output_index.at(loader->chrNames(loader->currentChr()));
     return res;
 }
 
 void ChrNameSelect::seek(uint32_t chr_id, uint32_t base) {
     current_chr = chr_id;
-    loader->seek(input_index[chr_id], base);
+    if (chr_id < input_index.size()) {
+        loader->seek(input_index[chr_id], base);
+    } else {
+        loader->seek(UINT32_MAX, base);
+    }
 }
 
 } // end namespace BPCells
