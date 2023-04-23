@@ -83,11 +83,7 @@ setMethod("cellNames<-", "IterableFragments", function(x, ..., value) {
   }
   assert_is_character(value)
   assert_len(value, length(cellNames(x)))
-  if (.hasSlot(x, "fragments")) {
-    cellNames(x@fragments) <- value
-    return(x)
-  }
-  stop(sprintf("Error: cellNames<- not implemented on object of class %s", class(x)))
+  new("CellRename", fragments = x, cell_names = value)
 })
 
 #' Get chromosome names
@@ -111,13 +107,12 @@ setMethod("chrNames", "IterableFragments", function(x) {
 #' @export
 setGeneric("chrNames<-", function(x, ..., value) standardGeneric("chrNames<-"))
 setMethod("chrNames<-", "IterableFragments", function(x, ..., value) {
+  if (is.null(chrNames(x))) {
+    stop("Assigning new chrNames is not allowed, only renaming")
+  }
   assert_is_character(value)
   assert_len(value, length(chrNames(x)))
-  if (.hasSlot(x, "fragments")) {
-    chrNames(x@fragments) <- value
-    return(x)
-  }
-  stop(sprintf("Error: chrNames<- not implemented on object of class %s", class(x)))
+  new("ChrRename", fragments = x, chr_names = value)
 })
 
 # Read/write from 10x fragment files
@@ -134,13 +129,6 @@ setClass("FragmentsTsv",
 )
 setMethod("chrNames", "FragmentsTsv", function(x) NULL)
 setMethod("cellNames", "FragmentsTsv", function(x) NULL)
-
-setMethod("chrNames<-", "FragmentsTsv", function(x, ..., value) {
-  new("ChrRename", x, chr_names = value)
-})
-setMethod("cellNames<-", "FragmentsTsv", function(x, ..., value) {
-  new("CellRename", x, cell_names = value)
-})
 
 setMethod("iterate_fragments", "FragmentsTsv", function(x) iterate_10x_fragments_cpp(normalizePath(x@path), x@comment))
 setMethod("short_description", "FragmentsTsv", function(x) {
@@ -225,19 +213,6 @@ setClass("UnpackedMemFragments",
 )
 setMethod("chrNames", "UnpackedMemFragments", function(x) x@chr_names)
 setMethod("cellNames", "UnpackedMemFragments", function(x) x@cell_names)
-setMethod("chrNames<-", "UnpackedMemFragments", function(x, ..., value) {
-  assert_is_character(value)
-  assert_len(value, length(x@chr_names))
-  x@chr_names <- value
-  x
-})
-setMethod("cellNames<-", "UnpackedMemFragments", function(x, ..., value) {
-  assert_is_character(value)
-  assert_len(value, length(x@cell_names))
-  x@cell_names <- value
-  x
-})
-
 setMethod("iterate_fragments", "UnpackedMemFragments", function(x) {
   iterate_unpacked_fragments_cpp(x)
 })
@@ -284,19 +259,6 @@ setClass("PackedMemFragments",
 )
 setMethod("chrNames", "PackedMemFragments", function(x) x@chr_names)
 setMethod("cellNames", "PackedMemFragments", function(x) x@cell_names)
-setMethod("chrNames<-", "PackedMemFragments", function(x, ..., value) {
-  assert_is_character(value)
-  assert_len(value, length(x@chr_names))
-  x@chr_names <- value
-  x
-})
-setMethod("cellNames<-", "PackedMemFragments", function(x, ..., value) {
-  assert_is_character(value)
-  assert_len(value, length(x@cell_names))
-  x@cell_names <- value
-  x
-})
-
 setMethod("iterate_fragments", "PackedMemFragments", function(x) {
   iterate_packed_fragments_cpp(x)
 })
@@ -354,18 +316,6 @@ setClass("FragmentsDir",
 )
 setMethod("chrNames", "FragmentsDir", function(x) x@chr_names)
 setMethod("cellNames", "FragmentsDir", function(x) x@cell_names)
-setMethod("chrNames<-", "FragmentsDir", function(x, ..., value) {
-  assert_is_character(value)
-  assert_len(value, length(x@chr_names))
-  x@chr_names <- value
-  x
-})
-setMethod("cellNames<-", "FragmentsDir", function(x, ..., value) {
-  assert_is_character(value)
-  assert_len(value, length(x@cell_names))
-  x@cell_names <- value
-  x
-})
 setMethod("iterate_fragments", "FragmentsDir", function(x) {
   if (x@compressed) {
     iterate_packed_fragments_file_cpp(x@dir, x@buffer_size, x@chr_names, x@cell_names)
@@ -456,18 +406,6 @@ setClass("FragmentsHDF5",
 )
 setMethod("chrNames", "FragmentsHDF5", function(x) x@chr_names)
 setMethod("cellNames", "FragmentsHDF5", function(x) x@cell_names)
-setMethod("chrNames<-", "FragmentsHDF5", function(x, ..., value) {
-  assert_is_character(value)
-  assert_len(value, length(x@chr_names))
-  x@chr_names <- value
-  x
-})
-setMethod("cellNames<-", "FragmentsHDF5", function(x, ..., value) {
-  assert_is_character(value)
-  assert_len(value, length(x@cell_names))
-  x@cell_names <- value
-  x
-})
 setMethod("iterate_fragments", "FragmentsHDF5", function(x) {
   if (x@compressed) {
     iterate_packed_fragments_hdf5_cpp(x@path, x@group, x@buffer_size, x@chr_names, x@cell_names)
@@ -735,12 +673,6 @@ setClass("ChrSelectName",
   )
 )
 setMethod("chrNames", "ChrSelectName", function(x) x@chr_names)
-setMethod("chrNames<-", "ChrSelectName", function(x, ..., value) {
-  assert_is_character(value)
-  assert_len(value, length(x@chr_names))
-  x@chr_names <- value
-  x
-})
 setMethod("iterate_fragments", "ChrSelectName", function(x) {
   iterate_chr_name_select_cpp(iterate_fragments(x@fragments), x@chr_names)
 })
@@ -766,12 +698,6 @@ setClass("ChrSelectIndex",
   )
 )
 setMethod("chrNames", "ChrSelectIndex", function(x) chrNames(x@fragments)[x@chr_index_selection])
-setMethod("chrNames<-", "ChrSelectIndex", function(x, ..., value) {
-  assert_is_character(value)
-  assert_len(value, length(x@chr_index_selection))
-  new("ChrRename", fragments = x, chr_names = value)
-})
-
 setMethod("iterate_fragments", "ChrSelectIndex", function(x) {
   iterate_chr_index_select_cpp(iterate_fragments(x@fragments), x@chr_index_selection - 1)
 })
@@ -827,12 +753,6 @@ setClass("CellSelectName",
   )
 )
 setMethod("cellNames", "CellSelectName", function(x) x@cell_names)
-setMethod("cellNames<-", "CellSelectName", function(x, ..., value) {
-  assert_is_character(value)
-  assert_len(value, length(x@cell_names))
-  x@cell_names <- value
-  x
-})
 setMethod("iterate_fragments", "CellSelectName", function(x) {
   iterate_cell_name_select_cpp(iterate_fragments(x@fragments), x@cell_names)
 })
@@ -858,11 +778,6 @@ setClass("CellSelectIndex",
   )
 )
 setMethod("cellNames", "CellSelectIndex", function(x) cellNames(x@fragments)[x@cell_index_selection])
-setMethod("cellNames<-", "CellSelectIndex", function(x, ..., value) {
-  assert_is_character(value)
-  assert_len(value, length(x@cell_index_selection))
-  new("CellRename", fragments = x, cell_names = value)
-})
 setMethod("iterate_fragments", "CellSelectIndex", function(x) {
   iterate_cell_index_select_cpp(iterate_fragments(x@fragments), x@cell_index_selection - 1)
 })
@@ -916,12 +831,6 @@ setClass("CellMerge",
   )
 )
 setMethod("cellNames", "CellMerge", function(x) x@group_names)
-setMethod("cellNames<-", "CellMerge", function(x, ..., value) {
-  assert_is_character(value)
-  assert_len(value, length(x@group_names))
-  x@group_names <- value
-  x
-})
 setMethod("iterate_fragments", "CellMerge", function(x) {
   iterate_cell_merge_cpp(iterate_fragments(x@fragments), x@group_ids, x@group_names)
 })
@@ -966,12 +875,6 @@ setClass("ChrRename",
   )
 )
 setMethod("chrNames", "ChrRename", function(x) x@chr_names)
-setMethod("chrNames<-", "ChrRename", function(x, ..., value) {
-  assert_is_character(value)
-  assert_len(value, length(x@chr_names))
-  x@chr_names <- value
-  x
-})
 setMethod("iterate_fragments", "ChrRename", function(x) {
   iterate_chr_rename_cpp(iterate_fragments(x@fragments), x@chr_names)
 })
@@ -995,12 +898,6 @@ setClass("CellRename",
   )
 )
 setMethod("cellNames", "CellRename", function(x) x@cell_names)
-setMethod("cellNames<-", "CellRename", function(x, ..., value) {
-  assert_is_character(value)
-  assert_len(value, length(x@cell_names))
-  x@cell_names <- value
-  x
-})
 setMethod("iterate_fragments", "CellRename", function(x) {
   iterate_cell_rename_cpp(iterate_fragments(x@fragments), x@cell_names)
 })
@@ -1116,22 +1013,6 @@ setMethod("chrNames", "MergeFragments", function(x) {
 })
 setMethod("cellNames", "MergeFragments", function(x) {
   do.call(c, lapply(x@fragments_list, cellNames))
-})
-
-setMethod("chrNames<-", "MergeFragments", function(x, ..., value) {
-  for (i in seq_along(x@fragments_list)) {
-    chrNames(x@fragments_list[[i]]) <- value
-  }
-  x
-})
-setMethod("cellNames<-", "MergeFragments", function(x, ..., value) {
-  start_idx <- 1
-  for (i in seq_along(x@fragments_list)) {
-    end_idx <- start_idx - 1 + length(cellNames(x@fragments_list[[i]]))
-    cellNames(x@fragments_list[[i]]) <- value[start_idx:end_idx]
-    start_idx <- end_idx + 1
-  }
-  x
 })
 
 setMethod("iterate_fragments", "MergeFragments", function(x) {

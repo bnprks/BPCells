@@ -367,6 +367,10 @@ test_that("Generic methods work", {
     expect_identical(cellNames(trans), cellNames(frags))
     expect_identical(write_fragments_memory(trans), frags)
 
+    expected_rename <- as.data.frame(trans)
+    levels(expected_rename$chr) <- paste0("new-", levels(expected_rename$chr))
+    levels(expected_rename$cell_id) <- paste0("new-", levels(expected_rename$cell_id))
+
     chrNames(trans) <- paste0("new-", chrNames(frags))
     cellNames(trans) <- paste0("new-", cellNames(frags))
     expect_identical(chrNames(trans), paste0("new-", chrNames(frags)))
@@ -374,6 +378,7 @@ test_that("Generic methods work", {
     n <- write_fragments_memory(trans)
     expect_identical(chrNames(n), paste0("new-", chrNames(frags)))
     expect_identical(cellNames(n), paste0("new-", cellNames(frags)))
+    expect_identical(as.data.frame(n), expected_rename)
 
     # Test that garbage collection after creating the iterator doesn't cause issues
     # Reset cell + chr names
