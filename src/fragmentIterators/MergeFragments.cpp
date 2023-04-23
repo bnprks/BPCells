@@ -42,6 +42,7 @@ void MergeFragments::seek(uint32_t chr_id, uint32_t base) {
     for (auto &&f : frags)
         f.seek(chr_id, base);
     heap.clear();
+    current_chr = chr_id;
 }
 
 void MergeFragments::restart() {
