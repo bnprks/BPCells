@@ -48,8 +48,8 @@
     <a class="dropdown-item" href="../articles/pbmc3k.html">Basic tutorial</a>
     <a class="dropdown-item" href="../articles/web-only/benchmarks.html">Performance Benchmarks</a>
     <a class="dropdown-item" href="../articles/web-only/how-it-works.html">How BPCells works</a>
-    <a class="dropdown-item" href="../articles/web-only/programming-efficiency.html">Efficiency tips</a>
-    <a class="dropdown-item" href="../articles/web-only/programming-philosopy.html">Programming Philosophy</a>
+    <div class="dropdown-divider"></div>
+    <a class="dropdown-item" href="../articles/index.html">More articles...</a>
   </div>
 </li>
 <li class="nav-item">
@@ -500,11 +500,11 @@ dense.</p>
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">12341512</span><span class="op">)</span></span>
 <span><span class="va">umap</span> <span class="op">&lt;-</span> <span class="fu">uwot</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/uwot/man/umap.html" class="external-link">umap</a></span><span class="op">(</span><span class="va">pca</span><span class="op">)</span></span>
 <span><span class="va">umap</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">4</span>,<span class="op">]</span></span></code></pre></div>
-<pre><code><span><span class="co">##           [,1]      [,2]</span></span>
-<span><span class="co">## [1,]  9.370317  4.610638</span></span>
-<span><span class="co">## [2,] -0.678380 -9.748415</span></span>
-<span><span class="co">## [3,]  9.192847  4.582925</span></span>
-<span><span class="co">## [4,]  8.110769  1.889614</span></span></code></pre>
+<pre><code><span><span class="co">##          [,1]      [,2]</span></span>
+<span><span class="co">## [1,] 9.478912 2.8883930</span></span>
+<span><span class="co">## [2,] 8.899133 0.6127033</span></span>
+<span><span class="co">## [3,] 9.270820 2.8209666</span></span>
+<span><span class="co">## [4,] 8.049050 0.3024858</span></span></code></pre>
 </div>
 <div class="section level3">
 <h3 id="clustering">Clustering<a class="anchor" aria-label="anchor" href="#clustering"></a>
@@ -598,7 +598,7 @@ resolution is approximately +/- 30bp.</p>
 <span><span class="co">## <span style="color: #BCBCBC;">3</span> chr17  81<span style="text-decoration: underline;">860</span>866  81<span style="text-decoration: underline;">861</span>066 DC    7.87<span style="color: #949494;">e</span><span style="color: #BB0000;">- 63</span> 1.21<span style="color: #949494;">e</span><span style="color: #BB0000;">- 55</span>       552.</span></span>
 <span><span class="co">## <span style="color: #BCBCBC;">4</span> chr1    1<span style="text-decoration: underline;">724</span>333   1<span style="text-decoration: underline;">724</span>533 Mono  0   <span style="color: #949494;"> </span>     0   <span style="color: #949494;"> </span>           511.</span></span>
 <span><span class="co">## <span style="color: #BCBCBC;">5</span> chr1  228<span style="text-decoration: underline;">140</span>000 228<span style="text-decoration: underline;">140</span>200 NK    2.24<span style="color: #949494;">e</span><span style="color: #BB0000;">-158</span> 1.73<span style="color: #949494;">e</span><span style="color: #BB0000;">-151</span>       845.</span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">6</span> chr8   30<span style="text-decoration: underline;">083</span>133  30<span style="text-decoration: underline;">083</span>333 CD8 T 2.95<span style="color: #949494;">e</span><span style="color: #BB0000;">-225</span> 4.55<span style="color: #949494;">e</span><span style="color: #BB0000;">-218</span>       749.</span></span></code></pre>
+<span><span class="co">## <span style="color: #BCBCBC;">6</span> chr8   30<span style="text-decoration: underline;">083</span>133  30<span style="text-decoration: underline;">083</span>333 CD8 T 8.02<span style="color: #949494;">e</span><span style="color: #BB0000;">-225</span> 1.24<span style="color: #949494;">e</span><span style="color: #BB0000;">-217</span>       750.</span></span></code></pre>
 <p>Next we compute a peak matrix counting how many ATAC-seq insertions
 overlap each peak. We again save it in memory rather than saving it to
 disk since our dataset is quite small.</p>
@@ -672,20 +672,20 @@ our data and run PCA as usual</p>
 <span><span class="va">pca_atac</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/mat_norm.html">multiply_cols</a></span><span class="op">(</span><span class="va">svd_atac</span><span class="op">$</span><span class="va">v</span>, <span class="va">svd_atac</span><span class="op">$</span><span class="va">d</span><span class="op">)</span></span>
 <span><span class="va">pca_atac</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">4</span>,<span class="fl">1</span><span class="op">:</span><span class="fl">4</span><span class="op">]</span></span></code></pre></div>
 <pre><code><span><span class="co">##            [,1]       [,2]       [,3]      [,4]</span></span>
-<span><span class="co">## [1,] -103.80285   1.442493   1.771851 -21.48437</span></span>
-<span><span class="co">## [2,]  -44.87028 -28.931331 -12.668194  10.50600</span></span>
-<span><span class="co">## [3,]  -90.63232   3.478272   3.462969 -13.01293</span></span>
-<span><span class="co">## [4,]  -90.64986  -6.356748   7.264226  15.85167</span></span></code></pre>
+<span><span class="co">## [1,] -103.80520   1.365424   1.707384 -21.38388</span></span>
+<span><span class="co">## [2,]  -44.93022 -28.991700 -12.600363  10.43552</span></span>
+<span><span class="co">## [3,]  -90.55621   3.551652   3.406559 -13.05907</span></span>
+<span><span class="co">## [4,]  -90.57636  -6.205737   7.265390  15.64226</span></span></code></pre>
 <p>Next we calculate our UMAP</p>
 <div class="sourceCode" id="cb52"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">12341512</span><span class="op">)</span></span>
 <span><span class="va">umap_atac</span> <span class="op">&lt;-</span> <span class="fu">uwot</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/uwot/man/umap.html" class="external-link">umap</a></span><span class="op">(</span><span class="va">pca_atac</span><span class="op">)</span></span>
 <span><span class="va">umap_atac</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">4</span>,<span class="op">]</span></span></code></pre></div>
-<pre><code><span><span class="co">##           [,1]      [,2]</span></span>
-<span><span class="co">## [1,]  7.791935  3.672994</span></span>
-<span><span class="co">## [2,] -6.902291 -2.141718</span></span>
-<span><span class="co">## [3,]  7.412089  8.693615</span></span>
-<span><span class="co">## [4,]  8.560311  0.083962</span></span></code></pre>
+<pre><code><span><span class="co">##           [,1]        [,2]</span></span>
+<span><span class="co">## [1,]  7.366673  3.49072457</span></span>
+<span><span class="co">## [2,] -7.177320  0.36089159</span></span>
+<span><span class="co">## [3,]  7.769831  8.12516213</span></span>
+<span><span class="co">## [4,]  8.370543 -0.05077623</span></span></code></pre>
 <p>Then we cluster, just like for the RNA</p>
 <div class="sourceCode" id="cb54"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">clusts_atac</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/knn.html">knn_hnsw</a></span><span class="op">(</span><span class="va">pca_atac</span>, ef<span class="op">=</span><span class="fl">500</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> <span class="co"># Find approximate nearest neighbors</span></span>
@@ -813,20 +813,20 @@ motifs-of-interest in peaks</p>
 <span><span class="va">motif_positions</span></span></code></pre></div>
 <pre><code><span><span class="co">## GRangesList object of length 4:</span></span>
 <span><span class="co">## $CEBPA</span></span>
-<span><span class="co">## GRanges object with 13977 ranges and 1 metadata column:</span></span>
+<span><span class="co">## GRanges object with 13979 ranges and 1 metadata column:</span></span>
 <span><span class="co">##           seqnames              ranges strand |     score</span></span>
 <span><span class="co">##              &lt;Rle&gt;           &lt;IRanges&gt;  &lt;Rle&gt; | &lt;numeric&gt;</span></span>
-<span><span class="co">##       [1]     chr1     1060191-1060200      + |   7.24911</span></span>
-<span><span class="co">##       [2]     chr1     1398356-1398365      - |   7.31986</span></span>
-<span><span class="co">##       [3]     chr1     1408228-1408237      - |   7.91989</span></span>
-<span><span class="co">##       [4]     chr1     1470604-1470613      + |   7.26087</span></span>
+<span><span class="co">##       [1]     chr1     1060191-1060200      + |   7.24916</span></span>
+<span><span class="co">##       [2]     chr1     1398356-1398365      - |   7.31987</span></span>
+<span><span class="co">##       [3]     chr1     1408228-1408237      - |   7.91988</span></span>
+<span><span class="co">##       [4]     chr1     1470604-1470613      + |   7.26088</span></span>
 <span><span class="co">##       [5]     chr1     1614370-1614379      - |   7.33086</span></span>
 <span><span class="co">##       ...      ...                 ...    ... .       ...</span></span>
-<span><span class="co">##   [13973]     chrX 154247973-154247982      + |   7.91989</span></span>
-<span><span class="co">##   [13974]     chrX 154377819-154377828      - |   7.91989</span></span>
-<span><span class="co">##   [13975]     chrX 154497506-154497515      + |   8.62512</span></span>
-<span><span class="co">##   [13976]     chrX 154734157-154734166      + |   7.33804</span></span>
-<span><span class="co">##   [13977]     chrX 155242494-155242503      - |   7.24429</span></span>
+<span><span class="co">##   [13975]     chrX 154247973-154247982      + |   7.91988</span></span>
+<span><span class="co">##   [13976]     chrX 154377819-154377828      - |   7.91988</span></span>
+<span><span class="co">##   [13977]     chrX 154497506-154497515      + |   8.62515</span></span>
+<span><span class="co">##   [13978]     chrX 154734157-154734166      + |   7.33807</span></span>
+<span><span class="co">##   [13979]     chrX 155242494-155242503      - |   7.24431</span></span>
 <span><span class="co">##   -------</span></span>
 <span><span class="co">##   seqinfo: 39 sequences from an unspecified genome; no seqlengths</span></span>
 <span><span class="co">## </span></span>

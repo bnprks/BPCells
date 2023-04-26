@@ -24,6 +24,19 @@ navbar:
       text: "News"
       href: "news/index.html"
 
+articles:
+- title: "Articles from dropdown list"
+  navbar: ~
+  contents:
+  - "pbmc3k"
+  - "web-only/benchmarks"
+  - "web-only/how-it-works"
+- title: "Additional articles"
+  contents:
+  - "web-only/bitpacking-format"
+  - "web-only/programming-efficiency"
+  - "web-only/programming-philosophy"
+
 # cosmo, flatly, united, sandstone all look reasonable
 # pulse, lumen, zephyr
 reference:
