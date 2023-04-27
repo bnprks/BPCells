@@ -127,6 +127,7 @@ test_that("Subsetting to 0 dimensions works", {
   )
 })
 
+test_that("Dense matrix-vector multiply works", {
   withr::local_seed(195123)
 
   m1 <- generate_sparse_matrix(5, 1000)

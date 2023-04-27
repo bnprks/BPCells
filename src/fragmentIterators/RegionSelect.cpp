@@ -56,7 +56,7 @@ RegionSelect::RegionSelect(
 
 void RegionSelect::seek(uint32_t chr_id, uint32_t base) {
     loader->seek(chr_id, base);
-    if (chr_id < loader->chrCount()) {
+    if ((int64_t) chr_id < loader->chrCount()) {
         current_chr_id = findChrIDTranslation(loader->chrNames(loader->currentChr()));
         active_region = computeNextActiveRegion(current_chr_id, base);
     }
