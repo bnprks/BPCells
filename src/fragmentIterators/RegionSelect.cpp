@@ -56,8 +56,10 @@ RegionSelect::RegionSelect(
 
 void RegionSelect::seek(uint32_t chr_id, uint32_t base) {
     loader->seek(chr_id, base);
-    current_chr_id = findChrIDTranslation(loader->chrNames(loader->currentChr()));
-    active_region = computeNextActiveRegion(current_chr_id, base);
+    if ((int64_t) chr_id < loader->chrCount()) {
+        current_chr_id = findChrIDTranslation(loader->chrNames(loader->currentChr()));
+        active_region = computeNextActiveRegion(current_chr_id, base);
+    }
     did_seek_active_region = false;
 }
 
@@ -73,6 +75,8 @@ bool RegionSelect::nextChr() {
     if (ret) {
         active_region = computeNextActiveRegion(current_chr_id, 0);
         did_seek_active_region = false;
+    } else {
+        active_region = sorted_regions.size() - 1;
     }
     return ret;
 }

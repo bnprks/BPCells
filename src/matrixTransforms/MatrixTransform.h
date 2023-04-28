@@ -1,6 +1,7 @@
 #pragma once
 
 #include <array>
+#include <atomic>
 #include <vector>
 
 #include "../matrixIterators/OrderRows.h"
@@ -85,22 +86,22 @@ class MatrixTransformDense : public MatrixTransform {
     double *valData() override;
 
     Eigen::MatrixXd denseMultiplyRight(
-        const Eigen::Map<Eigen::MatrixXd> B, void (*checkInterrupt)(void) = NULL
+        const Eigen::Map<Eigen::MatrixXd> B, std::atomic<bool> *user_interrupt = NULL
     ) override;
     Eigen::MatrixXd denseMultiplyLeft(
-        const Eigen::Map<Eigen::MatrixXd> B, void (*checkInterrupt)(void) = NULL
+        const Eigen::Map<Eigen::MatrixXd> B, std::atomic<bool> *user_interrupt = NULL
     ) override;
     // Calculate matrix-vector product A*v where A (this) is sparse and B is a dense matrix.
     Eigen::VectorXd vecMultiplyRight(
-        const Eigen::Map<Eigen::VectorXd> v, void (*checkInterrupt)(void) = NULL
+        const Eigen::Map<Eigen::VectorXd> v, std::atomic<bool> *user_interrupt = NULL
     ) override;
     Eigen::VectorXd vecMultiplyLeft(
-        const Eigen::Map<Eigen::VectorXd> v, void (*checkInterrupt)(void) = NULL
+        const Eigen::Map<Eigen::VectorXd> v, std::atomic<bool> *user_interrupt = NULL
     ) override;
 
     // Calculate row/column sums of the matrix
-    std::vector<double> colSums(void (*checkInterrupt)(void) = NULL) override;
-    std::vector<double> rowSums(void (*checkInterrupt)(void) = NULL) override;
+    std::vector<double> colSums(std::atomic<bool> *user_interrupt = NULL) override;
+    std::vector<double> rowSums(std::atomic<bool> *user_interrupt = NULL) override;
 
   protected:
     // Perform a normal load from the underlying matrix, then subtract transform(0)
@@ -118,23 +119,23 @@ class MatrixTransformDense : public MatrixTransform {
     virtual void denseMultiplyRightZero(
         Eigen::MatrixXd &out,
         const Eigen::Map<Eigen::MatrixXd> B,
-        void (*checkInterrupt)(void) = NULL
+        std::atomic<bool> *user_interrupt = NULL
     );
     virtual void denseMultiplyLeftZero(
         Eigen::MatrixXd &out,
         const Eigen::Map<Eigen::MatrixXd> B,
-        void (*checkInterrupt)(void) = NULL
+        std::atomic<bool> *user_interrupt = NULL
     );
 
     virtual void vecMultiplyRightZero(
         Eigen::VectorXd &out,
         const Eigen::Map<Eigen::VectorXd> v,
-        void (*checkInterrupt)(void) = NULL
+        std::atomic<bool> *user_interrupt = NULL
     );
     virtual void vecMultiplyLeftZero(
         Eigen::VectorXd &out,
         const Eigen::Map<Eigen::VectorXd> v,
-        void (*checkInterrupt)(void) = NULL
+        std::atomic<bool> *user_interrupt = NULL
     );
 };
 

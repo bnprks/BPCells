@@ -68,7 +68,7 @@ template <class T> class OrderRows : public MatrixLoaderWrapper<T> {
             }
             if (needs_reorder) {
                 // Sort the entries by increasing row ID
-                lsdRadixSortArrays<T>(cap, row_data, val_data, row_buf, val_buf);
+                lsdRadixSortArrays<uint32_t, T>(cap, row_data, val_data, row_buf, val_buf);
             }
         } else {
             idx += std::min(cap - idx, load_size);

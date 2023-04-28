@@ -1,6 +1,7 @@
 #pragma once
 
 #include <array>
+#include <atomic>
 #include <filesystem>
 #include <string>
 #include <unordered_map>
@@ -81,7 +82,7 @@ class BedFragmentsWriter : public FragmentWriter {
         const char *path, bool append_5th_column = false, uint32_t buffer_size = 1 << 20
     );
     ~BedFragmentsWriter();
-    void write(FragmentLoader &fragments, void (*checkInterrupt)(void) = NULL) override;
+    void write(FragmentLoader &fragments, std::atomic<bool> *user_interrupt = NULL) override;
 
   private:
     gzFile f;

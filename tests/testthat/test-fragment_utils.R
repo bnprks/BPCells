@@ -29,7 +29,7 @@ test_that("Chromosome name/index select works", { #nolint
     paste0("cell", 1:500)
   )
 
-  chr_selection <- sample.int(500, 250, replace = FALSE)
+  chr_selection <- sort(sample.int(500, 250, replace = FALSE))
 
   short_chrs_ans <- as(short_chrs, "data.frame")
   short_chrs_ans <- short_chrs_ans[as.character(short_chrs_ans$chr) %in% paste0("chr", chr_selection),] %>%
@@ -43,6 +43,36 @@ test_that("Chromosome name/index select works", { #nolint
 
   expect_equal(short_chrs_ans, short_chrs_2, check.attributes = FALSE)
   expect_equal(short_chrs_ans, short_chrs_3, check.attributes = FALSE)
+})
+
+test_that("Chromosome select reordering works", {
+  x1 <- open_fragments_10x("../data/mini_fragments.tsv.gz")
+  x2 <- write_fragments_memory(x1)
+
+  chr_order <- c("chr2", "chr1", "chr3")
+  y1 <- select_chromosomes(x1, chr_order)
+  y2 <- select_chromosomes(x2, chr_order)
+
+  expect_identical(
+    as.data.frame(y1) %>% dplyr::arrange(chr),
+    as.data.frame(y2) %>% dplyr::arrange(chr)
+  )
+  expect_identical(
+    as.data.frame(y2)$chr %>% as.character() %>% rle() %>% {.$values},
+    chr_order
+  )
+
+  z1 <- select_chromosomes(x1, c(2,1,3))
+  z2 <- select_chromosomes(x2, c(2,1,3))
+
+  expect_identical(
+    as.data.frame(z1) %>% dplyr::arrange(chr),
+    as.data.frame(z2) %>% dplyr::arrange(chr)
+  )
+  expect_identical(
+    as.data.frame(z2)$chr %>% as.character() %>% rle() %>% {.$values},
+    chr_order
+  )
 })
 
 test_that("Cell name/index select works", { #nolint
@@ -300,6 +330,26 @@ test_that("Concatenate seek works", {
   y <- as(tiles[keeper_tiles,], "dgCMatrix")
   expect_identical(x, y)
 })
+
+test_that("Concatenate/merge different chromosome sets works", {
+  frags_a <- open_fragments_10x("../data/mini_fragments.tsv.gz") %>%
+    prefix_cell_names("A") %>%
+    select_chromosomes(c("chr1", "chr3", "chr2", "chr5")) %>%
+    write_fragments_memory()
+  frags_b <- open_fragments_10x("../data/mini_fragments.tsv.gz") %>%
+    prefix_cell_names("B") %>%
+    select_chromosomes(c("chr1", "chr2", "chr5", "chr4", "chr9")) %>%
+    write_fragments_memory()
+
+  frags_merge <- c(frags_a, frags_b)
+
+  expect_identical(
+    as.data.frame(frags_merge) ,
+    dplyr::bind_rows(as.data.frame(frags_a), as.data.frame(frags_b)) %>%
+      dplyr::arrange(chr, start, cell_id)
+  )
+})
+
 test_that("Generic methods work", {
   frags <- open_fragments_10x("../data/mini_fragments.tsv.gz") %>% #nolint
     write_fragments_memory()
@@ -332,11 +382,26 @@ test_that("Generic methods work", {
 
   for (i in seq_along(ident_transforms)) {
     trans <- ident_transforms[[i]]
+    
+    # Test that basic operations work
     short_description(trans)
     expect_identical(chrNames(trans), chrNames(frags))
     expect_identical(cellNames(trans), cellNames(frags))
     expect_identical(write_fragments_memory(trans), frags)
 
+    # Test that selecting a non-existent chromosome is fine
+    expect_identical(
+      as.data.frame(frags) %>% dplyr::mutate(chr=as.character(chr)), 
+      trans %>% 
+        select_chromosomes(c(chrNames(frags)[1:5], "NOT_A_CHROMOSOME", chrNames(frags)[-(1:5)])) %>%
+        as.data.frame() %>%
+        dplyr::mutate(chr=as.character(chr))
+    )
+
+    # Test that renaming chromosomes/cells works
+    expected_rename <- as.data.frame(trans)
+    levels(expected_rename$chr) <- paste0("new-", levels(expected_rename$chr))
+    levels(expected_rename$cell_id) <- paste0("new-", levels(expected_rename$cell_id))
     chrNames(trans) <- paste0("new-", chrNames(frags))
     cellNames(trans) <- paste0("new-", cellNames(frags))
     expect_identical(chrNames(trans), paste0("new-", chrNames(frags)))
@@ -344,11 +409,12 @@ test_that("Generic methods work", {
     n <- write_fragments_memory(trans)
     expect_identical(chrNames(n), paste0("new-", chrNames(frags)))
     expect_identical(cellNames(n), paste0("new-", cellNames(frags)))
-
-    # Test that garbage collection after creating the iterator doesn't cause issues
+    expect_identical(as.data.frame(n), expected_rename)
     # Reset cell + chr names
     chrNames(trans) <- chrNames(frags)
     cellNames(trans) <- cellNames(frags)
+
+    # Test that garbage collection after creating the iterator doesn't cause issues
     # Create the C++ iterator
     it <- iterate_fragments(trans) %>%
       iterate_chr_index_select_cpp(seq_along(chrNames(frags)) - 1L) %>%

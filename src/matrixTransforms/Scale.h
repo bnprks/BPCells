@@ -1,5 +1,5 @@
 #pragma once
-
+#include <atomic>
 #include "MatrixTransform.h"
 
 namespace BPCells {
@@ -14,17 +14,17 @@ class Scale : public MatrixTransform {
     bool load() override;
 
     Eigen::MatrixXd denseMultiplyRight(
-        const Eigen::Map<Eigen::MatrixXd> B, void (*checkInterrupt)(void) = NULL
+        const Eigen::Map<Eigen::MatrixXd> B, std::atomic<bool> *user_interrupt = NULL
     ) override;
     Eigen::MatrixXd denseMultiplyLeft(
-        const Eigen::Map<Eigen::MatrixXd> B, void (*checkInterrupt)(void) = NULL
+        const Eigen::Map<Eigen::MatrixXd> B, std::atomic<bool> *user_interrupt = NULL
     ) override;
     // Calculate matrix-vector product A*v where A (this) is sparse and B is a dense matrix.
     Eigen::VectorXd vecMultiplyRight(
-        const Eigen::Map<Eigen::VectorXd> v, void (*checkInterrupt)(void) = NULL
+        const Eigen::Map<Eigen::VectorXd> v, std::atomic<bool> *user_interrupt = NULL
     ) override;
     Eigen::VectorXd vecMultiplyLeft(
-        const Eigen::Map<Eigen::VectorXd> v, void (*checkInterrupt)(void) = NULL
+        const Eigen::Map<Eigen::VectorXd> v, std::atomic<bool> *user_interrupt = NULL
     ) override;
 };
 

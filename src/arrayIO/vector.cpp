@@ -4,7 +4,7 @@ namespace BPCells {
 
 VecStringWriter::VecStringWriter(std::vector<std::string> &data) : data(data) {}
 void VecStringWriter::write(const StringReader &reader) {
-    uint32_t i = 0;
+    uint64_t i = 0;
     data.resize(0);
     while (true) {
         const char *s = reader.get(i);
@@ -14,7 +14,7 @@ void VecStringWriter::write(const StringReader &reader) {
     }
 }
 
-VecReaderWriterBuilder::VecReaderWriterBuilder(uint32_t chunk_size) : chunk_size(chunk_size) {}
+VecReaderWriterBuilder::VecReaderWriterBuilder(uint64_t chunk_size) : chunk_size(chunk_size) {}
 
 // UIntWriter VecReaderWriterBuilder::createUIntWriter(std::string name) {
 //     int_vecs[name] = std::vector<uint32_t>();
@@ -105,4 +105,5 @@ std::map<std::string, std::vector<double>> &VecReaderWriterBuilder::getDoubleVec
 std::map<std::string, std::vector<std::string>> &VecReaderWriterBuilder::getStringVecs() {
     return string_vecs;
 }
+
 } // end namespace BPCells

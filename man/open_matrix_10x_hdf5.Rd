@@ -22,7 +22,9 @@ write_matrix_10x_hdf5(
 \arguments{
 \item{path}{Path to the hdf5 file on disk}
 
-\item{feature_type}{String or vector of feature types}
+\item{feature_type}{Optional selection of feature types to include in output matrix.
+For multiome data, the options are "Gene Expression" and "Peaks". This option is
+only compatible with files from cellranger 3.0 and newer.}
 
 \item{buffer_size}{For performance tuning only. The number of items to be buffered
 in memory before calling writes to disk.}
@@ -34,6 +36,8 @@ in memory before calling writes to disk.}
 \item{feature_ids}{Vector of IDs for the features}
 
 \item{feature_names}{Vector of names for the features}
+
+\item{feature_types}{String or vector of feature types}
 
 \item{feature_metadata}{Named list of additional metadata vectors
 to store for each feature}

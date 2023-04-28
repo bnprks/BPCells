@@ -3,7 +3,12 @@ pkgdown: 2.0.7
 pkgdown_sha: ~
 articles:
   pbmc3k: pbmc3k.html
-last_built: 2023-03-01T01:39Z
+  benchmarks: web-only/benchmarks.html
+  bitpacking-format: web-only/bitpacking-format.html
+  how-it-works: web-only/how-it-works.html
+  programming-efficiency: web-only/programming-efficiency.html
+  programming-philosophy: web-only/programming-philosophy.html
+last_built: 2023-04-26T02:00Z
 urls:
   reference: https://bnprks.github.io/BPCells/reference
   article: https://bnprks.github.io/BPCells/articles

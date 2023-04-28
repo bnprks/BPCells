@@ -39,10 +39,10 @@ template <typename T> class MatrixAccumulator {
 
     void compactData() {
         // Sort by (col, row) by sorting stably first by row then by col
-        lsdRadixSortArrays<uint32_t, T>(
+        lsdRadixSortArrays<uint32_t, uint32_t, T>(
             entries_stored, row_data, col_data, val_data, row_buf, col_buf, val_buf
         );
-        lsdRadixSortArrays<uint32_t, T>(
+        lsdRadixSortArrays<uint32_t, uint32_t, T>(
             entries_stored, col_data, row_data, val_data, col_buf, row_buf, val_buf
         );
 

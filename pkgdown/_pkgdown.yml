@@ -12,6 +12,30 @@ template:
     after_body: |
        <img src="https://plausible.benparks.net/flask-plausible/bpcells-docs.png" style="position:absolute;" />
 
+navbar:
+  structure:
+    left: [introduction, reference, articles, news]
+    right: [search, github]
+  components:
+    introduction:
+      text: "Get Started"
+      href: "articles/pbmc3k.html"
+    news:
+      text: "News"
+      href: "news/index.html"
+
+articles:
+- title: "Articles from dropdown list"
+  navbar: ~
+  contents:
+  - "pbmc3k"
+  - "web-only/benchmarks"
+  - "web-only/how-it-works"
+- title: "Additional articles"
+  contents:
+  - "web-only/bitpacking-format"
+  - "web-only/programming-efficiency"
+  - "web-only/programming-philosophy"
 
 # cosmo, flatly, united, sandstone all look reasonable
 # pulse, lumen, zephyr
@@ -66,9 +90,11 @@ reference:
   - open_matrix_10x_hdf5
   - open_matrix_anndata_hdf5
   - write_matrix_memory
+  - import_matrix_market
 
 - subtitle: "Matrix Operations"
 - contents:
+  - marker_features
   - matrix_stats
   - convert_matrix_type
   - transpose_storage_order

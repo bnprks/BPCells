@@ -10,13 +10,18 @@ namespace BPCells {
 
 // Merge several fragment sources into a single sorted loader.
 // Cell IDs will be adjusted to be sequential between fragments
-// Chromosome names & IDs must match between fragments and come in the same ordering.
-//   (Use ChrSelect before merging if necessary to match ordering)
+// Chromosomes will be merged in the order of the provided chromosome ordering. It
+// is an error if any input has chromosmes not in the output ordering.
+// All inputs must have known cell counts, chr counts+names, and be seekable
 class MergeFragments : public FragmentLoader {
   private:
     std::vector<FragmentIterator> frags;
     std::vector<uint32_t> heap; // Heap of indices into the fragments array
-    std::vector<uint32_t> cell_id_offset, frags_completed;
+    std::vector<uint32_t> cell_id_offset;
+
+    std::vector<std::string> chr_order; // Order of output chromosomes
+    std::vector<std::vector<uint32_t>>
+        source_chr; // source_chr[i][j] is the chr ID in frags[i] with name chr_order[j]
 
     std::vector<uint32_t> start, end, cell;
     uint32_t loaded;
@@ -30,7 +35,9 @@ class MergeFragments : public FragmentLoader {
     }
 
   public:
-    MergeFragments(std::vector<std::unique_ptr<FragmentLoader>> &&fragments, uint32_t load_size = 1024);
+    MergeFragments(
+        std::vector<std::unique_ptr<FragmentLoader>> &&fragments, const std::vector<std::string> &chr_order, uint32_t load_size = 1024
+    );
 
     ~MergeFragments() = default;
 

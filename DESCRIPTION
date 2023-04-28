@@ -1,6 +1,6 @@
 Package: BPCells
 Title: Single Cell Counts Matrices to PCA
-Version: 0.0.0.9000
+Version: 0.1.0
 Authors@R: 
     person(given = "Benjamin",
            family = "Parks",

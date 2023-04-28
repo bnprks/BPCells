@@ -40,7 +40,7 @@ template <class T> class FileNumWriter final : public BulkNumWriter<T> {
         file.write((char *)&header.first, 4);
         file.write((char *)&header.second, 4);
     }
-    uint32_t write(T *in, uint32_t count) override {
+    uint64_t write(T *in, uint64_t count) override {
         file.write((char *)in, count * sizeof(T));
         return count;
     }
@@ -51,7 +51,7 @@ using FileUIntWriter = FileNumWriter<uint32_t>;
 template <class T> class FileNumReader final : public BulkNumReader<T> {
   protected:
     std::ifstream file;
-    uint32_t total_size;
+    uint64_t total_size;
 
   public:
     FileNumReader(const char *path) {
@@ -81,23 +81,23 @@ template <class T> class FileNumReader final : public BulkNumReader<T> {
         }
 
         // Detect the file size & cache it
-        uint32_t cur = file.tellg();
+        uint64_t cur = file.tellg();
         file.seekg(0, file.end);
         total_size = (file.tellg() / sizeof(T)) - 8 / sizeof(T);
         file.seekg(cur);
     }
 
     // Return total number of numbers in the reader
-    uint32_t size() const override { return total_size; }
+    uint64_t size() const override { return total_size; }
 
     // Change the next load to start at index pos
-    void seek(uint32_t pos) override { file.seekg(8 + pos * sizeof(T)); }
+    void seek(uint64_t pos) override { file.seekg(8 + pos * sizeof(T)); }
 
     // Copy up to `count` integers into `out`, returning the actual number copied.
     // Will always load >0 unless there is no more input
-    uint32_t load(T *out, uint32_t count) override {
+    uint64_t load(T *out, uint64_t count) override {
         file.read((char *)out, sizeof(T) * count);
-        uint32_t read_count = file.gcount() / sizeof(T);
+        uint64_t read_count = file.gcount() / sizeof(T);
         return read_count;
     }
 };
@@ -112,8 +112,8 @@ class FileStringReader final : public StringReader {
 
   public:
     FileStringReader(std::filesystem::path path);
-    const char *get(uint32_t idx) const override;
-    uint32_t size() const override;
+    const char *get(uint64_t idx) const override;
+    uint64_t size() const override;
 };
 
 class FileStringWriter final : public StringWriter {
@@ -128,11 +128,11 @@ class FileStringWriter final : public StringWriter {
 class FileWriterBuilder final : public WriterBuilder {
   protected:
     std::filesystem::path dir;
-    uint32_t buffer_size;
+    uint64_t buffer_size;
 
   public:
     FileWriterBuilder() = default;
-    FileWriterBuilder(std::string dir, uint32_t buffer_size = 8192, bool allow_exists = false);
+    FileWriterBuilder(std::string dir, uint64_t buffer_size = 8192, bool allow_exists = false);
     FileWriterBuilder &operator=(FileWriterBuilder &&other) = default;
     UIntWriter createUIntWriter(std::string name) override;
     ULongWriter createULongWriter(std::string name) override;
@@ -145,12 +145,12 @@ class FileWriterBuilder final : public WriterBuilder {
 
 class FileReaderBuilder final : public ReaderBuilder {
     std::filesystem::path dir;
-    uint32_t buffer_size;
-    uint32_t read_size;
+    uint64_t buffer_size;
+    uint64_t read_size;
 
   public:
     FileReaderBuilder() = default;
-    FileReaderBuilder(std::string dir, uint32_t buffer_size = 8192, uint32_t read_size = 1024);
+    FileReaderBuilder(std::string dir, uint64_t buffer_size = 8192, uint64_t read_size = 1024);
     FileReaderBuilder &operator=(FileReaderBuilder &&other) = default;
     UIntReader openUIntReader(std::string name) override;
     ULongReader openULongReader(std::string name) override;

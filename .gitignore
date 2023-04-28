@@ -23,3 +23,5 @@ tools/h5write
 tools/cxx17_filesystem
 tools/*.exe
 vignettes/*.html
+vignettes/pbmc-3k-data
+cpp-tests

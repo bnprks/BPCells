@@ -76,6 +76,12 @@ setGeneric("iterate_matrix", function(x) standardGeneric("iterate_matrix"))
 #' @describeIn IterableMatrix-methods Get the matrix data type (mat_uint32_t, mat_float, or mat_double for now)
 setGeneric("matrix_type", function(x) standardGeneric("matrix_type"))
 
+#' @describeIn IterableMatrix-methods Get the matrix storage order ("row" or "col")
+#' @export
+setGeneric("storage_order", function(x) standardGeneric("storage_order"))
+
+setMethod("storage_order", "IterableMatrix", function(x) if(x@transpose) "row" else "col")
+
 #' Return a list of input matrices to the current matrix (experimental)
 #'
 #' File objects have 0 inputs. Most transforms have 1 input. Some transforms
@@ -237,33 +243,33 @@ linear_operator <- function(mat) {
 
 setMethod("%*%", signature(x = "LinearOperator", y = "matrix"), function(x, y) {
   if (x@transpose) {
-    return(t(dense_multiply_left_cpp(x@xptr, t(y))))
+    return(t(dense_multiply_left_preserve_loader_cpp(x@xptr, t(y))))
   } else {
-    return(dense_multiply_right_cpp(x@xptr, y))
+    return(dense_multiply_right_preserve_loader_cpp(x@xptr, y))
   }
 })
 
 setMethod("%*%", signature(x = "matrix", y = "LinearOperator"), function(x, y) {
   if (y@transpose) {
-    return(t(dense_multiply_right_cpp(y@xptr, t(x))))
+    return(t(dense_multiply_right_preserve_loader_cpp(y@xptr, t(x))))
   } else {
-    return(dense_multiply_left_cpp(y@xptr, x))
+    return(dense_multiply_left_preserve_loader_cpp(y@xptr, x))
   }
 })
 
 setMethod("%*%", signature(x = "LinearOperator", y = "numeric"), function(x, y) {
   if (x@transpose) {
-    return(vec_multiply_left_cpp(x@xptr, y))
+    return(vec_multiply_left_preserve_loader_cpp(x@xptr, y))
   } else {
-    return(vec_multiply_right_cpp(x@xptr, y))
+    return(vec_multiply_right_preserve_loader_cpp(x@xptr, y))
   }
 })
 
 setMethod("%*%", signature(x = "numeric", y = "LinearOperator"), function(x, y) {
   if (y@transpose) {
-    return(vec_multiply_right_cpp(y@xptr, x))
+    return(vec_multiply_right_preserve_loader_cpp(y@xptr, x))
   } else {
-    return(vec_multiply_left_cpp(y@xptr, x))
+    return(vec_multiply_left_preserve_loader_cpp(y@xptr, x))
   }
 })
 
@@ -415,6 +421,7 @@ setMethod("short_description", "MatrixMask", function(x) {
 #' values in the mask matrix will set the matrix entry to zero.
 #' @param mat Data matrix (IterableMatrix)
 #' @param mask Mask matrix (IterableMatrix or dgCMatrix)
+#' @keywords internal
 mask_matrix <- function(mat, mask, invert=FALSE) {
   assert_is(mat, "IterableMatrix")
   assert_is(invert, "logical")
@@ -437,6 +444,54 @@ mask_matrix <- function(mat, mask, invert=FALSE) {
   )
 }
 
+setClass("MatrixRankTransform",
+  contains = "IterableMatrix",
+  slots = c(
+    matrix = "IterableMatrix"
+  ),
+  prototype = list(
+    matrix = NULL
+  )
+)
+setMethod("matrix_type", signature(x = "MatrixRankTransform"), function(x) "double")
+setMethod("iterate_matrix", "MatrixRankTransform", function(x) {
+  iter_function <- get(sprintf("iterate_matrix_rank_%s_cpp", matrix_type(x@matrix)))
+  iter_function(iterate_matrix(x@matrix))
+})
+
+setMethod("short_description", "MatrixRankTransform", function(x) {
+  c(
+    short_description(x@matrix),
+    sprintf(
+      "Rank transform each matrix %s",
+      ifelse(x@transpose, "row", "col")
+    )
+  )
+})
+
+#' Rank-transform a matrix
+#' 
+#' Rank the values within each row/col of a matrix, and output
+#' the rank values as a new matrix. Rank values are offset such
+#' that the rank of a 0 value is 0, and ties are handled by
+#' averaging ranks.
+#'
+#' Note that efficient rank calculation depends on the storage order
+#' of a matrix, so it may be necessary to call transpose_storage_order()
+#'
+#' @param mat Data matrix (IterableMatrix)
+#' @param axis Axis to rank values within. "col" to rank values within each column,
+#'     and "row" to rank values within each row.
+#' @keywords internal
+rank_transform <- function(mat, axis) {
+  assert_is(mat, "IterableMatrix")
+  assert_is_character(axis)
+  assert_len(axis, 1)
+  assert_true(axis %in% c("row", "col"))
+  assert_true(storage_order(mat) == axis)
+
+  wrapMatrix("MatrixRankTransform", mat)
+}
 
 # Row sums and row means
 
@@ -485,11 +540,13 @@ setClass("MatrixSubset",
   slots = c(
     matrix = "IterableMatrix",
     row_selection = "integer",
-    col_selection = "integer"
+    col_selection = "integer",
+    zero_dims = "logical"
   ),
   prototype = list(
     row_selection = integer(0),
-    col_selection = integer(0)
+    col_selection = integer(0),
+    zero_dims = c(FALSE, FALSE)
   )
 )
 setMethod("matrix_type", signature(x = "MatrixSubset"), function(x) matrix_type(x@matrix))
@@ -534,8 +591,14 @@ setMethod("[", "IterableMatrix", function(x, i, j, ...) {
     i <- rlang::maybe_missing(j)
     j <- rlang::maybe_missing(tmp)
   }
-  if (!rlang::is_missing(i)) ret@row_selection <- i
-  if (!rlang::is_missing(j)) ret@col_selection <- j
+  if (!rlang::is_missing(i)) {
+    ret@row_selection <- i
+    ret@zero_dims[1] <- length(i) == 0
+  }
+  if (!rlang::is_missing(j)) {
+    ret@col_selection <- j
+    ret@zero_dims[2] <- length(j) == 0
+  }
   ret
 })
 
@@ -551,18 +614,20 @@ setMethod("[", "MatrixSubset", function(x, i, j, ...) {
     j <- rlang::maybe_missing(tmp)
   }
   if (!rlang::is_missing(i)) {
-    if (length(x@row_selection) == 0) {
+    if (length(x@row_selection) == 0 && !x@zero_dims[1]) {
       x@row_selection <- i
     } else {
       x@row_selection <- x@row_selection[i]
     }
+    x@zero_dims[1] <- length(i) == 0
   }
   if (!rlang::is_missing(j)) {
-    if (length(x@col_selection) == 0) {
+    if (length(x@col_selection) == 0 && !x@zero_dims[2]) {
       x@col_selection <- j
     } else {
       x@col_selection <- x@col_selection[j]
     }
+    x@zero_dims[2] <- length(j) == 0
   }
   x
 })
@@ -576,19 +641,19 @@ setMethod("iterate_matrix", "MatrixSubset", function(x) {
 
   ret <- iterate_matrix(x@matrix)
 
-  if (length(x@row_selection) != 0) ret <- iter_row_function(ret, x@row_selection - 1L)
-  if (length(x@col_selection) != 0) ret <- iter_col_function(ret, x@col_selection - 1L)
+  if (length(x@row_selection) != 0 || x@zero_dims[1]) ret <- iter_row_function(ret, x@row_selection - 1L)
+  if (length(x@col_selection) != 0 || x@zero_dims[2]) ret <- iter_col_function(ret, x@col_selection - 1L)
   
   ret
 })
 
 setMethod("short_description", "MatrixSubset", function(x) {
   if (x@transpose) {
-    rows <- x@col_selection
-    cols <- x@row_selection
+    rows <- if (x@zero_dims[2]) "none" else x@col_selection
+    cols <- if (x@zero_dims[1]) "none" else x@row_selection
   } else {
-    rows <- x@row_selection
-    cols <- x@col_selection
+    rows <- if (x@zero_dims[1]) "none" else x@row_selection
+    cols <- if (x@zero_dims[2]) "none" else x@col_selection
   }
   c(
     short_description(x@matrix),
@@ -769,7 +834,8 @@ setClass("PackedMatrixMemBase",
     index_data = "integer",
     index_starts = "integer",
     index_idx = "integer",
-    idxptr = "integer",
+    index_idx_offsets = "numeric",
+    idxptr = "numeric",
     version = "character"
   ),
   prototype = list(
@@ -777,7 +843,8 @@ setClass("PackedMatrixMemBase",
     index_data = integer(0),
     index_starts = integer(0),
     index_idx = integer(0),
-    idxptr = integer(0),
+    index_idx_offsets = numeric(0),
+    idxptr = numeric(0),
     version = character(0)
   )
 )
@@ -790,11 +857,13 @@ setClass("PackedMatrixMem_uint32_t",
   contains = "PackedMatrixMemBase",
   slots = c(
     val_data = "integer",
-    val_idx = "integer"
+    val_idx = "integer",
+    val_idx_offsets = "numeric"
   ),
   prototype = list(
     val_data = integer(0),
-    val_idx = integer(0)
+    val_idx = integer(0),
+    val_idx_offsets = numeric(0)
   )
 )
 setMethod("matrix_type", "PackedMatrixMem_uint32_t", function(x) "uint32_t")
@@ -833,12 +902,12 @@ setClass("UnpackedMatrixMemBase",
   slots = c(
     # Leave out val storage since it's data-type dependent
     index = "integer",
-    idxptr = "integer",
+    idxptr = "numeric",
     version = "character"
   ),
   prototype = list(
     index = integer(0),
-    idxptr = integer(0),
+    idxptr = numeric(0),
     version = character(0)
   )
 )
@@ -906,11 +975,11 @@ transpose_storage_order <- function(matrix, outdir = tempfile("transpose"), tmpd
   outdir <- normalizePath(outdir, mustWork = FALSE)
   tmpdir <- normalizePath(tmpdir, mustWork = FALSE)
   tmpdir <- tempfile("transpose_tmp", tmpdir = tmpdir)
+  on.exit(unlink(tmpdir, recursive = TRUE, expand = FALSE))
 
   it <- iterate_matrix(matrix)
   write_function(it, outdir, tmpdir, load_bytes, sort_bytes, !matrix@transpose)
 
-  unlink(tmpdir, recursive = TRUE, expand = FALSE)
   open_matrix_dir(outdir)
 }
 
@@ -1014,7 +1083,8 @@ setMethod("short_description", "MatrixDir", function(x) {
 #' @param dir Directory to save the data into
 #' @param buffer_size For performance tuning only. The number of items to be buffered
 #' in memory before calling writes to disk.
-#' @param overwrite If `TRUE`, overwrite any pre-existing data
+#' @param overwrite If `TRUE`, write to a temp dir then overwrite existing data. Alternatively,
+#'   pass a temp path as a string to customize the temp dir location.
 #' @export
 write_matrix_dir <- function(mat, dir, compress = TRUE, buffer_size = 8192L, overwrite = FALSE) {
   assert_is(mat, c("IterableMatrix", "dgCMatrix"))
@@ -1023,7 +1093,15 @@ write_matrix_dir <- function(mat, dir, compress = TRUE, buffer_size = 8192L, ove
   assert_is(dir, "character")
   assert_is(compress, "logical")
   assert_is(buffer_size, "integer")
-  assert_is(overwrite, "logical")
+  assert_is(overwrite, c("logical", "character"))
+  if (is(overwrite, "character")) {
+    assert_true(dir.exists(overwrite))
+    overwrite_path <- tempfile("overwrite", tmpdir=overwrite)
+    overwrite <- TRUE
+  } else if (overwrite) {
+    overwrite_path <- tempfile("overwrite")
+  }
+
 
   assert_true(matrix_type(mat) %in% c("uint32_t", "float", "double"))
   if (compress && matrix_type(mat) != "uint32_t") {
@@ -1034,11 +1112,21 @@ write_matrix_dir <- function(mat, dir, compress = TRUE, buffer_size = 8192L, ove
   }
 
   dir <- normalizePath(dir, mustWork = FALSE)
+  
+  did_tmp_copy <- FALSE
+  if (overwrite && dir.exists(dir)) {
+    mat <- write_matrix_dir(mat, overwrite_path, compress, buffer_size)
+    did_tmp_copy <- TRUE
+  }
+
   it <- iterate_matrix(mat)
 
   write_function <- get(sprintf("write_%s_matrix_file_%s_cpp", ifelse(compress, "packed", "unpacked"), matrix_type(mat)))
   write_function(it, dir, buffer_size, overwrite, mat@transpose)
 
+  if (did_tmp_copy) {
+    unlink(overwrite_path, recursive=TRUE)
+  }
   open_matrix_dir(dir, buffer_size)
 }
 
@@ -1108,6 +1196,14 @@ write_matrix_hdf5 <- function(mat, path, group, compress = TRUE, buffer_size = 8
   assert_is(buffer_size, "integer")
   assert_is(chunk_size, "integer")
   assert_is(overwrite, "logical")
+  assert_is(overwrite, c("logical", "character"))
+  if (is(overwrite, "character")) {
+    assert_true(dir.exists(overwrite))
+    overwrite_path <- tempfile("overwrite", tmpdir=overwrite)
+    overwrite <- TRUE
+  } else if (overwrite) {
+    overwrite_path <- tempfile("overwrite")
+  }
 
   assert_true(matrix_type(mat) %in% c("uint32_t", "float", "double"))
   if (compress && matrix_type(mat) != "uint32_t") {
@@ -1118,10 +1214,13 @@ write_matrix_hdf5 <- function(mat, path, group, compress = TRUE, buffer_size = 8
   }
 
   path <- normalizePath(path, mustWork = FALSE)
+  did_tmp_copy <- FALSE
   if (overwrite && hdf5_group_exists_cpp(path, group)) {
     rlang::inform(c(
       "Warning: Overwriting an hdf5 dataset does not free old storage"
     ), .frequency = "regularly", .frequency_id = "hdf5_overwrite")
+    did_tmp_copy <- TRUE
+    mat <- write_matrix_dir(mat, overwrite_path, compress, buffer_size)
   }
 
   it <- iterate_matrix(mat)
@@ -1129,6 +1228,9 @@ write_matrix_hdf5 <- function(mat, path, group, compress = TRUE, buffer_size = 8
   write_function <- get(sprintf("write_%s_matrix_hdf5_%s_cpp", ifelse(compress, "packed", "unpacked"), matrix_type(mat)))
   write_function(it, path, group, buffer_size, chunk_size, overwrite, mat@transpose)
 
+  if (did_tmp_copy) {
+    unlink(overwrite_path, recursive=TRUE)
+  }
   open_matrix_hdf5(path, group, buffer_size)
 }
 
@@ -1163,7 +1265,9 @@ setClass("10xMatrixH5",
 setMethod("matrix_type", "10xMatrixH5", function(x) "uint32_t")
 setMethod("matrix_inputs", "10xMatrixH5", function(x) list())
 setMethod("iterate_matrix", "10xMatrixH5", function(x) {
-  iterate_matrix_10x_hdf5_cpp(x@path, x@buffer_size)
+  if (x@transpose) x <- t(x)
+  x@dimnames <- denormalize_dimnames(x@dimnames)
+  iterate_matrix_10x_hdf5_cpp(x@path, x@buffer_size, x@dimnames[[1]], x@dimnames[[2]])
 })
 setMethod("short_description", "10xMatrixH5", function(x) {
   sprintf("10x HDF5 feature matrix in file %s", x@path)
@@ -1174,7 +1278,7 @@ setMethod("short_description", "10xMatrixH5", function(x) {
 #' @inheritParams open_matrix_hdf5
 #' @param feature_type Optional selection of feature types to include in output matrix.
 #'    For multiome data, the options are "Gene Expression" and "Peaks". This option is
-#'    only compatible
+#'    only compatible with files from cellranger 3.0 and newer.
 #' @return BPCells matrix object
 #' @details The 10x format makes use of gzip compression for the matrix data,
 #' which can slow down read performance. Consider writing into another format
@@ -1206,7 +1310,7 @@ open_matrix_10x_hdf5 <- function(path, feature_type = NULL, buffer_size = 16384L
 #' @param barcodes Vector of names for the cells
 #' @param feature_ids Vector of IDs for the features
 #' @param feature_names Vector of names for the features
-#' @param feature_type String or vector of feature types
+#' @param feature_types String or vector of feature types
 #' @param feature_metadata Named list of additional metadata vectors
 #' to store for each feature
 #' @details Input matrices must be in column-major storage order,
@@ -1253,6 +1357,8 @@ write_matrix_10x_hdf5 <- function(mat,
       assert_len(feature_metadata[[name]], nrow(mat))
       assert_is(feature_metadata[[name]], "character")
     }
+  } else {
+    names(feature_metadata) <- character(0)
   }
   assert_is(buffer_size, "integer")
   assert_is(chunk_size, "integer")
@@ -1270,7 +1376,7 @@ write_matrix_10x_hdf5 <- function(mat,
     buffer_size,
     chunk_size
   )
-  open_matrix_10x_hdf5(path, buffer_size)
+  open_matrix_10x_hdf5(path, buffer_size=buffer_size)
 }
 
 setClass("AnnDataMatrixH5",
@@ -1278,18 +1384,22 @@ setClass("AnnDataMatrixH5",
   slots = c(
     path = "character",
     group = "character",
-    buffer_size = "integer"
+    buffer_size = "integer",
+    storage_transpose = "logical"
   ),
   prototype = list(
     path = character(0),
     group = "matrix",
-    buffer_size = integer(0)
+    buffer_size = integer(0),
+    storage_transpose = logical(0)
   )
 )
 setMethod("matrix_type", "AnnDataMatrixH5", function(x) "float")
 setMethod("matrix_inputs", "AnnDataMatrixH5", function(x) list())
 setMethod("iterate_matrix", "AnnDataMatrixH5", function(x) {
-  iterate_matrix_anndata_hdf5_cpp(x@path, x@group, x@buffer_size)
+  if (x@storage_transpose != x@transpose) x <- t(x)
+  x@dimnames <- denormalize_dimnames(x@dimnames)
+  iterate_matrix_anndata_hdf5_cpp(x@path, x@group, x@buffer_size, x@dimnames[[1]], x@dimnames[[2]])
 })
 setMethod("short_description", "AnnDataMatrixH5", function(x) {
   sprintf(
@@ -1316,17 +1426,99 @@ open_matrix_anndata_hdf5 <- function(path, group = "X", buffer_size = 16384L) {
   res <- new("AnnDataMatrixH5",
     path = path, dim = info$dims, buffer_size = buffer_size,
     group = group, dimnames = normalized_dimnames(info$row_names, info$col_names),
-    transpose = info$transpose
+    transpose = info$transpose,
+    storage_transpose = info$transpose
   )
 
-  # We do the reverse of what transpose says, because anndata files are usually
-  # stored row-major with cells as rows, whereas BPCells will work best with
-  # col-major with cells as cols.
-  if (info[["transpose"]]) {
-    return(t(res))
+  return(t(res))
+}
+
+#' Import MatrixMarket files
+#'
+#' Read a sparse matrix from a MatrixMarket file. This is a text-based format used by 
+#' 10x, Parse, and others to store sparse matrices. 
+#' Format details on the [NIST website](https://math.nist.gov/MatrixMarket/formats.html).
+#' @inheritParams transpose_storage_order
+#' @param mtx_path Path of mtx or mtx.gz file
+#' @param row_names Character vector of row names
+#' @param col_names Character vector of col names
+#' @param row_major If true, store the matrix in row-major orientation
+#' @return MatrixDir object with the imported matrix
+#' @details Import MatrixMarket mtx files to the BPCells format. This implementation ensures
+#'   fixed memory usage even for very large inputs by doing on-disk sorts. It will be
+#'   much slower than hdf5 inputs, so only use MatrixMarket format when absolutely necessary.
+#'
+#'   As a rough speed estimate, importing the 17GB Parse 
+#'   [1M PBMC](https://www.parsebiosciences.com/datasets/pbmc/single-cell-rna-sequencing-of-1-million-human-cells-in-a-single-experiment)
+#'   `DGE_1M_PBMC.mtx` file takes about 4 minutes and 1.3GB of RAM, producing a compressed output matrix of 1.5GB. `mtx.gz`
+#'   files will be slower to import due to gzip decompression.
+#'   
+#'   When importing from 10x mtx files, the row and column names can be read automatically
+#'   using the `import_matrix_market_10x()` convenience function.
+#' @export
+import_matrix_market <- function(
+  mtx_path, outdir = tempfile("matrix_market"), row_names = NULL, col_names = NULL, row_major = FALSE,
+  tmpdir = tempdir(), load_bytes = 4194304L, sort_bytes = 1073741824L
+) {
+  if (!is.null(row_names)) {
+    row_names <- as.character(row_names)
   } else {
-    return(res)
+    row_names <- character(0)
   }
+  if (!is.null(col_names)) {
+    col_names <- as.character(col_names)
+  } else {
+    col_names <- character(0)
+  }
+
+  mtx_path <- normalizePath(mtx_path, mustWork = FALSE)
+
+  outdir <- normalizePath(outdir, mustWork = FALSE)
+  tmpdir <- normalizePath(tmpdir, mustWork = FALSE)
+  tmpdir <- tempfile("matrix_market_tmp", tmpdir = tmpdir)
+  #on.exit(unlink(tmpdir, recursive = TRUE, expand = FALSE))
+
+
+  import_matrix_market_cpp(mtx_path, row_names, col_names, outdir, tmpdir, load_bytes, sort_bytes, row_major)
+  m <- open_matrix_dir(outdir)
+  return(m)
+}
+
+#' @rdname import_matrix_market
+#' @param mtx_dir Directory holding matrix.mtx.gz, barcodes.tsv.gz, and features.tsv.gz
+#' @param feature_type String or vector of feature types to include. (cellranger 3.0 and newer)
+#' @export
+import_matrix_market_10x <- function(
+  mtx_dir, outdir = tempfile("matrix_market"), feature_type=NULL, row_major = FALSE, 
+  tmpdir = tempdir(), load_bytes = 4194304L, sort_bytes = 1073741824L
+) {
+  mtx_dir <- normalizePath(mtx_dir, mustWork=TRUE)
+  assert_is_file(file.path(mtx_dir, c("matrix.mtx.gz", "features.tsv.gz", "barcodes.tsv.gz")), multiple_ok=TRUE)
+  col_types <- readr::cols(.default=readr::col_character())
+  col_names <- readr::read_tsv(file.path(mtx_dir, "barcodes.tsv.gz"), col_names=FALSE, col_types=col_types, progress=FALSE)[[1]]
+  features <- readr::read_tsv(file.path(mtx_dir, "features.tsv.gz"), col_names=FALSE, col_types=col_types, progress=FALSE)
+  row_names <- features[[1]]
+  if (!is.null(feature_type)) {
+    assert_true(ncol(features) >= 3)
+  }
+  
+  m <- import_matrix_market(
+    file.path(mtx_dir, "matrix.mtx.gz"), 
+    row_names = row_names, 
+    col_names = col_names,
+    row_major = row_major,
+    outdir = outdir,
+    tmpdir = tmpdir,
+    load_bytes = load_bytes,
+    sort_bytes = sort_bytes
+  )
+
+  if (!is.null(feature_type)) {
+    valid_features <- features[[3]] %in% feature_type # nolint
+    m <- m[valid_features, ]
+  }
+
+  m
 }
 
 # Overlap matrix from fragments

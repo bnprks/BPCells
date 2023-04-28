@@ -1,4 +1,7 @@
+#include <atomic>
+
 #include "StoredFragments.h"
+#include "../bitpacking/bp128.h"
 
 namespace BPCells {
 
@@ -7,7 +10,7 @@ StoredFragmentsBase::StoredFragmentsBase(
     UIntReader &&start,
     UIntReader &&end,
     UIntReader &&end_max,
-    UIntReader &&chr_ptr,
+    ULongReader &&chr_ptr,
     std::unique_ptr<StringReader> &&chr_names,
     std::unique_ptr<StringReader> &&cell_names
 )
@@ -21,7 +24,7 @@ StoredFragmentsBase::StoredFragmentsBase(
 
 // Read end_max_buf from end_max iterator, making it equal to the values between
 // start_idx and end_idx
-void StoredFragmentsBase::readEndMaxBuf(uint32_t start_idx, uint32_t end_idx) {
+void StoredFragmentsBase::readEndMaxBuf(uint64_t start_idx, uint64_t end_idx) {
     if (start_idx == end_idx) {
         end_max_buf.resize(0);
         return;
@@ -32,7 +35,7 @@ void StoredFragmentsBase::readEndMaxBuf(uint32_t start_idx, uint32_t end_idx) {
     uint32_t i = 0;
     while (true) {
         end_max.ensureCapacity(1);
-        uint32_t load_amount = std::min(end_max.capacity(), (uint32_t)end_max_buf.size() - i);
+        uint64_t load_amount = std::min(end_max.capacity(), (uint64_t) end_max_buf.size() - i);
 
         std::memmove(&end_max_buf[i], end_max.data(), load_amount * sizeof(uint32_t));
         i += load_amount;
@@ -67,7 +70,7 @@ void StoredFragmentsBase::seek(uint32_t chr_id, uint32_t base) {
     }
 
     // Binary search for base in end_max
-    uint32_t current_block = chr_start_ptr / 128 +
+    uint64_t current_block = chr_start_ptr / 128 +
                              std::upper_bound(end_max_buf.begin(), end_max_buf.end(), base) -
                              end_max_buf.begin();
 
@@ -130,9 +133,15 @@ StoredFragments StoredFragments::openUnpacked(
     std::unique_ptr<StringReader> &&chr_names,
     std::unique_ptr<StringReader> &&cell_names
 ) {
-    if (rb.readVersion() != "unpacked-fragments-v1") {
+
+    ULongReader chr_ptr;
+    if (rb.readVersion() == "unpacked-fragments-v1") {
+        chr_ptr = rb.openUIntReader("chr_ptr").convert<uint64_t>();
+    } else if (rb.readVersion() == "unpacked-fragments-v2") {
+        chr_ptr = rb.openULongReader("chr_ptr");
+    } else {
         throw std::runtime_error(
-            std::string("Version does not match unpacked-fragments-v1: ") + rb.readVersion()
+            std::string("Version does not match unpacked-fragments-v2: ") + rb.readVersion()
         );
     }
 
@@ -144,7 +153,7 @@ StoredFragments StoredFragments::openUnpacked(
         rb.openUIntReader("start"),
         rb.openUIntReader("end"),
         rb.openUIntReader("end_max"),
-        rb.openUIntReader("chr_ptr"),
+        std::move(chr_ptr),
         std::move(chr_names),
         std::move(cell_names)
     );
@@ -176,14 +185,24 @@ StoredFragmentsPacked StoredFragmentsPacked::openPacked(
     std::unique_ptr<StringReader> &&chr_names,
     std::unique_ptr<StringReader> &&cell_names
 ) {
-    if (rb.readVersion() != "packed-fragments-v1") {
+    ULongReader chr_ptr, start_idx_offsets, end_idx_offsets, cell_idx_offsets;
+    if (rb.readVersion() == "packed-fragments-v1") {
+        chr_ptr = rb.openUIntReader("chr_ptr").convert<uint64_t>();
+        start_idx_offsets = ConstNumReader<uint64_t>::create({0, UINT64_MAX});
+        end_idx_offsets = ConstNumReader<uint64_t>::create({0, UINT64_MAX});
+        cell_idx_offsets = ConstNumReader<uint64_t>::create({0, UINT64_MAX});
+    } else if (rb.readVersion() == "packed-fragments-v2") {
+        chr_ptr = rb.openULongReader("chr_ptr");
+        start_idx_offsets = rb.openULongReader("start_idx_offsets");
+        end_idx_offsets = rb.openULongReader("end_idx_offsets");
+        cell_idx_offsets = rb.openULongReader("cell_idx_offsets");
+    } else {
         throw std::runtime_error(
-            std::string("Version does not match packed-fragments-v1: ") + rb.readVersion()
+            std::string("Version does not match packed-fragments-v2: ") + rb.readVersion()
         );
     }
 
-    UIntReader chr_ptr = rb.openUIntReader("chr_ptr");
-    uint32_t count = 0;
+    uint64_t count = 0;
     for (uint32_t i = 0; i < chr_ptr.size(); i++) {
         count = std::max(count, chr_ptr.read_one());
     }
@@ -195,7 +214,10 @@ StoredFragmentsPacked StoredFragmentsPacked::openPacked(
     return StoredFragmentsPacked(
         UIntReader(
             std::make_unique<BP128UIntReader>(
-                rb.openUIntReader("cell_data"), rb.openUIntReader("cell_idx"), count
+                rb.openUIntReader("cell_data"),
+                rb.openUIntReader("cell_idx"),
+                std::move(cell_idx_offsets),
+                count
             ),
             load_size,
             load_size
@@ -204,6 +226,7 @@ StoredFragmentsPacked StoredFragmentsPacked::openPacked(
             std::make_unique<BP128_D1_UIntReader>(
                 rb.openUIntReader("start_data"),
                 rb.openUIntReader("start_idx"),
+                std::move(start_idx_offsets),
                 rb.openUIntReader("start_starts"),
                 count
             ),
@@ -212,7 +235,10 @@ StoredFragmentsPacked StoredFragmentsPacked::openPacked(
         ),
         UIntReader(
             std::make_unique<BP128UIntReader>(
-                rb.openUIntReader("end_data"), rb.openUIntReader("end_idx"), count
+                rb.openUIntReader("end_data"),
+                rb.openUIntReader("end_idx"),
+                std::move(end_idx_offsets),
+                count
             ),
             load_size,
             load_size
@@ -259,7 +285,7 @@ StoredFragmentsWriter::StoredFragmentsWriter(
     UIntWriter &&start,
     UIntWriter &&end,
     UIntWriter &&end_max,
-    UIntWriter &&chr_ptr,
+    ULongWriter &&chr_ptr,
     std::unique_ptr<StringWriter> &&chr_names,
     std::unique_ptr<StringWriter> &&cell_names,
     bool subtract_start_from_end
@@ -274,13 +300,13 @@ StoredFragmentsWriter::StoredFragmentsWriter(
     , subtract_start_from_end(subtract_start_from_end) {}
 
 StoredFragmentsWriter StoredFragmentsWriter::createUnpacked(WriterBuilder &wb) {
-    wb.writeVersion("unpacked-fragments-v1");
+    wb.writeVersion("unpacked-fragments-v2");
     return StoredFragmentsWriter(
         wb.createUIntWriter("cell"),
         wb.createUIntWriter("start"),
         wb.createUIntWriter("end"),
         wb.createUIntWriter("end_max"),
-        wb.createUIntWriter("chr_ptr"),
+        wb.createULongWriter("chr_ptr"),
         wb.createStringWriter("chr_names"),
         wb.createStringWriter("cell_names"),
         false
@@ -288,12 +314,14 @@ StoredFragmentsWriter StoredFragmentsWriter::createUnpacked(WriterBuilder &wb) {
 }
 
 StoredFragmentsWriter StoredFragmentsWriter::createPacked(WriterBuilder &wb, uint32_t buffer_size) {
-    wb.writeVersion("packed-fragments-v1");
+    wb.writeVersion("packed-fragments-v2");
 
     return StoredFragmentsWriter(
         UIntWriter(
             std::make_unique<BP128UIntWriter>(
-                wb.createUIntWriter("cell_data"), wb.createUIntWriter("cell_idx")
+                wb.createUIntWriter("cell_data"),
+                wb.createUIntWriter("cell_idx"),
+                wb.createULongWriter("cell_idx_offsets")
             ),
             buffer_size
         ),
@@ -301,32 +329,35 @@ StoredFragmentsWriter StoredFragmentsWriter::createPacked(WriterBuilder &wb, uin
             std::make_unique<BP128_D1_UIntWriter>(
                 wb.createUIntWriter("start_data"),
                 wb.createUIntWriter("start_idx"),
+                wb.createULongWriter("start_idx_offsets"),
                 wb.createUIntWriter("start_starts")
             ),
             buffer_size
         ),
         UIntWriter(
             std::make_unique<BP128UIntWriter>(
-                wb.createUIntWriter("end_data"), wb.createUIntWriter("end_idx")
+                wb.createUIntWriter("end_data"),
+                wb.createUIntWriter("end_idx"),
+                wb.createULongWriter("end_idx_offsets")
             ),
             buffer_size
         ),
         wb.createUIntWriter("end_max"),
-        wb.createUIntWriter("chr_ptr"),
+        wb.createULongWriter("chr_ptr"),
         wb.createStringWriter("chr_names"),
         wb.createStringWriter("cell_names"),
         true
     );
 }
 
-void StoredFragmentsWriter::write(FragmentLoader &fragments, void (*checkInterrupt)(void)) {
+void StoredFragmentsWriter::write(FragmentLoader &fragments, std::atomic<bool> *user_interrupt) {
     uint32_t cur_end_max = 0;
     uint32_t prev_end_max = 0;
-    uint32_t idx = 0;
+    uint64_t idx = 0;
 
-    std::vector<uint32_t> chr_ptr_buf;
+    std::vector<uint64_t> chr_ptr_buf;
 
-    uint32_t write_capacity =
+    uint64_t write_capacity =
         std::min({cell.maxCapacity(), start.maxCapacity(), end.maxCapacity()});
 
     fragments.restart();
@@ -343,17 +374,17 @@ void StoredFragmentsWriter::write(FragmentLoader &fragments, void (*checkInterru
         prev_end_max = std::max(prev_end_max, cur_end_max);
         cur_end_max = 0;
         while (fragments.load()) {
-            uint32_t capacity = fragments.capacity();
+            uint64_t capacity = fragments.capacity();
 
             const uint32_t *in_cell_data = fragments.cellData();
             const uint32_t *in_start_data = fragments.startData();
             uint32_t *in_end_data = fragments.endData();
 
-            uint32_t i = 0;
+            uint64_t i = 0;
 
             // Finish calculating end_max for first partial chunk
             if (idx % 128 != 0) {
-                const uint32_t batch = std::min(capacity, 128 - idx % 128);
+                const uint64_t batch = std::min(capacity, 128 - idx % 128);
                 for (; i < batch; i++) {
                     cur_end_max = std::max(cur_end_max, in_end_data[i]);
                 }
@@ -374,7 +405,7 @@ void StoredFragmentsWriter::write(FragmentLoader &fragments, void (*checkInterru
             }
 
             if (subtract_start_from_end) {
-                uint32_t j;
+                uint64_t j;
                 for (j = 0; j + 128 <= capacity; j += 128) {
                     simdsubtract(in_end_data + j, in_start_data + j);
                 }
@@ -385,8 +416,8 @@ void StoredFragmentsWriter::write(FragmentLoader &fragments, void (*checkInterru
 
             // Write data in chunks in case our output read capacity is less than our
             // input read amount
-            for (uint32_t written = 0; written < capacity;) {
-                uint32_t write_amount = std::min(write_capacity, capacity - written);
+            for (uint64_t written = 0; written < capacity;) {
+                uint64_t write_amount = std::min(write_capacity, capacity - written);
                 cell.ensureCapacity(write_amount);
                 start.ensureCapacity(write_amount);
                 end.ensureCapacity(write_amount);
@@ -405,7 +436,7 @@ void StoredFragmentsWriter::write(FragmentLoader &fragments, void (*checkInterru
 
             idx += capacity;
 
-            if (checkInterrupt != NULL) checkInterrupt();
+            if (user_interrupt != NULL && *user_interrupt) return;
         }
         chr_ptr_buf[chr_id * 2 + 1] = idx;
     }
@@ -418,7 +449,7 @@ void StoredFragmentsWriter::write(FragmentLoader &fragments, void (*checkInterru
     }
 
     chr_ptr.ensureCapacity(chr_ptr_buf.size());
-    std::memmove(chr_ptr.data(), chr_ptr_buf.data(), chr_ptr_buf.size() * sizeof(uint32_t));
+    std::memmove(chr_ptr.data(), chr_ptr_buf.data(), chr_ptr_buf.size() * sizeof(uint64_t));
     chr_ptr.advance(chr_ptr_buf.size());
 
     cell.finalize();

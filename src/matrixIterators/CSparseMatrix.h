@@ -1,3 +1,5 @@
+#include <atomic>
+
 #include "../arrayIO/array_interfaces.h"
 #include "MatrixIterator.h"
 
@@ -103,7 +105,7 @@ class CSparseMatrixWriter : public MatrixWriter<double> {
     Eigen::SparseMatrix<double> eigen_mat;
 
   public:
-    void write(MatrixLoader<double> &loader, void (*checkInterrupt)(void) = NULL) override {
+    void write(MatrixLoader<double> &loader, std::atomic<bool> *user_interrupt = NULL) override {
         MatrixIterator<double> mat((std::unique_ptr<MatrixLoader<double>>(&loader)));
         // Don't take ownership of our input loader
         mat.preserve_input_loader();
@@ -114,7 +116,7 @@ class CSparseMatrixWriter : public MatrixWriter<double> {
         while (mat.nextCol()) {
             while (mat.nextValue()) {
                 triplets.push_back(Eigen::Triplet<double>(mat.row(), mat.col(), mat.val()));
-                if (count++ % 8192 == 0 && checkInterrupt != NULL) checkInterrupt();
+                if (count++ % 8192 == 0 && user_interrupt != NULL && *user_interrupt) return;
             }
         }
 
@@ -130,7 +132,7 @@ class CSparseTransposeMatrixWriter : public MatrixWriter<double> {
     Eigen::SparseMatrix<double> eigen_mat;
 
   public:
-    void write(MatrixLoader<double> &loader, void (*checkInterrupt)(void) = NULL) override {
+    void write(MatrixLoader<double> &loader, std::atomic<bool> *user_interrupt = NULL) override {
         MatrixIterator<double> mat((std::unique_ptr<MatrixLoader<double>>(&loader)));
         // Don't take ownership of our input loader
         mat.preserve_input_loader();
@@ -140,7 +142,7 @@ class CSparseTransposeMatrixWriter : public MatrixWriter<double> {
         while (mat.nextCol()) {
             while (mat.nextValue()) {
                 triplets.push_back(Eigen::Triplet<double>(mat.col(), mat.row(), mat.val()));
-                if (count++ % 8192 == 0 && checkInterrupt != NULL) checkInterrupt();
+                if (count++ % 8192 == 0 && user_interrupt != NULL && *user_interrupt) return;
             }
         }
 

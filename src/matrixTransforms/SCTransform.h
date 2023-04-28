@@ -1,5 +1,6 @@
 #pragma once
 
+#include <atomic>
 #include <algorithm>
 
 #include "../lib/sleef_wrapper.h"
@@ -42,13 +43,13 @@ class SCTransformPearsonSIMD : public MatrixTransformDense {
     void vecMultiplyRightZero(
         Eigen::VectorXd &out,
         const Eigen::Map<Eigen::VectorXd> v,
-        void (*checkInterrupt)(void) = NULL
+        std::atomic<bool> *user_interrupt = NULL
     ) override;
 
     void vecMultiplyLeftZero(
         Eigen::VectorXd &out,
         const Eigen::Map<Eigen::VectorXd> v,
-        void (*checkInterrupt)(void) = NULL
+        std::atomic<bool> *user_interrupt = NULL
     ) override;
 };
 
@@ -71,13 +72,13 @@ class SCTransformPearsonTransposeSIMD : public MatrixTransformDense {
     void vecMultiplyRightZero(
         Eigen::VectorXd &out,
         const Eigen::Map<Eigen::VectorXd> v,
-        void (*checkInterrupt)(void) = NULL
+        std::atomic<bool> *user_interrupt = NULL
     ) override;
 
     void vecMultiplyLeftZero(
         Eigen::VectorXd &out,
         const Eigen::Map<Eigen::VectorXd> v,
-        void (*checkInterrupt)(void) = NULL
+        std::atomic<bool> *user_interrupt = NULL
     ) override;
 };
 

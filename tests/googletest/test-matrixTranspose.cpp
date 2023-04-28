@@ -67,7 +67,7 @@ void test_transpose(const Eigen::SparseMatrix<double> orig_mat) {
     w_double.write(mat_d);
     mat_d.restart();
     w_uint.write(mat_i);
-
+    
     auto trans_i = std::make_unique<StoredMatrix<uint32_t>>(StoredMatrix<uint32_t>::openPacked(vb1));
     auto loader1 = MatrixConverterLoader<uint32_t, double>(std::move(trans_i));
 
@@ -81,6 +81,8 @@ void test_transpose(const Eigen::SparseMatrix<double> orig_mat) {
 }
 
 TEST(MatrixTranspose, SmallIntMatrix) {
+    test_transpose(generate_mat(3,5));
+    test_transpose(generate_mat(15,200));
     test_transpose(generate_mat(100, 2000));
     test_transpose(generate_mat(3, 100000));
     test_transpose(generate_mat(100000, 3));

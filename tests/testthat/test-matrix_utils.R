@@ -83,7 +83,6 @@ test_that("Subsetting matrix multiply works", {
   m <- as(m1, "IterableMatrix") %*% as(m2, "IterableMatrix")
   res <- m1 %*% m2
 
-
   expect_equal(as(m[c(2, 4, 9, 5), ], "dgCMatrix"), res[c(2, 4, 9, 5), ], tolerance=testthat_tolerance())
   expect_s4_class(m[c(2, 4, 9, 5), ], "MatrixMultiply")
 
@@ -92,6 +91,40 @@ test_that("Subsetting matrix multiply works", {
 
   expect_equal(as(m[c(2, 4, 9, 5), c(4, 3, 6)], "dgCMatrix"), res[c(2, 4, 9, 5), c(4, 3, 6)], tolerance=testthat_tolerance())
   expect_s4_class(m[c(2, 4, 9, 5), c(4, 3, 6)], "MatrixMultiply")
+})
+
+test_that("Subsetting to 0 dimensions works", {
+  m1 <- generate_dense_matrix(10, 5) %>% as("dgCMatrix")
+  m2 <- as(m1, "IterableMatrix")
+  expect_identical(
+    m2[rep_len(FALSE, nrow(m1)),] %>% as("dgCMatrix"),
+    m1[rep_len(FALSE, nrow(m1)),]
+  )
+
+  expect_identical(
+    m2[,rep_len(FALSE, ncol(m1))] %>% as("dgCMatrix"),
+    m1[,rep_len(FALSE, ncol(m1))]
+  )
+
+  expect_identical(
+    m2[1:3,][integer(0),] %>% as("dgCMatrix"),
+    m1[1:3,][integer(0),]
+  )
+
+  expect_identical(
+    m2[1:3,][,integer(0)] %>% as("dgCMatrix"),
+    m1[1:3,][,integer(0)]
+  )
+
+  expect_identical(
+    m2[,1:3][integer(0),] %>% as("dgCMatrix"),
+    m1[,1:3][integer(0),]
+  )
+
+  expect_identical(
+    m2[,1:3][,integer(0)] %>% as("dgCMatrix"),
+    m1[,1:3][,integer(0)]
+  )
 })
 
 test_that("Dense matrix-vector multiply works", {
@@ -212,6 +245,39 @@ test_that("Matrix mask works", {
   }
 })
 
+test_that("Rank transform works", {
+  test_mats <- list(generate_sparse_matrix(4000, 10), generate_sparse_matrix(10, 10, max_val=100))
+  # Add offsets so we have explicit zeros and negative values
+  test_mats[[1]]@x <- test_mats[[1]]@x - 5
+  test_mats[[2]]@x <- test_mats[[2]]@x - 50
+  
+  for (m in test_mats) {
+    for (type in c("uint32_t", "float", "double")) {
+      if (type == "uint32_t") m@x <- m@x - min(m@x) # Get rid of negative value for uint32_t test
+      r_rank <- as.matrix(m)
+      for (i in seq_len(ncol(r_rank))) {
+        r_rank[,i] <- rank(as.numeric(m[,i]))
+      }
+
+      r <- m %>% as("IterableMatrix") %>%
+        convert_matrix_type(type) %>%
+        rank_transform("col")
+        
+      bp_rank <- as(r, "dgCMatrix") %>% as.matrix()
+
+      # Rank of 0 entries should map to 0
+      expect_true(all(bp_rank[as.matrix(m) == 0] == 0))
+
+      # When we undo the rank offset, we should match R
+      for (i in seq_len(ncol(r_rank))) {
+        bp_rank[,i] <- bp_rank[,i] + (nrow(r) + 1)/2 - mean(bp_rank[,i])
+      }
+
+      expect_identical(r_rank, bp_rank)
+    }
+  }
+})
+
 test_that("Generic methods work", {
   # Generic methods to test:
   # - dim
@@ -252,7 +318,10 @@ test_that("Generic methods work", {
     mask = mask_matrix(mi, Matrix::sparseMatrix(i=integer(0), j=integer(0), x=integer(0), dims=dim(mi))),
     mask_float = convert_matrix_type(mi, "float") %>% mask_matrix(Matrix::sparseMatrix(i=integer(0), j=integer(0), x=integer(0), dims=dim(mi))),
     mask_int = convert_matrix_type(mi, "uint32_t") %>% mask_matrix(Matrix::sparseMatrix(i=integer(0), j=integer(0), x=integer(0), dims=dim(mi))),
-    min_1 = min_scalar(mi, 1e9),
+    min_1 = min_scalar(mi, 1e9 + 0.1),
+    min_row = min_by_row(mi, rep.int(1e9 + 0.1, nrow(mi))),
+    min_col = min_by_col(mi, rep.int(1e9 + 0.1, ncol(mi))),
+    round = round(mi),
     subset = mi[seq_len(nrow(m)), ][, seq_len(ncol(m))][seq_len(nrow(m)), seq_len(ncol(m))],
     rbind = rbind2(mi[1:2, ], mi[3:nrow(m)]),
     cbind = cbind2(mi[, 1:2], mi[, 3:ncol(m)]),
@@ -264,11 +333,12 @@ test_that("Generic methods work", {
 
   for (i in names(ident_transforms)) {
     trans <- ident_transforms[[i]]
-    short_description(trans)
+    expect_no_error(short_description(trans))
     expect_identical(dim(trans), dim(m))
     expect_identical(dimnames(trans), dimnames(m))
     expect_true(matrix_type(trans) %in% c("uint32_t", "float", "double"))
-    matrix_is_transform(trans)
+    expect_type(matrix_is_transform(trans), "logical")
+    expect_true(storage_order(trans) %in% c("roww", "col"))
 
     expect_identical(rowSums(trans), rowSums(m))
     expect_identical(colSums(trans), colSums(m))

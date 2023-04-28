@@ -11,6 +11,7 @@
 #include "arrayIO/vector.h"
 
 #include "R_array_io.h"
+#include "R_interrupts.h"
 #include "R_xptr_wrapper.h"
 
 using namespace Rcpp;
@@ -24,7 +25,9 @@ SEXP iterate_10x_fragments_cpp(std::string path, std::string comment) {
 // [[Rcpp::export]]
 void write_10x_fragments_cpp(std::string path, SEXP fragments, bool append_5th_column = false) {
     BedFragmentsWriter writer(path.c_str(), append_5th_column);
-    writer.write(*peek_unique_xptr<FragmentLoader>(fragments), &Rcpp::checkUserInterrupt);
+
+    auto frags = take_unique_xptr<FragmentLoader>(fragments);
+    run_with_R_interrupt_check(&BedFragmentsWriter::write, &writer, std::ref(*frags));
 }
 
 // [[Rcpp::export]]
@@ -68,8 +71,9 @@ IntegerVector calculate_end_max_cpp(IntegerVector end, IntegerVector chr_ptr) {
 // [[Rcpp::export]]
 List write_packed_fragments_cpp(SEXP fragments) {
     ListWriterBuilder wb;
-    StoredFragmentsWriter::createPacked(wb).write(
-        *peek_unique_xptr<FragmentLoader>(fragments), &Rcpp::checkUserInterrupt
+    auto frags = take_unique_xptr<FragmentLoader>(fragments);
+    run_with_R_interrupt_check(
+        &StoredFragmentsWriter::write, StoredFragmentsWriter::createPacked(wb), std::ref(*frags)
     );
 
     return wb.getList();
@@ -84,8 +88,9 @@ SEXP iterate_unpacked_fragments_cpp(S4 s4) {
 // [[Rcpp::export]]
 List write_unpacked_fragments_cpp(SEXP fragments) {
     ListWriterBuilder wb;
-    StoredFragmentsWriter::createUnpacked(wb).write(
-        *peek_unique_xptr<FragmentLoader>(fragments), &Rcpp::checkUserInterrupt
+    auto frags = take_unique_xptr<FragmentLoader>(fragments);
+    run_with_R_interrupt_check(
+        &StoredFragmentsWriter::write, StoredFragmentsWriter::createUnpacked(wb), std::ref(*frags)
     );
 
     return wb.getList();
@@ -113,11 +118,11 @@ List fragments_get_names(StoredFragmentsBase &&frags) {
 
 List info_fragments_reader_builder(ReaderBuilder &rb) {
     std::string version = rb.readVersion();
-    if (version == "unpacked-fragments-v1") {
+    if (version == "unpacked-fragments-v1" || version == "unpacked-fragments-v2") {
         List l = fragments_get_names(StoredFragments::openUnpacked(rb));
         l["compressed"] = false;
         return l;
-    } else if (version == "packed-fragments-v1") {
+    } else if (version == "packed-fragments-v1" || version == "packed-fragments-v2") {
         List l = fragments_get_names(StoredFragmentsPacked::openPacked(rb));
         l["compressed"] = true;
         return l;
@@ -151,8 +156,9 @@ void write_unpacked_fragments_file_cpp(
     SEXP fragments, std::string dir, uint32_t buffer_size, bool allow_overwrite
 ) {
     FileWriterBuilder wb(dir, buffer_size, allow_overwrite);
-    StoredFragmentsWriter::createUnpacked(wb).write(
-        *peek_unique_xptr<FragmentLoader>(fragments), &Rcpp::checkUserInterrupt
+    auto frags = take_unique_xptr<FragmentLoader>(fragments);
+    run_with_R_interrupt_check(
+        &StoredFragmentsWriter::write, StoredFragmentsWriter::createUnpacked(wb), std::ref(*frags)
     );
 }
 
@@ -174,8 +180,9 @@ void write_packed_fragments_file_cpp(
     SEXP fragments, std::string dir, uint32_t buffer_size, bool allow_overwrite
 ) {
     FileWriterBuilder wb(dir, buffer_size, allow_overwrite);
-    StoredFragmentsWriter::createPacked(wb).write(
-        *peek_unique_xptr<FragmentLoader>(fragments), &Rcpp::checkUserInterrupt
+    auto frags = take_unique_xptr<FragmentLoader>(fragments);
+    run_with_R_interrupt_check(
+        &StoredFragmentsWriter::write, StoredFragmentsWriter::createPacked(wb), std::ref(*frags)
     );
 }
 
@@ -211,8 +218,9 @@ void write_unpacked_fragments_hdf5_cpp(
     bool allow_overwrite
 ) {
     H5WriterBuilder wb(file, group, buffer_size, chunk_size, allow_overwrite);
-    StoredFragmentsWriter::createUnpacked(wb).write(
-        *peek_unique_xptr<FragmentLoader>(fragments), &Rcpp::checkUserInterrupt
+    auto frags = take_unique_xptr<FragmentLoader>(fragments);
+    run_with_R_interrupt_check(
+        &StoredFragmentsWriter::write, StoredFragmentsWriter::createUnpacked(wb), std::ref(*frags)
     );
 }
 
@@ -243,22 +251,16 @@ void write_packed_fragments_hdf5_cpp(
     bool allow_overwrite
 ) {
     H5WriterBuilder wb(file, group, buffer_size, chunk_size, allow_overwrite);
-    StoredFragmentsWriter::createPacked(wb).write(
-        *peek_unique_xptr<FragmentLoader>(fragments), &Rcpp::checkUserInterrupt
+    auto frags = take_unique_xptr<FragmentLoader>(fragments);
+    run_with_R_interrupt_check(
+        &StoredFragmentsWriter::write, StoredFragmentsWriter::createPacked(wb), std::ref(*frags)
     );
 }
 
 // [[Rcpp::export]]
-int get_bp128_version_cpp() { return _SIMDBP128_MODE_; }
-
-// [[Rcpp::export]]
 bool fragments_identical_cpp(SEXP fragments1, SEXP fragments2) {
-    FragmentIterator i1(std::unique_ptr<FragmentLoader>(peek_unique_xptr<FragmentLoader>(fragments1
-    )));
-    FragmentIterator i2(std::unique_ptr<FragmentLoader>(peek_unique_xptr<FragmentLoader>(fragments2
-    )));
-    i1.preserve_input_loader();
-    i2.preserve_input_loader();
+    FragmentIterator i1(take_unique_xptr<FragmentLoader>(fragments1));
+    FragmentIterator i2(take_unique_xptr<FragmentLoader>(fragments2));
     i1.restart();
     i2.restart();
 

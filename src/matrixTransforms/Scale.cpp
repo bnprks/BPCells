@@ -1,3 +1,5 @@
+#include <atomic>
+
 #include "Scale.h"
 
 namespace BPCells {
@@ -28,17 +30,17 @@ bool Scale::load() {
 }
 
 Eigen::MatrixXd
-Scale::denseMultiplyRight(const Eigen::Map<Eigen::MatrixXd> B, void (*checkInterrupt)(void)) {
+Scale::denseMultiplyRight(const Eigen::Map<Eigen::MatrixXd> B, std::atomic<bool> *user_interrupt) {
     Eigen::MatrixXd res;
 
     // Scale input by col scale
     if (fit.col_params.size() > 0) {
         Eigen::MatrixXd B2(B.array().colwise() * fit.col_params.row(0).transpose());
         res = loader->denseMultiplyRight(
-            Eigen::Map<Eigen::MatrixXd>(B2.data(), B2.rows(), B2.cols()), checkInterrupt
+            Eigen::Map<Eigen::MatrixXd>(B2.data(), B2.rows(), B2.cols()), user_interrupt
         );
     } else {
-        res = loader->denseMultiplyRight(B, checkInterrupt);
+        res = loader->denseMultiplyRight(B, user_interrupt);
     }
 
     // Scale output by row scale
@@ -49,17 +51,17 @@ Scale::denseMultiplyRight(const Eigen::Map<Eigen::MatrixXd> B, void (*checkInter
 }
 
 Eigen::MatrixXd
-Scale::denseMultiplyLeft(const Eigen::Map<Eigen::MatrixXd> B, void (*checkInterrupt)(void)) {
+Scale::denseMultiplyLeft(const Eigen::Map<Eigen::MatrixXd> B, std::atomic<bool> *user_interrupt) {
     Eigen::MatrixXd res;
 
     // Scale input by row scale
     if (fit.row_params.size() > 0) {
         Eigen::MatrixXd B2(B.array().rowwise() * fit.row_params.row(0));
         res = loader->denseMultiplyLeft(
-            Eigen::Map<Eigen::MatrixXd>(B2.data(), B2.rows(), B2.cols()), checkInterrupt
+            Eigen::Map<Eigen::MatrixXd>(B2.data(), B2.rows(), B2.cols()), user_interrupt
         );
     } else {
-        res = loader->denseMultiplyLeft(B, checkInterrupt);
+        res = loader->denseMultiplyLeft(B, user_interrupt);
     }
 
     // Scale output by col scale
@@ -70,17 +72,17 @@ Scale::denseMultiplyLeft(const Eigen::Map<Eigen::MatrixXd> B, void (*checkInterr
 }
 // Calculate matrix-vector product A*v where A (this) is sparse and B is a dense matrix.
 Eigen::VectorXd
-Scale::vecMultiplyRight(const Eigen::Map<Eigen::VectorXd> v, void (*checkInterrupt)(void)) {
+Scale::vecMultiplyRight(const Eigen::Map<Eigen::VectorXd> v, std::atomic<bool> *user_interrupt) {
     Eigen::VectorXd res;
 
     // Scale input by col scale
     if (fit.col_params.size() > 0) {
         Eigen::VectorXd v2(v.array() * fit.col_params.row(0).transpose());
         res = loader->vecMultiplyRight(
-            Eigen::Map<Eigen::VectorXd>(v2.data(), v2.size()), checkInterrupt
+            Eigen::Map<Eigen::VectorXd>(v2.data(), v2.size()), user_interrupt
         );
     } else {
-        res = loader->vecMultiplyRight(v, checkInterrupt);
+        res = loader->vecMultiplyRight(v, user_interrupt);
     }
 
     // Scale output by row scale
@@ -91,17 +93,17 @@ Scale::vecMultiplyRight(const Eigen::Map<Eigen::VectorXd> v, void (*checkInterru
 }
 
 Eigen::VectorXd
-Scale::vecMultiplyLeft(const Eigen::Map<Eigen::VectorXd> v, void (*checkInterrupt)(void)) {
+Scale::vecMultiplyLeft(const Eigen::Map<Eigen::VectorXd> v, std::atomic<bool> *user_interrupt) {
     Eigen::VectorXd res;
 
     // Scale input by row scale
     if (fit.row_params.size() > 0) {
         Eigen::VectorXd v2(v.array() * fit.row_params.row(0).transpose());
         res = loader->vecMultiplyLeft(
-            Eigen::Map<Eigen::VectorXd>(v2.data(), v2.size()), checkInterrupt
+            Eigen::Map<Eigen::VectorXd>(v2.data(), v2.size()), user_interrupt
         );
     } else {
-        res = loader->vecMultiplyLeft(v, checkInterrupt);
+        res = loader->vecMultiplyLeft(v, user_interrupt);
     }
 
     // Scale output by col scale

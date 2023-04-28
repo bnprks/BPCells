@@ -1,3 +1,4 @@
+#include <atomic>
 #include "BedFragments.h"
 
 namespace BPCells {
@@ -231,7 +232,7 @@ BedFragmentsWriter::~BedFragmentsWriter() {
     if (f != NULL) gzclose(f);
 }
 
-void BedFragmentsWriter::write(FragmentLoader &loader, void (*checkInterrupt)(void)) {
+void BedFragmentsWriter::write(FragmentLoader &loader, std::atomic<bool> *user_interrupt) {
     FragmentIterator fragments((std::unique_ptr<FragmentLoader>(&loader)));
     // Don't take ownership of the loader object
     fragments.preserve_input_loader();
@@ -263,7 +264,7 @@ void BedFragmentsWriter::write(FragmentLoader &loader, void (*checkInterrupt)(vo
                 throw std::runtime_error("Failed to write data in BedFragmentsWriter");
             }
 
-            if (checkInterrupt != NULL && total_fragments++ % 1024 == 0) checkInterrupt();
+            if (user_interrupt != NULL && total_fragments++ % 1024 == 0 && *user_interrupt) return;
         }
     }
     gzclose(f);

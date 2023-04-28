@@ -10,6 +10,7 @@ namespace BPCells {
 class ChrIndexSelect : public FragmentLoaderWrapper {
   private:
     const std::vector<uint32_t> chr_assignments;
+    uint32_t current_chr = UINT32_MAX;
 
   public:
     // chr_assignments -- vector with length <= the number of chromosomes in the input
@@ -18,6 +19,8 @@ class ChrIndexSelect : public FragmentLoaderWrapper {
     ChrIndexSelect(std::unique_ptr<FragmentLoader> &&loader, const std::vector<uint32_t> chr_assignments);
 
     ~ChrIndexSelect() = default;
+
+    void restart() override;
 
     int chrCount() const override;
 
@@ -41,6 +44,7 @@ class ChrNameSelect : public FragmentLoaderWrapper {
     // if iter is seekable, map the output IDs to input IDs. input_index[i] gives
     // the input index for output chromosome i. This is just needed for seeking
     std::vector<uint32_t> input_index;
+    uint32_t current_chr = UINT32_MAX;
 
   public:
     // chr_names -- vector with length <= the number of chromosomes in the input
@@ -49,6 +53,8 @@ class ChrNameSelect : public FragmentLoaderWrapper {
     ChrNameSelect(std::unique_ptr<FragmentLoader> &&loader, const std::vector<std::string> chr_names);
 
     ~ChrNameSelect() = default;
+
+    void restart() override;
 
     int chrCount() const override;
 

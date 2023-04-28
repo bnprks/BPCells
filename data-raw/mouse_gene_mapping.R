@@ -58,4 +58,4 @@ mouse_gene_mapping <- bind_rows(
   dplyr::arrange(alt) %>%
   dplyr::pull(symbol, alt)
 
-usethis::use_data(mouse_gene_mapping, overwrite = TRUE)
+usethis::use_data(mouse_gene_mapping, overwrite = TRUE, compress="xz")

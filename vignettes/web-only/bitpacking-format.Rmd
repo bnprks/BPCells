@@ -1,0 +1,149 @@
+---
+title: "Matrix Storage Format"
+output: 
+  html_document:
+    toc: true
+    toc_depth: 2
+    toc_float: true
+    theme: simplex
+---
+
+This provides an overview of the BPCells compressed and uncompressed matrix
+formats as they stand as of April 2023. While BPCells is pre-1.0 these formats
+may be updated, though with a goal of maintaining backwards read-compatibility
+across updates.
+
+### Matrix Logical Storage Layout
+
+For data storage, we use a storage abstraction of named data arrays, stored as
+e.g. a single group hdf5 or a directory of files. The matrix format is a
+compressed sparse column/row (CSC/CSR) format with the following data arrays:
+
+| Name            | Type                   | Length      |
+| --------------- | ---------------------- | ----------- |
+| `val`           | uint32/float32/float64 | # non-zeros |
+| `index`         | uint32                 | # non-zeros |
+| `idxptr`        | uint64                 | # cols + 1  |
+| `shape`         | uint32                 | 2           |
+| `row_names`     | string                 | 0 or #rows  |
+| `col_names`     | string                 | 0 or #cols  |
+| `storage_order` | string                 | 1           |
+
+The interpretation of each array is as follows:
+
+- `val` - Values of non-zero entries in increasing order of (column, row)
+  position of the non-zero value.
+- `index` - `index[i]` provides the 0-based row index for the value found in
+  `val[i]` (or column index for row-major storage order)
+- `idxptr` - The indexes in `idx` and `val` for the entries in column `j` can be
+  found from `idxptr[j]` to `idxptr[j+1] - 1` , inclusive. (or row j for
+  row-major storage order)
+- `shape` - number of rows in matrix, followed by number of columns 
+- `row_names` - Names for each row of the matrix (optional) 
+- `col_names` - Names for each column of the matrix (optional) 
+- `storage_order`- `col` for compressed-sparse-column, or `row` for compressed-sparse-row 
+
+Bitpacked compressed matrices consist of the following modifications:
+
+- `val`: For unsigned 32-bit integers, we replace `val` with `val_data`,
+  `val_idx`, and `val_idx_offsets` corresponding to a BP-128m1 encoding as
+  described below. The total number of values is already stored as the last
+  value in `idxptr`. For 32-bit and 64-bit floats `val` remains unchanged.
+- `index`: We replace the `index` array with a BP-128d1z encoded data in arrays
+  `index_data`, `index_idx`, `index_idx_offsets`, and `index_starts`
+
+Each matrix is stored as a single directory, HDF5 group, or R S4 object. The
+storage format for each matrix is encoded as a version string. The current
+version string is of the format `[compression]-[datatype]-matrix-v2`, where
+`[compression]` can be either `packed` or `unpacked`, and `[datatype]` can be
+one of `uint`, `float`, and `double` corresponding to 32-bit unsigned integer,
+32-bit float, and 64-bit double respectively. In v1 formats, the only difference
+is that `idxptr` had type uint32.
+
+## Bitpacking formats
+
+Our bitpacked formats are based on the formats described in a paper by
+[Lemire and Boytsov](https://arxiv.org/abs/1209.2137).
+
+#### BP-128
+
+The vanilla BP-128 format is stored in 3 arrays as follows:
+
+- `data` - stream of bitpacked data, represented as 32-bit integers with the
+  interleaved bit layout as shown in Lemire and Boytsov figure 6. A chunk of 128
+  32-bit input integers with $B$ bits per integer will be stored using $4B$
+  32-bit integers holding the bitpacked data.
+- `idx` - list of 32-bit integers, where the encoded data for integers index
+  `128*i` to `128*i + 127` can be found in data from index `idx[i]` to index
+  `idx[i+1]-1`. For lists with $2^{32}$ (4 billion) entries or greater, idx
+  stores the index modulo $2^{32}$
+- `idx_offsets` - list of 64-bit integers, where the values of `idx` with
+  indices from `idx_offsets[i]` to `idx_offsets[i+1]-1` should have `i*(2^32)`
+  added to them.
+
+#### BP-128m1
+
+This is the same as BP-128, but with 1 subtracted from each value prior to compression
+
+#### BP-128d1
+
+Equivalent to the BP-128* algorithm from Lemire and Boytsov where integers are
+difference encoded prior to bitpacking. This is best for lists of sorted
+integers.
+
+-  `data` - Encoding as with vanilla BP-128, but we do difference encoding prior
+   to bitpacking: $x_{0}^{\prime}=0$, $x_{1}^{\prime}=x_{1}-x_{0}$,
+   $x_{2}^{\prime}=x_{2}-x_{1}$, ..., $x_{127}^{\prime}=x_{127}-x_{126}$
+- `idx`, `idx_offsets` - identical to BP-128
+- `starts` - list of 32-bit integers, where `starts[i]` is the decoded value for the integer at index `128*i`
+
+#### BP-128d1z
+
+Similar to BP128d1 but with zigzag encoding applied after difference encoding.
+This is best for lists of close but not fully sorted runs of integers.
+
+- `data` - Encoding as with BP-128d1, but between difference encoding and
+  bitpacking, the results are zigzag encoded, where $zigzag(x)=2x$ if $x\geq0$,
+  and $zigzag(x)=-2x-1$ if $x<0$.
+- `idx`, `idx_offsets` - identical to BP-128
+- `starts` - identical to BP128-d1
+
+ The core bitpacking code can be found in [`src/bitpacking/bp128.cpp`](https://github.com/bnprks/BPCells/blob/main/src/bitpacking/bp128.cpp) in the github repository.
+
+
+
+## Physical storage layout
+
+The abstraction of named data arrays can be realized by a few different formats.
+The three currently supported by BPCells are:
+
+#### Directory of files format:
+
+An array of numbers is stored as a single file with an 8-byte header, followed
+by the data values in little-endian binary format. Unsigned integers are encoded
+according to standard little-endian representation, and 32-bit and 64-bit
+floating point numbers as IEEE-754 format. Header values are 8-byte ASCII text
+as follows: unsigned 32-bit integer `UINT32v1`, unsigned 64-bit integer
+`UINT64v1`, 32-bit float `FLOATSv1`, 64-bit float `DOUBLEv1`. Arrays of strings
+are stored as ASCII text with one array value per line with no header. The
+version string is stored as a file named version containing the version string
+followed by a newline.
+
+#### Hdf5 file format:
+
+Arrays of numbers are stored as HDF5 datasets using the built-in HDF5 encoding
+format. Arrays of strings are stored as HDF5 variable length string datasets.
+
+The version string is stored as a version attribute on the HDF5 group
+
+#### R object format:
+
+Strings are stored as native R character arrays. Unsigned integers and 32-bit
+floats are stored in native R integer arrays by bitcasting the R signed integers
+into the required data types. 64-bit floats are stored in native R numeric
+arrays. 64-bit integers are stored as doubles in R numeric arrays. This reduces
+the highest representable value from $2^{64}-1$ to $2^{53}-1$ (about 9
+quadrillion), which we do not expect to pose practical problems. Named
+collections of arrays are stored in R lists (when writing) or S4 objects (when
+reading). The version string is stored as a string vector named version of
+length 1.

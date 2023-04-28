@@ -3,17 +3,17 @@
 namespace BPCells {
 
 FileStringReader::FileStringReader(std::filesystem::path path) : data(readLines(path)) {}
-const char *FileStringReader::get(uint32_t idx) const {
+const char *FileStringReader::get(uint64_t idx) const {
     if (idx < data.size()) return data[idx].c_str();
     return NULL;
 }
 
-uint32_t FileStringReader::size() const { return data.size(); }
+uint64_t FileStringReader::size() const { return data.size(); }
 
 FileStringWriter::FileStringWriter(std::filesystem::path path) : path(path) {}
 void FileStringWriter::write(const StringReader &reader) {
     std::ofstream f(path.c_str());
-    uint32_t i = 0;
+    uint64_t i = 0;
     while (true) {
         const char *s = reader.get(i);
         if (s == NULL) break;
@@ -26,7 +26,7 @@ void FileStringWriter::write(const StringReader &reader) {
     }
 }
 
-FileWriterBuilder::FileWriterBuilder(std::string _dir, uint32_t buffer_size, bool allow_exists)
+FileWriterBuilder::FileWriterBuilder(std::string _dir, uint64_t buffer_size, bool allow_exists)
     : dir(_dir)
     , buffer_size(buffer_size) {
 
@@ -71,7 +71,7 @@ void FileWriterBuilder::writeVersion(std::string version) {
 
 void FileWriterBuilder::deleteWriter(std::string name) { std::filesystem::remove(dir / name); }
 
-FileReaderBuilder::FileReaderBuilder(std::string _dir, uint32_t buffer_size, uint32_t read_size)
+FileReaderBuilder::FileReaderBuilder(std::string _dir, uint64_t buffer_size, uint64_t read_size)
     : dir(_dir)
     , buffer_size(buffer_size)
     , read_size(read_size) {

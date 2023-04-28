@@ -1,5 +1,6 @@
 #pragma once
 
+#include <atomic>
 #include "MatrixIterator.h"
 
 namespace BPCells {
@@ -105,51 +106,51 @@ template <typename T> class SparseMultiply : public MatrixLoader<T> {
     // MATH OPERATIONS: utilize associative property that A*B*C = (A*B)*C = A*(B*C)
     // Calculate matrix-matrix product A*B where A (this) is sparse and B is a dense matrix.
     Eigen::MatrixXd denseMultiplyRight(
-        const Eigen::Map<Eigen::MatrixXd> B, void (*checkInterrupt)(void) = NULL
+        const Eigen::Map<Eigen::MatrixXd> B, std::atomic<bool> *user_interrupt = NULL
     ) override {
-        auto tmp = right->denseMultiplyRight(B, checkInterrupt);
+        auto tmp = right->denseMultiplyRight(B, user_interrupt);
         Eigen::Map<Eigen::MatrixXd> map(tmp.data(), tmp.rows(), tmp.cols());
-        return left->denseMultiplyRight(map, checkInterrupt);
+        return left->denseMultiplyRight(map, user_interrupt);
     }
     Eigen::MatrixXd denseMultiplyLeft(
-        const Eigen::Map<Eigen::MatrixXd> B, void (*checkInterrupt)(void) = NULL
+        const Eigen::Map<Eigen::MatrixXd> B, std::atomic<bool> *user_interrupt = NULL
     ) override {
-        auto tmp = left->denseMultiplyLeft(B, checkInterrupt);
+        auto tmp = left->denseMultiplyLeft(B, user_interrupt);
         Eigen::Map<Eigen::MatrixXd> map(tmp.data(), tmp.rows(), tmp.cols());
-        return right->denseMultiplyLeft(map, checkInterrupt);
+        return right->denseMultiplyLeft(map, user_interrupt);
     }
     // Calculate matrix-vector product A*v where A (this) is sparse and B is a dense matrix.
     Eigen::VectorXd vecMultiplyRight(
-        const Eigen::Map<Eigen::VectorXd> v, void (*checkInterrupt)(void) = NULL
+        const Eigen::Map<Eigen::VectorXd> v, std::atomic<bool> *user_interrupt = NULL
     ) override {
-        auto tmp = right->vecMultiplyRight(v, checkInterrupt);
+        auto tmp = right->vecMultiplyRight(v, user_interrupt);
         Eigen::Map<Eigen::VectorXd> map(tmp.data(), tmp.rows(), tmp.cols());
-        return left->vecMultiplyRight(map, checkInterrupt);
+        return left->vecMultiplyRight(map, user_interrupt);
     }
     Eigen::VectorXd vecMultiplyLeft(
-        const Eigen::Map<Eigen::VectorXd> v, void (*checkInterrupt)(void) = NULL
+        const Eigen::Map<Eigen::VectorXd> v, std::atomic<bool> *user_interrupt = NULL
     ) override {
-        auto tmp = left->vecMultiplyLeft(v, checkInterrupt);
+        auto tmp = left->vecMultiplyLeft(v, user_interrupt);
         Eigen::Map<Eigen::VectorXd> map(tmp.data(), tmp.rows(), tmp.cols());
-        return right->vecMultiplyLeft(map, checkInterrupt);
+        return right->vecMultiplyLeft(map, user_interrupt);
     }
     // Calculate row/column sums of the matrix
-    std::vector<T> colSums(void (*checkInterrupt)(void) = NULL) override {
+    std::vector<T> colSums(std::atomic<bool> *user_interrupt = NULL) override {
         Eigen::VectorXd v;
         v.setOnes(rows());
         Eigen::Map<Eigen::VectorXd> map(v.data(), v.rows(), v.cols());
-        auto res = vecMultiplyLeft(map, checkInterrupt);
+        auto res = vecMultiplyLeft(map, user_interrupt);
         std::vector<T> ret(cols());
         for (uint32_t i = 0; i < cols(); i++) {
             ret[i] = res[i];
         }
         return ret;
     }
-    std::vector<T> rowSums(void (*checkInterrupt)(void) = NULL) override {
+    std::vector<T> rowSums(std::atomic<bool> *user_interrupt = NULL) override {
         Eigen::VectorXd v;
         v.setOnes(cols());
         Eigen::Map<Eigen::VectorXd> map(v.data(), v.rows(), v.cols());
-        auto res = vecMultiplyRight(map, checkInterrupt);
+        auto res = vecMultiplyRight(map, user_interrupt);
         std::vector<T> ret(rows());
         for (uint32_t i = 0; i < rows(); i++) {
             ret[i] = res[i];

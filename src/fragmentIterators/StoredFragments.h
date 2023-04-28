@@ -1,5 +1,6 @@
 #pragma once
 
+#include <atomic>
 #include <cstdint>
 #include <cstring>
 #include <memory>
@@ -17,7 +18,8 @@ class StoredFragmentsBase : public FragmentLoader {
     // end_max[i] = max(ends[chr_start:i*128])
     // chr_ptr[2*i] = start index of chr i in data arrays
     // chr_ptr[2*i + 1] = end index of chr i in data arrays
-    UIntReader cell, start, end, end_max, chr_ptr;
+    UIntReader cell, start, end, end_max;
+    ULongReader chr_ptr;
     std::unique_ptr<StringReader> chr_names, cell_names;
 
     // end_max_buf holds the end_max values for the current chromosome, but to
@@ -27,11 +29,11 @@ class StoredFragmentsBase : public FragmentLoader {
     uint32_t current_chr = UINT32_MAX;
     uint32_t current_idx = UINT32_MAX;
     uint32_t current_capacity = 0;
-    uint32_t chr_start_ptr, chr_end_ptr;
+    uint64_t chr_start_ptr, chr_end_ptr;
 
     // Read end_max_buf from end_max iterator, making it equal to the values between
     // start_idx and end_idx
-    void readEndMaxBuf(uint32_t start_idx, uint32_t end_idx);
+    void readEndMaxBuf(uint64_t start_idx, uint64_t end_idx);
 
   public:
     StoredFragmentsBase(
@@ -39,7 +41,7 @@ class StoredFragmentsBase : public FragmentLoader {
         UIntReader &&start,
         UIntReader &&end,
         UIntReader &&end_max,
-        UIntReader &&chr_ptr,
+        ULongReader &&chr_ptr,
         std::unique_ptr<StringReader> &&chr_names,
         std::unique_ptr<StringReader> &&cell_names
     );
@@ -93,7 +95,8 @@ class StoredFragmentsPacked : public StoredFragmentsBase {
 
 class StoredFragmentsWriter : public FragmentWriter {
   private:
-    UIntWriter cell, start, end, end_max, chr_ptr;
+    UIntWriter cell, start, end, end_max;
+    ULongWriter chr_ptr;
     std::unique_ptr<StringWriter> chr_names, cell_names;
 
     bool subtract_start_from_end; // Set to true if writing packed
@@ -107,13 +110,13 @@ class StoredFragmentsWriter : public FragmentWriter {
         UIntWriter &&start,
         UIntWriter &&end,
         UIntWriter &&end_max,
-        UIntWriter &&chr_ptr,
+        ULongWriter &&chr_ptr,
         std::unique_ptr<StringWriter> &&chr_names,
         std::unique_ptr<StringWriter> &&cell_names,
         bool subtract_start_from_end
     );
 
-    void write(FragmentLoader &fragments, void (*checkInterrupt)(void) = NULL) override;
+    void write(FragmentLoader &fragments, std::atomic<bool> *user_interrupt = NULL) override;
 };
 
 } // end namespace BPCells

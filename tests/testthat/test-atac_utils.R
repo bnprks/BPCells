@@ -39,14 +39,14 @@ test_that("tile_ranges works", {
 
   selection1 <- sample.int(nrow(tile_mat))
   expect_identical(
-    normalize_ranges(rownames(tile_mat)[selection1]),
-    tile_ranges(tile_mat, selection1)
+    normalize_ranges(rownames(tile_mat)[selection1]) %>% dplyr::mutate(chr=as.character(chr)),
+    tile_ranges(tile_mat, selection1) %>% dplyr::mutate(chr=as.character(chr))
   )
 
   selection2 <- as.logical(rbinom(nrow(tile_mat), 1, 0.5))
   expect_identical(
-    normalize_ranges(rownames(tile_mat)[selection2]),
-    tile_ranges(tile_mat, selection2)
+    normalize_ranges(rownames(tile_mat)[selection2]) %>% dplyr::mutate(chr=as.character(chr)),
+    tile_ranges(tile_mat, selection2) %>% dplyr::mutate(chr=as.character(chr))
   )
 })
 

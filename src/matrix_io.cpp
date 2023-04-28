@@ -4,6 +4,7 @@
 
 #include "matrixIterators/ImportMatrixHDF5.h"
 #include "matrixIterators/MatrixIterator.h"
+#include "matrixIterators/MatrixMarketImport.h"
 #include "matrixIterators/StoredMatrix.h"
 #include "matrixIterators/StoredMatrixTransposeWriter.h"
 #include "matrixIterators/StoredMatrixWriter.h"
@@ -13,6 +14,7 @@
 #include "arrayIO/vector.h"
 
 #include "R_array_io.h"
+#include "R_interrupts.h"
 #include "R_xptr_wrapper.h"
 
 using namespace Rcpp;
@@ -64,32 +66,32 @@ List dims_matrix_reader_builder(ReaderBuilder &rb) {
     auto storage_order = storage_order_reader->get(0);
     bool row_major = storage_order == std::string_view("row");
 
-    if (version == "unpacked-uint-matrix-v1") {
+    if (version == "unpacked-uint-matrix-v1" || version == "unpacked-uint-matrix-v2") {
         List l = dims_matrix(StoredMatrix<uint32_t>::openUnpacked(rb), row_major);
         l["compressed"] = false;
         l["type"] = "uint32_t";
         return l;
-    } else if (version == "packed-uint-matrix-v1") {
+    } else if (version == "packed-uint-matrix-v1" || version == "packed-uint-matrix-v2") {
         List l = dims_matrix(StoredMatrix<uint32_t>::openPacked(rb), row_major);
         l["compressed"] = true;
         l["type"] = "uint32_t";
         return l;
-    } else if (version == "unpacked-float-matrix-v1") {
+    } else if (version == "unpacked-float-matrix-v1" || version == "unpacked-float-matrix-v2") {
         List l = dims_matrix(StoredMatrix<float>::openUnpacked(rb), row_major);
         l["compressed"] = false;
         l["type"] = "float";
         return l;
-    } else if (version == "packed-float-matrix-v1") {
+    } else if (version == "packed-float-matrix-v1" || version == "packed-float-matrix-v2") {
         List l = dims_matrix(StoredMatrix<float>::openPacked(rb), row_major);
         l["compressed"] = true;
         l["type"] = "float";
         return l;
-    } else if (version == "unpacked-double-matrix-v1") {
+    } else if (version == "unpacked-double-matrix-v1" || version == "unpacked-double-matrix-v2") {
         List l = dims_matrix(StoredMatrix<double>::openUnpacked(rb), row_major);
         l["compressed"] = false;
         l["type"] = "double";
         return l;
-    } else if (version == "packed-double-matrix-v1") {
+    } else if (version == "packed-double-matrix-v1" || version == "packed-double-matrix-v2") {
         List l = dims_matrix(StoredMatrix<double>::openPacked(rb), row_major);
         l["compressed"] = true;
         l["type"] = "double";
@@ -114,7 +116,13 @@ SEXP write_matrix_transpose_dir(
     StoredMatrixTransposeWriter<T> transpose(
         wb, tmpdir.c_str(), load_bytes, sort_buffer_bytes, row_major
     );
-    transpose.write(*peek_unique_xptr<MatrixLoader<T>>(matrix));
+    auto mat = take_unique_xptr<MatrixLoader<T>>(matrix);
+    run_with_R_interrupt_check(
+        &MatrixWriter<T>::write,
+        &transpose,
+        std::ref(*mat)
+    );
+    
     FileReaderBuilder rb(outdir);
     return make_unique_xptr<StoredMatrix<T>>(StoredMatrix<T>::openPacked(rb));
 }
@@ -237,15 +245,23 @@ SEXP iterate_unpacked_matrix_mem_double_cpp(
 }
 
 template <typename T> void write_packed_matrix(WriterBuilder &wb, SEXP matrix, bool row_major) {
-    MatrixLoader<T> *loader = peek_unique_xptr<MatrixLoader<T>>(matrix);
+    auto loader = take_unique_xptr<MatrixLoader<T>>(matrix);
     loader->restart();
-    StoredMatrixWriter<T>::createPacked(wb, row_major).write(*loader, &Rcpp::checkUserInterrupt);
+    run_with_R_interrupt_check(
+        &StoredMatrixWriter<T>::write,
+        StoredMatrixWriter<T>::createPacked(wb, row_major),
+        std::ref(*loader)
+    );
 }
 
 template <typename T> void write_unpacked_matrix(WriterBuilder &wb, SEXP matrix, bool row_major) {
-    MatrixLoader<T> *loader = peek_unique_xptr<MatrixLoader<T>>(matrix);
+    auto loader = take_unique_xptr<MatrixLoader<T>>(matrix);
     loader->restart();
-    StoredMatrixWriter<T>::createUnpacked(wb, row_major).write(*loader, &Rcpp::checkUserInterrupt);
+    run_with_R_interrupt_check(
+        &StoredMatrixWriter<T>::write,
+        StoredMatrixWriter<T>::createUnpacked(wb, row_major),
+        std::ref(*loader)
+    );
 }
 
 // [[Rcpp::export]]
@@ -575,8 +591,18 @@ List dims_matrix_10x_hdf5_cpp(std::string file, uint32_t buffer_size) {
 }
 
 // [[Rcpp::export]]
-SEXP iterate_matrix_10x_hdf5_cpp(std::string file, uint32_t buffer_size) {
-    return make_unique_xptr<StoredMatrix<uint32_t>>(open10xFeatureMatrix(file, buffer_size));
+SEXP iterate_matrix_10x_hdf5_cpp(
+    std::string file,
+    uint32_t buffer_size,
+    const StringVector row_names,
+    const StringVector col_names
+) {
+    return make_unique_xptr<StoredMatrix<uint32_t>>(open10xFeatureMatrix(
+        file,
+        buffer_size,
+        std::make_unique<RcppStringReader>(row_names),
+        std::make_unique<RcppStringReader>(col_names)
+    ));
 }
 
 // [[Rcpp::export]]
@@ -591,7 +617,7 @@ void write_matrix_10x_hdf5_cpp(
     uint32_t buffer_size,
     uint32_t chunk_size
 ) {
-    MatrixLoader<uint32_t> *loader = peek_unique_xptr<MatrixLoader<uint32_t>>(matrix);
+    auto loader = take_unique_xptr<MatrixLoader<uint32_t>>(matrix);
     loader->restart();
     std::map<std::string, std::unique_ptr<StringReader>> metadata;
     StringVector metadata_names = feature_metadata.names();
@@ -609,7 +635,7 @@ void write_matrix_10x_hdf5_cpp(
         buffer_size,
         chunk_size
     );
-    w.write(*loader, &Rcpp::checkUserInterrupt);
+    run_with_R_interrupt_check(&StoredMatrixWriter<uint32_t>::write, &w, std::ref(*loader));
 }
 
 // [[Rcpp::export]]
@@ -620,8 +646,20 @@ List dims_matrix_anndata_hdf5_cpp(std::string file, std::string group, uint32_t 
 }
 
 // [[Rcpp::export]]
-SEXP iterate_matrix_anndata_hdf5_cpp(std::string file, std::string group, uint32_t buffer_size) {
-    return make_unique_xptr<StoredMatrix<float>>(openAnnDataMatrix(file, group, buffer_size));
+SEXP iterate_matrix_anndata_hdf5_cpp(
+    std::string file,
+    std::string group,
+    uint32_t buffer_size,
+    const StringVector row_names,
+    const StringVector col_names
+) {
+    return make_unique_xptr<StoredMatrix<float>>(openAnnDataMatrix(
+        file,
+        group,
+        buffer_size,
+        std::make_unique<RcppStringReader>(row_names),
+        std::make_unique<RcppStringReader>(col_names)
+    ));
 }
 
 // [[Rcpp::export]]
@@ -640,4 +678,30 @@ read_hdf5_string_cpp(std::string path, std::string group, uint32_t buffer_size) 
 bool hdf5_group_exists_cpp(std::string path, std::string group) {
     H5ReaderBuilder rb(path, "/", 1);
     return rb.getGroup().exist(group);
+}
+
+// [[Rcpp::export]]
+void import_matrix_market_cpp(
+    std::string mtx_path,
+    std::vector<std::string> row_names,
+    std::vector<std::string> col_names,
+    std::string outdir,
+    std::string tmpdir,
+    uint64_t load_bytes,
+    uint64_t sort_buffer_bytes,
+    bool row_major
+) {
+    FileWriterBuilder wb(outdir);
+
+    run_with_R_interrupt_check(
+        importMtx,
+        mtx_path,
+        std::move(row_names),
+        std::move(col_names),
+        std::ref(wb),
+        tmpdir.c_str(),
+        load_bytes,
+        sort_buffer_bytes,
+        row_major
+    );
 }

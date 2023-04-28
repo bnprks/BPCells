@@ -169,7 +169,7 @@ setMethod("iterate_matrix", "TransformMin", function(x) {
 setMethod("short_description", "TransformMin", function(x) {
   c(
     short_description(x@matrix),
-    sprintf("Transform min(x, %d)", x@global_params[1])
+    sprintf("Transform min(x, %.3g)", x@global_params[1])
   )
 })
 
@@ -255,6 +255,33 @@ min_by_col <- function(mat, vals) {
 
   wrapMatrix("TransformMinByCol", convert_matrix_type(mat, "double"), col_params=matrix(vals, nrow=1))
 }
+
+
+#################
+# Round
+#################
+
+setClass("TransformRound", contains = "TransformedMatrix")
+
+setMethod("iterate_matrix", "TransformRound", function(x) {
+  iterate_matrix_round_cpp(iterate_matrix(x@matrix))
+})
+
+setMethod("short_description", "TransformRound", function(x) {
+  c(
+    short_description(x@matrix),
+    "Transform round to nearest integer"
+  )
+})
+
+# Initially, allow only digits=0.
+setMethod("round", "IterableMatrix", function(x, digits=0) {
+  assert_is(x, "IterableMatrix")
+  assert_is(digits, "numeric")
+  if (digits != 0) stop("BPCells only supports round() with digits=0")
+
+  wrapMatrix("TransformRound", convert_matrix_type(x, "double"))
+})
 
 
 #################

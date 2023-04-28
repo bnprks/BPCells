@@ -179,6 +179,47 @@ test_that("AnnData subset hasn't regressed", {
   expect_identical(s$col_stats["mean",], c(1.2, 1, 0.8))
 })
 
+test_that("AnnData and 10x row/col rename works", {
+  dir <- withr::local_tempdir()
+  # Make a copy since apparently reading the test hdf5 file causes modifications that git detects
+  file.copy("../data/mini_mat.h5ad", file.path(dir, "mini_mat.h5ad"))
+
+  # Test change row+col names on hdf5
+  x <- open_matrix_anndata_hdf5(file.path(dir, "mini_mat.h5ad"))
+  
+  orig_colnames <- colnames(x)
+  orig_rownames <- rownames(x)
+  rownames(x) <- paste0("row", rownames(x))
+  colnames(x) <- paste0("col", colnames(x))
+  expect_false(identical(orig_colnames, colnames(x)))
+  expect_false(identical(orig_rownames, rownames(x)))
+
+  x2 <- write_matrix_memory(x, compress=FALSE)
+  expect_identical(rownames(x2), rownames(x))
+  expect_identical(colnames(x2), colnames(x))
+
+  x2_t <- write_matrix_memory(t(x), compress=FALSE)
+  expect_identical(colnames(x2_t), rownames(x))
+  expect_identical(rownames(x2_t), colnames(x))
+
+  # Test change row+col names on 10x
+  x_10x <- open_matrix_anndata_hdf5(file.path(dir, "mini_mat.h5ad")) %>%
+    convert_matrix_type("uint32_t") %>%
+    write_matrix_10x_hdf5(file.path(dir, "mini_mat.h5"))
+  rownames(x_10x) <- paste0("2row", rownames(x_10x))
+  colnames(x_10x) <- paste0("2col", colnames(x_10x))
+  expect_false(identical(orig_colnames, colnames(x_10x)))
+  expect_false(identical(orig_rownames, rownames(x_10x)))
+
+  x2 <- write_matrix_memory(x_10x, compress=FALSE)
+  expect_identical(rownames(x2), rownames(x_10x))
+  expect_identical(colnames(x2), colnames(x_10x))
+
+  x2_t <- write_matrix_memory(t(x_10x), compress=FALSE)
+  expect_identical(colnames(x2_t), rownames(x_10x))
+  expect_identical(rownames(x2_t), colnames(x_10x))
+})
+
 test_that("Matrix without names works", {
   dir <- withr::local_tempdir()
   m <- generate_sparse_matrix(nrow = 10, ncol = 9, fraction_nonzero = 0.2, max_val = 10)
@@ -224,6 +265,14 @@ test_that("H5 overwrite works", {
     open_matrix_hdf5(file.path(dir, "overwrite.h5"), "mat") %>%
       as("dgCMatrix")
   )
+  # It should be okay even if we overwrite the same source we're loading from
+  expect_identical(
+    as(m2, "dgCMatrix")[c(1,3),],
+    open_matrix_hdf5(file.path(dir, "overwrite.h5"), "mat") %>% 
+      .[c(1,3),] %>%
+      write_matrix_hdf5(file.path(dir, "overwrite.h5"), "mat", overwrite=TRUE) %>%
+      as("dgCMatrix")
+  )
 })
 
 test_that("Dir overwrite works", {
@@ -256,5 +305,49 @@ test_that("Dir overwrite works", {
     as(m2, "dgCMatrix"),
     open_matrix_dir(file.path(dir, "overwrite-mat")) %>%
       as("dgCMatrix")
+  )
+  # It should be okay even if we overwrite the same source we're loading from
+  expect_identical(
+    as(m2, "dgCMatrix")[c(1,3),],
+    open_matrix_dir(file.path(dir, "overwrite-mat")) %>% 
+      .[c(1,3),] %>%
+      write_matrix_dir(file.path(dir, "overwrite-mat"), overwrite=TRUE) %>%
+      as("dgCMatrix")
+  )
+})
+
+test_that("Mtx import works", {
+  md <- import_matrix_market("../data/double_mat.mtx")
+  md_t <- import_matrix_market("../data/double_mat.mtx", row_major=TRUE)
+  mi <- import_matrix_market("../data/int_mat.mtx.gz")
+  mi_t <- import_matrix_market("../data/int_mat.mtx.gz", row_major=TRUE)
+
+  expect_identical(storage_order(md), "col")
+  expect_identical(storage_order(mi), "col")
+  expect_identical(storage_order(md_t), "row")
+  expect_identical(storage_order(mi_t), "row")
+
+  expect_identical(md@type, "double")
+  expect_identical(md_t@type, "double")
+  expect_identical(mi@type, "uint32_t")
+  expect_identical(mi_t@type, "uint32_t")
+
+  ans_d <- Matrix::readMM("../data/double_mat.mtx") %>% as("dgCMatrix")
+  ans_i <- Matrix::readMM("../data/int_mat.mtx.gz") %>% as("dgCMatrix")
+  expect_identical(
+    ans_d,
+    as(md, "dgCMatrix")
+  )
+  expect_identical(
+    ans_d,
+    as(md_t, "dgCMatrix")
+  )
+  expect_identical(
+    ans_i,
+    as(mi, "dgCMatrix")
+  )
+  expect_identical(
+    ans_i,
+    as(mi_t, "dgCMatrix")
   )
 })

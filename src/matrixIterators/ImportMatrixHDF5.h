@@ -15,9 +15,9 @@ template <class T> class SingletonNumReader : public BulkNumReader<T> {
 
   public:
     SingletonNumReader(T num) : num(num) {}
-    uint32_t size() const override { return 1; }
-    void seek(uint32_t pos) override { read = pos > 0; }
-    uint32_t load(T *out, uint32_t count) override {
+    uint64_t size() const override { return 1; }
+    void seek(uint64_t pos) override { read = pos > 0; }
+    uint64_t load(T *out, uint64_t count) override {
         if (read) return 0;
         out[0] = num;
         return 1;
@@ -28,6 +28,15 @@ template <class T> class SingletonNumReader : public BulkNumReader<T> {
 
 StoredMatrix<uint32_t>
 open10xFeatureMatrix(std::string file, uint32_t buffer_size, uint32_t read_size = 1024);
+
+StoredMatrix<uint32_t> open10xFeatureMatrix(
+    std::string file,
+    uint32_t buffer_size,
+    std::unique_ptr<StringReader> &&row_names,
+    std::unique_ptr<StringReader> &&col_names,
+    uint32_t read_size = 1024
+);
+
 StoredMatrixWriter<uint32_t> create10xFeatureMatrix(
     std::string file,
     const StringReader &barcodes,
@@ -43,6 +52,15 @@ StoredMatrixWriter<uint32_t> create10xFeatureMatrix(
 // any data stored in CSR format
 StoredMatrix<float> openAnnDataMatrix(
     std::string file, std::string group, uint32_t buffer_size, uint32_t read_size = 1024
+);
+
+StoredMatrix<float> openAnnDataMatrix(
+    std::string file,
+    std::string group,
+    uint32_t buffer_size,
+    std::unique_ptr<StringReader> &&row_names,
+    std::unique_ptr<StringReader> &&col_names,
+    uint32_t read_size = 1024
 );
 
 bool isRowOrientedAnnDataMatrix(std::string file, std::string group);

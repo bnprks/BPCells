@@ -1,5 +1,6 @@
 #pragma once
 
+#include <atomic>
 #include <cstdint>
 #include <memory>
 #include <stdexcept>
@@ -79,18 +80,18 @@ template <typename T> class MatrixLoader {
 
     // Calculate matrix-matrix product A*B where A (this) is sparse and B is a dense matrix.
     virtual Eigen::MatrixXd
-    denseMultiplyRight(const Eigen::Map<Eigen::MatrixXd> B, void (*checkInterrupt)(void) = NULL);
+    denseMultiplyRight(const Eigen::Map<Eigen::MatrixXd> B, std::atomic<bool> *user_interrupt = NULL);
     virtual Eigen::MatrixXd
-    denseMultiplyLeft(const Eigen::Map<Eigen::MatrixXd> B, void (*checkInterrupt)(void) = NULL);
+    denseMultiplyLeft(const Eigen::Map<Eigen::MatrixXd> B, std::atomic<bool> *user_interrupt = NULL);
     // Calculate matrix-vector product A*v where A (this) is sparse and B is a dense matrix.
     virtual Eigen::VectorXd
-    vecMultiplyRight(const Eigen::Map<Eigen::VectorXd> v, void (*checkInterrupt)(void) = NULL);
+    vecMultiplyRight(const Eigen::Map<Eigen::VectorXd> v, std::atomic<bool> *user_interrupt = NULL);
     virtual Eigen::VectorXd
-    vecMultiplyLeft(const Eigen::Map<Eigen::VectorXd> v, void (*checkInterrupt)(void) = NULL);
+    vecMultiplyLeft(const Eigen::Map<Eigen::VectorXd> v, std::atomic<bool> *user_interrupt = NULL);
 
     // Calculate row/column sums of the matrix
-    virtual std::vector<T> colSums(void (*checkInterrupt)(void) = NULL);
-    virtual std::vector<T> rowSums(void (*checkInterrupt)(void) = NULL);
+    virtual std::vector<T> colSums(std::atomic<bool> *user_interrupt = NULL);
+    virtual std::vector<T> rowSums(std::atomic<bool> *user_interrupt = NULL);
 
     // Calculate stats on the rows or columns of a matrix in a single pass.
     // For each of rows and columns, the user can choose to from the following
@@ -103,7 +104,7 @@ template <typename T> class MatrixLoader {
     // Outputs results to matrices row_output and col_output, which are col-major matrices,
     // with one column per # rows or # columns as appropriate, and one row per output statistic
     virtual StatsResult
-    computeMatrixStats(Stats row_stats, Stats col_stats, void (*checkInterrupt)(void) = NULL);
+    computeMatrixStats(Stats row_stats, Stats col_stats, std::atomic<bool> *user_interrupt = NULL);
 };
 
 template <typename T> class MatrixLoaderWrapper : public MatrixLoader<T> {
@@ -216,7 +217,7 @@ template <typename T> class MatrixIterator : public MatrixLoaderWrapper<T> {
 template <typename T> class MatrixWriter {
   public:
     virtual ~MatrixWriter(){};
-    virtual void write(MatrixLoader<T> &mat, void (*checkInterrupt)(void) = NULL) = 0;
+    virtual void write(MatrixLoader<T> &mat, std::atomic<bool> *user_interrupt = NULL) = 0;
 };
 
 template <typename Tin, typename Tout> class MatrixConverterLoader : public MatrixLoader<Tout> {

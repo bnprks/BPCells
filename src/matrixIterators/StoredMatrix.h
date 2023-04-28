@@ -14,14 +14,14 @@ template <class T> class StoredMatrix : public MatrixLoader<T> {
   private:
     NumReader<uint32_t> row;
     NumReader<T> val;
-    NumReader<uint32_t> col_ptr;
+    NumReader<uint64_t> col_ptr;
     std::unique_ptr<StringReader> row_names, col_names;
     uint32_t n_rows;
     uint32_t n_cols;
     uint32_t current_col = UINT32_MAX;
-    uint32_t current_idx = 0;
-    uint32_t next_col_ptr;
-    uint32_t current_capacity = 0;
+    uint64_t current_idx = 0;
+    uint64_t next_col_ptr;
+    uint64_t current_capacity = 0;
 
   public:
     StoredMatrix() = default;
@@ -30,7 +30,7 @@ template <class T> class StoredMatrix : public MatrixLoader<T> {
     StoredMatrix(
         NumReader<uint32_t> &&row,
         NumReader<T> &&val,
-        NumReader<uint32_t> &&col_ptr,
+        NumReader<uint64_t> &&col_ptr,
         uint32_t row_count,
         std::unique_ptr<StringReader> &&row_names,
         std::unique_ptr<StringReader> &&col_names
@@ -44,7 +44,7 @@ template <class T> class StoredMatrix : public MatrixLoader<T> {
         , n_cols(this->col_ptr.size() - 1)
         , next_col_ptr(this->col_ptr.read_one()) {}
 
-    static std::string versionString(bool packed) {
+    static std::string versionString(bool packed, uint32_t version) {
         std::string ret = packed ? "packed-" : "unpacked-";
         // Static check that our type is one we expect
         static_assert(
@@ -59,7 +59,8 @@ template <class T> class StoredMatrix : public MatrixLoader<T> {
         if constexpr (std::is_same_v<T, uint64_t>) ret += "ulong-";
         if constexpr (std::is_same_v<T, double>) ret += "double-";
         if constexpr (std::is_same_v<T, float>) ret += "float-";
-        ret += "matrix-v1";
+        ret += "matrix-v";
+        ret += std::to_string(version);
         return ret;
     }
 
@@ -70,9 +71,14 @@ template <class T> class StoredMatrix : public MatrixLoader<T> {
         std::unique_ptr<StringReader> &&col_names,
         uint32_t row_count
     ) {
-        if (rb.readVersion() != versionString(false)) {
+        ULongReader col_ptr;
+        if (rb.readVersion() == versionString(false, 1)) {
+            col_ptr = rb.openUIntReader("idxptr").convert<uint64_t>();
+        } else if (rb.readVersion() == versionString(false, 2)) {
+            col_ptr = rb.openULongReader("idxptr");
+        } else {
             throw std::runtime_error(
-                std::string("Version does not match ") + versionString(false) + ": " +
+                std::string("Version does not match ") + versionString(false, 2) + ": " +
                 rb.readVersion()
             );
         }
@@ -80,7 +86,7 @@ template <class T> class StoredMatrix : public MatrixLoader<T> {
         return StoredMatrix<T>(
             rb.openUIntReader("index"),
             rb.open<T>("val"),
-            rb.openUIntReader("idxptr"),
+            std::move(col_ptr),
             row_count,
             std::move(row_names),
             std::move(col_names)
@@ -125,23 +131,38 @@ template <class T> class StoredMatrix : public MatrixLoader<T> {
         std::unique_ptr<StringReader> &&col_names,
         uint32_t row_count
     ) {
-        if (rb.readVersion() != versionString(true)) {
+        ULongReader col_ptr, index_idx_offsets;
+        if (rb.readVersion() == versionString(true, 1)) {
+            col_ptr = rb.openUIntReader("idxptr").convert<uint64_t>();
+            index_idx_offsets = ConstNumReader<uint64_t>::create({0, UINT64_MAX});
+        } else if (rb.readVersion() == versionString(true, 2)) {
+            col_ptr = rb.openULongReader("idxptr");
+            index_idx_offsets = rb.openULongReader("index_idx_offsets");
+        } else {
             throw std::runtime_error(
-                std::string("Version does not match ") + versionString(true) + ": " +
+                std::string("Version does not match ") + versionString(true, 2) + ": " +
                 rb.readVersion()
             );
         }
 
-        UIntReader col_ptr = rb.openUIntReader("idxptr");
         col_ptr.seek(col_ptr.size() - 1);
-        uint32_t count = col_ptr.read_one();
+        uint64_t count = col_ptr.read_one();
         col_ptr.seek(0);
 
         NumReader<T> val;
         if constexpr (std::is_same_v<T, uint32_t>) {
+            ULongReader val_idx_offsets;
+            if (rb.readVersion() == versionString(true, 1)) {
+                val_idx_offsets = ConstNumReader<uint64_t>::create({0, UINT64_MAX});
+            } else if (rb.readVersion() == versionString(true, 2)) {
+                val_idx_offsets = rb.openULongReader("val_idx_offsets");
+            }
             val = UIntReader(
                 std::make_unique<BP128_FOR_UIntReader>(
-                    rb.openUIntReader("val_data"), rb.openUIntReader("val_idx"), count
+                    rb.openUIntReader("val_data"),
+                    rb.openUIntReader("val_idx"),
+                    std::move(val_idx_offsets),
+                    count
                 ),
                 load_size,
                 load_size
@@ -155,6 +176,7 @@ template <class T> class StoredMatrix : public MatrixLoader<T> {
                 std::make_unique<BP128_D1Z_UIntReader>(
                     rb.openUIntReader("index_data"),
                     rb.openUIntReader("index_idx"),
+                    std::move(index_idx_offsets),
                     rb.openUIntReader("index_starts"),
                     count
                 ),

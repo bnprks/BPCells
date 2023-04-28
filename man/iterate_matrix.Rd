@@ -2,11 +2,11 @@
 % Please edit documentation in R/matrix.R
 \name{iterate_matrix}
 \alias{iterate_matrix}
-\title{Get a wrapped pointer to the iterable matrix, in the form of an XPtrList (see fragments.R)}
+\title{Get a wrapped pointer to the iterable matrix}
 \usage{
 iterate_matrix(x)
 }
 \description{
-Get a wrapped pointer to the iterable matrix, in the form of an XPtrList (see fragments.R)
+Get a wrapped pointer to the iterable matrix
 }
 \keyword{internal}
