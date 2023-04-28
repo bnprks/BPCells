@@ -1448,6 +1448,11 @@ open_matrix_anndata_hdf5 <- function(path, group = "X", buffer_size = 16384L) {
 #'   fixed memory usage even for very large inputs by doing on-disk sorts. It will be
 #'   much slower than hdf5 inputs, so only use MatrixMarket format when absolutely necessary.
 #'
+#'   As a rough speed estimate, importing the 17GB Parse 
+#'   [1M PBMC](https://www.parsebiosciences.com/datasets/pbmc/single-cell-rna-sequencing-of-1-million-human-cells-in-a-single-experiment)
+#'   `DGE_1M_PBMC.mtx` file takes about 4 minutes and 1.3GB of RAM, producing a compressed output matrix of 1.5GB. `mtx.gz`
+#'   files will be slower to import due to gzip decompression.
+#'   
 #'   When importing from 10x mtx files, the row and column names can be read automatically
 #'   using the `import_matrix_market_10x()` convenience function.
 #' @export

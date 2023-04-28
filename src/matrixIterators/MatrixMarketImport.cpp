@@ -16,6 +16,8 @@ void importMtx(
 ) {
     MatrixMarketHeader h;
     h = MatrixMarketImport<uint32_t>::parse_header(input_path);
+    if (h.rows != row_names.size() && row_names.size() != 0) throw std::runtime_error("importMtx: row_names not same length as row count");
+    if (h.cols != col_names.size() && col_names.size() != 0) throw std::runtime_error("importMtx: col_names not same length as col count");
     if (row_major) {
         std::swap(h.rows, h.cols);
         std::swap(row_names, col_names);
