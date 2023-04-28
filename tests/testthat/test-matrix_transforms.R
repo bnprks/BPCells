@@ -72,6 +72,16 @@ test_that("pow works", {
     expect_equal(m^3, m2^3 %>% as("dgCMatrix"))
 })
 
+test_that("binarize works", {
+    v <- c(-1.0, 0, .1, .2, .5, 1.0, 1.5, 2.0)
+    m <- matrix(v, nrow=2, byrow=TRUE)
+    m2 <- as(as(m, 'dgCMatrix'), 'IterableMatrix')
+    m3 <- as(binarize(m2), 'matrix')
+    expect_identical(m3, matrix(c(0, 0, 0, 1, 0, 1, 0, 1), nrow=2))
+    m4 <- as(binarize(m2, threshold=.5), 'matrix')
+    expect_identical(m4, matrix(c(0, 1, 0, 1, 0, 1, 0, 1), nrow=2))
+})
+
 test_that("round works", {
     v <- c(0.1, 0.5, 0.7, 1.3, 1.5, 1.9, -0.1, -0.5, -0.7, -1.3, -1.5, -1.9)
     m <- matrix(v, nrow=2, byrow=TRUE)

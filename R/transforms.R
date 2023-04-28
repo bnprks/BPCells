@@ -258,6 +258,45 @@ min_by_col <- function(mat, vals) {
 
 
 #################
+# Binarize
+#################
+
+setClass("TransformBinarize", contains = "TransformedMatrix")
+
+#' Binarize converts matrix elements to zeros and ones.
+#'
+#' @description Binarize compares the matrix element values to the
+#'   threshold value. Elements whose value is less than the threshold
+#'   are set to zero and values greater than or equal to the
+#'   threshold are set to one. The default threshold is 1.
+#' @param x matrix An input matrix.
+#' @param threshold A numeric value that determines whether the elements
+#'   of x are set to zero or one.
+#' @return matrix
+#' @export
+setGeneric("binarize", function(x, threshold=1) standardGeneric("binarize"))
+
+setMethod("iterate_matrix", "TransformBinarize", function(x) {
+  iterate_matrix_binarize_cpp(iterate_matrix(x@matrix), x@global_params[1])
+})
+
+setMethod("short_description", "TransformBinarize", function(x) {
+  c(
+    short_description(x@matrix),
+    "Transform matrix to binary; that is, zeros and ones"
+  )
+})
+
+setMethod("binarize", "IterableMatrix", function(x, threshold=1) {
+  assert_is(x, "IterableMatrix")
+  assert_is(threshold, "numeric")
+  if (threshold < 0) stop("binarize threshold must be greater than or equal to zero")
+
+  wrapMatrix("TransformBinarize", convert_matrix_type(x, "double"), global_params=threshold)
+})
+
+
+#################
 # Round
 #################
 
