@@ -4,6 +4,7 @@
 
 #include "matrixIterators/ImportMatrixHDF5.h"
 #include "matrixIterators/MatrixIterator.h"
+#include "matrixIterators/MatrixMarketImport.h"
 #include "matrixIterators/StoredMatrix.h"
 #include "matrixIterators/StoredMatrixTransposeWriter.h"
 #include "matrixIterators/StoredMatrixWriter.h"
@@ -116,7 +117,12 @@ SEXP write_matrix_transpose_dir(
         wb, tmpdir.c_str(), load_bytes, sort_buffer_bytes, row_major
     );
     auto mat = take_unique_xptr<MatrixLoader<T>>(matrix);
-    transpose.write(*mat);
+    run_with_R_interrupt_check(
+        &MatrixWriter<T>::write,
+        &transpose,
+        std::ref(*mat)
+    );
+    
     FileReaderBuilder rb(outdir);
     return make_unique_xptr<StoredMatrix<T>>(StoredMatrix<T>::openPacked(rb));
 }
@@ -672,4 +678,30 @@ read_hdf5_string_cpp(std::string path, std::string group, uint32_t buffer_size) 
 bool hdf5_group_exists_cpp(std::string path, std::string group) {
     H5ReaderBuilder rb(path, "/", 1);
     return rb.getGroup().exist(group);
+}
+
+// [[Rcpp::export]]
+void import_matrix_market_cpp(
+    std::string mtx_path,
+    std::vector<std::string> row_names,
+    std::vector<std::string> col_names,
+    std::string outdir,
+    std::string tmpdir,
+    uint64_t load_bytes,
+    uint64_t sort_buffer_bytes,
+    bool row_major
+) {
+    FileWriterBuilder wb(outdir);
+
+    run_with_R_interrupt_check(
+        importMtx,
+        mtx_path,
+        std::move(row_names),
+        std::move(col_names),
+        std::ref(wb),
+        tmpdir.c_str(),
+        load_bytes,
+        sort_buffer_bytes,
+        row_major
+    );
 }

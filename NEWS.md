@@ -8,6 +8,9 @@ Contributions welcome :)
 
 # BPCells 0.2.0 (unreleased - github main branch)
 ## Features
+- Reading text-based MatrixMarket inputs (e.g. from 10x or Parse) is now supported via
+  `import_matrix_market()` and the convenience function `import_matrix_market_10x()`. Our
+  implementation uses disk-backed sorting to allow importing large files with low memory usage.
 - Merging fragments with `c()` now handles inputs with mismatched chromosome names.
 
 ## Bug-fixes

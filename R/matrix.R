@@ -975,11 +975,11 @@ transpose_storage_order <- function(matrix, outdir = tempfile("transpose"), tmpd
   outdir <- normalizePath(outdir, mustWork = FALSE)
   tmpdir <- normalizePath(tmpdir, mustWork = FALSE)
   tmpdir <- tempfile("transpose_tmp", tmpdir = tmpdir)
+  on.exit(unlink(tmpdir, recursive = TRUE, expand = FALSE))
 
   it <- iterate_matrix(matrix)
   write_function(it, outdir, tmpdir, load_bytes, sort_bytes, !matrix@transpose)
 
-  unlink(tmpdir, recursive = TRUE, expand = FALSE)
   open_matrix_dir(outdir)
 }
 
@@ -1278,7 +1278,7 @@ setMethod("short_description", "10xMatrixH5", function(x) {
 #' @inheritParams open_matrix_hdf5
 #' @param feature_type Optional selection of feature types to include in output matrix.
 #'    For multiome data, the options are "Gene Expression" and "Peaks". This option is
-#'    only compatible
+#'    only compatible with files from cellranger 3.0 and newer.
 #' @return BPCells matrix object
 #' @details The 10x format makes use of gzip compression for the matrix data,
 #' which can slow down read performance. Consider writing into another format
@@ -1310,7 +1310,7 @@ open_matrix_10x_hdf5 <- function(path, feature_type = NULL, buffer_size = 16384L
 #' @param barcodes Vector of names for the cells
 #' @param feature_ids Vector of IDs for the features
 #' @param feature_names Vector of names for the features
-#' @param feature_type String or vector of feature types
+#' @param feature_types String or vector of feature types
 #' @param feature_metadata Named list of additional metadata vectors
 #' to store for each feature
 #' @details Input matrices must be in column-major storage order,
@@ -1431,6 +1431,89 @@ open_matrix_anndata_hdf5 <- function(path, group = "X", buffer_size = 16384L) {
   )
 
   return(t(res))
+}
+
+#' Import MatrixMarket files
+#'
+#' Read a sparse matrix from a MatrixMarket file. This is a text-based format used by 
+#' 10x, Parse, and others to store sparse matrices. 
+#' Format details on the [NIST website](https://math.nist.gov/MatrixMarket/formats.html).
+#' @inheritParams transpose_storage_order
+#' @param mtx_path Path of mtx or mtx.gz file
+#' @param row_names Character vector of row names
+#' @param col_names Character vector of col names
+#' @param row_major If true, store the matrix in row-major orientation
+#' @return MatrixDir object with the imported matrix
+#' @details Import MatrixMarket mtx files to the BPCells format. This implementation ensures
+#'   fixed memory usage even for very large inputs by doing on-disk sorts. It will be
+#'   much slower than hdf5 inputs, so only use MatrixMarket format when absolutely necessary.
+#'
+#'   When importing from 10x mtx files, the row and column names can be read automatically
+#'   using the `import_matrix_market_10x()` convenience function.
+#' @export
+import_matrix_market <- function(
+  mtx_path, outdir = tempfile("matrix_market"), row_names = NULL, col_names = NULL, row_major = FALSE,
+  tmpdir = tempdir(), load_bytes = 4194304L, sort_bytes = 1073741824L
+) {
+  if (!is.null(row_names)) {
+    row_names <- as.character(row_names)
+  } else {
+    row_names <- character(0)
+  }
+  if (!is.null(col_names)) {
+    col_names <- as.character(col_names)
+  } else {
+    col_names <- character(0)
+  }
+
+  mtx_path <- normalizePath(mtx_path, mustWork = FALSE)
+
+  outdir <- normalizePath(outdir, mustWork = FALSE)
+  tmpdir <- normalizePath(tmpdir, mustWork = FALSE)
+  tmpdir <- tempfile("matrix_market_tmp", tmpdir = tmpdir)
+  #on.exit(unlink(tmpdir, recursive = TRUE, expand = FALSE))
+
+
+  import_matrix_market_cpp(mtx_path, row_names, col_names, outdir, tmpdir, load_bytes, sort_bytes, row_major)
+  m <- open_matrix_dir(outdir)
+  return(m)
+}
+
+#' @rdname import_matrix_market
+#' @param mtx_dir Directory holding matrix.mtx.gz, barcodes.tsv.gz, and features.tsv.gz
+#' @param feature_type String or vector of feature types to include. (cellranger 3.0 and newer)
+#' @export
+import_matrix_market_10x <- function(
+  mtx_dir, outdir = tempfile("matrix_market"), feature_type=NULL, row_major = FALSE, 
+  tmpdir = tempdir(), load_bytes = 4194304L, sort_bytes = 1073741824L
+) {
+  mtx_dir <- normalizePath(mtx_dir, mustWork=TRUE)
+  assert_is_file(file.path(mtx_dir, c("matrix.mtx.gz", "features.tsv.gz", "barcodes.tsv.gz")), multiple_ok=TRUE)
+  col_types <- readr::cols(.default=readr::col_character())
+  col_names <- readr::read_tsv(file.path(mtx_dir, "barcodes.tsv.gz"), col_names=FALSE, col_types=col_types, progress=FALSE)[[1]]
+  features <- readr::read_tsv(file.path(mtx_dir, "features.tsv.gz"), col_names=FALSE, col_types=col_types, progress=FALSE)
+  row_names <- features[[1]]
+  if (!is.null(feature_type)) {
+    assert_true(ncol(features) >= 3)
+  }
+  
+  m <- import_matrix_market(
+    file.path(mtx_dir, "matrix.mtx.gz"), 
+    row_names = row_names, 
+    col_names = col_names,
+    row_major = row_major,
+    outdir = outdir,
+    tmpdir = tmpdir,
+    load_bytes = load_bytes,
+    sort_bytes = sort_bytes
+  )
+
+  if (!is.null(feature_type)) {
+    valid_features <- features[[3]] %in% feature_type # nolint
+    m <- m[valid_features, ]
+  }
+
+  m
 }
 
 # Overlap matrix from fragments

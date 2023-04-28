@@ -86,7 +86,9 @@
 
 
 <dt>feature_type</dt>
-<dd><p>String or vector of feature types</p></dd>
+<dd><p>Optional selection of feature types to include in output matrix.
+For multiome data, the options are "Gene Expression" and "Peaks". This option is
+only compatible with files from cellranger 3.0 and newer.</p></dd>
 
 
 <dt>buffer_size</dt>
@@ -108,6 +110,10 @@ in memory before calling writes to disk.</p></dd>
 
 <dt>feature_names</dt>
 <dd><p>Vector of names for the features</p></dd>
+
+
+<dt>feature_types</dt>
+<dd><p>String or vector of feature types</p></dd>
 
 
 <dt>feature_metadata</dt>

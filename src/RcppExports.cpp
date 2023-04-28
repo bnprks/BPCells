@@ -1297,6 +1297,23 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// import_matrix_market_cpp
+void import_matrix_market_cpp(std::string mtx_path, std::vector<std::string> row_names, std::vector<std::string> col_names, std::string outdir, std::string tmpdir, uint64_t load_bytes, uint64_t sort_buffer_bytes, bool row_major);
+RcppExport SEXP _BPCells_import_matrix_market_cpp(SEXP mtx_pathSEXP, SEXP row_namesSEXP, SEXP col_namesSEXP, SEXP outdirSEXP, SEXP tmpdirSEXP, SEXP load_bytesSEXP, SEXP sort_buffer_bytesSEXP, SEXP row_majorSEXP) {
+BEGIN_RCPP
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< std::string >::type mtx_path(mtx_pathSEXP);
+    Rcpp::traits::input_parameter< std::vector<std::string> >::type row_names(row_namesSEXP);
+    Rcpp::traits::input_parameter< std::vector<std::string> >::type col_names(col_namesSEXP);
+    Rcpp::traits::input_parameter< std::string >::type outdir(outdirSEXP);
+    Rcpp::traits::input_parameter< std::string >::type tmpdir(tmpdirSEXP);
+    Rcpp::traits::input_parameter< uint64_t >::type load_bytes(load_bytesSEXP);
+    Rcpp::traits::input_parameter< uint64_t >::type sort_buffer_bytes(sort_buffer_bytesSEXP);
+    Rcpp::traits::input_parameter< bool >::type row_major(row_majorSEXP);
+    import_matrix_market_cpp(mtx_path, row_names, col_names, outdir, tmpdir, load_bytes, sort_buffer_bytes, row_major);
+    return R_NilValue;
+END_RCPP
+}
 // iterate_matrix_log1p_cpp
 SEXP iterate_matrix_log1p_cpp(SEXP matrix);
 RcppExport SEXP _BPCells_iterate_matrix_log1p_cpp(SEXP matrixSEXP) {
@@ -2127,6 +2144,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_BPCells_iterate_matrix_anndata_hdf5_cpp", (DL_FUNC) &_BPCells_iterate_matrix_anndata_hdf5_cpp, 5},
     {"_BPCells_read_hdf5_string_cpp", (DL_FUNC) &_BPCells_read_hdf5_string_cpp, 3},
     {"_BPCells_hdf5_group_exists_cpp", (DL_FUNC) &_BPCells_hdf5_group_exists_cpp, 2},
+    {"_BPCells_import_matrix_market_cpp", (DL_FUNC) &_BPCells_import_matrix_market_cpp, 8},
     {"_BPCells_iterate_matrix_log1p_cpp", (DL_FUNC) &_BPCells_iterate_matrix_log1p_cpp, 1},
     {"_BPCells_iterate_matrix_log1psimd_cpp", (DL_FUNC) &_BPCells_iterate_matrix_log1psimd_cpp, 1},
     {"_BPCells_iterate_matrix_expm1_cpp", (DL_FUNC) &_BPCells_iterate_matrix_expm1_cpp, 1},

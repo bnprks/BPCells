@@ -315,3 +315,39 @@ test_that("Dir overwrite works", {
       as("dgCMatrix")
   )
 })
+
+test_that("Mtx import works", {
+  md <- import_matrix_market("../data/double_mat.mtx")
+  md_t <- import_matrix_market("../data/double_mat.mtx", row_major=TRUE)
+  mi <- import_matrix_market("../data/int_mat.mtx.gz")
+  mi_t <- import_matrix_market("../data/int_mat.mtx.gz", row_major=TRUE)
+
+  expect_identical(storage_order(md), "col")
+  expect_identical(storage_order(mi), "col")
+  expect_identical(storage_order(md_t), "row")
+  expect_identical(storage_order(mi_t), "row")
+
+  expect_identical(md@type, "double")
+  expect_identical(md_t@type, "double")
+  expect_identical(mi@type, "uint32_t")
+  expect_identical(mi_t@type, "uint32_t")
+
+  ans_d <- Matrix::readMM("../data/double_mat.mtx") %>% as("dgCMatrix")
+  ans_i <- Matrix::readMM("../data/int_mat.mtx.gz") %>% as("dgCMatrix")
+  expect_identical(
+    ans_d,
+    as(md, "dgCMatrix")
+  )
+  expect_identical(
+    ans_d,
+    as(md_t, "dgCMatrix")
+  )
+  expect_identical(
+    ans_i,
+    as(mi, "dgCMatrix")
+  )
+  expect_identical(
+    ans_i,
+    as(mi_t, "dgCMatrix")
+  )
+})

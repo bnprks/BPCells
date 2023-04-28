@@ -377,6 +377,10 @@ hdf5_group_exists_cpp <- function(path, group) {
     .Call(`_BPCells_hdf5_group_exists_cpp`, path, group)
 }
 
+import_matrix_market_cpp <- function(mtx_path, row_names, col_names, outdir, tmpdir, load_bytes, sort_buffer_bytes, row_major) {
+    invisible(.Call(`_BPCells_import_matrix_market_cpp`, mtx_path, row_names, col_names, outdir, tmpdir, load_bytes, sort_buffer_bytes, row_major))
+}
+
 iterate_matrix_log1p_cpp <- function(matrix) {
     .Call(`_BPCells_iterate_matrix_log1p_cpp`, matrix)
 }

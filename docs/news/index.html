@@ -69,7 +69,8 @@
 <h2 class="pkg-version" data-toc-text="0.2.0" id="bpcells-020-unreleased---github-main-branch">BPCells 0.2.0 (unreleased - github main branch)<a class="anchor" aria-label="anchor" href="#bpcells-020-unreleased---github-main-branch"></a></h2>
 <div class="section level3">
 <h3 id="features-0-2-0">Features<a class="anchor" aria-label="anchor" href="#features-0-2-0"></a></h3>
-<ul><li>Merging fragments with <code><a href="https://rdrr.io/r/base/c.html" class="external-link">c()</a></code> now handles inputs with mismatched chromosome names.</li>
+<ul><li>Reading text-based MatrixMarket inputs (e.g. from 10x or Parse) is now supported via <code><a href="../reference/import_matrix_market.html">import_matrix_market()</a></code> and the convenience function <code><a href="../reference/import_matrix_market.html">import_matrix_market_10x()</a></code>. Our implementation uses disk-backed sorting to allow importing large files with low memory usage.</li>
+<li>Merging fragments with <code><a href="https://rdrr.io/r/base/c.html" class="external-link">c()</a></code> now handles inputs with mismatched chromosome names.</li>
 </ul></div>
 <div class="section level3">
 <h3 id="bug-fixes-0-2-0">Bug-fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-0-2-0"></a></h3>

@@ -38,6 +38,7 @@ matrixIterators/ImportMatrixHDF5.o \
 matrixIterators/PeakMatrix.o \
 matrixIterators/TileMatrix.o \
 matrixIterators/MatrixStats.o \
+matrixIterators/MatrixMarketImport.o \
 matrixIterators/WilcoxonRankSum.o \
 matrixTransforms/Log1p.o \
 matrixTransforms/Min.o \

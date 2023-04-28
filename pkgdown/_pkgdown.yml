@@ -90,6 +90,7 @@ reference:
   - open_matrix_10x_hdf5
   - open_matrix_anndata_hdf5
   - write_matrix_memory
+  - import_matrix_market
 
 - subtitle: "Matrix Operations"
 - contents:
