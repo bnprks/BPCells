@@ -1786,6 +1786,9 @@ convert_matrix_type <- function(matrix, type = c("uint32_t", "double", "float"))
   }
   if (matrix_type(matrix) == type) {
     return(matrix)
+  } else if (is(matrix, "ConvertMatrixType")) {
+    matrix@type <- type
+    return(matrix)
   } else if (matrix@transpose) {
     return(t(convert_matrix_type(t(matrix), type)))
   }
