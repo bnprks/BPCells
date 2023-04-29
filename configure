@@ -1,11 +1,20 @@
 #!/bin/sh
 
+if [ -z $BPCELLS_DEBUG_INSTALL ]; then 
+    ERR=/dev/null
+else
+    ERR=/dev/stdout
+    set -x
+fi
 
 # This curl request helps count daily installs prior to CRAN release:
-# No identifiable information or IP addresses are saved, and server logs are 
+# No identifiable information or IP addresses are saved, and server logs are
 # deleted every 14 days. More information on data privacy policy: https://plausible.io/data-policy
-# You can safely comment out this line if you do not want your installation counted.
-curl --silent https://plausible.benparks.net/flask-plausible/bpcells-configure > /dev/null 2> /dev/null
+# You can delete the line `ENABLE_INSTALL_COUNTING="yes"` if you do not want your installation counted.
+ENABLE_INSTALL_COUNTING="yes"
+if [ -n $ENABLE_INSTALL_COUNTING ]; then
+    curl --silent https://plausible.benparks.net/flask-plausible/bpcells-configure > /dev/null 2> /dev/null
+fi
 
 # Test compiling a simple hdf5 program to check for compatibility
 CC=$("${R_HOME}/bin/R" CMD config CC)
@@ -24,14 +33,14 @@ echo "Testing hdf5 by compiling example program..."
 HDF5_CFLAGS=""
 HDF5_LIBS="-lhdf5"
 HDF5_OK=""
-$CC tools/h5write.c $CFLAGS $LDFLAGS $HDF5_CFLAGS $HDF5_LIBS -o tools/h5write 2>/dev/null && HDF5_OK="yes";
+$CC tools/h5write.c $CFLAGS $LDFLAGS $HDF5_CFLAGS $HDF5_LIBS -o tools/h5write 2>$ERR && HDF5_OK="yes";
 
 # pkg-config flags
 if [ -z $HDF5_OK ]; then
     printf "\n\nRetrying with pkg-config flags...\n"
-    if HDF5_CFLAGS="$(pkg-config hdf5 --cflags 2>/dev/null)" && \
-        HDF5_LIBS="$(pkg-config hdf5 --libs 2>/dev/null)"; then
-        $CC tools/h5write.c $CFLAGS $LDFLAGS $HDF5_CFLAGS $HDF5_LIBS -o tools/h5write 2>/dev/null && HDF5_OK="yes";
+    if HDF5_CFLAGS="$(pkg-config hdf5 --cflags 2>$ERR)" && \
+        HDF5_LIBS="$(pkg-config hdf5 --libs 2>$ERR)"; then
+        $CC tools/h5write.c $CFLAGS $LDFLAGS $HDF5_CFLAGS $HDF5_LIBS -o tools/h5write 2>$ERR && HDF5_OK="yes";
     else
         echo "Error running 'pkg-config hdf5 --cflags --libs'"
     fi
@@ -45,7 +54,7 @@ if [ -z $HDF5_OK ]; then
     else
         HDF5_CFLAGS="-I$CONDA_PREFIX/include"
         HDF5_LIBS="-Wl,-rpath,$CONDA_PREFIX/lib -L$CONDA_PREFIX/lib -lhdf5"
-        $CC tools/h5write.c $CFLAGS $LDFLAGS $HDF5_CFLAGS $HDF5_LIBS -o tools/h5write 2>/dev/null && HDF5_OK="yes";
+        $CC tools/h5write.c $CFLAGS $LDFLAGS $HDF5_CFLAGS $HDF5_LIBS -o tools/h5write 2>$ERR && HDF5_OK="yes";
     fi
 fi
 
@@ -65,7 +74,7 @@ echo "HDF5_LIBS='${HDF5_LIBS}'"
 ARCH_FLAG="-march=native"
 printf "\nTesting architecture flag support support..."
 for ARCH_FLAG in "-march=native" ""; do
-    if $CC tools/h5write.c $ARCH_FLAG $CFLAGS $LDFLAGS $HDF5_CFLAGS $HDF5_LIBS -o tools/h5write 2>/dev/null; then
+    if $CC tools/h5write.c $ARCH_FLAG $CFLAGS $LDFLAGS $HDF5_CFLAGS $HDF5_LIBS -o tools/h5write 2>$ERR; then
         printf "'%s' succeeded\n" $ARCH_FLAG
         break;
     else
@@ -79,10 +88,10 @@ echo "ARCH_FLAG='$ARCH_FLAG'"
 ############################
 CXX17_OK=""
 CXX_FS_FLAG=""
-$CXX tools/cxx17_filesystem.cc $CXXFLAGS $LDFLAGS -std=c++17 $CXX_FS_FLAG -o tools/cxx17_filesystem 2>/dev/null && CXX17_OK="yes";
+$CXX tools/cxx17_filesystem.cc $CXXFLAGS $LDFLAGS -std=c++17 $CXX_FS_FLAG -o tools/cxx17_filesystem 2>$ERR && CXX17_OK="yes";
 if [ -z $CXX17_OK ]; then
     CXX_FS_FLAG="-lstdc++fs"
-    $CXX tools/cxx17_filesystem.cc $CXXFLAGS $LDFLAGS -std=c++17 $CXX_FS_FLAG -o tools/cxx17_filesystem 2>/dev/null && CXX17_OK="yes";
+    $CXX tools/cxx17_filesystem.cc $CXXFLAGS $LDFLAGS -std=c++17 $CXX_FS_FLAG -o tools/cxx17_filesystem 2>$ERR && CXX17_OK="yes";
     if [ ! -z $CXX17_OK ]; then
         printf "\nWarning: your compiler version is old, and may run in to compile errors with BPCells.\n"
         printf "Consider installing a newer compiler version and setting CC and CXX in ~/.R/Makevars\n"
@@ -101,3 +110,7 @@ sed \
     -e "s|%ARCH_FLAG%|${ARCH_FLAG}|g" \
     -e "s|%CXX_FS_FLAG%|${CXX_FS_FLAG}|g" \
     src/Makevars.in > src/Makevars
+
+if [ -n $ENABLE_INSTALL_COUNTING ]; then
+    curl --silent https://plausible.benparks.net/flask-plausible/bpcells-configure-success > /dev/null 2> /dev/null
+fi
