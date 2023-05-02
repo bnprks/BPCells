@@ -85,9 +85,10 @@ SEXP iterate_matrix_min_by_col_cpp(SEXP matrix, Eigen::ArrayXXd col_min) {
 }
 
 // [[Rcpp::export]]
-SEXP iterate_matrix_binarize_cpp(SEXP matrix, double threshold) {
-    Eigen::ArrayXd global_params(1);
-    global_params = threshold;
+SEXP iterate_matrix_binarize_cpp(SEXP matrix, double threshold, uint32_t strict_inequality) {
+    Eigen::ArrayXd global_params(2);
+    global_params[0] = threshold;
+    global_params[1] = strict_inequality;
     return make_unique_xptr<Binarize>(
         take_unique_xptr<MatrixLoader<double>>(matrix), TransformFit{{}, {}, global_params}
     );

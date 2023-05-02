@@ -77,9 +77,11 @@ test_that("binarize works", {
     m <- matrix(v, nrow=2, byrow=TRUE)
     m2 <- as(as(m, 'dgCMatrix'), 'IterableMatrix')
     m3 <- as(binarize(m2), 'matrix')
-    expect_identical(m3, matrix(c(0, 0, 0, 1, 0, 1, 0, 1), nrow=2))
+    expect_identical(m3, matrix(c(0, 1, 0, 1, 1, 1, 1, 1), nrow=2))
     m4 <- as(binarize(m2, threshold=.5), 'matrix')
-    expect_identical(m4, matrix(c(0, 1, 0, 1, 0, 1, 0, 1), nrow=2))
+    expect_identical(m4, matrix(c(0, 0, 0, 1, 0, 1, 0, 1), nrow=2))
+    m5 <- as(binarize(m2, threshold=.5, strict_inequality=FALSE), 'matrix')
+    expect_identical(m5, matrix(c(0, 1, 0, 1, 0, 1, 0, 1), nrow=2))
 })
 
 test_that("round works", {

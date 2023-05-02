@@ -421,8 +421,8 @@ iterate_matrix_min_by_col_cpp <- function(matrix, col_min) {
     .Call(`_BPCells_iterate_matrix_min_by_col_cpp`, matrix, col_min)
 }
 
-iterate_matrix_binarize_cpp <- function(matrix, threshold) {
-    .Call(`_BPCells_iterate_matrix_binarize_cpp`, matrix, threshold)
+iterate_matrix_binarize_cpp <- function(matrix, threshold, strict_inequality) {
+    .Call(`_BPCells_iterate_matrix_binarize_cpp`, matrix, threshold, strict_inequality)
 }
 
 iterate_matrix_round_cpp <- function(matrix) {

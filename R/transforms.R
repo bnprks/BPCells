@@ -266,18 +266,23 @@ setClass("TransformBinarize", contains = "TransformedMatrix")
 #' Binarize converts matrix elements to zeros and ones.
 #'
 #' @description Binarize compares the matrix element values to the
-#'   threshold value. Elements whose value is less than the threshold
-#'   are set to zero and values greater than or equal to the
-#'   threshold are set to one. The default threshold is 1.
+#'   threshold value and sets the output elements to either zero
+#'   or one. By default, element values greater than the threshold
+#'   are set to one; otherwise, set to zero. When strict_inequality
+#'   is set to FALSE, element values greater than or equal to the
+#'   threshold are set to one.
 #' @param x matrix An input matrix.
 #' @param threshold A numeric value that determines whether the elements
 #'   of x are set to zero or one.
+#' @param strict_inequality A logical value determining whether the
+#'   comparison to the threshold is >= (strict_inequality=FALSE)
+#'   or > (strict_inequality=TRUE).
 #' @return matrix
 #' @export
-setGeneric("binarize", function(x, threshold=1) standardGeneric("binarize"))
+setGeneric("binarize", function(x, threshold=0, strict_inequality=TRUE) standardGeneric("binarize"))
 
 setMethod("iterate_matrix", "TransformBinarize", function(x) {
-  iterate_matrix_binarize_cpp(iterate_matrix(x@matrix), x@global_params[1])
+  iterate_matrix_binarize_cpp(iterate_matrix(x@matrix), x@global_params[1], x@global_params[2])
 })
 
 setMethod("short_description", "TransformBinarize", function(x) {
@@ -287,14 +292,19 @@ setMethod("short_description", "TransformBinarize", function(x) {
   )
 })
 
-setMethod("binarize", "IterableMatrix", function(x, threshold=1) {
+setMethod("binarize", "IterableMatrix", function(x, threshold=0, strict_inequality=TRUE) {
   assert_is(x, "IterableMatrix")
   assert_is(threshold, "numeric")
-  if (threshold < 0) stop("binarize threshold must be greater than or equal to zero")
+  assert_is(strict_inequality, "logical")
+  if (strict_inequality == TRUE && threshold < 0)
+      stop("binarize threshold must be greater than or equal to zero when strict_inequality is TRUE")
+  if (strict_inequality == FALSE && threshold <= 0)
+     stop("binarize threshold must be greater than zero when strict_inequality is FALSE")
 
-  wrapMatrix("TransformBinarize", convert_matrix_type(x, "double"), global_params=threshold)
+  wrapMatrix("TransformBinarize",
+             convert_matrix_type(x, "double"),
+             global_params=c(threshold, strict_inequality))
 })
-
 
 #################
 # Round

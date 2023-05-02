@@ -4,20 +4,26 @@
 \alias{binarize}
 \title{Binarize converts matrix elements to zeros and ones.}
 \usage{
-binarize(x, threshold = 1)
+binarize(x, threshold = 0, strict_inequality = TRUE)
 }
 \arguments{
 \item{x}{matrix An input matrix.}
 
 \item{threshold}{A numeric value that determines whether the elements
 of x are set to zero or one.}
+
+\item{strict_inequality}{A logical value determining whether the
+comparison to the threshold is >= (strict_inequality=FALSE)
+or > (strict_inequality=TRUE).}
 }
 \value{
 matrix
 }
 \description{
 Binarize compares the matrix element values to the
-threshold value. Elements whose value is less than the threshold
-are set to zero and values greater than or equal to the
-threshold are set to one. The default threshold is 1.
+threshold value and sets the output elements to either zero
+or one. By default, element values greater than the threshold
+are set to one; otherwise, set to zero. When strict_inequality
+is set to FALSE, element values greater than or equal to the
+threshold are set to one.
 }
