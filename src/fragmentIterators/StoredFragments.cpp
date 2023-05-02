@@ -448,9 +448,9 @@ void StoredFragmentsWriter::write(FragmentLoader &fragments, std::atomic<bool> *
         chr_ptr_buf.resize(fragments.chrCount() * 2, idx);
     }
 
-    chr_ptr.ensureCapacity(chr_ptr_buf.size());
-    std::memmove(chr_ptr.data(), chr_ptr_buf.data(), chr_ptr_buf.size() * sizeof(uint64_t));
-    chr_ptr.advance(chr_ptr_buf.size());
+    for (auto &ptr : chr_ptr_buf) {
+        chr_ptr.write_one(ptr);
+    }
 
     cell.finalize();
     start.finalize();

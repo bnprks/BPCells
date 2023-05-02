@@ -50,9 +50,9 @@ template <typename T> class StoredMatrixSorter {
 
     bool row_major;
 
-    void openWriters(uint32_t round, bool last_round = false);
-    void openReaders(uint32_t round, bool last_round = false);
-    void deleteWriters(uint32_t round, bool last_round = false);
+    void openWriters(uint64_t round, bool last_round = false);
+    void openReaders(uint64_t round, bool last_round = false);
+    void deleteWriters(uint64_t round, bool last_round = false);
 
     template <typename S> NumWriter<S> openWriter(WriterBuilder &wb, std::string name);
 
@@ -69,12 +69,12 @@ template <typename T> class StoredMatrixSorter {
     template <typename V> class SliceReader {
         NumReader<V> &reader;
         std::vector<V> data;
-        uint32_t data_idx = 1, num_loaded = 0, reader_idx;
-        const uint32_t reader_end_idx;
+        uint64_t data_idx = 0, num_loaded = 0, reader_idx;
+        const uint64_t reader_end_idx;
 
       public:
         SliceReader(
-            NumReader<V> &reader, uint32_t start_offset, uint32_t count, uint32_t chunk_size
+            NumReader<V> &reader, uint64_t start_offset, uint64_t count, uint64_t chunk_size
         );
         bool advance();
         V value() const;
@@ -88,7 +88,8 @@ template <typename T> class StoredMatrixSorter {
         const char *tmpdir,
         uint64_t load_bytes,
         uint64_t sort_buffer_bytes,
-        bool row_major = false // If true, swap metadata in writeValues() to mark outputs as row-major
+        bool row_major =
+            false // If true, swap metadata in writeValues() to mark outputs as row-major
     )
         : load_elements(load_bytes / sizeof(uint32_t))
         , sort_buffer_elements(sort_buffer_bytes / (bytesPerElement()))
@@ -116,8 +117,15 @@ template <typename T> class StoredMatrixSorter {
     // Load matrix values using the load_entries() function and sort to be in col-major order
     // row_names, col_names -- row/column names (assuming col-major order)
     // rows, cols -- number of rows/cols (assuming col-major order)
-    // row_major -- if true, swap row/col arguments when writing the StoredMatrix format and mark as row-major storage order
-    void writeValues(std::vector<std::string> &&row_names, std::vector<std::string> &&col_names, uint32_t rows, uint32_t cols, std::atomic<bool> *user_interrupt = NULL) {
+    // row_major -- if true, swap row/col arguments when writing the StoredMatrix format and mark as
+    // row-major storage order
+    void writeValues(
+        std::vector<std::string> &&row_names,
+        std::vector<std::string> &&col_names,
+        uint32_t rows,
+        uint32_t cols,
+        std::atomic<bool> *user_interrupt = NULL
+    ) {
         if (round != 0)
             throw std::runtime_error(
                 "StoredMatrixSorter: can't write more than once to same temporary location"
@@ -174,15 +182,14 @@ template <typename T> class StoredMatrixSorter {
         // correct lexographic ordering to make a min-heap
         std::vector<std::tuple<uint32_t, uint32_t, uint32_t>> heap;
 
-        
         if (input_chunk_sizes.size() == 1) {
             // Copy data into the output location
             round += 1;
-            openReaders(round-1);
+            openReaders(round - 1);
             openWriters(round, true);
-            
-            while(row_reader.requestCapacity()) {
-                uint32_t capacity = row_reader.capacity();
+
+            while (row_reader.requestCapacity()) {
+                uint64_t capacity = row_reader.capacity();
                 row_writer.ensureCapacity(capacity);
                 std::memmove(row_writer.data(), row_reader.data(), capacity * sizeof(uint32_t));
                 row_reader.advance(capacity);
@@ -190,8 +197,8 @@ template <typename T> class StoredMatrixSorter {
             }
             row_writer.finalize();
 
-            while(col_reader.requestCapacity()) {
-                uint32_t capacity = col_reader.capacity();
+            while (col_reader.requestCapacity()) {
+                uint64_t capacity = col_reader.capacity();
                 col_writer.ensureCapacity(capacity);
                 std::memmove(col_writer.data(), col_reader.data(), capacity * sizeof(uint32_t));
                 col_reader.advance(capacity);
@@ -199,8 +206,8 @@ template <typename T> class StoredMatrixSorter {
             }
             col_writer.finalize();
 
-            while(val_reader.requestCapacity()) {
-                uint32_t capacity = val_reader.capacity();
+            while (val_reader.requestCapacity()) {
+                uint64_t capacity = val_reader.capacity();
                 val_writer.ensureCapacity(capacity);
                 std::memmove(val_writer.data(), val_reader.data(), capacity * sizeof(T));
                 val_reader.advance(capacity);
@@ -220,7 +227,7 @@ template <typename T> class StoredMatrixSorter {
 
             output_chunk_sizes.clear();
 
-            uint32_t reader_offset = 0; // Used to calculate offsets for reads
+            uint64_t reader_offset = 0; // Used to calculate offsets for reads
 
             // Merge up to `row_chunks` sorted chunks at a time, starting at index `chunk`
             for (uint64_t chunk = 0; chunk < input_chunk_sizes.size();
@@ -294,8 +301,7 @@ template <typename T> class StoredMatrixSorter {
                     // Because we will often have repeated elements coming from the same
                     // chunk, do a quick test to see if we even need to adjust the heap.
                     // (Why often repeated? If a chunk spans several adjacent columns of input, then
-                    // it
-                    //  will span several adjacent rows of the output)
+                    // it will span several adjacent rows of the output)
                     if (!has_more || second_to_top < heap.front()) {
                         dary_heap::pop_heap<2>(heap.begin(), heap.end(), std::greater<>{});
                         if (!has_more) heap.pop_back();
@@ -359,7 +365,7 @@ template <typename T> class StoredMatrixSorter {
     }
 };
 
-template <typename T> void StoredMatrixSorter<T>::openWriters(uint32_t round, bool last_round) {
+template <typename T> void StoredMatrixSorter<T>::openWriters(uint64_t round, bool last_round) {
     writer_round = round;
 
     std::string prefix = last_round ? "" : (std::to_string(round) + "_");
@@ -400,7 +406,7 @@ template <typename T> void StoredMatrixSorter<T>::openWriters(uint32_t round, bo
     }
 }
 
-template <typename T> void StoredMatrixSorter<T>::openReaders(uint32_t round, bool last_round) {
+template <typename T> void StoredMatrixSorter<T>::openReaders(uint64_t round, bool last_round) {
     reader_round = round;
 
     std::string prefix = last_round ? "" : (std::to_string(round) + "_");
@@ -450,7 +456,7 @@ template <typename T> void StoredMatrixSorter<T>::openReaders(uint32_t round, bo
     }
 }
 
-template <typename T> void StoredMatrixSorter<T>::deleteWriters(uint32_t round, bool last_round) {
+template <typename T> void StoredMatrixSorter<T>::deleteWriters(uint64_t round, bool last_round) {
     // TODO: If I ever change the makeup of BP128 storage to support > 2^34 bytes,
     //  then I'll need to add another deletion here
     std::string prefix = last_round ? "" : (std::to_string(round) + "_");
@@ -508,7 +514,7 @@ void StoredMatrixSorter<T>::flushToNumWriter(const V *vals, uint64_t count, NumW
 template <typename T>
 template <typename V>
 StoredMatrixSorter<T>::SliceReader<V>::SliceReader(
-    NumReader<V> &reader, uint32_t start_offset, uint32_t count, uint32_t chunk_size
+    NumReader<V> &reader, uint64_t start_offset, uint64_t count, uint64_t chunk_size
 )
     : reader(reader)
     , reader_idx(start_offset)

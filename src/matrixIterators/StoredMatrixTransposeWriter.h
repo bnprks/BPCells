@@ -36,7 +36,7 @@ template <typename T> class StoredMatrixTransposeWriter : public StoredMatrixSor
             }
             // Calculate the number of values to copy to outputs
             size_t available = mat->capacity() - previously_loaded;
-            uint32_t copy_count = std::min(row.size() - loaded, available);
+            uint32_t copy_count = std::min<size_t>(row.size() - loaded, available);
             
             // Copy the values
             std::memmove(

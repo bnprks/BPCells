@@ -3,6 +3,7 @@
 #include "../lib/dary_heap.hpp"
 #include <cstring>
 #include <vector>
+#include <unordered_map>
 
 #include "FragmentIterator.h"
 
