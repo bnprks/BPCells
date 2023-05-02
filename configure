@@ -13,7 +13,8 @@ fi
 # You can delete the line `ENABLE_INSTALL_COUNTING="yes"` if you do not want your installation counted.
 ENABLE_INSTALL_COUNTING="yes"
 if [ -n $ENABLE_INSTALL_COUNTING ]; then
-    curl --silent https://plausible.benparks.net/flask-plausible/bpcells-configure > /dev/null 2> /dev/null
+    curl --silent "https://plausible.benparks.net/flask-plausible/bpcells-configure" > /dev/null 2> /dev/null \
+        || true
 fi
 
 # Test compiling a simple hdf5 program to check for compatibility
@@ -112,5 +113,6 @@ sed \
     src/Makevars.in > src/Makevars
 
 if [ -n $ENABLE_INSTALL_COUNTING ]; then
-    curl --silent https://plausible.benparks.net/flask-plausible/bpcells-configure-success > /dev/null 2> /dev/null
+    curl --silent https://plausible.benparks.net/flask-plausible/bpcells-configure-success > /dev/null 2> /dev/null \
+        || true
 fi
