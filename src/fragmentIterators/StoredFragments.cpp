@@ -30,7 +30,7 @@ void StoredFragmentsBase::readEndMaxBuf(uint64_t start_idx, uint64_t end_idx) {
         return;
     }
     // Read the end_max buffer
-    end_max_buf.resize(end_idx / 128 - start_idx / 128 + 1);
+    end_max_buf.resize((end_idx - 1) / 128 - start_idx / 128 + 1);
     end_max.seek(start_idx / 128);
     uint32_t i = 0;
     while (true) {

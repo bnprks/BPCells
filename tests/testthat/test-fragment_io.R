@@ -163,3 +163,15 @@ test_that("Dir overwrite works", {
       as.data.frame()
   )
 })
+
+test_that("Regression test on multiple of 128 fragments", {
+  frags_table <- tibble::tibble(
+    chr = as.factor("chr1"),
+    start = 1:(128*10),
+    end = start+5L,
+    cell_id = as.factor(seq_along(start) %% 5)
+  )
+  f <- as(frags_table, "IterableFragments") %>% write_fragments_memory()
+  x <- as.data.frame(f) %>% tibble::as_tibble()
+  expect_identical(frags_table, x)
+})
