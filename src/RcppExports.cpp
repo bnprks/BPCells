@@ -1429,6 +1429,19 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// iterate_matrix_binarize_cpp
+SEXP iterate_matrix_binarize_cpp(SEXP matrix, double threshold, uint32_t strict_inequality);
+RcppExport SEXP _BPCells_iterate_matrix_binarize_cpp(SEXP matrixSEXP, SEXP thresholdSEXP, SEXP strict_inequalitySEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type matrix(matrixSEXP);
+    Rcpp::traits::input_parameter< double >::type threshold(thresholdSEXP);
+    Rcpp::traits::input_parameter< uint32_t >::type strict_inequality(strict_inequalitySEXP);
+    rcpp_result_gen = Rcpp::wrap(iterate_matrix_binarize_cpp(matrix, threshold, strict_inequality));
+    return rcpp_result_gen;
+END_RCPP
+}
 // iterate_matrix_round_cpp
 SEXP iterate_matrix_round_cpp(SEXP matrix);
 RcppExport SEXP _BPCells_iterate_matrix_round_cpp(SEXP matrixSEXP) {
@@ -2155,6 +2168,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_BPCells_iterate_matrix_min_cpp", (DL_FUNC) &_BPCells_iterate_matrix_min_cpp, 2},
     {"_BPCells_iterate_matrix_min_by_row_cpp", (DL_FUNC) &_BPCells_iterate_matrix_min_by_row_cpp, 2},
     {"_BPCells_iterate_matrix_min_by_col_cpp", (DL_FUNC) &_BPCells_iterate_matrix_min_by_col_cpp, 2},
+    {"_BPCells_iterate_matrix_binarize_cpp", (DL_FUNC) &_BPCells_iterate_matrix_binarize_cpp, 3},
     {"_BPCells_iterate_matrix_round_cpp", (DL_FUNC) &_BPCells_iterate_matrix_round_cpp, 1},
     {"_BPCells_iterate_matrix_sctransform_pearson_cpp", (DL_FUNC) &_BPCells_iterate_matrix_sctransform_pearson_cpp, 4},
     {"_BPCells_iterate_matrix_sctransform_pearson_transpose_cpp", (DL_FUNC) &_BPCells_iterate_matrix_sctransform_pearson_transpose_cpp, 4},

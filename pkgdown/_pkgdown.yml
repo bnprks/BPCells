@@ -101,6 +101,7 @@ reference:
   - sctransform_pearson
   - min_scalar
   - add_rows
+  - binarize
   - IterableMatrix-methods
 
 - title: "Reference Annotations"

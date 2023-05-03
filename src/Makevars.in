@@ -40,6 +40,7 @@ matrixIterators/TileMatrix.o \
 matrixIterators/MatrixStats.o \
 matrixIterators/MatrixMarketImport.o \
 matrixIterators/WilcoxonRankSum.o \
+matrixTransforms/Binarize.o \
 matrixTransforms/Log1p.o \
 matrixTransforms/Min.o \
 matrixTransforms/MatrixTransform.o \

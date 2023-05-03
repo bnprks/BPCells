@@ -258,6 +258,82 @@ min_by_col <- function(mat, vals) {
 
 
 #################
+# Binarize
+#################
+
+setClass("TransformBinarize", contains = "TransformedMatrix")
+
+setMethod("iterate_matrix", "TransformBinarize", function(x) {
+  iterate_matrix_binarize_cpp(iterate_matrix(x@matrix), x@global_params[1], x@global_params[2])
+})
+
+setMethod("short_description", "TransformBinarize", function(x) {
+  c(
+    short_description(x@matrix),
+    sprintf("Binarize according to formula: x %s %.2g", if(x@global_params[2] == 1) "<" else "<=", x@global_params[1])
+  )
+})
+
+#' Binarize converts matrix elements to zeros and ones.
+#'
+#' @description Binarize compares the matrix element values to the
+#'   threshold value and sets the output elements to either zero
+#'   or one. By default, element values greater than the threshold
+#'   are set to one; otherwise, set to zero. When strict_inequality
+#'   is set to FALSE, element values greater than or equal to the
+#'   threshold are set to one. As an alternative, the `<`, `<=`, `>`,
+#'   and `>=` operators are also supported.
+#' @param mat IterableMatrix
+#' @param threshold A numeric value that determines whether the elements
+#'   of x are set to zero or one.
+#' @param strict_inequality A logical value determining whether the
+#'   comparison to the threshold is >= (strict_inequality=FALSE)
+#'   or > (strict_inequality=TRUE).
+#' @return binarized IterableMatrix object
+#' @export
+binarize <- function(mat, threshold=0, strict_inequality=TRUE) {
+  assert_is(mat, "IterableMatrix")
+  assert_is(threshold, "numeric")
+  assert_len(threshold, 1)
+  assert_is(strict_inequality, "logical")
+  if (strict_inequality == TRUE && threshold < 0)
+      stop("binarize threshold must be greater than or equal to zero when strict_inequality is TRUE")
+  if (strict_inequality == FALSE && threshold <= 0)
+     stop("binarize threshold must be greater than zero when strict_inequality is FALSE")
+
+  res <- wrapMatrix("TransformBinarize",
+             convert_matrix_type(mat, "double"),
+             global_params=c(threshold, strict_inequality))
+  convert_matrix_type(res, "uint32_t")
+}
+
+setMethod("<", signature(e1= "IterableMatrix", e2= "numeric"), function(e1, e2) {
+  stop("matrix < numeric not supported for IterableMatrix objects")
+})
+setMethod("<", signature(e1= "numeric", e2= "IterableMatrix"), function(e1, e2) {
+  binarize(e2, threshold=e1, strict_inequality=TRUE)
+})
+setMethod(">", signature(e1= "IterableMatrix", e2= "numeric"), function(e1, e2) {
+  binarize(e1, threshold=e2, strict_inequality=TRUE)
+})
+setMethod(">", signature(e1= "numeric", e2= "IterableMatrix"), function(e1, e2) {
+  stop("numeric > matrix not supported for IterableMatrix objects")
+})
+
+setMethod("<=", signature(e1= "IterableMatrix", e2= "numeric"), function(e1, e2) {
+  stop("matrix <= numeric not supported for IterableMatrix objects")
+})
+setMethod("<=", signature(e1= "numeric", e2= "IterableMatrix"), function(e1, e2) {
+  binarize(e2, threshold=e1, strict_inequality=FALSE)
+})
+setMethod(">=", signature(e1= "IterableMatrix", e2= "numeric"), function(e1, e2) {
+  binarize(e1, threshold=e2, strict_inequality=FALSE)
+})
+setMethod(">=", signature(e1= "numeric", e2= "IterableMatrix"), function(e1, e2) {
+  stop("numeric >= matrix not supported for IterableMatrix objects")
+})
+
+#################
 # Round
 #################
 
@@ -540,10 +616,12 @@ setMethod("*", signature(e1 = "numeric", e2 = "IterableMatrix"), function(e1, e2
   e2 * e1
 })
 setMethod("+", signature(e1 = "IterableMatrix", e2 = "numeric"), function(e1, e2) {
+  if (all(e2 == 0)) return(e1)
   e1 <- wrapMatrix("TransformScaleShift", convert_matrix_type(e1, "double"))
   e1 + e2
 })
 setMethod("+", signature(e1 = "numeric", e2 = "IterableMatrix"), function(e1, e2) {
+  if (all(e1 == 0)) return(e2)
   e2 <- wrapMatrix("TransformScaleShift", convert_matrix_type(e2, "double"))
   e2 + e1
 })
@@ -617,6 +695,7 @@ setMethod("*", signature(e1 = "TransformScaleShift", e2 = "numeric"), function(e
   return(x)
 })
 setMethod("+", signature(e1 = "TransformScaleShift", e2 = "numeric"), function(e1, e2) {
+  if (all(e2 == 0)) return(e1)
   # Convenience renaming - x is matrix, y is vector/scalar
   x <- e1
   y <- e2
