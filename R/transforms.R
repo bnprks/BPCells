@@ -59,6 +59,7 @@ setMethod("short_description", "TransformLog1p", function(x) {
     "Transform log1p"
   )
 })
+#' @describeIn IterableMatrix-methods Calculate log(x + 1)
 setMethod("log1p", "IterableMatrix", function(x) {
   wrapMatrix("TransformLog1p", convert_matrix_type(x, "double"))
 })
@@ -73,6 +74,9 @@ setMethod("short_description", "TransformLog1pSlow", function(x) {
     "Transform log1p (non-SIMD implementation)"
   )
 })
+
+#' @describeIn IterableMatrix-methods Calculate log(x + 1) (non-SIMD version)
+#' @export
 log1p_slow <- function(x) {
   wrapMatrix("TransformLog1pSlow", convert_matrix_type(x, "double"))
 }
@@ -88,6 +92,7 @@ setMethod("short_description", "TransformExpm1", function(x) {
     "Transform expm1"
   )
 })
+#' @describeIn IterableMatrix-methods Calculate exp(x) - 1
 setMethod("expm1", "IterableMatrix", function(x) {
   wrapMatrix("TransformExpm1", convert_matrix_type(x, "double"))
 })
@@ -102,6 +107,8 @@ setMethod("short_description", "TransformExpm1Slow", function(x) {
     "Transform expm1 (non-SIMD implementation)"
   )
 })
+#' @describeIn IterableMatrix-methods Calculate exp(x) - 1 (non-SIMD version)
+#' @export
 expm1_slow <- function(x) {
   wrapMatrix("TransformExpm1Slow", convert_matrix_type(x, "double"))
 }
@@ -133,6 +140,7 @@ setMethod("short_description", "TransformPow", function(x) {
   )
 })
 
+#' @describeIn IterableMatrix-methods Calculate x^y (elementwise)
 setMethod("^", signature(e1 = "IterableMatrix", e2 = "numeric"), function(e1, e2) {
   assert_len(e2, 1)
   assert_true(e2 != 0)
@@ -154,6 +162,8 @@ setMethod("short_description", "TransformPowSlow", function(x) {
   )
 })
 
+#' @describeIn IterableMatrix-methods Calculate x^y (elementwise, non-SIMD version)
+#' @export
 pow_slow <- function(x, exponent) {
   wrapMatrix("TransformPowSlow", convert_matrix_type(x, "double"), global_params=exponent)
 }
@@ -310,9 +320,11 @@ binarize <- function(mat, threshold=0, strict_inequality=TRUE) {
 setMethod("<", signature(e1= "IterableMatrix", e2= "numeric"), function(e1, e2) {
   stop("matrix < numeric not supported for IterableMatrix objects")
 })
+#' @describeIn IterableMatrix-methods Binarize matrix according to numeric < matrix comparison
 setMethod("<", signature(e1= "numeric", e2= "IterableMatrix"), function(e1, e2) {
   binarize(e2, threshold=e1, strict_inequality=TRUE)
 })
+#' @describeIn IterableMatrix-methods Binarize matrix according to matrix > numeric comparison
 setMethod(">", signature(e1= "IterableMatrix", e2= "numeric"), function(e1, e2) {
   binarize(e1, threshold=e2, strict_inequality=TRUE)
 })
@@ -323,9 +335,11 @@ setMethod(">", signature(e1= "numeric", e2= "IterableMatrix"), function(e1, e2) 
 setMethod("<=", signature(e1= "IterableMatrix", e2= "numeric"), function(e1, e2) {
   stop("matrix <= numeric not supported for IterableMatrix objects")
 })
+#' @describeIn IterableMatrix-methods Binarize matrix according to numeric <= matrix comparison
 setMethod("<=", signature(e1= "numeric", e2= "IterableMatrix"), function(e1, e2) {
   binarize(e2, threshold=e1, strict_inequality=FALSE)
 })
+#' @describeIn IterableMatrix-methods Binarize matrix according to matrix >= numeric comparison
 setMethod(">=", signature(e1= "IterableMatrix", e2= "numeric"), function(e1, e2) {
   binarize(e1, threshold=e2, strict_inequality=FALSE)
 })
@@ -351,6 +365,7 @@ setMethod("short_description", "TransformRound", function(x) {
 })
 
 # Initially, allow only digits=0.
+#' @describeIn IterableMatrix-methods round to nearest integer (digits must be 0)
 setMethod("round", "IterableMatrix", function(x, digits=0) {
   assert_is(x, "IterableMatrix")
   assert_is(digits, "numeric")
@@ -607,6 +622,7 @@ setMethod("short_description", "TransformScaleShift", function(x) {
 })
 
 # Basic dispatch for scaling/shifting (Create TransformScaleShift and then apply function to it)
+#' @describeIn IterableMatrix-methods Multiply by a constant, or multiply rows by a vector length nrow(mat)
 setMethod("*", signature(e1 = "IterableMatrix", e2 = "numeric"), function(e1, e2) {
   e1 <- wrapMatrix("TransformScaleShift", convert_matrix_type(e1, "double"))
   e1 * e2
@@ -615,6 +631,7 @@ setMethod("*", signature(e1 = "numeric", e2 = "IterableMatrix"), function(e1, e2
   e2 <- wrapMatrix("TransformScaleShift", convert_matrix_type(e2, "double"))
   e2 * e1
 })
+#' @describeIn IterableMatrix-methods Add a constant, or row-wise addition with a vector length nrow(mat)
 setMethod("+", signature(e1 = "IterableMatrix", e2 = "numeric"), function(e1, e2) {
   if (all(e2 == 0)) return(e1)
   e1 <- wrapMatrix("TransformScaleShift", convert_matrix_type(e1, "double"))
@@ -626,9 +643,11 @@ setMethod("+", signature(e1 = "numeric", e2 = "IterableMatrix"), function(e1, e2
   e2 + e1
 })
 # Note: we skip numeric / IterableMatrix as it would result in a lot of infinities for dividing by 0.
+#' @describeIn IterableMatrix-methods Divide by a constant, or divide rows by a vector length nrow(mat)
 setMethod("/", signature(e1 = "IterableMatrix", e2 = "numeric"), function(e1, e2) {
   e1 * (1 / e2)
 })
+#' @describeIn IterableMatrix-methods Subtract a constant, or row-wise subtraction with a vector length nrow(mat)
 setMethod("-", signature(e1 = "IterableMatrix", e2 = "numeric"), function(e1, e2) {
   e1 + (-e2)
 })

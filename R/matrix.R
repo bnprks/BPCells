@@ -1,7 +1,7 @@
 
 #' IterableMatrix methods
 #'
-#' Methods for IterableMatrix objects
+#' Generic methods and built-in functions for IterableMatrix objects
 #'
 #' @name IterableMatrix-methods
 #' @rdname IterableMatrix-methods
