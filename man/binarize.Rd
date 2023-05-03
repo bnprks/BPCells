@@ -4,10 +4,10 @@
 \alias{binarize}
 \title{Binarize converts matrix elements to zeros and ones.}
 \usage{
-binarize(x, threshold = 0, strict_inequality = TRUE)
+binarize(mat, threshold = 0, strict_inequality = TRUE)
 }
 \arguments{
-\item{x}{matrix An input matrix.}
+\item{mat}{IterableMatrix}
 
 \item{threshold}{A numeric value that determines whether the elements
 of x are set to zero or one.}
@@ -17,7 +17,7 @@ comparison to the threshold is >= (strict_inequality=FALSE)
 or > (strict_inequality=TRUE).}
 }
 \value{
-matrix
+binarized IterableMatrix object
 }
 \description{
 Binarize compares the matrix element values to the
@@ -25,5 +25,6 @@ threshold value and sets the output elements to either zero
 or one. By default, element values greater than the threshold
 are set to one; otherwise, set to zero. When strict_inequality
 is set to FALSE, element values greater than or equal to the
-threshold are set to one.
+threshold are set to one. As an alternative, the \code{<}, \code{<=}, \code{>},
+and \code{>=} operators are also supported.
 }
