@@ -12,6 +12,9 @@ Contributions welcome :)
   `import_matrix_market()` and the convenience function `import_matrix_market_10x()`. Our
   implementation uses disk-backed sorting to allow importing large files with low memory usage.
 - Merging fragments with `c()` now handles inputs with mismatched chromosome names.
+- Added `binarize()` function and associated generics `<`, `<=`, `>`, and `>=`.
+  This only supports comparison with non-negative numbers currently. (Thanks to 
+  contribution from @brgew)
 
 ## Bug-fixes
 - Fixed a few fragment transforms where using `chrNames(frags) <- val` or `cellNames(frags) <- val` could cause
