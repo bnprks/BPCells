@@ -1062,6 +1062,9 @@ setMethod("c", "IterableFragments", function(x, ...) {
   if (duplicate_cells) {
     rlang::inform(c("Warning: duplicicate cell names detected when merging fragments.", "Try using prefix_cell_names() to disambiguate"))
   }
+  if (length(fragments_list) == 1) {
+    return(fragments_list)[[1]]
+  }
   new("MergeFragments", fragments_list = fragments_list)
 })
 
