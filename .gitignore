@@ -25,3 +25,12 @@ tools/*.exe
 vignettes/*.html
 vignettes/pbmc-3k-data
 cpp-tests
+
+
+# A few convenience igores for my development cruft
+failing_test.R
+mytest*.R
+.clang-format
+.dockerignore
+.lintr
+bench/
