@@ -74,7 +74,11 @@ HighFive::Group createH5Group(std::string file_path, std::string group_path, boo
 }
 
 H5WriterBuilder::H5WriterBuilder(
-    std::string file, std::string group, uint64_t buffer_size, uint64_t chunk_size, bool allow_exists
+    std::string file,
+    std::string group,
+    uint64_t buffer_size,
+    uint64_t chunk_size,
+    bool allow_exists
 )
     : group(createH5Group(file, group, allow_exists))
     , buffer_size(buffer_size)
@@ -111,7 +115,7 @@ void H5WriterBuilder::writeVersion(std::string version) {
         group.getAttribute("version").write(version);
     } else {
         group.createAttribute<std::string>("version", HighFive::DataSpace::From(version))
-        .write(version);
+            .write(version);
     }
 }
 
@@ -119,11 +123,23 @@ void H5WriterBuilder::deleteWriter(std::string name) {
     throw std::logic_error("deleteWriter: HDF5 files don't support deletion");
 }
 
+// Try to open a file for read-write, then fall back to read only if needed.
+// If we first open a file ReadOnly, it prevents future opening with ReadWrite
+// (bad if we want to read + write the same file).
+// This retry makes it possible to still open a file if it's read-only though.
+HighFive::File openH5ForReading(const std::string &path) {
+    try {
+        HighFive::SilenceHDF5 s;
+        return HighFive::File(path, HighFive::File::ReadWrite);
+    } catch (const HighFive::FileException &f) {
+        return HighFive::File(path, HighFive::File::ReadOnly);
+    }
+}
+
 H5ReaderBuilder::H5ReaderBuilder(
     std::string file, std::string group, uint64_t buffer_size, uint64_t read_size
 )
-    : group(HighFive::File(file, HighFive::File::ReadWrite)
-                .getGroup(group == "" ? std::string("/") : group))
+    : group(openH5ForReading(file).getGroup(group == "" ? std::string("/") : group))
     , buffer_size(buffer_size)
     , read_size(read_size) {}
 

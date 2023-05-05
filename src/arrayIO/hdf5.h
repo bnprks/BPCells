@@ -119,6 +119,12 @@ class H5WriterBuilder final : public WriterBuilder {
     void deleteWriter(std::string name) override;
 };
 
+// Try to open a file for read-write, then fall back to read only if needed.
+// If we first open a file ReadOnly, it prevents future opening with ReadWrite
+// (bad if we want to read + write the same file).
+// This retry makes it possible to still open a file if it's read-only though.
+HighFive::File openH5ForReading(const std::string &path);
+
 class H5ReaderBuilder final : public ReaderBuilder {
     HighFive::Group group;
     uint64_t buffer_size;

@@ -6,7 +6,7 @@
 
 Contributions welcome :)
 
-# BPCells 0.2.0 (unreleased - github main branch)
+# BPCells 0.2.0 (github main branch - in progress)
 ## Features
 - Reading text-based MatrixMarket inputs (e.g. from 10x or Parse) is now supported via
   `import_matrix_market()` and the convenience function `import_matrix_market_10x()`. Our
@@ -19,6 +19,9 @@ Contributions welcome :)
 ## Bug-fixes
 - Fixed a few fragment transforms where using `chrNames(frags) <- val` or `cellNames(frags) <- val` could cause
   downstream errors.
+- Fixed errors in `transpose_storage_order()` for matrices with >4 billion non-zero entries.
+- Fixed bug writing fragment files with >512 chromosomes.
+- Fixed file permissions errors when using read-only hdf5 files (Issue #26 reported thanks to @ttumkaya)
 
 # BPCells 0.1.0
 

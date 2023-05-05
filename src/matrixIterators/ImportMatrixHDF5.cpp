@@ -11,7 +11,7 @@ StoredMatrix<uint32_t> open10xFeatureMatrix(
     std::unique_ptr<StringReader> &&col_names,
     uint32_t read_size
 ) {
-    HighFive::File f(file, HighFive::File::ReadWrite);
+    HighFive::File f = openH5ForReading(file);
 
     // Most up-to-date matrix format
     if (f.exist("matrix")) {
@@ -106,7 +106,7 @@ StoredMatrixWriter<uint32_t> create10xFeatureMatrix(
 
 void assertAnnDataSparse(std::string file, std::string group) {
     // Check for a dense matrix where we expect a sparse matrix
-    HighFive::File f(file, HighFive::File::ReadWrite);
+    HighFive::File f = openH5ForReading(file);
     auto node_type = f.getObjectType(group);
     if (node_type == HighFive::ObjectType::Dataset) {
         throw std::runtime_error(

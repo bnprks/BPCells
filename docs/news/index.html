@@ -66,7 +66,7 @@
 </ul><p>Contributions welcome :)</p>
 </div>
     <div class="section level2">
-<h2 class="pkg-version" data-toc-text="0.2.0" id="bpcells-020-unreleased---github-main-branch">BPCells 0.2.0 (unreleased - github main branch)<a class="anchor" aria-label="anchor" href="#bpcells-020-unreleased---github-main-branch"></a></h2>
+<h2 class="pkg-version" data-toc-text="0.2.0" id="bpcells-020-github-main-branch---in-progress">BPCells 0.2.0 (github main branch - in progress)<a class="anchor" aria-label="anchor" href="#bpcells-020-github-main-branch---in-progress"></a></h2>
 <div class="section level3">
 <h3 id="features-0-2-0">Features<a class="anchor" aria-label="anchor" href="#features-0-2-0"></a></h3>
 <ul><li>Reading text-based MatrixMarket inputs (e.g. from 10x or Parse) is now supported via <code><a href="../reference/import_matrix_market.html">import_matrix_market()</a></code> and the convenience function <code><a href="../reference/import_matrix_market.html">import_matrix_market_10x()</a></code>. Our implementation uses disk-backed sorting to allow importing large files with low memory usage.</li>
@@ -76,6 +76,9 @@
 <div class="section level3">
 <h3 id="bug-fixes-0-2-0">Bug-fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-0-2-0"></a></h3>
 <ul><li>Fixed a few fragment transforms where using <code>chrNames(frags) &lt;- val</code> or <code>cellNames(frags) &lt;- val</code> could cause downstream errors.</li>
+<li>Fixed errors in <code><a href="../reference/transpose_storage_order.html">transpose_storage_order()</a></code> for matrices with &gt;4 billion non-zero entries.</li>
+<li>Fixed bug writing fragment files with &gt;512 chromosomes.</li>
+<li>Fixed file permissions errors when using read-only hdf5 files (Issue <a href="https://github.com/bnprks/BPCells/issues/26" class="external-link">#26</a> reported thanks to <a href="https://github.com/ttumkaya" class="external-link">@ttumkaya</a>)</li>
 </ul></div>
 </div>
     <div class="section level2">

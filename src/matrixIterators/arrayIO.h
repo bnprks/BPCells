@@ -14,7 +14,7 @@ openPackedMatrixH5(std::string file_path, std::string group_path, uint32_t buffe
     HighFive::SilenceHDF5 s;
     if (group_path == "") group_path = "/";
 
-    HighFive::Group group(HighFive::File(file_path, HighFive::File::ReadOnly).getGroup(group_path));
+    HighFive::Group group(openH5ForReading(file_path).getGroup(group_path));
 
     std::string version;
     group.getAttribute("version").read(version);
