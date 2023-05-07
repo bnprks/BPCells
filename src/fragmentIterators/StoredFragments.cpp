@@ -32,7 +32,7 @@ void StoredFragmentsBase::readEndMaxBuf(uint64_t start_idx, uint64_t end_idx) {
     // Read the end_max buffer
     end_max_buf.resize((end_idx - 1) / 128 - start_idx / 128 + 1);
     end_max.seek(start_idx / 128);
-    uint32_t i = 0;
+    uint64_t i = 0;
     while (true) {
         end_max.ensureCapacity(1);
         uint64_t load_amount = std::min(end_max.capacity(), (uint64_t) end_max_buf.size() - i);
@@ -56,7 +56,7 @@ void StoredFragmentsBase::seek(uint32_t chr_id, uint32_t base) {
             // Seeking to a chromosome larger than exists in the fragments.
             // Make it so next load and nextChr calls will return false
             current_chr = chr_id;
-            current_idx = UINT32_MAX;
+            current_idx = UINT64_MAX;
             chr_start_ptr = 0;
             chr_end_ptr = 0;
             return;
@@ -86,7 +86,7 @@ void StoredFragmentsBase::seek(uint32_t chr_id, uint32_t base) {
 
 void StoredFragmentsBase::restart() {
     current_chr = UINT32_MAX;
-    current_idx = UINT32_MAX;
+    current_idx = UINT64_MAX;
     chr_ptr.seek(0);
 }
 
@@ -100,7 +100,7 @@ bool StoredFragmentsBase::nextChr() {
     current_chr += 1;
     if ((int64_t)current_chr >= chrCount()) {
         current_chr -= 1;
-        current_idx = UINT32_MAX;
+        current_idx = UINT64_MAX;
         return false;
     }
 
@@ -203,7 +203,7 @@ StoredFragmentsPacked StoredFragmentsPacked::openPacked(
     }
 
     uint64_t count = 0;
-    for (uint32_t i = 0; i < chr_ptr.size(); i++) {
+    for (uint64_t i = 0; i < chr_ptr.size(); i++) {
         count = std::max(count, chr_ptr.read_one());
     }
     chr_ptr.seek(0);

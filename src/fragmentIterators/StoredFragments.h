@@ -27,7 +27,7 @@ class StoredFragmentsBase : public FragmentLoader {
     // ensure end_max_buf[0] <= end_max_buf[1]
     std::vector<uint32_t> end_max_buf;
     uint32_t current_chr = UINT32_MAX;
-    uint32_t current_idx = UINT32_MAX;
+    uint64_t current_idx = UINT64_MAX;
     uint32_t current_capacity = 0;
     uint64_t chr_start_ptr, chr_end_ptr;
 

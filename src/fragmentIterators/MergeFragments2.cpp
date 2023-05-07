@@ -40,7 +40,7 @@ MergeFragments2::ChunkedLoader::load_chunk(uint32_t *start, uint32_t *end, uint3
         copied += copy_amount;
         loaded -= copy_amount;
     }
-    for (int i = 0; i < copied; i++) {
+    for (uint32_t i = 0; i < copied; i++) {
         cell[i] += cell_offset;
     }
     return copied;
