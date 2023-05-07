@@ -51,6 +51,7 @@ add_library(
     ${SRC}/fragmentIterators/FragmentIterator.cpp
     ${SRC}/fragmentIterators/LengthSelect.cpp
     ${SRC}/fragmentIterators/MergeFragments.cpp
+    ${SRC}/fragmentIterators/MergeFragments2.cpp
     ${SRC}/fragmentIterators/RegionSelect.cpp
     ${SRC}/fragmentIterators/Rename.cpp
     ${SRC}/fragmentIterators/ShiftCoords.cpp

@@ -185,6 +185,10 @@ iterate_merge_fragments_cpp <- function(fragments_list, chr_order) {
     .Call(`_BPCells_iterate_merge_fragments_cpp`, fragments_list, chr_order)
 }
 
+iterate_merge_fragments2_cpp <- function(fragments_list, chr_order) {
+    .Call(`_BPCells_iterate_merge_fragments2_cpp`, fragments_list, chr_order)
+}
+
 write_matrix_transpose_uint32_t_cpp <- function(matrix, outdir, tmpdir, load_bytes, sort_buffer_bytes, row_major) {
     .Call(`_BPCells_write_matrix_transpose_uint32_t_cpp`, matrix, outdir, tmpdir, load_bytes, sort_buffer_bytes, row_major)
 }

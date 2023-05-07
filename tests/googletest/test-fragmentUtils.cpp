@@ -7,6 +7,7 @@
 #include <fragmentIterators/CellSelect.h>
 #include <fragmentIterators/FragmentIterator.h>
 #include <fragmentIterators/MergeFragments.h>
+#include <fragmentIterators/MergeFragments2.h>
 #include <fragmentIterators/RegionSelect.h>
 #include <fragmentIterators/Rename.h>
 #include <fragmentIterators/StoredFragments.h>
@@ -149,6 +150,24 @@ TEST(FragmentUtils, MergeFragments) {
     auto v2 = Testing::generateFrags(1000, 3, 200, max_cell - 1, 25, 1334);
     auto v3 = Testing::generateFrags(1000, 3, 200, max_cell - 1, 25, 1227);
 
+    // Make sure that there are no matching start coordinates between v1, v2, v3
+    // since the ordering is undefined 
+    for (auto &f : v1) {
+        uint32_t width = f.end - f.start;
+        f.start = f.start * 3;
+        f.end = f.start + width;
+    }
+    for (auto &f : v2) {
+        uint32_t width = f.end - f.start;
+        f.start = f.start * 3 + 1;
+        f.end = f.start + width;
+    }
+    for (auto &f : v3) {
+        uint32_t width = f.end - f.start;
+        f.start = f.start * 3 + 2;
+        f.end = f.start + width;
+    }
+
     std::sort(v1.begin(), v1.end(), [](const Testing::Frag &a, const Testing::Frag &b) {
         if (a.chr != b.chr) return a.chr < b.chr;
         return a.start < b.start;
@@ -200,6 +219,13 @@ TEST(FragmentUtils, MergeFragments) {
     MergeFragments merge(std::move(merge_vec), v_expect->getStringVecs().at("chr_names"));
 
     EXPECT_TRUE(Testing::fragments_identical(expected, merge));
+
+    std::vector<std::unique_ptr<FragmentLoader>> merge_vec2;
+    merge_vec2.push_back(std::make_unique<StoredFragments>(StoredFragments::openUnpacked(*v1_data)));
+    merge_vec2.push_back(std::make_unique<StoredFragments>(StoredFragments::openUnpacked(*v2_data)));
+    merge_vec2.push_back(std::make_unique<StoredFragments>(StoredFragments::openUnpacked(*v3_data)));
+    MergeFragments2 merge2(std::move(merge_vec2), v_expect->getStringVecs().at("chr_names"));
+    EXPECT_TRUE(Testing::fragments_identical(expected, merge2));
 }
 
 TEST(FragmentUtils, InsertionIterator) {

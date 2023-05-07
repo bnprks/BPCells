@@ -2,8 +2,8 @@
 
 #include "../lib/dary_heap.hpp"
 #include <cstring>
-#include <vector>
 #include <unordered_map>
+#include <vector>
 
 #include "FragmentIterator.h"
 
@@ -37,7 +37,9 @@ class MergeFragments : public FragmentLoader {
 
   public:
     MergeFragments(
-        std::vector<std::unique_ptr<FragmentLoader>> &&fragments, const std::vector<std::string> &chr_order, uint32_t load_size = 1024
+        std::vector<std::unique_ptr<FragmentLoader>> &&fragments,
+        const std::vector<std::string> &chr_order,
+        uint32_t load_size = 1024
     );
 
     ~MergeFragments() = default;
