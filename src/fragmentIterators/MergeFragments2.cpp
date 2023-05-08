@@ -1,10 +1,10 @@
 #include "MergeFragments2.h"
-#include <functional>
 #include <cstring>
+#include <functional>
 #include <unordered_map>
 
-#include "../utils/radix_sort.h"
 #include "../lib/dary_heap.hpp"
+#include "../utils/radix_sort.h"
 
 namespace BPCells {
 
@@ -88,16 +88,20 @@ MergeFragments2::MergeFragments2(
     uint32_t load_size,
     uint32_t chunk_size
 )
-    : chr_order(chr_order)
-    , start(3 * chunk_size * fragments.size())
-    , end(3 * chunk_size * fragments.size())
-    , cell(3 * chunk_size * fragments.size())
-    , start_buf(3 * chunk_size * fragments.size())
-    , end_buf(3 * chunk_size * fragments.size())
-    , cell_buf(3 * chunk_size * fragments.size())
-    , heap(fragments.size())
-    , load_size(load_size)
-    , chunk_size(chunk_size) {
+    : load_size(load_size)
+    , chunk_size(chunk_size)
+    // load_size <= chunk_size * (chunks_per_input - 1) * fragments.size()
+    , chunks_per_input(
+          1 + (load_size + chunk_size * fragments.size() - 1) / (chunk_size * fragments.size())
+      )
+    , chr_order(chr_order)
+    , start((chunks_per_input + 1) * chunk_size * fragments.size())
+    , end((chunks_per_input + 1) * chunk_size * fragments.size())
+    , cell((chunks_per_input + 1) * chunk_size * fragments.size())
+    , start_buf((chunks_per_input + 1) * chunk_size * fragments.size())
+    , end_buf((chunks_per_input + 1) * chunk_size * fragments.size())
+    , cell_buf((chunks_per_input + 1) * chunk_size * fragments.size())
+    , heap(fragments.size()) {
 
     if (fragments.size() < 2) throw std::runtime_error("Must have >= 2 fragments to merge");
 
@@ -169,14 +173,9 @@ void MergeFragments2::restart() {
     current_chr = UINT32_MAX;
 }
 
+int MergeFragments2::chrCount() const { return chr_order.size(); }
 
-int MergeFragments2::chrCount() const {
-    return chr_order.size();
-}
-
-int MergeFragments2::cellCount() const {
-    return cell_id_offset.back();
-}
+int MergeFragments2::cellCount() const { return cell_id_offset.back(); }
 
 const char *MergeFragments2::chrNames(uint32_t chr_id) {
     if (chr_id >= chr_order.size()) return NULL;
@@ -196,7 +195,7 @@ bool MergeFragments2::nextChr() {
     loaded = 0;
     available = 0;
     current_chr += 1;
-    if ((int64_t) current_chr >= chrCount()) {
+    if ((int64_t)current_chr >= chrCount()) {
         current_chr -= 1;
         return false;
     }
@@ -204,13 +203,12 @@ bool MergeFragments2::nextChr() {
     for (uint32_t i = 0; i < frags.size(); i++) {
         if (source_chr[i][current_chr] != UINT32_MAX) {
             frags[i].seek(source_chr[i][current_chr], 0);
-        } 
+        }
     }
     return true;
 }
 
 uint32_t MergeFragments2::currentChr() const { return current_chr; }
-
 
 bool MergeFragments2::load() {
     // Try loading data from our existing available set
@@ -231,14 +229,16 @@ bool MergeFragments2::load() {
             heap[i] = {frags[i].peek_start(), i};
         }
         dary_heap::make_heap<4>(heap.begin(), heap.end(), std::greater<>{});
-        
-        for (uint32_t i = 0; i < 2*frags.size(); i++) {
+
+        for (uint32_t i = 0; i < chunks_per_input * frags.size(); i++) {
             if (heap.front().first == UINT32_MAX) break; // No more data to load in this chromosome
             uint32_t idx = heap.front().second;
             if (loaded + chunk_size > start.size()) {
                 throw std::runtime_error("MergeFragments: Not enough space to load input chunk");
             }
-            loaded += frags[idx].load_chunk(start.data() + loaded, end.data() + loaded, cell.data() + loaded);
+            loaded += frags[idx].load_chunk(
+                start.data() + loaded, end.data() + loaded, cell.data() + loaded
+            );
             // Update the chunk info and put back in heap
             heap.front().first = frags[idx].peek_start();
             dary_heap::pop_heap<4>(heap.begin(), heap.end(), std::greater<>{});
@@ -256,7 +256,7 @@ bool MergeFragments2::load() {
             max_sorted_start = std::min(max_sorted_start, heap[i].first);
         }
         available = std::upper_bound(start.begin(), start.begin() + loaded, max_sorted_start) -
-            start.begin();
+                    start.begin();
 
         cur_idx = 0;
     }

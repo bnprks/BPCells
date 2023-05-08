@@ -1048,8 +1048,6 @@ setMethod("c", "IterableFragments", function(x, ...) {
   chr_names <- chrNames(x)
   assert_not_null(chr_names)
   fragments_list <- list()
-  seen_cells <- c()
-  duplicate_cells <- FALSE
   for (i in seq_along(args)) {
     assert_is(args[[i]], "IterableFragments")
     assert_not_null(chrNames(args[[i]]))
@@ -1058,20 +1056,15 @@ setMethod("c", "IterableFragments", function(x, ...) {
     } else {
       fragments_list <- c(fragments_list, args[[i]])
     }
-    if (!is.null(cellNames(args[[i]]))) {
-      if (any(cellNames(args[[i]]) %in% seen_cells)) {
-        duplicate_cells <- TRUE
-      }
-      seen_cells <- union(seen_cells, cellNames(args[[i]]))
-    }
-  }
-  if (duplicate_cells) {
-    rlang::inform(c("Warning: duplicicate cell names detected when merging fragments.", "Try using prefix_cell_names() to disambiguate"))
   }
   if (length(fragments_list) == 1) {
     return(fragments_list)[[1]]
   }
-  new("MergeFragments", fragments_list = fragments_list)
+  res <- new("MergeFragments", fragments_list = fragments_list)
+  if (anyDuplicated(cellNames(res))) {
+    rlang::inform(c("Warning: duplicicate cell names detected when merging fragments.", "Try using prefix_cell_names() to disambiguate"))
+  }
+  return(res)
 })
 
 

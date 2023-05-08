@@ -43,6 +43,8 @@ class MergeFragments2 : public FragmentLoader {
         uint32_t currentChr() const;
     };
 
+    uint32_t const load_size, chunk_size, chunks_per_input;
+
     std::vector<ChunkedLoader> frags;
     std::vector<uint32_t> cell_id_offset;
 
@@ -62,14 +64,12 @@ class MergeFragments2 : public FragmentLoader {
     uint32_t loaded, available, cur_idx; 
     uint32_t current_chr = UINT32_MAX;
 
-    uint32_t const load_size, chunk_size;
-
   public:
     MergeFragments2(
         std::vector<std::unique_ptr<FragmentLoader>> &&fragments,
         const std::vector<std::string> &chr_order,
-        uint32_t load_size = 1024,
-        uint32_t chunk_size = 1024
+        uint32_t load_size = 1024, // Output load size
+        uint32_t chunk_size = 32 // Input load chunk size
     );
 
     ~MergeFragments2() = default;
@@ -89,14 +89,14 @@ class MergeFragments2 : public FragmentLoader {
     uint32_t currentChr() const override;
 
     // Load algorithm:
-    // 1. Add 2N chunks from the input loaders into the cell, start, end vectors
+    // 1. Add chunks_per_input * N chunks from the N input loaders into the cell, start, end vectors
     //    - Always add the chunk with the smallest start coordinate
     //    - Track what's the largest start coordinate added from any input loader.
     //      The smallest of these coordinates well be the limit of our known-sorted data.
     // 2. Sort all the fragments
     // 3. Output fragments until we hit our start coordinate limit
     //    - This is guaranteed to leave at most N chunks left over (at most 1 chunk for each input loader)
-    //    - This means if we have space for 3N chunks, and add 2N chunks each time we can never overflow 
+    //    - This means if we have space for (chunks_per_input + 1)*N chunks, and add (chunks_per_input)*N chunks each time we can never overflow 
     //      our buffers, and we'll never sort a fragment more than once
     bool load() override;
 
