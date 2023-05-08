@@ -13,7 +13,6 @@
 #include "fragmentIterators/FragmentIterator.h"
 #include "fragmentIterators/LengthSelect.h"
 #include "fragmentIterators/MergeFragments.h"
-#include "fragmentIterators/MergeFragments2.h"
 #include "fragmentIterators/RegionSelect.h"
 #include "fragmentIterators/Rename.h"
 #include "fragmentIterators/ShiftCoords.h"
@@ -345,16 +344,4 @@ SEXP iterate_merge_fragments_cpp(SEXP fragments_list, std::vector<std::string> c
     }
 
     return make_unique_xptr<MergeFragments>(std::move(fragments_vec), chr_order);
-}
-
-// [[Rcpp::export]]
-SEXP iterate_merge_fragments2_cpp(SEXP fragments_list, std::vector<std::string> chr_order) {
-    std::vector<std::unique_ptr<FragmentLoader>> fragments_vec;
-    List l = fragments_list;
-    for (uint32_t i = 0; i < l.size(); i++) {
-        SEXP elem = l[i];
-        fragments_vec.push_back(take_unique_xptr<FragmentLoader>(elem));
-    }
-
-    return make_unique_xptr<MergeFragments2>(std::move(fragments_vec), chr_order);
 }

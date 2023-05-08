@@ -29,7 +29,6 @@ fragmentIterators/ChrSelect.o \
 fragmentIterators/FragmentIterator.o \
 fragmentIterators/LengthSelect.o \
 fragmentIterators/MergeFragments.o \
-fragmentIterators/MergeFragments2.o \
 fragmentIterators/RegionSelect.o \
 fragmentIterators/Rename.o \
 fragmentIterators/ShiftCoords.o \

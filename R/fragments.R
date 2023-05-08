@@ -1006,12 +1006,10 @@ select_regions <- function(fragments, ranges, invert_selection = FALSE, zero_bas
 setClass("MergeFragments",
   contains = "IterableFragments",
   slots = c(
-    fragments_list = "list",
-    use_new = "logical"
+    fragments_list = "list"
   ),
   prototype = list(
-    fragments_list = list(),
-    use_new = TRUE
+    fragments_list = list()
   )
 )
 setMethod("chrNames", "MergeFragments", function(x) {
@@ -1022,11 +1020,7 @@ setMethod("cellNames", "MergeFragments", function(x) {
 })
 
 setMethod("iterate_fragments", "MergeFragments", function(x) {
-  if (x@use_new) {
-    iterate_merge_fragments2_cpp(lapply(x@fragments_list, iterate_fragments), chrNames(x))
-  } else {
-    iterate_merge_fragments_cpp(lapply(x@fragments_list, iterate_fragments), chrNames(x))
-  }
+  iterate_merge_fragments_cpp(lapply(x@fragments_list, iterate_fragments), chrNames(x))
 })
 setMethod("short_description", "MergeFragments", function(x) {
   # Subset strings first to avoid a very slow string concatenation process

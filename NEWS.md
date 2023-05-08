@@ -11,16 +11,20 @@ Contributions welcome :)
 - Reading text-based MatrixMarket inputs (e.g. from 10x or Parse) is now supported via
   `import_matrix_market()` and the convenience function `import_matrix_market_10x()`. Our
   implementation uses disk-backed sorting to allow importing large files with low memory usage.
-- Merging fragments with `c()` now handles inputs with mismatched chromosome names.
 - Added `binarize()` function and associated generics `<`, `<=`, `>`, and `>=`.
   This only supports comparison with non-negative numbers currently. (Thanks to 
   contribution from @brgew)
+
+## Improvements
+- Merging fragments with `c()` now handles inputs with mismatched chromosome names.
+- Merging fragments is now 2-3.5x faster 
 
 ## Bug-fixes
 - Fixed a few fragment transforms where using `chrNames(frags) <- val` or `cellNames(frags) <- val` could cause
   downstream errors.
 - Fixed errors in `transpose_storage_order()` for matrices with >4 billion non-zero entries.
 - Fixed bug writing fragment files with >512 chromosomes.
+- Fixed bug when reading fragment files with >4 billion fragments.
 - Fixed file permissions errors when using read-only hdf5 files (Issue #26 reported thanks to @ttumkaya)
 
 # BPCells 0.1.0

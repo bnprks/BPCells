@@ -7,7 +7,6 @@
 #include <fragmentIterators/CellSelect.h>
 #include <fragmentIterators/FragmentIterator.h>
 #include <fragmentIterators/MergeFragments.h>
-#include <fragmentIterators/MergeFragments2.h>
 #include <fragmentIterators/RegionSelect.h>
 #include <fragmentIterators/Rename.h>
 #include <fragmentIterators/StoredFragments.h>
@@ -219,13 +218,6 @@ TEST(FragmentUtils, MergeFragments) {
     MergeFragments merge(std::move(merge_vec), v_expect->getStringVecs().at("chr_names"));
 
     EXPECT_TRUE(Testing::fragments_identical(expected, merge));
-
-    std::vector<std::unique_ptr<FragmentLoader>> merge_vec2;
-    merge_vec2.push_back(std::make_unique<StoredFragments>(StoredFragments::openUnpacked(*v1_data)));
-    merge_vec2.push_back(std::make_unique<StoredFragments>(StoredFragments::openUnpacked(*v2_data)));
-    merge_vec2.push_back(std::make_unique<StoredFragments>(StoredFragments::openUnpacked(*v3_data)));
-    MergeFragments2 merge2(std::move(merge_vec2), v_expect->getStringVecs().at("chr_names"));
-    EXPECT_TRUE(Testing::fragments_identical(expected, merge2));
 }
 
 TEST(FragmentUtils, InsertionIterator) {
