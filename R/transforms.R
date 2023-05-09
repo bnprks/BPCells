@@ -360,7 +360,7 @@ setMethod("iterate_matrix", "TransformRound", function(x) {
 setMethod("short_description", "TransformRound", function(x) {
   c(
     short_description(x@matrix),
-    "Transform round to specified precision"
+    sprintf("Transform round to %d decimal places", x@global_params[1])
   )
 })
 
@@ -369,7 +369,6 @@ setMethod("short_description", "TransformRound", function(x) {
 setMethod("round", "IterableMatrix", function(x, digits=0) {
   assert_is(x, "IterableMatrix")
   assert_is(digits, "numeric")
-  if (digits < 0) stop("Digits value must be greater than or equal to zero")
 
   wrapMatrix("TransformRound", convert_matrix_type(x, "double"), global_params=digits)
 })

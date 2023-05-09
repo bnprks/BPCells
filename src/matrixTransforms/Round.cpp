@@ -21,8 +21,9 @@ bool Round::load() {
     }
     else {
       const double factor = pow(10.0, (double)digits);
+      const double inv_factor = 1.0 / factor;
       for (uint32_t i = 0; i < cap; i++) {
-        val_data[i] = std::nearbyint(val_data[i] * factor) / factor;
+        val_data[i] = std::nearbyint(val_data[i] * factor) * inv_factor;
       }
     }
 
