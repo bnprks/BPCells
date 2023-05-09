@@ -99,13 +99,20 @@ test_that("binarize works", {
 })
 
 test_that("round works", {
-    v <- c(0.1, 0.5, 0.7, 1.3, 1.5, 1.9, -0.1, -0.5, -0.7, -1.3, -1.5, -1.9)
-    m <- matrix(v, nrow=2, byrow=TRUE)
-    vr <- c(0, 0, 1, 1, 2, 2, 0, 0, -1, -1, -2, -2)
-    mr <- matrix(vr, nrow=2, byrow=TRUE)
-    m2 <- as(as(m, 'dgCMatrix'), 'IterableMatrix')
-    m3 <- as(round(m2), 'matrix')
-    expect_identical(m3, mr)
+    m <- generate_sparse_matrix(20, 10, max_val=1e5) / 70
+    digits <- 0
+    res <- m %>%
+        as("IterableMatrix") %>%
+        round(digits=digits) %>%
+        as("dgCMatrix")
+    expect_equal(round(m, digits=digits), res, tolerance=(10.0**-digits))
+
+    digits <- 2
+    res <- m %>%
+        as("IterableMatrix") %>%
+        round(digits=digits) %>%
+        as("dgCMatrix")
+    expect_equal(round(m, digits=digits), res, tolerance=(10.0**-digits))
 })
 
 test_that("sctransform works", {

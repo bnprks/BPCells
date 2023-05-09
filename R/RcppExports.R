@@ -425,8 +425,8 @@ iterate_matrix_binarize_cpp <- function(matrix, threshold, strict_inequality) {
     .Call(`_BPCells_iterate_matrix_binarize_cpp`, matrix, threshold, strict_inequality)
 }
 
-iterate_matrix_round_cpp <- function(matrix) {
-    .Call(`_BPCells_iterate_matrix_round_cpp`, matrix)
+iterate_matrix_round_cpp <- function(matrix, digits) {
+    .Call(`_BPCells_iterate_matrix_round_cpp`, matrix, digits)
 }
 
 iterate_matrix_sctransform_pearson_cpp <- function(matrix, gene_params, cell_params, global_params) {
