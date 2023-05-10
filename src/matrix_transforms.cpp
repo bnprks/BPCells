@@ -95,8 +95,12 @@ SEXP iterate_matrix_binarize_cpp(SEXP matrix, double threshold, uint32_t strict_
 }
 
 // [[Rcpp::export]]
-SEXP iterate_matrix_round_cpp(SEXP matrix) {
-    return make_unique_xptr<Round>(take_unique_xptr<MatrixLoader<double>>(matrix));
+SEXP iterate_matrix_round_cpp(SEXP matrix, uint32_t digits) {
+    Eigen::ArrayXd global_params(1);
+    global_params[0] = digits;
+    return make_unique_xptr<Round>(
+        take_unique_xptr<MatrixLoader<double>>(matrix), TransformFit{{}, {}, global_params}
+    );
 }
 
 // [[Rcpp::export]]

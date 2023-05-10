@@ -354,13 +354,13 @@ setMethod(">=", signature(e1= "numeric", e2= "IterableMatrix"), function(e1, e2)
 setClass("TransformRound", contains = "TransformedMatrix")
 
 setMethod("iterate_matrix", "TransformRound", function(x) {
-  iterate_matrix_round_cpp(iterate_matrix(x@matrix))
+  iterate_matrix_round_cpp(iterate_matrix(x@matrix), x@global_params[1])
 })
 
 setMethod("short_description", "TransformRound", function(x) {
   c(
     short_description(x@matrix),
-    "Transform round to nearest integer"
+    sprintf("Transform round to %d decimal places", x@global_params[1])
   )
 })
 
@@ -369,9 +369,8 @@ setMethod("short_description", "TransformRound", function(x) {
 setMethod("round", "IterableMatrix", function(x, digits=0) {
   assert_is(x, "IterableMatrix")
   assert_is(digits, "numeric")
-  if (digits != 0) stop("BPCells only supports round() with digits=0")
 
-  wrapMatrix("TransformRound", convert_matrix_type(x, "double"))
+  wrapMatrix("TransformRound", convert_matrix_type(x, "double"), global_params=digits)
 })
 
 
