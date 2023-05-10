@@ -105,14 +105,14 @@ test_that("round works", {
         as("IterableMatrix") %>%
         round(digits=digits) %>%
         as("dgCMatrix")
-    expect_equal(round(m, digits=digits), res, tolerance=(10.0**-digits))
+    expect_equal(round(m, digits=digits), res, tolerance=1.49e-08)
 
     digits <- 2
     res <- m %>%
         as("IterableMatrix") %>%
         round(digits=digits) %>%
         as("dgCMatrix")
-    expect_equal(round(m, digits=digits), res, tolerance=(10.0**-digits))
+    expect_equal(round(m, digits=digits), res, tolerance=1.49e-08)
 })
 
 test_that("sctransform works", {
