@@ -127,6 +127,25 @@ test_that("Subsetting to 0 dimensions works", {
   )
 })
 
+test_that("Transposing a 0 dimension matrix works", {
+  m1 <- generate_dense_matrix(10, 5) %>% as("dgCMatrix") 
+  rownames(m1) <- paste0("row", seq_len(nrow(m1)))
+  colnames(m1) <- paste0("col", seq_len(ncol(m1)))
+  m2 <- m1[integer(0),]
+  rownames(m2) <- NULL # Don't worry about edge-case of rownames mismatching on NULL vs character(0)
+  expect_identical(
+    as(m2, "IterableMatrix") %>% transpose_storage_order() %>% as("dgCMatrix"),
+    m2
+  )
+
+  m3 <- m1[,integer(0)]
+  colnames(m3) <- NULL
+  expect_identical(
+    as(m3, "IterableMatrix") %>% transpose_storage_order() %>% as("dgCMatrix"),
+    m3
+  )
+})
+
 test_that("Dense matrix-vector multiply works", {
   withr::local_seed(195123)
 

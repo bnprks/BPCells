@@ -23,6 +23,7 @@ Contributions welcome :)
 - Fixed a few fragment transforms where using `chrNames(frags) <- val` or `cellNames(frags) <- val` could cause
   downstream errors.
 - Fixed errors in `transpose_storage_order()` for matrices with >4 billion non-zero entries.
+- Fixed error in `transpose_storage_order()` for matrices with no non-zero entries.
 - Fixed bug writing fragment files with >512 chromosomes.
 - Fixed bug when reading fragment files with >4 billion fragments.
 - Fixed file permissions errors when using read-only hdf5 files (Issue #26 reported thanks to @ttumkaya)

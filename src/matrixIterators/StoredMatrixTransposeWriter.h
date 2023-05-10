@@ -81,7 +81,7 @@ template <typename T> class StoredMatrixTransposeWriter : public StoredMatrixSor
             row_names.push_back(std::string(row_name));
         }
 
-        if (!mat.nextCol()) throw std::runtime_error("StoredMatrixTransposeWriter: Input matrix has no data");
+        mat.nextCol();
         this->writeValues(std::move(row_names), std::move(col_names), mat.cols(), mat.rows(), user_interrupt);
     }
 };

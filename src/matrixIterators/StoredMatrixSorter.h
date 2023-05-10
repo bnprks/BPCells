@@ -182,7 +182,8 @@ template <typename T> class StoredMatrixSorter {
         // correct lexographic ordering to make a min-heap
         std::vector<std::tuple<uint32_t, uint32_t, uint32_t>> heap;
 
-        if (input_chunk_sizes.size() == 1) {
+        // Handle cases of empty matrix or a matrix that fits in one chunk
+        if (input_chunk_sizes.size() <= 1) {
             // Copy data into the output location
             round += 1;
             openReaders(round - 1);
