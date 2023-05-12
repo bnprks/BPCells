@@ -357,6 +357,20 @@ Eigen::MatrixXd wilcoxon_rank_sum_pval_double_cpp(SEXP matrix, std::vector<uint3
     return wilcoxon_rank_sum(take_unique_xptr<MatrixLoader<double>>(matrix), groups);
 }
 
+// Compute a histogram of the values in a matrix. 
+// [[Rcpp::export]]
+NumericVector matrix_value_histogram_cpp(SEXP matrix, uint32_t max_value) {
+    MatrixIterator<uint32_t> it(take_unique_xptr<MatrixLoader<uint32_t>>(matrix));
+    std::vector<double> result(max_value + 1, 0.0);
+    while (it.nextCol()) {
+        while (it.nextValue()) {
+            if (it.val() == 0) continue;
+            result[std::min(it.val(), max_value + 1) - 1]++;
+        }
+    }
+    return Rcpp::wrap(result);
+}
+
 // [[Rcpp::export]]
 bool matrix_identical_uint32_t_cpp(SEXP mat1, SEXP mat2) {
     MatrixIterator<uint32_t> i1(take_unique_xptr<MatrixLoader<uint32_t>>(mat1));

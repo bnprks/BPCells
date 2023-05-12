@@ -629,6 +629,10 @@ wilcoxon_rank_sum_pval_double_cpp <- function(matrix, groups) {
     .Call(`_BPCells_wilcoxon_rank_sum_pval_double_cpp`, matrix, groups)
 }
 
+matrix_value_histogram_cpp <- function(matrix, max_value) {
+    .Call(`_BPCells_matrix_value_histogram_cpp`, matrix, max_value)
+}
+
 matrix_identical_uint32_t_cpp <- function(mat1, mat2) {
     .Call(`_BPCells_matrix_identical_uint32_t_cpp`, mat1, mat2)
 }
