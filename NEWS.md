@@ -27,6 +27,7 @@ Contributions welcome :)
 - Fixed bug writing fragment files with >512 chromosomes.
 - Fixed bug when reading fragment files with >4 billion fragments.
 - Fixed file permissions errors when using read-only hdf5 files (Issue #26 reported thanks to @ttumkaya)
+- Renaming `rownames()` or `colnames()` is now propagated when saving matrices (Issue #29 reported thanks to @realzehuali)
 
 # BPCells 0.1.0
 
