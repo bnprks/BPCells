@@ -33,6 +33,46 @@ simd_sleef_version <- function() {
     .Call(`_BPCells_simd_sleef_version`)
 }
 
+write_bp128 <- function(input, out_data, out_idx, out_idx_offsets) {
+    invisible(.Call(`_BPCells_write_bp128`, input, out_data, out_idx, out_idx_offsets))
+}
+
+write_bp128_for <- function(input, out_data, out_idx, out_idx_offsets) {
+    invisible(.Call(`_BPCells_write_bp128_for`, input, out_data, out_idx, out_idx_offsets))
+}
+
+write_bp128_d1 <- function(input, out_data, out_idx, out_idx_offsets, out_starts) {
+    invisible(.Call(`_BPCells_write_bp128_d1`, input, out_data, out_idx, out_idx_offsets, out_starts))
+}
+
+write_bp128_d1z <- function(input, out_data, out_idx, out_idx_offsets, out_starts) {
+    invisible(.Call(`_BPCells_write_bp128_d1z`, input, out_data, out_idx, out_idx_offsets, out_starts))
+}
+
+read_bp128 <- function(input_data, input_idx, input_idx_offsets, out, count) {
+    invisible(.Call(`_BPCells_read_bp128`, input_data, input_idx, input_idx_offsets, out, count))
+}
+
+read_bp128_for <- function(input_data, input_idx, input_idx_offsets, out, count) {
+    invisible(.Call(`_BPCells_read_bp128_for`, input_data, input_idx, input_idx_offsets, out, count))
+}
+
+read_bp128_d1 <- function(input_data, input_idx, input_idx_offsets, input_starts, out, count) {
+    invisible(.Call(`_BPCells_read_bp128_d1`, input_data, input_idx, input_idx_offsets, input_starts, out, count))
+}
+
+read_bp128_d1z <- function(input_data, input_idx, input_idx_offsets, input_starts, out, count) {
+    invisible(.Call(`_BPCells_read_bp128_d1z`, input_data, input_idx, input_idx_offsets, input_starts, out, count))
+}
+
+write_bp128_end <- function(end, start, out_data, out_idx, out_idx_offsets) {
+    invisible(.Call(`_BPCells_write_bp128_end`, end, start, out_data, out_idx, out_idx_offsets))
+}
+
+read_bp128_end <- function(input_data, input_idx, input_idx_offsets, start, out, count) {
+    invisible(.Call(`_BPCells_read_bp128_end`, input_data, input_idx, input_idx_offsets, start, out, count))
+}
+
 iterate_10x_fragments_cpp <- function(path, comment) {
     .Call(`_BPCells_iterate_10x_fragments_cpp`, path, comment)
 }
@@ -511,6 +551,18 @@ iterate_matrix_row_select_float_cpp <- function(matrix, row_selection) {
 
 iterate_matrix_row_select_double_cpp <- function(matrix, row_selection) {
     .Call(`_BPCells_iterate_matrix_row_select_double_cpp`, matrix, row_selection)
+}
+
+iterate_matrix_rename_dims_uint32_t_cpp <- function(matrix, row_names, col_names, clear_row_names, clear_col_names) {
+    .Call(`_BPCells_iterate_matrix_rename_dims_uint32_t_cpp`, matrix, row_names, col_names, clear_row_names, clear_col_names)
+}
+
+iterate_matrix_rename_dims_float_cpp <- function(matrix, row_names, col_names, clear_row_names, clear_col_names) {
+    .Call(`_BPCells_iterate_matrix_rename_dims_float_cpp`, matrix, row_names, col_names, clear_row_names, clear_col_names)
+}
+
+iterate_matrix_rename_dims_double_cpp <- function(matrix, row_names, col_names, clear_row_names, clear_col_names) {
+    .Call(`_BPCells_iterate_matrix_rename_dims_double_cpp`, matrix, row_names, col_names, clear_row_names, clear_col_names)
 }
 
 iterate_matrix_row_bind_uint32_t_cpp <- function(matrix_list) {

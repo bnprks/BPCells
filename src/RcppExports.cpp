@@ -1709,6 +1709,51 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// iterate_matrix_rename_dims_uint32_t_cpp
+SEXP iterate_matrix_rename_dims_uint32_t_cpp(SEXP matrix, std::vector<std::string> row_names, std::vector<std::string> col_names, bool clear_row_names, bool clear_col_names);
+RcppExport SEXP _BPCells_iterate_matrix_rename_dims_uint32_t_cpp(SEXP matrixSEXP, SEXP row_namesSEXP, SEXP col_namesSEXP, SEXP clear_row_namesSEXP, SEXP clear_col_namesSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type matrix(matrixSEXP);
+    Rcpp::traits::input_parameter< std::vector<std::string> >::type row_names(row_namesSEXP);
+    Rcpp::traits::input_parameter< std::vector<std::string> >::type col_names(col_namesSEXP);
+    Rcpp::traits::input_parameter< bool >::type clear_row_names(clear_row_namesSEXP);
+    Rcpp::traits::input_parameter< bool >::type clear_col_names(clear_col_namesSEXP);
+    rcpp_result_gen = Rcpp::wrap(iterate_matrix_rename_dims_uint32_t_cpp(matrix, row_names, col_names, clear_row_names, clear_col_names));
+    return rcpp_result_gen;
+END_RCPP
+}
+// iterate_matrix_rename_dims_float_cpp
+SEXP iterate_matrix_rename_dims_float_cpp(SEXP matrix, std::vector<std::string> row_names, std::vector<std::string> col_names, bool clear_row_names, bool clear_col_names);
+RcppExport SEXP _BPCells_iterate_matrix_rename_dims_float_cpp(SEXP matrixSEXP, SEXP row_namesSEXP, SEXP col_namesSEXP, SEXP clear_row_namesSEXP, SEXP clear_col_namesSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type matrix(matrixSEXP);
+    Rcpp::traits::input_parameter< std::vector<std::string> >::type row_names(row_namesSEXP);
+    Rcpp::traits::input_parameter< std::vector<std::string> >::type col_names(col_namesSEXP);
+    Rcpp::traits::input_parameter< bool >::type clear_row_names(clear_row_namesSEXP);
+    Rcpp::traits::input_parameter< bool >::type clear_col_names(clear_col_namesSEXP);
+    rcpp_result_gen = Rcpp::wrap(iterate_matrix_rename_dims_float_cpp(matrix, row_names, col_names, clear_row_names, clear_col_names));
+    return rcpp_result_gen;
+END_RCPP
+}
+// iterate_matrix_rename_dims_double_cpp
+SEXP iterate_matrix_rename_dims_double_cpp(SEXP matrix, std::vector<std::string> row_names, std::vector<std::string> col_names, bool clear_row_names, bool clear_col_names);
+RcppExport SEXP _BPCells_iterate_matrix_rename_dims_double_cpp(SEXP matrixSEXP, SEXP row_namesSEXP, SEXP col_namesSEXP, SEXP clear_row_namesSEXP, SEXP clear_col_namesSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type matrix(matrixSEXP);
+    Rcpp::traits::input_parameter< std::vector<std::string> >::type row_names(row_namesSEXP);
+    Rcpp::traits::input_parameter< std::vector<std::string> >::type col_names(col_namesSEXP);
+    Rcpp::traits::input_parameter< bool >::type clear_row_names(clear_row_namesSEXP);
+    Rcpp::traits::input_parameter< bool >::type clear_col_names(clear_col_namesSEXP);
+    rcpp_result_gen = Rcpp::wrap(iterate_matrix_rename_dims_double_cpp(matrix, row_names, col_names, clear_row_names, clear_col_names));
+    return rcpp_result_gen;
+END_RCPP
+}
 // iterate_matrix_row_bind_uint32_t_cpp
 SEXP iterate_matrix_row_bind_uint32_t_cpp(SEXP matrix_list);
 RcppExport SEXP _BPCells_iterate_matrix_row_bind_uint32_t_cpp(SEXP matrix_listSEXP) {
@@ -2204,6 +2249,9 @@ static const R_CallMethodDef CallEntries[] = {
     {"_BPCells_iterate_matrix_row_select_uint32_t_cpp", (DL_FUNC) &_BPCells_iterate_matrix_row_select_uint32_t_cpp, 2},
     {"_BPCells_iterate_matrix_row_select_float_cpp", (DL_FUNC) &_BPCells_iterate_matrix_row_select_float_cpp, 2},
     {"_BPCells_iterate_matrix_row_select_double_cpp", (DL_FUNC) &_BPCells_iterate_matrix_row_select_double_cpp, 2},
+    {"_BPCells_iterate_matrix_rename_dims_uint32_t_cpp", (DL_FUNC) &_BPCells_iterate_matrix_rename_dims_uint32_t_cpp, 5},
+    {"_BPCells_iterate_matrix_rename_dims_float_cpp", (DL_FUNC) &_BPCells_iterate_matrix_rename_dims_float_cpp, 5},
+    {"_BPCells_iterate_matrix_rename_dims_double_cpp", (DL_FUNC) &_BPCells_iterate_matrix_rename_dims_double_cpp, 5},
     {"_BPCells_iterate_matrix_row_bind_uint32_t_cpp", (DL_FUNC) &_BPCells_iterate_matrix_row_bind_uint32_t_cpp, 1},
     {"_BPCells_iterate_matrix_row_bind_float_cpp", (DL_FUNC) &_BPCells_iterate_matrix_row_bind_float_cpp, 1},
     {"_BPCells_iterate_matrix_row_bind_double_cpp", (DL_FUNC) &_BPCells_iterate_matrix_row_bind_double_cpp, 1},

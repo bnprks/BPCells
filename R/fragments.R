@@ -853,6 +853,7 @@ setMethod("short_description", "CellMerge", function(x) {
 #' @param fragments Input fragments object
 #' @param cell_groups Character or factor vector providing a group for each cell.
 #' Ordering is the same as `cellNames(fragments)`
+#' @export
 merge_cells <- function(fragments, cell_groups) {
   assert_is(fragments, "IterableFragments")
   assert_not_null(cellNames(fragments))

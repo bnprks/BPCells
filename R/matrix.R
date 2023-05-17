@@ -19,30 +19,7 @@ setClass("IterableMatrix",
     dimnames = list(NULL, NULL)
   )
 )
-setMethod("dimnames<-", signature(x = "IterableMatrix", value = "list"), function(x, value) {
-  d <- dim(x)
-  has_error <- FALSE
-  if (!is.list(value) || length(value) != 2) has_error <- TRUE
-  if (!is.null(value[[1]]) && length(value[[1]]) != d[1]) has_error <- TRUE
-  if (!is.null(value[[2]]) && length(value[[2]]) != d[2]) has_error <- TRUE
-  if (has_error) stop("Invalid dimnames supplied")
 
-  if (!is.null(value[[1]])) {
-    x@dimnames[[1]] <- as.character(value[[1]])
-  } else {
-    x@dimnames[1] <- list(NULL)
-  }
-  if (!is.null(value[[2]])) {
-    x@dimnames[[2]] <- as.character(value[[2]])
-  } else {
-    x@dimnames[2] <- list(NULL)
-  }
-  x
-})
-setMethod("dimnames<-", signature(x = "IterableMatrix", value = "NULL"), function(x, value) {
-  x@dimnames <- list(NULL, NULL)
-  x
-})
 
 #' Construct an S4 matrix object wrapping another matrix object
 #'
@@ -665,6 +642,79 @@ setMethod("short_description", "MatrixSubset", function(x) {
   )
 })
 
+# Renaming dims
+setClass("RenameDims",
+  contains = "IterableMatrix",
+  slots = c(
+    matrix = "IterableMatrix"
+  )
+)
+setMethod("matrix_type", "RenameDims", function(x) matrix_type(x@matrix))
+setMethod("iterate_matrix", "RenameDims", function(x) {
+  if (x@transpose) {
+    return(iterate_matrix(t(x)))
+  }
+  assert_true(matrix_type(x) %in% c("uint32_t", "float", "double"))
+  
+  iter_function <- get(sprintf("iterate_matrix_rename_dims_%s_cpp", matrix_type(x)))
+  row_names <- if (is.null(rownames(x))) character(0) else rownames(x)
+  col_names <- if (is.null(colnames(x))) character(0) else colnames(x)
+
+  iter_function(iterate_matrix(x@matrix), row_names, col_names, is.null(rownames(x)), is.null(colnames(x)))
+})
+
+setMethod("[", "RenameDims", function(x, i, j, ...) {
+  if (missing(x)) stop("x is missing in matrix selection")
+
+  i <- selection_index(i, nrow(x), rownames(x))
+  j <- selection_index(j, ncol(x), colnames(x))
+  x <- selection_fix_dims(x, rlang::maybe_missing(i), rlang::maybe_missing(j))
+
+  x@matrix <- x@matrix[rlang::maybe_missing(i), rlang::maybe_missing(j)]
+
+  if (x@transpose) {
+    tmp <- rlang::maybe_missing(i)
+    i <- rlang::maybe_missing(j)
+    j <- rlang::maybe_missing(tmp)
+  }
+  x
+})
+setMethod("short_description", "RenameDims", function(x) {
+  c(
+    short_description(x@matrix),
+    sprintf("Reset dimnames")
+  )
+})
+setMethod("dimnames<-", signature(x = "IterableMatrix", value = "list"), function(x, value) {
+  d <- dim(x)
+  has_error <- FALSE
+  if (!is.list(value) || length(value) != 2) has_error <- TRUE
+  if (!is.null(value[[1]]) && length(value[[1]]) != d[1]) has_error <- TRUE
+  if (!is.null(value[[2]]) && length(value[[2]]) != d[2]) has_error <- TRUE
+  if (has_error) stop("Invalid dimnames supplied")
+
+  if (!is(x, "RenameDims")) {
+    x <- wrapMatrix("RenameDims", x)
+  }
+  if (!is.null(value[[1]])) {
+    x@dimnames[[1]] <- as.character(value[[1]])
+  } else {
+    x@dimnames[1] <- list(NULL)
+  }
+  if (!is.null(value[[2]])) {
+    x@dimnames[[2]] <- as.character(value[[2]])
+  } else {
+    x@dimnames[2] <- list(NULL)
+  }
+  x
+})
+setMethod("dimnames<-", signature(x = "IterableMatrix", value = "NULL"), function(x, value) {
+  if (!is(x, "RenameDims")) {
+    x <- wrapMatrix("RenameDims", x)
+  }
+  x@dimnames <- list(NULL, NULL)
+  x
+})
 
 # Concatenating matrices by row or by column
 

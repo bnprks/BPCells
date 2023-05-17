@@ -12,6 +12,7 @@
 #include "matrixIterators/MatrixMultiply.h"
 #include "matrixIterators/MatrixOps.h"
 #include "matrixIterators/MatrixStats.h"
+#include "matrixIterators/RenameDims.h"
 #include "matrixIterators/TSparseMatrixWriter.h"
 #include "matrixIterators/WilcoxonRankSum.h"
 
@@ -111,6 +112,57 @@ SEXP iterate_matrix_row_select_float_cpp(SEXP matrix, std::vector<uint32_t> row_
 SEXP iterate_matrix_row_select_double_cpp(SEXP matrix, std::vector<uint32_t> row_selection) {
     return make_unique_xptr<MatrixRowSelect<double>>(
         take_unique_xptr<MatrixLoader<double>>(matrix), row_selection
+    );
+}
+
+// [[Rcpp::export]]
+SEXP iterate_matrix_rename_dims_uint32_t_cpp(
+    SEXP matrix,
+    std::vector<std::string> row_names,
+    std::vector<std::string> col_names,
+    bool clear_row_names,
+    bool clear_col_names
+) {
+    return make_unique_xptr<RenameDims<uint32_t>>(
+        take_unique_xptr<MatrixLoader<uint32_t>>(matrix),
+        row_names,
+        col_names,
+        clear_row_names,
+        clear_col_names
+    );
+}
+
+// [[Rcpp::export]]
+SEXP iterate_matrix_rename_dims_float_cpp(
+    SEXP matrix,
+    std::vector<std::string> row_names,
+    std::vector<std::string> col_names,
+    bool clear_row_names,
+    bool clear_col_names
+) {
+    return make_unique_xptr<RenameDims<float>>(
+        take_unique_xptr<MatrixLoader<float>>(matrix),
+        row_names,
+        col_names,
+        clear_row_names,
+        clear_col_names
+    );
+}
+
+// [[Rcpp::export]]
+SEXP iterate_matrix_rename_dims_double_cpp(
+    SEXP matrix,
+    std::vector<std::string> row_names,
+    std::vector<std::string> col_names,
+    bool clear_row_names,
+    bool clear_col_names
+) {
+    return make_unique_xptr<RenameDims<double>>(
+        take_unique_xptr<MatrixLoader<double>>(matrix),
+        row_names,
+        col_names,
+        clear_row_names,
+        clear_col_names
     );
 }
 
@@ -357,7 +409,7 @@ Eigen::MatrixXd wilcoxon_rank_sum_pval_double_cpp(SEXP matrix, std::vector<uint3
     return wilcoxon_rank_sum(take_unique_xptr<MatrixLoader<double>>(matrix), groups);
 }
 
-// Compute a histogram of the values in a matrix. 
+// Compute a histogram of the values in a matrix.
 // [[Rcpp::export]]
 NumericVector matrix_value_histogram_cpp(SEXP matrix, uint32_t max_value) {
     MatrixIterator<uint32_t> it(take_unique_xptr<MatrixLoader<uint32_t>>(matrix));

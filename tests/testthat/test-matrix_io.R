@@ -220,6 +220,42 @@ test_that("AnnData and 10x row/col rename works", {
   expect_identical(rownames(x2_t), colnames(x_10x))
 })
 
+test_that("Renaming transformed matrix works", {
+  x <- matrix(1:12, nrow=3)
+  rownames(x) <- paste0("row", seq_len(nrow(x)))
+  colnames(x) <- paste0("col", seq_len(ncol(x)))
+  
+  # Check that dim names changes are properly preserved (or removed)
+  x1 <- x %>%
+    as("dgCMatrix") %>%
+    as("IterableMatrix") %>%
+    .[1:3,1:4]
+  
+  rownames(x1) <- paste0("newrow", seq_len(nrow(x)))
+  colnames(x1) <- paste0("newcol", seq_len(ncol(x)))
+  expect_identical(
+    dimnames(x1), dimnames(as.matrix(x1))
+  )
+
+  x2 <- x1
+  rownames(x2) <- NULL
+  colnames(x2) <- NULL
+  expect_identical(
+    rownames(x2), rownames(as.matrix(x2))
+  )
+  expect_identical(
+    colnames(x2), colnames(as.matrix(x2))
+  )
+
+  # Check that this works across subsets
+  x3 <- x1[1:2,3:4]
+  expect_s4_class(x3, "RenameDims")
+  expect_identical(
+    as.matrix(x3), as.matrix(x1)[1:2,3:4]
+  )
+
+})
+
 test_that("Matrix without names works", {
   dir <- withr::local_tempdir()
   m <- generate_sparse_matrix(nrow = 10, ncol = 9, fraction_nonzero = 0.2, max_val = 10)
