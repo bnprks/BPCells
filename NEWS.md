@@ -14,6 +14,7 @@ Contributions welcome :)
 - Added `binarize()` function and associated generics `<`, `<=`, `>`, and `>=`.
   This only supports comparison with non-negative numbers currently. (Thanks to 
   contribution from @brgew)
+- Added `round()` matrix transformation (Thanks to contributions from @brgew)
 
 ## Improvements
 - Merging fragments with `c()` now handles inputs with mismatched chromosome names.
