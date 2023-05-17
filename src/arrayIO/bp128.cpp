@@ -45,6 +45,7 @@ void BP128UIntReader::seek(uint64_t new_pos) {
 }
 
 uint64_t BP128UIntReader::load(uint32_t *out, uint64_t count) {
+    count = std::min(this->count - pos, count);
     uint64_t i = 0;
     if (pos % 128 != 0) {
         i = std::min(count, 128 - pos % 128);
@@ -55,7 +56,7 @@ uint64_t BP128UIntReader::load(uint32_t *out, uint64_t count) {
         load128(out + i);
         pos += 128;
     }
-    if (i == 0) {
+    if (i == 0 && count > 0) {
         // Handle leftovers. If we get here we know count < 128 and
         // we started aligned to a boundary of 128
         load128(buf);

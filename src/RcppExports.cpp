@@ -108,6 +108,147 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// write_bp128
+void write_bp128(IntegerVector input, IntegerVector out_data, IntegerVector out_idx, NumericVector out_idx_offsets);
+RcppExport SEXP _BPCells_write_bp128(SEXP inputSEXP, SEXP out_dataSEXP, SEXP out_idxSEXP, SEXP out_idx_offsetsSEXP) {
+BEGIN_RCPP
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< IntegerVector >::type input(inputSEXP);
+    Rcpp::traits::input_parameter< IntegerVector >::type out_data(out_dataSEXP);
+    Rcpp::traits::input_parameter< IntegerVector >::type out_idx(out_idxSEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type out_idx_offsets(out_idx_offsetsSEXP);
+    write_bp128(input, out_data, out_idx, out_idx_offsets);
+    return R_NilValue;
+END_RCPP
+}
+// write_bp128_for
+void write_bp128_for(IntegerVector input, IntegerVector out_data, IntegerVector out_idx, NumericVector out_idx_offsets);
+RcppExport SEXP _BPCells_write_bp128_for(SEXP inputSEXP, SEXP out_dataSEXP, SEXP out_idxSEXP, SEXP out_idx_offsetsSEXP) {
+BEGIN_RCPP
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< IntegerVector >::type input(inputSEXP);
+    Rcpp::traits::input_parameter< IntegerVector >::type out_data(out_dataSEXP);
+    Rcpp::traits::input_parameter< IntegerVector >::type out_idx(out_idxSEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type out_idx_offsets(out_idx_offsetsSEXP);
+    write_bp128_for(input, out_data, out_idx, out_idx_offsets);
+    return R_NilValue;
+END_RCPP
+}
+// write_bp128_d1
+void write_bp128_d1(IntegerVector input, IntegerVector out_data, IntegerVector out_idx, NumericVector out_idx_offsets, IntegerVector out_starts);
+RcppExport SEXP _BPCells_write_bp128_d1(SEXP inputSEXP, SEXP out_dataSEXP, SEXP out_idxSEXP, SEXP out_idx_offsetsSEXP, SEXP out_startsSEXP) {
+BEGIN_RCPP
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< IntegerVector >::type input(inputSEXP);
+    Rcpp::traits::input_parameter< IntegerVector >::type out_data(out_dataSEXP);
+    Rcpp::traits::input_parameter< IntegerVector >::type out_idx(out_idxSEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type out_idx_offsets(out_idx_offsetsSEXP);
+    Rcpp::traits::input_parameter< IntegerVector >::type out_starts(out_startsSEXP);
+    write_bp128_d1(input, out_data, out_idx, out_idx_offsets, out_starts);
+    return R_NilValue;
+END_RCPP
+}
+// write_bp128_d1z
+void write_bp128_d1z(IntegerVector input, IntegerVector out_data, IntegerVector out_idx, NumericVector out_idx_offsets, IntegerVector out_starts);
+RcppExport SEXP _BPCells_write_bp128_d1z(SEXP inputSEXP, SEXP out_dataSEXP, SEXP out_idxSEXP, SEXP out_idx_offsetsSEXP, SEXP out_startsSEXP) {
+BEGIN_RCPP
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< IntegerVector >::type input(inputSEXP);
+    Rcpp::traits::input_parameter< IntegerVector >::type out_data(out_dataSEXP);
+    Rcpp::traits::input_parameter< IntegerVector >::type out_idx(out_idxSEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type out_idx_offsets(out_idx_offsetsSEXP);
+    Rcpp::traits::input_parameter< IntegerVector >::type out_starts(out_startsSEXP);
+    write_bp128_d1z(input, out_data, out_idx, out_idx_offsets, out_starts);
+    return R_NilValue;
+END_RCPP
+}
+// read_bp128
+void read_bp128(IntegerVector input_data, IntegerVector input_idx, NumericVector input_idx_offsets, IntegerVector out, double count);
+RcppExport SEXP _BPCells_read_bp128(SEXP input_dataSEXP, SEXP input_idxSEXP, SEXP input_idx_offsetsSEXP, SEXP outSEXP, SEXP countSEXP) {
+BEGIN_RCPP
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< IntegerVector >::type input_data(input_dataSEXP);
+    Rcpp::traits::input_parameter< IntegerVector >::type input_idx(input_idxSEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type input_idx_offsets(input_idx_offsetsSEXP);
+    Rcpp::traits::input_parameter< IntegerVector >::type out(outSEXP);
+    Rcpp::traits::input_parameter< double >::type count(countSEXP);
+    read_bp128(input_data, input_idx, input_idx_offsets, out, count);
+    return R_NilValue;
+END_RCPP
+}
+// read_bp128_for
+void read_bp128_for(IntegerVector input_data, IntegerVector input_idx, NumericVector input_idx_offsets, IntegerVector out, double count);
+RcppExport SEXP _BPCells_read_bp128_for(SEXP input_dataSEXP, SEXP input_idxSEXP, SEXP input_idx_offsetsSEXP, SEXP outSEXP, SEXP countSEXP) {
+BEGIN_RCPP
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< IntegerVector >::type input_data(input_dataSEXP);
+    Rcpp::traits::input_parameter< IntegerVector >::type input_idx(input_idxSEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type input_idx_offsets(input_idx_offsetsSEXP);
+    Rcpp::traits::input_parameter< IntegerVector >::type out(outSEXP);
+    Rcpp::traits::input_parameter< double >::type count(countSEXP);
+    read_bp128_for(input_data, input_idx, input_idx_offsets, out, count);
+    return R_NilValue;
+END_RCPP
+}
+// read_bp128_d1
+void read_bp128_d1(IntegerVector input_data, IntegerVector input_idx, NumericVector input_idx_offsets, IntegerVector input_starts, IntegerVector out, double count);
+RcppExport SEXP _BPCells_read_bp128_d1(SEXP input_dataSEXP, SEXP input_idxSEXP, SEXP input_idx_offsetsSEXP, SEXP input_startsSEXP, SEXP outSEXP, SEXP countSEXP) {
+BEGIN_RCPP
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< IntegerVector >::type input_data(input_dataSEXP);
+    Rcpp::traits::input_parameter< IntegerVector >::type input_idx(input_idxSEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type input_idx_offsets(input_idx_offsetsSEXP);
+    Rcpp::traits::input_parameter< IntegerVector >::type input_starts(input_startsSEXP);
+    Rcpp::traits::input_parameter< IntegerVector >::type out(outSEXP);
+    Rcpp::traits::input_parameter< double >::type count(countSEXP);
+    read_bp128_d1(input_data, input_idx, input_idx_offsets, input_starts, out, count);
+    return R_NilValue;
+END_RCPP
+}
+// read_bp128_d1z
+void read_bp128_d1z(IntegerVector input_data, IntegerVector input_idx, NumericVector input_idx_offsets, IntegerVector input_starts, IntegerVector out, double count);
+RcppExport SEXP _BPCells_read_bp128_d1z(SEXP input_dataSEXP, SEXP input_idxSEXP, SEXP input_idx_offsetsSEXP, SEXP input_startsSEXP, SEXP outSEXP, SEXP countSEXP) {
+BEGIN_RCPP
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< IntegerVector >::type input_data(input_dataSEXP);
+    Rcpp::traits::input_parameter< IntegerVector >::type input_idx(input_idxSEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type input_idx_offsets(input_idx_offsetsSEXP);
+    Rcpp::traits::input_parameter< IntegerVector >::type input_starts(input_startsSEXP);
+    Rcpp::traits::input_parameter< IntegerVector >::type out(outSEXP);
+    Rcpp::traits::input_parameter< double >::type count(countSEXP);
+    read_bp128_d1z(input_data, input_idx, input_idx_offsets, input_starts, out, count);
+    return R_NilValue;
+END_RCPP
+}
+// write_bp128_end
+void write_bp128_end(IntegerVector end, IntegerVector start, IntegerVector out_data, IntegerVector out_idx, NumericVector out_idx_offsets);
+RcppExport SEXP _BPCells_write_bp128_end(SEXP endSEXP, SEXP startSEXP, SEXP out_dataSEXP, SEXP out_idxSEXP, SEXP out_idx_offsetsSEXP) {
+BEGIN_RCPP
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< IntegerVector >::type end(endSEXP);
+    Rcpp::traits::input_parameter< IntegerVector >::type start(startSEXP);
+    Rcpp::traits::input_parameter< IntegerVector >::type out_data(out_dataSEXP);
+    Rcpp::traits::input_parameter< IntegerVector >::type out_idx(out_idxSEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type out_idx_offsets(out_idx_offsetsSEXP);
+    write_bp128_end(end, start, out_data, out_idx, out_idx_offsets);
+    return R_NilValue;
+END_RCPP
+}
+// read_bp128_end
+void read_bp128_end(IntegerVector input_data, IntegerVector input_idx, NumericVector input_idx_offsets, IntegerVector start, IntegerVector out, double count);
+RcppExport SEXP _BPCells_read_bp128_end(SEXP input_dataSEXP, SEXP input_idxSEXP, SEXP input_idx_offsetsSEXP, SEXP startSEXP, SEXP outSEXP, SEXP countSEXP) {
+BEGIN_RCPP
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< IntegerVector >::type input_data(input_dataSEXP);
+    Rcpp::traits::input_parameter< IntegerVector >::type input_idx(input_idxSEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type input_idx_offsets(input_idx_offsetsSEXP);
+    Rcpp::traits::input_parameter< IntegerVector >::type start(startSEXP);
+    Rcpp::traits::input_parameter< IntegerVector >::type out(outSEXP);
+    Rcpp::traits::input_parameter< double >::type count(countSEXP);
+    read_bp128_end(input_data, input_idx, input_idx_offsets, start, out, count);
+    return R_NilValue;
+END_RCPP
+}
 // iterate_10x_fragments_cpp
 SEXP iterate_10x_fragments_cpp(std::string path, std::string comment);
 RcppExport SEXP _BPCells_iterate_10x_fragments_cpp(SEXP pathSEXP, SEXP commentSEXP) {
@@ -2129,6 +2270,16 @@ static const R_CallMethodDef CallEntries[] = {
     {"_BPCells_open_bp128_for", (DL_FUNC) &_BPCells_open_bp128_for, 4},
     {"_BPCells_simd_vec_version", (DL_FUNC) &_BPCells_simd_vec_version, 0},
     {"_BPCells_simd_sleef_version", (DL_FUNC) &_BPCells_simd_sleef_version, 0},
+    {"_BPCells_write_bp128", (DL_FUNC) &_BPCells_write_bp128, 4},
+    {"_BPCells_write_bp128_for", (DL_FUNC) &_BPCells_write_bp128_for, 4},
+    {"_BPCells_write_bp128_d1", (DL_FUNC) &_BPCells_write_bp128_d1, 5},
+    {"_BPCells_write_bp128_d1z", (DL_FUNC) &_BPCells_write_bp128_d1z, 5},
+    {"_BPCells_read_bp128", (DL_FUNC) &_BPCells_read_bp128, 5},
+    {"_BPCells_read_bp128_for", (DL_FUNC) &_BPCells_read_bp128_for, 5},
+    {"_BPCells_read_bp128_d1", (DL_FUNC) &_BPCells_read_bp128_d1, 6},
+    {"_BPCells_read_bp128_d1z", (DL_FUNC) &_BPCells_read_bp128_d1z, 6},
+    {"_BPCells_write_bp128_end", (DL_FUNC) &_BPCells_write_bp128_end, 5},
+    {"_BPCells_read_bp128_end", (DL_FUNC) &_BPCells_read_bp128_end, 6},
     {"_BPCells_iterate_10x_fragments_cpp", (DL_FUNC) &_BPCells_iterate_10x_fragments_cpp, 2},
     {"_BPCells_write_10x_fragments_cpp", (DL_FUNC) &_BPCells_write_10x_fragments_cpp, 3},
     {"_BPCells_iterate_packed_fragments_cpp", (DL_FUNC) &_BPCells_iterate_packed_fragments_cpp, 1},

@@ -26,6 +26,25 @@ template <class T> class VecNumWriter final : public BulkNumWriter<T> {
 
 using VecUIntWriter = VecNumWriter<uint32_t>;
 
+template <class T> class PointerNumWriter final : public BulkNumWriter<T> {
+  private:
+    T *vec;
+    uint64_t capacity;
+    uint64_t pos = 0;
+  public:
+    // Capacity is given in units of sizeof(T), e.g. 4 bytes for uint32_t
+    PointerNumWriter(T *vec, uint64_t capacity) : vec(vec), capacity(capacity) {}
+
+    uint64_t write(T *in, uint64_t count) override {
+        if (pos + count >= capacity) {
+          throw std::runtime_error("PointerNumWriter: exceeded destination memory capacity");
+        }
+        std::memmove(vec + pos, in, sizeof(T)*count);
+        pos += count;
+        return count;
+    }
+};
+
 template <class T> class VecNumReader : public BulkNumReader<T> {
   private:
     const T *vec;
@@ -44,9 +63,10 @@ template <class T> class VecNumReader : public BulkNumReader<T> {
     // Copy up to `count` integers into `out`, returning the actual number copied.
     // Will always load >0 unless there is no more input
     uint64_t load(T *out, uint64_t count) override {
-        std::memmove(out, vec + pos, sizeof(T) * count);
-        pos += count;
-        return count;
+        uint64_t load_size = std::min<uint64_t>(capacity - pos, count);
+        std::memmove(out, vec + pos, sizeof(T) * load_size);
+        pos += load_size;
+        return load_size;
     }
 };
 
