@@ -254,6 +254,13 @@ test_that("Renaming transformed matrix works", {
     as.matrix(x3), as.matrix(x1)[1:2,3:4]
   )
 
+  # Check that changing dimnames twice coalesces
+  x4 <- x3
+  rownames(x4) <- paste0("newnewrow", seq_len(nrow(x4)))
+  colnames(x4) <- paste0("newnewcol", seq_len(ncol(x4)))
+  expect_s4_class(x4, "RenameDims")
+  expect_s4_class(x4@matrix, class(x3@matrix))
+
 })
 
 test_that("Matrix without names works", {
