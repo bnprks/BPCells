@@ -89,6 +89,66 @@ setMethod("matrix_inputs<-", "IterableMatrix", function(x, ..., value) {
   rlang::abort(sprintf("matrix_inputs not defined for inputs of type %s", class(x)))
 })
 
+#' Get/set inputs to a matrix transform
+#' 
+#' A matrix object can either be an input (i.e. a file on disk or a raw matrix in memory),
+#' or it can represent a delayed operation on one or more matrices. The `all_matrix_inputs()`
+#' getter and setter functions allow accessing the base-level input matrices as a list, and
+#' changing them. This is useful if you want to re-locate data on disk without losing your
+#' transformed BPCells matrix. (Note: experimental API; potentially subject to revisions).
+#'
+#' 
+#'
+#' @param x IterableMatrix
+#' @param value List of IterableMatrix objects
+#' @return List of IterableMatrix objects. If a matrix `m` is itself an input object, then 
+#'   `all_matrix_inputs(m)` will return `list(m)`.
+all_matrix_inputs <- function(x) {
+  assert_is(x, "IterableMatrix")
+  inputs <- matrix_inputs(x)
+  if (length(inputs) == 0) return(list(x))
+  if (length(inputs) == 1) return(inputs)
+  do.call(c, lapply(inputs, all_matrix_inputs))
+}
+
+#' @rdname all_matrix_inputs
+`all_matrix_inputs<-` <- function(x, value) {
+  # Error checking:
+  # - value should be a list of iterable matrices
+  # - value should be the same length as the existing matrix inputs
+  # - Each iterable matrix should have the same dimensions as the one it's replacing
+  assert_is(value, "list")
+  prev_inputs <- all_matrix_inputs(x)
+  if (length(prev_inputs) != length(value)) {
+    rlang::abort("Error assigning matrix inputs: length mismatch of input list")
+  }
+  for (i in seq_along(value)) {
+    if (!is(value[[i]], "IterableMatrix")) {
+      rlang::abort(sprintf("Error assigning matrix inputs: Entry %d is not an IterableMatrix", i))
+    }
+    if (!all(dim(prev_inputs[[i]]) == dim(value[[i]]))) {
+      rlang::warn(sprintf("Warning assigning matrix inputs: entry %d has mismatched dimensions with the matrix it replaces", i))
+    }
+  }
+
+  # Actual work -- recursively reset the inputs
+  direct_inputs <- matrix_inputs(x)
+  if (length(direct_inputs) == 0) {
+    stopifnot(length(value) == 1)
+    return(value[[1]])
+  }
+  subtree_counts <- lapply(direct_inputs, function(x) length(all_matrix_inputs(x)))
+  stopifnot(sum(as.integer(subtree_counts)) == length(value))
+  start <- 1L
+  for (i in seq_along(direct_inputs)) {
+    end <- start + subtree_counts[[i]] - 1L
+    all_matrix_inputs(direct_inputs[[i]]) <- value[start:end]
+    start <- end + 1L
+  }
+  matrix_inputs(x) <- direct_inputs
+  x
+}
+
 setMethod("short_description", "IterableMatrix", function(x) {
   character(0)
 })

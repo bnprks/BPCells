@@ -297,6 +297,65 @@ test_that("Rank transform works", {
   }
 })
 
+test_that("Relocating matrix inputs works", {
+  # Test case: do a matrix multiply of two concatenated matrices,
+  # then swap out the inputs and check it all works
+
+  # X: 4x5
+  x1 <- matrix(rnorm(9), nrow=3) 
+  x2 <- matrix(rnorm(6), nrow=3)
+  x3 <- matrix(rnorm(5), ncol=5)
+  x <- rbind(cbind(x1, x2), x3)
+
+  # Y: 5x3
+  y1 <- matrix(rnorm(9), ncol=3) 
+  y2 <- matrix(rnorm(6), ncol=3)
+  y <- rbind(y1, y2)
+
+  z <- x %*% y
+  x1_bp <- as(as(x1, "dgCMatrix"), "IterableMatrix")
+  x2_bp <- as(as(x2, "dgCMatrix"), "IterableMatrix")
+  x3_bp <- as(as(x3, "dgCMatrix"), "IterableMatrix")
+
+  y1_bp <- as(as(y1, "dgCMatrix"), "IterableMatrix")
+  y2_bp <- as(as(y2, "dgCMatrix"), "IterableMatrix")
+
+  x_bp <- rbind(cbind(x1_bp, x2_bp), x3_bp)
+  y_bp <- rbind(y1_bp, y2_bp)
+
+  z_bp <- x_bp %*% y_bp
+
+  in_x <- all_matrix_inputs(x_bp)
+  in_y <- all_matrix_inputs(y_bp)
+  in_z <- all_matrix_inputs(z_bp)
+
+  expect_identical(as.matrix(x_bp), x)
+  expect_identical(as.matrix(y_bp), y)
+  expect_equal(as.matrix(z_bp), z)
+
+  expect_length(all_matrix_inputs(x_bp), 3)
+  expect_length(all_matrix_inputs(y_bp), 2)
+  expect_length(all_matrix_inputs(z_bp), 5)
+
+  expect_identical(
+      lapply(all_matrix_inputs(z_bp), class) %>% as.character(),
+      rep("Iterable_dgCMatrix_wrapper", 5)
+  )
+
+  new_inputs <- lapply(all_matrix_inputs(z_bp), function(x) write_matrix_dir(x, tempfile(), compress=FALSE))
+
+  z_bp2 <- z_bp
+  all_matrix_inputs(z_bp2) <- new_inputs
+
+  expect_equal(as.matrix(z_bp2), z)
+  expect_length(all_matrix_inputs(z_bp2), 5)
+  expect_identical(
+      lapply(all_matrix_inputs(z_bp2), class) %>% as.character(),
+      rep("MatrixDir", 5)
+  )
+
+})
+
 test_that("Generic methods work", {
   # Generic methods to test:
   # - dim

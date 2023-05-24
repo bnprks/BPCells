@@ -103,6 +103,7 @@ reference:
   - add_rows
   - binarize
   - IterableMatrix-methods
+  - all_matrix_inputs
 
 - title: "Reference Annotations"
 - contents:
