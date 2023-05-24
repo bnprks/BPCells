@@ -157,9 +157,10 @@ template <typename T> class ConcatCols : public MatrixLoader<T> {
     // Advance to the next column, or return false if there
     // are no more columns
     bool nextCol() override {
-        while (!mats[cur_mat]->nextCol()) {
+        if (!mats[cur_mat]->nextCol()) {
             if (cur_mat + 1 == mats.size()) return false;
             cur_mat++;
+            mats[cur_mat]->seekCol(0);
         }
 
         return true;
