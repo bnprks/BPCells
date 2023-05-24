@@ -85,7 +85,7 @@ extend_ranges <- function(ranges, upstream = 0, downstream = 0, metadata_cols = 
   if (!is.null(chromosome_sizes)) {
     chr_size_lookup <- dplyr::pull(chromosome_sizes, end, name = chr)
     if (length(setdiff(ranges$chr, names(chr_size_lookup))) > 0) {
-      rlang::abort("chromosome_sizes does not contain al chromosomes present in ranges")
+      rlang::abort("chromosome_sizes does not contain all chromosomes present in ranges")
     }
     ranges$start <- pmin(chr_size_lookup[as.character(ranges$chr)], ranges$start)
     ranges$end <- pmin(chr_size_lookup[as.character(ranges$chr)], ranges$end)
