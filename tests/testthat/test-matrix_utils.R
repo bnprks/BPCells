@@ -324,6 +324,8 @@ test_that("Relocating matrix inputs works", {
   y_bp <- rbind(y1_bp, y2_bp)
 
   z_bp <- x_bp %*% y_bp
+  # Add in a length 1 layer which would catch an early error in all_matrix_inputs
+  rownames(z_bp) <- rownames(z_bp)
 
   in_x <- all_matrix_inputs(x_bp)
   in_y <- all_matrix_inputs(y_bp)

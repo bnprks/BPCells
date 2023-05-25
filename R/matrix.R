@@ -107,7 +107,6 @@ all_matrix_inputs <- function(x) {
   assert_is(x, "IterableMatrix")
   inputs <- matrix_inputs(x)
   if (length(inputs) == 0) return(list(x))
-  if (length(inputs) == 1) return(inputs)
   do.call(c, lapply(inputs, all_matrix_inputs))
 }
 
