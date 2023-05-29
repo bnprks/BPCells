@@ -8,6 +8,7 @@ PKG_LIBS = -lz %HDF5_LIBS% %CXX_FS_FLAG% %ARCH_FLAG%
 
 OBJECTS=\
 bitpacking_io.o \
+clustering.o \
 fragment_io.o \
 fragment_utils.o \
 matrix_io.o \

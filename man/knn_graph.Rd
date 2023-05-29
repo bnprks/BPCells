@@ -28,7 +28,8 @@ cell \code{j}, or 0 if cell \code{j} is not in the K nearest neighbors of \code{
 \strong{knn_to_snn_graph}
 Sparse matrix (dgCMatrix) where \code{mat[i,j]} = jaccard index of the overlap
 in nearest neigbors between cell \code{i} and cell \code{j}, or 0 if the jaccard index
-is < \code{min_val}
+is < \code{min_val}. Only the lower triangle is filled in, which is compatible with
+the BPCells clustering methods
 }
 \description{
 Convert a KNN object (e.g. returned by \code{knn_hnsw()} or \code{knn_annoy()}) into

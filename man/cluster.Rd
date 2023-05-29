@@ -13,7 +13,7 @@ cluster_graph_louvain(snn, resolution = 1, seed = 12531)
 cluster_graph_seurat(snn, resolution = 0.8, ...)
 }
 \arguments{
-\item{snn}{Symmetric adjacency matrix (dgCMatrix) output from e.g. knn_to_snn_graph}
+\item{snn}{Symmetric adjacency matrix (dgCMatrix) output from e.g. knn_to_snn_graph. Only the lower triangle is used}
 
 \item{resolution}{Resolution parameter. Higher values result in more clusters}
 

@@ -109,9 +109,8 @@ cell <code>j</code>, or 0 if cell <code>j</code> is not in the K nearest neighbo
 
 <p>Sparse matrix (dgCMatrix) where <code>mat[i,j]</code> = jaccard index of the overlap
 in nearest neigbors between cell <code>i</code> and cell <code>j</code>, or 0 if the jaccard index
-is &lt; <code>min_val</code></p>
-
-
+is &lt; <code>min_val</code>. Only the lower triangle is filled in, which is compatible with
+the BPCells clustering methods</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>

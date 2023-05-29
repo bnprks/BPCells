@@ -1,13 +1,4 @@
 
-# Prune zeros from a dgCMatrix
-prune_zeros_dgCMatrix <- function(mat) {
-  nonzeros <- colSums(mat != 0)
-  mat@i <- mat@i[mat@x != 0]
-  mat@x <- mat@x[mat@x != 0]
-  mat@p <- as.integer(c(0, cumsum(nonzeros)))
-  mat
-}
-
 #' K Nearest Neighbor (KNN) Graph
 #'
 #' Convert a KNN object (e.g. returned by `knn_hnsw()` or `knn_annoy()`) into
@@ -36,7 +27,7 @@ knn_to_graph <- function(knn, use_weights = FALSE, self_loops = TRUE) {
   )
   if (!self_loops) {
     diag(mat) <- 0
-    mat <- prune_zeros_dgCMatrix(mat)
+    mat <- Matrix::drop0(mat)
   }
   rownames(mat) <- rownames(knn$idx)
   colnames(mat) <- rownames(knn$idx)
@@ -53,25 +44,34 @@ knn_to_graph <- function(knn, use_weights = FALSE, self_loops = TRUE) {
 #' @return **knn_to_snn_graph**
 #'   Sparse matrix (dgCMatrix) where `mat[i,j]` = jaccard index of the overlap
 #'   in nearest neigbors between cell `i` and cell `j`, or 0 if the jaccard index
-#'   is < `min_val`
+#'   is < `min_val`. Only the lower triangle is filled in, which is compatible with
+#'   the BPCells clustering methods
 #' @export
 knn_to_snn_graph <- function(knn, min_val = 1 / 15, self_loops = TRUE) {
-  mat <- knn_to_graph(knn, use_weights = FALSE)
-  mat <- mat %*% t(mat)
-  mat <- mat / (2 * ncol(knn$idx) - mat)
-  mat@x[mat@x < min_val] <- 0
+  # Solve x / (2*K - x) >= min_val --> x >= 2*K*min_val / (1 + min_val)
+  min_int <- ceiling(2*min_val*ncol(knn$idx) / (1 + min_val))
+  snn <- build_snn_graph_cpp(knn$idx, min_neighbors = min_int)
+
+  snn$snn_count <- snn$snn_count / (2*ncol(knn$idx) - snn$snn_count)
+  
   if (!self_loops) {
-    diag(mat) <- 0
+    keepers <- snn$i != snn$j
+    snn$i <- snn$i[keepers]
+    snn$j <- snn$j[keepers]
+    snn$snn_count <- snn$snn_count[keepers]
   }
-  # Prune the explicit 0 entries from storage
-  mat <- prune_zeros_dgCMatrix(mat)
-  mat
+  
+  # Return as a sparse matrix
+  Matrix::sparseMatrix(
+    i = snn$i + 1L, j = snn$j + 1L, x = snn$snn_count,
+    repr="C"
+  )
 }
 
 #' Cluster an adjacency matrix
 #' @rdname cluster
 #' @details **cluster_graph_leiden**: Leiden graph clustering algorithm `igraph::cluster_leiden()`
-#' @param snn Symmetric adjacency matrix (dgCMatrix) output from e.g. knn_to_snn_graph
+#' @param snn Symmetric adjacency matrix (dgCMatrix) output from e.g. knn_to_snn_graph. Only the lower triangle is used
 #' @param resolution Resolution parameter. Higher values result in more clusters
 #' @param seed Random seed for clustering initialization
 #' @param ... Additional arguments to underlying clustering function

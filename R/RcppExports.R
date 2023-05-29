@@ -73,6 +73,10 @@ read_bp128_end <- function(input_data, input_idx, input_idx_offsets, start, out,
     invisible(.Call(`_BPCells_read_bp128_end`, input_data, input_idx, input_idx_offsets, start, out, count))
 }
 
+build_snn_graph_cpp <- function(neighbor_indices, min_neighbors) {
+    .Call(`_BPCells_build_snn_graph_cpp`, neighbor_indices, min_neighbors)
+}
+
 iterate_10x_fragments_cpp <- function(path, comment) {
     .Call(`_BPCells_iterate_10x_fragments_cpp`, path, comment)
 }

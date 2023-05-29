@@ -249,6 +249,18 @@ BEGIN_RCPP
     return R_NilValue;
 END_RCPP
 }
+// build_snn_graph_cpp
+SEXP build_snn_graph_cpp(IntegerMatrix neighbor_indices, int min_neighbors);
+RcppExport SEXP _BPCells_build_snn_graph_cpp(SEXP neighbor_indicesSEXP, SEXP min_neighborsSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< IntegerMatrix >::type neighbor_indices(neighbor_indicesSEXP);
+    Rcpp::traits::input_parameter< int >::type min_neighbors(min_neighborsSEXP);
+    rcpp_result_gen = Rcpp::wrap(build_snn_graph_cpp(neighbor_indices, min_neighbors));
+    return rcpp_result_gen;
+END_RCPP
+}
 // iterate_10x_fragments_cpp
 SEXP iterate_10x_fragments_cpp(std::string path, std::string comment);
 RcppExport SEXP _BPCells_iterate_10x_fragments_cpp(SEXP pathSEXP, SEXP commentSEXP) {
@@ -2280,6 +2292,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_BPCells_read_bp128_d1z", (DL_FUNC) &_BPCells_read_bp128_d1z, 6},
     {"_BPCells_write_bp128_end", (DL_FUNC) &_BPCells_write_bp128_end, 5},
     {"_BPCells_read_bp128_end", (DL_FUNC) &_BPCells_read_bp128_end, 6},
+    {"_BPCells_build_snn_graph_cpp", (DL_FUNC) &_BPCells_build_snn_graph_cpp, 2},
     {"_BPCells_iterate_10x_fragments_cpp", (DL_FUNC) &_BPCells_iterate_10x_fragments_cpp, 2},
     {"_BPCells_write_10x_fragments_cpp", (DL_FUNC) &_BPCells_write_10x_fragments_cpp, 3},
     {"_BPCells_iterate_packed_fragments_cpp", (DL_FUNC) &_BPCells_iterate_packed_fragments_cpp, 1},
