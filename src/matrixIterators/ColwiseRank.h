@@ -15,7 +15,7 @@ template <class T> class ColwiseRank : public MatrixLoader<double> {
     std::vector<uint32_t> row_data, row_buf;
     std::vector<T> val_data, val_buf;
     std::vector<double> ranks;
-    int64_t tie_statistic;
+    double tie_statistic;
 
     uint32_t idx = 0;
     uint32_t cap = 0;
@@ -45,7 +45,7 @@ template <class T> class ColwiseRank : public MatrixLoader<double> {
 
     // Get this column's sum of t^3 - t
     // where t is the number of tied entries at a given rank
-    int64_t tieStatistic() {return tie_statistic;}
+    double tieStatistic() {return tie_statistic;}
 
     uint32_t rows() const override { return loader->rows(); }
     uint32_t cols() const override { return loader->cols(); }
