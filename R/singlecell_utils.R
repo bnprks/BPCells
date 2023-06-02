@@ -42,10 +42,10 @@ marker_features <- function(mat, groups, method="wilcoxon") {
     test_fn <- get(sprintf("wilcoxon_rank_sum_pval_%s_cpp", matrix_type(mat)))
     p_vals <- test_fn(iterate_matrix(mat), as.integer(groups) - 1)
 
-    group_membership <- cluster_membership_matrix(groups, levels(groups)) %>% 
-        as.matrix()
+    group_membership <- cluster_membership_matrix(groups, levels(groups))
+    group_membership <- t(as(t(group_membership), "IterableMatrix"))
 
-    group_sums <- t(mat %*% group_membership) # dim groups x features
+    group_sums <- as.matrix(as(t(mat %*% group_membership), "dgCMatrix")) # dim groups x features
     foreground_means <- multiply_rows(group_sums, 1 / as.numeric(table(groups)))
     background_means <- add_cols(-group_sums, colSums(group_sums)) %>%
       multiply_rows(1 / (length(groups) - as.numeric(table(groups))))

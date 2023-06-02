@@ -22,6 +22,8 @@ Contributions welcome :)
 - Merging fragments with `c()` now handles inputs with mismatched chromosome names.
 - Merging fragments is now 2-3.5x faster 
 - SNN graph construction in `knn_to_snn_graph()` should work more smoothly on large datasets due to C++ implementation
+- Reduced memory usage in `marker_features()` for samples with millions of cells and a large number
+  of clusters to compare.
 
 ## Bug-fixes
 - Fixed a few fragment transforms where using `chrNames(frags) <- val` or `cellNames(frags) <- val` could cause
