@@ -17,9 +17,22 @@ CXX=$("${R_HOME}/bin/R" CMD config CXX)
 
 echo "Testing hdf5 by compiling example program..."
 
+
 HDF5_CFLAGS=""
-HDF5_LIBS="-lhdf5 -lsz -lz"
-if ! $CC tools/h5write.c $HDF5_CFLAGS $HDF5_LIBS -o tools/h5write; then
+HDF5_LIBS="-lhdf5 -lz -lsz"
+HDF5_OK=""
+
+# First attempt with flags compatible with rtools43
+$CC tools/h5write.c $HDF5_CFLAGS $HDF5_LIBS -o tools/h5write && HDF5_OK="yes";
+
+# Second attempt with flags compatible with rtools42 (drop -lsz)
+if [ -z $HDF5_OK ]; then
+    printf "\n\nRetrying without -lsz flag...\n"
+    HDF5_LIBS="-lhdf5 -lz"
+    $CC tools/h5write.c $HDF5_CFLAGS $HDF5_LIBS -o tools/h5write && HDF5_OK="yes";
+fi
+
+if [ -z $HDF5_OK ] ; then
     echo ""
     echo ""
     echo "Unable to locate libhdf5. Please install manually or edit compiler flags."
