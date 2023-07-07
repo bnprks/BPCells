@@ -130,7 +130,11 @@ std::vector<std::string> readLines(std::filesystem::path path) {
     std::vector<std::string> ret;
 
     in.open(path.c_str());
-    if (!in) throw std::runtime_error(std::string("Could not open file: ") + path.string());
+    if (!in) {
+        throw std::runtime_error(
+            std::string("Could not open file: ") + strerror(errno) + ": " + path.string()
+        );
+    }
 
     while (std::getline(in, line)) {
         ret.push_back(line);

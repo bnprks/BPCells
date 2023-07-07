@@ -57,7 +57,9 @@ template <class T> class FileNumReader final : public BulkNumReader<T> {
     FileNumReader(const char *path) {
         file.open(path, std::ios_base::binary);
         if (!file) {
-            throw std::runtime_error(std::string("Error opening file: ") + path);
+            throw std::runtime_error(
+                std::string("Error opening file: ") + strerror(errno) + ": " + path
+            );
         }
 
         uint32_t header[2];
