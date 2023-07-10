@@ -1,8 +1,6 @@
-library(dplyr)
-
 tibble_to_fragments <- function(x, chr_names, cell_names) {
   x %>%
-    mutate(
+    dplyr::mutate(
       chr = factor(chr_names[chr], levels = chr_names),
       cell_id = factor(cell_names[cell_id], levels = cell_names)
     ) %>%
@@ -25,7 +23,7 @@ test_that("Basic insertion matrix succeeds", {
   }
   chr1_coords <- dplyr::bind_rows(chr1_list) %>%
     dplyr::arrange(start) %>%
-    mutate(chr = 2, cell_id = cell_id + 1)
+    dplyr::mutate(chr = 2, cell_id = cell_id + 1)
 
   chr2_coords <- tibble::tribble(
     ~cell_id, ~start, ~end,
@@ -35,10 +33,10 @@ test_that("Basic insertion matrix succeeds", {
     3, 10, 20
   ) %>%
     dplyr::arrange(start) %>%
-    mutate(chr = 1, cell_id = cell_id + 1)
+    dplyr::mutate(chr = 1, cell_id = cell_id + 1)
 
   raw_fragments <- tibble_to_fragments(
-    bind_rows(chr2_coords, chr1_coords),
+    dplyr::bind_rows(chr2_coords, chr1_coords),
     chr_names = c("chr2", "chr1"),
     cell_names = sprintf("cell%d", 1:5)
   )
@@ -83,7 +81,7 @@ test_that("Out of range peaks work", {
   }
   chr1_coords <- dplyr::bind_rows(chr1_list) %>%
     dplyr::arrange(start) %>%
-    mutate(chr = 2, cell_id = cell_id + 1)
+    dplyr::mutate(chr = 2, cell_id = cell_id + 1)
 
   chr2_coords <- tibble::tribble(
     ~cell_id, ~start, ~end,
@@ -93,13 +91,13 @@ test_that("Out of range peaks work", {
     3, 10, 20
   ) %>%
     dplyr::arrange(start) %>%
-    mutate(chr = 1, cell_id = cell_id + 1)
+    dplyr::mutate(chr = 1, cell_id = cell_id + 1)
 
-  chr3_coords <- mutate(chr2_coords, chr = 3)
-  chr4_coords <- mutate(chr2_coords, chr = 4)
+  chr3_coords <- dplyr::mutate(chr2_coords, chr = 3)
+  chr4_coords <- dplyr::mutate(chr2_coords, chr = 4)
 
   raw_fragments <- tibble_to_fragments(
-    bind_rows(chr2_coords, chr1_coords, chr3_coords, chr4_coords),
+    dplyr::bind_rows(chr2_coords, chr1_coords, chr3_coords, chr4_coords),
     chr_names = c("chr2", "chr1", "chr3", "chr4"),
     cell_names = sprintf("cell%d", 1:5)
   )
@@ -147,7 +145,7 @@ test_that("Basic tile matrix works", {
   }
   chr1_coords <- dplyr::bind_rows(chr1_list) %>%
     dplyr::arrange(start) %>%
-    mutate(chr = 2, cell_id = cell_id + 1)
+    dplyr::mutate(chr = 2, cell_id = cell_id + 1)
 
   chr2_coords <- tibble::tribble(
     ~cell_id, ~start, ~end,
@@ -157,13 +155,13 @@ test_that("Basic tile matrix works", {
     3, 10, 20
   ) %>%
     dplyr::arrange(start) %>%
-    mutate(chr = 1, cell_id = cell_id + 1)
+    dplyr::mutate(chr = 1, cell_id = cell_id + 1)
 
-  chr3_coords <- mutate(chr2_coords, chr = 3)
-  chr4_coords <- mutate(chr2_coords, chr = 4)
+  chr3_coords <- dplyr::mutate(chr2_coords, chr = 3)
+  chr4_coords <- dplyr::mutate(chr2_coords, chr = 4)
 
   raw_fragments <- tibble_to_fragments(
-    bind_rows(chr2_coords, chr1_coords, chr3_coords, chr4_coords),
+    dplyr::bind_rows(chr2_coords, chr1_coords, chr3_coords, chr4_coords),
     chr_names = c("chr2", "chr1", "chr3", "chr4"),
     cell_names = sprintf("cell%d", 1:5)
   )
