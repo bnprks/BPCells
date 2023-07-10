@@ -56,6 +56,19 @@ template <class T> class FileNumReader final : public BulkNumReader<T> {
   public:
     FileNumReader(const char *path) {
         file.open(path, std::ios_base::binary);
+#if _WIN32
+        // Windows-specific: Try to increase maximum open file limit if it is causing
+        // the file open operation to fail
+        if (!file && _getmaxstdio() == 512) {
+            if (_getmaxstdio() == 512) {
+                int new_max = 8192;
+                while (_setmaxstdio(new_max) == -1 && new_max > 512) {
+                    new_max /= 2;
+                }
+                file.open(path, std::ios_base::binary);
+            }
+        }
+#endif
         if (!file) {
             throw std::runtime_error(
                 std::string("Error opening file: ") + strerror(errno) + ": " + path

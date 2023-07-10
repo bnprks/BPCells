@@ -394,3 +394,19 @@ test_that("Mtx import works", {
     as(mi_t, "dgCMatrix")
   )
 })
+
+test_that("Opening >64 matrices works", {
+  # Note: this test is primarily for Windows, where there's a 512 file limit by default
+  dir <- withr::local_tempdir()
+  
+  n_matrices <- 80
+  matrices <- lapply(seq_len(n_matrices), function(x) generate_sparse_matrix(10, 20)) %>%
+    lapply(function(x) write_matrix_dir(convert_matrix_type(x, "uint32_t"), tempfile("mat", tmpdir=dir)))
+  
+  matrix_rbind <- do.call(rbind, matrices)
+  matrix_cbind <- do.call(cbind, matrices)
+
+  # Test that we can do a basic operation on the matrix
+  expect_identical(colSums(matrix_rbind), colSums(as(matrix_rbind, "dgCMatrix")))
+  expect_identical(colSums(matrix_cbind), colSums(as(matrix_cbind, "dgCMatrix")))
+})
