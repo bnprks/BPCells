@@ -14,9 +14,11 @@ inline bool hasUserInterrupt() { return (R_ToplevelExec(myCheckInterruptFn, NULL
 
 // Wrap a function call such that we will check for R user interrupts
 // The function itself is run in a background thread, and the main thread checks for an
-// R user interrupt every 100ms. 
+// R user interrupt every 100ms.
 // The function must take a pointer to as std::atomic<bool> as the last argument, and exit
 // early if the bool gets set to true
+// NOTE: It is EXTREMELY IMPORTANT that no R objects are created/destroyed inside the spawned
+// thread, which includes destructors that mess with R's GC protection.
 template <class F, class... Args>
 std::invoke_result_t<F, Args..., std::atomic<bool> *>
 run_with_R_interrupt_check(F &&f, Args &&...args) {
@@ -28,6 +30,8 @@ run_with_R_interrupt_check(F &&f, Args &&...args) {
             interrupt = true;
         }
     }
-    if (interrupt) {throw Rcpp::internal::InterruptedException();}
+    if (interrupt) {
+        throw Rcpp::internal::InterruptedException();
+    }
     return job.get();
 }

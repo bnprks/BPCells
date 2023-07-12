@@ -1,0 +1,44 @@
+---
+title: "Notes for Developers"
+output: 
+  html_document:
+    toc: true
+    toc_depth: 2
+    toc_float: true
+    theme: simplex
+---
+## Garbage collection and threads
+
+To help avoid unnecessary copies, BPCells in some circumstances keeps direct references
+to R objects. The major use-cases when that happens are:
+
+  1. Loading data from an R object (e.g. dgCMatrix)
+  2. Using pre-loaded R vectors holding row/col names (or cell/chr names) 
+    to avoid repeatedly reading from disk.
+
+Unfortunately, we need to be extremely careful that these R objects are only created/destroyed
+*on the R main thread*. As stated in the [R extensions documentation](https://cran.r-project.org/doc/manuals/r-release/R-exts.html#OpenMP-support):
+
+> Calling any of the R API from threaded code is ‘for experts only’ and strongly discouraged. 
+> Many functions in the R API modify internal R data structures and might corrupt these data structures if called simultaneously 
+> from multiple threads. Most R API functions can signal errors, which must only happen on the R main thread. 
+> Also, external libraries (e.g. LAPACK) may not be thread-safe. 
+
+Within Rcpp, R objects will default to being protected from garbage collection ([code link](https://github.com/RcppCore/Rcpp/blob/master/inst/include/Rcpp/storage/PreserveStorage.h)).
+This means, however, that the Rcpp object constructors and destructors must only execute on the main thread
+as they interact with the R API to manage GC protection.
+
+From the design of BPCells C++ code, we will often have code that is running not on the main 
+thread, e.g. the C++ function `run_with_R_interrupt_check` runs the main work in a background
+thread to simplify interrupt checking. And obviously explicit parallelization will result in code running
+off the main thread. 
+
+For safety, we must assume that `MatrixLoader` and `FragmentLoader` objects may contain references to R objects.
+Therefore their constructors and destructors can only be called from the main thread.
+
+Ensuring constructors are only called from the main thread is fairly simple -- just put all constructors in the top level
+when directly requested from R. 
+
+To ensure destructors are only called on the main thread, we must never give ownership of a `MatrixLoader` or `FragmentLoader` 
+object to a worker thread. Passing references or raw pointers is fine. Giving ownership via unique_ptr, move semantics, 
+or pass-by-value must all be avoided when handing a `MatrixLoader` or `FragmentLoader` to a worker thread.

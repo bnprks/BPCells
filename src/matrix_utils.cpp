@@ -23,16 +23,29 @@
 using namespace BPCells;
 using namespace Rcpp;
 
+// Add a protected handle to the underlying R data to prevent unwanted garbage collection
+template <typename T> class RMatrixWrapper : public BPCells::MatrixLoaderWrapper<T> {
+  private:
+    Rcpp::RObject preserved_object;
+
+  public:
+    RMatrixWrapper(SEXP preserved_object, std::unique_ptr<MatrixLoader<T>> &&loader)
+        : BPCells::MatrixLoaderWrapper<T>(std::move(loader))
+        , preserved_object(preserved_object) {}
+};
+
 // [[Rcpp::export]]
 SEXP iterate_csparse_matrix_cpp(
     SEXP matrix, const StringVector row_names, const StringVector col_names
 ) {
     auto eigen_mat = Rcpp::as<Eigen::Map<Eigen::SparseMatrix<double>>>(matrix);
-    return make_unique_xptr<CSparseMatrix>(
+    auto loader = std::make_unique<CSparseMatrix>(
         eigen_mat,
         std::make_unique<RcppStringReader>(row_names),
         std::make_unique<RcppStringReader>(col_names)
     );
+
+    return make_unique_xptr<RMatrixWrapper<double>>(Rcpp::RObject(matrix), std::move(loader));
 }
 
 template <typename From, typename To> SEXP convert_matrix_cpp(SEXP matrix) {

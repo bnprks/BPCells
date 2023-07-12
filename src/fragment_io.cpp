@@ -17,6 +17,17 @@
 using namespace Rcpp;
 using namespace BPCells;
 
+// Add a protected handle to the underlying R data to prevent unwanted garbage collection
+class RFragmentWrapper : public BPCells::FragmentLoaderWrapper {
+  private:
+    Rcpp::RObject preserved_object;
+
+  public:
+    RFragmentWrapper(SEXP preserved_object, std::unique_ptr<FragmentLoader> &&loader)
+        : BPCells::FragmentLoaderWrapper(std::move(loader))
+        , preserved_object(preserved_object) {}
+};
+
 // [[Rcpp::export]]
 SEXP iterate_10x_fragments_cpp(std::string path, std::string comment) {
     return make_unique_xptr<BedFragments>(path.c_str(), comment.c_str());
@@ -33,7 +44,8 @@ void write_10x_fragments_cpp(std::string path, SEXP fragments, bool append_5th_c
 // [[Rcpp::export]]
 SEXP iterate_packed_fragments_cpp(S4 s4) {
     S4ReaderBuilder rb(s4);
-    return make_unique_xptr<StoredFragmentsPacked>(StoredFragmentsPacked::openPacked(rb));
+    auto loader = std::make_unique<StoredFragmentsPacked>(StoredFragmentsPacked::openPacked(rb));
+    return make_unique_xptr<RFragmentWrapper>(s4, std::move(loader));
 }
 
 // [[Rcpp::export]]
@@ -82,7 +94,8 @@ List write_packed_fragments_cpp(SEXP fragments) {
 // [[Rcpp::export]]
 SEXP iterate_unpacked_fragments_cpp(S4 s4) {
     S4ReaderBuilder rb(s4);
-    return make_unique_xptr<StoredFragments>(StoredFragments::openUnpacked(rb));
+    auto loader = std::make_unique<StoredFragments>(StoredFragments::openUnpacked(rb));
+    return make_unique_xptr<RFragmentWrapper>(s4, std::move(loader));
 }
 
 // [[Rcpp::export]]

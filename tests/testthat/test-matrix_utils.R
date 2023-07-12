@@ -247,6 +247,36 @@ test_that("Garbage collection between iterate_matrix doesn't mess things up", {
   expect_equal(m, res, tolerance=testthat_tolerance())
 })
 
+test_that("Adverserial garbage collection of dgCMatrix doesn't mess things up", {
+  gc_flags <- list(gc_1=FALSE, gc_2=FALSE)
+  test_gc <- function() {
+    set_gc_flag <- function(name) {function(e) gc_flags[[name]] <<- TRUE}
+    # Run everything in a closure to create new env
+    construct_matrix <- function(flag_name) {
+      m <- as(matrix(1:12, nrow=3), "dgCMatrix")
+      x <- environment()
+      reg.finalizer(x, set_gc_flag(flag_name))
+      attr(m, "gc_flag") <- x
+      m
+    }
+    m <- construct_matrix("gc_1")
+    m2 <- construct_matrix("gc_2") # Positive control for GC independent of BPCells
+    
+    it <- iterate_matrix(as(m, "IterableMatrix"))
+    rm(m)
+    rm(m2)
+    gc()
+    # Don't want GC to happen for the matrix we're iterating on, since the iterator object should maintain a reference
+    expect_false(gc_flags[["gc_1"]])
+    expect_true(gc_flags[["gc_2"]])
+    res <- BPCells:::build_csparse_matrix_double_cpp(it)
+    gc()
+    # Now we do want GC to happen, since there's no longer a reference to maintain
+    expect_true(gc_flags[["gc_1"]])
+  }
+  test_gc()
+})
+
 test_that("Matrix mask works", {
   dims <- list(c(5, 1000), c(5000, 5))
   for (d in dims) {
