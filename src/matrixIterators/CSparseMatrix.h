@@ -64,6 +64,7 @@ class CSparseMatrix : public MatrixLoader<double> {
     void restart() override {
         col = UINT32_MAX;
         num_loaded = 0;
+        idx = UINT32_MAX;
     };
 
     void seekCol(uint32_t new_col) override {
@@ -73,7 +74,10 @@ class CSparseMatrix : public MatrixLoader<double> {
     }
 
     bool nextCol() override {
-        if (col + 1 >= mat.cols()) return false;
+        if (col + 1 >= mat.cols()) {
+            idx = UINT32_MAX;
+            return false;
+        }
         col++;
         idx = mat.outerIndexPtr()[col];
         num_loaded = 0;
@@ -84,7 +88,7 @@ class CSparseMatrix : public MatrixLoader<double> {
 
     bool load() override {
         idx += capacity();
-        if (idx == (uint32_t)mat.outerIndexPtr()[col + 1]) {
+        if (idx >= (uint32_t)mat.outerIndexPtr()[col + 1]) {
             num_loaded = 0;
             return false;
         }
