@@ -24,6 +24,8 @@ Contributions welcome :)
 - SNN graph construction in `knn_to_snn_graph()` should work more smoothly on large datasets due to C++ implementation
 - Reduced memory usage in `marker_features()` for samples with millions of cells and a large number
   of clusters to compare.
+- On Windows, increased the maximum number of files that can be simultaneously open. Previously, opening >63 compressed
+  counts matrices simultaneously would hit the limit. Now at least 1,000 simultaneous matrices should be possible.
 
 ## Bug-fixes
 - Fixed a few fragment transforms where using `chrNames(frags) <- val` or `cellNames(frags) <- val` could cause
@@ -36,6 +38,9 @@ Contributions welcome :)
 - Renaming `rownames()` or `colnames()` is now propagated when saving matrices (Issue #29 reported thanks to @realzehuali)
 - Fixed 64-bit integer overflow (!) that could cause incorrect p-value calculations in `marker_features()` for features with
   more than 2.6 million zeros.
+- Improved robustness of the Windows installation process for setups that do not need the -lsz linker flag to compile hdf5
+- Fixed possible memory safety bug where wrapped R objects (such as dgCMatrix) could be potentially garbage collected
+  while C++ was still trying to access the data in rare circumstances.
 
 # BPCells 0.1.0
 

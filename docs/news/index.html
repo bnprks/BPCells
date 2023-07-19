@@ -80,6 +80,7 @@
 <li>Merging fragments is now 2-3.5x faster</li>
 <li>SNN graph construction in <code><a href="../reference/knn_graph.html">knn_to_snn_graph()</a></code> should work more smoothly on large datasets due to C++ implementation</li>
 <li>Reduced memory usage in <code><a href="../reference/marker_features.html">marker_features()</a></code> for samples with millions of cells and a large number of clusters to compare.</li>
+<li>On Windows, increased the maximum number of files that can be simultaneously open. Previously, opening &gt;63 compressed counts matrices simultaneously would hit the limit. Now at least 1,000 simultaneous matrices should be possible.</li>
 </ul></div>
 <div class="section level3">
 <h3 id="bug-fixes-0-2-0">Bug-fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-0-2-0"></a></h3>
@@ -91,6 +92,8 @@
 <li>Fixed file permissions errors when using read-only hdf5 files (Issue <a href="https://github.com/bnprks/BPCells/issues/26" class="external-link">#26</a> reported thanks to <a href="https://github.com/ttumkaya" class="external-link">@ttumkaya</a>)</li>
 <li>Renaming <code><a href="https://rdrr.io/r/base/colnames.html" class="external-link">rownames()</a></code> or <code><a href="https://rdrr.io/r/base/colnames.html" class="external-link">colnames()</a></code> is now propagated when saving matrices (Issue <a href="https://github.com/bnprks/BPCells/issues/29" class="external-link">#29</a> reported thanks to <a href="https://github.com/realzehuali" class="external-link">@realzehuali</a>)</li>
 <li>Fixed 64-bit integer overflow (!) that could cause incorrect p-value calculations in <code><a href="../reference/marker_features.html">marker_features()</a></code> for features with more than 2.6 million zeros.</li>
+<li>Improved robustness of the Windows installation process for setups that do not need the -lsz linker flag to compile hdf5</li>
+<li>Fixed possible memory safety bug where wrapped R objects (such as dgCMatrix) could be potentially garbage collected while C++ was still trying to access the data in rare circumstances.</li>
 </ul></div>
 </div>
     <div class="section level2">
