@@ -12,7 +12,9 @@ template <class T> class MatrixColSelect : public MatrixLoaderWrapper<T> {
 
   public:
     // col_indices -- vector of columns to select
-    MatrixColSelect(std::unique_ptr<MatrixLoader<T>> &&loader, const std::vector<uint32_t> col_indices)
+    MatrixColSelect(
+        std::unique_ptr<MatrixLoader<T>> &&loader, const std::vector<uint32_t> col_indices
+    )
         : MatrixLoaderWrapper<T>(std::move(loader))
         , col_indices(col_indices) {}
 
@@ -37,11 +39,11 @@ template <class T> class MatrixColSelect : public MatrixLoaderWrapper<T> {
 
     bool nextCol() override {
         current_col += 1;
-        if (current_col > 0 && col_indices[current_col - 1] == col_indices[current_col] - 1) {
-            return this->loader->nextCol();
-        } else if (current_col >= col_indices.size()) {
+        if (current_col >= col_indices.size()) {
             current_col -= 1;
             return false;
+        } else if (current_col > 0 && col_indices[current_col - 1] == col_indices[current_col] - 1) {
+            return this->loader->nextCol();
         } else {
             this->loader->seekCol(col_indices[current_col]);
             return true;
@@ -66,7 +68,9 @@ template <class T> class MatrixRowSelect : public MatrixLoaderWrapper<T> {
     // cell_names -- vector with length <= the number of chromosomes in the input
     //     FragmentLoader-> The output cell `i` will come from input cell
     //     `chr_assignments[i]`. The entries of cell_names must be unique
-    MatrixRowSelect(std::unique_ptr<MatrixLoader<T>> &&loader, const std::vector<uint32_t> row_indices)
+    MatrixRowSelect(
+        std::unique_ptr<MatrixLoader<T>> &&loader, const std::vector<uint32_t> row_indices
+    )
         : MatrixLoaderWrapper<T>(std::move(loader))
         , reverse_indices(this->loader->rows(), UINT32_MAX)
         , row_indices(row_indices) {
