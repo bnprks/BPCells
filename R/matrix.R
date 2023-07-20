@@ -1989,7 +1989,7 @@ matrix_stats <- function(matrix,
   row_stats_number <- match(row_stats, stat_options) - 1
   col_stats_number <- match(col_stats, stat_options) - 1
 
-  it <- iterate_matrix(matrix)
+  it <- iterate_matrix(convert_matrix_type(matrix, "double"))
   res <- matrix_stats_cpp(it, row_stats_number, col_stats_number)
   rownames(res$row_stats) <- stat_options[seq_len(row_stats_number) + 1]
   rownames(res$col_stats) <- stat_options[seq_len(col_stats_number) + 1]
