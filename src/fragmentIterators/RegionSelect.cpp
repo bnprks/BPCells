@@ -110,7 +110,7 @@ bool RegionSelect::load() {
             }
             // 1. Scan until frag.start >= region.start, marking any overlaps that happen from
             // frag.end
-            while (start[i] < r.start && i < capacity) {
+            while (i < capacity && start[i] < r.start) {
                 cell[loaded] = cell[i];
                 start[loaded] = start[i];
                 end[loaded] = end[i];

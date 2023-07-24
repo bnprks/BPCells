@@ -49,7 +49,10 @@ void H5StringWriter::write(const StringReader &reader) {
         group.unlink(path);
     }
     HighFive::DataSet ds = group.createDataSet<std::string>(path, HighFive::DataSpace::From(data));
-    ds.write(data);
+    // Safety check to avoid an ASan complaint in the R test "AnnData and 10x row/col rename works"
+    if (data.size() > 0) {
+        ds.write(data);
+    }
 }
 
 HighFive::Group createH5Group(std::string file_path, std::string group_path, bool allow_exists) {
