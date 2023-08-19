@@ -2,7 +2,7 @@
 % Please edit documentation in R/fragments.R
 \name{select_regions}
 \alias{select_regions}
-\title{Select fragments overlapping (or not overlapping) selected regions}
+\title{Subset fragments by genomic region}
 \usage{
 select_regions(
   fragments,
@@ -14,7 +14,10 @@ select_regions(
 \arguments{
 \item{fragments}{Input fragments object.}
 
-\item{ranges}{GRanges object with the ranges to overlap, or list/data frame with columns chr, start, & end.}
+\item{ranges}{Peaks/ranges to overlap, given as GRanges, data.frame, or list. See \code{help("genomic-ranges-like")} for details on format and coordinate systems. Required attributes:
+\itemize{
+\item \code{chr}, \code{start}, \code{end}: genomic position
+}}
 
 \item{invert_selection}{If TRUE, select fragments \emph{not} overlapping selected regions
 instead of only fragments overlapping the selected regions.}
@@ -22,11 +25,11 @@ instead of only fragments overlapping the selected regions.}
 \item{zero_based_coords}{Whether to convert the ranges from a 1-based end-inclusive
 coordinate system to a 0-based end-exclusive coordinate system. Defaults to true
 for GRanges and false for other formats
-(see \url{http://genome.ucsc.edu/blog/the-ucsc-genome-browser-coordinate-counting-systems/})}
+(see this \href{https://web.archive.org/web/20210920203703/http://genome.ucsc.edu/blog/the-ucsc-genome-browser-coordinate-counting-systems/}{archived UCSC blogpost})}
 }
 \value{
 Fragments object filtered according to the selected regions
 }
 \description{
-Select fragments overlapping (or not overlapping) selected regions
+Fragments can be subset based on overlapping (or not overlapping) a set of regions
 }

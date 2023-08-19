@@ -4,6 +4,7 @@
 #' @param path Output path to write file
 #' @param url to download from
 #' @param timeout timeout in seconds
+#' @keywords internal
 ensure_downloaded <- function(path, backup_url, timeout) {
   old_timeout <- getOption("timeout")
   on.exit(options(timeout = old_timeout))

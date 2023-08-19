@@ -3,8 +3,13 @@
 #' Count fragments by nucleosomal size
 #' @param fragments Fragments object
 #' @param nucleosome_width Integer cutoff to use as nucleosome width
-#' @return List with names subNucleosomal, monoNucleosomal, multiNucleosomal containing the
-#'         count vectors of fragments in each class per cell.
+#' @return List with names `subNucleosomal`, `monoNucleosomal`, `multiNucleosomal`, and `nFrags`, containing the
+#'         count vectors of fragments in each class per cell. 
+#' @details
+#' Shorter than `nucleosome_width` is `subNucleosomal`,
+#' `nucleosome_width` to `2*nucleosome_width-1` is `monoNucleosomal`, and anything longer is `multiNucleosomal`.
+#' The sum of all fragments is given as `nFrags`
+#'         
 #' @export
 nucleosome_counts <- function(fragments, nucleosome_width = 147) {
   assert_is(fragments, "IterableFragments")
@@ -20,11 +25,11 @@ nucleosome_counts <- function(fragments, nucleosome_width = 147) {
 #' Get footprints around a set of genomic coordinates
 #'
 #' @param fragments IterableFragments object
-#' @param ranges GRanges object with the positions to footprint, or
-#'     list/data frame with columns chr, start, & end. For list/data frame, must
-#'     include strand information as character vector of "+"/"-", or TRUE/FALSE for
-#'     positive/negative strand. "+" strand motifs will footprint around the start
-#'     coordinate, and "-" strand motifs will footprint around the end coordinate
+#' @param ranges `r document_granges("Footprint centers", strand="default")`
+#' 
+#' "+" strand ranges will footprint around the start coordinate, and "-" strand ranges
+#' around the end coordinate.
+#'
 #' @inheritParams normalize_ranges
 #' @param cell_groups Character or factor assigning a group to each cell, in order of
 #'   `cellNames(fragments)`
@@ -34,7 +39,7 @@ nucleosome_counts <- function(fragments, nucleosome_width = 147) {
 #' @param normalization_width Number of basepairs at the upstream + downstream
 #'   extremes to use for calculating enrichment
 #'
-#' @return tibble with columns "group", "position", and "count", "enrichment"
+#' @return `tibble::tibble()` with columns `group`, `position`, and `count`, `enrichment`
 #' @export
 footprint <- function(fragments, ranges, zero_based_coords = !is(ranges, "GRanges"),
                       cell_groups = rlang::rep_along(cellNames(fragments), "all"),
@@ -85,33 +90,33 @@ footprint <- function(fragments, ranges, zero_based_coords = !is(ranges, "GRange
 
 #' Calculate ArchR-compatible per-cell QC statistics
 #' @param fragments IterableFragments object
-#' @param genes GenomicRanges object or list/data.frame with columns chr, start, end
-#' @param blacklist GenomicRanges object or list/data.frame with columns chr, start, end
+#' @param genes `r document_granges("Gene coordinates")`
+#' @param blacklist `r document_granges("Blacklisted regions")`
 #' @return data.frame with QC data
 #' @details
 #' This implementation mimics ArchR's default parameters. For uses requiring more flexibility to tweak default parameters,
 #' the best option is to re-implement this function with required changes.
 #' Output columns of data.frame:
-#'  - cellName: cell name for each cell
-#'  - nFrags: number of fragments per cell
-#'  - subNucleosomal, monoNucleosomal, multiNucleosomal: number of fragments of size 1-146bp, 147-254bp, and 255bp + respectively.
+#'  - `cellName`: cell name for each cell
+#'  - `nFrags`: number of fragments per cell
+#'  - `subNucleosomal`, `monoNucleosomal`, `multiNucleosomal`: number of fragments of size 1-146bp, 147-254bp, and 255bp + respectively.
 #'    equivalent to ArchR's nMonoFrags, nDiFrags, nMultiFrags respectively
-#'  - TSSEnrichment: AvgInsertInTSS / max(AvgInsertFlankingTSS, 0.1), where AvgInsertInTSS ReadsInTSS / 101 (window size),
-#'    and AvgInsertFlankingTSS is ReadsFlankingTSS / (100*2) (window size). The max(0.1) ensures that very low-read cells
+#'  - `TSSEnrichment`: `AvgInsertInTSS / max(AvgInsertFlankingTSS, 0.1)`, where `AvgInsertInTSS` is `ReadsInTSS / 101` (window size),
+#'    and `AvgInsertFlankingTSS` is `ReadsFlankingTSS / (100*2)` (window size). The `max(0.1)` ensures that very low-read cells
 #'    do not get assigned spuriously high TSSEnrichment.
-#'  - ReadsInPromoter: Number of reads from 2000bp upstream of TSS to 101bp downstream of TSS
-#'  - ReadsInBlacklist: Number of reads in the provided blacklist region
-#'  - ReadsInTSS: Number of reads overlapping the 101bp centered around each TSS
-#'  - ReadsFlankingTSS: Number of reads overlapping 1901-2000bp +/- each TSS
+#'  - `ReadsInPromoter`: Number of reads from 2000bp upstream of TSS to 101bp downstream of TSS
+#'  - `ReadsInBlacklist`: Number of reads in the provided blacklist region
+#'  - `ReadsInTSS`: Number of reads overlapping the 101bp centered around each TSS
+#'  - `ReadsFlankingTSS`: Number of reads overlapping 1901-2000bp +/- each TSS
 #'
 #' Differences from ArchR:
 #' Note that ArchR by default uses a different set of annotations to derive TSS sites and promoter sites.
 #' This function uses just one annotation for gene start+end sites, so must be called twice to exactly
 #' re-calculate the ArchR QC stats.
 #'
-#' ArchR's PromoterRatio and BlacklistRatio are not included in the output, as they can be easily calculated
-#' from ReadsInPromoter / nFrags and  ReadsInBlacklist / nFrags. Similarly, ArchR's NucleosomeRatio can be calculated
-#' as (monoNucleosomal + multiNucleosomal) / subNucleosomal.
+#' ArchR's `PromoterRatio` and `BlacklistRatio` are not included in the output, as they can be easily calculated
+#' from `ReadsInPromoter / nFrags` and  `ReadsInBlacklist / nFrags`. Similarly, ArchR's `NucleosomeRatio` can be calculated
+#' as `(monoNucleosomal + multiNucleosomal) / subNucleosomal`.
 #'
 #' @export
 qc_scATAC <- function(fragments, genes, blacklist) {
@@ -174,7 +179,7 @@ qc_scATAC <- function(fragments, genes, blacklist) {
 #' Merge peaks
 #'
 #' Merge peaks according to ArchR's iterative merging algorithm. More
-#' details here: <https://www.archrproject.com/bookdown/the-iterative-overlap-peak-merging-procedure.html>
+#' details on the [ArchR website](https://www.archrproject.com/bookdown/the-iterative-overlap-peak-merging-procedure.html)
 #'
 #' Properties of merged peaks:
 #'   - No peaks in the merged set overlap
@@ -182,9 +187,10 @@ qc_scATAC <- function(fragments, genes, blacklist) {
 #'   - The output peaks are a subset of the input peaks, with no peak boundaries
 #'     changed
 #'
-#' @param peaks `data.frame`, `tibble`, or `list` ranges object. Must be ordered by
-#'  priority and have columns chr, start, end.
-#' @return `tibble::tibble()`` with a nonoverlapping subset of the rows in peaks. All metadata
+#' @param peaks `r document_granges("Peaks")`  
+#'
+#'  Must be ordered by priority and have columns chr, start, end.
+#' @return `tibble::tibble()` with a nonoverlapping subset of the rows in peaks. All metadata
 #'  columns are preserved
 merge_peaks_iterative <- function(peaks) {
   assert_is(peaks, c("data.frame", "list"))
@@ -225,12 +231,13 @@ merge_peaks_iterative <- function(peaks) {
 #' analyses.
 #'
 #' @param fragments IterableFragments object
-#' @param chromosome_sizes [genomic-ranges] holding start and end coordinates for
-#'    each chromosome. See read_ucsc_chrom_sizes().
+#' @param chromosome_sizes `r document_granges("Chromosome start and end coordinates")`  
+#' 
+#'   See `read_ucsc_chrom_sizes()`.
 #' @param cell_groups Grouping vector with one entry per cell in fragments, e.g.
 #'    cluster IDs
 #' @param effective_genome_size (Optional) effective genome size for poisson
-#'    background rate estimation. See (deeptools)[https://deeptools.readthedocs.io/en/develop/content/feature/effectiveGenomeSize.html]
+#'    background rate estimation. See [deeptools](https://deeptools.readthedocs.io/en/develop/content/feature/effectiveGenomeSize.html)
 #'    for values for common genomes. Defaults to sum of chromosome sizes, which
 #'    overestimates peak significance
 #' @param peak_width Width of candidate peaks
@@ -261,11 +268,9 @@ merge_peaks_iterative <- function(peaks) {
 #' 4. Compute adjusted p-values using BH method and using the total number of
 #' tiles as the number of hypotheses tested.
 #' 5. Repeat steps 2-4 `peak_tiling` times, with evenly spaced offsets
-#'
-#' If `merge_peaks`
-#' 4. Within each group, use `merge_peaks_iterative()` to keep only the most
+#' 6. If `merge_peaks` is "all" or "group": use `merge_peaks_iterative()` within each group to keep only the most
 #' significant of the overlapping candidate peaks
-#' 5. If `merge_peaks == TRUE`, perform a final round of `merge_peaks_iterative()`,
+#' 7. If `merge_peaks` is "all", perform a final round of `merge_peaks_iterative()`,
 #' prioritizing each peak by its within-group significance rank
 #' @export
 call_peaks_tile <- function(fragments, chromosome_sizes, cell_groups = rep.int("all", length(cellNames(fragments))),

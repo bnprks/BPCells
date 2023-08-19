@@ -2,16 +2,16 @@
 #'
 #' Given a set of genomic ranges, find the distance to the nearest neighbors both
 #' upstream and downstream.
-#' @param ranges  List, GRanges, or data.frame object. Must have chr, start, end, and strand defined. See [genomic-ranges]
+#' @param ranges `r document_granges(strand="default")`
 #' @inheritParams normalize_ranges
 #' @param addArchRBug boolean to reproduce ArchR's bug that incorrectly handles nested genes
 #' @return A 2-column data.frame with columns upstream and downstream, containing
 #' the distances to the nearest neighbor in the respective directions.
-#' For ranges on + or * strand, distance is calculated as:
-#'   - upstream = max(start(range) - end(upstreamNeighbor), 0)
-#'   - downstream = max(start(downstreamNeighbor) - end(range), 0)
+#' For ranges on `+` or `*` strand, distance is calculated as:
+#'   - upstream = `max(start(range) - end(upstreamNeighbor), 0)`
+#'   - downstream = `max(start(downstreamNeighbor) - end(range), 0)`
 #'
-#' For ranges on - strand, the definition of upstream and downstream is flipped.
+#' For ranges on `-` strand, the definition of upstream and downstream is flipped.
 #' Note that this definition of distance is one off from
 #' `GenomicRanges::distance()`, as ranges that neighbor but don't overlap are given
 #' a distance of 1 rather than 0.
@@ -103,19 +103,19 @@ extend_ranges <- function(ranges, upstream = 0, downstream = 0, metadata_cols = 
 #' 1. Genes are extended 5kb upstream
 #' 2. Genes are linked to any tiles 1kb-100kb upstream + downstream, but tiles
 #'    beyond a neighboring gene are not considered
-#' @param genes GRanges object with gene start, end, and strand
+#' @param genes `r document_granges("Gene coordinates", strand="default")`
 #' @param tile_width Size of tiles to consider
 #' @inheritParams extend_ranges
 #' @param addArchRBug Replicate ArchR bug in handling nested genes
-#' @details Note: assumes the 1-based, end inclusive coordinate convention used
-#' by GRanges, so 500bp tiles run from bases 1-500, 501-1000, etc.
-#' @return GRanges object with one range per tile, with additional metadata
+#'
+#' @return Tibble with one range per tile, with additional metadata
 #' columns gene_idx (row index of the gene this tile corresponds to) and
 #' distance.
 #'
 #' Distance is a signed distance calculated such that if the tile has a smaller
 #' start coordinate than the gene and the gene is on the + strand, distance will
-#' be negative and calculated as min(0, end(tile) - start(gene))
+#' be negative. The distance of adjacent but non-overlapping regions is 1bp, counting
+#' up from there.
 #' @export
 gene_score_tiles_archr <- function(genes, chromosome_sizes = NULL, tile_width = 500, addArchRBug = FALSE) {
   assert_is_wholenumber(tile_width)
@@ -163,15 +163,15 @@ gene_score_tiles_archr <- function(genes, chromosome_sizes = NULL, tile_width = 
 #' weight matrix (best if you have a pre-computed tile matrix), while `gene_score_archr()` provides
 #' a easy-to-use wrapper.
 #' 
-#' `gene_score_weights_archr`
+#' **gene_score_weights_archr**:
+#' 
 #' Given a set of tile coordinates and distances returned by `gene_score_tiles_archr()`,
 #' calculate a weight matrix of dimensions genes x tiles. This matrix can be
 #' multiplied with a tile matrix to obtain ArchR-compatible gene activity scores.
 #'
 #' @inheritParams call_peaks_tile
 #' @inheritParams gene_score_tiles_archr
-#' @param blacklist Blacklist ranges to exclude from gene calculations. [genomic-ranges]
-#'  object (list, data.frame, or GRanges)
+#' @param blacklist `r document_granges("Regions to exclude from calculations,")`
 #' @param gene_name_column If not NULL, a column name of `genes` to use as row names
 #' @return **gene_score_weights_archr**
 #' 

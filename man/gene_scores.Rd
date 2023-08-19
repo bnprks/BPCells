@@ -28,13 +28,23 @@ gene_score_archr(
 )
 }
 \arguments{
-\item{genes}{GRanges object with gene start, end, and strand}
+\item{genes}{Gene coordinates given as GRanges, data.frame, or list. See \code{help("genomic-ranges-like")} for details on format and coordinate systems. Required attributes:
+\itemize{
+\item \code{chr}, \code{start}, \code{end}: genomic position
+\item \code{strand}: +/- or TRUE/FALSE for positive or negative strand
+}}
 
-\item{chromosome_sizes}{\link{genomic-ranges} holding start and end coordinates for
-each chromosome. See read_ucsc_chrom_sizes().}
+\item{chromosome_sizes}{Chromosome start and end coordinates given as GRanges, data.frame, or list. See \code{help("genomic-ranges-like")} for details on format and coordinate systems. Required attributes:
+\itemize{
+\item \code{chr}, \code{start}, \code{end}: genomic position
+}
 
-\item{blacklist}{Blacklist ranges to exclude from gene calculations. \link{genomic-ranges}
-object (list, data.frame, or GRanges)}
+See \code{read_ucsc_chrom_sizes()}.}
+
+\item{blacklist}{Regions to exclude from calculations, given as GRanges, data.frame, or list. See \code{help("genomic-ranges-like")} for details on format and coordinate systems. Required attributes:
+\itemize{
+\item \code{chr}, \code{start}, \code{end}: genomic position
+}}
 
 \item{tile_width}{Size of tiles to consider}
 
@@ -69,7 +79,8 @@ weight matrix (best if you have a pre-computed tile matrix), while \code{gene_sc
 a easy-to-use wrapper.
 }
 \details{
-\code{gene_score_weights_archr}
+\strong{gene_score_weights_archr}:
+
 Given a set of tile coordinates and distances returned by \code{gene_score_tiles_archr()},
 calculate a weight matrix of dimensions genes x tiles. This matrix can be
 multiplied with a tile matrix to obtain ArchR-compatible gene activity scores.

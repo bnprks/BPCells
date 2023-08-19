@@ -18,14 +18,18 @@ call_peaks_tile(
 \arguments{
 \item{fragments}{IterableFragments object}
 
-\item{chromosome_sizes}{\link{genomic-ranges} holding start and end coordinates for
-each chromosome. See read_ucsc_chrom_sizes().}
+\item{chromosome_sizes}{Chromosome start and end coordinates given as GRanges, data.frame, or list. See \code{help("genomic-ranges-like")} for details on format and coordinate systems. Required attributes:
+\itemize{
+\item \code{chr}, \code{start}, \code{end}: genomic position
+}
+
+See \code{read_ucsc_chrom_sizes()}.}
 
 \item{cell_groups}{Grouping vector with one entry per cell in fragments, e.g.
 cluster IDs}
 
 \item{effective_genome_size}{(Optional) effective genome size for poisson
-background rate estimation. See (deeptools)\link{https://deeptools.readthedocs.io/en/develop/content/feature/effectiveGenomeSize.html}
+background rate estimation. See \href{https://deeptools.readthedocs.io/en/develop/content/feature/effectiveGenomeSize.html}{deeptools}
 for values for common genomes. Defaults to sum of chromosome sizes, which
 overestimates peak significance}
 
@@ -70,11 +74,9 @@ Peak calling steps:
 \item Compute adjusted p-values using BH method and using the total number of
 tiles as the number of hypotheses tested.
 \item Repeat steps 2-4 \code{peak_tiling} times, with evenly spaced offsets
-}
-
-If \code{merge_peaks}
-4. Within each group, use \code{merge_peaks_iterative()} to keep only the most
+\item If \code{merge_peaks} is "all" or "group": use \code{merge_peaks_iterative()} within each group to keep only the most
 significant of the overlapping candidate peaks
-5. If \code{merge_peaks == TRUE}, perform a final round of \code{merge_peaks_iterative()},
+\item If \code{merge_peaks} is "all", perform a final round of \code{merge_peaks_iterative()},
 prioritizing each peak by its within-group significance rank
+}
 }

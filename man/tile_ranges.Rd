@@ -9,3 +9,4 @@ tile_ranges(tile_matrix, selection)
 \description{
 Get ranges corresponding to selected tiles of a tile matrix
 }
+\keyword{internal}

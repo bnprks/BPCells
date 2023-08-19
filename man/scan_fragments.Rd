@@ -15,3 +15,4 @@ Length 4 vector with fragment count, then sums of chr, starts, and ends
 \description{
 Scan through fragments without performing any operations (used for benchmarking)
 }
+\keyword{internal}

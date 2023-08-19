@@ -28,22 +28,43 @@ BPCells is easiest to install directly from github:
 remotes::install_github("bnprks/BPCells")
 ```
 Before installing, you must have the HDF5 library installed and accessible on your system.
-HDF5 can be installed from your choice of package manager:
+HDF5 can be installed from your choice of package manager. 
 
+You will also need a C/C++ compiler either gcc >=8.0 (>=9.1 recommended), or clang >= 7.0 (>= 9.0 recommended).
+This corresponds to versions from late-2018 and newer.
+
+### Linux
+Obtaining the HDF5 dependency is usually pretty straightforward on Linux
 - apt: `sudo apt-get install libhdf5-dev` 
 - yum: `sudo yum install hdf5-devel`
 - conda: `conda install -c anaconda hdf5` 
   - Note: Linux users should prefer their distro's package manager (e.g. `apt` or `yum`) when possible,
     as it appears to give a slightly more reliable installation experience.
 
-You will also need a C/C++ compiler either gcc >=8.0 (>=9.1 recommended), or clang >= 7.0 (>= 9.0 recommended).
-This corresponds to versions from late-2018 and newer.
+### Windows
+Compiling R packages from source on Windows requires installing [R tools for Windows](https://cran.r-project.org/bin/windows/Rtools/). See [Issue #9](https://github.com/bnprks/BPCells/issues/9) for more discussion.
 
-**Installation troubleshooting** -- see these github issues:
+### MacOS
+For MacOS, installing HDF5 through homebrew seems to be most reliable: `brew install hdf5`.
 
-- Windows ([Issue #9](https://github.com/bnprks/BPCells/issues/9#issuecomment-1489741180))
-- M1 Macs ([Issue #6](https://github.com/bnprks/BPCells/issues/6#issuecomment-1476976677))
-- Macs running MacOS 10.14 (Mojave) or older ([Issue #3](https://github.com/bnprks/BPCells/issues/3#issuecomment-1375238635))
+**Mac-specific troubleshooting**:
+
+- **Macs with ARM CPUs**: a common error is to have an ARM-based HDF5 install but an x86-based 
+  R install. This will cause errors when BPCells tries to access HDF5 during installation. 
+    - Check your R installation
+  by running `sessionInfo()`, and seeing if it lists ARM or x86 under "Platform". 
+    - The easiest option is to use
+  ARM R because homebrew will default to an ARM hdf5 installation
+    - It is [possible](https://codetinkering.com/switch-homebrew-arm-x86/) (though tricky) to install an x86 copy of homebrew in order to access an x86 version of hdf5
+- **Older Macs (10.14 Mojave or older)**: The default compiler on old Macs does not support needed
+  C++17 filesystem features. See [issue #3](https://github.com/bnprks/BPCells/issues/3#issuecomment-1375238635) for
+  tips getting a newer compiler set up via homebrew.
+
+### General Installation troubleshooting
+BPCells tries to print informative error messages during compilation to help diagnose the problem. For a more
+verbose set of information, run `Sys.setenv(BPCELLS_DEBUG_INSTALL="true")` prior to `remotes::install_github("bnprks/BPCells")`. If you still can't solve the issue with that additional information, feel free to file a Github issue, being
+sure to use a [collapsible section](https://docs.github.com/en/get-started/writing-on-github/working-with-advanced-formatting/organizing-information-with-collapsed-sections) for the verbose installation log.
+
 
 ## Contributing
 BPCells is an open source project, and we welcome quality contributions. If you
@@ -61,7 +82,4 @@ improve your scalability, I'm happy to provide advice. We have had a couple of l
 try this so far, with promising success. Email is the best way to get in touch
 for this (look in the `DESCRIPTION` file on github for contact info). Python
 developers welcome, though the full python package will likely not be
-available until mid-summer 2023.
-
-AnnData maintainers: would love to talk about putting bitpacking compression in
-AnnData. The [benchmarks](https://bnprks.github.io/BPCells/articles/web-only/benchmarks.html#counts-matrices-rna-or-atac) look promising.
+available until after summer 2023.

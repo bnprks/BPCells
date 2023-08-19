@@ -74,11 +74,13 @@
 
 
 <dt>genes</dt>
-<dd><p>GenomicRanges object or list/data.frame with columns chr, start, end</p></dd>
+<dd><p>Gene coordinates given as GRanges, data.frame, or list. See <code><a href="genomic-ranges-like.html">help("genomic-ranges-like")</a></code> for details on format and coordinate systems. Required attributes:</p><ul><li><p><code>chr</code>, <code>start</code>, <code>end</code>: genomic position</p></li>
+</ul></dd>
 
 
 <dt>blacklist</dt>
-<dd><p>GenomicRanges object or list/data.frame with columns chr, start, end</p></dd>
+<dd><p>Blacklisted regions given as GRanges, data.frame, or list. See <code><a href="genomic-ranges-like.html">help("genomic-ranges-like")</a></code> for details on format and coordinate systems. Required attributes:</p><ul><li><p><code>chr</code>, <code>start</code>, <code>end</code>: genomic position</p></li>
+</ul></dd>
 
 </dl></div>
     <div class="section level2">
@@ -91,24 +93,24 @@
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
     <p>This implementation mimics ArchR's default parameters. For uses requiring more flexibility to tweak default parameters,
 the best option is to re-implement this function with required changes.
-Output columns of data.frame:</p><ul><li><p>cellName: cell name for each cell</p></li>
-<li><p>nFrags: number of fragments per cell</p></li>
-<li><p>subNucleosomal, monoNucleosomal, multiNucleosomal: number of fragments of size 1-146bp, 147-254bp, and 255bp + respectively.
+Output columns of data.frame:</p><ul><li><p><code>cellName</code>: cell name for each cell</p></li>
+<li><p><code>nFrags</code>: number of fragments per cell</p></li>
+<li><p><code>subNucleosomal</code>, <code>monoNucleosomal</code>, <code>multiNucleosomal</code>: number of fragments of size 1-146bp, 147-254bp, and 255bp + respectively.
 equivalent to ArchR's nMonoFrags, nDiFrags, nMultiFrags respectively</p></li>
-<li><p>TSSEnrichment: AvgInsertInTSS / max(AvgInsertFlankingTSS, 0.1), where AvgInsertInTSS ReadsInTSS / 101 (window size),
-and AvgInsertFlankingTSS is ReadsFlankingTSS / (100*2) (window size). The max(0.1) ensures that very low-read cells
+<li><p><code>TSSEnrichment</code>: <code>AvgInsertInTSS / max(AvgInsertFlankingTSS, 0.1)</code>, where <code>AvgInsertInTSS</code> is <code>ReadsInTSS / 101</code> (window size),
+and <code>AvgInsertFlankingTSS</code> is <code>ReadsFlankingTSS / (100*2)</code> (window size). The <code>max(0.1)</code> ensures that very low-read cells
 do not get assigned spuriously high TSSEnrichment.</p></li>
-<li><p>ReadsInPromoter: Number of reads from 2000bp upstream of TSS to 101bp downstream of TSS</p></li>
-<li><p>ReadsInBlacklist: Number of reads in the provided blacklist region</p></li>
-<li><p>ReadsInTSS: Number of reads overlapping the 101bp centered around each TSS</p></li>
-<li><p>ReadsFlankingTSS: Number of reads overlapping 1901-2000bp +/- each TSS</p></li>
+<li><p><code>ReadsInPromoter</code>: Number of reads from 2000bp upstream of TSS to 101bp downstream of TSS</p></li>
+<li><p><code>ReadsInBlacklist</code>: Number of reads in the provided blacklist region</p></li>
+<li><p><code>ReadsInTSS</code>: Number of reads overlapping the 101bp centered around each TSS</p></li>
+<li><p><code>ReadsFlankingTSS</code>: Number of reads overlapping 1901-2000bp +/- each TSS</p></li>
 </ul><p>Differences from ArchR:
 Note that ArchR by default uses a different set of annotations to derive TSS sites and promoter sites.
 This function uses just one annotation for gene start+end sites, so must be called twice to exactly
 re-calculate the ArchR QC stats.</p>
-<p>ArchR's PromoterRatio and BlacklistRatio are not included in the output, as they can be easily calculated
-from ReadsInPromoter / nFrags and  ReadsInBlacklist / nFrags. Similarly, ArchR's NucleosomeRatio can be calculated
-as (monoNucleosomal + multiNucleosomal) / subNucleosomal.</p>
+<p>ArchR's <code>PromoterRatio</code> and <code>BlacklistRatio</code> are not included in the output, as they can be easily calculated
+from <code>ReadsInPromoter / nFrags</code> and  <code>ReadsInBlacklist / nFrags</code>. Similarly, ArchR's <code>NucleosomeRatio</code> can be calculated
+as <code>(monoNucleosomal + multiNucleosomal) / subNucleosomal</code>.</p>
     </div>
 
   </main><aside class="col-md-3"><nav id="toc"><h2>On this page</h2>
@@ -120,7 +122,7 @@ as (monoNucleosomal + multiNucleosomal) / subNucleosomal.</p>
 </div>
 
 <div class="pkgdown-footer-right">
-  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.7.</p>
+  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.7.9000.</p>
 </div>
 
     </footer></div>

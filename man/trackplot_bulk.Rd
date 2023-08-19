@@ -44,7 +44,7 @@ just the most extreme outliers across the region. NULL to disable clipping}
 \item{zero_based_coords}{Whether to convert the ranges from a 1-based end-inclusive
 coordinate system to a 0-based end-exclusive coordinate system. Defaults to true
 for GRanges and false for other formats
-(see \url{http://genome.ucsc.edu/blog/the-ucsc-genome-browser-coordinate-counting-systems/})}
+(see this \href{https://web.archive.org/web/20210920203703/http://genome.ucsc.edu/blog/the-ucsc-genome-browser-coordinate-counting-systems/}{archived UCSC blogpost})}
 
 \item{return_data}{If true, return data from just before plotting rather than a plot.}
 
@@ -55,7 +55,9 @@ single plot combined using patchwork::wrap_plots()}
 }
 \value{
 Returns a combined plot of pseudobulk genome tracks. For compatability with
-\verb{draw_trackplot_grid()``, the extra attribute }$patches$labels\verb{will be added to specify the labels for each track. If}return_data\code{or}return_plot_list\code{is}TRUE`, the return value will be modified accordingly.
+\code{draw_trackplot_grid()}, the extra attribute \verb{$patches$labels} will be added to
+specify the labels for each track. If \code{return_data} or \code{return_plot_list} is
+\code{TRUE}, the return value will be modified accordingly.
 }
 \description{
 Plot a pseudobulk genome track, showing the number of fragment insertions

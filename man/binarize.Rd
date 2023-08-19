@@ -2,7 +2,7 @@
 % Please edit documentation in R/transforms.R
 \name{binarize}
 \alias{binarize}
-\title{Binarize converts matrix elements to zeros and ones.}
+\title{Convert matrix elements to zeros and ones}
 \usage{
 binarize(mat, threshold = 0, strict_inequality = TRUE)
 }

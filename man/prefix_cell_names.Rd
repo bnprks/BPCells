@@ -2,7 +2,7 @@
 % Please edit documentation in R/fragments.R
 \name{prefix_cell_names}
 \alias{prefix_cell_names}
-\title{Rename cells by adding a prefix to the names (e.g. sample name)}
+\title{Add sample prefix to cell names}
 \usage{
 prefix_cell_names(fragments, prefix)
 }
@@ -15,5 +15,9 @@ prefix_cell_names(fragments, prefix)
 Fragments object with prefixed names
 }
 \description{
-Rename cells by adding a prefix to the names (e.g. sample name)
+Rename cells by adding a prefix to the names. Most commonly this will be a sample name.
+All cells will recieve the exact text of \code{prefix} added to the beginning, so any separator
+characters like "_" must be included in the given \code{prefix}. Use this prior to merging
+fragments from different experiments with \code{c()} in order to help prevent cell name
+clashes.
 }

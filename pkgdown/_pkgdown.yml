@@ -75,11 +75,9 @@ reference:
 
 - subtitle: "Genomic Range Calculations"
 - contents:
-  - genomic-ranges
-  - scan_fragments
+  - genomic-ranges-like
   - order_ranges
   - range_distance_to_nearest
-  - tile_ranges
   - extend_ranges
   - gene_score_tiles_archr
   - normalize_ranges
@@ -92,6 +90,7 @@ reference:
   - open_matrix_anndata_hdf5
   - write_matrix_memory
   - import_matrix_market
+  - matrix_R_conversion
 
 - subtitle: "Matrix Operations"
 - contents:
@@ -113,7 +112,6 @@ reference:
   - read_gtf
   - read_bed
   - read_ucsc_chrom_sizes
-  - ensure_downloaded
 
 - title: "Clustering"
 - contents:

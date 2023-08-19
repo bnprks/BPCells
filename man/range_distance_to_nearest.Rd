@@ -11,7 +11,11 @@ range_distance_to_nearest(
 )
 }
 \arguments{
-\item{ranges}{List, GRanges, or data.frame object. Must have chr, start, end, and strand defined. See \link{genomic-ranges}}
+\item{ranges}{Genomic regions given as GRanges, data.frame, or list. See \code{help("genomic-ranges-like")} for details on format and coordinate systems. Required attributes:
+\itemize{
+\item \code{chr}, \code{start}, \code{end}: genomic position
+\item \code{strand}: +/- or TRUE/FALSE for positive or negative strand
+}}
 
 \item{addArchRBug}{boolean to reproduce ArchR's bug that incorrectly handles nested genes}
 
@@ -21,13 +25,13 @@ If false, coordinates start at 1 and the end coordinate is included in the range
 \value{
 A 2-column data.frame with columns upstream and downstream, containing
 the distances to the nearest neighbor in the respective directions.
-For ranges on + or * strand, distance is calculated as:
+For ranges on \code{+} or \code{*} strand, distance is calculated as:
 \itemize{
-\item upstream = max(start(range) - end(upstreamNeighbor), 0)
-\item downstream = max(start(downstreamNeighbor) - end(range), 0)
+\item upstream = \code{max(start(range) - end(upstreamNeighbor), 0)}
+\item downstream = \code{max(start(downstreamNeighbor) - end(range), 0)}
 }
 
-For ranges on - strand, the definition of upstream and downstream is flipped.
+For ranges on \code{-} strand, the definition of upstream and downstream is flipped.
 Note that this definition of distance is one off from
 \code{GenomicRanges::distance()}, as ranges that neighbor but don't overlap are given
 a distance of 1 rather than 0.

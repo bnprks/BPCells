@@ -12,7 +12,10 @@ normalize_ranges(
 )
 }
 \arguments{
-\item{ranges}{List, GRanges, or data.frame object. Must have start, end, and chr defined. See \link{genomic-ranges}}
+\item{ranges}{Genomic regions given as GRanges, data.frame, or list. See \code{help("genomic-ranges-like")} for details on format and coordinate systems. Required attributes:
+\itemize{
+\item \code{chr}, \code{start}, \code{end}: genomic position
+}}
 
 \item{metadata_cols}{Optional list of metadata columns to require & extract}
 

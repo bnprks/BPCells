@@ -17,11 +17,14 @@ footprint(
 \arguments{
 \item{fragments}{IterableFragments object}
 
-\item{ranges}{GRanges object with the positions to footprint, or
-list/data frame with columns chr, start, & end. For list/data frame, must
-include strand information as character vector of "+"/"-", or TRUE/FALSE for
-positive/negative strand. "+" strand motifs will footprint around the start
-coordinate, and "-" strand motifs will footprint around the end coordinate}
+\item{ranges}{Footprint centers given as GRanges, data.frame, or list. See \code{help("genomic-ranges-like")} for details on format and coordinate systems. Required attributes:
+\itemize{
+\item \code{chr}, \code{start}, \code{end}: genomic position
+\item \code{strand}: +/- or TRUE/FALSE for positive or negative strand
+}
+
+"+" strand ranges will footprint around the start coordinate, and "-" strand ranges
+around the end coordinate.}
 
 \item{zero_based_coords}{If true, coordinates start and 0 and the end coordinate is not included in the range.
 If false, coordinates start at 1 and the end coordinate is included in the range}
@@ -38,7 +41,7 @@ If false, coordinates start at 1 and the end coordinate is included in the range
 extremes to use for calculating enrichment}
 }
 \value{
-tibble with columns "group", "position", and "count", "enrichment"
+\code{tibble::tibble()} with columns \code{group}, \code{position}, and \code{count}, \code{enrichment}
 }
 \description{
 Get footprints around a set of genomic coordinates

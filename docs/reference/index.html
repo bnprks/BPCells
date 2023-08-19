@@ -85,9 +85,9 @@
         <dd>Read/write BPCells fragment objects</dd>
       </dl><dl><dt>
           
-          <code><a href="convert_to_fragments.html">convert_to_fragments()</a></code> 
+          <code><a href="fragment_R_conversion.html">convert_to_fragments()</a></code> <code><a href="fragment_R_conversion.html">as()</a></code> <code><a href="fragment_R_conversion.html">as.data.frame()</a></code> 
         </dt>
-        <dd>Build a Fragments object from an R data frame or GRanges object</dd>
+        <dd>Convert between BPCells fragments and R objects.</dd>
       </dl></div><div class="section level2">
       
       <h3 id="atac-analysis">ATAC Analysis<a class="anchor" aria-label="anchor" href="#atac-analysis"></a></h3>
@@ -159,12 +159,12 @@
           
           <code><a href="select_chromosomes.html">select_chromosomes()</a></code> 
         </dt>
-        <dd>Select chromosmes for subsetting or translating chromosome IDs in a fragments object</dd>
+        <dd>Subset, translate, or reorder chromosome IDs</dd>
       </dl><dl><dt>
           
           <code><a href="select_cells.html">select_cells()</a></code> 
         </dt>
-        <dd>Select cells for subsetting or translating cells IDs in a fragments object</dd>
+        <dd>Subset, translate, or reorder cell IDs</dd>
       </dl><dl><dt>
           
           <code><a href="merge_cells.html">merge_cells()</a></code> 
@@ -174,17 +174,17 @@
           
           <code><a href="subset_lengths.html">subset_lengths()</a></code> 
         </dt>
-        <dd>Subset fragments to only include those in a given size range</dd>
+        <dd>Subset fragments by length</dd>
       </dl><dl><dt>
           
           <code><a href="select_regions.html">select_regions()</a></code> 
         </dt>
-        <dd>Select fragments overlapping (or not overlapping) selected regions</dd>
+        <dd>Subset fragments by genomic region</dd>
       </dl><dl><dt>
           
           <code><a href="prefix_cell_names.html">prefix_cell_names()</a></code> 
         </dt>
-        <dd>Rename cells by adding a prefix to the names (e.g. sample name)</dd>
+        <dd>Add sample prefix to cell names</dd>
       </dl><dl><dt>
           
           <code><a href="IterableFragments-methods.html">show(<i>&lt;IterableFragments&gt;</i>)</a></code> <code><a href="IterableFragments-methods.html">cellNames()</a></code> <code><a href="IterableFragments-methods.html">`cellNames&lt;-`()</a></code> <code><a href="IterableFragments-methods.html">chrNames()</a></code> <code><a href="IterableFragments-methods.html">`chrNames&lt;-`()</a></code> 
@@ -208,14 +208,9 @@
 
       <dl><dt>
           
-          <code><a href="genomic-ranges.html">genomic-ranges</a></code> 
+          <code><a href="genomic-ranges-like.html">genomic-ranges-like</a></code> 
         </dt>
         <dd>Genomic range formats</dd>
-      </dl><dl><dt>
-          
-          <code><a href="scan_fragments.html">scan_fragments()</a></code> 
-        </dt>
-        <dd>Scan through fragments without performing any operations (used for benchmarking)</dd>
       </dl><dl><dt>
           
           <code><a href="order_ranges.html">order_ranges()</a></code> 
@@ -226,11 +221,6 @@
           <code><a href="range_distance_to_nearest.html">range_distance_to_nearest()</a></code> 
         </dt>
         <dd>Find signed distance to nearest genomic ranges</dd>
-      </dl><dl><dt>
-          
-          <code><a href="tile_ranges.html">tile_ranges()</a></code> 
-        </dt>
-        <dd>Get ranges corresponding to selected tiles of a tile matrix</dd>
       </dl><dl><dt>
           
           <code><a href="extend_ranges.html">extend_ranges()</a></code> 
@@ -283,6 +273,11 @@
           <code><a href="import_matrix_market.html">import_matrix_market()</a></code> <code><a href="import_matrix_market.html">import_matrix_market_10x()</a></code> 
         </dt>
         <dd>Import MatrixMarket files</dd>
+      </dl><dl><dt>
+          
+          <code><a href="matrix_R_conversion.html">as()</a></code> <code><a href="matrix_R_conversion.html">as.matrix()</a></code> 
+        </dt>
+        <dd>Convert between BPCells matrix and R objects.</dd>
       </dl></div><div class="section level2">
       
       <h3 id="matrix-operations">Matrix Operations<a class="anchor" aria-label="anchor" href="#matrix-operations"></a></h3>
@@ -333,7 +328,7 @@
           
           <code><a href="binarize.html">binarize()</a></code> 
         </dt>
-        <dd>Binarize converts matrix elements to zeros and ones.</dd>
+        <dd>Convert matrix elements to zeros and ones</dd>
       </dl><dl><dt>
           
           <code><a href="IterableMatrix-methods.html">matrix_type()</a></code> <code><a href="IterableMatrix-methods.html">storage_order()</a></code> <code><a href="IterableMatrix-methods.html">show(<i>&lt;IterableMatrix&gt;</i>)</a></code> <code><a href="IterableMatrix-methods.html">t(<i>&lt;IterableMatrix&gt;</i>)</a></code> <code><a href="IterableMatrix-methods.html">`%*%`(<i>&lt;IterableMatrix&gt;</i>,<i>&lt;matrix&gt;</i>)</a></code> <code><a href="IterableMatrix-methods.html">rowSums(<i>&lt;IterableMatrix&gt;</i>)</a></code> <code><a href="IterableMatrix-methods.html">colSums(<i>&lt;IterableMatrix&gt;</i>)</a></code> <code><a href="IterableMatrix-methods.html">rowMeans(<i>&lt;IterableMatrix&gt;</i>)</a></code> <code><a href="IterableMatrix-methods.html">colMeans(<i>&lt;IterableMatrix&gt;</i>)</a></code> <code><a href="IterableMatrix-methods.html">log1p(<i>&lt;IterableMatrix&gt;</i>)</a></code> <code><a href="IterableMatrix-methods.html">log1p_slow()</a></code> <code><a href="IterableMatrix-methods.html">expm1(<i>&lt;IterableMatrix&gt;</i>)</a></code> <code><a href="IterableMatrix-methods.html">expm1_slow()</a></code> <code><a href="IterableMatrix-methods.html">`^`(<i>&lt;IterableMatrix&gt;</i>,<i>&lt;numeric&gt;</i>)</a></code> <code><a href="IterableMatrix-methods.html">pow_slow()</a></code> <code><a href="IterableMatrix-methods.html">`&lt;`(<i>&lt;numeric&gt;</i>,<i>&lt;IterableMatrix&gt;</i>)</a></code> <code><a href="IterableMatrix-methods.html">`&gt;`(<i>&lt;IterableMatrix&gt;</i>,<i>&lt;numeric&gt;</i>)</a></code> <code><a href="IterableMatrix-methods.html">`&lt;=`(<i>&lt;numeric&gt;</i>,<i>&lt;IterableMatrix&gt;</i>)</a></code> <code><a href="IterableMatrix-methods.html">`&gt;=`(<i>&lt;IterableMatrix&gt;</i>,<i>&lt;numeric&gt;</i>)</a></code> <code><a href="IterableMatrix-methods.html">round(<i>&lt;IterableMatrix&gt;</i>)</a></code> <code><a href="IterableMatrix-methods.html">`*`(<i>&lt;IterableMatrix&gt;</i>,<i>&lt;numeric&gt;</i>)</a></code> <code><a href="IterableMatrix-methods.html">`+`(<i>&lt;IterableMatrix&gt;</i>,<i>&lt;numeric&gt;</i>)</a></code> <code><a href="IterableMatrix-methods.html">`/`(<i>&lt;IterableMatrix&gt;</i>,<i>&lt;numeric&gt;</i>)</a></code> <code><a href="IterableMatrix-methods.html">`-`(<i>&lt;IterableMatrix&gt;</i>,<i>&lt;numeric&gt;</i>)</a></code> 
@@ -380,11 +375,6 @@
           <code><a href="read_ucsc_chrom_sizes.html">read_ucsc_chrom_sizes()</a></code> 
         </dt>
         <dd>Read UCSC chromosome sizes</dd>
-      </dl><dl><dt>
-          
-          <code><a href="ensure_downloaded.html">ensure_downloaded()</a></code> 
-        </dt>
-        <dd>Download a file with a custom timeout</dd>
       </dl></div><div class="section level2">
       <h2 id="clustering">Clustering<a class="anchor" aria-label="anchor" href="#clustering"></a></h2>
       
@@ -483,8 +473,7 @@
           
           <code><a href="draw_trackplot_grid.html">draw_trackplot_grid()</a></code> 
         </dt>
-        <dd>Combine ggplot track plots into an aligned grid.
-Uses patchwork to perform the alignment</dd>
+        <dd>Combine ggplot track plots into an aligned grid. Uses patchwork to perform the alignment</dd>
       </dl><dl><dt>
           
           <code><a href="trackplot_bulk.html">trackplot_bulk()</a></code> 
@@ -536,7 +525,7 @@ Uses patchwork to perform the alignment</dd>
 </div>
 
 <div class="pkgdown-footer-right">
-  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.7.</p>
+  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.7.9000.</p>
 </div>
 
     </footer></div>

@@ -17,7 +17,7 @@ write_fragments_10x(
 \arguments{
 \item{path}{File path (e.g. fragments.tsv or fragments.tsv.gz)}
 
-\item{comment}{Skip lines at beginning of file which start with comment}
+\item{comment}{Skip lines at beginning of file which start with comment string}
 
 \item{end_inclusive}{Whether the end coordinate of the bed is inclusive -- i.e. there was an
 insertion at the end coordinate rather than the base before the end coordinate. This is the
@@ -29,7 +29,7 @@ insertion at the end coordinate rather than the base before the end coordinate. 
 with 10x fragment file outputs (defaults to 4 columns chr,start,end,cell)}
 }
 \value{
-10x fragments file object
+**10x fragments file object
 }
 \description{
 10x fragment files come in a bed-like format, with columns chr, start, end,

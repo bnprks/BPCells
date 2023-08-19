@@ -16,3 +16,4 @@ ensure_downloaded(path, backup_url, timeout)
 \description{
 Download a file with a custom timeout
 }
+\keyword{internal}

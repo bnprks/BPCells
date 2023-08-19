@@ -7,16 +7,20 @@
 merge_peaks_iterative(peaks)
 }
 \arguments{
-\item{peaks}{\code{data.frame}, \code{tibble}, or \code{list} ranges object. Must be ordered by
-priority and have columns chr, start, end.}
+\item{peaks}{Peaks given as GRanges, data.frame, or list. See \code{help("genomic-ranges-like")} for details on format and coordinate systems. Required attributes:
+\itemize{
+\item \code{chr}, \code{start}, \code{end}: genomic position
+}
+
+Must be ordered by priority and have columns chr, start, end.}
 }
 \value{
-`tibble::tibble()`` with a nonoverlapping subset of the rows in peaks. All metadata
+\code{tibble::tibble()} with a nonoverlapping subset of the rows in peaks. All metadata
 columns are preserved
 }
 \description{
 Merge peaks according to ArchR's iterative merging algorithm. More
-details here: \url{https://www.archrproject.com/bookdown/the-iterative-overlap-peak-merging-procedure.html}
+details on the \href{https://www.archrproject.com/bookdown/the-iterative-overlap-peak-merging-procedure.html}{ArchR website}
 }
 \details{
 Properties of merged peaks:

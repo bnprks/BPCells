@@ -14,14 +14,19 @@ tile_matrix(
 \arguments{
 \item{fragments}{Input fragments object}
 
-\item{ranges}{GRanges object with the ranges to overlap including a metadata column tile_width,
-or a list/data frame with columns chr, start, end, and tile_width. Must be non-overlapping and sorted by
+\item{ranges}{Tiled regions given as GRanges, data.frame, or list. See \code{help("genomic-ranges-like")} for details on format and coordinate systems. Required attributes:
+\itemize{
+\item \code{chr}, \code{start}, \code{end}: genomic position
+\item \code{tile_width}: Size of each tile in this region in basepairs
+}
+
+Must be non-overlapping and sorted by
 (chr, start), with chromosomes ordered according to the chromosome names of \code{fragments}}
 
 \item{zero_based_coords}{Whether to convert the ranges from a 1-based end-inclusive
 coordinate system to a 0-based end-exclusive coordinate system. Defaults to true
 for GRanges and false for other formats
-(see \url{http://genome.ucsc.edu/blog/the-ucsc-genome-browser-coordinate-counting-systems/})}
+(see this \href{https://web.archive.org/web/20210920203703/http://genome.ucsc.edu/blog/the-ucsc-genome-browser-coordinate-counting-systems/}{archived UCSC blogpost})}
 
 \item{explicit_tile_names}{Boolean for whether to add rownames to the output matrix in format e.g
 chr1:500-1000, where start and end coords are given in a 0-based coordinate system. For
@@ -37,6 +42,6 @@ where start and end coords are given in a 0-based coordinate system.
 Calculate ranges x cells tile overlap matrix
 }
 \note{
-When calculating the matrix directly from a fragments tsv, it's necessary to first call \code{select_chromosomes} in order to
+When calculating the matrix directly from a fragments tsv, it's necessary to first call \code{select_chromosomes()} in order to
 provide the ordering of chromosomes to expect while reading the tsv.
 }

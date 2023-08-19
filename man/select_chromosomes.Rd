@@ -2,7 +2,7 @@
 % Please edit documentation in R/fragments.R
 \name{select_chromosomes}
 \alias{select_chromosomes}
-\title{Select chromosmes for subsetting or translating chromosome IDs in a fragments object}
+\title{Subset, translate, or reorder chromosome IDs}
 \usage{
 select_chromosomes(fragments, chromosome_selection)
 }
@@ -10,9 +10,9 @@ select_chromosomes(fragments, chromosome_selection)
 \item{fragments}{Input fragments object}
 
 \item{chromosome_selection}{List of chromosme IDs (numeric), or names (character).
-The output chromosome ID n will be taken
-from the input fragments chromosome with ID/name chromosome_selection\link{n}.}
+The output chromosome ID \code{n} will be taken
+from the input fragments chromosome with ID/name \code{chromosome_selection[n]}.}
 }
 \description{
-Select chromosmes for subsetting or translating chromosome IDs in a fragments object
+Subset, translate, or reorder chromosome IDs
 }

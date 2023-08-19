@@ -2,7 +2,7 @@
 % Please edit documentation in R/fragments.R
 \name{select_cells}
 \alias{select_cells}
-\title{Select cells for subsetting or translating cells IDs in a fragments object}
+\title{Subset, translate, or reorder cell IDs}
 \usage{
 select_cells(fragments, cell_selection)
 }
@@ -10,8 +10,9 @@ select_cells(fragments, cell_selection)
 \item{fragments}{Input fragments object}
 
 \item{cell_selection}{List of chromosme IDs (numeric), or names (character).
-The output cell ID \verb{n`` will be taken from the input cell with ID/name }cell_selection\link{n}`.}
+The output cell ID \code{n} will be taken
+from the input cell with ID/name \code{cell_selection[n]}.}
 }
 \description{
-Select cells for subsetting or translating cells IDs in a fragments object
+Subset, translate, or reorder cell IDs
 }

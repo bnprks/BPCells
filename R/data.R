@@ -1,13 +1,15 @@
 #' Gene Symbol Mapping data
 #'
 #' Mapping of the canonical gene symbols corresponding to each
-#' unambiguous alias, previous symbol, ensembl ID, or entrez ID
+#' unambiguous alias, previous symbol, ensembl ID, or entrez ID. 
 #'
 #' @format **human_gene_mapping**
 #'
 #' A named character vector. Names are aliases or IDs and values
 #' are the corresponding canonical gene symbol
 #'
+#' @details See the source code in `data-raw/human_gene_mapping.R` and
+#' `data-raw/mouse_gene_mapping.R` for exactly how these mappings were made.
 #' @source **human_gene_mapping**
 #'
 #' <http://ftp.ebi.ac.uk/pub/databases/genenames/hgnc/tsv/non_alt_loci_set.txt>

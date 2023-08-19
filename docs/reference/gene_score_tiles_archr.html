@@ -81,11 +81,13 @@ calculates the signed distances according to ArchR's default parameters.</p>
     <div class="section level2">
     <h2 id="arguments">Arguments<a class="anchor" aria-label="anchor" href="#arguments"></a></h2>
     <dl><dt>genes</dt>
-<dd><p>GRanges object with gene start, end, and strand</p></dd>
+<dd><p>Gene coordinates given as GRanges, data.frame, or list. See <code><a href="genomic-ranges-like.html">help("genomic-ranges-like")</a></code> for details on format and coordinate systems. Required attributes:</p><ul><li><p><code>chr</code>, <code>start</code>, <code>end</code>: genomic position</p></li>
+<li><p><code>strand</code>: +/- or TRUE/FALSE for positive or negative strand</p></li>
+</ul></dd>
 
 
 <dt>chromosome_sizes</dt>
-<dd><p>(optional) Size of chromosomes as a <a href="genomic-ranges.html">genomic-ranges</a> object</p></dd>
+<dd><p>(optional) Size of chromosomes as a genomic-ranges object</p></dd>
 
 
 <dt>tile_width</dt>
@@ -100,23 +102,22 @@ calculates the signed distances according to ArchR's default parameters.</p>
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     
 
-<p>GRanges object with one range per tile, with additional metadata
+<p>Tibble with one range per tile, with additional metadata
 columns gene_idx (row index of the gene this tile corresponds to) and
 distance.</p>
 
 
 <p>Distance is a signed distance calculated such that if the tile has a smaller
 start coordinate than the gene and the gene is on the + strand, distance will
-be negative and calculated as min(0, end(tile) - start(gene))</p>
+be negative. The distance of adjacent but non-overlapping regions is 1bp, counting
+up from there.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
     <p>ArchR's tile distance algorithm works as follows</p><ol><li><p>Genes are extended 5kb upstream</p></li>
 <li><p>Genes are linked to any tiles 1kb-100kb upstream + downstream, but tiles
 beyond a neighboring gene are not considered</p></li>
-</ol><p>Note: assumes the 1-based, end inclusive coordinate convention used
-by GRanges, so 500bp tiles run from bases 1-500, 501-1000, etc.</p>
-    </div>
+</ol></div>
 
   </main><aside class="col-md-3"><nav id="toc"><h2>On this page</h2>
     </nav></aside></div>
@@ -127,7 +128,7 @@ by GRanges, so 500bp tiles run from bases 1-500, 501-1000, etc.</p>
 </div>
 
 <div class="pkgdown-footer-right">
-  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.7.</p>
+  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.7.9000.</p>
 </div>
 
     </footer></div>

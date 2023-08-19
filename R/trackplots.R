@@ -118,7 +118,7 @@ draw_trackplot_grid <- function(..., labels, title = NULL,
 #' @param legend_label Custom label to put on the legend
 #'
 #' @return Returns a combined plot of pseudobulk genome tracks. For compatability with
-#' `draw_trackplot_grid()``, the extra attribute `$patches$labels` will be added to
+#' `draw_trackplot_grid()`, the extra attribute `$patches$labels` will be added to
 #' specify the labels for each track. If `return_data` or `return_plot_list` is
 #' `TRUE`, the return value will be modified accordingly.
 #' @export

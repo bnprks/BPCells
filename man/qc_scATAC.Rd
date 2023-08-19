@@ -9,9 +9,15 @@ qc_scATAC(fragments, genes, blacklist)
 \arguments{
 \item{fragments}{IterableFragments object}
 
-\item{genes}{GenomicRanges object or list/data.frame with columns chr, start, end}
+\item{genes}{Gene coordinates given as GRanges, data.frame, or list. See \code{help("genomic-ranges-like")} for details on format and coordinate systems. Required attributes:
+\itemize{
+\item \code{chr}, \code{start}, \code{end}: genomic position
+}}
 
-\item{blacklist}{GenomicRanges object or list/data.frame with columns chr, start, end}
+\item{blacklist}{Blacklisted regions given as GRanges, data.frame, or list. See \code{help("genomic-ranges-like")} for details on format and coordinate systems. Required attributes:
+\itemize{
+\item \code{chr}, \code{start}, \code{end}: genomic position
+}}
 }
 \value{
 data.frame with QC data
@@ -24,17 +30,17 @@ This implementation mimics ArchR's default parameters. For uses requiring more f
 the best option is to re-implement this function with required changes.
 Output columns of data.frame:
 \itemize{
-\item cellName: cell name for each cell
-\item nFrags: number of fragments per cell
-\item subNucleosomal, monoNucleosomal, multiNucleosomal: number of fragments of size 1-146bp, 147-254bp, and 255bp + respectively.
+\item \code{cellName}: cell name for each cell
+\item \code{nFrags}: number of fragments per cell
+\item \code{subNucleosomal}, \code{monoNucleosomal}, \code{multiNucleosomal}: number of fragments of size 1-146bp, 147-254bp, and 255bp + respectively.
 equivalent to ArchR's nMonoFrags, nDiFrags, nMultiFrags respectively
-\item TSSEnrichment: AvgInsertInTSS / max(AvgInsertFlankingTSS, 0.1), where AvgInsertInTSS ReadsInTSS / 101 (window size),
-and AvgInsertFlankingTSS is ReadsFlankingTSS / (100*2) (window size). The max(0.1) ensures that very low-read cells
+\item \code{TSSEnrichment}: \code{AvgInsertInTSS / max(AvgInsertFlankingTSS, 0.1)}, where \code{AvgInsertInTSS} is \code{ReadsInTSS / 101} (window size),
+and \code{AvgInsertFlankingTSS} is \code{ReadsFlankingTSS / (100*2)} (window size). The \code{max(0.1)} ensures that very low-read cells
 do not get assigned spuriously high TSSEnrichment.
-\item ReadsInPromoter: Number of reads from 2000bp upstream of TSS to 101bp downstream of TSS
-\item ReadsInBlacklist: Number of reads in the provided blacklist region
-\item ReadsInTSS: Number of reads overlapping the 101bp centered around each TSS
-\item ReadsFlankingTSS: Number of reads overlapping 1901-2000bp +/- each TSS
+\item \code{ReadsInPromoter}: Number of reads from 2000bp upstream of TSS to 101bp downstream of TSS
+\item \code{ReadsInBlacklist}: Number of reads in the provided blacklist region
+\item \code{ReadsInTSS}: Number of reads overlapping the 101bp centered around each TSS
+\item \code{ReadsFlankingTSS}: Number of reads overlapping 1901-2000bp +/- each TSS
 }
 
 Differences from ArchR:
@@ -42,7 +48,7 @@ Note that ArchR by default uses a different set of annotations to derive TSS sit
 This function uses just one annotation for gene start+end sites, so must be called twice to exactly
 re-calculate the ArchR QC stats.
 
-ArchR's PromoterRatio and BlacklistRatio are not included in the output, as they can be easily calculated
-from ReadsInPromoter / nFrags and  ReadsInBlacklist / nFrags. Similarly, ArchR's NucleosomeRatio can be calculated
-as (monoNucleosomal + multiNucleosomal) / subNucleosomal.
+ArchR's \code{PromoterRatio} and \code{BlacklistRatio} are not included in the output, as they can be easily calculated
+from \code{ReadsInPromoter / nFrags} and  \code{ReadsInBlacklist / nFrags}. Similarly, ArchR's \code{NucleosomeRatio} can be calculated
+as \code{(monoNucleosomal + multiNucleosomal) / subNucleosomal}.
 }

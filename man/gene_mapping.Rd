@@ -33,6 +33,10 @@ mouse_gene_mapping
 }
 \description{
 Mapping of the canonical gene symbols corresponding to each
-unambiguous alias, previous symbol, ensembl ID, or entrez ID
+unambiguous alias, previous symbol, ensembl ID, or entrez ID.
+}
+\details{
+See the source code in \code{data-raw/human_gene_mapping.R} and
+\code{data-raw/mouse_gene_mapping.R} for exactly how these mappings were made.
 }
 \keyword{datasets}

@@ -284,7 +284,7 @@ setMethod("short_description", "TransformBinarize", function(x) {
   )
 })
 
-#' Binarize converts matrix elements to zeros and ones.
+#' Convert matrix elements to zeros and ones
 #'
 #' @description Binarize compares the matrix element values to the
 #'   threshold value and sets the output elements to either zero

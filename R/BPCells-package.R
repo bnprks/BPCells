@@ -25,12 +25,14 @@ Matrix::colMeans
 
 #' Genomic range formats
 #'
-#' @name genomic-ranges
+#' @name genomic-ranges-like
 #' @description
-#' Ranges of genomic coordinates are given by chromosme, start, and end coordinate,
-#' along with optional metadata about each range. With the exception of
-#' `GenomicRanges::GRanges` objects, all BPCells objects are assumed to use a
-#' zero-based, end-exclusive coordinate system (see below for details).
+#' BPCells accepts a flexible set of genomic ranges-like objects as input, either
+#' GRanges, data.frame, lists, or character vectors. These objects must specify chromosome, start,
+#' and end coordinates along with optional metadata about each range.
+
+#'  With the exception of `GenomicRanges::GRanges` objects, BPCells assumes all
+#'  objects use a zero-based, end-exclusive coordinate system (see below for details).
 #'
 #' ## Valid Range-like objects
 #' BPCells can interpret the following types as ranges:

@@ -15,3 +15,25 @@ restore_seed <- function(seed) {
     assign(".Random.seed", seed, envir = globalenv(), inherits = FALSE)
   }
 }
+
+# Helper-function for pkgdown documentation about genomic ranges inputs
+document_granges <- function(
+  intro_noun="Genomic regions", 
+  position="`chr`, `start`, `end`: genomic position",
+  strand=NULL,
+  extras=NULL
+) {
+  if (!is.null(strand) && strand == "default") {
+    strand <- "`strand`: +/- or TRUE/FALSE for positive or negative strand"
+  }
+  if (!is.null(extras)) {
+    extras <- sprintf("`%s`: %s", names(extras), as.character(extras))
+  }
+  bullets <- paste0(sprintf("  - %s", c(position, strand, extras)), collapse="\n")
+  sprintf(paste0(
+    "%s given as GRanges, data.frame, or list. ",
+    "See `help(\"genomic-ranges-like\")` for details on format and coordinate systems. ",
+    "Required attributes:\n\n",
+    "%s"
+  ), intro_noun, bullets)
+}

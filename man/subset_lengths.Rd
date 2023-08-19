@@ -2,7 +2,7 @@
 % Please edit documentation in R/fragments.R
 \name{subset_lengths}
 \alias{subset_lengths}
-\title{Subset fragments to only include those in a given size range}
+\title{Subset fragments by length}
 \usage{
 subset_lengths(fragments, min_len = 0L, max_len = NA_integer_)
 }
@@ -17,8 +17,8 @@ subset_lengths(fragments, min_len = 0L, max_len = NA_integer_)
 Fragments object
 }
 \description{
-Subset fragments to only include those in a given size range
+Subset fragments by length
 }
 \details{
-Fragment length is calculated as end-start
+Fragment length is calculated as \code{end-start}
 }

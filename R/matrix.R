@@ -1655,13 +1655,13 @@ setMethod("matrix_inputs", "PeakMatrix", function(x) list())
 
 #' Calculate ranges x cells overlap matrix
 #' @param fragments Input fragments object. Must have cell names and chromosome names defined
-#' @param ranges GRanges object with the ranges to overlap, or list/data frame with columns chr, start, & end.
+#' @param ranges `r document_granges("Peaks/ranges to overlap,")`
 #' @param mode Mode for counting peak overlaps. (See "value" section for more details)
 #' @inheritParams convert_to_fragments
 #' @param explicit_peak_names Boolean for whether to add rownames to the output matrix in format e.g
 #'  chr1:500-1000, where start and end coords are given in a 0-based coordinate system.
 #'  Note that either way, peak names will be written when the matrix is saved.
-#' @note When calculating the matrix directly from a fragments tsv, it's necessary to first call `select_chromosomes` in order to
+#' @note When calculating the matrix directly from a fragments tsv, it's necessary to first call `select_chromosomes()` in order to
 #'     provide the ordering of chromosomes to expect while reading the tsv.
 #' @return Iterable matrix object with dimension ranges x cells. When saved,
 #'   the column names of the output matrix will be in the format chr1:500-1000,
@@ -1752,15 +1752,16 @@ setMethod("matrix_inputs", "TileMatrix", function(x) list())
 
 #' Calculate ranges x cells tile overlap matrix
 #' @param fragments Input fragments object
-#' @param ranges GRanges object with the ranges to overlap including a metadata column tile_width,
-#'  or a list/data frame with columns chr, start, end, and tile_width. Must be non-overlapping and sorted by
+#' @param ranges `r document_granges("Tiled regions", extras=c("tile_width"="Size of each tile in this region in basepairs"))`  
+#'  
+#'  Must be non-overlapping and sorted by
 #'  (chr, start), with chromosomes ordered according to the chromosome names of `fragments`
 #' @inheritParams convert_to_fragments
 #' @param explicit_tile_names Boolean for whether to add rownames to the output matrix in format e.g
 #'  chr1:500-1000, where start and end coords are given in a 0-based coordinate system. For
 #'  whole-genome Tile matrices the names will take ~5 seconds to generate and take up 400MB of memory.
 #'  Note that either way, tile names will be written when the matrix is saved.
-#' @note When calculating the matrix directly from a fragments tsv, it's necessary to first call `select_chromosomes` in order to
+#' @note When calculating the matrix directly from a fragments tsv, it's necessary to first call `select_chromosomes()` in order to
 #'     provide the ordering of chromosomes to expect while reading the tsv.
 #' @return Iterable matrix object with dimension ranges x cells. When saved,
 #'   the column names will be in the format chr1:500-1000,
@@ -1811,6 +1812,7 @@ tile_matrix <- function(fragments, ranges, zero_based_coords = !is(ranges, "GRan
 }
 
 #' Get ranges corresponding to selected tiles of a tile matrix
+#' @keywords internal
 tile_ranges <- function(tile_matrix, selection) {
   # Handle manually transposed tile_matrix objects
   if (!tile_matrix@transpose) {
@@ -1909,6 +1911,23 @@ convert_matrix_type <- function(matrix, type = c("uint32_t", "double", "float"))
 }
 
 # Conversions with dgCMatrix
+
+#' Convert between BPCells matrix and R objects.
+#'
+#' BPCells matrices can be interconverted with Matrix package 
+#' dgCMatrix sparse matrices, as well as base R
+#' dense matrices (though this may result in high memory usage for large matrices)
+#'
+#' @usage
+#' # Convert to R from BPCells
+#' as(bpcells_mat, "dgCMatrix") # Sparse matrix conversion
+#' as.matrix(bpcells_mat) # Dense matrix conversion
+#' 
+#' # Convert to BPCells from R
+#' as(dgc_mat, "IterableMatrix")
+#' @name matrix_R_conversion
+NULL
+
 setClass("Iterable_dgCMatrix_wrapper",
   contains = "IterableMatrix",
   slots = c(

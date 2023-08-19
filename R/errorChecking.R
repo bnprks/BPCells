@@ -148,7 +148,7 @@ assert_has_package <- function(packages, n = 1) {
 
 #' Normalize an object representing genomic ranges
 #'
-#' @param ranges List, GRanges, or data.frame object. Must have start, end, and chr defined. See [genomic-ranges]
+#' @param ranges `r document_granges()`
 #' @param metadata_cols Optional list of metadata columns to require & extract
 #' @param zero_based_coords If true, coordinates start and 0 and the end coordinate is not included in the range.
 #'  If false, coordinates start at 1 and the end coordinate is included in the range

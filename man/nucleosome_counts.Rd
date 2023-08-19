@@ -12,9 +12,14 @@ nucleosome_counts(fragments, nucleosome_width = 147)
 \item{nucleosome_width}{Integer cutoff to use as nucleosome width}
 }
 \value{
-List with names subNucleosomal, monoNucleosomal, multiNucleosomal containing the
+List with names \code{subNucleosomal}, \code{monoNucleosomal}, \code{multiNucleosomal}, and \code{nFrags}, containing the
 count vectors of fragments in each class per cell.
 }
 \description{
 Count fragments by nucleosomal size
+}
+\details{
+Shorter than \code{nucleosome_width} is \code{subNucleosomal},
+\code{nucleosome_width} to \code{2*nucleosome_width-1} is \code{monoNucleosomal}, and anything longer is \code{multiNucleosomal}.
+The sum of all fragments is given as \code{nFrags}
 }
