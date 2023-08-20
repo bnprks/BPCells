@@ -80,7 +80,7 @@ std::string simd_vec_version() {
 
 // [[Rcpp::export]]
 std::string simd_sleef_version() {
-    switch (_SIMDBP128_MODE_) {
+    switch (BPCELLS_SLEEF_MODE) {
         case _BPCELLS_SLEEF_FALLBACK: return "FALLBACK";
         case _BPCELLS_SLEEF_SSE2: return "SSE2";
         case _BPCELLS_SLEEF_AVX: return "AVX";
