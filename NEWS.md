@@ -37,6 +37,7 @@ Contributions welcome :)
 - Subsetting peak or tile matrices with `[` now propagates through so we always avoid computing parts of
   the peak/tile matrix that have been discarded by our subset. Subsetting a tile matrix will automatically
   convert into a peak matrix when possible for improved efficiency.
+- Subsetting RowBindMatrices now propagates through so we avoid touching matrices with no selected indices
 
 ## Bug-fixes
 - Fixed a few fragment transforms where using `chrNames(frags) <- val` or `cellNames(frags) <- val` could cause

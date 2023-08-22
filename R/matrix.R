@@ -959,6 +959,68 @@ setMethod("cbind2", signature(x = "IterableMatrix", y = "IterableMatrix"), funct
   new("ColBindMatrices", matrix_list = matrix_list, dim = c(nrow(x), ncol(x) + ncol(y)), dimnames = list(row_names, col_names), transpose = FALSE)
 })
 
+# Row bind needs specialization because there's not a default row-seek operation
+setMethod("[", "RowBindMatrices", function(x, i, j, ...) {
+  if (missing(x)) stop("x is missing in matrix selection")
+  # Handle transpose via recursive call
+  if (x@transpose) {
+    return(t(t(x)[rlang::maybe_missing(j), rlang::maybe_missing(i)]))
+  }
+
+  i <- selection_index(i, nrow(x), rownames(x))
+  j <- selection_index(j, ncol(x), colnames(x))
+
+
+  # If we're just reordering rows, do a standard matrix selection
+  if (rlang::is_missing(j) && !rlang::is_missing(i) && all(sort(i) == seq_along(i))) {
+    return(callNextMethod())
+  }
+
+  # if the length of our row selection is 0, do a standard matrix selection
+  if (!rlang::is_missing(i) && length(i) == 0) {
+    return(callNextMethod())
+  }
+
+  x <- selection_fix_dims(x, rlang::maybe_missing(i), rlang::maybe_missing(j))
+
+  last_row <- 0L
+  new_mats <- list()
+  for (mat in x@matrix_list) {
+    row_start <- last_row + 1L
+    row_end <- last_row + nrow(mat)
+
+    if (!rlang::is_missing(i)) {
+      local_i <- i[i >= row_start & i <= row_end] - last_row
+      if (length(local_i) == 0) {
+        # Adjust later i to compensate for removing this matrix from the list
+        i[i > row_end] <- i[i > row_end] - nrow(mat)
+        next #skip adding this matrix to output list, and skip updating last_row
+      } else {
+        mat <- mat[sort(local_i),]
+      }
+    }
+    if (!rlang::is_missing(j)) {
+      mat <- mat[,j]
+    }
+    new_mats <- c(new_mats, mat)
+
+    last_row <- row_end
+  }
+  if (length(new_mats) > 1) {
+    x@matrix_list <- new_mats
+  } else if(length(new_mats) == 1) {
+    x <- new_mats[[1]]
+  } else {
+    stop("Subset RowBindMatrix error: got 0-length matrix_list after subsetting (please report this BPCells bug)")
+  }
+  if (!rlang::is_missing(i)) {
+    shuffle_i <- rank(i)
+    real_rownames <- rownames(x)
+    x <- x[shuffle_i,]
+    rownames(x) <- real_rownames
+  }
+  return(x)
+})
 #' Prepare a matrix for multi-threaded operation
 #' 
 #' Transforms a matrix such that `matrix_stats` or matrix multiplies with
