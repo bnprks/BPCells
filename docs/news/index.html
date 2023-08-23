@@ -89,6 +89,7 @@
 <li>On Windows, increased the maximum number of files that can be simultaneously open. Previously, opening &gt;63 compressed counts matrices simultaneously would hit the limit. Now at least 1,000 simultaneous matrices should be possible.</li>
 <li>Subsetting peak or tile matrices with <code>[</code> now propagates through so we always avoid computing parts of the peak/tile matrix that have been discarded by our subset. Subsetting a tile matrix will automatically convert into a peak matrix when possible for improved efficiency.</li>
 <li>Subsetting RowBindMatrices now propagates through so we avoid touching matrices with no selected indices</li>
+<li>Additional C++17 filesystem backwards compatibility that should allow slightly older compilers such as GCC 7.5 to build BPCells.</li>
 </ul></div>
 <div class="section level3">
 <h3 id="bug-fixes-0-2-0">Bug-fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-0-2-0"></a></h3>

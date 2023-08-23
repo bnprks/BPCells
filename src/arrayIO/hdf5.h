@@ -1,6 +1,5 @@
 #pragma once
 
-#include <filesystem>
 
 #include "array_interfaces.h"
 

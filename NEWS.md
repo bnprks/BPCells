@@ -38,6 +38,8 @@ Contributions welcome :)
   the peak/tile matrix that have been discarded by our subset. Subsetting a tile matrix will automatically
   convert into a peak matrix when possible for improved efficiency.
 - Subsetting RowBindMatrices now propagates through so we avoid touching matrices with no selected indices
+- Additional C++17 filesystem backwards compatibility that should allow slightly older compilers such as GCC 7.5 to 
+  build BPCells.
 
 ## Bug-fixes
 - Fixed a few fragment transforms where using `chrNames(frags) <- val` or `cellNames(frags) <- val` could cause

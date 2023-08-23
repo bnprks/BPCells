@@ -5,9 +5,8 @@
 #include <arrayIO/vector.h>
 #include <gtest/gtest.h>
 
-#include <filesystem>
+#include <utils/filesystem_compat.h>
 
-namespace fs = std::filesystem;
 using namespace BPCells;
 
 // Basic Idea for the test:
@@ -123,9 +122,9 @@ TEST(ArrayIO, Vector) {
 
 TEST(ArrayIO, Binaryfile) {
     SCOPED_TRACE("Binaryfile ArrayIO");
-    fs::path p = fs::temp_directory_path() / "BPCells_arrayIO_test/bin_array";
-    fs::create_directories(p.parent_path());
-    if (fs::exists(p)) fs::remove(p);
+    std_fs::path p = std_fs::temp_directory_path() / "BPCells_arrayIO_test/bin_array";
+    std_fs::create_directories(p.parent_path());
+    if (std_fs::exists(p)) std_fs::remove(p);
     {
         UIntWriter w(std::make_unique<FileUIntWriter>(p.string().c_str()), 1024);
         writeValues(w);
@@ -136,9 +135,9 @@ TEST(ArrayIO, Binaryfile) {
 
 TEST(ArrayIO, HDF5) {
     SCOPED_TRACE("HDF5 ArrayIO");
-    fs::path p = fs::temp_directory_path() / "BPCells_arrayIO_test/bin_array.hdf5";
-    fs::create_directories(p.parent_path());
-    if (fs::exists(p)) fs::remove(p);
+    std_fs::path p = std_fs::temp_directory_path() / "BPCells_arrayIO_test/bin_array.hdf5";
+    std_fs::create_directories(p.parent_path());
+    if (std_fs::exists(p)) std_fs::remove(p);
     H5WriterBuilder write_builder(p.string(), "", 2040, 1024);
     H5ReaderBuilder read_builder(p.string(), "", 2040, 1024);
     {

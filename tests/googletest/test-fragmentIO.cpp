@@ -1,4 +1,4 @@
-#include <filesystem>
+#include <utils/filesystem_compat.h>
 #include <sstream>
 
 #include <gtest/gtest.h>
@@ -11,7 +11,6 @@
 
 #include "utils-fragments.h"
 
-namespace fs = std::filesystem;
 using namespace BPCells;
 using namespace ::testing;
 
@@ -33,17 +32,17 @@ TEST(FragmentIO, BedRoundtrip) {
     std::unique_ptr<VecReaderWriterBuilder> v = writeFragmentTuple(frags_vec);
     StoredFragments frags = StoredFragments::openUnpacked(*v);
 
-    fs::path p = fs::temp_directory_path() / "BPCells_fragmentIO_test/fragments.tsv.gz";
-    fs::create_directories(p.parent_path());
-    if (fs::exists(p)) fs::remove(p);
+    std_fs::path p = std_fs::temp_directory_path() / "BPCells_fragmentIO_test/fragments.tsv.gz";
+    std_fs::create_directories(p.parent_path());
+    if (std_fs::exists(p)) std_fs::remove(p);
 
     BedFragmentsWriter w(p.string().c_str());
     w.write(frags);
 
     BedFragments bed1(p.string().c_str());
 
-    fs::path p2 = fs::temp_directory_path() / "BPCells_fragmentIO_test/fragments2.tsv.gz";
-    if (fs::exists(p2)) fs::remove(p2);
+    std_fs::path p2 = std_fs::temp_directory_path() / "BPCells_fragmentIO_test/fragments2.tsv.gz";
+    if (std_fs::exists(p2)) std_fs::remove(p2);
     BedFragmentsWriter w2(p2.string().c_str());
     w2.write(bed1);
 

@@ -2,7 +2,6 @@
 
 #include <atomic>
 #include <cstdlib>
-#include <filesystem>
 #include <string>
 #include <zlib.h>
 

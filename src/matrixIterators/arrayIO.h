@@ -1,6 +1,6 @@
 #pragma once
 
-#include <filesystem>
+#include "../utils/filesystem_compat.h"
 
 #include "arrayIO/binaryfile.h"
 #include "arrayIO/hdf5.h"
@@ -41,9 +41,9 @@ PackedMatrixWriter createPackedMatrixH5(
     HighFive::SilenceHDF5 s;
     if (group_path == "") group_path = "/";
 
-    std::filesystem::path path(file_path);
-    if (path.has_parent_path() && !std::filesystem::exists(path.parent_path())) {
-        std::filesystem::create_directories(path.parent_path());
+    std_fs::path path(file_path);
+    if (path.has_parent_path() && !std_fs::exists(path.parent_path())) {
+        std_fs::create_directories(path.parent_path());
     }
 
     HighFive::File file(file_path, HighFive::File::OpenOrCreate);

@@ -30,7 +30,8 @@ Before installing, you must have the HDF5 library installed and accessible on yo
 HDF5 can be installed from your choice of package manager. 
 
 You will also need a C/C++ compiler either gcc >=8.0 (>=9.1 recommended), or clang >= 7.0 (>= 9.0 recommended).
-This corresponds to versions from late-2018 and newer.
+This corresponds to versions from late-2018 and newer. Older versions may work in some cases so long as they
+have basic C++17 support, but they are not officially supported.
 
 ### Linux
 Obtaining the HDF5 dependency is usually pretty straightforward on Linux

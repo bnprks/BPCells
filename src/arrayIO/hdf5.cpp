@@ -1,4 +1,5 @@
 #include "hdf5.h"
+#include "../utils/filesystem_compat.h"
 
 namespace BPCells {
 
@@ -59,9 +60,9 @@ HighFive::Group createH5Group(std::string file_path, std::string group_path, boo
     HighFive::SilenceHDF5 s;
     if (group_path == "") group_path = "/";
 
-    std::filesystem::path path(file_path);
-    if (path.has_parent_path() && !std::filesystem::exists(path.parent_path())) {
-        std::filesystem::create_directories(path.parent_path());
+    std_fs::path path(file_path);
+    if (path.has_parent_path() && !std_fs::exists(path.parent_path())) {
+        std_fs::create_directories(path.parent_path());
     }
 
     HighFive::File file(file_path, HighFive::File::OpenOrCreate);

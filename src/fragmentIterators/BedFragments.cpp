@@ -1,5 +1,6 @@
 #include <atomic>
 #include "BedFragments.h"
+#include "../utils/filesystem_compat.h"
 
 namespace BPCells {
 
@@ -212,9 +213,9 @@ BedFragmentsWriter::BedFragmentsWriter(
     std::string str_path(path);
 
     // Create directory if it doesn't already exist
-    std::filesystem::path fpath(path);
-    if (fpath.has_parent_path() && !std::filesystem::exists(fpath.parent_path())) {
-        std::filesystem::create_directories(fpath.parent_path());
+    std_fs::path fpath(path);
+    if (fpath.has_parent_path() && !std_fs::exists(fpath.parent_path())) {
+        std_fs::create_directories(fpath.parent_path());
     }
 
     size_t extension_idx = str_path.rfind(".");

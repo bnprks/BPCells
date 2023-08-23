@@ -1,7 +1,6 @@
 #pragma once
 
 #include <atomic>
-#include <filesystem>
 #include <string>
 
 #include "../arrayIO/array_interfaces.h"

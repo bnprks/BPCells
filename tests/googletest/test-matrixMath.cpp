@@ -1,4 +1,3 @@
-#include <filesystem>
 #include <random>
 #include <sstream>
 
@@ -20,7 +19,6 @@
 
 #include <Eigen/Core>
 
-namespace fs = std::filesystem;
 using namespace BPCells;
 using namespace ::testing;
 using namespace Eigen;

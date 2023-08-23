@@ -1,7 +1,7 @@
 #include <iostream>
-#include <filesystem>
+#include "../src/utils/filesystem_compat.h"
 
 int main() {
-    std::filesystem::path p("test/path.txt");
+    BPCells::std_fs::path p("test/path.txt");
     std::cout << p << std::endl;
 }

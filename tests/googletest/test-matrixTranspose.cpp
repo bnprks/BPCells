@@ -1,4 +1,4 @@
-#include <filesystem>
+#include <utils/filesystem_compat.h>
 #include <random>
 
 #include <gtest/gtest.h>
@@ -11,7 +11,6 @@
 
 #include <Eigen/Core>
 
-namespace fs = std::filesystem;
 using namespace BPCells;
 using namespace ::testing;
 using namespace Eigen;
@@ -54,14 +53,14 @@ void test_transpose(const Eigen::SparseMatrix<double> orig_mat) {
     VecReaderWriterBuilder vb1(1024);
     VecReaderWriterBuilder vb2(1024);
 
-    fs::remove_all(fs::temp_directory_path() / "tmp_storage_uint");
-    fs::remove_all(fs::temp_directory_path() / "tmp_storage_double");
+    std_fs::remove_all(std_fs::temp_directory_path() / "tmp_storage_uint");
+    std_fs::remove_all(std_fs::temp_directory_path() / "tmp_storage_double");
     // Use small load sizes to help boost the number of rounds used for merging
     StoredMatrixTransposeWriter<uint32_t> w_uint(
-        vb1, (fs::temp_directory_path() / "tmp_storage_uint").string().c_str(), 512, 16384
+        vb1, (std_fs::temp_directory_path() / "tmp_storage_uint").string().c_str(), 512, 16384
     );
     StoredMatrixTransposeWriter<double> w_double(
-        vb2, (fs::temp_directory_path() / "tmp_storage_double").string().c_str(), 512, 16384
+        vb2, (std_fs::temp_directory_path() / "tmp_storage_double").string().c_str(), 512, 16384
     );
 
     w_double.write(mat_d);
@@ -93,7 +92,7 @@ TEST(MatrixTranspose, SmallIntMatrix) {
 //     auto mat =
 //     open10xFeatureMatrix("/Users/ben/Downloads/20k_PBMC_3p_HT_nextgem_Chromium_X_filtered_feature_bc_matrix.h5",
 //     16384);
-//     std::filesystem::remove_all(std::filesystem::path("test-dir-deleteme"));
+//     std_fs::remove_all(std_fs::path("test-dir-deleteme"));
 //     StoredMatrixTransposeWriter<uint32_t> mat_t("test-dir-deleteme", 4194304,
 //     1073741824); mat_t.write(mat); auto mat_t_read = mat_t.read();
 //     VecReaderWriterBuilder data;

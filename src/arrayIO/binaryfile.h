@@ -1,9 +1,11 @@
 #pragma once
 
 #include <cstring>
-#include <filesystem>
 #include <fstream>
 #include <vector>
+
+#include "../utils/filesystem_compat.h"
+
 
 #include "array_interfaces.h"
 
@@ -119,30 +121,30 @@ template <class T> class FileNumReader final : public BulkNumReader<T> {
 
 using FileUIntReader = FileNumReader<uint32_t>;
 
-std::vector<std::string> readLines(std::filesystem::path path);
+std::vector<std::string> readLines(std_fs::path path);
 
 class FileStringReader final : public StringReader {
   private:
     std::vector<std::string> data;
 
   public:
-    FileStringReader(std::filesystem::path path);
+    FileStringReader(std_fs::path path);
     const char *get(uint64_t idx) const override;
     uint64_t size() const override;
 };
 
 class FileStringWriter final : public StringWriter {
   private:
-    std::filesystem::path path;
+    std_fs::path path;
 
   public:
-    FileStringWriter(std::filesystem::path path);
+    FileStringWriter(std_fs::path path);
     void write(const StringReader &reader) override;
 };
 
 class FileWriterBuilder final : public WriterBuilder {
   protected:
-    std::filesystem::path dir;
+    std_fs::path dir;
     uint64_t buffer_size;
 
   public:
@@ -159,7 +161,7 @@ class FileWriterBuilder final : public WriterBuilder {
 };
 
 class FileReaderBuilder final : public ReaderBuilder {
-    std::filesystem::path dir;
+    std_fs::path dir;
     uint64_t buffer_size;
     uint64_t read_size;
 

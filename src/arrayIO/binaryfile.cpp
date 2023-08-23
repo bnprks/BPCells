@@ -2,7 +2,7 @@
 
 namespace BPCells {
 
-FileStringReader::FileStringReader(std::filesystem::path path) : data(readLines(path)) {}
+FileStringReader::FileStringReader(std_fs::path path) : data(readLines(path)) {}
 const char *FileStringReader::get(uint64_t idx) const {
     if (idx < data.size()) return data[idx].c_str();
     return NULL;
@@ -10,7 +10,7 @@ const char *FileStringReader::get(uint64_t idx) const {
 
 uint64_t FileStringReader::size() const { return data.size(); }
 
-FileStringWriter::FileStringWriter(std::filesystem::path path) : path(path) {}
+FileStringWriter::FileStringWriter(std_fs::path path) : path(path) {}
 void FileStringWriter::write(const StringReader &reader) {
     std::ofstream f(path.c_str());
     uint64_t i = 0;
@@ -30,11 +30,11 @@ FileWriterBuilder::FileWriterBuilder(std::string _dir, uint64_t buffer_size, boo
     : dir(_dir)
     , buffer_size(buffer_size) {
 
-    if (!allow_exists && std::filesystem::exists(dir)) {
+    if (!allow_exists && std_fs::exists(dir)) {
         throw std::runtime_error(std::string("Path already exists: ") + _dir);
     }
 
-    std::filesystem::create_directories(dir);
+    std_fs::create_directories(dir);
 }
 
 UIntWriter FileWriterBuilder::createUIntWriter(std::string name) {
@@ -69,14 +69,14 @@ void FileWriterBuilder::writeVersion(std::string version) {
     f << version << std::endl;
 }
 
-void FileWriterBuilder::deleteWriter(std::string name) { std::filesystem::remove(dir / name); }
+void FileWriterBuilder::deleteWriter(std::string name) { std_fs::remove(dir / name); }
 
 FileReaderBuilder::FileReaderBuilder(std::string _dir, uint64_t buffer_size, uint64_t read_size)
     : dir(_dir)
     , buffer_size(buffer_size)
     , read_size(read_size) {
 
-    if (!std::filesystem::exists(dir)) {
+    if (!std_fs::exists(dir)) {
         throw std::invalid_argument(std::string("Missing directory: ") + _dir);
     }
 }
@@ -124,7 +124,7 @@ std::string FileReaderBuilder::readVersion() {
     return version[0];
 }
 
-std::vector<std::string> readLines(std::filesystem::path path) {
+std::vector<std::string> readLines(std_fs::path path) {
     std::ifstream in;
     std::string line;
     std::vector<std::string> ret;

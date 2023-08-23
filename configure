@@ -1,11 +1,11 @@
 #!/bin/sh
-
 if [ -z $BPCELLS_DEBUG_INSTALL ]; then 
     ERR=/dev/null
 else
     ERR=/dev/stdout
     set -x
 fi
+
 
 # This curl request helps count daily installs prior to CRAN release:
 # No identifiable information or IP addresses are saved, and server logs are
@@ -131,6 +131,7 @@ CXX17_OK=""
 CXX_FS_FLAG=""
 $CXX tools/cxx17_filesystem.cc $CXXFLAGS $LDFLAGS -std=c++17 $CXX_FS_FLAG -o tools/cxx17_filesystem 2>$ERR && CXX17_OK="yes";
 if [ -z $CXX17_OK ]; then
+    # Compiler support flag for gcc
     CXX_FS_FLAG="-lstdc++fs"
     $CXX tools/cxx17_filesystem.cc $CXXFLAGS $LDFLAGS -std=c++17 $CXX_FS_FLAG -o tools/cxx17_filesystem 2>$ERR && CXX17_OK="yes";
     if [ ! -z $CXX17_OK ]; then
@@ -139,6 +140,18 @@ if [ -z $CXX17_OK ]; then
         printf "\nUsed fallback compatibility flags for C++17 std::filesystem support: $CXX_FS_FLAG\n"
     fi
 fi
+
+if [ -z $CXX17_OK ]; then
+    # Compiler support flag for llvm
+    CXX_FS_FLAG="-lc++fs"
+    $CXX tools/cxx17_filesystem.cc $CXXFLAGS $LDFLAGS -std=c++17 $CXX_FS_FLAG -o tools/cxx17_filesystem 2>$ERR && CXX17_OK="yes";
+    if [ ! -z $CXX17_OK ]; then
+        printf "\nWarning: your compiler version is old, and may run in to compile errors with BPCells.\n"
+        printf "Consider installing a newer compiler version and setting CC and CXX in ~/.R/Makevars\n"
+        printf "\nUsed fallback compatibility flags for C++17 std::filesystem support: $CXX_FS_FLAG\n"
+    fi
+fi
+
 if [ -z $CXX17_OK ]; then
     printf "\n\nUnable to compile program with C++17 std::filesystem.\nPlease install a newer compiler version and set CC and CXX in ~/.R/Makevars\n"
     exit 1
