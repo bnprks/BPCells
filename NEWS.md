@@ -23,7 +23,7 @@ Contributions welcome :)
   This only supports comparison with non-negative numbers currently. (Thanks to 
   contribution from @brgew)
 - Added `round()` matrix transformation (Thanks to contributions from @brgew)
-- Add experimental internal getter/setter function `all_matrix_inputs()` to help enable relocating
+- Add getter/setter function `all_matrix_inputs()` to help enable relocating
   the underlying storage for BPCells matrix transform objects.
 
 ## Improvements

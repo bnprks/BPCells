@@ -103,6 +103,7 @@ setMethod("matrix_inputs<-", "IterableMatrix", function(x, ..., value) {
 #' @param value List of IterableMatrix objects
 #' @return List of IterableMatrix objects. If a matrix `m` is itself an input object, then 
 #'   `all_matrix_inputs(m)` will return `list(m)`.
+#' @export
 all_matrix_inputs <- function(x) {
   assert_is(x, "IterableMatrix")
   inputs <- matrix_inputs(x)
@@ -111,6 +112,7 @@ all_matrix_inputs <- function(x) {
 }
 
 #' @rdname all_matrix_inputs
+#' @export
 `all_matrix_inputs<-` <- function(x, value) {
   # Error checking:
   # - value should be a list of iterable matrices

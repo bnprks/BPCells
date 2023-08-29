@@ -2,9 +2,11 @@
 
 S3method(base::as.data.frame,IterableFragments)
 S3method(base::as.matrix,IterableMatrix)
+export("all_matrix_inputs<-")
 export("cellNames<-")
 export("chrNames<-")
 export(add_cols)
+export(all_matrix_inputs)
 export(binarize)
 export(call_peaks_tile)
 export(canonical_gene_symbol)
