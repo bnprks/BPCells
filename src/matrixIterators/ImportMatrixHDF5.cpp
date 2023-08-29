@@ -78,9 +78,10 @@ StoredMatrixWriter<uint32_t> create10xFeatureMatrix(
     const StringReader &feature_types,
     const std::map<std::string, std::unique_ptr<StringReader>> &feature_metadata,
     uint32_t buffer_size,
-    uint32_t chunk_size
+    uint32_t chunk_size,
+    uint32_t gzip_level
 ) {
-    H5WriterBuilder wb(file_path, "matrix", buffer_size, chunk_size);
+    H5WriterBuilder wb(file_path, "matrix", buffer_size, chunk_size, gzip_level);
 
     wb.createStringWriter("barcodes")->write(barcodes);
     wb.createStringWriter("features/id")->write(feature_ids);

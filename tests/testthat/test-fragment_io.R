@@ -71,6 +71,22 @@ test_that("HDF5 File Fragments example data round-trip", {
   expect_identical(raw_fragments, write_fragments_memory(packed, compress = FALSE))
 })
 
+test_that("HDF5 File Fragments example data round-trip with gzip", {
+  dir <- withr::local_tempdir()
+  
+  in_path <- "../data/mini_fragments.tsv.gz" #nolint
+  raw_fragments <- write_fragments_memory(open_fragments_10x(in_path), compress = FALSE)
+  
+  write_fragments_hdf5(raw_fragments, file.path(dir, "file.h5"), "unpacked", compress = FALSE, gzip_level = 4L)
+  write_fragments_hdf5(raw_fragments, file.path(dir, "file.h5"), "packed", compress = TRUE, gzip_level = 4L)
+  
+  unpacked <- open_fragments_hdf5(file.path(dir, "file.h5"), "unpacked")
+  packed <- open_fragments_hdf5(file.path(dir, "file.h5"), "packed")
+  
+  expect_identical(raw_fragments, write_fragments_memory(unpacked, compress = FALSE))
+  expect_identical(raw_fragments, write_fragments_memory(packed, compress = FALSE))
+})
+
 test_that("H5 overwrite works", {
   dir <- withr::local_tempdir()
   frags1 <- tibble::tibble(

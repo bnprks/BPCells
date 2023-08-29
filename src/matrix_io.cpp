@@ -512,9 +512,10 @@ void write_unpacked_matrix_hdf5_uint32_t_cpp(
     uint32_t buffer_size,
     uint32_t chunk_size,
     bool allow_overwrite,
-    bool row_major
+    bool row_major,
+    uint32_t gzip_level
 ) {
-    H5WriterBuilder wb(file, group, buffer_size, chunk_size, allow_overwrite);
+    H5WriterBuilder wb(file, group, buffer_size, chunk_size, allow_overwrite, gzip_level);
     write_unpacked_matrix<uint32_t>(wb, matrix, row_major);
 }
 // [[Rcpp::export]]
@@ -525,9 +526,10 @@ void write_packed_matrix_hdf5_uint32_t_cpp(
     uint32_t buffer_size,
     uint32_t chunk_size,
     bool allow_overwrite,
-    bool row_major
+    bool row_major,
+    uint32_t gzip_level
 ) {
-    H5WriterBuilder wb(file, group, buffer_size, chunk_size, allow_overwrite);
+    H5WriterBuilder wb(file, group, buffer_size, chunk_size, allow_overwrite, gzip_level);
     write_packed_matrix<uint32_t>(wb, matrix, row_major);
 }
 // [[Rcpp::export]]
@@ -538,9 +540,10 @@ void write_unpacked_matrix_hdf5_float_cpp(
     uint32_t buffer_size,
     uint32_t chunk_size,
     bool allow_overwrite,
-    bool row_major
+    bool row_major,
+    uint32_t gzip_level
 ) {
-    H5WriterBuilder wb(file, group, buffer_size, chunk_size, allow_overwrite);
+    H5WriterBuilder wb(file, group, buffer_size, chunk_size, allow_overwrite, gzip_level);
     write_unpacked_matrix<float>(wb, matrix, row_major);
 }
 // [[Rcpp::export]]
@@ -551,9 +554,10 @@ void write_packed_matrix_hdf5_float_cpp(
     uint32_t buffer_size,
     uint32_t chunk_size,
     bool allow_overwrite,
-    bool row_major
+    bool row_major,
+    uint32_t gzip_level
 ) {
-    H5WriterBuilder wb(file, group, buffer_size, chunk_size, allow_overwrite);
+    H5WriterBuilder wb(file, group, buffer_size, chunk_size, allow_overwrite, gzip_level);
     write_packed_matrix<float>(wb, matrix, row_major);
 }
 // [[Rcpp::export]]
@@ -564,9 +568,10 @@ void write_unpacked_matrix_hdf5_double_cpp(
     uint32_t buffer_size,
     uint32_t chunk_size,
     bool allow_overwrite,
-    bool row_major
+    bool row_major,
+    uint32_t gzip_level
 ) {
-    H5WriterBuilder wb(file, group, buffer_size, chunk_size, allow_overwrite);
+    H5WriterBuilder wb(file, group, buffer_size, chunk_size, allow_overwrite, gzip_level);
     write_unpacked_matrix<double>(wb, matrix, row_major);
 }
 // [[Rcpp::export]]
@@ -577,9 +582,10 @@ void write_packed_matrix_hdf5_double_cpp(
     uint32_t buffer_size,
     uint32_t chunk_size,
     bool allow_overwrite,
-    bool row_major
+    bool row_major,
+    uint32_t gzip_level
 ) {
-    H5WriterBuilder wb(file, group, buffer_size, chunk_size, allow_overwrite);
+    H5WriterBuilder wb(file, group, buffer_size, chunk_size, allow_overwrite, gzip_level);
     write_packed_matrix<double>(wb, matrix, row_major);
 }
 
@@ -615,7 +621,8 @@ void write_matrix_10x_hdf5_cpp(
     StringVector feature_types,
     List feature_metadata,
     uint32_t buffer_size,
-    uint32_t chunk_size
+    uint32_t chunk_size,
+    uint32_t gzip_level
 ) {
     auto loader = take_unique_xptr<MatrixLoader<uint32_t>>(matrix);
     loader->restart();
@@ -633,7 +640,8 @@ void write_matrix_10x_hdf5_cpp(
         RcppStringReader(feature_types),
         metadata,
         buffer_size,
-        chunk_size
+        chunk_size,
+        gzip_level
     );
     run_with_R_interrupt_check(&StoredMatrixWriter<uint32_t>::write, &w, std::ref(*loader));
 }

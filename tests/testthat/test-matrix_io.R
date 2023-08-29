@@ -106,6 +106,40 @@ test_that("H5Packed Matrix round-trips", {
   }
 })
 
+test_that("H5Packed Matrix round-trips with gzip", {
+  dir <- withr::local_tempdir()
+  args <- list(
+    list(nrow = 10, ncol = 9, fraction_nonzero = 0.2, max_val = 10),
+    list(nrow = 100, ncol = 99, fraction_nonzero = 0.2, max_val = 100),
+    list(nrow = 1000, ncol = 999, fraction_nonzero = 0.1, max_val = 1000)
+  )
+  for (a in args) {
+    m <- do.call(generate_sparse_matrix, a)
+    for (type in c("uint32_t", "float", "double")) {
+      m2 <- m %>%
+        as("IterableMatrix") %>%
+        convert_matrix_type(type)
+      mem <- write_matrix_memory(m2, compress = FALSE)
+      mu <- write_matrix_hdf5(m2, file.path(dir, "subdir", type, "file.h5"), paste0("packed/", as.character(a[["nrow"]])), compress = FALSE, gzip_level = 4L)
+      mp <- write_matrix_hdf5(m2, file.path(dir, "subdir", type, "file.h5"), paste0("unpacked/", as.character(a[["nrow"]])), compress = TRUE, gzip_level = 4L)
+      
+      expect_identical(m, as(mp, "dgCMatrix"))
+      expect_identical(m, as(mu, "dgCMatrix"))
+      expect_identical(matrix_type(mp), type)
+      expect_identical(matrix_type(mu), type)
+      expect_identical(mem, write_matrix_memory(mp, compress = FALSE))
+      expect_identical(mem, write_matrix_memory(mu, compress = FALSE))
+      
+      mu_t <- write_matrix_hdf5(t(m2), file.path(dir, "subdir", type, "file.h5"), paste0("t_packed/", as.character(a[["nrow"]])), compress = FALSE, gzip_level = 4L)
+      mp_t <- write_matrix_hdf5(t(m2), file.path(dir, "subdir", type, "file.h5"), paste0("t_unpacked/", as.character(a[["nrow"]])), compress = TRUE, gzip_level = 4L)
+      expect_identical(t(m), as(mp_t, "dgCMatrix"))
+      expect_identical(t(m), as(mu_t, "dgCMatrix"))
+      expect_identical(matrix_type(mp_t), type)
+      expect_identical(matrix_type(mu_t), type)
+    }
+  }
+})
+
 test_that("Packed Matrix works on all bit widths", {
   # Test matrix design
   # - 512 columns, each column has as many entries in it as the column index

@@ -1417,10 +1417,20 @@ setMethod("short_description", "MatrixH5", function(x) {
   )
 })
 
+#' @param gzip_level Gzip compression level. Default is 0 (no compression).
 #' @rdname matrix_io
 #' @inheritParams write_fragments_hdf5
 #' @export
-write_matrix_hdf5 <- function(mat, path, group, compress = TRUE, buffer_size = 8192L, chunk_size = 1024L, overwrite=FALSE) {
+write_matrix_hdf5 <- function(
+    mat, 
+    path, 
+    group, 
+    compress = TRUE, 
+    buffer_size = 8192L, 
+    chunk_size = 1024L, 
+    overwrite = FALSE,
+    gzip_level = 0L
+) {
   assert_is(mat, c("IterableMatrix", "dgCMatrix"))
   if (is(mat, "dgCMatrix")) mat <- as(mat, "IterableMatrix")
 
@@ -1429,7 +1439,8 @@ write_matrix_hdf5 <- function(mat, path, group, compress = TRUE, buffer_size = 8
   assert_is(compress, "logical")
   assert_is(buffer_size, "integer")
   assert_is(chunk_size, "integer")
-  assert_is(overwrite, "logical")
+  assert_is(gzip_level, "integer")
+  # assert_is(overwrite, "logical")
   assert_is(overwrite, c("logical", "character"))
   if (is(overwrite, "character")) {
     assert_true(dir.exists(overwrite))
@@ -1460,7 +1471,7 @@ write_matrix_hdf5 <- function(mat, path, group, compress = TRUE, buffer_size = 8
   it <- iterate_matrix(mat)
 
   write_function <- get(sprintf("write_%s_matrix_hdf5_%s_cpp", ifelse(compress, "packed", "unpacked"), matrix_type(mat)))
-  write_function(it, path, group, buffer_size, chunk_size, overwrite, mat@transpose)
+  write_function(it, path, group, buffer_size, chunk_size, overwrite, mat@transpose, gzip_level)
 
   if (did_tmp_copy) {
     unlink(overwrite_path, recursive=TRUE)
@@ -1547,6 +1558,7 @@ open_matrix_10x_hdf5 <- function(path, feature_type = NULL, buffer_size = 16384L
 #' @param feature_types String or vector of feature types
 #' @param feature_metadata Named list of additional metadata vectors
 #' to store for each feature
+#' @param gzip_level Gzip compression level. Default is 0 (no compression).
 #' @details Input matrices must be in column-major storage order,
 #' and if the rownames and colnames are not set, names must be
 #' provided for the relevant metadata parameters. Some of the
@@ -1561,16 +1573,14 @@ write_matrix_10x_hdf5 <- function(mat,
                                   feature_types = "Gene Expression",
                                   feature_metadata = list(),
                                   buffer_size = 16384L,
-                                  chunk_size = 1024L) {
+                                  chunk_size = 1024L,
+                                  gzip_level = 0L) {
   assert_is(mat, "IterableMatrix")
   assert_is(path, "character")
   if (mat@transpose) {
     stop("Matrix must have column-major storage order.\nCall t() or transpose_storage_order() first.")
   }
-  if (matrix_type(mat) != "uint32_t") {
-    warning("Converting to integer matrix for output to 10x format")
-    mat <- convert_matrix_type(mat, "uint32_t")
-  }
+  
   assert_is(barcodes, "character")
   assert_len(barcodes, ncol(mat))
   assert_is(feature_ids, "character")
@@ -1596,8 +1606,13 @@ write_matrix_10x_hdf5 <- function(mat,
   }
   assert_is(buffer_size, "integer")
   assert_is(chunk_size, "integer")
+  assert_is(gzip_level, "integer")
 
   path <- normalizePath(path, mustWork = FALSE)
+  if (matrix_type(mat) != "uint32_t") {
+    warning("Converting to integer matrix for output to 10x format")
+    mat <- convert_matrix_type(mat, "uint32_t")
+  }
   it <- iterate_matrix(mat)
   write_matrix_10x_hdf5_cpp(
     it,
@@ -1608,9 +1623,10 @@ write_matrix_10x_hdf5 <- function(mat,
     feature_types,
     feature_metadata,
     buffer_size,
-    chunk_size
+    chunk_size,
+    gzip_level
   )
-  open_matrix_10x_hdf5(path, buffer_size=buffer_size)
+  open_matrix_10x_hdf5(path, buffer_size = buffer_size)
 }
 
 setClass("AnnDataMatrixH5",

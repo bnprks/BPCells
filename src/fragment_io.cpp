@@ -228,9 +228,10 @@ void write_unpacked_fragments_hdf5_cpp(
     std::string group,
     uint32_t buffer_size,
     uint32_t chunk_size,
-    bool allow_overwrite
+    bool allow_overwrite,
+    uint32_t gzip_level
 ) {
-    H5WriterBuilder wb(file, group, buffer_size, chunk_size, allow_overwrite);
+    H5WriterBuilder wb(file, group, buffer_size, chunk_size, allow_overwrite, gzip_level);
     auto frags = take_unique_xptr<FragmentLoader>(fragments);
     run_with_R_interrupt_check(
         &StoredFragmentsWriter::write, StoredFragmentsWriter::createUnpacked(wb), std::ref(*frags)
@@ -261,9 +262,10 @@ void write_packed_fragments_hdf5_cpp(
     std::string group,
     uint32_t buffer_size,
     uint32_t chunk_size,
-    bool allow_overwrite
+    bool allow_overwrite,
+    uint32_t gzip_level
 ) {
-    H5WriterBuilder wb(file, group, buffer_size, chunk_size, allow_overwrite);
+    H5WriterBuilder wb(file, group, buffer_size, chunk_size, allow_overwrite, gzip_level);
     auto frags = take_unique_xptr<FragmentLoader>(fragments);
     run_with_R_interrupt_check(
         &StoredFragmentsWriter::write, StoredFragmentsWriter::createPacked(wb), std::ref(*frags)

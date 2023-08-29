@@ -45,7 +45,8 @@ StoredMatrixWriter<uint32_t> create10xFeatureMatrix(
     const StringReader &feature_types,
     const std::map<std::string, std::unique_ptr<StringReader>> &feature_metadata,
     uint32_t buffer_size,
-    uint32_t chunk_size
+    uint32_t chunk_size,
+    uint32_t gzip_level
 );
 
 // Read AnnData sparse matrix, with an implicit transpose to CSC format for

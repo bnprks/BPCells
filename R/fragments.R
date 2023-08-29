@@ -427,14 +427,25 @@ setMethod("short_description", "FragmentsHDF5", function(x) {
 #' @param group The group within the hdf5 file to write the data to. If writing
 #' to an existing hdf5 file this group must not already be in use
 #' @param chunk_size For performance tuning only. The chunk size used for the HDF5 array storage.
+#' @param gzip_level Gzip compression level. Default is 0 (no compression).
 #' @export
-write_fragments_hdf5 <- function(fragments, path, group = "fragments", compress = TRUE, buffer_size = 8192L, chunk_size = 1024L, overwrite=FALSE) {
+write_fragments_hdf5 <- function(
+    fragments, 
+    path, 
+    group = "fragments", 
+    compress = TRUE, 
+    buffer_size = 8192L, 
+    chunk_size = 1024L, 
+    overwrite = FALSE,
+    gzip_level = 0L
+) {
   assert_is(fragments, "IterableFragments")
   assert_is(path, "character")
   assert_is(group, "character")
   assert_is(compress, "logical")
   assert_is(buffer_size, "integer")
   assert_is(chunk_size, "integer")
+  assert_is(gzip_level, "integer")
   assert_is(overwrite, c("logical", "character"))
   if (is(overwrite, "character")) {
     assert_true(dir.exists(overwrite))
@@ -455,9 +466,9 @@ write_fragments_hdf5 <- function(fragments, path, group = "fragments", compress 
   }
   it <- iterate_fragments(fragments)
   if (compress) {
-    write_packed_fragments_hdf5_cpp(it, path, group, buffer_size, chunk_size, overwrite)
+    write_packed_fragments_hdf5_cpp(it, path, group, buffer_size, chunk_size, overwrite, gzip_level)
   } else {
-    write_unpacked_fragments_hdf5_cpp(it, path, group, buffer_size, chunk_size, overwrite)
+    write_unpacked_fragments_hdf5_cpp(it, path, group, buffer_size, chunk_size, overwrite, gzip_level)
   }
 
   if (did_tmp_copy) {

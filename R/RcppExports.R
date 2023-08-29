@@ -133,16 +133,16 @@ iterate_unpacked_fragments_hdf5_cpp <- function(file, group, buffer_size, chr_na
     .Call(`_BPCells_iterate_unpacked_fragments_hdf5_cpp`, file, group, buffer_size, chr_names, cell_names)
 }
 
-write_unpacked_fragments_hdf5_cpp <- function(fragments, file, group, buffer_size, chunk_size, allow_overwrite) {
-    invisible(.Call(`_BPCells_write_unpacked_fragments_hdf5_cpp`, fragments, file, group, buffer_size, chunk_size, allow_overwrite))
+write_unpacked_fragments_hdf5_cpp <- function(fragments, file, group, buffer_size, chunk_size, allow_overwrite, gzip_level) {
+    invisible(.Call(`_BPCells_write_unpacked_fragments_hdf5_cpp`, fragments, file, group, buffer_size, chunk_size, allow_overwrite, gzip_level))
 }
 
 iterate_packed_fragments_hdf5_cpp <- function(file, group, buffer_size, chr_names, cell_names) {
     .Call(`_BPCells_iterate_packed_fragments_hdf5_cpp`, file, group, buffer_size, chr_names, cell_names)
 }
 
-write_packed_fragments_hdf5_cpp <- function(fragments, file, group, buffer_size, chunk_size, allow_overwrite) {
-    invisible(.Call(`_BPCells_write_packed_fragments_hdf5_cpp`, fragments, file, group, buffer_size, chunk_size, allow_overwrite))
+write_packed_fragments_hdf5_cpp <- function(fragments, file, group, buffer_size, chunk_size, allow_overwrite, gzip_level) {
+    invisible(.Call(`_BPCells_write_packed_fragments_hdf5_cpp`, fragments, file, group, buffer_size, chunk_size, allow_overwrite, gzip_level))
 }
 
 fragments_identical_cpp <- function(fragments1, fragments2) {
@@ -373,28 +373,28 @@ iterate_packed_matrix_hdf5_double_cpp <- function(file, group, buffer_size, row_
     .Call(`_BPCells_iterate_packed_matrix_hdf5_double_cpp`, file, group, buffer_size, row_names, col_names, row_count)
 }
 
-write_unpacked_matrix_hdf5_uint32_t_cpp <- function(matrix, file, group, buffer_size, chunk_size, allow_overwrite, row_major) {
-    invisible(.Call(`_BPCells_write_unpacked_matrix_hdf5_uint32_t_cpp`, matrix, file, group, buffer_size, chunk_size, allow_overwrite, row_major))
+write_unpacked_matrix_hdf5_uint32_t_cpp <- function(matrix, file, group, buffer_size, chunk_size, allow_overwrite, row_major, gzip_level) {
+    invisible(.Call(`_BPCells_write_unpacked_matrix_hdf5_uint32_t_cpp`, matrix, file, group, buffer_size, chunk_size, allow_overwrite, row_major, gzip_level))
 }
 
-write_packed_matrix_hdf5_uint32_t_cpp <- function(matrix, file, group, buffer_size, chunk_size, allow_overwrite, row_major) {
-    invisible(.Call(`_BPCells_write_packed_matrix_hdf5_uint32_t_cpp`, matrix, file, group, buffer_size, chunk_size, allow_overwrite, row_major))
+write_packed_matrix_hdf5_uint32_t_cpp <- function(matrix, file, group, buffer_size, chunk_size, allow_overwrite, row_major, gzip_level) {
+    invisible(.Call(`_BPCells_write_packed_matrix_hdf5_uint32_t_cpp`, matrix, file, group, buffer_size, chunk_size, allow_overwrite, row_major, gzip_level))
 }
 
-write_unpacked_matrix_hdf5_float_cpp <- function(matrix, file, group, buffer_size, chunk_size, allow_overwrite, row_major) {
-    invisible(.Call(`_BPCells_write_unpacked_matrix_hdf5_float_cpp`, matrix, file, group, buffer_size, chunk_size, allow_overwrite, row_major))
+write_unpacked_matrix_hdf5_float_cpp <- function(matrix, file, group, buffer_size, chunk_size, allow_overwrite, row_major, gzip_level) {
+    invisible(.Call(`_BPCells_write_unpacked_matrix_hdf5_float_cpp`, matrix, file, group, buffer_size, chunk_size, allow_overwrite, row_major, gzip_level))
 }
 
-write_packed_matrix_hdf5_float_cpp <- function(matrix, file, group, buffer_size, chunk_size, allow_overwrite, row_major) {
-    invisible(.Call(`_BPCells_write_packed_matrix_hdf5_float_cpp`, matrix, file, group, buffer_size, chunk_size, allow_overwrite, row_major))
+write_packed_matrix_hdf5_float_cpp <- function(matrix, file, group, buffer_size, chunk_size, allow_overwrite, row_major, gzip_level) {
+    invisible(.Call(`_BPCells_write_packed_matrix_hdf5_float_cpp`, matrix, file, group, buffer_size, chunk_size, allow_overwrite, row_major, gzip_level))
 }
 
-write_unpacked_matrix_hdf5_double_cpp <- function(matrix, file, group, buffer_size, chunk_size, allow_overwrite, row_major) {
-    invisible(.Call(`_BPCells_write_unpacked_matrix_hdf5_double_cpp`, matrix, file, group, buffer_size, chunk_size, allow_overwrite, row_major))
+write_unpacked_matrix_hdf5_double_cpp <- function(matrix, file, group, buffer_size, chunk_size, allow_overwrite, row_major, gzip_level) {
+    invisible(.Call(`_BPCells_write_unpacked_matrix_hdf5_double_cpp`, matrix, file, group, buffer_size, chunk_size, allow_overwrite, row_major, gzip_level))
 }
 
-write_packed_matrix_hdf5_double_cpp <- function(matrix, file, group, buffer_size, chunk_size, allow_overwrite, row_major) {
-    invisible(.Call(`_BPCells_write_packed_matrix_hdf5_double_cpp`, matrix, file, group, buffer_size, chunk_size, allow_overwrite, row_major))
+write_packed_matrix_hdf5_double_cpp <- function(matrix, file, group, buffer_size, chunk_size, allow_overwrite, row_major, gzip_level) {
+    invisible(.Call(`_BPCells_write_packed_matrix_hdf5_double_cpp`, matrix, file, group, buffer_size, chunk_size, allow_overwrite, row_major, gzip_level))
 }
 
 dims_matrix_10x_hdf5_cpp <- function(file, buffer_size) {
@@ -405,8 +405,8 @@ iterate_matrix_10x_hdf5_cpp <- function(file, buffer_size, row_names, col_names)
     .Call(`_BPCells_iterate_matrix_10x_hdf5_cpp`, file, buffer_size, row_names, col_names)
 }
 
-write_matrix_10x_hdf5_cpp <- function(matrix, path, barcodes, feature_ids, feature_names, feature_types, feature_metadata, buffer_size, chunk_size) {
-    invisible(.Call(`_BPCells_write_matrix_10x_hdf5_cpp`, matrix, path, barcodes, feature_ids, feature_names, feature_types, feature_metadata, buffer_size, chunk_size))
+write_matrix_10x_hdf5_cpp <- function(matrix, path, barcodes, feature_ids, feature_names, feature_types, feature_metadata, buffer_size, chunk_size, gzip_level) {
+    invisible(.Call(`_BPCells_write_matrix_10x_hdf5_cpp`, matrix, path, barcodes, feature_ids, feature_names, feature_types, feature_metadata, buffer_size, chunk_size, gzip_level))
 }
 
 dims_matrix_anndata_hdf5_cpp <- function(file, group, buffer_size) {

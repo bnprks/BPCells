@@ -16,7 +16,12 @@ template <class T> class H5NumWriter : public BulkNumWriter<T> {
     HighFive::DataType datatype = HighFive::create_datatype<T>();
 
     static HighFive::DataSet
-    createH5DataSet(HighFive::Group group, std::string group_path, uint64_t chunk_size) {
+    createH5DataSet(
+      HighFive::Group group, 
+      std::string group_path, 
+      uint64_t chunk_size, 
+      uint64_t gzip_level
+    ) {
         HighFive::SilenceHDF5 s;
         // Create a dataspace with initial shape and max shape
         HighFive::DataSpace dataspace({0}, {HighFive::DataSpace::UNLIMITED});
@@ -24,6 +29,7 @@ template <class T> class H5NumWriter : public BulkNumWriter<T> {
         // Use chunking
         HighFive::DataSetCreateProps props;
         props.add(HighFive::Chunking(std::vector<hsize_t>{chunk_size}));
+        props.add(HighFive::Deflate(gzip_level));
 
         // At one point I considered using more aggressive chunk caching, but I
         // don't think it's necessary anymore
@@ -40,8 +46,8 @@ template <class T> class H5NumWriter : public BulkNumWriter<T> {
     }
 
   public:
-    H5NumWriter(const HighFive::Group &group, std::string path, uint64_t chunk_size = 1024)
-        : dataset(createH5DataSet(group, path, chunk_size)) {}
+    H5NumWriter(const HighFive::Group &group, std::string path, uint64_t chunk_size = 1024, uint64_t gzip_level = 0)
+        : dataset(createH5DataSet(group, path, chunk_size, gzip_level)) {}
 
     uint64_t write(T *in, uint64_t count) override {
         uint64_t cur_size = dataset.getDimensions()[0];
@@ -104,10 +110,16 @@ class H5WriterBuilder final : public WriterBuilder {
     HighFive::Group group;
     uint64_t buffer_size;
     uint64_t chunk_size;
+    uint64_t gzip_level;
 
   public:
     H5WriterBuilder(
-        std::string file, std::string group, uint64_t buffer_size = 8192, uint64_t chunk_size = 1024, bool allow_exists = false
+      std::string file, 
+      std::string group, 
+      uint64_t buffer_size = 8192, 
+      uint64_t chunk_size = 1024,
+      bool allow_exists = false,
+      uint64_t gzip_level = 0
     );
     UIntWriter createUIntWriter(std::string name) override;
     ULongWriter createULongWriter(std::string name) override;
@@ -128,7 +140,6 @@ class H5ReaderBuilder final : public ReaderBuilder {
     HighFive::Group group;
     uint64_t buffer_size;
     uint64_t read_size;
-
   public:
     H5ReaderBuilder(
         std::string file, std::string group, uint64_t buffer_size, uint64_t read_size = 1024

@@ -82,31 +82,33 @@ H5WriterBuilder::H5WriterBuilder(
     std::string group,
     uint64_t buffer_size,
     uint64_t chunk_size,
-    bool allow_exists
+    bool allow_exists,
+    uint64_t gzip_level
 )
     : group(createH5Group(file, group, allow_exists))
     , buffer_size(buffer_size)
-    , chunk_size(chunk_size) {}
+    , chunk_size(chunk_size) 
+    , gzip_level(gzip_level) {}
 
 UIntWriter H5WriterBuilder::createUIntWriter(std::string name) {
     return UIntWriter(
-        std::make_unique<H5NumWriter<uint32_t>>(group, name, chunk_size), buffer_size
+        std::make_unique<H5NumWriter<uint32_t>>(group, name, chunk_size, gzip_level), buffer_size
     );
 }
 
 ULongWriter H5WriterBuilder::createULongWriter(std::string name) {
     return ULongWriter(
-        std::make_unique<H5NumWriter<uint64_t>>(group, name, chunk_size), buffer_size
+        std::make_unique<H5NumWriter<uint64_t>>(group, name, chunk_size, gzip_level), buffer_size
     );
 }
 
 FloatWriter H5WriterBuilder::createFloatWriter(std::string name) {
-    return FloatWriter(std::make_unique<H5NumWriter<float>>(group, name, chunk_size), buffer_size);
+    return FloatWriter(std::make_unique<H5NumWriter<float>>(group, name, chunk_size, gzip_level), buffer_size);
 }
 
 DoubleWriter H5WriterBuilder::createDoubleWriter(std::string name) {
     return DoubleWriter(
-        std::make_unique<H5NumWriter<double>>(group, name, chunk_size), buffer_size
+        std::make_unique<H5NumWriter<double>>(group, name, chunk_size, gzip_level), buffer_size
     );
 }
 

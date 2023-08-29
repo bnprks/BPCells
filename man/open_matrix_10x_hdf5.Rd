@@ -16,7 +16,8 @@ write_matrix_10x_hdf5(
   feature_types = "Gene Expression",
   feature_metadata = list(),
   buffer_size = 16384L,
-  chunk_size = 1024L
+  chunk_size = 1024L,
+  gzip_level = 0L
 )
 }
 \arguments{
@@ -43,6 +44,8 @@ in memory before calling writes to disk.}
 to store for each feature}
 
 \item{chunk_size}{For performance tuning only. The chunk size used for the HDF5 array storage.}
+
+\item{gzip_level}{Gzip compression level. Default is 0 (no compression).}
 }
 \value{
 BPCells matrix object
