@@ -89,7 +89,8 @@ See details for more information.</p>
 <span>  compress <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  buffer_size <span class="op">=</span> <span class="fl">8192L</span>,</span>
 <span>  chunk_size <span class="op">=</span> <span class="fl">1024L</span>,</span>
-<span>  overwrite <span class="op">=</span> <span class="cn">FALSE</span></span>
+<span>  overwrite <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  gzip_level <span class="op">=</span> <span class="fl">0L</span></span>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu">open_matrix_hdf5</span><span class="op">(</span><span class="va">path</span>, <span class="va">group</span>, buffer_size <span class="op">=</span> <span class="fl">16384L</span><span class="op">)</span></span></code></pre></div>
@@ -126,6 +127,12 @@ to an existing hdf5 file this group must not already be in use</p></dd>
 
 <dt>chunk_size</dt>
 <dd><p>For performance tuning only. The chunk size used for the HDF5 array storage.</p></dd>
+
+
+<dt>gzip_level</dt>
+<dd><p>Gzip compression level. Default is 0 (no compression). This is recommended when both compression and
+compatibility with outside programs is required. Otherwise, using compress=TRUE is recommended
+as it is &gt;10x faster with often similar compression levels.</p></dd>
 
 
 <dt>matrix</dt>

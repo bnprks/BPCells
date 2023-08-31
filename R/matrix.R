@@ -1417,7 +1417,6 @@ setMethod("short_description", "MatrixH5", function(x) {
   )
 })
 
-#' @param gzip_level Gzip compression level. Default is 0 (no compression).
 #' @rdname matrix_io
 #' @inheritParams write_fragments_hdf5
 #' @export
@@ -1440,7 +1439,6 @@ write_matrix_hdf5 <- function(
   assert_is(buffer_size, "integer")
   assert_is(chunk_size, "integer")
   assert_is(gzip_level, "integer")
-  # assert_is(overwrite, "logical")
   assert_is(overwrite, c("logical", "character"))
   if (is(overwrite, "character")) {
     assert_true(dir.exists(overwrite))
@@ -1448,6 +1446,12 @@ write_matrix_hdf5 <- function(
     overwrite <- TRUE
   } else if (overwrite) {
     overwrite_path <- tempfile("overwrite")
+  }
+
+  if (gzip_level != 0L && compress) {
+     rlang::inform(c(
+        "Warning: Mixing gzip compression (gzip_level > 0) with bitpacking compression (compress=TRUE) may be slower than bitpacking compression alone, with little space savings"
+     ))
   }
 
   assert_true(matrix_type(mat) %in% c("uint32_t", "float", "double"))
@@ -1558,7 +1562,6 @@ open_matrix_10x_hdf5 <- function(path, feature_type = NULL, buffer_size = 16384L
 #' @param feature_types String or vector of feature types
 #' @param feature_metadata Named list of additional metadata vectors
 #' to store for each feature
-#' @param gzip_level Gzip compression level. Default is 0 (no compression).
 #' @details Input matrices must be in column-major storage order,
 #' and if the rownames and colnames are not set, names must be
 #' provided for the relevant metadata parameters. Some of the
@@ -1580,7 +1583,15 @@ write_matrix_10x_hdf5 <- function(mat,
   if (mat@transpose) {
     stop("Matrix must have column-major storage order.\nCall t() or transpose_storage_order() first.")
   }
-  
+  if (matrix_type(mat) != "uint32_t") {
+    warning("Converting to integer matrix for output to 10x format")
+    mat <- convert_matrix_type(mat, "uint32_t")
+  }
+  if (gzip_level != 0L && compress) {
+     rlang::inform(c(
+        "Warning: Mixing gzip compression (gzip_level > 0) with bitpacking compression (compress=TRUE) may be slower than bitpacking compression alone, with little space savings"
+     ))
+  }
   assert_is(barcodes, "character")
   assert_len(barcodes, ncol(mat))
   assert_is(feature_ids, "character")
@@ -1609,10 +1620,6 @@ write_matrix_10x_hdf5 <- function(mat,
   assert_is(gzip_level, "integer")
 
   path <- normalizePath(path, mustWork = FALSE)
-  if (matrix_type(mat) != "uint32_t") {
-    warning("Converting to integer matrix for output to 10x format")
-    mat <- convert_matrix_type(mat, "uint32_t")
-  }
   it <- iterate_matrix(mat)
   write_matrix_10x_hdf5_cpp(
     it,

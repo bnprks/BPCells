@@ -32,9 +32,10 @@ const char *H5StringReader::get(uint64_t idx) const {
 }
 uint64_t H5StringReader::size() const { return data.size(); }
 
-H5StringWriter::H5StringWriter(const HighFive::Group &group, std::string path)
+H5StringWriter::H5StringWriter(const HighFive::Group &group, std::string path, uint32_t gzip_level)
     : group(group)
-    , path(path) {}
+    , path(path)
+    , gzip_level(gzip_level) {}
 
 void H5StringWriter::write(const StringReader &reader) {
     std::vector<std::string> data;
@@ -46,10 +47,16 @@ void H5StringWriter::write(const StringReader &reader) {
         i++;
     }
     HighFive::SilenceHDF5 s;
+
+    HighFive::DataSetCreateProps props;
+    if (gzip_level > 0) {
+        props.add(HighFive::Deflate(gzip_level));
+    }
+    
     if (group.exist(path)) {
         group.unlink(path);
     }
-    HighFive::DataSet ds = group.createDataSet<std::string>(path, HighFive::DataSpace::From(data));
+    HighFive::DataSet ds = group.createDataSet<std::string>(path, HighFive::DataSpace::From(data), props);
     // Safety check to avoid an ASan complaint in the R test "AnnData and 10x row/col rename works"
     if (data.size() > 0) {
         ds.write(data);
@@ -83,7 +90,7 @@ H5WriterBuilder::H5WriterBuilder(
     uint64_t buffer_size,
     uint64_t chunk_size,
     bool allow_exists,
-    uint64_t gzip_level
+    uint32_t gzip_level
 )
     : group(createH5Group(file, group, allow_exists))
     , buffer_size(buffer_size)
@@ -113,7 +120,7 @@ DoubleWriter H5WriterBuilder::createDoubleWriter(std::string name) {
 }
 
 std::unique_ptr<StringWriter> H5WriterBuilder::createStringWriter(std::string name) {
-    return std::make_unique<H5StringWriter>(group, name);
+    return std::make_unique<H5StringWriter>(group, name, gzip_level);
 }
 
 void H5WriterBuilder::writeVersion(std::string version) {

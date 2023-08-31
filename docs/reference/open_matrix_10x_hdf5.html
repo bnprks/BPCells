@@ -75,7 +75,8 @@
 <span>  feature_types <span class="op">=</span> <span class="st">"Gene Expression"</span>,</span>
 <span>  feature_metadata <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span>,</span>
 <span>  buffer_size <span class="op">=</span> <span class="fl">16384L</span>,</span>
-<span>  chunk_size <span class="op">=</span> <span class="fl">1024L</span></span>
+<span>  chunk_size <span class="op">=</span> <span class="fl">1024L</span>,</span>
+<span>  gzip_level <span class="op">=</span> <span class="fl">0L</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -123,6 +124,12 @@ to store for each feature</p></dd>
 
 <dt>chunk_size</dt>
 <dd><p>For performance tuning only. The chunk size used for the HDF5 array storage.</p></dd>
+
+
+<dt>gzip_level</dt>
+<dd><p>Gzip compression level. Default is 0 (no compression). This is recommended when both compression and
+compatibility with outside programs is required. Otherwise, using compress=TRUE is recommended
+as it is &gt;10x faster with often similar compression levels.</p></dd>
 
 </dl></div>
     <div class="section level2">

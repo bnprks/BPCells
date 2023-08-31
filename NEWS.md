@@ -25,6 +25,9 @@ Contributions welcome :)
 - Added `round()` matrix transformation (Thanks to contributions from @brgew)
 - Add getter/setter function `all_matrix_inputs()` to help enable relocating
   the underlying storage for BPCells matrix transform objects.
+- All hdf5-writing functions now support a `gzip_level` parameter, which will enable a shuffle + gzip filter for
+  compression. This is generally much slower than bitpacking compression, but it adds improved storage options for
+  files that must be read by outside programs. Thanks to @ycli1995 for submitting this improvement in pull #42.
 
 ## Improvements
 - Merging fragments with `c()` now handles inputs with mismatched chromosome names.

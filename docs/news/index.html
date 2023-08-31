@@ -78,7 +78,12 @@
 <li>Reading text-based MatrixMarket inputs (e.g. from 10x or Parse) is now supported via <code><a href="../reference/import_matrix_market.html">import_matrix_market()</a></code> and the convenience function <code><a href="../reference/import_matrix_market.html">import_matrix_market_10x()</a></code>. Our implementation uses disk-backed sorting to allow importing large files with low memory usage.</li>
 <li>Added <code><a href="../reference/binarize.html">binarize()</a></code> function and associated generics <code>&lt;</code>, <code>&lt;=</code>, <code>&gt;</code>, and <code>&gt;=</code>. This only supports comparison with non-negative numbers currently. (Thanks to contribution from <a href="https://github.com/brgew" class="external-link">@brgew</a>)</li>
 <li>Added <code><a href="https://rdrr.io/r/base/Round.html" class="external-link">round()</a></code> matrix transformation (Thanks to contributions from <a href="https://github.com/brgew" class="external-link">@brgew</a>)</li>
+<<<<<<< HEAD
 <li>Add getter/setter function <code><a href="../reference/all_matrix_inputs.html">all_matrix_inputs()</a></code> to help enable relocating the underlying storage for BPCells matrix transform objects.</li>
+=======
+<li>Add experimental internal getter/setter function <code><a href="../reference/all_matrix_inputs.html">all_matrix_inputs()</a></code> to help enable relocating the underlying storage for BPCells matrix transform objects.</li>
+<li>All hdf5-writing functions now support a <code>gzip_level</code> parameter, which will enable a shuffle + gzip filter for compression. This is generally much slower than bitpacking compression, but it adds improved storage options for files that must be read by outside programs. Thanks to <a href="https://github.com/ycli1995" class="external-link">@ycli1995</a> for submitting this improvement in pull <a href="https://github.com/bnprks/BPCells/issues/42" class="external-link">#42</a>.</li>
+>>>>>>> cd6a821 (Clean-up work for hdf5 gzip_level option)
 </ul></div>
 <div class="section level3">
 <h3 id="improvements-0-2-0">Improvements<a class="anchor" aria-label="anchor" href="#improvements-0-2-0"></a></h3>

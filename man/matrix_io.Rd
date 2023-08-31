@@ -51,7 +51,9 @@ to an existing hdf5 file this group must not already be in use}
 
 \item{chunk_size}{For performance tuning only. The chunk size used for the HDF5 array storage.}
 
-\item{gzip_level}{Gzip compression level. Default is 0 (no compression).}
+\item{gzip_level}{Gzip compression level. Default is 0 (no compression). This is recommended when both compression and
+compatibility with outside programs is required. Otherwise, using compress=TRUE is recommended
+as it is >10x faster with often similar compression levels.}
 
 \item{matrix}{Input matrix, either IterableMatrix or dgCMatrix}
 }
