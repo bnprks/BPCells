@@ -98,6 +98,20 @@ test_that("binarize works", {
     short_description(m2 > 0.5)
 })
 
+test_that("Issue 43 regression (preserve colnames when cancelling type conversion)",  {
+    m <- matrix(1:12, nrow=3) |> as("dgCMatrix")
+    rownames(m) <- paste0("row", seq_len(nrow(m)))
+    colnames(m) <- paste0("col", seq_len(ncol(m)))
+
+    m2 <- t(m) |> as("IterableMatrix")
+    rownames(m2) <- paste0("row", seq_len(nrow(m2)))
+    colnames(m2) <- paste0("col", seq_len(ncol(m2)))
+
+    res <- m %*% (m2 >= 1)
+    expect_identical(rownames(res), rownames(m))
+    expect_identical(colnames(res), colnames(m2))
+})
+
 test_that("round works", {
     m <- generate_sparse_matrix(20, 10, max_val=1e5) / 70
     digits <- 0

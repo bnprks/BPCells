@@ -58,6 +58,7 @@ Contributions welcome :)
 - Improved robustness of the Windows installation process for setups that do not need the -lsz linker flag to compile hdf5
 - Fixed possible memory safety bug where wrapped R objects (such as dgCMatrix) could be potentially garbage collected
   while C++ was still trying to access the data in rare circumstances.
+- Fixed case when dimnames were not preserved when calling `convert_matrix_type()` twice in a row such that it cancels out (e.g. double -> uint32_t -> double). Thanks to @brgrew reporting issue #43
 
 # BPCells 0.1.0
 

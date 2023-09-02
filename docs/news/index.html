@@ -104,6 +104,7 @@
 <li>Fixed 64-bit integer overflow (!) that could cause incorrect p-value calculations in <code><a href="../reference/marker_features.html">marker_features()</a></code> for features with more than 2.6 million zeros.</li>
 <li>Improved robustness of the Windows installation process for setups that do not need the -lsz linker flag to compile hdf5</li>
 <li>Fixed possible memory safety bug where wrapped R objects (such as dgCMatrix) could be potentially garbage collected while C++ was still trying to access the data in rare circumstances.</li>
+<li>Fixed case when dimnames were not preserved when calling <code><a href="../reference/convert_matrix_type.html">convert_matrix_type()</a></code> twice in a row such that it cancels out (e.g. double -&gt; uint32_t -&gt; double). Thanks to <a href="https://github.com/brgrew" class="external-link">@brgrew</a> reporting issue <a href="https://github.com/bnprks/BPCells/issues/43" class="external-link">#43</a></li>
 </ul></div>
 </div>
     <div class="section level2">

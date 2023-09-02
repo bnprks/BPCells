@@ -2130,7 +2130,10 @@ convert_matrix_type <- function(matrix, type = c("uint32_t", "double", "float"))
     return(matrix)
   } else if (is(matrix, "ConvertMatrixType")) {
     if (matrix_type(matrix@matrix) == type) {
-      return(matrix@matrix)
+      ret <- matrix@matrix
+      # Restore dimnames that would have been cleared with wrapMatrix
+      dimnames(ret) <- dimnames(matrix) 
+      return(ret)
     } else {
       matrix@type <- type
       return(matrix)
