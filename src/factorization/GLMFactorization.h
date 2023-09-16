@@ -3,7 +3,7 @@
 #include <vector>
 
 #ifndef RCPP_EIGEN
-#include <Eigen/Core>
+#include <Eigen/Cholesky>
 #else
 #define RCPP_NO_RTTI
 #define RCPP_NO_SUGAR

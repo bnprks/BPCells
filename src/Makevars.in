@@ -23,7 +23,6 @@ arrayIO/hdf5.o \
 arrayIO/vector.o \
 bitpacking/bp128.o \
 bitpacking/simd_vec.o \
-factorization/GLMFactorization.o \
 fragmentIterators/BedFragments.o \
 fragmentIterators/CellSelect.o \
 fragmentIterators/ChrSelect.o \
