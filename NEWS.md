@@ -52,7 +52,7 @@ Contributions welcome :)
 - Fixed bug writing fragment files with >512 chromosomes.
 - Fixed bug when reading fragment files with >4 billion fragments.
 - Fixed file permissions errors when using read-only hdf5 files (Issue #26 reported thanks to @ttumkaya)
-- Renaming `rownames()` or `colnames()` is now propagated when saving matrices (Issue #29 reported thanks to @realzehuali)
+- Renaming `rownames()` or `colnames()` is now propagated when saving matrices (Issue #29 reported thanks to @realzehuali, with an additional fix after report thanks to @Dario-Rocha)
 - Fixed 64-bit integer overflow (!) that could cause incorrect p-value calculations in `marker_features()` for features with
   more than 2.6 million zeros.
 - Improved robustness of the Windows installation process for setups that do not need the -lsz linker flag to compile hdf5

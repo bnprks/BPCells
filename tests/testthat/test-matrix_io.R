@@ -295,7 +295,21 @@ test_that("Renaming transformed matrix works", {
   expect_s4_class(x4, "RenameDims")
   expect_s4_class(x4@matrix, class(x3@matrix))
 
+  # Check that the dimnames are preserved after a transform and a write
+  # (Bug re-reported in issue #29)
+  expect_identical(
+    dimnames(x1), dimnames(write_matrix_memory(log1p(x1), compress=FALSE))
+  )
+  # Test that this still works with rbind and cbind
+  expect_identical(
+    dimnames(x1), dimnames(write_matrix_memory(rbind(x1[1:2,],x1[3,]), compress=FALSE))
+  )
+  expect_identical(
+    dimnames(x1), dimnames(write_matrix_memory(cbind(x1[,1:2],x1[,3:4]), compress=FALSE))
+  )
 })
+
+
 
 test_that("Matrix without names works", {
   dir <- withr::local_tempdir()

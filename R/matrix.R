@@ -27,7 +27,7 @@ setClass("IterableMatrix",
 #' @keywords internal
 wrapMatrix <- function(class, m, ...) {
   dimnames <- dimnames(m)
-  if (matrix_is_transform(m)) m@dimnames <- list(NULL, NULL)
+  if (matrix_is_transform(m) && !is(m, "RenameDims")) m@dimnames <- list(NULL, NULL)
   new(class, matrix = m, transpose = m@transpose, dim = m@dim, dimnames = dimnames, ...)
 }
 
@@ -860,8 +860,8 @@ setMethod("rbind2", signature(x = "IterableMatrix", y = "IterableMatrix"), funct
   # Handle dimnames
   col_names <- merge_dimnames(colnames(x), colnames(y), "rbind", "column")
   row_names <- concat_dimnames(rownames(x), rownames(y), nrow(x), nrow(y), "rbind", "row")
-  if (matrix_is_transform(x)) x@dimnames <- list(NULL, NULL)
-  if (matrix_is_transform(y)) y@dimnames <- list(NULL, NULL)
+  if (matrix_is_transform(x) && !is(x, "RenameDims")) x@dimnames <- list(NULL, NULL)
+  if (matrix_is_transform(y) && !is(y, "RenameDims")) y@dimnames <- list(NULL, NULL)
 
   matrix_list <- list()
   if (is(x, "RowBindMatrices")) {
@@ -943,8 +943,8 @@ setMethod("cbind2", signature(x = "IterableMatrix", y = "IterableMatrix"), funct
   # Handle dimnames
   row_names <- merge_dimnames(rownames(x), rownames(y), "cbind", "row")
   col_names <- concat_dimnames(colnames(x), colnames(y), ncol(x), ncol(y), "cbind", "column")
-  if (matrix_is_transform(x)) x@dimnames <- list(NULL, NULL)
-  if (matrix_is_transform(y)) y@dimnames <- list(NULL, NULL)
+  if (matrix_is_transform(x) && !is(x, "RenameDims")) x@dimnames <- list(NULL, NULL)
+  if (matrix_is_transform(y) && !is(y, "RenameDims")) y@dimnames <- list(NULL, NULL)
 
   matrix_list <- list()
   if (is(x, "ColBindMatrices")) {
