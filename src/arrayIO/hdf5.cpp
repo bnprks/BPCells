@@ -52,11 +52,12 @@ void H5StringWriter::write(const StringReader &reader) {
     if (gzip_level > 0) {
         props.add(HighFive::Deflate(gzip_level));
     }
-    
+
     if (group.exist(path)) {
         group.unlink(path);
     }
-    HighFive::DataSet ds = group.createDataSet<std::string>(path, HighFive::DataSpace::From(data), props);
+    HighFive::DataSet ds =
+        group.createDataSet<std::string>(path, HighFive::DataSpace::From(data), props);
     // Safety check to avoid an ASan complaint in the R test "AnnData and 10x row/col rename works"
     if (data.size() > 0) {
         ds.write(data);
@@ -94,7 +95,7 @@ H5WriterBuilder::H5WriterBuilder(
 )
     : group(createH5Group(file, group, allow_exists))
     , buffer_size(buffer_size)
-    , chunk_size(chunk_size) 
+    , chunk_size(chunk_size)
     , gzip_level(gzip_level) {}
 
 UIntWriter H5WriterBuilder::createUIntWriter(std::string name) {
@@ -110,7 +111,9 @@ ULongWriter H5WriterBuilder::createULongWriter(std::string name) {
 }
 
 FloatWriter H5WriterBuilder::createFloatWriter(std::string name) {
-    return FloatWriter(std::make_unique<H5NumWriter<float>>(group, name, chunk_size, gzip_level), buffer_size);
+    return FloatWriter(
+        std::make_unique<H5NumWriter<float>>(group, name, chunk_size, gzip_level), buffer_size
+    );
 }
 
 DoubleWriter H5WriterBuilder::createDoubleWriter(std::string name) {
@@ -135,6 +138,8 @@ void H5WriterBuilder::writeVersion(std::string version) {
 void H5WriterBuilder::deleteWriter(std::string name) {
     throw std::logic_error("deleteWriter: HDF5 files don't support deletion");
 }
+
+HighFive::Group &H5WriterBuilder::getGroup() { return group; }
 
 // Try to open a file for read-write, then fall back to read only if needed.
 // If we first open a file ReadOnly, it prevents future opening with ReadWrite

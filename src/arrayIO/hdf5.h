@@ -132,6 +132,7 @@ class H5WriterBuilder final : public WriterBuilder {
     std::unique_ptr<StringWriter> createStringWriter(std::string name) override;
     void writeVersion(std::string version) override;
     void deleteWriter(std::string name) override;
+    HighFive::Group &getGroup();
 };
 
 // Try to open a file for read-write, then fall back to read only if needed.
