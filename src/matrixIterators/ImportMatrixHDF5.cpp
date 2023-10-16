@@ -72,10 +72,10 @@ open10xFeatureMatrix(std::string file, uint32_t buffer_size, uint32_t read_size)
 
 StoredMatrixWriter<uint32_t> create10xFeatureMatrix(
     std::string file_path,
-    const StringReader &barcodes,
-    const StringReader &feature_ids,
-    const StringReader &feature_names,
-    const StringReader &feature_types,
+    StringReader &&barcodes,
+    StringReader &&feature_ids,
+    StringReader &&feature_names,
+    StringReader &&feature_types,
     const std::map<std::string, std::unique_ptr<StringReader>> &feature_metadata,
     uint32_t buffer_size,
     uint32_t chunk_size,

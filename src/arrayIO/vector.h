@@ -78,7 +78,7 @@ class VecStringWriter : public StringWriter {
 
   public:
     VecStringWriter(std::vector<std::string> &data);
-    void write(const StringReader &reader) override;
+    void write(StringReader &reader) override;
 };
 
 class VecReaderWriterBuilder : public WriterBuilder, public ReaderBuilder {

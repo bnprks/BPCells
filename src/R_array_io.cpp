@@ -27,11 +27,11 @@ NumericVector convert_ulong_to_numeric(const NumericVector &ulong_vec) {
 // and longs represented as doubles
 
 RcppStringReader::RcppStringReader(const StringVector &data) : data(data) {}
-const char *RcppStringReader::get(uint64_t idx) const {
+const char *RcppStringReader::get(uint64_t idx) {
     if ((int64_t)idx < data.size()) return data[idx];
     return NULL;
 }
-uint64_t RcppStringReader::size() const { return data.size(); }
+uint64_t RcppStringReader::size() { return data.size(); }
 
 S4ReaderBuilder::S4ReaderBuilder(S4 s4, uint32_t load_size) : s4(s4), load_size(load_size) {}
 UIntReader S4ReaderBuilder::openUIntReader(std::string name) {

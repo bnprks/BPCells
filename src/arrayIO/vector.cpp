@@ -3,7 +3,7 @@
 namespace BPCells {
 
 VecStringWriter::VecStringWriter(std::vector<std::string> &data) : data(data) {}
-void VecStringWriter::write(const StringReader &reader) {
+void VecStringWriter::write(StringReader &reader) {
     uint64_t i = 0;
     data.resize(0);
     while (true) {

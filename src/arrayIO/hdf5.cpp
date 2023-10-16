@@ -3,41 +3,45 @@
 
 namespace BPCells {
 
-H5StringReader::H5StringReader(const HighFive::Group &group, std::string path) {
-    HighFive::SilenceHDF5 s;
+H5StringReader::H5StringReader(const HighFive::Group &group, std::string path) : dataset(group.getDataSet(path)) {}
 
-    HighFive::DataSet d(group.getDataSet(path));
-    HighFive::DataType type = d.getDataType();
+inline void H5StringReader::ensureDataReady() {
+    if (data_ready) return;
+    HighFive::DataType type = dataset.getDataType();
     if (type.isVariableStr()) {
         // Workaround for HighFive bug: don't try reading an empty string vector
-        if (d.getDimensions()[0] > 0) {
-            d.read(data);
+        if (dataset.getDimensions()[0] > 0) {
+            dataset.read(data);
         } else {
             data.resize(0);
         }
     } else {
         uint64_t bytes = type.getSize();
-        uint64_t elements = d.getDimensions()[0];
+        uint64_t elements = dataset.getDimensions()[0];
         std::vector<char> char_data(bytes * elements);
-        d.read(char_data.data(), type);
+        dataset.read(char_data.data(), type);
         data.resize(elements);
         for (uint64_t i = 0; i < elements; i++) {
             data[i] = std::string(char_data.data() + bytes * i, char_data.data() + bytes * (i + 1));
         }
     }
 }
-const char *H5StringReader::get(uint64_t idx) const {
+const char *H5StringReader::get(uint64_t idx) {
+    ensureDataReady();
     if (idx < data.size()) return data[idx].c_str();
     return NULL;
 }
-uint64_t H5StringReader::size() const { return data.size(); }
+uint64_t H5StringReader::size() { 
+    ensureDataReady();
+    return dataset.getElementCount(); 
+}
 
 H5StringWriter::H5StringWriter(const HighFive::Group &group, std::string path, uint32_t gzip_level)
     : group(group)
     , path(path)
     , gzip_level(gzip_level) {}
 
-void H5StringWriter::write(const StringReader &reader) {
+void H5StringWriter::write(StringReader &reader) {
     std::vector<std::string> data;
     uint64_t i = 0;
     while (true) {

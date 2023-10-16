@@ -6,11 +6,9 @@ namespace BPCells {
 
 // Rank-transform each column of a matrix. Offset the ranking such that 0 values
 // are assigned a rank of 0. Tied ranks are averaged together.
-template <class T> class ColwiseRank : public MatrixLoader<double> {
+template <class T> class ColwiseRank : public MatrixConverterLoaderWrapper<T, double> {
   private:
-    std::unique_ptr<MatrixLoader<T>> loader;
     uint32_t current_col = UINT32_MAX - 1;
-    bool take_ownership = true;
 
     std::vector<uint32_t> row_data, row_buf;
     std::vector<T> val_data, val_buf;
@@ -23,7 +21,7 @@ template <class T> class ColwiseRank : public MatrixLoader<double> {
 
   public:
     ColwiseRank(std::unique_ptr<MatrixLoader<T>> &&loader, uint32_t load_size = 1024)
-        : loader(std::move(loader))
+        : MatrixConverterLoaderWrapper<T, double>(std::move(loader))
         , load_size(load_size) {
         row_data.resize(this->loader->rows());
         row_buf.resize(this->loader->rows());
@@ -32,26 +30,13 @@ template <class T> class ColwiseRank : public MatrixLoader<double> {
         ranks.resize(this->loader->rows());
     }
 
-    ~ColwiseRank() {
-        if (!take_ownership) loader.release();
-    }
     ColwiseRank() = default;
     ColwiseRank(ColwiseRank&&) = default;
     ColwiseRank& operator=(ColwiseRank&&) = default;
 
-    // Set the object so that the inner loader will be preserved
-    // rather than calling the destructor when this loader is destructed
-    void preserve_input_loader() {take_ownership = false;}
-
     // Get this column's sum of t^3 - t
     // where t is the number of tied entries at a given rank
     double tieStatistic() {return tie_statistic;}
-
-    uint32_t rows() const override { return loader->rows(); }
-    uint32_t cols() const override { return loader->cols(); }
-
-    const char *rowNames(uint32_t row) override { return loader->rowNames(row); }
-    const char *colNames(uint32_t col) override { return loader->colNames(col); }
 
     void restart() override {
         idx = 0;
@@ -70,8 +55,6 @@ template <class T> class ColwiseRank : public MatrixLoader<double> {
         cap = 0;
         return this->loader->nextCol();
     }
-
-    uint32_t currentCol() const override { return loader->currentCol(); }
 
     bool load() override {
         if (idx == 0 && cap == 0) {
@@ -95,7 +78,7 @@ template <class T> class ColwiseRank : public MatrixLoader<double> {
             }
 
             // Calculate the offset to apply to make rank of 0 map to 0
-            uint32_t implicit_zeros_count = rows() - cap;
+            uint32_t implicit_zeros_count = this->rows() - cap;
             double zero_rank =
                 negative_count + (1 + explicit_zeros_count + implicit_zeros_count) / 2.0;
             if (explicit_zeros_count == 0 && implicit_zeros_count == 0) zero_rank = 0;

@@ -167,9 +167,7 @@ template <typename T> class StoredMatrixWriter : public MatrixWriter<T> {
         this->col_names->write(VecStringReader(col_names));
         this->row_names->write(VecStringReader(row_names));
 
-        std::vector<std::string> storage_order;
-        storage_order.push_back(row_major ? "row" : "col");
-        this->storage_order->write(VecStringReader(storage_order));
+        this->storage_order->write(VecStringReader({row_major ? "row" : "col"}));
     }
 };
 

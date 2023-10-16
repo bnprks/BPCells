@@ -12,14 +12,15 @@ namespace BPCells {
 class StringReader {
   public:
     virtual ~StringReader() = default;
-    virtual const char *get(uint64_t idx) const = 0;
-    virtual uint64_t size() const = 0;
+    virtual const char *get(uint64_t idx) = 0;
+    virtual uint64_t size() = 0;
 };
 
 class StringWriter {
   public:
     virtual ~StringWriter() = default;
-    virtual void write(const StringReader &reader) = 0;
+    virtual void write(StringReader &reader) = 0;
+    void write(StringReader &&reader) { write(reader); }
 };
 
 // Simple generic StringReader designed to allow for transparent reading
@@ -30,13 +31,13 @@ class VecStringReader : public StringReader {
 
   public:
     VecStringReader(std::vector<std::string> data);
-    const char *get(uint64_t idx) const override;
-    uint64_t size() const override;
+    const char *get(uint64_t idx) override;
+    uint64_t size() override;
 };
 
 class NullStringWriter : public StringWriter {
   public:
-    void write(const StringReader &reader) override {}
+    void write(StringReader &reader) override {}
 };
 
 template <class T> class BulkNumReader {

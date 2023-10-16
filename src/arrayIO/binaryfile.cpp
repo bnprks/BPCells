@@ -2,25 +2,34 @@
 
 namespace BPCells {
 
-FileStringReader::FileStringReader(std_fs::path path) : data(readLines(path)) {}
-const char *FileStringReader::get(uint64_t idx) const {
+FileStringReader::FileStringReader(std_fs::path path) : path(path) {}
+
+inline void FileStringReader::ensureDataReady() {
+    if (!data_ready) {
+        data = readLines(path);
+        data_ready = true;
+    }
+}
+const char *FileStringReader::get(uint64_t idx) {
+    ensureDataReady();
     if (idx < data.size()) return data[idx].c_str();
     return NULL;
 }
 
-uint64_t FileStringReader::size() const { return data.size(); }
+uint64_t FileStringReader::size() {
+    ensureDataReady();
+    return data.size();
+}
 
 FileStringWriter::FileStringWriter(std_fs::path path) : path(path) {}
-void FileStringWriter::write(const StringReader &reader) {
+void FileStringWriter::write(StringReader &reader) {
     std::ofstream f(path.c_str());
     uint64_t i = 0;
     while (true) {
         const char *s = reader.get(i);
         if (s == NULL) break;
-        while (*s != '\0') {
-            f.put(*s);
-            s++;
-        }
+        
+        f.write(s, strlen(s));
         f.put('\n');
         i += 1;
     }

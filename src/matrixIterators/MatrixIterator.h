@@ -79,10 +79,12 @@ template <typename T> class MatrixLoader {
     // These operations can be overloaded by matrix transform operations
 
     // Calculate matrix-matrix product A*B where A (this) is sparse and B is a dense matrix.
-    virtual Eigen::MatrixXd
-    denseMultiplyRight(const Eigen::Map<Eigen::MatrixXd> B, std::atomic<bool> *user_interrupt = NULL);
-    virtual Eigen::MatrixXd
-    denseMultiplyLeft(const Eigen::Map<Eigen::MatrixXd> B, std::atomic<bool> *user_interrupt = NULL);
+    virtual Eigen::MatrixXd denseMultiplyRight(
+        const Eigen::Map<Eigen::MatrixXd> B, std::atomic<bool> *user_interrupt = NULL
+    );
+    virtual Eigen::MatrixXd denseMultiplyLeft(
+        const Eigen::Map<Eigen::MatrixXd> B, std::atomic<bool> *user_interrupt = NULL
+    );
     // Calculate matrix-vector product A*v where A (this) is sparse and B is a dense matrix.
     virtual Eigen::VectorXd
     vecMultiplyRight(const Eigen::Map<Eigen::VectorXd> v, std::atomic<bool> *user_interrupt = NULL);
@@ -107,25 +109,29 @@ template <typename T> class MatrixLoader {
     computeMatrixStats(Stats row_stats, Stats col_stats, std::atomic<bool> *user_interrupt = NULL);
 };
 
-template <typename T> class MatrixLoaderWrapper : public MatrixLoader<T> {
+// Usually downstream users will want MatrixLoaderWrapper.
+// This base type is provided in rare cases where we want a wrapper that might
+// not match the output type of its input type (e.g. colwise rank)
+template <typename Tin, typename Tout = Tin> class MatrixConverterLoaderWrapper : public MatrixLoader<Tout> {
   protected:
-    std::unique_ptr<MatrixLoader<T>> loader;
+    std::unique_ptr<MatrixLoader<Tin>> loader;
     uint32_t current_col = UINT32_MAX - 1;
     bool take_ownership = true;
 
   public:
-    MatrixLoaderWrapper(std::unique_ptr<MatrixLoader<T>> &&loader) : loader(std::move(loader)){};
-    
-    ~MatrixLoaderWrapper() {
-      if (!take_ownership) loader.release();
+    MatrixConverterLoaderWrapper(std::unique_ptr<MatrixLoader<Tin>> &&loader)
+        : loader(std::move(loader)){};
+
+    ~MatrixConverterLoaderWrapper() {
+        if (!take_ownership) loader.release();
     }
-    MatrixLoaderWrapper() = default;
-    MatrixLoaderWrapper(MatrixLoaderWrapper&&) = default;
-    MatrixLoaderWrapper& operator=(MatrixLoaderWrapper&&) = default;
+    MatrixConverterLoaderWrapper() = default;
+    MatrixConverterLoaderWrapper(MatrixConverterLoaderWrapper &&) = default;
+    MatrixConverterLoaderWrapper &operator=(MatrixConverterLoaderWrapper &&) = default;
 
     // Set the object so that the inner loader will be preserved
     // rather than calling the destructor when this loader is destructed
-    void preserve_input_loader() {take_ownership = false;}
+    void preserve_input_loader() { take_ownership = false; }
 
     uint32_t rows() const override { return loader->rows(); }
     uint32_t cols() const override { return loader->cols(); }
@@ -149,7 +155,18 @@ template <typename T> class MatrixLoaderWrapper : public MatrixLoader<T> {
     uint32_t capacity() const override { return loader->capacity(); }
 
     uint32_t *rowData() override { return loader->rowData(); }
-    T *valData() override { return loader->valData(); }
+};
+
+template <typename T> class MatrixLoaderWrapper : public MatrixConverterLoaderWrapper<T, T> {
+
+  public:
+    MatrixLoaderWrapper(std::unique_ptr<MatrixLoader<T>> &&loader)
+        : MatrixConverterLoaderWrapper<T,T>(std::move(loader)){};
+
+    MatrixLoaderWrapper() = default;
+    MatrixLoaderWrapper(MatrixLoaderWrapper &&) = default;
+    MatrixLoaderWrapper &operator=(MatrixLoaderWrapper &&) = default;
+    T *valData() override { return this->loader->valData(); }
 };
 
 template <typename T> class MatrixIterator : public MatrixLoaderWrapper<T> {

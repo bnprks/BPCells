@@ -356,10 +356,8 @@ template <typename T> class StoredMatrixSorter {
         }
         shape.finalize();
 
-        std::vector<std::string> storage_order;
-        storage_order.push_back(row_major ? "row" : "col");
         out_writer_builder.createStringWriter("storage_order")
-            ->write(VecStringReader(storage_order));
+            ->write(VecStringReader({row_major ? "row" : "col"}));
 
         out_writer_builder.writeVersion(StoredMatrix<T>::versionString(true, 2));
     }

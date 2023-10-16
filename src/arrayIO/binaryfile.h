@@ -125,12 +125,15 @@ std::vector<std::string> readLines(std_fs::path path);
 
 class FileStringReader final : public StringReader {
   private:
+    bool data_ready = false;
+    std_fs::path path;
     std::vector<std::string> data;
 
+    inline void ensureDataReady();
   public:
     FileStringReader(std_fs::path path);
-    const char *get(uint64_t idx) const override;
-    uint64_t size() const override;
+    const char *get(uint64_t idx) override;
+    uint64_t size() override;
 };
 
 class FileStringWriter final : public StringWriter {
@@ -139,7 +142,7 @@ class FileStringWriter final : public StringWriter {
 
   public:
     FileStringWriter(std_fs::path path);
-    void write(const StringReader &reader) override;
+    void write(StringReader &reader) override;
 };
 
 class FileWriterBuilder final : public WriterBuilder {

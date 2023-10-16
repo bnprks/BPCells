@@ -17,8 +17,8 @@ class RcppStringReader : public BPCells::StringReader {
 
   public:
     RcppStringReader(const Rcpp::StringVector &data);
-    const char *get(uint64_t idx) const override;
-    uint64_t size() const override;
+    const char *get(uint64_t idx) override;
+    uint64_t size() override;
 };
 
 class S4ReaderBuilder : public BPCells::ReaderBuilder {

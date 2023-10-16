@@ -90,12 +90,15 @@ using H5UIntReader = H5NumReader<uint32_t>;
 
 class H5StringReader : public StringReader {
   private:
+    bool data_ready = false;
+    HighFive::DataSet dataset;
     std::vector<std::string> data;
 
+    inline void ensureDataReady();
   public:
     H5StringReader(const HighFive::Group &group, std::string path);
-    const char *get(uint64_t idx) const override;
-    uint64_t size() const override;
+    const char *get(uint64_t idx) override;
+    uint64_t size() override;
 };
 
 class H5StringWriter : public StringWriter {
@@ -106,7 +109,7 @@ class H5StringWriter : public StringWriter {
 
   public:
     H5StringWriter(const HighFive::Group &group, std::string path, uint32_t gzip_level = 0);
-    void write(const StringReader &reader) override;
+    void write(StringReader &reader) override;
 };
 
 class H5WriterBuilder final : public WriterBuilder {
