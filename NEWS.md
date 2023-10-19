@@ -28,6 +28,7 @@ Contributions welcome :)
 - All hdf5-writing functions now support a `gzip_level` parameter, which will enable a shuffle + gzip filter for
   compression. This is generally much slower than bitpacking compression, but it adds improved storage options for
   files that must be read by outside programs. Thanks to @ycli1995 for submitting this improvement in pull #42.
+- AnnData export now supported via `write_matrix_anndata_hdf5()` (issue #49)
 
 ## Improvements
 - Merging fragments with `c()` now handles inputs with mismatched chromosome names.

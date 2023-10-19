@@ -2,9 +2,19 @@
 % Please edit documentation in R/matrix.R
 \name{open_matrix_anndata_hdf5}
 \alias{open_matrix_anndata_hdf5}
-\title{Read AnnData matrix}
+\alias{write_matrix_anndata_hdf5}
+\title{Read/write AnnData matrix}
 \usage{
 open_matrix_anndata_hdf5(path, group = "X", buffer_size = 16384L)
+
+write_matrix_anndata_hdf5(
+  mat,
+  path,
+  group = "X",
+  buffer_size = 16384L,
+  chunk_size = 1024L,
+  gzip_level = 0L
+)
 }
 \arguments{
 \item{path}{Path to the hdf5 file on disk}
@@ -14,15 +24,18 @@ to an existing hdf5 file this group must not already be in use}
 
 \item{buffer_size}{For performance tuning only. The number of items to be buffered
 in memory before calling writes to disk.}
+
+\item{chunk_size}{For performance tuning only. The chunk size used for the HDF5 array storage.}
+
+\item{gzip_level}{Gzip compression level. Default is 0 (no compression)}
 }
 \value{
 AnnDataMatrixH5 object, with cells as the columns.
 }
 \description{
-Read a sparse integer matrix from an anndata matrix in an hdf5 file.
-}
-\details{
-Since AnnData stores RNA matrices as cells x genes, whereas BPCells
-stores RNA matrices as genes x cells, the returned matrix will be transposed
-relative to the native AnnData matrix.
+Read or write a sparse matrix from an anndata hdf5 file. These functions will
+automatically transpose matrices when converting to/from the AnnData
+format. This is because the AnnData convention stores cells as rows, whereas the R
+convention stores cells as columns. If this behavior is undesired, call \code{t()}
+manually on the matrix inputs and outputs of these functions.
 }

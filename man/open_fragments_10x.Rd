@@ -29,7 +29,7 @@ insertion at the end coordinate rather than the base before the end coordinate. 
 with 10x fragment file outputs (defaults to 4 columns chr,start,end,cell)}
 }
 \value{
-**10x fragments file object
+10x fragments file object
 }
 \description{
 10x fragment files come in a bed-like format, with columns chr, start, end,

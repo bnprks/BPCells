@@ -51,11 +51,13 @@ StoredMatrixWriter<uint32_t> create10xFeatureMatrix(
 
 // Read AnnData sparse matrix, with an implicit transpose to CSC format for
 // any data stored in CSR format
-StoredMatrix<float> openAnnDataMatrix(
+template<typename T>
+StoredMatrix<T> openAnnDataMatrix(
     std::string file, std::string group, uint32_t buffer_size, uint32_t read_size = 1024
 );
 
-StoredMatrix<float> openAnnDataMatrix(
+template<typename T>
+StoredMatrix<T> openAnnDataMatrix(
     std::string file,
     std::string group,
     uint32_t buffer_size,
@@ -63,6 +65,30 @@ StoredMatrix<float> openAnnDataMatrix(
     std::unique_ptr<StringReader> &&col_names,
     uint32_t read_size = 1024
 );
+
+// Write a Sparse Array to an AnnData file
+template<typename T>
+StoredMatrixWriter<T> createAnnDataMatrix(
+    std::string file,
+    std::string group,
+    bool row_major,
+    uint32_t buffer_size,
+    uint32_t chunk_size,
+    uint32_t gzip_level
+);
+
+// Add obs + var metadata to an anndata file if needed.
+// Draw from the matrix row/col names if present, or otherwise
+// insert dummy identifiers.
+template<typename T>
+void createAnnDataObsVarIfMissing(
+    MatrixLoader<T> &mat,
+    std::string file,
+    bool row_major,
+    uint32_t gzip_level
+);
+
+std::string getAnnDataMatrixType(std::string file, std::string group);
 
 bool isRowOrientedAnnDataMatrix(std::string file, std::string group);
 

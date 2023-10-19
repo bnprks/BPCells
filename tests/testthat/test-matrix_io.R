@@ -213,6 +213,43 @@ test_that("AnnData subset hasn't regressed", {
   expect_identical(s$col_stats["mean",], c(1.2, 1, 0.8))
 })
 
+test_that("AnnData write works", {
+  dir <- withr::local_tempdir()
+  mat_1 <- generate_sparse_matrix(10, 15)
+  rownames(mat_1) <- paste0("mat1_row", seq_len(nrow(mat_1)))
+  colnames(mat_1) <- NULL
+  mat_2 <- generate_sparse_matrix(10, 20)
+  
+  mat_1_res <- write_matrix_anndata_hdf5(as(mat_1, "IterableMatrix"), file.path(dir, "mat.h5ad")) %>%
+    as("dgCMatrix")
+  mat_2_res <- write_matrix_anndata_hdf5(t(as(t(mat_2), "IterableMatrix")), file.path(dir, "mat.h5ad"), group="varm/mat2") %>%
+    as("dgCMatrix")
+
+  expect_identical(rownames(mat_1_res), rownames(mat_1))
+  expect_identical(colnames(mat_1_res), as.character(seq_len(ncol(mat_1)) - 1L))
+
+  expect_identical(rownames(mat_2_res), rownames(mat_1))
+  expect_identical(colnames(mat_2_res), NULL)
+
+  dimnames(mat_1) <- NULL
+  dimnames(mat_2) <- NULL
+  dimnames(mat_1_res) <- NULL
+  dimnames(mat_2_res) <- NULL
+  expect_identical(mat_1, mat_1_res)
+  expect_identical(mat_2, mat_2_res)
+})
+
+test_that("AnnData types round-trip", {
+  dir <- withr::local_tempdir()
+  mat <- generate_sparse_matrix(10, 15)
+  for (type in c("uint32_t", "float", "double")) {
+    typed_mat <- as(mat, "IterableMatrix") %>% convert_matrix_type(type)
+    mat_res <- write_matrix_anndata_hdf5(typed_mat, file.path(dir, "mat.h5ad"), group=paste0("layers/", type))
+    expect_identical(matrix_type(mat_res), type)
+    expect_identical(as(mat_res, "dgCMatrix"), mat)
+  }
+})
+
 test_that("AnnData and 10x row/col rename works", {
   dir <- withr::local_tempdir()
   # Make a copy since apparently reading the test hdf5 file causes modifications that git detects

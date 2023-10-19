@@ -32,8 +32,7 @@ const char *H5StringReader::get(uint64_t idx) {
     return NULL;
 }
 uint64_t H5StringReader::size() { 
-    ensureDataReady();
-    return dataset.getElementCount(); 
+    return dataset.getDimensions()[0]; 
 }
 
 H5StringWriter::H5StringWriter(const HighFive::Group &group, std::string path, uint32_t gzip_level)

@@ -81,7 +81,7 @@ StoredMatrixWriter<uint32_t> create10xFeatureMatrix(
     uint32_t chunk_size,
     uint32_t gzip_level
 ) {
-    H5WriterBuilder wb(file_path, "matrix", buffer_size, chunk_size, gzip_level);
+    H5WriterBuilder wb(file_path, "matrix", buffer_size, chunk_size, false, gzip_level);
 
     wb.createStringWriter("barcodes")->write(barcodes);
     wb.createStringWriter("features/id")->write(feature_ids);
@@ -119,7 +119,8 @@ void assertAnnDataSparse(std::string file, std::string group) {
 }
 // Read AnnData sparse matrix, with an implicit transpose to CSC format for
 // any data stored in CSR format
-StoredMatrix<float> openAnnDataMatrix(
+template <typename T>
+StoredMatrix<T> openAnnDataMatrix(
     std::string file,
     std::string group,
     uint32_t buffer_size,
@@ -148,11 +149,15 @@ StoredMatrix<float> openAnnDataMatrix(
         if (row_names.get() == nullptr) {
             std::vector<std::string> row_name_data;
             readMember(root.getDataSet("obs"), "index", row_name_data);
+            // Handle matrices that aren't dims (obs x var)
+            if (row_name_data.size() != dims[0]) row_name_data.clear();
             row_names = std::make_unique<VecStringReader>(row_name_data);
         }
         if (col_names.get() == nullptr) {
             std::vector<std::string> col_name_data;
             readMember(root.getDataSet("var"), "index", col_name_data);
+            // Handle matrices that aren't dims (obs x var)
+            if (col_name_data.size() != dims[1]) col_name_data.clear();
             col_names = std::make_unique<VecStringReader>(col_name_data);
         }
     } else if (g.hasAttribute("encoding-type")) {
@@ -163,12 +168,16 @@ StoredMatrix<float> openAnnDataMatrix(
             root.getGroup("obs").getAttribute("_index").read(row_ids);
             row_ids = "obs/" + row_ids;
             row_names = std::make_unique<H5StringReader>(root, row_ids);
+            // Handle matrices that aren't dims (obs x var)
+            if (row_names->size() != dims[0]) row_names = std::make_unique<VecStringReader>(std::vector<std::string>());
         }
         if (col_names.get() == nullptr) {
             std::string col_ids;
             root.getGroup("var").getAttribute("_index").read(col_ids);
             col_ids = "var/" + col_ids;
             col_names = std::make_unique<H5StringReader>(root, col_ids);
+            // Handle matrices that aren't dims (obs x var)
+            if (col_names->size() != dims[1]) col_names = std::make_unique<VecStringReader>(std::vector<std::string>());
         }
     } else {
         throw std::runtime_error(
@@ -184,9 +193,9 @@ StoredMatrix<float> openAnnDataMatrix(
         rows = dims[0];
     } else throw std::runtime_error("Unsupported matrix encoding: " + encoding);
 
-    return StoredMatrix<float>(
+    return StoredMatrix<T>(
         rb.openUIntReader("indices"),
-        rb.openFloatReader("data"),
+        rb.open<T>("data"),
         rb.openULongReader("indptr"),
         rows,
         std::move(row_names),
@@ -194,15 +203,235 @@ StoredMatrix<float> openAnnDataMatrix(
     );
 }
 
-StoredMatrix<float>
+template <typename T>
+StoredMatrix<T>
 openAnnDataMatrix(std::string file, std::string group, uint32_t buffer_size, uint32_t read_size) {
-    return openAnnDataMatrix(
+    return openAnnDataMatrix<T>(
         file,
         group,
         buffer_size,
         std::unique_ptr<StringReader>(nullptr),
         std::unique_ptr<StringReader>(nullptr),
         read_size
+    );
+}
+
+// Convenience class forr writing shape attribute
+template <class T> class H5AttributeNumWriter : public BulkNumWriter<T> {
+  private:
+    HighFive::Group g;
+    std::string attribute_name;
+    std::vector<T> data;
+
+  public:
+    H5AttributeNumWriter(HighFive::Group g, std::string attribute_name)
+        : g(g)
+        , attribute_name(attribute_name) {}
+
+    uint64_t write(T *in, uint64_t count) override {
+        data.insert(data.end(), in, in + count);
+        return count;
+    }
+
+    void finalize() override { g.createAttribute(attribute_name, data); }
+};
+
+template <typename T>
+StoredMatrixWriter<T> createAnnDataMatrix(
+    std::string file,
+    std::string group,
+    bool row_major,
+    uint32_t buffer_size,
+    uint32_t chunk_size,
+    uint32_t gzip_level
+) {
+    H5WriterBuilder wb(file, group, buffer_size, chunk_size, false, gzip_level);
+    HighFive::Group &g = wb.getGroup();
+
+    // See format docs:
+    // https://anndata.readthedocs.io/en/latest/fileformat-prose.html#sparse-array-specification-v0-1-0
+    g.createAttribute("encoding-type", std::string(row_major ? "csr_matrix" : "csc_matrix"));
+    g.createAttribute("encoding-version", std::string("0.1.0"));
+
+    return StoredMatrixWriter<T>(
+        wb.createUIntWriter("indices"),
+        wb.create<T>("data"),
+        wb.createULongWriter("indptr"),
+        UIntWriter(std::make_unique<H5AttributeNumWriter<uint32_t>>(g, "shape"), 16),
+        std::make_unique<NullStringWriter>(),
+        std::make_unique<NullStringWriter>(),
+        std::make_unique<NullStringWriter>(),
+        row_major
+    );
+}
+
+// Add obs + var metadata to an anndata file if needed.
+// Draw from the matrix row/col names if present, or otherwise
+// insert dummy identifiers.
+template <typename T>
+void createAnnDataObsVarIfMissing(
+    MatrixLoader<T> &mat, std::string file, bool row_major, uint32_t gzip_level
+) {
+    HighFive::SilenceHDF5 s;
+    H5WriterBuilder wb(file, "/", 8192, 1024, true, gzip_level);
+    HighFive::Group &g = wb.getGroup();
+
+    const std::string index_name = "bpcells_name";
+
+    std::string row_key = "obs";
+    std::string col_key = "var";
+    if (row_major) std::swap(row_key, col_key);
+
+    if (!g.exist(row_key)) {
+        HighFive::Group metadata = g.createGroup(row_key);
+        metadata.createAttribute("encoding-type", std::string("dataframe"));
+        metadata.createAttribute("encoding-version", std::string("0.2.0"));
+        metadata.createAttribute("_index", index_name);
+
+        std::vector<std::string> row_names(mat.rows());
+        if (mat.rows() > 0 && mat.rowNames(0) != NULL) {
+            for (uint32_t i = 0; i < mat.rows(); i++) {
+                row_names[i] = mat.rowNames(i);
+            }
+        } else {
+            for (uint32_t i = 0; i < mat.rows(); i++) {
+                row_names[i] = std::to_string(i);
+            }
+        }
+
+        wb.createStringWriter(row_key + "/" + index_name)->write(VecStringReader(row_names));
+    }
+    if (!g.exist(col_key)) {
+        HighFive::Group metadata = g.createGroup(col_key);
+        metadata.createAttribute("encoding-type", std::string("dataframe"));
+        metadata.createAttribute("encoding-version", std::string("0.2.0"));
+        metadata.createAttribute("_index", index_name);
+
+        std::vector<std::string> col_names(mat.cols());
+        if (mat.cols() > 0 && mat.colNames(0) != NULL) {
+            for (uint32_t i = 0; i < mat.cols(); i++) {
+                col_names[i] = mat.colNames(i);
+            }
+        } else {
+            for (uint32_t i = 0; i < mat.cols(); i++) {
+                col_names[i] = std::to_string(i);
+            }
+        }
+
+        wb.createStringWriter(col_key + "/" + index_name)->write(VecStringReader(col_names));
+    }
+}
+
+// Explicit template instantiations
+template StoredMatrix<uint32_t> openAnnDataMatrix<uint32_t>(
+    std::string file,
+    std::string group,
+    uint32_t buffer_size,
+    std::unique_ptr<StringReader> &&row_names,
+    std::unique_ptr<StringReader> &&col_names,
+    uint32_t read_size
+);
+template StoredMatrix<uint64_t> openAnnDataMatrix<uint64_t>(
+    std::string file,
+    std::string group,
+    uint32_t buffer_size,
+    std::unique_ptr<StringReader> &&row_names,
+    std::unique_ptr<StringReader> &&col_names,
+    uint32_t read_size
+);
+template StoredMatrix<float> openAnnDataMatrix<float>(
+    std::string file,
+    std::string group,
+    uint32_t buffer_size,
+    std::unique_ptr<StringReader> &&row_names,
+    std::unique_ptr<StringReader> &&col_names,
+    uint32_t read_size
+);
+template StoredMatrix<double> openAnnDataMatrix<double>(
+    std::string file,
+    std::string group,
+    uint32_t buffer_size,
+    std::unique_ptr<StringReader> &&row_names,
+    std::unique_ptr<StringReader> &&col_names,
+    uint32_t read_size
+);
+
+template StoredMatrix<uint32_t> openAnnDataMatrix<uint32_t>(
+    std::string file, std::string group, uint32_t buffer_size, uint32_t read_size
+);
+template StoredMatrix<uint64_t> openAnnDataMatrix<uint64_t>(
+    std::string file, std::string group, uint32_t buffer_size, uint32_t read_size
+);
+template StoredMatrix<float> openAnnDataMatrix<float>(
+    std::string file, std::string group, uint32_t buffer_size, uint32_t read_size
+);
+template StoredMatrix<double> openAnnDataMatrix<double>(
+    std::string file, std::string group, uint32_t buffer_size, uint32_t read_size
+);
+
+template StoredMatrixWriter<uint32_t> createAnnDataMatrix<uint32_t>(
+    std::string file,
+    std::string group,
+    bool row_major,
+    uint32_t buffer_size,
+    uint32_t chunk_size,
+    uint32_t gzip_level
+);
+template StoredMatrixWriter<uint64_t> createAnnDataMatrix<uint64_t>(
+    std::string file,
+    std::string group,
+    bool row_major,
+    uint32_t buffer_size,
+    uint32_t chunk_size,
+    uint32_t gzip_level
+);
+template StoredMatrixWriter<float> createAnnDataMatrix<float>(
+    std::string file,
+    std::string group,
+    bool row_major,
+    uint32_t buffer_size,
+    uint32_t chunk_size,
+    uint32_t gzip_level
+);
+template StoredMatrixWriter<double> createAnnDataMatrix<double>(
+    std::string file,
+    std::string group,
+    bool row_major,
+    uint32_t buffer_size,
+    uint32_t chunk_size,
+    uint32_t gzip_level
+);
+
+template void createAnnDataObsVarIfMissing<uint32_t>(
+    MatrixLoader<uint32_t> &mat, std::string file, bool row_major, uint32_t gzip_level
+);
+template void createAnnDataObsVarIfMissing<uint64_t>(
+    MatrixLoader<uint64_t> &mat, std::string file, bool row_major, uint32_t gzip_level
+);
+template void createAnnDataObsVarIfMissing<float>(
+    MatrixLoader<float> &mat, std::string file, bool row_major, uint32_t gzip_level
+);
+template void createAnnDataObsVarIfMissing<double>(
+    MatrixLoader<double> &mat, std::string file, bool row_major, uint32_t gzip_level
+);
+// End explicit template instantiations
+
+std::string getAnnDataMatrixType(std::string file, std::string group) {
+    assertAnnDataSparse(file, group);
+    H5ReaderBuilder rb(file, group, 1024, 1024);
+    HighFive::SilenceHDF5 s;
+    HighFive::DataType t = rb.getGroup().getDataSet("data").getDataType();
+    if (t == HighFive::AtomicType<uint32_t>()) {
+        return "uint32_t";
+    } else if (t == HighFive::AtomicType<uint64_t>()) {
+        return "uint64_t";
+    } else if (t == HighFive::AtomicType<float>()) {
+        return "float";
+    } else if (t == HighFive::AtomicType<double>()) {
+        return "double";
+    }
+    throw std::runtime_error(
+        "getAnnDataMatrixType: unrecognized type for group " + group + " in file " + file
     );
 }
 

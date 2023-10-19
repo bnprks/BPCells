@@ -1562,6 +1562,7 @@ open_matrix_10x_hdf5 <- function(path, feature_type = NULL, buffer_size = 16384L
 #' @param feature_types String or vector of feature types
 #' @param feature_metadata Named list of additional metadata vectors
 #' to store for each feature
+#' @param gzip_level Gzip compression level. Default is 0 (no compression)
 #' @details Input matrices must be in column-major storage order,
 #' and if the rownames and colnames are not set, names must be
 #' provided for the relevant metadata parameters. Some of the
@@ -1586,11 +1587,6 @@ write_matrix_10x_hdf5 <- function(mat,
   if (matrix_type(mat) != "uint32_t") {
     warning("Converting to integer matrix for output to 10x format")
     mat <- convert_matrix_type(mat, "uint32_t")
-  }
-  if (gzip_level != 0L && compress) {
-     rlang::inform(c(
-        "Warning: Mixing gzip compression (gzip_level > 0) with bitpacking compression (compress=TRUE) may be slower than bitpacking compression alone, with little space savings"
-     ))
   }
   assert_is(barcodes, "character")
   assert_len(barcodes, ncol(mat))
@@ -1641,22 +1637,22 @@ setClass("AnnDataMatrixH5",
   slots = c(
     path = "character",
     group = "character",
-    buffer_size = "integer",
-    storage_transpose = "logical"
+    type = "character",
+    buffer_size = "integer"
   ),
   prototype = list(
     path = character(0),
     group = "matrix",
-    buffer_size = integer(0),
-    storage_transpose = logical(0)
+    type = character(0),
+    buffer_size = integer(0)
   )
 )
-setMethod("matrix_type", "AnnDataMatrixH5", function(x) "float")
+setMethod("matrix_type", "AnnDataMatrixH5", function(x) x@type)
 setMethod("matrix_inputs", "AnnDataMatrixH5", function(x) list())
 setMethod("iterate_matrix", "AnnDataMatrixH5", function(x) {
-  if (x@storage_transpose != x@transpose) x <- t(x)
+  if (x@transpose) x <- t(x)
   x@dimnames <- denormalize_dimnames(x@dimnames)
-  iterate_matrix_anndata_hdf5_cpp(x@path, x@group, x@buffer_size, x@dimnames[[1]], x@dimnames[[2]])
+  iterate_matrix_anndata_hdf5_cpp(x@path, x@group, x@type, x@buffer_size, x@dimnames[[1]], x@dimnames[[2]])
 })
 setMethod("short_description", "AnnDataMatrixH5", function(x) {
   sprintf(
@@ -1665,14 +1661,16 @@ setMethod("short_description", "AnnDataMatrixH5", function(x) {
   )
 })
 
-#' Read AnnData matrix
+#' Read/write AnnData matrix
 #'
-#' Read a sparse integer matrix from an anndata matrix in an hdf5 file.
+#' Read or write a sparse matrix from an anndata hdf5 file. These functions will
+#' automatically transpose matrices when converting to/from the AnnData
+#' format. This is because the AnnData convention stores cells as rows, whereas the R
+#' convention stores cells as columns. If this behavior is undesired, call `t()`
+#' manually on the matrix inputs and outputs of these functions. 
+#' 
 #' @inheritParams open_matrix_hdf5
 #' @return AnnDataMatrixH5 object, with cells as the columns.
-#' @details Since AnnData stores RNA matrices as cells x genes, whereas BPCells
-#'   stores RNA matrices as genes x cells, the returned matrix will be transposed
-#'   relative to the native AnnData matrix.
 #' @export
 open_matrix_anndata_hdf5 <- function(path, group = "X", buffer_size = 16384L) {
   assert_is_file(path)
@@ -1684,10 +1682,31 @@ open_matrix_anndata_hdf5 <- function(path, group = "X", buffer_size = 16384L) {
     path = path, dim = info$dims, buffer_size = buffer_size,
     group = group, dimnames = normalized_dimnames(info$row_names, info$col_names),
     transpose = info$transpose,
-    storage_transpose = info$transpose
+    type = info$type
   )
 
   return(t(res))
+}
+
+#' @rdname open_matrix_anndata_hdf5
+#' @inheritParams open_matrix_anndata_hdf5
+#' @inheritParams write_matrix_hdf5
+#' @param gzip_level Gzip compression level. Default is 0 (no compression)
+write_matrix_anndata_hdf5 <- function(mat, path, group = "X", buffer_size = 16384L, chunk_size = 1024L, gzip_level = 0L) {
+  assert_is(mat, "IterableMatrix")
+  assert_is(path, "character")
+  mat <- t(mat)
+  write_matrix_anndata_hdf5_cpp(
+    iterate_matrix(mat),
+    path,
+    group,
+    matrix_type(mat),
+    mat@transpose,
+    buffer_size,
+    chunk_size,
+    gzip_level
+  )
+  open_matrix_anndata_hdf5(path, group, buffer_size)
 }
 
 #' Import MatrixMarket files

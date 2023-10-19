@@ -80,6 +80,7 @@
 <li>Added <code><a href="https://rdrr.io/r/base/Round.html" class="external-link">round()</a></code> matrix transformation (Thanks to contributions from <a href="https://github.com/brgew" class="external-link">@brgew</a>)</li>
 <li>Add getter/setter function <code><a href="../reference/all_matrix_inputs.html">all_matrix_inputs()</a></code> to help enable relocating the underlying storage for BPCells matrix transform objects.</li>
 <li>All hdf5-writing functions now support a <code>gzip_level</code> parameter, which will enable a shuffle + gzip filter for compression. This is generally much slower than bitpacking compression, but it adds improved storage options for files that must be read by outside programs. Thanks to <a href="https://github.com/ycli1995" class="external-link">@ycli1995</a> for submitting this improvement in pull <a href="https://github.com/bnprks/BPCells/issues/42" class="external-link">#42</a>.</li>
+<li>AnnData export now supported via <code><a href="../reference/open_matrix_anndata_hdf5.html">write_matrix_anndata_hdf5()</a></code> (issue <a href="https://github.com/bnprks/BPCells/issues/49" class="external-link">#49</a>)</li>
 </ul></div>
 <div class="section level3">
 <h3 id="improvements-0-2-0">Improvements<a class="anchor" aria-label="anchor" href="#improvements-0-2-0"></a></h3>
@@ -100,7 +101,7 @@
 <li>Fixed bug writing fragment files with &gt;512 chromosomes.</li>
 <li>Fixed bug when reading fragment files with &gt;4 billion fragments.</li>
 <li>Fixed file permissions errors when using read-only hdf5 files (Issue <a href="https://github.com/bnprks/BPCells/issues/26" class="external-link">#26</a> reported thanks to <a href="https://github.com/ttumkaya" class="external-link">@ttumkaya</a>)</li>
-<li>Renaming <code><a href="https://rdrr.io/r/base/colnames.html" class="external-link">rownames()</a></code> or <code><a href="https://rdrr.io/r/base/colnames.html" class="external-link">colnames()</a></code> is now propagated when saving matrices (Issue <a href="https://github.com/bnprks/BPCells/issues/29" class="external-link">#29</a> reported thanks to <a href="https://github.com/realzehuali" class="external-link">@realzehuali</a>)</li>
+<li>Renaming <code><a href="https://rdrr.io/r/base/colnames.html" class="external-link">rownames()</a></code> or <code><a href="https://rdrr.io/r/base/colnames.html" class="external-link">colnames()</a></code> is now propagated when saving matrices (Issue <a href="https://github.com/bnprks/BPCells/issues/29" class="external-link">#29</a> reported thanks to <a href="https://github.com/realzehuali" class="external-link">@realzehuali</a>, with an additional fix after report thanks to <a href="https://github.com/Dario-Rocha" class="external-link">@Dario-Rocha</a>)</li>
 <li>Fixed 64-bit integer overflow (!) that could cause incorrect p-value calculations in <code><a href="../reference/marker_features.html">marker_features()</a></code> for features with more than 2.6 million zeros.</li>
 <li>Improved robustness of the Windows installation process for setups that do not need the -lsz linker flag to compile hdf5</li>
 <li>Fixed possible memory safety bug where wrapped R objects (such as dgCMatrix) could be potentially garbage collected while C++ was still trying to access the data in rare circumstances.</li>

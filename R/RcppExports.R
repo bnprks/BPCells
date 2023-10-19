@@ -413,8 +413,12 @@ dims_matrix_anndata_hdf5_cpp <- function(file, group, buffer_size) {
     .Call(`_BPCells_dims_matrix_anndata_hdf5_cpp`, file, group, buffer_size)
 }
 
-iterate_matrix_anndata_hdf5_cpp <- function(file, group, buffer_size, row_names, col_names) {
-    .Call(`_BPCells_iterate_matrix_anndata_hdf5_cpp`, file, group, buffer_size, row_names, col_names)
+iterate_matrix_anndata_hdf5_cpp <- function(file, group, type, buffer_size, row_names, col_names) {
+    .Call(`_BPCells_iterate_matrix_anndata_hdf5_cpp`, file, group, type, buffer_size, row_names, col_names)
+}
+
+write_matrix_anndata_hdf5_cpp <- function(matrix, file, group, type, row_major, buffer_size, chunk_size, gzip_level) {
+    invisible(.Call(`_BPCells_write_matrix_anndata_hdf5_cpp`, matrix, file, group, type, row_major, buffer_size, chunk_size, gzip_level))
 }
 
 read_hdf5_string_cpp <- function(path, group, buffer_size) {

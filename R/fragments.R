@@ -150,7 +150,7 @@ setMethod("short_description", "FragmentsTsv", function(x) {
 #' @param end_inclusive Whether the end coordinate of the bed is inclusive -- i.e. there was an
 #'     insertion at the end coordinate rather than the base before the end coordinate. This is the
 #'     10x default, though it's not quite standard for the bed file format.
-#' @return **10x fragments file object
+#' @return 10x fragments file object
 #' @export
 open_fragments_10x <- function(path, comment = "#", end_inclusive = TRUE) {
   assert_is_file(path, extension = c(".tsv", ".tsv.gz"))
