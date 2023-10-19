@@ -2,7 +2,7 @@
 if [ -z $BPCELLS_DEBUG_INSTALL ]; then 
     ERR=/dev/null
 else
-    ERR=/dev/stdout
+    ERR=/dev/stderr
     set -x
 fi
 
@@ -34,14 +34,26 @@ echo "Testing hdf5 by compiling example program..."
 HDF5_CFLAGS=""
 HDF5_LIBS="-lhdf5"
 HDF5_OK=""
-$CC tools/h5write.c $CFLAGS $LDFLAGS $HDF5_CFLAGS $HDF5_LIBS -o tools/h5write 2>$ERR && HDF5_OK="yes";
+
+test_hdf5() {
+    H5_ERR=1
+    cd tools
+    $CC ./h5write.c $CFLAGS $LDFLAGS $HDF5_CFLAGS $HDF5_LIBS -o ./h5write 2>$ERR && \
+        ./h5write 2>$ERR && \
+        H5_ERR=0
+    rm -f SDS.h5
+    cd ..
+    return $H5_ERR
+}
+
+test_hdf5 && HDF5_OK="yes";
 
 # pkg-config flags
 if [ -z $HDF5_OK ]; then
     printf "\n\nRetrying with pkg-config flags...\n"
     if HDF5_CFLAGS="$(pkg-config hdf5 --cflags 2>$ERR)" && \
         HDF5_LIBS="$(pkg-config hdf5 --libs 2>$ERR)"; then
-        $CC tools/h5write.c $CFLAGS $LDFLAGS $HDF5_CFLAGS $HDF5_LIBS -o tools/h5write 2>$ERR && HDF5_OK="yes";
+        test_hdf5 && HDF5_OK="yes";
     else
         echo "Error running 'pkg-config hdf5 --cflags --libs'"
     fi
@@ -81,7 +93,7 @@ if [ -z $HDF5_OK ]; then
           esac
         done
         HDF5_LIBS="$HDF5_LIBS -lhdf5"
-        $CC tools/h5write.c $CFLAGS $LDFLAGS $HDF5_CFLAGS $HDF5_LIBS -o tools/h5write 2>$ERR && HDF5_OK="yes";
+        test_hdf5 && HDF5_OK="yes";
     else
         echo "Failure running either 'h5cc -show' or: 'h5cc -showconfig | awk -F: '/FLAGS|Extra libraries:/ {printf("%s ", \$2)}'"
     fi
@@ -95,7 +107,7 @@ if [ -z $HDF5_OK ]; then
     else
         HDF5_CFLAGS="-I$CONDA_PREFIX/include"
         HDF5_LIBS="-Wl,-rpath,$CONDA_PREFIX/lib -L$CONDA_PREFIX/lib -lhdf5"
-        $CC tools/h5write.c $CFLAGS $LDFLAGS $HDF5_CFLAGS $HDF5_LIBS -o tools/h5write 2>$ERR && HDF5_OK="yes";
+        test_hdf5 && HDF5_OK="yes";
     fi
 fi
 
