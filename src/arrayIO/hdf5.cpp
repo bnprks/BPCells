@@ -25,6 +25,7 @@ inline void H5StringReader::ensureDataReady() {
             data[i] = std::string(char_data.data() + bytes * i, char_data.data() + bytes * (i + 1));
         }
     }
+    data_ready = true;
 }
 const char *H5StringReader::get(uint64_t idx) {
     ensureDataReady();
