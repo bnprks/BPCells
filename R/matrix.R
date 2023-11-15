@@ -2393,6 +2393,7 @@ setMethod("svds", signature(A="IterableMatrix"), function (A, k, nu = k, nv = k,
     k, 
     solver_params[["ncv"]],
     solver_params[["maxitr"]],
-    solver_params[["tol"]]
+    solver_params[["tol"]],
+    A@transpose
   )
 })

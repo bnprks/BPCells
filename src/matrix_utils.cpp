@@ -430,10 +430,10 @@ Eigen::MatrixXd wilcoxon_rank_sum_pval_double_cpp(SEXP matrix, std::vector<uint3
 }
 
 // [[Rcpp::export]]
-SEXP svds_cpp(SEXP matrix, int k, int n_cv, int maxit, double tol) { 
+SEXP svds_cpp(SEXP matrix, int k, int n_cv, int maxit, double tol, bool transpose) { 
     auto mat = take_unique_xptr<MatrixLoader<double>>(matrix);
     SVDResult res = run_with_R_interrupt_check(
-        svd, mat.get(), k, n_cv, maxit, tol
+        svd, mat.get(), k, n_cv, maxit, tol, transpose
     );
     if (!res.success) warning("SVD calculation did not converge");
     return List::create(
