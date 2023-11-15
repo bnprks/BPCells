@@ -1,5 +1,7 @@
 #include "SVD.h"
 
+#include <algorithm>
+
 #include "../lib/Spectra/SymEigsSolver.h"
 #include <Eigen/Core>
 namespace BPCells {
@@ -39,6 +41,7 @@ void SpectraMatOp::perform_op(const double *x_in, double *y_out) const {
 // n_cv - convergence speed parameter. Higher values use more memory, and more
 //        operations per iteration, but converge faster
 // maxit - maximum iterations
+// transpose - if true, treat mat as transposed
 // tol - precision for eigenvalues
 SVDResult
 svd(MatrixLoader<double> *mat,
@@ -46,6 +49,7 @@ svd(MatrixLoader<double> *mat,
     int n_cv,
     int maxit,
     double tol,
+    bool transpose,
     std::atomic<bool> *user_interrupt) {
 
     SVDResult res;
@@ -86,6 +90,10 @@ svd(MatrixLoader<double> *mat,
         res.u = mat->denseMultiplyRight(tmp_map, user_interrupt);
     }
     res.num_operations += k;
+
+    if (transpose) {
+        std::swap(res.u, res.v);
+    }
 
     return res;
 }

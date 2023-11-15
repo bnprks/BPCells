@@ -42,6 +42,7 @@ class SVDResult {
 // n_cv - convergence speed parameter. Higher values use more memory, and more
 //        operations per iteration, but converge faster
 // maxit - maximum iterations
+// transpose - if true, treat mat as transposed
 // tol - precision for eigenvalues
 SVDResult
 svd(MatrixLoader<double> *mat,
@@ -49,6 +50,7 @@ svd(MatrixLoader<double> *mat,
     int n_cv,
     int maxit,
     double tol,
+    bool transpose,
     std::atomic<bool> *user_interrupt);
 
 } // end namespace BPCells

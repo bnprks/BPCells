@@ -2298,8 +2298,8 @@ BEGIN_RCPP
 END_RCPP
 }
 // svds_cpp
-SEXP svds_cpp(SEXP matrix, int k, int n_cv, int maxit, double tol);
-RcppExport SEXP _BPCells_svds_cpp(SEXP matrixSEXP, SEXP kSEXP, SEXP n_cvSEXP, SEXP maxitSEXP, SEXP tolSEXP) {
+SEXP svds_cpp(SEXP matrix, int k, int n_cv, int maxit, double tol, bool transpose);
+RcppExport SEXP _BPCells_svds_cpp(SEXP matrixSEXP, SEXP kSEXP, SEXP n_cvSEXP, SEXP maxitSEXP, SEXP tolSEXP, SEXP transposeSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -2308,7 +2308,8 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< int >::type n_cv(n_cvSEXP);
     Rcpp::traits::input_parameter< int >::type maxit(maxitSEXP);
     Rcpp::traits::input_parameter< double >::type tol(tolSEXP);
-    rcpp_result_gen = Rcpp::wrap(svds_cpp(matrix, k, n_cv, maxit, tol));
+    Rcpp::traits::input_parameter< bool >::type transpose(transposeSEXP);
+    rcpp_result_gen = Rcpp::wrap(svds_cpp(matrix, k, n_cv, maxit, tol, transpose));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -2511,7 +2512,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_BPCells_wilcoxon_rank_sum_pval_uint32_t_cpp", (DL_FUNC) &_BPCells_wilcoxon_rank_sum_pval_uint32_t_cpp, 2},
     {"_BPCells_wilcoxon_rank_sum_pval_float_cpp", (DL_FUNC) &_BPCells_wilcoxon_rank_sum_pval_float_cpp, 2},
     {"_BPCells_wilcoxon_rank_sum_pval_double_cpp", (DL_FUNC) &_BPCells_wilcoxon_rank_sum_pval_double_cpp, 2},
-    {"_BPCells_svds_cpp", (DL_FUNC) &_BPCells_svds_cpp, 5},
+    {"_BPCells_svds_cpp", (DL_FUNC) &_BPCells_svds_cpp, 6},
     {"_BPCells_matrix_value_histogram_cpp", (DL_FUNC) &_BPCells_matrix_value_histogram_cpp, 2},
     {"_BPCells_matrix_identical_uint32_t_cpp", (DL_FUNC) &_BPCells_matrix_identical_uint32_t_cpp, 2},
     {NULL, NULL, 0}

@@ -29,6 +29,7 @@ Contributions welcome :)
   compression. This is generally much slower than bitpacking compression, but it adds improved storage options for
   files that must be read by outside programs. Thanks to @ycli1995 for submitting this improvement in pull #42.
 - AnnData export now supported via `write_matrix_anndata_hdf5()` (issue #49)
+- Re-licensed code base to use dual-licensed Apache V2 or MIT instead of GPLv3
 
 ## Improvements
 - Merging fragments with `c()` now handles inputs with mismatched chromosome names.
@@ -60,6 +61,8 @@ Contributions welcome :)
 - Fixed possible memory safety bug where wrapped R objects (such as dgCMatrix) could be potentially garbage collected
   while C++ was still trying to access the data in rare circumstances.
 - Fixed case when dimnames were not preserved when calling `convert_matrix_type()` twice in a row such that it cancels out (e.g. double -> uint32_t -> double). Thanks to @brgrew reporting issue #43
+- Caused and fixed issue resulting in unusably slow performance reading matrices from HDF5 files. Broken versions range from commit  21f8dcf until the fix in 3711a40 (October 18-November 3, 2023). Thanks to @abhiachoudhary for reporting this in issue #53
+- Fixed error with `svds()` not handling row-major matrices correctly. Thanks to @ycli1995 for reporting this in issue #55
 
 # BPCells 0.1.0
 

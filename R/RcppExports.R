@@ -693,8 +693,8 @@ wilcoxon_rank_sum_pval_double_cpp <- function(matrix, groups) {
     .Call(`_BPCells_wilcoxon_rank_sum_pval_double_cpp`, matrix, groups)
 }
 
-svds_cpp <- function(matrix, k, n_cv, maxit, tol) {
-    .Call(`_BPCells_svds_cpp`, matrix, k, n_cv, maxit, tol)
+svds_cpp <- function(matrix, k, n_cv, maxit, tol, transpose) {
+    .Call(`_BPCells_svds_cpp`, matrix, k, n_cv, maxit, tol, transpose)
 }
 
 matrix_value_histogram_cpp <- function(matrix, max_value) {

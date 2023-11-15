@@ -81,6 +81,7 @@
 <li>Add getter/setter function <code><a href="../reference/all_matrix_inputs.html">all_matrix_inputs()</a></code> to help enable relocating the underlying storage for BPCells matrix transform objects.</li>
 <li>All hdf5-writing functions now support a <code>gzip_level</code> parameter, which will enable a shuffle + gzip filter for compression. This is generally much slower than bitpacking compression, but it adds improved storage options for files that must be read by outside programs. Thanks to <a href="https://github.com/ycli1995" class="external-link">@ycli1995</a> for submitting this improvement in pull <a href="https://github.com/bnprks/BPCells/issues/42" class="external-link">#42</a>.</li>
 <li>AnnData export now supported via <code><a href="../reference/open_matrix_anndata_hdf5.html">write_matrix_anndata_hdf5()</a></code> (issue <a href="https://github.com/bnprks/BPCells/issues/49" class="external-link">#49</a>)</li>
+<li>Re-licensed code base to use dual-licensed Apache V2 or MIT instead of GPLv3</li>
 </ul></div>
 <div class="section level3">
 <h3 id="improvements-0-2-0">Improvements<a class="anchor" aria-label="anchor" href="#improvements-0-2-0"></a></h3>
@@ -106,6 +107,8 @@
 <li>Improved robustness of the Windows installation process for setups that do not need the -lsz linker flag to compile hdf5</li>
 <li>Fixed possible memory safety bug where wrapped R objects (such as dgCMatrix) could be potentially garbage collected while C++ was still trying to access the data in rare circumstances.</li>
 <li>Fixed case when dimnames were not preserved when calling <code><a href="../reference/convert_matrix_type.html">convert_matrix_type()</a></code> twice in a row such that it cancels out (e.g. double -&gt; uint32_t -&gt; double). Thanks to <a href="https://github.com/brgrew" class="external-link">@brgrew</a> reporting issue <a href="https://github.com/bnprks/BPCells/issues/43" class="external-link">#43</a></li>
+<li>Caused and fixed issue resulting in unusably slow performance reading matrices from HDF5 files. Broken versions range from commit 21f8dcf until the fix in 3711a40 (October 18-November 3, 2023). Thanks to <a href="https://github.com/abhiachoudhary" class="external-link">@abhiachoudhary</a> for reporting this in issue <a href="https://github.com/bnprks/BPCells/issues/53" class="external-link">#53</a></li>
+<li>Fixed error with <code><a href="../reference/svds.html">svds()</a></code> not handling row-major matrices correctly. Thanks to <a href="https://github.com/ycli1995" class="external-link">@ycli1995</a> for reporting this in issue <a href="https://github.com/bnprks/BPCells/issues/55" class="external-link">#55</a></li>
 </ul></div>
 </div>
     <div class="section level2">

@@ -151,4 +151,6 @@ test_that("svds works", {
 
   equal_svds(ans, mine_threaded)
   equal_svds(ans_t, mine_t_threaded)
+
+  equal_svds(ans_t, svds(t(i1), k=5))
 })
