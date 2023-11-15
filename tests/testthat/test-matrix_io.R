@@ -291,6 +291,20 @@ test_that("AnnData and 10x row/col rename works", {
   expect_identical(rownames(x2_t), colnames(x_10x))
 })
 
+test_that("AnnData write to dir matrix works (#57 regression test)", {
+  dir <- withr::local_tempdir()
+  # Make a copy since apparently reading the test hdf5 file causes modifications that git detects
+  file.copy("../data/mini_mat.h5ad", file.path(dir, "mini_mat.h5ad"))
+  x <- open_matrix_anndata_hdf5(file.path(dir, "mini_mat.h5ad"))
+  xt <- open_matrix_anndata_hdf5(file.path(dir, "mini_mat.h5ad"), group="layers/transpose")
+  y <- write_matrix_dir(x, file.path(dir, "mini_mat"))
+  yt <- write_matrix_dir(xt, file.path(dir, "mini_mat_t"))
+  
+  expect_identical(as(x, "dgCMatrix"), as(y, "dgCMatrix"))
+  expect_identical(as(xt, "dgCMatrix"), as(yt, "dgCMatrix"))
+  expect_identical(as(x, "dgCMatrix"), as(xt, "dgCMatrix"))
+})
+
 test_that("Renaming transformed matrix works", {
   x <- matrix(1:12, nrow=3)
   rownames(x) <- paste0("row", seq_len(nrow(x)))

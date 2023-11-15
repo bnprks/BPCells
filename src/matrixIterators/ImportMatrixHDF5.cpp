@@ -143,6 +143,8 @@ StoredMatrix<T> openAnnDataMatrix(
         g.getAttribute("h5sparse_format").read(encoding);
         g.getAttribute("h5sparse_shape").read(dims);
         encoding += "_matrix";
+        // Make sure we assign to the correct row/col names if some are already provided
+        if (encoding == "csr_matrix") std::swap(row_names, col_names);
 
         auto dt = root.getDataSet("var").getDataType();
 
@@ -163,6 +165,8 @@ StoredMatrix<T> openAnnDataMatrix(
     } else if (g.hasAttribute("encoding-type")) {
         g.getAttribute("encoding-type").read(encoding);
         g.getAttribute("shape").read(dims);
+        // Make sure we assign to the correct row/col names if some are already provided
+        if (encoding == "csr_matrix") std::swap(row_names, col_names);
         if (row_names.get() == nullptr) {
             std::string row_ids;
             root.getGroup("obs").getAttribute("_index").read(row_ids);
@@ -287,6 +291,7 @@ void createAnnDataObsVarIfMissing(
         metadata.createAttribute("encoding-type", std::string("dataframe"));
         metadata.createAttribute("encoding-version", std::string("0.2.0"));
         metadata.createAttribute("_index", index_name);
+        metadata.createAttribute("column-order", std::vector<std::string>{index_name});
 
         std::vector<std::string> row_names(mat.rows());
         if (mat.rows() > 0 && mat.rowNames(0) != NULL) {
@@ -306,6 +311,7 @@ void createAnnDataObsVarIfMissing(
         metadata.createAttribute("encoding-type", std::string("dataframe"));
         metadata.createAttribute("encoding-version", std::string("0.2.0"));
         metadata.createAttribute("_index", index_name);
+        metadata.createAttribute("column-order", std::vector<std::string>{index_name});
 
         std::vector<std::string> col_names(mat.cols());
         if (mat.cols() > 0 && mat.colNames(0) != NULL) {
