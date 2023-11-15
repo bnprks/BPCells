@@ -11,7 +11,7 @@ Description: > Efficient operations for single cell ATAC-seq fragments and
     RNA counts matrices. Interoperable with standard file formats, and introduces
     efficient bit-packed formats that allow large storage savings and increased
     read speeds.
-License: GPL-3
+License: MIT
 Encoding: UTF-8
 LazyData: true
 RoxygenNote: 7.2.3
