@@ -640,6 +640,47 @@ setMethod("[", "IterableMatrix", function(x, i, j, ...) {
   ret
 })
 
+# Simulate assigning to a subset of the matrix.
+# We concatenate the un-modified matrix subsets with the new values,
+# then reorder rows/columns appropriately
+setMethod("[<-", "IterableMatrix", function(x, i, j, ..., value) {
+  if (!rlang::is_missing(i)) {
+    i <- selection_index(i, nrow(x), rownames(x))
+    ni <- if (length(i) > 0) seq_len(nrow(x))[-i] else seq_len(nrow(x))
+    
+    x_i <- x[i,]
+    x_ni <- x[ni,]
+    
+    if (rlang::is_missing(j)) {
+      if (any(dim(x_i) != dim(value))) {
+        stop("Mismatched dimensions in assignment to subset")
+      }
+      x_i <- value
+    } else {
+      x_i[,j] <- value
+    }
+    x <- rbind(x_i, x_ni)[order(c(i, ni)),]
+  } else if(!rlang::is_missing(j)) {
+    j <- selection_index(j, ncol(x), colnames(x))
+    nj <- if (length(j) > 0) seq_len(ncol(x))[-j] else seq_len(ncol(x))
+    
+    x_j <- x[,j]
+    x_nj <- x[,nj]
+    if (any(dim(x_j) != dim(value))) {
+      stop("Mismatched dimensions in assignment to subset")
+    }
+    x_j <- value
+    x <- cbind(x_j, x_nj)[,order(c(j, nj))]
+  } else {
+    if (any(dim(x) != dim(value))) {
+      stop("Mismatched dimensions in assignment to subset")
+    }
+    x <- value
+  }
+  
+  return(x)
+})
+
 setMethod("[", "MatrixSubset", function(x, i, j, ...) {
   if (missing(x)) stop("x is missing in matrix selection")
   i <- selection_index(i, nrow(x), rownames(x))
@@ -1692,6 +1733,7 @@ open_matrix_anndata_hdf5 <- function(path, group = "X", buffer_size = 16384L) {
 #' @inheritParams open_matrix_anndata_hdf5
 #' @inheritParams write_matrix_hdf5
 #' @param gzip_level Gzip compression level. Default is 0 (no compression)
+#' @export
 write_matrix_anndata_hdf5 <- function(mat, path, group = "X", buffer_size = 16384L, chunk_size = 1024L, gzip_level = 0L) {
   assert_is(mat, "IterableMatrix")
   assert_is(path, "character")

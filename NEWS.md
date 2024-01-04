@@ -30,6 +30,9 @@ Contributions welcome :)
   files that must be read by outside programs. Thanks to @ycli1995 for submitting this improvement in pull #42.
 - AnnData export now supported via `write_matrix_anndata_hdf5()` (issue #49)
 - Re-licensed code base to use dual-licensed Apache V2 or MIT instead of GPLv3
+- Assigning to a subset is now supported (e.g. `m1[i,j] <- m2`). Note that this does not modify data on disk. Instead,
+  it uses a series of subsetting and concatenation operations to provide the *appearance* of overwriting the appropriate
+  entries.
 
 ## Improvements
 - Merging fragments with `c()` now handles inputs with mismatched chromosome names.
@@ -63,6 +66,7 @@ Contributions welcome :)
 - Fixed case when dimnames were not preserved when calling `convert_matrix_type()` twice in a row such that it cancels out (e.g. double -> uint32_t -> double). Thanks to @brgrew reporting issue #43
 - Caused and fixed issue resulting in unusably slow performance reading matrices from HDF5 files. Broken versions range from commit  21f8dcf until the fix in 3711a40 (October 18-November 3, 2023). Thanks to @abhiachoudhary for reporting this in issue #53
 - Fixed error with `svds()` not handling row-major matrices correctly. Thanks to @ycli1995 for reporting this in issue #55
+- Fixed error with row/col name handling for AnnData matrices. Thanks to @lisch7 for reporting this in issue #57
 
 # BPCells 0.1.0
 

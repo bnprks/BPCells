@@ -181,6 +181,48 @@ test_that("Subsetting to 0 dimensions works", {
   )
 })
 
+test_that("Subset assignment works", {
+  m1 <- generate_dense_matrix(10, 20) %>% as("dgCMatrix")
+  r <- -(1 * generate_dense_matrix(10, 20)) %>% as("dgCMatrix")
+  r2 <- as(r, "IterableMatrix")
+
+  test_cases <- list(
+    list(rows = sample.int(nrow(m1), 5), cols = sample.int(ncol(m1), 10)),
+    list(rows = seq_len(nrow(m1)), cols = seq_len(ncol(m1))),
+    list(rows = rep_len(FALSE, nrow(m1)), cols=rep_len(FALSE, ncol(m1)))
+  )
+  for (t in test_cases) {
+    # Test subset just rows
+    m2 <- as(m1, "IterableMatrix")
+    m2[t$rows,] <- r2[t$rows,]
+    m1b <- m1
+    m1b[t$rows,] <- r[t$rows,]
+    expect_identical(as(m2, "dgCMatrix"), m1b)
+    expect_error(m2[t$rows,] <- cbind(r2, r2))
+
+    # Test subset just cols
+    m2 <- as(m1, "IterableMatrix")
+    m2[,t$cols] <- r2[,t$cols]
+    m1b <- m1
+    m1b[,t$cols] <- r[,t$cols]
+    expect_identical(as(m2, "dgCMatrix"), m1b)
+    expect_error(m2[,t$cols] <- cbind(r2, r2))
+
+    # Test subset rows + cols
+    m2 <- as(m1, "IterableMatrix")
+    m2[t$rows, t$cols] <- r2[t$rows, t$cols]
+    m1b <- m1
+    m1b[t$rows, t$cols] <- r[t$rows, t$cols]
+    expect_identical(as(m2, "dgCMatrix"), m1b)
+    expect_error(m2[t$rows,t$cols] <- cbind(r2, r2))
+  }
+
+  # Test replacing the full matrix with rows + cols missing
+  m2 <- as(m1, "IterableMatrix")
+  m2[,] <- r2
+  expect_identical(as(m2, "dgCMatrix"), r)
+})
+
 test_that("Transposing a 0 dimension matrix works", {
   m1 <- generate_dense_matrix(10, 5) %>% as("dgCMatrix") 
   rownames(m1) <- paste0("row", seq_len(nrow(m1)))
