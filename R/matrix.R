@@ -644,6 +644,10 @@ setMethod("[", "IterableMatrix", function(x, i, j, ...) {
 # We concatenate the un-modified matrix subsets with the new values,
 # then reorder rows/columns appropriately
 setMethod("[<-", "IterableMatrix", function(x, i, j, ..., value) {
+  # Do type conversions if needed
+  if (is.matrix(value)) value <- as(value, "dgCMatrix")
+  if (is(value, "dgCMatrix")) value <- as(value, "IterableMatrix")
+
   if (!rlang::is_missing(i)) {
     i <- selection_index(i, nrow(x), rownames(x))
     ni <- if (length(i) > 0) seq_len(nrow(x))[-i] else seq_len(nrow(x))
@@ -659,6 +663,7 @@ setMethod("[<-", "IterableMatrix", function(x, i, j, ..., value) {
     } else {
       x_i[,j] <- value
     }
+    rownames(x_i) <- rownames(x)[i]
     x <- rbind(x_i, x_ni)[order(c(i, ni)),]
   } else if(!rlang::is_missing(j)) {
     j <- selection_index(j, ncol(x), colnames(x))
@@ -670,6 +675,7 @@ setMethod("[<-", "IterableMatrix", function(x, i, j, ..., value) {
       stop("Mismatched dimensions in assignment to subset")
     }
     x_j <- value
+    colnames(x_j) <- colnames(x)[j]
     x <- cbind(x_j, x_nj)[,order(c(j, nj))]
   } else {
     if (any(dim(x) != dim(value))) {
