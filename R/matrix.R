@@ -401,15 +401,19 @@ setMethod("[", "MatrixMultiply", function(x, i, j, ...) {
     return(t(t(x)[rlang::maybe_missing(j), rlang::maybe_missing(i)]))
   }
 
-  i <- selection_index(i, nrow(x), rownames(x))
-  j <- selection_index(j, ncol(x), colnames(x))
-  x <- selection_fix_dims(x, rlang::maybe_missing(i), rlang::maybe_missing(j))
+  i <- split_selection(selection_index(i, nrow(x), rownames(x)))
+  j <- split_selection(selection_index(j, ncol(x), colnames(x)))
+  # If we're just reordering rows/cols, do a standard matrix selection
+  if (rlang::is_missing(i$subset) && rlang::is_missing(j$subset)) {
+    return(callNextMethod(x, unsplit_selection(i), unsplit_selection(j)))
+  }
+  x <- selection_fix_dims(x, rlang::maybe_missing(i$subset), rlang::maybe_missing(j$subset))
 
   # Selection will be a no-op if i or j is missing
-  x@left <- x@left[rlang::maybe_missing(i), ]
-  x@right <- x@right[, rlang::maybe_missing(j)]
+  x@left <- x@left[rlang::maybe_missing(i$subset), ]
+  x@right <- x@right[, rlang::maybe_missing(j$subset)]
 
-  x
+  x[rlang::maybe_missing(i$reorder),rlang::maybe_missing(j$reorder)]
 })
 
 setClass("MatrixMask",
@@ -595,7 +599,9 @@ selection_index <- function(selection, dim_len, dimnames) {
     indices <- seq_len(dim_len)
     names(indices) <- dimnames
     if (!is.logical(selection)) assert_distinct(selection, n = 2)
-    return(vctrs::vec_slice(indices, selection))
+    res <- vctrs::vec_slice(indices, selection)
+    names(res) <- NULL
+    return(res)
   } else {
     return(rlang::missing_arg())
   }
@@ -613,6 +619,28 @@ selection_fix_dims <- function(x, i, j) {
   }
   x
 }
+
+# Helper function to split a selection into two components:
+# First a subset, followed by a reorder.
+# Set subset or reorder to rlang::missing_arg() if they are an identity transformation
+# When we push down subset operations, we'll just push down the subset, and not the reorder
+split_selection <- function(selection) {
+  if (rlang::is_missing(selection)) {
+    return(list(subset=rlang::missing_arg(), reorder=rlang::missing_arg()))
+  }
+  res <- list(subset = sort(selection), reorder=rank(selection, ties.method="first"))
+  if (all(res$subset == seq_along(res$subset))) res$subset <- rlang::missing_arg()
+  if (all(res$reorder == seq_along(res$reorder))) res$reorder <- rlang::missing_arg()
+  return(res)
+}
+
+# Reverse split_selection
+unsplit_selection <- function(selection) {
+  if (rlang::is_missing(selection$subset)) return(rlang::maybe_missing(selection$reorder))
+  if (rlang::is_missing(selection$reorder)) return(selection$subset)
+  selection$subset[selection$reorder]
+}
+
 setMethod("[", "IterableMatrix", function(x, i, j, ...) {
   if (missing(x)) stop("x is missing in matrix selection")
   if (rlang::is_missing(i) && rlang::is_missing(j)) {
@@ -622,6 +650,12 @@ setMethod("[", "IterableMatrix", function(x, i, j, ...) {
   ret <- wrapMatrix("MatrixSubset", x)
   i <- selection_index(i, nrow(x), rownames(x))
   j <- selection_index(j, ncol(x), colnames(x))
+ 
+  # Check for a trivial selection that doesn't introduce any subset
+  if ((rlang::is_missing(i) || isTRUE(all.equal(i, seq_len(nrow(x))))) && 
+      (rlang::is_missing(j) || isTRUE(all.equal(j, seq_len(ncol(x)))))) {
+    return(x)
+  }
   ret <- selection_fix_dims(ret, rlang::maybe_missing(i), rlang::maybe_missing(j))
 
   if (x@transpose) {
@@ -646,8 +680,13 @@ setMethod("[", "IterableMatrix", function(x, i, j, ...) {
 setMethod("[<-", "IterableMatrix", function(x, i, j, ..., value) {
   # Do type conversions if needed
   if (is.matrix(value)) value <- as(value, "dgCMatrix")
-  if (is(value, "dgCMatrix")) value <- as(value, "IterableMatrix")
-
+  if (is(value, "dgCMatrix")) {
+    if (x@transpose) {
+      value <- t(as(t(value), "IterableMatrix"))
+    } else {
+      value <- as(value, "IterableMatrix")
+    }
+  }
   if (!rlang::is_missing(i)) {
     i <- selection_index(i, nrow(x), rownames(x))
     ni <- if (length(i) > 0) seq_len(nrow(x))[-i] else seq_len(nrow(x))
@@ -689,15 +728,15 @@ setMethod("[<-", "IterableMatrix", function(x, i, j, ..., value) {
 
 setMethod("[", "MatrixSubset", function(x, i, j, ...) {
   if (missing(x)) stop("x is missing in matrix selection")
+  
+  if (x@transpose) {
+    return(t(t(x)[rlang::maybe_missing(j), rlang::maybe_missing(i)]))
+  }
+
   i <- selection_index(i, nrow(x), rownames(x))
   j <- selection_index(j, ncol(x), colnames(x))
   x <- selection_fix_dims(x, rlang::maybe_missing(i), rlang::maybe_missing(j))
 
-  if (x@transpose) {
-    tmp <- rlang::maybe_missing(i)
-    i <- rlang::maybe_missing(j)
-    j <- rlang::maybe_missing(tmp)
-  }
   if (!rlang::is_missing(i)) {
     if (length(x@row_selection) == 0 && !x@zero_dims[1]) {
       x@row_selection <- i
@@ -714,7 +753,11 @@ setMethod("[", "MatrixSubset", function(x, i, j, ...) {
     }
     x@zero_dims[2] <- length(j) == 0
   }
-  x
+  # Apply the consolidated selection to the inner matrix in case there is some
+  # new subsetting that should be pushed down further
+  i <- if(length(x@row_selection) == 0 && !x@zero_dims[1]) rlang::missing_arg() else x@row_selection
+  j <- if(length(x@col_selection) == 0 && !x@zero_dims[2]) rlang::missing_arg() else x@col_selection
+  x@matrix[rlang::maybe_missing(i), rlang::maybe_missing(j)]
 })
 
 
@@ -794,6 +837,7 @@ setMethod("short_description", "RenameDims", function(x) {
   )
 })
 setMethod("dimnames<-", signature(x = "IterableMatrix", value = "list"), function(x, value) {
+  if (identical(dimnames(x), value)) return(x)
   d <- dim(x)
   has_error <- FALSE
   if (!is.list(value) || length(value) != 2) has_error <- TRUE
@@ -817,6 +861,7 @@ setMethod("dimnames<-", signature(x = "IterableMatrix", value = "list"), functio
   x
 })
 setMethod("dimnames<-", signature(x = "IterableMatrix", value = "NULL"), function(x, value) {
+  if (identical(dimnames(x), value)) return(x)
   if (!is(x, "RenameDims")) {
     x <- wrapMatrix("RenameDims", x)
   }
@@ -904,6 +949,9 @@ setMethod("rbind2", signature(x = "IterableMatrix", y = "IterableMatrix"), funct
   }
 
   if (ncol(x) != ncol(y)) stop("Error in rbind: matrices must have equal number of columns")
+  if (nrow(x) == 0) return(y)
+  if (nrow(y) == 0) return(x)
+
   # Handle dimnames
   col_names <- merge_dimnames(colnames(x), colnames(y), "rbind", "column")
   row_names <- concat_dimnames(rownames(x), rownames(y), nrow(x), nrow(y), "rbind", "row")
@@ -987,6 +1035,8 @@ setMethod("cbind2", signature(x = "IterableMatrix", y = "IterableMatrix"), funct
   }
 
   if (nrow(x) != nrow(y)) stop("Error in cbind: matrices must have equal number of columns")
+  if (ncol(x) == 0) return(y)
+  if (ncol(y) == 0) return(x)
   # Handle dimnames
   row_names <- merge_dimnames(rownames(x), rownames(y), "cbind", "row")
   col_names <- concat_dimnames(colnames(x), colnames(y), ncol(x), ncol(y), "cbind", "column")
@@ -1016,21 +1066,21 @@ setMethod("[", "RowBindMatrices", function(x, i, j, ...) {
     return(t(t(x)[rlang::maybe_missing(j), rlang::maybe_missing(i)]))
   }
 
-  i <- selection_index(i, nrow(x), rownames(x))
-  j <- selection_index(j, ncol(x), colnames(x))
+  i <- split_selection(selection_index(i, nrow(x), rownames(x)))
+  j <- split_selection(selection_index(j, ncol(x), colnames(x)))
 
 
-  # If we're just reordering rows, do a standard matrix selection
-  if (rlang::is_missing(j) && !rlang::is_missing(i) && all(sort(i) == seq_along(i))) {
-    return(callNextMethod())
+  # If we're just reordering rows/cols, do a standard matrix selection
+  if (rlang::is_missing(i$subset) && rlang::is_missing(j$subset)) {
+    return(callNextMethod(x, unsplit_selection(i), unsplit_selection(j)))
   }
 
   # if the length of our row selection is 0, do a standard matrix selection
-  if (!rlang::is_missing(i) && length(i) == 0) {
-    return(callNextMethod())
+  if (!rlang::is_missing(i$subset) && length(i$subset) == 0) {
+    return(callNextMethod(x, unsplit_selection(i), unsplit_selection(j)))
   }
 
-  x <- selection_fix_dims(x, rlang::maybe_missing(i), rlang::maybe_missing(j))
+  x <- selection_fix_dims(x, rlang::maybe_missing(i$subset), rlang::maybe_missing(j$subset))
 
   last_row <- 0L
   new_mats <- list()
@@ -1038,20 +1088,17 @@ setMethod("[", "RowBindMatrices", function(x, i, j, ...) {
     row_start <- last_row + 1L
     row_end <- last_row + nrow(mat)
 
-    if (!rlang::is_missing(i)) {
-      local_i <- i[i >= row_start & i <= row_end] - last_row
-      if (length(local_i) == 0) {
-        # Adjust later i to compensate for removing this matrix from the list
-        i[i > row_end] <- i[i > row_end] - nrow(mat)
-        next #skip adding this matrix to output list, and skip updating last_row
-      } else {
-        mat <- mat[sort(local_i),]
-      }
+    if (!rlang::is_missing(i$subset)) {
+      local_i <- i$subset[i$subset >= row_start & i$subset <= row_end] - last_row
+      mat <- mat[local_i,]
     }
-    if (!rlang::is_missing(j)) {
-      mat <- mat[,j]
+    if (!rlang::is_missing(j$subset)) {
+      # Only pass through the subset operation to a lower-level, not the shuffle
+      mat <- mat[,j$subset]
     }
-    new_mats <- c(new_mats, mat)
+    if (nrow(mat) > 0) {
+      new_mats <- c(new_mats, mat)
+    }
 
     last_row <- row_end
   }
@@ -1062,11 +1109,70 @@ setMethod("[", "RowBindMatrices", function(x, i, j, ...) {
   } else {
     stop("Subset RowBindMatrix error: got 0-length matrix_list after subsetting (please report this BPCells bug)")
   }
-  if (!rlang::is_missing(i)) {
-    shuffle_i <- rank(i)
-    real_rownames <- rownames(x)
-    x <- x[shuffle_i,]
-    rownames(x) <- real_rownames
+  if (!rlang::is_missing(i$reorder)) {
+    x <- x[i$reorder,]
+  }
+  if (!rlang::is_missing(j$reorder)) {
+    x <- x[,j$reorder]
+  }
+  return(x)
+})
+
+setMethod("[", "ColBindMatrices", function(x, i, j, ...) {
+  if (missing(x)) stop("x is missing in matrix selection")
+  # Handle transpose via recursive call
+  if (x@transpose) {
+    return(t(t(x)[rlang::maybe_missing(j), rlang::maybe_missing(i)]))
+  }
+
+  i <- split_selection(selection_index(i, nrow(x), rownames(x)))
+  j <- split_selection(selection_index(j, ncol(x), colnames(x)))
+
+
+  # If we're just reordering rows/cols, do a standard matrix selection
+  if (rlang::is_missing(i$subset) && rlang::is_missing(j$subset)) {
+    return(callNextMethod(x, unsplit_selection(i), unsplit_selection(j)))
+  }
+
+  # if the length of our col selection is 0, do a standard matrix selection
+  if (!rlang::is_missing(j$subset) && length(j$subset) == 0) {
+    return(callNextMethod(x, unsplit_selection(i), unsplit_selection(j)))
+  }
+
+  x <- selection_fix_dims(x, rlang::maybe_missing(i$subset), rlang::maybe_missing(j$subset))
+
+  last_col <- 0L
+  new_mats <- list()
+  for (mat in x@matrix_list) {
+    col_start <- last_col + 1L
+    col_end <- last_col + ncol(mat)
+
+    if (!rlang::is_missing(j$subset)) {
+      local_j <- j$subset[j$subset >= col_start & j$subset <= col_end] - last_col
+      mat <- mat[,local_j]
+    }
+    if (!rlang::is_missing(i$subset)) {
+      # Only pass through the subset operation to a lower-level, not the shuffle
+      mat <- mat[i$subset,]
+    }
+    if (ncol(mat) > 0) {
+      new_mats <- c(new_mats, mat)
+    }
+
+    last_col <- col_end
+  }
+  if (length(new_mats) > 1) {
+    x@matrix_list <- new_mats
+  } else if(length(new_mats) == 1) {
+    x <- new_mats[[1]]
+  } else {
+    stop("Subset ColBindMatrix error: got 0-length matrix_list after subsetting (please report this BPCells bug)")
+  }
+  if (!rlang::is_missing(i$reorder)) {
+    x <- x[i$reorder,]
+  }
+  if (!rlang::is_missing(j$reorder)) {
+    x <- x[,j$reorder]
   }
   return(x)
 })
@@ -1948,27 +2054,21 @@ setMethod("[", "PeakMatrix", function(x, i, j, ...) {
   }
 
   i <- selection_index(i, nrow(x), rownames(x))
-  j <- selection_index(j, ncol(x), colnames(x))
+  j <- split_selection(selection_index(j, ncol(x), colnames(x)))
 
-  if (rlang::is_missing(i) && !rlang::is_missing(j) && all(sort(j) == seq_along(j))) {
-    # If we're just reordering columns, do a standard matrix selection
-    return(callNextMethod())
-  }
 
-  x <- selection_fix_dims(x, rlang::maybe_missing(i), rlang::maybe_missing(j))
+  x <- selection_fix_dims(x, rlang::maybe_missing(i), rlang::maybe_missing(j$subset))
 
   if (!rlang::is_missing(i)) {
     x@fragments <- select_cells(x@fragments, i)
   }
-  if (!rlang::is_missing(j)) {
-    subset_j <- sort(j)
-    shuffle_j <- rank(j)
-    x@chr_id <- x@chr_id[subset_j]
-    x@start <- x@start[subset_j]
-    x@end <- x@end[subset_j]
-    real_colnames <- colnames(x)
-    x <- x[,shuffle_j]
-    colnames(x) <- real_colnames
+  if (!rlang::is_missing(j$subset)) {
+    x@chr_id <- x@chr_id[j$subset]
+    x@start <- x@start[j$subset]
+    x@end <- x@end[j$subset]
+  }
+  if (!rlang::is_missing(j$reorder)) {
+    x <- callNextMethod(x,,j$reorder)
   }
 
   x
@@ -2098,7 +2198,7 @@ setMethod("short_description", "TileMatrix", function(x) {
 })
 
 setMethod("[", "TileMatrix", function(x, i, j, ...) {
-    if (missing(x)) stop("x is missing in matrix selection")
+  if (missing(x)) stop("x is missing in matrix selection")
 
   # Handle transpose via recursive call
   if (x@transpose) {
@@ -2106,42 +2206,33 @@ setMethod("[", "TileMatrix", function(x, i, j, ...) {
   }
   
   i <- selection_index(i, nrow(x), rownames(x))
-  j <- selection_index(j, ncol(x), colnames(x))
-
-  if (rlang::is_missing(i) && !rlang::is_missing(j) && all(sort(j) == seq_along(j))) {
-    # If we're just reordering columns, do a standard matrix selection
-    return(callNextMethod())
-  }
+  j <- split_selection(selection_index(j, ncol(x), colnames(x)))
 
   x_orig <- x
-  x <- selection_fix_dims(x, rlang::maybe_missing(i), rlang::maybe_missing(j))
+  x <- selection_fix_dims(x, rlang::maybe_missing(i), rlang::maybe_missing(j$subset))
 
   if (!rlang::is_missing(i)) {
     x@fragments <- select_cells(x@fragments, i)
   }
-  if (!rlang::is_missing(j)) {
-    subset_j <- sort(j)
-    shuffle_j <- rank(j)
-    if (mean(diff(subset_j) == 1) > .9) {
+  if (!rlang::is_missing(j$subset)) {
+    if (mean(diff(j$subset) == 1) > .9) {
       # If 90% contiguous, then use a slice
       new_tiles <- subset_tiles_cpp(
         x@chr_id, x@start, x@end, x@tile_width, x@chr_levels,
-        subset_j - 1
+        j$subset - 1
       )
       x@chr_id <- new_tiles$chr_id
       x@start <- new_tiles$start
       x@end <- new_tiles$end
       x@tile_width <- new_tiles$tile_width
-      
-      real_colnames <- colnames(x)
-      x <- x[,shuffle_j]
-      x@dimnames[2] <- list(real_colnames)
     } else {
       # Otherwise, convert to a peak matrix
-      peaks <- tile_ranges(x_orig, subset_j)
+      peaks <- tile_ranges(x_orig, j$subset)
       x <- t(peak_matrix(x@fragments, peaks))
-      x <- x[,shuffle_j]
     }
+  }
+  if (!rlang::is_missing(j$reorder)) {
+    x <- callNextMethod(x,,j$reorder)
   }
   x
 })
@@ -2170,6 +2261,7 @@ setMethod("short_description", "ConvertMatrixType", function(x) {
     sprintf("Convert type from %s to %s", matrix_type(x@matrix), matrix_type(x))
   )
 })
+
 setMethod("[", "ConvertMatrixType", function(x, i, j, ...) {
   if (missing(x)) stop("x is missing in matrix selection")
 

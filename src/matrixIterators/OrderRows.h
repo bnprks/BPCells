@@ -8,6 +8,7 @@ namespace BPCells {
 // Re-order a MatixIterator so that each column gives entries sorted by row index
 template <class T> class OrderRows : public MatrixLoaderWrapper<T> {
     friend class MatrixTransformDense;
+
   private:
     std::vector<uint32_t> row_data, row_buf;
     std::vector<T> val_data, val_buf;
@@ -79,6 +80,27 @@ template <class T> class OrderRows : public MatrixLoaderWrapper<T> {
     uint32_t capacity() const override { return std::min(cap - idx, load_size); }
     uint32_t *rowData() override { return row_data.data() + idx; }
     T *valData() override { return val_data.data() + idx; }
+
+    // Override the mat-vec ops, since sorting is not necessary for these and it showed up
+    // prominently in a profile I ran (patterns from a Scale+Shift matrix with a subset assignment.
+    // The input to Scale got row-reordered in the process)
+    Eigen::MatrixXd
+    denseMultiplyRight(const Eigen::Map<Eigen::MatrixXd> B, std::atomic<bool> *user_interrupt) {
+        return this->loader->denseMultiplyRight(B, user_interrupt);
+    }
+    Eigen::MatrixXd
+    denseMultiplyLeft(const Eigen::Map<Eigen::MatrixXd> B, std::atomic<bool> *user_interrupt) {
+        return this->loader->denseMultiplyLeft(B, user_interrupt);
+    }
+    // Calculate matrix-vector product A*v where A=this and B is a dense matrix.
+    Eigen::VectorXd
+    vecMultiplyRight(const Eigen::Map<Eigen::VectorXd> v, std::atomic<bool> *user_interrupt) {
+        return this->loader->vecMultiplyRight(v, user_interrupt);
+    }
+    Eigen::VectorXd
+    vecMultiplyLeft(const Eigen::Map<Eigen::VectorXd> v, std::atomic<bool> *user_interrupt) {
+        return this->loader->vecMultiplyLeft(v, user_interrupt);
+    }
 };
 
 } // end namespace BPCells

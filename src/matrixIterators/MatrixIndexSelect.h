@@ -4,11 +4,62 @@
 
 namespace BPCells {
 
+namespace {
+
+// Generic subsetting over
+template <int Rows, int Cols>
+Eigen::Matrix<double, Rows, Cols> subset_eigen_rows(
+    const Eigen::Map<Eigen::Matrix<double, Rows, Cols>> m, const std::vector<uint32_t> &indices
+) {
+    Eigen::Matrix<double, Rows, Cols> ret(indices.size(), m.cols());
+    for (size_t i = 0; i < indices.size(); i++) {
+        ret.row(i) = m.row(indices[i]);
+    }
+    return ret;
+}
+
+template <int Rows, int Cols>
+Eigen::Matrix<double, Rows, Cols> subset_eigen_cols(
+    const Eigen::Map<Eigen::Matrix<double, Rows, Cols>> m, const std::vector<uint32_t> &indices
+) {
+    Eigen::Matrix<double, Rows, Cols> ret(m.rows(), indices.size());
+    for (size_t i = 0; i < indices.size(); i++) {
+        ret.col(i) = m.col(indices[i]);
+    }
+    return ret;
+}
+
+// Non-map variants
+template <int Rows, int Cols>
+Eigen::Matrix<double, Rows, Cols>
+subset_eigen_rows(const Eigen::Matrix<double, Rows, Cols> m, const std::vector<uint32_t> &indices) {
+    Eigen::Matrix<double, Rows, Cols> ret(indices.size(), m.cols());
+    for (size_t i = 0; i < indices.size(); i++) {
+        ret.row(i) = m.row(indices[i]);
+    }
+    return ret;
+}
+
+template <int Rows, int Cols>
+Eigen::Matrix<double, Rows, Cols>
+subset_eigen_cols(const Eigen::Matrix<double, Rows, Cols> m, const std::vector<uint32_t> &indices) {
+    Eigen::Matrix<double, Rows, Cols> ret(m.rows(), indices.size());
+    for (size_t i = 0; i < indices.size(); i++) {
+        ret.col(i) = m.col(indices[i]);
+    }
+    return ret;
+}
+
+} // namespace
+
 // Select specific columns from a dataset
 template <class T> class MatrixColSelect : public MatrixLoaderWrapper<T> {
   private:
     uint32_t current_col = UINT32_MAX;
     const std::vector<uint32_t> col_indices;
+    bool is_reorder = false;
+    std::vector<uint32_t> reverse_indices; // Only populated if is_reorder == true;
+                                           // reverse_indices[col_indices[i]] = i
 
   public:
     // col_indices -- vector of columns to select
@@ -16,7 +67,29 @@ template <class T> class MatrixColSelect : public MatrixLoaderWrapper<T> {
         std::unique_ptr<MatrixLoader<T>> &&loader, const std::vector<uint32_t> col_indices
     )
         : MatrixLoaderWrapper<T>(std::move(loader))
-        , col_indices(col_indices) {}
+        , col_indices(col_indices) {
+
+        if (col_indices.size() == this->loader->cols()) {
+            std::vector<uint8_t> seen(col_indices.size(), 0);
+            is_reorder = true;
+            for (const auto &c : col_indices) {
+                if (seen[c]) {
+                    is_reorder = false;
+                    break;
+                }
+                seen[c] = 1;
+            }
+        }
+        if (is_reorder) {
+            reverse_indices.resize(col_indices.size(), UINT32_MAX);
+            for (uint32_t i = 0; i < col_indices.size(); i++) {
+                if (reverse_indices[col_indices[i]] != UINT32_MAX)
+                    throw std::runtime_error("Error constructing reverse_indices in MatrixColSelect"
+                    );
+                reverse_indices[col_indices[i]] = i;
+            }
+        }
+    }
 
     ~MatrixColSelect() = default;
 
@@ -50,6 +123,56 @@ template <class T> class MatrixColSelect : public MatrixLoaderWrapper<T> {
         }
     }
     uint32_t currentCol() const override { return current_col; }
+
+    // Override sparse-dense multiply ops
+    // This proved needed in cases of subsetting/reordering rows after a concatenation.
+    // It will potentially increase overall work in case of a small subset, so the
+    // long-term fix is to separate out permuting from filtering (since filtering
+    // can be pushed down and permuting can be pulled up)
+    Eigen::MatrixXd denseMultiplyRight(
+        const Eigen::Map<Eigen::MatrixXd> B, std::atomic<bool> *user_interrupt = NULL
+    ) override {
+        if (is_reorder) {
+            Eigen::MatrixXd B2 = subset_eigen_rows(B, reverse_indices);
+            Eigen::Map<Eigen::MatrixXd> B2_map(B2.data(), B2.rows(), B2.cols());
+            return this->loader->denseMultiplyRight(B2_map, user_interrupt);
+        } else {
+            return MatrixLoaderWrapper<T>::denseMultiplyRight(B, user_interrupt);
+        }
+    }
+
+    Eigen::MatrixXd denseMultiplyLeft(
+        const Eigen::Map<Eigen::MatrixXd> B, std::atomic<bool> *user_interrupt = NULL
+    ) override {
+        if (is_reorder) {
+            Eigen::MatrixXd R1 = this->loader->denseMultiplyLeft(B, user_interrupt);
+            return subset_eigen_cols(R1, col_indices);
+        } else {
+            return MatrixLoaderWrapper<T>::denseMultiplyLeft(B, user_interrupt);
+        }
+    }
+
+    Eigen::VectorXd vecMultiplyRight(
+        const Eigen::Map<Eigen::VectorXd> v, std::atomic<bool> *user_interrupt = NULL
+    ) override {
+        if (is_reorder) {
+            Eigen::VectorXd v2 = subset_eigen_rows(v, reverse_indices);
+            Eigen::Map<Eigen::VectorXd> v2_map(v2.data(), v2.rows());
+            return this->loader->vecMultiplyRight(v2_map, user_interrupt);
+        } else {
+            return MatrixLoaderWrapper<T>::vecMultiplyRight(v, user_interrupt);
+        }
+    }
+    Eigen::VectorXd vecMultiplyLeft(
+        const Eigen::Map<Eigen::VectorXd> v, std::atomic<bool> *user_interrupt = NULL
+    ) override {
+        if (is_reorder) {
+            Eigen::VectorXd r1 = this->loader->vecMultiplyLeft(v, user_interrupt);
+            return subset_eigen_rows(r1, col_indices);
+        } else {
+            return MatrixLoaderWrapper<T>::vecMultiplyLeft(v, user_interrupt);
+        }
+    }
 };
 
 // Select specific rows from a dataset
@@ -63,6 +186,7 @@ template <class T> class MatrixRowSelect : public MatrixLoaderWrapper<T> {
     // for input row_id i
     std::vector<uint32_t> reverse_indices;
     const std::vector<uint32_t> row_indices;
+    bool is_reorder;
 
   public:
     // cell_names -- vector with length <= the number of chromosomes in the input
@@ -79,6 +203,7 @@ template <class T> class MatrixRowSelect : public MatrixLoaderWrapper<T> {
                 throw std::runtime_error("Cannot duplicate rows using MatrixRowSelect");
             reverse_indices[row_indices[i]] = i;
         }
+        is_reorder = row_indices.size() == this->loader->rows();
     }
 
     ~MatrixRowSelect() = default;
@@ -126,6 +251,57 @@ template <class T> class MatrixRowSelect : public MatrixLoaderWrapper<T> {
     uint32_t capacity() const override { return loaded; }
     uint32_t *rowData() override { return this->loader->rowData(); }
     T *valData() override { return this->loader->valData(); }
+
+    // Override sparse-dense multiply ops
+    // This proved needed in cases of subsetting/reordering rows after a concatenation.
+    // It will potentially increase overall work in case of a small subset, so the
+    // long-term fix is to separate out permuting from filtering (since filtering
+    // can be pushed down and permuting can be pulled up)
+    Eigen::MatrixXd denseMultiplyRight(
+        const Eigen::Map<Eigen::MatrixXd> B, std::atomic<bool> *user_interrupt = NULL
+    ) override {
+        if (is_reorder) {
+            Eigen::MatrixXd R1 = this->loader->denseMultiplyRight(B, user_interrupt);
+            return subset_eigen_rows(R1, row_indices);
+        } else {
+            return MatrixLoaderWrapper<T>::denseMultiplyRight(B, user_interrupt);
+        }
+    }
+
+    Eigen::MatrixXd denseMultiplyLeft(
+        const Eigen::Map<Eigen::MatrixXd> B, std::atomic<bool> *user_interrupt = NULL
+    ) override {
+        if (is_reorder) {
+            Eigen::MatrixXd B2 = subset_eigen_cols(B, reverse_indices);
+            Eigen::Map<Eigen::MatrixXd> B2_map(B2.data(), B2.rows(), B2.cols());
+            return this->loader->denseMultiplyLeft(B2_map, user_interrupt);
+        } else {
+            return MatrixLoaderWrapper<T>::denseMultiplyLeft(B, user_interrupt);
+        }
+    }
+
+    Eigen::VectorXd vecMultiplyRight(
+        const Eigen::Map<Eigen::VectorXd> v, std::atomic<bool> *user_interrupt = NULL
+    ) override {
+        if (is_reorder) {
+            Eigen::VectorXd r1 = this->loader->vecMultiplyRight(v, user_interrupt);
+            return subset_eigen_rows(r1, row_indices);
+        } else {
+            return MatrixLoaderWrapper<T>::vecMultiplyRight(v, user_interrupt);
+        }
+    }
+
+    Eigen::VectorXd vecMultiplyLeft(
+        const Eigen::Map<Eigen::VectorXd> v, std::atomic<bool> *user_interrupt = NULL
+    ) override {
+        if (is_reorder) {
+            Eigen::VectorXd v2 = subset_eigen_rows(v, reverse_indices);
+            Eigen::Map<Eigen::VectorXd> v2_map(v2.data(), v2.rows());
+            return this->loader->vecMultiplyLeft(v2_map, user_interrupt);
+        } else {
+            return MatrixLoaderWrapper<T>::vecMultiplyLeft(v, user_interrupt);
+        }
+    }
 };
 
 } // end namespace BPCells

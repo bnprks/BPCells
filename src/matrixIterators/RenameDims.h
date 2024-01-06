@@ -58,6 +58,37 @@ template <class T> class RenameDims : public MatrixLoaderWrapper<T> {
         return NULL;
     }
 
+    // Defer through all the math ops to tihe input matrix
+    Eigen::MatrixXd denseMultiplyRight(
+        const Eigen::Map<Eigen::MatrixXd> B, std::atomic<bool> *user_interrupt = NULL
+    ) override {
+        return this->loader->denseMultiplyRight(B, user_interrupt);
+    }
+    Eigen::MatrixXd denseMultiplyLeft(
+        const Eigen::Map<Eigen::MatrixXd> B, std::atomic<bool> *user_interrupt = NULL
+    ) override {
+        return this->loader->denseMultiplyLeft(B, user_interrupt);
+    }
+    Eigen::VectorXd vecMultiplyRight(
+        const Eigen::Map<Eigen::VectorXd> v, std::atomic<bool> *user_interrupt = NULL
+    ) override {
+        return this->loader->vecMultiplyRight(v, user_interrupt);
+    }
+    Eigen::VectorXd vecMultiplyLeft(
+        const Eigen::Map<Eigen::VectorXd> v, std::atomic<bool> *user_interrupt = NULL
+    ) override {
+        return this->loader->vecMultiplyLeft(v, user_interrupt);
+    }
+    std::vector<T> colSums(std::atomic<bool> *user_interrupt = NULL) override {
+        return this->loader->colSums();
+    }
+    std::vector<T> rowSums(std::atomic<bool> *user_interrupt = NULL) override {
+        return this->loader->rowSums();
+    }
+    StatsResult computeMatrixStats(Stats row_stats, Stats col_stats, std::atomic<bool> *user_interrupt = NULL) override {
+        return this->loader->computeMatrixStats(row_stats, col_stats, user_interrupt);
+    }
+
 };
 
 } // namespace BPCells

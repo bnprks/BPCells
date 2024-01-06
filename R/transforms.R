@@ -19,27 +19,25 @@ setMethod("matrix_type", "TransformedMatrix", function(x) "double")
 # Subsetting on TransformedMatrix objects
 setMethod("[", "TransformedMatrix", function(x, i, j, ...) {
   if (missing(x)) stop("x is missing in matrix selection")
-
-  i <- selection_index(i, nrow(x), rownames(x))
-  j <- selection_index(j, ncol(x), colnames(x))
-  x <- selection_fix_dims(x, rlang::maybe_missing(i), rlang::maybe_missing(j))
-
-  x@matrix <- x@matrix[rlang::maybe_missing(i), rlang::maybe_missing(j)]
-
+  # Handle transpose via recursive call
   if (x@transpose) {
-    tmp <- rlang::maybe_missing(i)
-    i <- rlang::maybe_missing(j)
-    j <- rlang::maybe_missing(tmp)
+    return(t(t(x)[rlang::maybe_missing(j), rlang::maybe_missing(i)]))
   }
+
+  i <- split_selection(selection_index(i, nrow(x), rownames(x)))
+  j <- split_selection(selection_index(j, ncol(x), colnames(x)))
+  
+  x <- selection_fix_dims(x, rlang::maybe_missing(i$subset), rlang::maybe_missing(j$subset))
+  x@matrix <- x@matrix[rlang::maybe_missing(i$subset), rlang::maybe_missing(j$subset)]
 
   # Subset the row/col params
-  if (!rlang::is_missing(i) && ncol(x@row_params) != 0) {
-    x@row_params <- x@row_params[, i, drop = FALSE]
+  if (ncol(x@row_params) != 0) {
+    x@row_params <- x@row_params[, rlang::maybe_missing(i$subset), drop = FALSE]
   }
-  if (!rlang::is_missing(j) && ncol(x@col_params) != 0) {
-    x@col_params <- x@col_params[, j, drop = FALSE]
+  if (ncol(x@col_params) != 0) {
+    x@col_params <- x@col_params[, rlang::maybe_missing(j$subset), drop = FALSE]
   }
-  x
+  callNextMethod(x, rlang::maybe_missing(i$reorder), rlang::maybe_missing(j$reorder))
 })
 
 #################
@@ -218,9 +216,10 @@ setMethod("short_description", "TransformMinByRow", function(x) {
     x@row_params <- x@row_params[,c(1:print_entries, ncol(x@row_params)),drop=FALSE]
   }
   
+  label <- if (x@transpose) "col" else "row"
   c(
     short_description(x@matrix),
-    sprintf("Transform min by row: %s", pretty_print_vector(sprintf("%.3g", x@row_params[1, ]), max_len = 3))
+    sprintf("Transform min by %s: %s", label, pretty_print_vector(sprintf("%.3g", x@row_params[1, ]), max_len = 3))
   )
 })
 
@@ -228,6 +227,9 @@ setMethod("short_description", "TransformMinByRow", function(x) {
 #' @description **min_by_row**: Take the minimum with a per-row constant
 #' @export
 min_by_row <- function(mat, vals) {
+  if (mat@transpose) {
+    return(t(min_by_col(t(mat), vals)))
+  }
   assert_is(mat, "IterableMatrix")
   assert_is(vals, "numeric")
   assert_greater_than_zero(vals)
@@ -247,10 +249,10 @@ setMethod("short_description", "TransformMinByCol", function(x) {
   if (ncol(x@col_params) > print_entries + 1) {
     x@col_params <- x@col_params[,c(1:print_entries, ncol(x@col_params)), drop=FALSE]
   }
-  
+  label <- if (x@transpose) "row" else "col"
   c(
     short_description(x@matrix),
-    sprintf("Transform min by col: %s", pretty_print_vector(sprintf("%.3g", x@col_params[1, ]), max_len = 3))
+    sprintf("Transform min by %s: %s", label, pretty_print_vector(sprintf("%.3g", x@col_params[1, ]), max_len = 3))
   )
 })
 
@@ -258,6 +260,9 @@ setMethod("short_description", "TransformMinByCol", function(x) {
 #' @description **min_by_col**: Take the minimum with a per-col constant
 #' @export
 min_by_col <- function(mat, vals) {
+  if (mat@transpose) {
+    return(t(min_by_row(t(mat), vals)))
+  }
   assert_is(mat, "IterableMatrix")
   assert_is(vals, "numeric")
   assert_greater_than_zero(vals)

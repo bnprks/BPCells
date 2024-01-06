@@ -84,16 +84,19 @@ test_that("Subsetting matrix multiply works", {
   res <- m1 %*% m2
 
   expect_equal(as(m[c(2, 4, 9, 5), ], "dgCMatrix"), res[c(2, 4, 9, 5), ], tolerance=testthat_tolerance())
-  expect_s4_class(m[c(2, 4, 9, 5), ], "MatrixMultiply")
+  expect_s4_class(m[c(2, 4, 9, 5), ], "MatrixSubset")
+  expect_s4_class(m[sort(c(2, 4, 9, 5)), ], "MatrixMultiply")
 
   expect_equal(as(m[, c(4, 3, 6)], "dgCMatrix"), res[, c(4, 3, 6)], tolerance=testthat_tolerance())
-  expect_s4_class(m[, c(4, 3, 6)], "MatrixMultiply")
+  expect_s4_class(m[, sort(c(4, 3, 6))], "MatrixMultiply")
+  expect_s4_class(m[, c(4, 3, 6)], "MatrixSubset")
 
   expect_equal(as(m[c(2, 4, 9, 5), c(4, 3, 6)], "dgCMatrix"), res[c(2, 4, 9, 5), c(4, 3, 6)], tolerance=testthat_tolerance())
-  expect_s4_class(m[c(2, 4, 9, 5), c(4, 3, 6)], "MatrixMultiply")
+  expect_s4_class(m[sort(c(2, 4, 9, 5)), sort(c(4, 3, 6))], "MatrixMultiply")
+  expect_s4_class(m[c(2, 4, 9, 5), c(4, 3, 6)], "MatrixSubset")
 })
 
-test_that("Subsetting RowBindMatrices works", {
+test_that("Subsetting RowBindMatrices/ColBindMatrices works", {
   withr::local_seed(195123) 
 
   mat_list <- lapply(1:10, function(i) {
@@ -101,50 +104,54 @@ test_that("Subsetting RowBindMatrices works", {
   })
   
   ref <- do.call(rbind, mat_list)
-  bpmat_list <- lapply(mat_list, function(x) as(x, "dgCMatrix") |> as("IterableMatrix"))
-  bpmat <- do.call(rbind, bpmat_list)
+  bpmat_list1 <- lapply(mat_list, function(x) as(x, "dgCMatrix") |> as("IterableMatrix"))
+  bpmat_list2 <- lapply(mat_list, function(x) as(t(x), "dgCMatrix") |> as("IterableMatrix"))
+  bpmat1 <- do.call(rbind, bpmat_list1)
+  bpmat2 <- t(do.call(cbind, bpmat_list2))
 
-  j <- sample.int(ncol(ref), ncol(ref) %/% 2, replace=FALSE)
-  
-  # Try random subsets of 25% of the rows
-  for (x in 1:5) {
-    i <- sample.int(nrow(ref), nrow(ref) %/% 4, replace=FALSE)
+  for (bpmat in list(bpmat1, bpmat2)) {
+    j <- sample.int(ncol(ref), ncol(ref) %/% 2, replace=FALSE)
+    
+    # Try random subsets of 25% of the rows
+    for (x in 1:5) {
+      i <- sample.int(nrow(ref), nrow(ref) %/% 4, replace=FALSE)
+      expect_identical(
+        ref[i, j],
+        bpmat[i, j] |> as("dgCMatrix") |> as.matrix()
+      )
+
+      expect_identical(
+        ref[i, j],
+        t(bpmat)[j,i] |> as("dgCMatrix") |> as.matrix() |> t()
+      )
+    }
+
+    # Try random subsets of 3 contiguous rows
+    for (x in 1:5) {
+      i <- sample.int(nrow(ref) - 3, 1)
+      i <- i:(i+3L)
+      expect_identical(
+        ref[i, j],
+        bpmat[i, j] |> as("dgCMatrix") |> as.matrix()
+      )
+
+      expect_identical(
+        ref[i, j],
+        t(bpmat)[j,i] |> as("dgCMatrix") |> as.matrix() |> t()
+      )
+    }
+
+    # Try just subsetting j 
     expect_identical(
-      ref[i, j],
-      bpmat[i, j] |> as("dgCMatrix") |> as.matrix()
+      ref[, j],
+      bpmat[, j] |> as("dgCMatrix") |> as.matrix()
     )
 
     expect_identical(
-      ref[i, j],
-      t(bpmat)[j,i] |> as("dgCMatrix") |> as.matrix() |> t()
+      ref[, j],
+      t(bpmat)[j,] |> as("dgCMatrix") |> as.matrix() |> t()
     )
   }
-
-  # Try random subsets of 3 contiguous rows
-  for (x in 1:5) {
-    i <- sample.int(nrow(ref) - 3, 1)
-    i <- i:(i+3L)
-    expect_identical(
-      ref[i, j],
-      bpmat[i, j] |> as("dgCMatrix") |> as.matrix()
-    )
-
-    expect_identical(
-      ref[i, j],
-      t(bpmat)[j,i] |> as("dgCMatrix") |> as.matrix() |> t()
-    )
-  }
-
-  # Try just subsetting j 
-  expect_identical(
-    ref[, j],
-    bpmat[, j] |> as("dgCMatrix") |> as.matrix()
-  )
-
-  expect_identical(
-    ref[, j],
-    t(bpmat)[j,] |> as("dgCMatrix") |> as.matrix() |> t()
-  )
 })
 
 test_that("Subsetting to 0 dimensions works", {
@@ -221,6 +228,27 @@ test_that("Subset assignment works", {
   m2 <- as(m1, "IterableMatrix")
   m2[,] <- r2
   expect_identical(as(m2, "dgCMatrix"), r)
+
+  # Test assigning a dense matrix and a dgCMatrix
+  t <- test_cases[[1]]
+  m2 <- as(m1, "IterableMatrix")
+  m2[t$rows, t$cols] <- as.matrix(r)[t$rows, t$cols]
+  m1b <- m1
+  m1b[t$rows, t$cols] <- r[t$rows, t$cols]
+  expect_identical(as(m2, "dgCMatrix"), m1b)
+
+  m2 <- as(m1, "IterableMatrix")
+  m2[t$rows, t$cols] <- r[t$rows, t$cols]
+  expect_identical(as(m2, "dgCMatrix"), m1b)
+
+  # Check that rownames + colnames are preserved
+  rownames(m1) <- paste0("r", seq_len(nrow(m1)))
+  colnames(m1) <- paste0("c", seq_len(ncol(m1)))
+  m2 <- as(m1, "IterableMatrix")
+  m2[t$rows, t$cols] <- as.matrix(r)[t$rows, t$cols]
+  m1b <- m1
+  m1b[t$rows, t$cols] <- r[t$rows, t$cols]
+  expect_identical(as(m2, "dgCMatrix"), m1b)
 })
 
 test_that("Transposing a 0 dimension matrix works", {
@@ -346,9 +374,14 @@ test_that("rbind Math works", {
   })
 
   i1 <- do.call(rbind, mat_list)
-
   test_dense_multiply_ops(m1, i1)
   test_rowsum_colsum_rowmean_colmean(m1, i1)
+
+
+  # Test for the specialized multiply ops with MatrixSubset of RowBind/ColBind
+  row_permute <- sample.int(nrow(m1))
+  col_permute <- sample.int(ncol(m1))
+  test_dense_multiply_ops(m1[row_permute, col_permute], i1[row_permute, col_permute])
 
   i1 <- set_threads(i1, 3)
   test_dense_multiply_ops(m1, i1)
@@ -365,6 +398,11 @@ test_that("cbind Math works", {
   i1 <- do.call(cbind, mat_list)
   test_dense_multiply_ops(m1, i1)
   test_rowsum_colsum_rowmean_colmean(m1, i1)
+
+  # Test for the specialized multiply ops with MatrixSubset of RowBind/ColBind
+  row_permute <- sample.int(nrow(m1))
+  col_permute <- sample.int(ncol(m1))
+  test_dense_multiply_ops(m1[row_permute, col_permute], i1[row_permute, col_permute])
 
   i1 <- set_threads(i1, 3)
   test_dense_multiply_ops(m1, i1)
