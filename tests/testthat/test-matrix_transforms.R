@@ -3,6 +3,37 @@ generate_sparse_matrix <- function(nrow, ncol, fraction_nonzero = 0.5, max_val =
   as(m, "dgCMatrix")
 }
 
+test_that("Subsetting transform works", {
+    set.seed(125124)
+    m1 <- generate_sparse_matrix(20, 10, max_val=1e5)
+    m2 <- as(m1, "IterableMatrix")
+    m1 <- as.matrix(m1)
+
+    # Apply some transformation layers
+    y <- runif(nrow(m1))
+    m1 <- multiply_rows(m1, y)
+    m2 <- multiply_rows(m2, y)
+
+    y <- runif(ncol(m1))
+    m1 <- multiply_cols(m1, y)
+    m2 <- multiply_cols(m2, y)
+
+    m1 <- log1p(m1) + 1
+    m2 <- log1p_slow(m2) + 1
+
+    expect_equal(as.matrix(m2), m1)
+    
+    i <- sample.int(nrow(m1))
+    j <- sample.int(ncol(m2))
+    x <- 8
+    expect_equal(as.matrix(m2[,c(7,8)]), m1[,c(7,8),drop=FALSE])
+
+
+    expect_equal(as.matrix(m2[i,j]), m1[i,j])
+    expect_equal(as.matrix(m2[i[1:5],j[1:6]]), m1[i[1:5],j[1:6]])
+    expect_equal(as.matrix(m2[sort(i[1:5]),sort(j[1:6])]), m1[sort(i[1:5]),sort(j[1:6])])
+})
+
 test_that("log1p works", {
     m <- generate_sparse_matrix(20, 10, max_val=1e5)
     res <- m %>%

@@ -35,6 +35,7 @@ void MatrixTransformDense::seekCol(uint32_t col) {
     current_col = col;
     current_row = 0;
     loader->seekCol(col);
+    loader_col = loader->currentCol();
     loader_capacity = UINT32_MAX;
     loader_idx = UINT32_MAX;
 }
