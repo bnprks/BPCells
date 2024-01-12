@@ -30,7 +30,7 @@ template <class T> class RenameDims : public MatrixLoaderWrapper<T> {
         }
 
         if (col_names.size() > 0 && col_names.size() != this->loader->cols()) {
-            throw std::runtime_error("RenameDims: Cow names must be length 0 or equal to number of input cols");
+            throw std::runtime_error("RenameDims: Col names must be length 0 or equal to number of input cols");
         }
 
         if (clear_row_names && row_names.size() != 0) {

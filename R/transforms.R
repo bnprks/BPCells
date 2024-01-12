@@ -24,8 +24,8 @@ setMethod("[", "TransformedMatrix", function(x, i, j, ...) {
     return(t(t(x)[rlang::maybe_missing(j), rlang::maybe_missing(i)]))
   }
 
-  i <- split_selection(selection_index(i, nrow(x), rownames(x)))
-  j <- split_selection(selection_index(j, ncol(x), colnames(x)))
+  i <- split_selection_index(i, nrow(x), rownames(x))
+  j <- split_selection_index(j, ncol(x), colnames(x))
   
   x <- selection_fix_dims(x, rlang::maybe_missing(i$subset), rlang::maybe_missing(j$subset))
   x@matrix <- x@matrix[rlang::maybe_missing(i$subset), rlang::maybe_missing(j$subset)]

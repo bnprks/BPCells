@@ -401,8 +401,8 @@ setMethod("[", "MatrixMultiply", function(x, i, j, ...) {
     return(t(t(x)[rlang::maybe_missing(j), rlang::maybe_missing(i)]))
   }
 
-  i <- split_selection(selection_index(i, nrow(x), rownames(x)))
-  j <- split_selection(selection_index(j, ncol(x), colnames(x)))
+  i <- split_selection_index(i, nrow(x), rownames(x))
+  j <- split_selection_index(j, ncol(x), colnames(x))
   # If we're just reordering rows/cols, do a standard matrix selection
   if (rlang::is_missing(i$subset) && rlang::is_missing(j$subset)) {
     return(callNextMethod(x, unsplit_selection(i), unsplit_selection(j)))
@@ -624,12 +624,15 @@ selection_fix_dims <- function(x, i, j) {
 # First a subset, followed by a reorder.
 # Set subset or reorder to rlang::missing_arg() if they are an identity transformation
 # When we push down subset operations, we'll just push down the subset, and not the reorder
-split_selection <- function(selection) {
+# Use instead of `selection_index()`. Convert these results into the equivalent from `selection_index()` by
+# calling `unsplit_selection()`
+split_selection_index <- function(selection, dim_len, dimnames) {
+  selection <- selection_index(selection, dim_len, dimnames)
   if (rlang::is_missing(selection)) {
     return(list(subset=rlang::missing_arg(), reorder=rlang::missing_arg()))
   }
   res <- list(subset = sort(selection), reorder=rank(selection, ties.method="first"))
-  if (all(res$subset == seq_along(res$subset))) res$subset <- rlang::missing_arg()
+  if (length(res$subset) == dim_len) res$subset <- rlang::missing_arg()
   if (all(res$reorder == seq_along(res$reorder))) res$reorder <- rlang::missing_arg()
   return(res)
 }
@@ -1066,8 +1069,8 @@ setMethod("[", "RowBindMatrices", function(x, i, j, ...) {
     return(t(t(x)[rlang::maybe_missing(j), rlang::maybe_missing(i)]))
   }
 
-  i <- split_selection(selection_index(i, nrow(x), rownames(x)))
-  j <- split_selection(selection_index(j, ncol(x), colnames(x)))
+  i <- split_selection_index(i, nrow(x), rownames(x))
+  j <- split_selection_index(j, ncol(x), colnames(x))
 
 
   # If we're just reordering rows/cols, do a standard matrix selection
@@ -1125,8 +1128,8 @@ setMethod("[", "ColBindMatrices", function(x, i, j, ...) {
     return(t(t(x)[rlang::maybe_missing(j), rlang::maybe_missing(i)]))
   }
 
-  i <- split_selection(selection_index(i, nrow(x), rownames(x)))
-  j <- split_selection(selection_index(j, ncol(x), colnames(x)))
+  i <- split_selection_index(i, nrow(x), rownames(x))
+  j <- split_selection_index(j, ncol(x), colnames(x))
 
 
   # If we're just reordering rows/cols, do a standard matrix selection
@@ -2054,7 +2057,7 @@ setMethod("[", "PeakMatrix", function(x, i, j, ...) {
   }
 
   i <- selection_index(i, nrow(x), rownames(x))
-  j <- split_selection(selection_index(j, ncol(x), colnames(x)))
+  j <- split_selection_index(j, ncol(x), colnames(x))
 
 
   x <- selection_fix_dims(x, rlang::maybe_missing(i), rlang::maybe_missing(j$subset))
@@ -2206,7 +2209,7 @@ setMethod("[", "TileMatrix", function(x, i, j, ...) {
   }
   
   i <- selection_index(i, nrow(x), rownames(x))
-  j <- split_selection(selection_index(j, ncol(x), colnames(x)))
+  j <- split_selection_index(j, ncol(x), colnames(x))
 
   x_orig <- x
   x <- selection_fix_dims(x, rlang::maybe_missing(i), rlang::maybe_missing(j$subset))

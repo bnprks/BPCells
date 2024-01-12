@@ -188,6 +188,36 @@ test_that("Subsetting to 0 dimensions works", {
   )
 })
 
+test_that("Subset rename dims works (Issue #65)", {
+  m1 <- generate_sparse_matrix(20, 20) %>% as("dgCMatrix")
+  m2 <- as(m1, "IterableMatrix")
+
+  dimnames(m2) <- dimnames(m1)
+  m2 <- m2*2
+  m1 <- m1*2
+  i <- sample.int(nrow(m1), nrow(m1) - 2)
+  j <- sample.int(ncol(m1), nrow(m1) - 2)
+  m2 <- m2[i,j]
+  m1 <- m1[i,j]
+  
+  m1 <- cbind(m1, m1)
+  m2 <- cbind(m2, m2)
+
+  rownames(m1) <- paste("row", seq_len(nrow(m1)))
+  colnames(m1) <- paste("col", seq_len(ncol(m1)))
+  dimnames(m2) <- dimnames(m1)
+
+  expect_identical(
+    m2[,1:2] %>% as("dgCMatrix"),
+    m1[,1:2]
+  )
+
+  expect_identical(
+    m2[1:2,] %>% as("dgCMatrix"),
+    m1[1:2,]
+  )
+})
+
 test_that("Subset assignment works", {
   m1 <- generate_dense_matrix(10, 20) %>% as("dgCMatrix")
   r <- -(1 * generate_dense_matrix(10, 20)) %>% as("dgCMatrix")
