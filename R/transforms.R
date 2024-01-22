@@ -771,13 +771,14 @@ setMethod("+", signature(e1 = "numeric", e2 = "TransformScaleShift"), function(e
 #' Broadcasting vector arithmetic
 #'
 #' Convenience functions for adding or multiplying
-#' each row / column of a mtarix by a number.
+#' each row / column of a matrix by a number.
 #'
 #' @rdname mat_norm
 #'
 #' @param mat Matrix-like object
 #' @param vec Numeric vector
 #' @return Matrix-like object
+#' @export
 add_rows <- function(mat, vec) {
   assert_is(mat, c("dgCMatrix", "IterableMatrix", "matrix"))
   assert_is_numeric(vec)

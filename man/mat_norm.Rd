@@ -25,5 +25,5 @@ Matrix-like object
 }
 \description{
 Convenience functions for adding or multiplying
-each row / column of a mtarix by a number.
+each row / column of a matrix by a number.
 }

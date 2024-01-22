@@ -45,7 +45,10 @@ Contributions welcome :)
 - Subsetting peak or tile matrices with `[` now propagates through so we always avoid computing parts of
   the peak/tile matrix that have been discarded by our subset. Subsetting a tile matrix will automatically
   convert into a peak matrix when possible for improved efficiency.
-- Subsetting RowBindMatrices now propagates through so we avoid touching matrices with no selected indices
+- Subsetting RowBindMatrices and ColBindMatrices now propagates through so we avoid touching matrices with no selected indices
+- Added logic to help reduce cases where subsetting causes BPCells to fall back to a less efficient matrix-vector multiply algorithm.
+  This affects most math transforms. As part of this, the filtering part of a subset will propagate to earlier transformation steps, while the
+  reordering will not. Thanks to @nimanouri-nm for raising issue #65 to fix a bug in the initial implementation.
 - Additional C++17 filesystem backwards compatibility that should allow slightly older compilers such as GCC 7.5 to 
   build BPCells.
 
