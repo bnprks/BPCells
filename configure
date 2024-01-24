@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 if [ -z $BPCELLS_DEBUG_INSTALL ]; then 
     ERR=/dev/null
 else
@@ -114,7 +114,13 @@ echo "HDF5_LIBS='${HDF5_LIBS}'"
 
 ARCH_FLAG="-march=native"
 printf "\nTesting architecture flag support support..."
-for ARCH_FLAG in "-march=native" ""; do
+if [ -n "$BPCELLS_DISABLE_MARCH_NATIVE" ]; then
+    ARCH_CANDIDATES=""
+else
+    ARCH_CANDIDATES=("-march=native" "-march=native -Wa,-muse-unaligned-vector-move" "")
+fi
+
+for ARCH_FLAG in "${ARCH_CANDIDATES[@]}"; do
     if $CC tools/h5write.c $ARCH_FLAG $CFLAGS $LDFLAGS $HDF5_CFLAGS $HDF5_LIBS -o tools/h5write 2>$ERR; then
         printf "'%s' succeeded\n" $ARCH_FLAG
         break;
