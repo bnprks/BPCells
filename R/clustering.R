@@ -64,6 +64,7 @@ knn_to_snn_graph <- function(knn, min_val = 1 / 15, self_loops = TRUE) {
   # Return as a sparse matrix
   Matrix::sparseMatrix(
     i = snn$i + 1L, j = snn$j + 1L, x = snn$snn_count,
+    dims = c(nrow(knn$idx), nrow(knn$idx)),
     repr="C"
   )
 }
