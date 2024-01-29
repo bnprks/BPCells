@@ -947,6 +947,7 @@ setMethod("short_description", "RowBindMatrices", function(x) {
 
 setMethod("rbind2", signature(x = "IterableMatrix", y = "IterableMatrix"), function(x, y, ...) {
   if (x@transpose != y@transpose) stop("Cannot merge matrices with different interal transpose states.\nPlease use transpose_storage_order().")
+  if (matrix_type(x) != matrix_type(y)) stop("Cannot merge matrices with different data type.\nPlease use convert_matrix_type().")
   if (x@transpose) {
     return(t(cbind2(t(x), t(y))))
   }
@@ -1033,6 +1034,7 @@ setMethod("short_description", "ColBindMatrices", function(x) {
 
 setMethod("cbind2", signature(x = "IterableMatrix", y = "IterableMatrix"), function(x, y, ...) {
   if (x@transpose != y@transpose) stop("Cannot merge matrices with different interal transpose states.\nPlease use transpose_storage_order().")
+  if (matrix_type(x) != matrix_type(y)) stop("Cannot merge matrices with different data type.\nPlease use convert_matrix_type().")
   if (x@transpose) {
     return(t(rbind2(t(x), t(y))))
   }
