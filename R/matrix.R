@@ -680,54 +680,77 @@ setMethod("[", "IterableMatrix", function(x, i, j, ...) {
 # Simulate assigning to a subset of the matrix.
 # We concatenate the un-modified matrix subsets with the new values,
 # then reorder rows/columns appropriately
-setMethod("[<-", "IterableMatrix", function(x, i, j, ..., value) {
-  # Do type conversions if needed
-  if (is.matrix(value)) value <- as(value, "dgCMatrix")
-  if (is(value, "dgCMatrix")) {
-    if (x@transpose) {
-      value <- t(as(t(value), "IterableMatrix"))
-    } else {
-      value <- as(value, "IterableMatrix")
+setMethod(
+    "[<-", c("IterableMatrix", "ANY", "ANY", "ANY"),
+    function(x, i, j, ..., value) {
+        value <- as(value, "dgCMatrix")
+        callGeneric()
     }
-  }
-  if (!rlang::is_missing(i)) {
-    i <- selection_index(i, nrow(x), rownames(x))
-    ni <- if (length(i) > 0) seq_len(nrow(x))[-i] else seq_len(nrow(x))
-    
-    x_i <- x[i,]
-    x_ni <- x[ni,]
-    
-    if (rlang::is_missing(j)) {
-      if (any(dim(x_i) != dim(value))) {
-        stop("Mismatched dimensions in assignment to subset")
-      }
-      x_i <- value
-    } else {
-      x_i[,j] <- value
+)
+
+setMethod(
+    "[<-", c("IterableMatrix", "ANY", "ANY", "dgCMatrix"),
+    function(x, i, j, ..., value) {
+        if (x@transpose) {
+            value <- t(as(t(value), "IterableMatrix"))
+        } else {
+            value <- as(value, "IterableMatrix")
+        }
+        callGeneric()
     }
-    rownames(x_i) <- rownames(x)[i]
-    x <- rbind(x_i, x_ni)[order(c(i, ni)),]
-  } else if(!rlang::is_missing(j)) {
-    j <- selection_index(j, ncol(x), colnames(x))
-    nj <- if (length(j) > 0) seq_len(ncol(x))[-j] else seq_len(ncol(x))
-    
-    x_j <- x[,j]
-    x_nj <- x[,nj]
-    if (any(dim(x_j) != dim(value))) {
-      stop("Mismatched dimensions in assignment to subset")
+)
+
+setMethod(
+    "[<-", c("IterableMatrix", "ANY", "ANY", "IterableMatrix"),
+    function(x, i, j, ..., value) {
+        i <- selection_index(i, nrow(x), rownames(x))
+        ni <- if (length(i) > 0) seq_len(nrow(x))[-i] else seq_len(nrow(x))
+        x_i <- x[i, ]
+        x_ni <- x[ni, ]
+        # dispatch the "IterableMatrix", "missing", "ANY", "IterableMatrix" method
+        x_i <- callGeneric(x = x_i, j = j, value = value)
+        rbind(x_i, x_ni)[order(c(i, ni)), ]
     }
-    x_j <- value
-    colnames(x_j) <- colnames(x)[j]
-    x <- cbind(x_j, x_nj)[,order(c(j, nj))]
-  } else {
-    if (any(dim(x) != dim(value))) {
-      stop("Mismatched dimensions in assignment to subset")
+)
+
+setMethod(
+    "[<-", c("IterableMatrix", "ANY", "missing", "IterableMatrix"),
+    function(x, i, j, ..., value) {
+        i <- selection_index(i, nrow(x), rownames(x))
+        ni <- if (length(i) > 0) seq_len(nrow(x))[-i] else seq_len(nrow(x))
+
+        x_i <- x[i, ]
+        x_ni <- x[ni, ]
+        if (any(dim(x_i) != dim(value))) {
+            stop("Mismatched dimensions in assignment to subset")
+        }
+        rownames(value) <- rownames(x_i)
+        colnames(value) <- colnames(x_i)
+        rbind(value, x_ni)[order(c(i, ni)), ]
     }
-    x <- value
-  }
-  
-  return(x)
-})
+)
+
+setMethod(
+    "[<-", c("IterableMatrix", "missing", "ANY", "IterableMatrix"),
+    function(x, i, j, ..., value) {
+        x <- t(x)
+        # dispatch the "IterableMatrix", "ANY", "missing", "IterableMatrix" method
+        x[j, , ...] <- t(value)
+        t(x)
+    }
+)
+
+setMethod(
+    "[<-", c("IterableMatrix", "missing", "missing", "IterableMatrix"),
+    function(x, i, j, ..., value) {
+        if (any(dim(x) != dim(value))) {
+            stop("Mismatched dimensions in assignment to subset")
+        }
+        rownames(value) <- rownames(x)
+        colnames(value) <- colnames(x)
+        value
+    }
+)
 
 setMethod("[", "MatrixSubset", function(x, i, j, ...) {
   if (missing(x)) stop("x is missing in matrix selection")
