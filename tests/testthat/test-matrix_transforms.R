@@ -143,6 +143,17 @@ test_that("Issue 43 regression (preserve colnames when cancelling type conversio
     expect_identical(colnames(res), colnames(m2))
 })
 
+test_that("Multiply cols of transposed TransformScaleShift works", {
+    m <- matrix(1:12, nrow=3) |> as("dgCMatrix") |> as("IterableMatrix") |> t()
+
+    res <- (m - seq_len(nrow(m)))/seq_len(nrow(m))
+    res <- multiply_cols(res, seq_len(ncol(m)))
+
+    ans <- (t(matrix(1:12, nrow=3)) - seq_len(nrow(m)))/seq_len(nrow(m))
+    ans <- multiply_cols(ans, seq_len(ncol(m)))
+    expect_equal(as.matrix(res), as.matrix(ans))
+})
+
 test_that("round works", {
     m <- generate_sparse_matrix(20, 10, max_val=1e5) / 70
     digits <- 0

@@ -688,7 +688,7 @@ setMethod("*", signature(e1 = "TransformScaleShift", e2 = "numeric"), function(e
   }
   if (!x@transpose && x@active_transforms["col", "shift"]) {
     res <- wrapMatrix("TransformScaleShift", x)
-    res@active_transforms["col", "scale"] <- TRUE
+    res@active_transforms["row", "scale"] <- TRUE
     res@row_params <- matrix(c(1, 0), nrow = 2, ncol = nrow(x))
     res@row_params[1, ] <- y
     return(res)
