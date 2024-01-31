@@ -154,6 +154,17 @@ test_that("Subsetting RowBindMatrices/ColBindMatrices works", {
   }
 })
 
+test_that("rbind and cbind check types (#68 regression)", {
+  m <- generate_dense_matrix(10, 5) %>% as("dgCMatrix") %>% as("IterableMatrix")
+
+  expect_error(
+    rbind(m, convert_matrix_type(m, "uint32_t")), "type"
+  )
+  expect_error(
+    cbind(m, convert_matrix_type(m, "uint32_t")), "type"
+  )
+})
+
 test_that("Subsetting to 0 dimensions works", {
   m1 <- generate_dense_matrix(10, 5) %>% as("dgCMatrix")
   m2 <- as(m1, "IterableMatrix")
