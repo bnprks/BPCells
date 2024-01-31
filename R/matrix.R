@@ -689,6 +689,14 @@ setMethod("[<-", "IterableMatrix", function(x, i, j, ..., value) {
     } else {
       value <- as(value, "IterableMatrix")
     }
+    if (matrix_type(value) != matrix_type(x)) {
+      rlang::warn(c(
+        "Converting input matrix type to match destination",
+        sprintf("input type: %s", matrix_type(value)),
+        sprintf("destination type: %s", matrix_type(x))
+      ))
+      value <- convert_matrix_type(value, matrix_type(x))
+    }
   }
   if (!rlang::is_missing(i)) {
     i <- selection_index(i, nrow(x), rownames(x))
