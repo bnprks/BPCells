@@ -231,7 +231,11 @@ test_that("Subset rename dims works (Issue #65)", {
 
 test_that("Subset assignment works", {
   m1 <- generate_dense_matrix(10, 20) %>% as("dgCMatrix")
+  rownames(m1) <- paste0("m1_row_", seq_len(nrow(m1)))
+  colnames(m1) <- paste0("m1_col_", seq_len(ncol(m1)))
   r <- -(1 * generate_dense_matrix(10, 20)) %>% as("dgCMatrix")
+  rownames(r) <- paste0("r_row_", seq_len(nrow(r)))
+  colnames(r) <- paste0("r_col_", seq_len(ncol(r)))
   r2 <- as(r, "IterableMatrix")
 
   test_cases <- list(
@@ -268,7 +272,9 @@ test_that("Subset assignment works", {
   # Test replacing the full matrix with rows + cols missing
   m2 <- as(m1, "IterableMatrix")
   m2[,] <- r2
-  expect_identical(as(m2, "dgCMatrix"), r)
+  m1b <- m1
+  m1b[,] <- r
+  expect_identical(as(m2, "dgCMatrix"), m1b)
 
   # Test assigning a dense matrix and a dgCMatrix
   t <- test_cases[[1]]

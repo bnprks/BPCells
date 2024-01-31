@@ -698,6 +698,10 @@ setMethod("[<-", "IterableMatrix", function(x, i, j, ..., value) {
       value <- convert_matrix_type(value, matrix_type(x))
     }
   }
+
+  rownames(value) <- if (rlang::is_missing(i)) rownames(x) else rownames(x)[i]
+  colnames(value) <- if (rlang::is_missing(j)) colnames(x) else colnames(x)[j]
+  
   if (!rlang::is_missing(i)) {
     i <- selection_index(i, nrow(x), rownames(x))
     ni <- if (length(i) > 0) seq_len(nrow(x))[-i] else seq_len(nrow(x))
@@ -892,7 +896,7 @@ concat_dimnames <- function(x, y, len_x, len_y, warning_prefix, dim_type) {
     return(c(x, y))
   }
   warning(sprintf(
-    "%s: %s names presenent on some but not all matrices. Setting missing names to \"\"",
+    "%s: %s names present on some but not all matrices. Setting missing names to \"\"",
     warning_prefix, dim_type
   ), call. = FALSE)
   if (is.null(x)) x <- rep_len("", len_x)
@@ -1118,6 +1122,7 @@ setMethod("[", "RowBindMatrices", function(x, i, j, ...) {
   if (length(new_mats) > 1) {
     x@matrix_list <- new_mats
   } else if(length(new_mats) == 1) {
+    dimnames(new_mats[[1]]) <- dimnames(x)
     x <- new_mats[[1]]
   } else {
     stop("Subset RowBindMatrix error: got 0-length matrix_list after subsetting (please report this BPCells bug)")
@@ -1177,6 +1182,7 @@ setMethod("[", "ColBindMatrices", function(x, i, j, ...) {
   if (length(new_mats) > 1) {
     x@matrix_list <- new_mats
   } else if(length(new_mats) == 1) {
+    dimnames(new_mats[[1]]) <- dimnames(x)
     x <- new_mats[[1]]
   } else {
     stop("Subset ColBindMatrix error: got 0-length matrix_list after subsetting (please report this BPCells bug)")

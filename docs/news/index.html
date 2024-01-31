@@ -92,7 +92,8 @@
 <li>Reduced memory usage in <code><a href="../reference/marker_features.html">marker_features()</a></code> for samples with millions of cells and a large number of clusters to compare.</li>
 <li>On Windows, increased the maximum number of files that can be simultaneously open. Previously, opening &gt;63 compressed counts matrices simultaneously would hit the limit. Now at least 1,000 simultaneous matrices should be possible.</li>
 <li>Subsetting peak or tile matrices with <code>[</code> now propagates through so we always avoid computing parts of the peak/tile matrix that have been discarded by our subset. Subsetting a tile matrix will automatically convert into a peak matrix when possible for improved efficiency.</li>
-<li>Subsetting RowBindMatrices now propagates through so we avoid touching matrices with no selected indices</li>
+<li>Subsetting RowBindMatrices and ColBindMatrices now propagates through so we avoid touching matrices with no selected indices</li>
+<li>Added logic to help reduce cases where subsetting causes BPCells to fall back to a less efficient matrix-vector multiply algorithm. This affects most math transforms. As part of this, the filtering part of a subset will propagate to earlier transformation steps, while the reordering will not. Thanks to <a href="https://github.com/nimanouri-nm" class="external-link">@nimanouri-nm</a> for raising issue <a href="https://github.com/bnprks/BPCells/issues/65" class="external-link">#65</a> to fix a bug in the initial implementation.</li>
 <li>Additional C++17 filesystem backwards compatibility that should allow slightly older compilers such as GCC 7.5 to build BPCells.</li>
 </ul></div>
 <div class="section level3">
@@ -111,6 +112,8 @@
 <li>Caused and fixed issue resulting in unusably slow performance reading matrices from HDF5 files. Broken versions range from commit 21f8dcf until the fix in 3711a40 (October 18-November 3, 2023). Thanks to <a href="https://github.com/abhiachoudhary" class="external-link">@abhiachoudhary</a> for reporting this in issue <a href="https://github.com/bnprks/BPCells/issues/53" class="external-link">#53</a></li>
 <li>Fixed error with <code><a href="../reference/svds.html">svds()</a></code> not handling row-major matrices correctly. Thanks to <a href="https://github.com/ycli1995" class="external-link">@ycli1995</a> for reporting this in issue <a href="https://github.com/bnprks/BPCells/issues/55" class="external-link">#55</a></li>
 <li>Fixed error with row/col name handling for AnnData matrices. Thanks to <a href="https://github.com/lisch7" class="external-link">@lisch7</a> for reporting this in issue <a href="https://github.com/bnprks/BPCells/issues/57" class="external-link">#57</a></li>
+<li>Fixed error with merging matrices of different data types. Thanks to <a href="https://github.com/Yunuuu" class="external-link">@Yunuuu</a> for identifying the issue and providing a fix (<a href="https://github.com/bnprks/BPCells/issues/68" class="external-link">#68</a> and <a href="https://github.com/bnprks/BPCells/issues/70" class="external-link">#70</a>)</li>
+<li>Fixed issue with losing dimnames on subset assignment <code>[&lt;-</code>. Thanks to <a href="https://github.com/Yunuuu" class="external-link">@Yunuuu</a> for identifying the issue <a href="https://github.com/bnprks/BPCells/issues/67" class="external-link">#67</a></li>
 </ul></div>
 </div>
     <div class="section level2">
