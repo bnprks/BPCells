@@ -689,6 +689,14 @@ setMethod("[<-", "IterableMatrix", function(x, i, j, ..., value) {
     } else {
       value <- as(value, "IterableMatrix")
     }
+    if (matrix_type(value) != matrix_type(x)) {
+      rlang::warn(c(
+        "Converting input matrix type to match destination",
+        sprintf("input type: %s", matrix_type(value)),
+        sprintf("destination type: %s", matrix_type(x))
+      ))
+      value <- convert_matrix_type(value, matrix_type(x))
+    }
   }
   if (!rlang::is_missing(i)) {
     i <- selection_index(i, nrow(x), rownames(x))
@@ -947,6 +955,7 @@ setMethod("short_description", "RowBindMatrices", function(x) {
 
 setMethod("rbind2", signature(x = "IterableMatrix", y = "IterableMatrix"), function(x, y, ...) {
   if (x@transpose != y@transpose) stop("Cannot merge matrices with different interal transpose states.\nPlease use transpose_storage_order().")
+  if (matrix_type(x) != matrix_type(y)) stop("Cannot merge matrices with different data type.\nPlease use convert_matrix_type().")
   if (x@transpose) {
     return(t(cbind2(t(x), t(y))))
   }
@@ -1033,6 +1042,7 @@ setMethod("short_description", "ColBindMatrices", function(x) {
 
 setMethod("cbind2", signature(x = "IterableMatrix", y = "IterableMatrix"), function(x, y, ...) {
   if (x@transpose != y@transpose) stop("Cannot merge matrices with different interal transpose states.\nPlease use transpose_storage_order().")
+  if (matrix_type(x) != matrix_type(y)) stop("Cannot merge matrices with different data type.\nPlease use convert_matrix_type().")
   if (x@transpose) {
     return(t(rbind2(t(x), t(y))))
   }
