@@ -73,7 +73,7 @@ Contributions welcome :)
 - Fixed error with merging matrices of different data types. Thanks to @Yunuuuu for identifying the issue and providing a fix (#68 and #70)
 - Fixed issue with losing dimnames on subset assignment `[<-`. Thanks to @Yunuuuu for identifying the issue #67
 - Fixed incorrect results with some cases of scaling matrix after shifting. Thanks to @Yunuuuu for identifying the issue #72
-
+- Fixed infinite loop bug when calling `transpose_storage_order()` on a densely-transformed matrix. Thanks to @Yunuuuu for reporting this in issue #71
 # BPCells 0.1.0
 
 ## Features

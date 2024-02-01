@@ -199,6 +199,14 @@ test_that("Transpose storage order works", {
   }
 })
 
+test_that("Transpose storage order on dense-transformed matrix (#71 regression test)", {
+  mat <- matrix(1337, nrow=1)
+  obj <- as(mat, "dgCMatrix") |> as("IterableMatrix")
+
+  res <- BPCells::transpose_storage_order(obj + 1)
+  expect_identical(as.matrix(res), mat + 1)
+})
+
 test_that("AnnData subset hasn't regressed", {
   dir <- withr::local_tempdir()
   # Make a copy since apparently reading the test hdf5 file causes modifications that git detects

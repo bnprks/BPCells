@@ -55,7 +55,8 @@ bool MatrixTransformDense::nextCol() {
     }
     current_col += 1;
     if (current_col >= loader->cols()) {
-        current_col -= 1;
+        current_col = loader->cols();
+        current_row = UINT32_MAX;
         return false;
     }
     return true;
