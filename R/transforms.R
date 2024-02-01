@@ -673,7 +673,9 @@ setMethod("*", signature(e1 = "TransformScaleShift", e2 = "numeric"), function(e
   if (length(y) == 1) {
     # Initialize global_params if necessary
     if (!any(x@active_transforms["global", ])) x@global_params <- c(1, 0)
-    x@global_params[1] <- y * x@global_params[1]
+    if (x@active_transforms["row", "shift"]) x@row_params[2,] <- x@row_params[2,]*y
+    if (x@active_transforms["col", "shift"]) x@col_params[2,] <- x@col_params[2,]*y
+    x@global_params[1] <- x@global_params[1] * y
     x@global_params[2] <- x@global_params[2] * y
     x@active_transforms["global", "scale"] <- TRUE
     return(x)
@@ -703,6 +705,12 @@ setMethod("*", signature(e1 = "TransformScaleShift", e2 = "numeric"), function(e
     x@active_transforms["col", "scale"] <- TRUE
 
     # Update shift
+    if (x@active_transforms["global", "shift"]) {
+      x@col_params[2,] <- x@col_params[2,] + x@global_params[2]
+      x@global_params[2] <- 0
+      x@active_transforms["global", "shift"] <- FALSE
+      x@active_transforms["col", "shift"] <- TRUE
+    }
     x@col_params[2, ] <- x@col_params[2, ] * y
   } else {
     # Initialize row_params if necessary
@@ -713,6 +721,12 @@ setMethod("*", signature(e1 = "TransformScaleShift", e2 = "numeric"), function(e
     x@active_transforms["row", "scale"] <- TRUE
 
     # Update shift
+    if (x@active_transforms["global", "shift"]) {
+      x@row_params[2,] <- x@row_params[2,] + x@global_params[2]
+      x@global_params[2] <- 0
+      x@active_transforms["global", "shift"] <- FALSE
+      x@active_transforms["row", "shift"] <- TRUE
+    }
     x@row_params[2, ] <- x@row_params[2, ] * y
   }
   return(x)
@@ -748,7 +762,7 @@ setMethod("+", signature(e1 = "TransformScaleShift", e2 = "numeric"), function(e
     # Initialize row_params if necessary
     if (!any(x@active_transforms["row", ])) x@row_params <- matrix(c(1, 0), nrow = 2, ncol = nrow(x))
 
-    # Update scale
+    # Update shift
     x@row_params[2, ] <- x@row_params[2, ] + y
     x@active_transforms["row", "shift"] <- TRUE
   }

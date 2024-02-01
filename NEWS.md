@@ -70,8 +70,9 @@ Contributions welcome :)
 - Caused and fixed issue resulting in unusably slow performance reading matrices from HDF5 files. Broken versions range from commit  21f8dcf until the fix in 3711a40 (October 18-November 3, 2023). Thanks to @abhiachoudhary for reporting this in issue #53
 - Fixed error with `svds()` not handling row-major matrices correctly. Thanks to @ycli1995 for reporting this in issue #55
 - Fixed error with row/col name handling for AnnData matrices. Thanks to @lisch7 for reporting this in issue #57
-- Fixed error with merging matrices of different data types. Thanks to @Yunuuu for identifying the issue and providing a fix (#68 and #70)
-- Fixed issue with losing dimnames on subset assignment `[<-`. Thanks to @Yunuuu for identifying the issue #67
+- Fixed error with merging matrices of different data types. Thanks to @Yunuuuu for identifying the issue and providing a fix (#68 and #70)
+- Fixed issue with losing dimnames on subset assignment `[<-`. Thanks to @Yunuuuu for identifying the issue #67
+- Fixed incorrect results with some cases of scaling matrix after shifting. Thanks to @Yunuuuu for identifying the issue #72
 
 # BPCells 0.1.0
 

@@ -154,6 +154,49 @@ test_that("Multiply cols of transposed TransformScaleShift works", {
     expect_equal(as.matrix(res), as.matrix(ans))
 })
 
+test_that("Complicated TransformScaleShift works", {
+    # Idea: randomly generate a series of scales + shifts, 
+    # checking that the whole sequence returns correct results
+    # Don't set a seed so if there's a rare bug we have a better chance of
+    # hitting it eventually
+
+    # Run this test 5 times to improve chances of catching something weird.
+    # We can't just extend the random operations indefinitely without running
+    # into precision issues.
+    for (j in seq_len(5)) {
+        m <- matrix(1:12, nrow=3)
+        bp <- as(m, "dgCMatrix") |> as("IterableMatrix")
+        bp_t <- as(t(m), "dgCMatrix") |> as("IterableMatrix") |> t()
+
+        # Do 30 random operations and check at the end
+        for (i in seq_len(30)) {
+            axis <- sample(c("row", "col", "global"), 1)
+            op <- sample(c(`+`, `*`), 1)[[1]]
+            bp_prev <- bp
+            bp_t_prev <- bp_t
+            if (axis == "row") {
+                y <- sample(c(-2, -1, 1, 2), nrow(m))
+                m <- op(m, y)
+                bp <- op(bp, y)
+                bp_t <- op(bp_t, y)
+            } else if (axis == "col") {
+                y <- sample(c(-2, -1, 1, 2), ncol(m))
+                m <- t(op(t(m), y))
+                bp <- t(op(t(bp), y))
+                bp_t <- t(op(t(bp_t), y))
+            } else {
+                y <- sample(c(-2, -1, 1, 2), 1)
+                m <- op(m, y)
+                bp <- op(bp, y)
+                bp_t <- op(bp_t, y)
+            }
+        }
+        expect_identical(m, as.matrix(bp))
+        expect_identical(m, as.matrix(bp_t))
+    }
+    
+})
+
 test_that("round works", {
     m <- generate_sparse_matrix(20, 10, max_val=1e5) / 70
     digits <- 0
