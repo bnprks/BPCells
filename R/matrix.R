@@ -1141,6 +1141,7 @@ setMethod("[", "RowBindMatrices", function(x, i, j, ...) {
   if (length(new_mats) > 1) {
     x@matrix_list <- new_mats
   } else if(length(new_mats) == 1) {
+    dimnames(new_mats[[1]]) <- dimnames(x)
     x <- new_mats[[1]]
   } else {
     stop("Subset RowBindMatrix error: got 0-length matrix_list after subsetting (please report this BPCells bug)")
@@ -1200,6 +1201,7 @@ setMethod("[", "ColBindMatrices", function(x, i, j, ...) {
   if (length(new_mats) > 1) {
     x@matrix_list <- new_mats
   } else if(length(new_mats) == 1) {
+    dimnames(new_mats[[1]]) <- dimnames(x)
     x <- new_mats[[1]]
   } else {
     stop("Subset ColBindMatrix error: got 0-length matrix_list after subsetting (please report this BPCells bug)")
