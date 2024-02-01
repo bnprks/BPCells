@@ -692,9 +692,9 @@ setMethod(
   "[<-", c("IterableMatrix", "ANY", "ANY", "dgCMatrix"),
   function(x, i, j, ..., value) {
     if (x@transpose) {
-        value <- t(as(t(value), "IterableMatrix"))
+      value <- t(as(t(value), "IterableMatrix"))
     } else {
-        value <- as(value, "IterableMatrix")
+      value <- as(value, "IterableMatrix")
     }
     if (matrix_type(value) != matrix_type(x)) {
       rlang::warn(c(
@@ -723,7 +723,7 @@ setMethod(
 
 setMethod(
   "[<-", c("IterableMatrix", "ANY", "missing", "IterableMatrix"),
-function(x, i, j, ..., value) {
+  function(x, i, j, ..., value) {
     i <- selection_index(i, nrow(x), rownames(x))
     ni <- if (length(i) > 0) seq_len(nrow(x))[-i] else seq_len(nrow(x))
 
@@ -739,13 +739,13 @@ function(x, i, j, ..., value) {
 )
 
 setMethod(
-    "[<-", c("IterableMatrix", "missing", "ANY", "IterableMatrix"),
-    function(x, i, j, ..., value) {
-        x <- t(x)
-        # dispatch the "IterableMatrix", "ANY", "missing", "IterableMatrix" method
-        x[j, , ...] <- t(value)
-        t(x)
-    }
+  "[<-", c("IterableMatrix", "missing", "ANY", "IterableMatrix"),
+  function(x, i, j, ..., value) {
+    x <- t(x)
+    # dispatch the "IterableMatrix", "ANY", "missing", "IterableMatrix" method
+    x[j, , ...] <- t(value)
+    t(x)
+  }
 )
 
 setMethod(
