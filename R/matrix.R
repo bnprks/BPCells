@@ -772,7 +772,9 @@ setMethod("[", "MatrixSubset", function(x, i, j, ...) {
   # new subsetting that should be pushed down further
   i <- if(length(x@row_selection) == 0 && !x@zero_dims[1]) rlang::missing_arg() else x@row_selection
   j <- if(length(x@col_selection) == 0 && !x@zero_dims[2]) rlang::missing_arg() else x@col_selection
-  x@matrix[rlang::maybe_missing(i), rlang::maybe_missing(j)]
+  res <- x@matrix[rlang::maybe_missing(i), rlang::maybe_missing(j)]
+  dimnames(res) <- dimnames(x)
+  res
 })
 
 

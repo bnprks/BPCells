@@ -296,6 +296,14 @@ test_that("Subset assignment works", {
   m1b <- m1
   m1b[t$rows, t$cols] <- r[t$rows, t$cols]
   expect_identical(as(m2, "dgCMatrix"), m1b)
+
+  # Additional regression test from #67
+  m2 <- as(m1, "IterableMatrix") |> rank_transform("col")
+  m1b <- as(m2, "dgCMatrix")
+  m2[1:5,1:5] <- as.matrix(r)[1:5,1:5]
+  m1b[1:5,1:5] <- r[1:5,1:5]
+  expect_identical(as(m2, "dgCMatrix"), m1b)
+
 })
 
 test_that("Transposing a 0 dimension matrix works", {
