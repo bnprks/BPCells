@@ -35,3 +35,38 @@ run_with_R_interrupt_check(F &&f, Args &&...args) {
     }
     return job.get();
 }
+
+// Wrap and parallelize a function call while checking for R interrupts
+// Arguments:
+//  Function f:
+//     parameters are: (int) task_start, (int) task_end, and pointer to std::atomic<bool>
+//     Will run tasks with IDs [task_start, task_end).
+//     Return value if any is ignored.
+//     Should terminate early if the std::atomic<bool> becomes true
+//  int n_tasks:
+//     Number of tasks to run
+//  int n_threads:
+//     Number of threads to run with
+// Parallelization assigns a contigous range of tasks to each thread
+template <class F>
+void run_parallel_with_R_interrupt_check(F &&f, size_t n_tasks, size_t n_threads) {
+    std::vector<std::future<void>> task_vec;
+    std::atomic<bool> interrupt = false;
+    size_t idx = 0;
+    n_threads = std::max<size_t>(1, n_threads);
+
+    for (size_t i = 0; i < n_threads; i++) {
+        size_t items = (n_tasks - idx) / (n_threads - i);
+        task_vec.push_back(std::async(std::launch::async, std::forward<F>(f), idx, idx+items, &interrupt));
+        idx += items;
+    }
+    // Wait for work to finish while checking for interrupts
+    for (size_t i = 0; i < n_threads; i++) {
+        while(task_vec[i].wait_for(std::chrono::milliseconds(100)) == std::future_status::timeout) {
+            if (hasUserInterrupt()) {
+                interrupt = true;
+            }
+        }
+    }
+    if (interrupt) throw Rcpp::internal::InterruptedException();
+}

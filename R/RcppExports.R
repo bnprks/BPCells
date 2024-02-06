@@ -77,6 +77,10 @@ build_snn_graph_cpp <- function(neighbor_indices, min_neighbors) {
     .Call(`_BPCells_build_snn_graph_cpp`, neighbor_indices, min_neighbors)
 }
 
+build_umap_graph_cpp <- function(dists, idx, threads = 0L, umap_learn_sigma_sum = FALSE) {
+    .Call(`_BPCells_build_umap_graph_cpp`, dists, idx, threads, umap_learn_sigma_sum)
+}
+
 iterate_10x_fragments_cpp <- function(path, comment) {
     .Call(`_BPCells_iterate_10x_fragments_cpp`, path, comment)
 }

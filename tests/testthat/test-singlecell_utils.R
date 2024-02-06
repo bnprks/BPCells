@@ -73,7 +73,7 @@ test_that("C++ SNN calculation works",{
         }
 
         min_val <- 1/15
-        snn <- knn_to_snn_graph(list(idx=neighbor_sim), min_val=min_val)
+        snn <- knn_to_snn_graph(list(idx=neighbor_sim), min_val=min_val, self_loops=TRUE)
 
         mat <- knn_to_graph(list(idx=neighbor_sim), use_weights=FALSE)
 
@@ -87,6 +87,22 @@ test_that("C++ SNN calculation works",{
             snn,
             as(mat, "dgCMatrix")
         )
+        snn2 <- knn_to_snn_graph(list(idx=neighbor_sim), min_val=min_val, self_loops=FALSE)
+        diag(mat) <- 0
+        mat <- Matrix::drop0(mat)
+        expect_identical(
+            snn2,
+            as(mat, "dgCMatrix")
+        )
     }
 
+})
+
+test_that("C++ UMAP graph calculation works", {
+    # This uses a pre-calculated graph from the umap-learn python package.
+    # See ../data/generate_iris_geodesic_graph.R for the generation code 
+    test_data <- readRDS("../data/iris_geodesic_graph.rds")
+    knn <- test_data$knn
+    res <- knn_to_geodesic_graph(knn)
+    expect_equal(as.matrix(res + t(res)), as.matrix(test_data$graph), tolerance=1e-6)
 })

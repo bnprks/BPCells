@@ -69,7 +69,14 @@ a graph. The graph is represented as a sparse adjacency matrix.</p>
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">knn_to_graph</span><span class="op">(</span><span class="va">knn</span>, use_weights <span class="op">=</span> <span class="cn">FALSE</span>, self_loops <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
 <span></span>
-<span><span class="fu">knn_to_snn_graph</span><span class="op">(</span><span class="va">knn</span>, min_val <span class="op">=</span> <span class="fl">1</span><span class="op">/</span><span class="fl">15</span>, self_loops <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
+<span><span class="fu">knn_to_snn_graph</span><span class="op">(</span></span>
+<span>  <span class="va">knn</span>,</span>
+<span>  min_val <span class="op">=</span> <span class="fl">1</span><span class="op">/</span><span class="fl">15</span>,</span>
+<span>  self_loops <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  return_type <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"matrix"</span>, <span class="st">"list"</span><span class="op">)</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu">knn_to_geodesic_graph</span><span class="op">(</span><span class="va">knn</span>, return_type <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"matrix"</span>, <span class="st">"list"</span><span class="op">)</span>, threads <span class="op">=</span> <span class="fl">0L</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -84,12 +91,20 @@ dist for cell x K neighbor distances</p></dd>
 
 
 <dt>self_loops</dt>
-<dd><p>boolean for whether to allow cells to count themselves as neighbors</p></dd>
+<dd><p>Whether to allow self-loops in the output graph</p></dd>
 
 
 <dt>min_val</dt>
 <dd><p>minimum jaccard index between neighbors. Values below this will
 round to 0</p></dd>
+
+
+<dt>return_type</dt>
+<dd><p>Whether to return a sparse adjacency matrix or an edge list</p></dd>
+
+
+<dt>threads</dt>
+<dd><p>Number of threads to use during calculations</p></dd>
 
 </dl></div>
     <div class="section level2">
@@ -107,11 +122,26 @@ cell <code>j</code>, or 0 if cell <code>j</code> is not in the K nearest neighbo
 <p><strong>knn_to_snn_graph</strong></p>
 
 
-<p>Sparse matrix (dgCMatrix) where <code>mat[i,j]</code> = jaccard index of the overlap
+<ul><li><p><code>return_type == "matrix"</code>:
+Sparse matrix (dgCMatrix) where <code>mat[i,j]</code> = jaccard index of the overlap
 in nearest neigbors between cell <code>i</code> and cell <code>j</code>, or 0 if the jaccard index
 is &lt; <code>min_val</code>. Only the lower triangle is filled in, which is compatible with
-the BPCells clustering methods</p>
-    </div>
+the BPCells clustering methods</p></li>
+<li><p><code>return_type == "list"</code>:
+List of 3 equal-length vectors <code>i</code>, <code>j</code>, and <code>weight</code>, along with an integer <code>dim</code>.
+These correspond to the rows, cols, and values of non-zero entries in the lower triangle
+adjacency matrix. <code>dim</code> is the total number of vertices (cells) in the graph</p></li>
+</ul><p><strong>knn_to_geodesic_graph</strong></p>
+
+
+<ul><li><p><code>return_type == "matrix"</code>:
+Sparse matrix (dgCMatrix) where <code>mat[i,j]</code> = normalized similarity between cell <code>i</code> and cell <code>j</code>.
+Only the lower triangle is filled in, which is compatible with the BPCells clustering methods</p></li>
+<li><p><code>return_type == "list"</code>:
+List of 3 equal-length vectors <code>i</code>, <code>j</code>, and <code>weight</code>, along with an integer <code>dim</code>.
+These correspond to the rows, cols, and values of non-zero entries in the lower triangle
+adjacency matrix. <code>dim</code> is the total number of vertices (cells) in the graph</p></li>
+</ul></div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
     <p><strong>knn_to_graph</strong>
@@ -119,6 +149,16 @@ Create a knn graph</p>
 <p><strong>knn_to_snn_graph</strong>
 Convert a knn object into a shared nearest neighbors adjacency matrix.
 This follows the algorithm that Seurat uses to compute SNN graphs</p>
+<p><strong>knn_to_geodesic_graph</strong>
+Convert a knn object into an undirected weighted graph, using the same
+geodesic distance estimation method as the UMAP package.
+This matches the output of <code>umap._umap.fuzzy_simplicial_set</code>
+from the <code>umap-learn</code> python package, used by default in <code>scanpy.pp.neighbors</code>.
+Because this only re-weights and symmetrizes the KNN graph, it will usually use
+less memory and return a sparser graph than <code>knn_to_snn_graph</code> which computes
+2nd-order neighbors. Note: when cells don't have themselves listed as the nearest
+neighbor, results may differ slightly from <code>umap._umap.fuzzy_simplicial_set</code>, which
+assumes self is always successfully found in the approximate nearest neighbor search.</p>
     </div>
 
   </main><aside class="col-md-3"><nav id="toc"><h2>On this page</h2>

@@ -33,6 +33,8 @@ Contributions welcome :)
 - Assigning to a subset is now supported (e.g. `m1[i,j] <- m2`). Note that this does not modify data on disk. Instead,
   it uses a series of subsetting and concatenation operations to provide the *appearance* of overwriting the appropriate
   entries.
+- Added `knn_to_geodesic_graph()`, which matches the Scanpy default construction for
+  graph-based clustering
 
 ## Improvements
 - Merging fragments with `c()` now handles inputs with mismatched chromosome names.

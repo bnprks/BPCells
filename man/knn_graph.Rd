@@ -3,11 +3,19 @@
 \name{knn_to_graph}
 \alias{knn_to_graph}
 \alias{knn_to_snn_graph}
+\alias{knn_to_geodesic_graph}
 \title{K Nearest Neighbor (KNN) Graph}
 \usage{
 knn_to_graph(knn, use_weights = FALSE, self_loops = TRUE)
 
-knn_to_snn_graph(knn, min_val = 1/15, self_loops = TRUE)
+knn_to_snn_graph(
+  knn,
+  min_val = 1/15,
+  self_loops = FALSE,
+  return_type = c("matrix", "list")
+)
+
+knn_to_geodesic_graph(knn, return_type = c("matrix", "list"), threads = 0L)
 }
 \arguments{
 \item{knn}{List of 2 matrices -- idx for cell x K neighbor indices,
@@ -15,10 +23,14 @@ dist for cell x K neighbor distances}
 
 \item{use_weights}{boolean for whether to replace all distance weights with 1}
 
-\item{self_loops}{boolean for whether to allow cells to count themselves as neighbors}
+\item{self_loops}{Whether to allow self-loops in the output graph}
 
 \item{min_val}{minimum jaccard index between neighbors. Values below this will
 round to 0}
+
+\item{return_type}{Whether to return a sparse adjacency matrix or an edge list}
+
+\item{threads}{Number of threads to use during calculations}
 }
 \value{
 \strong{knn_to_graph}
@@ -26,10 +38,28 @@ Sparse matrix (dgCMatrix) where \code{mat[i,j]} = distance from cell \code{i} to
 cell \code{j}, or 0 if cell \code{j} is not in the K nearest neighbors of \code{i}
 
 \strong{knn_to_snn_graph}
+\itemize{
+\item \code{return_type == "matrix"}:
 Sparse matrix (dgCMatrix) where \code{mat[i,j]} = jaccard index of the overlap
 in nearest neigbors between cell \code{i} and cell \code{j}, or 0 if the jaccard index
 is < \code{min_val}. Only the lower triangle is filled in, which is compatible with
 the BPCells clustering methods
+\item \code{return_type == "list"}:
+List of 3 equal-length vectors \code{i}, \code{j}, and \code{weight}, along with an integer \code{dim}.
+These correspond to the rows, cols, and values of non-zero entries in the lower triangle
+adjacency matrix. \code{dim} is the total number of vertices (cells) in the graph
+}
+
+\strong{knn_to_geodesic_graph}
+\itemize{
+\item \code{return_type == "matrix"}:
+Sparse matrix (dgCMatrix) where \code{mat[i,j]} = normalized similarity between cell \code{i} and cell \code{j}.
+Only the lower triangle is filled in, which is compatible with the BPCells clustering methods
+\item \code{return_type == "list"}:
+List of 3 equal-length vectors \code{i}, \code{j}, and \code{weight}, along with an integer \code{dim}.
+These correspond to the rows, cols, and values of non-zero entries in the lower triangle
+adjacency matrix. \code{dim} is the total number of vertices (cells) in the graph
+}
 }
 \description{
 Convert a KNN object (e.g. returned by \code{knn_hnsw()} or \code{knn_annoy()}) into
@@ -42,4 +72,15 @@ Create a knn graph
 \strong{knn_to_snn_graph}
 Convert a knn object into a shared nearest neighbors adjacency matrix.
 This follows the algorithm that Seurat uses to compute SNN graphs
+
+\strong{knn_to_geodesic_graph}
+Convert a knn object into an undirected weighted graph, using the same
+geodesic distance estimation method as the UMAP package.
+This matches the output of \code{umap._umap.fuzzy_simplicial_set}
+from the \code{umap-learn} python package, used by default in \code{scanpy.pp.neighbors}.
+Because this only re-weights and symmetrizes the KNN graph, it will usually use
+less memory and return a sparser graph than \code{knn_to_snn_graph} which computes
+2nd-order neighbors. Note: when cells don't have themselves listed as the nearest
+neighbor, results may differ slightly from \code{umap._umap.fuzzy_simplicial_set}, which
+assumes self is always successfully found in the approximate nearest neighbor search.
 }

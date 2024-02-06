@@ -261,6 +261,20 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// build_umap_graph_cpp
+SEXP build_umap_graph_cpp(const NumericMatrix dists, const IntegerMatrix idx, size_t threads, bool umap_learn_sigma_sum);
+RcppExport SEXP _BPCells_build_umap_graph_cpp(SEXP distsSEXP, SEXP idxSEXP, SEXP threadsSEXP, SEXP umap_learn_sigma_sumSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const NumericMatrix >::type dists(distsSEXP);
+    Rcpp::traits::input_parameter< const IntegerMatrix >::type idx(idxSEXP);
+    Rcpp::traits::input_parameter< size_t >::type threads(threadsSEXP);
+    Rcpp::traits::input_parameter< bool >::type umap_learn_sigma_sum(umap_learn_sigma_sumSEXP);
+    rcpp_result_gen = Rcpp::wrap(build_umap_graph_cpp(dists, idx, threads, umap_learn_sigma_sum));
+    return rcpp_result_gen;
+END_RCPP
+}
 // iterate_10x_fragments_cpp
 SEXP iterate_10x_fragments_cpp(std::string path, std::string comment);
 RcppExport SEXP _BPCells_iterate_10x_fragments_cpp(SEXP pathSEXP, SEXP commentSEXP) {
@@ -2358,6 +2372,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_BPCells_write_bp128_end", (DL_FUNC) &_BPCells_write_bp128_end, 5},
     {"_BPCells_read_bp128_end", (DL_FUNC) &_BPCells_read_bp128_end, 6},
     {"_BPCells_build_snn_graph_cpp", (DL_FUNC) &_BPCells_build_snn_graph_cpp, 2},
+    {"_BPCells_build_umap_graph_cpp", (DL_FUNC) &_BPCells_build_umap_graph_cpp, 4},
     {"_BPCells_iterate_10x_fragments_cpp", (DL_FUNC) &_BPCells_iterate_10x_fragments_cpp, 2},
     {"_BPCells_write_10x_fragments_cpp", (DL_FUNC) &_BPCells_write_10x_fragments_cpp, 3},
     {"_BPCells_iterate_packed_fragments_cpp", (DL_FUNC) &_BPCells_iterate_packed_fragments_cpp, 1},

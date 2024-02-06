@@ -83,6 +83,7 @@
 <li>AnnData export now supported via <code><a href="../reference/open_matrix_anndata_hdf5.html">write_matrix_anndata_hdf5()</a></code> (issue <a href="https://github.com/bnprks/BPCells/issues/49" class="external-link">#49</a>)</li>
 <li>Re-licensed code base to use dual-licensed Apache V2 or MIT instead of GPLv3</li>
 <li>Assigning to a subset is now supported (e.g. <code>m1[i,j] &lt;- m2</code>). Note that this does not modify data on disk. Instead, it uses a series of subsetting and concatenation operations to provide the <em>appearance</em> of overwriting the appropriate entries.</li>
+<li>Added <code><a href="../reference/knn_graph.html">knn_to_geodesic_graph()</a></code>, which matches the Scanpy default construction for graph-based clustering</li>
 </ul></div>
 <div class="section level3">
 <h3 id="improvements-0-2-0">Improvements<a class="anchor" aria-label="anchor" href="#improvements-0-2-0"></a></h3>
