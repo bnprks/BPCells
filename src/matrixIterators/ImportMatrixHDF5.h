@@ -25,20 +25,30 @@ template <class T> class SingletonNumReader : public BulkNumReader<T> {
 };
 
 // Reader interfaces for 10x and AnnData matrices
+// Open 10x matrix should not assume uint32_t
+template<typename T>
+StoredMatrix<T>
+open10xFeatureMatrix(
+    std::string file, 
+    std::string group, 
+    uint32_t buffer_size, 
+    uint32_t read_size = 1024
+);
 
-StoredMatrix<uint32_t>
-open10xFeatureMatrix(std::string file, uint32_t buffer_size, uint32_t read_size = 1024);
-
-StoredMatrix<uint32_t> open10xFeatureMatrix(
+template<typename T>
+StoredMatrix<T> open10xFeatureMatrix(
     std::string file,
+    std::string group,
     uint32_t buffer_size,
     std::unique_ptr<StringReader> &&row_names,
     std::unique_ptr<StringReader> &&col_names,
     uint32_t read_size = 1024
 );
 
-StoredMatrixWriter<uint32_t> create10xFeatureMatrix(
+template<typename T>
+StoredMatrixWriter<T> create10xFeatureMatrix(
     std::string file,
+    std::string group,
     StringReader &&barcodes,
     StringReader &&feature_ids,
     StringReader &&feature_names,

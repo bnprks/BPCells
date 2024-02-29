@@ -401,16 +401,16 @@ write_packed_matrix_hdf5_double_cpp <- function(matrix, file, group, buffer_size
     invisible(.Call(`_BPCells_write_packed_matrix_hdf5_double_cpp`, matrix, file, group, buffer_size, chunk_size, allow_overwrite, row_major, gzip_level))
 }
 
-dims_matrix_10x_hdf5_cpp <- function(file, buffer_size) {
-    .Call(`_BPCells_dims_matrix_10x_hdf5_cpp`, file, buffer_size)
+dims_matrix_10x_hdf5_cpp <- function(file, group, buffer_size) {
+    .Call(`_BPCells_dims_matrix_10x_hdf5_cpp`, file, group, buffer_size)
 }
 
-iterate_matrix_10x_hdf5_cpp <- function(file, buffer_size, row_names, col_names) {
-    .Call(`_BPCells_iterate_matrix_10x_hdf5_cpp`, file, buffer_size, row_names, col_names)
+iterate_matrix_10x_hdf5_cpp <- function(file, group, buffer_size, row_names, col_names) {
+    .Call(`_BPCells_iterate_matrix_10x_hdf5_cpp`, file, group, buffer_size, row_names, col_names)
 }
 
-write_matrix_10x_hdf5_cpp <- function(matrix, path, barcodes, feature_ids, feature_names, feature_types, feature_metadata, buffer_size, chunk_size, gzip_level) {
-    invisible(.Call(`_BPCells_write_matrix_10x_hdf5_cpp`, matrix, path, barcodes, feature_ids, feature_names, feature_types, feature_metadata, buffer_size, chunk_size, gzip_level))
+write_matrix_10x_hdf5_cpp <- function(matrix, path, group, type, barcodes, feature_ids, feature_names, feature_types, feature_metadata, buffer_size, chunk_size, gzip_level) {
+    invisible(.Call(`_BPCells_write_matrix_10x_hdf5_cpp`, matrix, path, group, type, barcodes, feature_ids, feature_names, feature_types, feature_metadata, buffer_size, chunk_size, gzip_level))
 }
 
 dims_matrix_anndata_hdf5_cpp <- function(file, group, buffer_size) {

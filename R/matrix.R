@@ -1674,24 +1674,37 @@ open_matrix_hdf5 <- function(path, group, buffer_size = 16384L) {
   )
 }
 
-setClass("10xMatrixH5",
+setClass(
+  Class = "10xMatrixH5",
   contains = "IterableMatrix",
   slots = c(
     path = "character",
+    group = "character",
+    type = "character",
     buffer_size = "integer"
-  ),
-  prototype = list(
-    path = character(0),
-    buffer_size = integer(0)
   )
 )
-setMethod("matrix_type", "10xMatrixH5", function(x) "uint32_t")
-setMethod("matrix_inputs", "10xMatrixH5", function(x) list())
-setMethod("iterate_matrix", "10xMatrixH5", function(x) {
-  if (x@transpose) x <- t(x)
-  x@dimnames <- denormalize_dimnames(x@dimnames)
-  iterate_matrix_10x_hdf5_cpp(x@path, x@buffer_size, x@dimnames[[1]], x@dimnames[[2]])
-})
+setMethod(
+  f = "matrix_type", 
+  signature = "10xMatrixH5", 
+  definition = function(x) slot(object = x, name = "type")
+)
+setMethod(
+  f = "matrix_inputs", 
+  signature = "10xMatrixH5", 
+  definition = function(x) list()
+)
+setMethod(
+  f = "iterate_matrix", 
+  signature = "10xMatrixH5", 
+  definition = function(x) {
+    if (x@transpose) {
+      x <- t(x = x)
+    }
+    x@dimnames <- denormalize_dimnames(x@dimnames)
+    iterate_matrix_10x_hdf5_cpp(x@path, x@group, x@buffer_size, x@dimnames[[1]], x@dimnames[[2]])
+  }
+)
 setMethod("short_description", "10xMatrixH5", function(x) {
   sprintf("10x HDF5 feature matrix in file %s", x@path)
 })
@@ -1707,23 +1720,23 @@ setMethod("short_description", "10xMatrixH5", function(x) {
 #' which can slow down read performance. Consider writing into another format
 #' if the read performance is important to you.
 #' @export
-open_matrix_10x_hdf5 <- function(path, feature_type = NULL, buffer_size = 16384L) {
+open_matrix_10x_hdf5 <- function(path, group = "matrix", feature_type = NULL, buffer_size = 16384L) {
   assert_is_file(path)
   assert_is(buffer_size, "integer")
   if (!is.null(feature_type)) assert_is(feature_type, "character")
-
+  
   path <- normalizePath(path, mustWork = FALSE)
-  info <- dims_matrix_10x_hdf5_cpp(path, buffer_size)
+  info <- dims_matrix_10x_hdf5_cpp(path, group, buffer_size)
   res <- new("10xMatrixH5",
-    path = path, dim = info$dims, buffer_size = buffer_size,
-    dimnames = normalized_dimnames(info$row_names, info$col_names)
+             path = path, group = group, type = info$type, dim = info$dims, buffer_size = buffer_size,
+             dimnames = normalized_dimnames(info$row_names, info$col_names)
   )
-
+  
   if (!is.null(feature_type)) {
-    valid_features <- read_hdf5_string_cpp(path, "matrix/features/feature_type", buffer_size) %in% feature_type # nolint
+    valid_features <- read_hdf5_string_cpp(path, file.path(group, "features/feature_type"), buffer_size) %in% feature_type # nolint
     res <- res[valid_features, ]
   }
-
+  
   return(res)
 }
 
@@ -1745,6 +1758,7 @@ open_matrix_10x_hdf5 <- function(path, feature_type = NULL, buffer_size = 16384L
 #' @export
 write_matrix_10x_hdf5 <- function(mat,
                                   path,
+                                  group = "matrix",
                                   barcodes = colnames(mat),
                                   feature_ids = rownames(mat),
                                   feature_names = rownames(mat),
@@ -1758,10 +1772,10 @@ write_matrix_10x_hdf5 <- function(mat,
   if (mat@transpose) {
     stop("Matrix must have column-major storage order.\nCall t() or transpose_storage_order() first.")
   }
-  if (matrix_type(mat) != "uint32_t") {
-    warning("Converting to integer matrix for output to 10x format")
-    mat <- convert_matrix_type(mat, "uint32_t")
-  }
+  # if (matrix_type(mat) != "uint32_t") {
+  #   warning("Converting to integer matrix for output to 10x format")
+  #   mat <- convert_matrix_type(mat, "uint32_t")
+  # }
   assert_is(barcodes, "character")
   assert_len(barcodes, ncol(mat))
   assert_is(feature_ids, "character")
@@ -1788,12 +1802,14 @@ write_matrix_10x_hdf5 <- function(mat,
   assert_is(buffer_size, "integer")
   assert_is(chunk_size, "integer")
   assert_is(gzip_level, "integer")
-
+  
   path <- normalizePath(path, mustWork = FALSE)
   it <- iterate_matrix(mat)
   write_matrix_10x_hdf5_cpp(
     it,
     path,
+    group,
+    type = matrix_type(x = mat),
     barcodes,
     feature_ids,
     feature_names,
