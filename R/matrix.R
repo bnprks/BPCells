@@ -1819,7 +1819,7 @@ write_matrix_10x_hdf5 <- function(mat,
     chunk_size,
     gzip_level
   )
-  open_matrix_10x_hdf5(path, buffer_size = buffer_size)
+  open_matrix_10x_hdf5(path, group, buffer_size = buffer_size)
 }
 
 setClass("AnnDataMatrixH5",

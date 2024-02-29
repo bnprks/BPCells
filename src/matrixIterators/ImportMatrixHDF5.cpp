@@ -14,9 +14,9 @@ StoredMatrix<T> open10xFeatureMatrix(
 ) {
     HighFive::File f = openH5ForReading(file);
 
-    // Most up-to-date matrix format
-    if (f.exist("matrix")) {
-        H5ReaderBuilder rb(file, "matrix", buffer_size, read_size);
+    H5ReaderBuilder rb(file, group, buffer_size, read_size);
+    if (f.exist(group + "/features/id")) {
+        // Most up-to-date matrix format (cellranger V3+)
         uint32_t rows = rb.openUIntReader("shape").read_one();
         if (row_names.get() == nullptr) {
             row_names = rb.openStringReader("features/id");
@@ -42,7 +42,6 @@ StoredMatrix<T> open10xFeatureMatrix(
     //     );
     // }
 
-    H5ReaderBuilder rb(file, group, buffer_size, read_size);
     uint32_t rows = rb.openUIntReader("shape").read_one();
     if (row_names.get() == nullptr) {
         row_names = rb.openStringReader("genes");
