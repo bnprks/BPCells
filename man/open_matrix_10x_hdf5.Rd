@@ -5,11 +5,17 @@
 \alias{write_matrix_10x_hdf5}
 \title{Read/write a 10x feature matrix}
 \usage{
-open_matrix_10x_hdf5(path, feature_type = NULL, buffer_size = 16384L)
+open_matrix_10x_hdf5(
+  path,
+  group = "matrix",
+  feature_type = NULL,
+  buffer_size = 16384L
+)
 
 write_matrix_10x_hdf5(
   mat,
   path,
+  group = "matrix",
   barcodes = colnames(mat),
   feature_ids = rownames(mat),
   feature_names = rownames(mat),
@@ -17,11 +23,15 @@ write_matrix_10x_hdf5(
   feature_metadata = list(),
   buffer_size = 16384L,
   chunk_size = 1024L,
-  gzip_level = 0L
+  gzip_level = 0L,
+  type = c("uint32_t", "double", "float", "auto")
 )
 }
 \arguments{
 \item{path}{Path to the hdf5 file on disk}
+
+\item{group}{The group within the hdf5 file to write the data to. If writing
+to an existing hdf5 file this group must not already be in use}
 
 \item{feature_type}{Optional selection of feature types to include in output matrix.
 For multiome data, the options are "Gene Expression" and "Peaks". This option is
@@ -46,6 +56,10 @@ to store for each feature}
 \item{chunk_size}{For performance tuning only. The chunk size used for the HDF5 array storage.}
 
 \item{gzip_level}{Gzip compression level. Default is 0 (no compression)}
+
+\item{type}{Data type of the output matrix. Default is \code{uint32_t} to match a
+matrix of 10x UMI counts. Non-integer data types include \code{float} and
+\code{double}. If \code{auto}, will use the original data type.}
 }
 \value{
 BPCells matrix object

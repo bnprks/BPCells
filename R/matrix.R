@@ -51,6 +51,7 @@ denormalize_dimnames <- function(dimnames) {
 setGeneric("iterate_matrix", function(x) standardGeneric("iterate_matrix"))
 
 #' @describeIn IterableMatrix-methods Get the matrix data type (mat_uint32_t, mat_float, or mat_double for now)
+#' @export
 setGeneric("matrix_type", function(x) standardGeneric("matrix_type"))
 
 #' @describeIn IterableMatrix-methods Get the matrix storage order ("row" or "col")
@@ -1750,32 +1751,49 @@ open_matrix_10x_hdf5 <- function(path, group = "matrix", feature_type = NULL, bu
 #' @param feature_metadata Named list of additional metadata vectors
 #' to store for each feature
 #' @param gzip_level Gzip compression level. Default is 0 (no compression)
+#' @param type Data type of the output matrix. Default is `uint32_t` to match a 
+#' matrix of 10x UMI counts. Non-integer data types include `float` and 
+#' `double`. If `auto`, will use the original data type.
+#' 
 #' @details Input matrices must be in column-major storage order,
 #' and if the rownames and colnames are not set, names must be
 #' provided for the relevant metadata parameters. Some of the
 #' metadata parameters are not read by default in BPCells, but
 #' it is possible to export them for use with other tools.
 #' @export
-write_matrix_10x_hdf5 <- function(mat,
-                                  path,
-                                  group = "matrix",
-                                  barcodes = colnames(mat),
-                                  feature_ids = rownames(mat),
-                                  feature_names = rownames(mat),
-                                  feature_types = "Gene Expression",
-                                  feature_metadata = list(),
-                                  buffer_size = 16384L,
-                                  chunk_size = 1024L,
-                                  gzip_level = 0L) {
+write_matrix_10x_hdf5 <- function(
+    mat,
+    path,
+    group = "matrix",
+    barcodes = colnames(mat),
+    feature_ids = rownames(mat),
+    feature_names = rownames(mat),
+    feature_types = "Gene Expression",
+    feature_metadata = list(),
+    buffer_size = 16384L,
+    chunk_size = 1024L,
+    gzip_level = 0L,
+    type = c("uint32_t", "double", "float", "auto")
+) {
+  type <- match.arg(type)
   assert_is(mat, "IterableMatrix")
   assert_is(path, "character")
   if (mat@transpose) {
-    stop("Matrix must have column-major storage order.\nCall t() or transpose_storage_order() first.")
+    stop(
+      "Matrix must have column-major storage order.\n", 
+      "Call t() or transpose_storage_order() first."
+    )
   }
-  # if (matrix_type(mat) != "uint32_t") {
-  #   warning("Converting to integer matrix for output to 10x format")
-  #   mat <- convert_matrix_type(mat, "uint32_t")
-  # }
+  if (type == "auto") {
+    type <- matrix_type(mat)
+  }
+  if (matrix_type(mat) != type) {
+    warning(
+      "Converting from ", matrix_type(mat), " to ", type, 
+      " matrix for output to 10x format"
+    )
+    mat <- convert_matrix_type(mat, type)
+  }
   assert_is(barcodes, "character")
   assert_len(barcodes, ncol(mat))
   assert_is(feature_ids, "character")
