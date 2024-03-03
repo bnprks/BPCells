@@ -13,20 +13,21 @@ else
 fi
 
 
-wget https://github.com/google/highway/archive/refs/tags/1.0.7.tar.gz
-tar -xzf 1.0.7.tar.gz
-rm 1.0.7.tar.gz
+wget https://github.com/google/highway/archive/refs/tags/1.1.0.tar.gz
+tar -xzf 1.1.0.tar.gz
+rm 1.1.0.tar.gz
 
-cd highway-1.0.7
+cd highway-1.1.0
 mkdir -p build-dir
 cd build-dir
 
 cmake .. \
     -DHWY_ENABLE_TESTS:BOOL=OFF \
     -DHWY_ENABLE_EXAMPLES:BOOL=OFF \
+    -DHWY_ENABLE_CONTRIB:BOOL=OFF \
     $SET_INSTALL_DIR
 
 make -j4 install
 
 cd ../../
-rm -r highway-1.0.7
+rm -r highway-1.1.0

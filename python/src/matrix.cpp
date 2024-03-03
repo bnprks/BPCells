@@ -105,7 +105,7 @@ void write_matrix_dir_from_h5ad(std::string h5ad_path, std::string out_path, std
     auto row_names = std::make_unique<VecStringReader>(empty_names);
     auto col_names = std::make_unique<VecStringReader>(empty_names);
 
-    auto mat_float = std::make_unique<StoredMatrix<float>>(openAnnDataMatrix(
+    auto mat_float = std::make_unique<StoredMatrix<float>>(openAnnDataMatrix<float>(
         h5ad_path,
         group,
         16384L, // Just provide a default buffer size matching what R uses

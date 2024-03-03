@@ -3,6 +3,7 @@ build/
 __pycache__
 .envrc
 .direnv
+.tox
 
 src/bpcells/version.py
 
