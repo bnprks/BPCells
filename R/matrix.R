@@ -2399,9 +2399,9 @@ matrix_to_integer <- function(matrix) { # a numeric matrix
     if (all(matrix <= .Machine$integer.max)) {
         storage.mode(matrix) <- "integer"
     } else {
-        cli::cli_warn(
-            "Using `double` mode since some values exceed {.code .Machine$integer.max}"
-        )
+      warning(
+        "Using `double` mode since some values exceed `.Machine$integer.max`"
+      )
     }
     matrix
 }
