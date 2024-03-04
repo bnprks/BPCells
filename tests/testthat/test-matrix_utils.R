@@ -33,6 +33,29 @@ test_that("Conversion to base types works", {
   }
 })
 
+test_that("Conversion to dense matrix keep data types", {
+  m_double <- as(generate_sparse_matrix(10, 10), "IterableMatrix")
+  # convert to double matrix
+  expect_identical(matrix_type(m_double), "double")
+  expect_identical(storage.mode(as.matrix(m_double)), "double")
+  # convert to double matrix
+  m_float <- convert_matrix_type(m_double, "float")
+  expect_identical(matrix_type(m_float), "float")
+  expect_identical(storage.mode(as.matrix(m_float)), "double")
+  # convert to integer matrix
+  m_integer <- convert_matrix_type(m_double, "uint32_t")
+  expect_identical(matrix_type(m_integer), "uint32_t")
+  expect_identical(storage.mode(as.matrix(m_integer)), "integer")
+  # value exceed `.Machine$integer.max` return double mode and warn message
+  m_large <- generate_dense_matrix(10, 10)
+  m_large[1L] <- m_large[1L] + .Machine$integer.max
+  m_large <- as(as(m_large, "dgCMatrix"), "IterableMatrix")
+  m_large_integer <- convert_matrix_type(m_large, "uint32_t")
+  expect_identical(matrix_type(m_large_integer), "uint32_t")
+  expect_warning(dense_mat <- as.matrix(m_large_integer))
+  expect_identical(storage.mode(dense_mat), "double")
+})
+
 test_that("Chained subsetting works", {
   m1 <- generate_dense_matrix(10, 10) %>% as("dgCMatrix")
 
