@@ -1721,24 +1721,34 @@ setMethod("short_description", "10xMatrixH5", function(x) {
 #' which can slow down read performance. Consider writing into another format
 #' if the read performance is important to you.
 #' @export
-open_matrix_10x_hdf5 <- function(path, group = "matrix", feature_type = NULL, buffer_size = 16384L) {
+open_matrix_10x_hdf5 <- function(path, feature_type = NULL, buffer_size = 16384L) {
   assert_is_file(path)
   assert_is(buffer_size, "integer")
-  if (!is.null(feature_type)) assert_is(feature_type, "character")
-  
-  path <- normalizePath(path, mustWork = FALSE)
-  info <- dims_matrix_10x_hdf5_cpp(path, group, buffer_size)
-  res <- new("10xMatrixH5",
-             path = path, group = group, type = info$type, dim = info$dims, buffer_size = buffer_size,
-             dimnames = normalized_dimnames(info$row_names, info$col_names)
-  )
-  
   if (!is.null(feature_type)) {
-    valid_features <- read_hdf5_string_cpp(path, file.path(group, "features/feature_type"), buffer_size) %in% feature_type # nolint
-    res <- res[valid_features, ]
+    assert_is(feature_type, "character")
   }
   
-  return(res)
+  path <- normalizePath(path, mustWork = FALSE)
+  all_groups <- hdf5_group_objnames_cpp(path, "/")
+  
+  mats <- list()
+  for (i in all_groups) {
+    info <- dims_matrix_10x_hdf5_cpp(path, i, buffer_size)
+    res <- new("10xMatrixH5",
+               path = path, group = i, type = info$type, dim = info$dims, buffer_size = buffer_size,
+               dimnames = normalized_dimnames(info$row_names, info$col_names)
+    )
+    if (!is.null(feature_type)) {
+      valid_features <- read_hdf5_string_cpp(path, file.path(group, "features/feature_type"), buffer_size) %in% feature_type # nolint
+      res <- res[valid_features, ]
+    }
+    mats[[i]] <- res
+  }
+  if (length(mats) == 1) {
+    return(mats[[1]])
+  }
+  rlang::inform("The input HDF5 file contain multiple sparse matrices, return a list")
+  return(mats)
 }
 
 #' @rdname open_matrix_10x_hdf5
@@ -1764,7 +1774,6 @@ open_matrix_10x_hdf5 <- function(path, group = "matrix", feature_type = NULL, bu
 write_matrix_10x_hdf5 <- function(
     mat,
     path,
-    group = "matrix",
     barcodes = colnames(mat),
     feature_ids = rownames(mat),
     feature_names = rownames(mat),
@@ -1826,7 +1835,7 @@ write_matrix_10x_hdf5 <- function(
   write_matrix_10x_hdf5_cpp(
     it,
     path,
-    group,
+    "matrix",
     type = matrix_type(x = mat),
     barcodes,
     feature_ids,
@@ -1837,7 +1846,7 @@ write_matrix_10x_hdf5 <- function(
     chunk_size,
     gzip_level
   )
-  open_matrix_10x_hdf5(path, group, buffer_size = buffer_size)
+  open_matrix_10x_hdf5(path, buffer_size = buffer_size)
 }
 
 setClass("AnnDataMatrixH5",

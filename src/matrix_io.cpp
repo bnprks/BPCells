@@ -902,6 +902,12 @@ bool hdf5_group_exists_cpp(std::string path, std::string group) {
     return rb.getGroup().exist(group);
 }
 
+// [[Rcpp::export]]
+std::vector<std::string> hdf5_group_objnames_cpp(std::string path, std::string group) {
+    H5ReaderBuilder rb(path, group, 1);
+    return rb.getGroup().listObjectNames();
+}
+
 // MTX format
 
 // [[Rcpp::export]]

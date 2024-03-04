@@ -20,11 +20,11 @@ test_that("Write 10x matrix to HDF5", {
         convert_matrix_type(type)
       if (type != "uint32_t") {
         expect_warning({
-          mm1 <- write_matrix_10x_hdf5(m2, file.path(dir, paste0("mm1_", type, a[["nrow"]], ".h5")), group = "mm10")
+          mm1 <- write_matrix_10x_hdf5(m2, file.path(dir, paste0("mm1_", type, a[["nrow"]], ".h5")))
           mm2 <- write_matrix_10x_hdf5(m2, file.path(dir, paste0("mm2_", type, a[["nrow"]], ".h5")))
         })
       } else {
-        mm1 <- write_matrix_10x_hdf5(m2, file.path(dir, paste0("mm1_", type, a[["nrow"]], ".h5")), group = "mm10")
+        mm1 <- write_matrix_10x_hdf5(m2, file.path(dir, paste0("mm1_", type, a[["nrow"]], ".h5")))
         mm2 <- write_matrix_10x_hdf5(m2, file.path(dir, paste0("mm2_", type, a[["nrow"]], ".h5")))
       }
       mm3 <- write_matrix_10x_hdf5(m2, file.path(dir, paste0("mm3_", type, a[["nrow"]], ".h5")), type = "auto")
