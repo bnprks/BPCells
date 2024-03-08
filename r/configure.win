@@ -103,7 +103,7 @@ $CXX tools/hwy-test.cpp $CXXFLAGS $LDFLAGS 2>$ERR && HWY_OK="yes";
 if [ -z $HWY_OK ]; then
     if [ ! -f tools/highway/lib/libhwy.a ]; then
         printf "\nBuilding highway SIMD library from source"
-        CXX=$CXX bash src/bpcells-cpp/vendor/highway/manual-build/build_highway.sh src/bpcells-cpp/vendor/highway tools/highway && HWY_OK="yes";
+        CXX=$CXX bash src/vendor/highway/manual-build/build_highway.sh src/vendor/highway tools/highway && HWY_OK="yes";
     else
         printf "\nUsing cached highway build"
         HWY_OK="yes"
