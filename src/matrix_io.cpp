@@ -591,7 +591,7 @@ void write_packed_matrix_hdf5_double_cpp(
 
 // [[Rcpp::export]]
 List dims_matrix_10x_hdf5_cpp(std::string file, std::string group, uint32_t buffer_size) {
-    std::string type = getAnnDataMatrixType(file, group);
+    std::string type = get10xMatrixType(file, group);
     List l;
     if (type == "uint32_t") {
         l = dims_matrix(open10xFeatureMatrix<uint32_t>(file, group, buffer_size), false);
@@ -616,36 +616,36 @@ SEXP iterate_matrix_10x_hdf5_cpp(
     const StringVector row_names,
     const StringVector col_names
 ) {
-    std::string type = getAnnDataMatrixType(file, group);
+    std::string type = get10xMatrixType(file, group);
     if (type == "uint32_t") {
         return make_unique_xptr<StoredMatrix<uint32_t>>(open10xFeatureMatrix<uint32_t>(
-            file, 
-            group, 
-            buffer_size, 
+            file,
+            group,
+            buffer_size,
             std::make_unique<RcppStringReader>(row_names),
             std::make_unique<RcppStringReader>(col_names)
         ));
     } else if (type == "uint64_t") {
         return make_unique_xptr<StoredMatrix<uint64_t>>(open10xFeatureMatrix<uint64_t>(
-            file, 
-            group, 
-            buffer_size, 
+            file,
+            group,
+            buffer_size,
             std::make_unique<RcppStringReader>(row_names),
             std::make_unique<RcppStringReader>(col_names)
         ));
     } else if (type == "float") {
         return make_unique_xptr<StoredMatrix<float>>(open10xFeatureMatrix<float>(
-            file, 
-            group, 
-            buffer_size, 
+            file,
+            group,
+            buffer_size,
             std::make_unique<RcppStringReader>(row_names),
             std::make_unique<RcppStringReader>(col_names)
         ));
     } else if (type == "double") {
         return make_unique_xptr<StoredMatrix<double>>(open10xFeatureMatrix<double>(
-            file, 
-            group, 
-            buffer_size, 
+            file,
+            group,
+            buffer_size,
             std::make_unique<RcppStringReader>(row_names),
             std::make_unique<RcppStringReader>(col_names)
         ));
@@ -658,7 +658,6 @@ template <typename T>
 void write_matrix_10x_hdf5_base(
     SEXP matrix,
     std::string path,
-    std::string group,
     StringVector barcodes,
     StringVector feature_ids,
     StringVector feature_names,
@@ -678,7 +677,6 @@ void write_matrix_10x_hdf5_base(
     }
     StoredMatrixWriter<T> w = create10xFeatureMatrix<T>(
         path,
-        group,
         RcppStringReader(barcodes),
         RcppStringReader(feature_ids),
         RcppStringReader(feature_names),
@@ -695,7 +693,6 @@ void write_matrix_10x_hdf5_base(
 void write_matrix_10x_hdf5_cpp(
     SEXP matrix,
     std::string path,
-    std::string group,
     std::string type,
     StringVector barcodes,
     StringVector feature_ids,
@@ -708,58 +705,54 @@ void write_matrix_10x_hdf5_cpp(
 ) {
     if (type == "uint32_t") {
         write_matrix_10x_hdf5_base<uint32_t>(
-            matrix, 
-            path, 
-            group, 
-            barcodes, 
-            feature_ids, 
-            feature_names, 
-            feature_types, 
-            feature_metadata, 
-            buffer_size, 
-            chunk_size, 
+            matrix,
+            path,
+            barcodes,
+            feature_ids,
+            feature_names,
+            feature_types,
+            feature_metadata,
+            buffer_size,
+            chunk_size,
             gzip_level
         );
     } else if (type == "uint64_t") {
         write_matrix_10x_hdf5_base<uint64_t>(
-            matrix, 
-            path, 
-            group, 
-            barcodes, 
-            feature_ids, 
-            feature_names, 
-            feature_types, 
-            feature_metadata, 
-            buffer_size, 
-            chunk_size, 
+            matrix,
+            path,
+            barcodes,
+            feature_ids,
+            feature_names,
+            feature_types,
+            feature_metadata,
+            buffer_size,
+            chunk_size,
             gzip_level
         );
     } else if (type == "float") {
         write_matrix_10x_hdf5_base<float>(
-            matrix, 
-            path, 
-            group, 
-            barcodes, 
-            feature_ids, 
-            feature_names, 
-            feature_types, 
-            feature_metadata, 
-            buffer_size, 
-            chunk_size, 
+            matrix,
+            path,
+            barcodes,
+            feature_ids,
+            feature_names,
+            feature_types,
+            feature_metadata,
+            buffer_size,
+            chunk_size,
             gzip_level
         );
     } else if (type == "double") {
         write_matrix_10x_hdf5_base<double>(
-            matrix, 
-            path, 
-            group, 
-            barcodes, 
-            feature_ids, 
-            feature_names, 
-            feature_types, 
-            feature_metadata, 
-            buffer_size, 
-            chunk_size, 
+            matrix,
+            path,
+            barcodes,
+            feature_ids,
+            feature_names,
+            feature_types,
+            feature_metadata,
+            buffer_size,
+            chunk_size,
             gzip_level
         );
     } else {
@@ -799,8 +792,8 @@ SEXP iterate_matrix_anndata_hdf5_cpp(
     std::string file_type = getAnnDataMatrixType(file, group);
     if (type != file_type) {
         std::stringstream ss;
-        ss << "iterate_matrix_anndata_hdf5_cpp: Found type '" << file_type <<
-            "' expected '" << type << "'";
+        ss << "iterate_matrix_anndata_hdf5_cpp: Found type '" << file_type << "' expected '" << type
+           << "'";
         throw std::runtime_error(ss.str());
     }
     if (type == "uint32_t") {
@@ -830,11 +823,6 @@ SEXP iterate_matrix_anndata_hdf5_cpp(
     } else {
         throw std::runtime_error("iterate_matrix_anndata_hdf5_cpp: Unsupported type " + type);
     }
-}
-
-// [Rcpp::export]
-std::string anndata_matrix_type_cpp(std::string file, std::string group) {
-    return getAnnDataMatrixType(file, group);
 }
 
 template <typename T>

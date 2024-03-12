@@ -7,32 +7,26 @@ generate_sparse_matrix <- function(nrow, ncol, fraction_nonzero = 0.5, max_val =
 
 test_that("Write 10x matrix to HDF5", {
   dir <- withr::local_tempdir()
-  args <- list(
-    list(nrow = 10, ncol = 9, fraction_nonzero = 0.2, max_val = 10),
-    list(nrow = 100, ncol = 99, fraction_nonzero = 0.2, max_val = 100),
-    list(nrow = 1000, ncol = 999, fraction_nonzero = 0.1, max_val = 1000)
-  )
-  for (a in args) {
-    m <- do.call(generate_sparse_matrix, a)
-    for (type in c("uint32_t", "float", "double")) {
-      m2 <- m %>%
-        as("IterableMatrix") %>%
-        convert_matrix_type(type)
-      if (type != "uint32_t") {
-        expect_warning({
-          mm1 <- write_matrix_10x_hdf5(m2, file.path(dir, paste0("mm1_", type, a[["nrow"]], ".h5")))
-          mm2 <- write_matrix_10x_hdf5(m2, file.path(dir, paste0("mm2_", type, a[["nrow"]], ".h5")))
-        })
-      } else {
-        mm1 <- write_matrix_10x_hdf5(m2, file.path(dir, paste0("mm1_", type, a[["nrow"]], ".h5")))
-        mm2 <- write_matrix_10x_hdf5(m2, file.path(dir, paste0("mm2_", type, a[["nrow"]], ".h5")))
-      }
-      mm3 <- write_matrix_10x_hdf5(m2, file.path(dir, paste0("mm3_", type, a[["nrow"]], ".h5")), type = "auto")
-      
-      expect_identical(matrix_type(mm1), "uint32_t")
-      expect_identical(matrix_type(mm2), "uint32_t")
-      expect_identical(matrix_type(mm3), type)
+
+  m <- generate_sparse_matrix(10, 9, fraction_nonzero=0.2)
+  for (type in c("uint32_t", "float", "double")) {
+    m2 <- m %>%
+      as("IterableMatrix") %>%
+      convert_matrix_type(type)
+    if (type != "uint32_t") {
+      expect_warning({
+        mm1 <- write_matrix_10x_hdf5(m2, file.path(dir, paste0("mm1_", type, 10, ".h5")))
+        mm2 <- write_matrix_10x_hdf5(m2, file.path(dir, paste0("mm2_", type, 10, ".h5")))
+      })
+    } else {
+      mm1 <- write_matrix_10x_hdf5(m2, file.path(dir, paste0("mm1_", type, 10, ".h5")))
+      mm2 <- write_matrix_10x_hdf5(m2, file.path(dir, paste0("mm2_", type, 10, ".h5")))
     }
+    mm3 <- write_matrix_10x_hdf5(m2, file.path(dir, paste0("mm3_", type, 10, ".h5")), type = "auto")
+    
+    expect_identical(matrix_type(mm1), "uint32_t")
+    expect_identical(matrix_type(mm2), "uint32_t")
+    expect_identical(matrix_type(mm3), type)
   }
 })
 

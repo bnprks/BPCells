@@ -7,6 +7,11 @@
 Contributions welcome :)
 
 # BPCells 0.2.0 (github main branch - in progress)
+## Breaking changes
+- New slots have been added to 10x matrix objects, so any saved RDS files may need to have
+  their 10x matrix inputs re-opened and replaced by calling `all_matrix_inputs()`. Outside of
+  loading old RDS files no changes should be needed.
+
 ## Features
 - New `svds()` function, based on the excellent Spectra C++ library (used in RSpectra) by Yixuan Qiu.
   This should ensure lower memory usage compared to `irlba`, while achieving similar speed + accuracy.
@@ -53,6 +58,9 @@ Contributions welcome :)
   reordering will not. Thanks to @nimanouri-nm for raising issue #65 to fix a bug in the initial implementation.
 - Additional C++17 filesystem backwards compatibility that should allow slightly older compilers such as GCC 7.5 to 
   build BPCells.
+- `as.matrix()` will produce integer matrices when appropriate (Thanks to @Yunuuuu in pull #77)
+- 10x HDF5 matrices can now read and write non-integer types when requested (Thanks to @ycli1995 in pull #75)
+- Old-style 10x files from cellranger v2 can now read multi-genome files, which are returned as a list (Thanks to @ycli1995 in pull #75)
 
 ## Bug-fixes
 - Fixed a few fragment transforms where using `chrNames(frags) <- val` or `cellNames(frags) <- val` could cause

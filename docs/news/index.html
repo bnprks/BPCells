@@ -69,6 +69,10 @@
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.2.0" id="bpcells-020-github-main-branch---in-progress">BPCells 0.2.0 (github main branch - in progress)<a class="anchor" aria-label="anchor" href="#bpcells-020-github-main-branch---in-progress"></a></h2>
 <div class="section level3">
+<h3 id="breaking-changes-0-2-0">Breaking changes<a class="anchor" aria-label="anchor" href="#breaking-changes-0-2-0"></a></h3>
+<ul><li>New slots have been added to 10x matrix objects, so any saved RDS files may need to have their 10x matrix inputs re-opened and replaced by calling <code><a href="../reference/all_matrix_inputs.html">all_matrix_inputs()</a></code>. Outside of loading old RDS files no changes should be needed.</li>
+</ul></div>
+<div class="section level3">
 <h3 id="features-0-2-0">Features<a class="anchor" aria-label="anchor" href="#features-0-2-0"></a></h3>
 <ul><li>New <code><a href="../reference/svds.html">svds()</a></code> function, based on the excellent Spectra C++ library (used in RSpectra) by Yixuan Qiu. This should ensure lower memory usage compared to <code>irlba</code>, while achieving similar speed + accuracy.</li>
 <li>Limited parallelization is now supported. This is easiest to use via the <code>threads</code> argument to <code><a href="../reference/matrix_stats.html">matrix_stats()</a></code> and <code><a href="../reference/svds.html">svds()</a></code>.
@@ -96,6 +100,10 @@
 <li>Subsetting RowBindMatrices and ColBindMatrices now propagates through so we avoid touching matrices with no selected indices</li>
 <li>Added logic to help reduce cases where subsetting causes BPCells to fall back to a less efficient matrix-vector multiply algorithm. This affects most math transforms. As part of this, the filtering part of a subset will propagate to earlier transformation steps, while the reordering will not. Thanks to <a href="https://github.com/nimanouri-nm" class="external-link">@nimanouri-nm</a> for raising issue <a href="https://github.com/bnprks/BPCells/issues/65" class="external-link">#65</a> to fix a bug in the initial implementation.</li>
 <li>Additional C++17 filesystem backwards compatibility that should allow slightly older compilers such as GCC 7.5 to build BPCells.</li>
+<li>
+<code><a href="https://rdrr.io/r/base/matrix.html" class="external-link">as.matrix()</a></code> will produce integer matrices when appropriate (Thanks to <a href="https://github.com/Yunuuuu" class="external-link">@Yunuuuu</a> in pull <a href="https://github.com/bnprks/BPCells/issues/77" class="external-link">#77</a>)</li>
+<li>10x HDF5 matrices can now read and write non-integer types when requested (Thanks to <a href="https://github.com/ycli1995" class="external-link">@ycli1995</a> in pull <a href="https://github.com/bnprks/BPCells/issues/75" class="external-link">#75</a>)</li>
+<li>Old-style 10x files from cellranger v2 can now read multi-genome files, which are returned as a list (Thanks to <a href="https://github.com/ycli1995" class="external-link">@ycli1995</a> in pull <a href="https://github.com/bnprks/BPCells/issues/75" class="external-link">#75</a>)</li>
 </ul></div>
 <div class="section level3">
 <h3 id="bug-fixes-0-2-0">Bug-fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-0-2-0"></a></h3>

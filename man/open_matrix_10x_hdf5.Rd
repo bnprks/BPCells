@@ -50,7 +50,7 @@ to store for each feature}
 
 \item{type}{Data type of the output matrix. Default is \code{uint32_t} to match a
 matrix of 10x UMI counts. Non-integer data types include \code{float} and
-\code{double}. If \code{auto}, will use the original data type.}
+\code{double}. If \code{auto}, will use the data type of \code{mat}.}
 }
 \value{
 BPCells matrix object

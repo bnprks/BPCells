@@ -1675,37 +1675,28 @@ open_matrix_hdf5 <- function(path, group, buffer_size = 16384L) {
   )
 }
 
-setClass(
-  Class = "10xMatrixH5",
+setClass("10xMatrixH5",
   contains = "IterableMatrix",
   slots = c(
     path = "character",
     group = "character",
     type = "character",
     buffer_size = "integer"
+  ),
+  prototype = list(
+    path = character(0),
+    group = "matrix",
+    type = "uint32_t",
+    buffer_size = integer(0)
   )
 )
-setMethod(
-  f = "matrix_type", 
-  signature = "10xMatrixH5", 
-  definition = function(x) slot(object = x, name = "type")
-)
-setMethod(
-  f = "matrix_inputs", 
-  signature = "10xMatrixH5", 
-  definition = function(x) list()
-)
-setMethod(
-  f = "iterate_matrix", 
-  signature = "10xMatrixH5", 
-  definition = function(x) {
-    if (x@transpose) {
-      x <- t(x = x)
-    }
-    x@dimnames <- denormalize_dimnames(x@dimnames)
-    iterate_matrix_10x_hdf5_cpp(x@path, x@group, x@buffer_size, x@dimnames[[1]], x@dimnames[[2]])
-  }
-)
+setMethod("matrix_type", "10xMatrixH5", function(x) x@type)
+setMethod("matrix_inputs", "10xMatrixH5", function(x) list())
+setMethod("iterate_matrix", "10xMatrixH5", function(x) {
+  if (x@transpose) x <- t(x)
+  x@dimnames <- denormalize_dimnames(x@dimnames)
+  iterate_matrix_10x_hdf5_cpp(x@path, x@group, x@buffer_size, x@dimnames[[1]], x@dimnames[[2]])
+})
 setMethod("short_description", "10xMatrixH5", function(x) {
   sprintf("10x HDF5 feature matrix in file %s", x@path)
 })
@@ -1724,30 +1715,34 @@ setMethod("short_description", "10xMatrixH5", function(x) {
 open_matrix_10x_hdf5 <- function(path, feature_type = NULL, buffer_size = 16384L) {
   assert_is_file(path)
   assert_is(buffer_size, "integer")
-  if (!is.null(feature_type)) {
-    assert_is(feature_type, "character")
-  }
-  
+  if (!is.null(feature_type)) assert_is(feature_type, "character")
   path <- normalizePath(path, mustWork = FALSE)
   all_groups <- hdf5_group_objnames_cpp(path, "/")
-  
+  if ("matrix" %in% all_groups) {
+    # If we detect something that looks like a new-style 10x matrix, 
+    # ignore any other top-level groups in the file
+    all_groups <- "matrix"
+  }
   mats <- list()
-  for (i in all_groups) {
-    info <- dims_matrix_10x_hdf5_cpp(path, i, buffer_size)
+  for (group in all_groups) {
+    # Note: to find old-style 10x files for testing purposes, try these links from 10x:
+    # Dataset description: https://www.10xgenomics.com/datasets/100-1-1-mixture-of-fresh-frozen-human-hek-293-t-and-mouse-nih-3-t-3-cells-2-standard-2-1-0
+    # HDF5 file url: https://cf.10xgenomics.com/samples/cell-exp/2.1.0/hgmm_100/hgmm_100_raw_gene_bc_matrices_h5.h5
+    info <- dims_matrix_10x_hdf5_cpp(path, group, buffer_size)
     res <- new("10xMatrixH5",
-               path = path, group = i, type = info$type, dim = info$dims, buffer_size = buffer_size,
+               path = path, group = group, type = info$type, dim = info$dims, buffer_size = buffer_size,
                dimnames = normalized_dimnames(info$row_names, info$col_names)
     )
     if (!is.null(feature_type)) {
       valid_features <- read_hdf5_string_cpp(path, file.path(group, "features/feature_type"), buffer_size) %in% feature_type # nolint
       res <- res[valid_features, ]
     }
-    mats[[i]] <- res
+    mats[[group]] <- res
   }
   if (length(mats) == 1) {
     return(mats[[1]])
   }
-  rlang::inform("The input HDF5 file contains multiple sparse matrices, returning a list")
+  rlang::inform("The input HDF5 is detected as an old-style multi-genome file, returning a list of matrices")
   return(mats)
 }
 
@@ -1763,7 +1758,7 @@ open_matrix_10x_hdf5 <- function(path, feature_type = NULL, buffer_size = 16384L
 #' @param gzip_level Gzip compression level. Default is 0 (no compression)
 #' @param type Data type of the output matrix. Default is `uint32_t` to match a 
 #' matrix of 10x UMI counts. Non-integer data types include `float` and 
-#' `double`. If `auto`, will use the original data type.
+#' `double`. If `auto`, will use the data type of `mat`.
 #' 
 #' @details Input matrices must be in column-major storage order,
 #' and if the rownames and colnames are not set, names must be
@@ -1835,7 +1830,6 @@ write_matrix_10x_hdf5 <- function(
   write_matrix_10x_hdf5_cpp(
     it,
     path,
-    "matrix",
     type = matrix_type(x = mat),
     barcodes,
     feature_ids,

@@ -1420,13 +1420,12 @@ BEGIN_RCPP
 END_RCPP
 }
 // write_matrix_10x_hdf5_cpp
-void write_matrix_10x_hdf5_cpp(SEXP matrix, std::string path, std::string group, std::string type, StringVector barcodes, StringVector feature_ids, StringVector feature_names, StringVector feature_types, List feature_metadata, uint32_t buffer_size, uint32_t chunk_size, uint32_t gzip_level);
-RcppExport SEXP _BPCells_write_matrix_10x_hdf5_cpp(SEXP matrixSEXP, SEXP pathSEXP, SEXP groupSEXP, SEXP typeSEXP, SEXP barcodesSEXP, SEXP feature_idsSEXP, SEXP feature_namesSEXP, SEXP feature_typesSEXP, SEXP feature_metadataSEXP, SEXP buffer_sizeSEXP, SEXP chunk_sizeSEXP, SEXP gzip_levelSEXP) {
+void write_matrix_10x_hdf5_cpp(SEXP matrix, std::string path, std::string type, StringVector barcodes, StringVector feature_ids, StringVector feature_names, StringVector feature_types, List feature_metadata, uint32_t buffer_size, uint32_t chunk_size, uint32_t gzip_level);
+RcppExport SEXP _BPCells_write_matrix_10x_hdf5_cpp(SEXP matrixSEXP, SEXP pathSEXP, SEXP typeSEXP, SEXP barcodesSEXP, SEXP feature_idsSEXP, SEXP feature_namesSEXP, SEXP feature_typesSEXP, SEXP feature_metadataSEXP, SEXP buffer_sizeSEXP, SEXP chunk_sizeSEXP, SEXP gzip_levelSEXP) {
 BEGIN_RCPP
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< SEXP >::type matrix(matrixSEXP);
     Rcpp::traits::input_parameter< std::string >::type path(pathSEXP);
-    Rcpp::traits::input_parameter< std::string >::type group(groupSEXP);
     Rcpp::traits::input_parameter< std::string >::type type(typeSEXP);
     Rcpp::traits::input_parameter< StringVector >::type barcodes(barcodesSEXP);
     Rcpp::traits::input_parameter< StringVector >::type feature_ids(feature_idsSEXP);
@@ -1436,7 +1435,7 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< uint32_t >::type buffer_size(buffer_sizeSEXP);
     Rcpp::traits::input_parameter< uint32_t >::type chunk_size(chunk_sizeSEXP);
     Rcpp::traits::input_parameter< uint32_t >::type gzip_level(gzip_levelSEXP);
-    write_matrix_10x_hdf5_cpp(matrix, path, group, type, barcodes, feature_ids, feature_names, feature_types, feature_metadata, buffer_size, chunk_size, gzip_level);
+    write_matrix_10x_hdf5_cpp(matrix, path, type, barcodes, feature_ids, feature_names, feature_types, feature_metadata, buffer_size, chunk_size, gzip_level);
     return R_NilValue;
 END_RCPP
 }
@@ -2471,7 +2470,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_BPCells_write_packed_matrix_hdf5_double_cpp", (DL_FUNC) &_BPCells_write_packed_matrix_hdf5_double_cpp, 8},
     {"_BPCells_dims_matrix_10x_hdf5_cpp", (DL_FUNC) &_BPCells_dims_matrix_10x_hdf5_cpp, 3},
     {"_BPCells_iterate_matrix_10x_hdf5_cpp", (DL_FUNC) &_BPCells_iterate_matrix_10x_hdf5_cpp, 5},
-    {"_BPCells_write_matrix_10x_hdf5_cpp", (DL_FUNC) &_BPCells_write_matrix_10x_hdf5_cpp, 12},
+    {"_BPCells_write_matrix_10x_hdf5_cpp", (DL_FUNC) &_BPCells_write_matrix_10x_hdf5_cpp, 11},
     {"_BPCells_dims_matrix_anndata_hdf5_cpp", (DL_FUNC) &_BPCells_dims_matrix_anndata_hdf5_cpp, 3},
     {"_BPCells_iterate_matrix_anndata_hdf5_cpp", (DL_FUNC) &_BPCells_iterate_matrix_anndata_hdf5_cpp, 6},
     {"_BPCells_write_matrix_anndata_hdf5_cpp", (DL_FUNC) &_BPCells_write_matrix_anndata_hdf5_cpp, 8},

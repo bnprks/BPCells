@@ -409,8 +409,8 @@ iterate_matrix_10x_hdf5_cpp <- function(file, group, buffer_size, row_names, col
     .Call(`_BPCells_iterate_matrix_10x_hdf5_cpp`, file, group, buffer_size, row_names, col_names)
 }
 
-write_matrix_10x_hdf5_cpp <- function(matrix, path, group, type, barcodes, feature_ids, feature_names, feature_types, feature_metadata, buffer_size, chunk_size, gzip_level) {
-    invisible(.Call(`_BPCells_write_matrix_10x_hdf5_cpp`, matrix, path, group, type, barcodes, feature_ids, feature_names, feature_types, feature_metadata, buffer_size, chunk_size, gzip_level))
+write_matrix_10x_hdf5_cpp <- function(matrix, path, type, barcodes, feature_ids, feature_names, feature_types, feature_metadata, buffer_size, chunk_size, gzip_level) {
+    invisible(.Call(`_BPCells_write_matrix_10x_hdf5_cpp`, matrix, path, type, barcodes, feature_ids, feature_names, feature_types, feature_metadata, buffer_size, chunk_size, gzip_level))
 }
 
 dims_matrix_anndata_hdf5_cpp <- function(file, group, buffer_size) {
