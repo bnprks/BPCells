@@ -2385,8 +2385,26 @@ setAs("IterableMatrix", "matrix", function(from) {
   rlang::inform(c(
       "Warning: Converting to a dense matrix may use excessive memory"
     ), .frequency = "regularly", .frequency_id = "matrix_dense_conversion")
-  as(from, "dgCMatrix") %>% as.matrix()  
+  # `mat` will always be numeric mode
+  mat <- as.matrix(as(from, "dgCMatrix"))
+  # to keep the original mode, we transform it when necessary
+  if (matrix_type(from) == "uint32_t") {
+      mat <- matrix_to_integer(mat)
+  }
+  mat
 })
+
+matrix_to_integer <- function(matrix) { # a numeric matrix
+    if (is.integer(matrix)) return(matrix) # styler: off
+    if (all(matrix <= .Machine$integer.max)) {
+        storage.mode(matrix) <- "integer"
+    } else {
+      warning(
+        "Using `double` mode since some values exceed `.Machine$integer.max`"
+      )
+    }
+    matrix
+}
 
 #' @exportS3Method base::as.matrix
 as.matrix.IterableMatrix <- function(x, ...) as(x, "matrix")
