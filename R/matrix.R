@@ -51,6 +51,7 @@ denormalize_dimnames <- function(dimnames) {
 setGeneric("iterate_matrix", function(x) standardGeneric("iterate_matrix"))
 
 #' @describeIn IterableMatrix-methods Get the matrix data type (mat_uint32_t, mat_float, or mat_double for now)
+#' @export
 setGeneric("matrix_type", function(x) standardGeneric("matrix_type"))
 
 #' @describeIn IterableMatrix-methods Get the matrix storage order ("row" or "col")
@@ -1678,19 +1679,23 @@ setClass("10xMatrixH5",
   contains = "IterableMatrix",
   slots = c(
     path = "character",
+    group = "character",
+    type = "character",
     buffer_size = "integer"
   ),
   prototype = list(
     path = character(0),
+    group = "matrix",
+    type = "uint32_t",
     buffer_size = integer(0)
   )
 )
-setMethod("matrix_type", "10xMatrixH5", function(x) "uint32_t")
+setMethod("matrix_type", "10xMatrixH5", function(x) x@type)
 setMethod("matrix_inputs", "10xMatrixH5", function(x) list())
 setMethod("iterate_matrix", "10xMatrixH5", function(x) {
   if (x@transpose) x <- t(x)
   x@dimnames <- denormalize_dimnames(x@dimnames)
-  iterate_matrix_10x_hdf5_cpp(x@path, x@buffer_size, x@dimnames[[1]], x@dimnames[[2]])
+  iterate_matrix_10x_hdf5_cpp(x@path, x@group, x@buffer_size, x@dimnames[[1]], x@dimnames[[2]])
 })
 setMethod("short_description", "10xMatrixH5", function(x) {
   sprintf("10x HDF5 feature matrix in file %s", x@path)
@@ -1711,20 +1716,34 @@ open_matrix_10x_hdf5 <- function(path, feature_type = NULL, buffer_size = 16384L
   assert_is_file(path)
   assert_is(buffer_size, "integer")
   if (!is.null(feature_type)) assert_is(feature_type, "character")
-
   path <- normalizePath(path, mustWork = FALSE)
-  info <- dims_matrix_10x_hdf5_cpp(path, buffer_size)
-  res <- new("10xMatrixH5",
-    path = path, dim = info$dims, buffer_size = buffer_size,
-    dimnames = normalized_dimnames(info$row_names, info$col_names)
-  )
-
-  if (!is.null(feature_type)) {
-    valid_features <- read_hdf5_string_cpp(path, "matrix/features/feature_type", buffer_size) %in% feature_type # nolint
-    res <- res[valid_features, ]
+  all_groups <- hdf5_group_objnames_cpp(path, "/")
+  if ("matrix" %in% all_groups) {
+    # If we detect something that looks like a new-style 10x matrix, 
+    # ignore any other top-level groups in the file
+    all_groups <- "matrix"
   }
-
-  return(res)
+  mats <- list()
+  for (group in all_groups) {
+    # Note: to find old-style 10x files for testing purposes, try these links from 10x:
+    # Dataset description: https://www.10xgenomics.com/datasets/100-1-1-mixture-of-fresh-frozen-human-hek-293-t-and-mouse-nih-3-t-3-cells-2-standard-2-1-0
+    # HDF5 file url: https://cf.10xgenomics.com/samples/cell-exp/2.1.0/hgmm_100/hgmm_100_raw_gene_bc_matrices_h5.h5
+    info <- dims_matrix_10x_hdf5_cpp(path, group, buffer_size)
+    res <- new("10xMatrixH5",
+               path = path, group = group, type = info$type, dim = info$dims, buffer_size = buffer_size,
+               dimnames = normalized_dimnames(info$row_names, info$col_names)
+    )
+    if (!is.null(feature_type)) {
+      valid_features <- read_hdf5_string_cpp(path, file.path(group, "features/feature_type"), buffer_size) %in% feature_type # nolint
+      res <- res[valid_features, ]
+    }
+    mats[[group]] <- res
+  }
+  if (length(mats) == 1) {
+    return(mats[[1]])
+  }
+  rlang::inform("The input HDF5 is detected as an old-style multi-genome file, returning a list of matrices")
+  return(mats)
 }
 
 #' @rdname open_matrix_10x_hdf5
@@ -1737,30 +1756,47 @@ open_matrix_10x_hdf5 <- function(path, feature_type = NULL, buffer_size = 16384L
 #' @param feature_metadata Named list of additional metadata vectors
 #' to store for each feature
 #' @param gzip_level Gzip compression level. Default is 0 (no compression)
+#' @param type Data type of the output matrix. Default is `uint32_t` to match a 
+#' matrix of 10x UMI counts. Non-integer data types include `float` and 
+#' `double`. If `auto`, will use the data type of `mat`.
+#' 
 #' @details Input matrices must be in column-major storage order,
 #' and if the rownames and colnames are not set, names must be
 #' provided for the relevant metadata parameters. Some of the
 #' metadata parameters are not read by default in BPCells, but
 #' it is possible to export them for use with other tools.
 #' @export
-write_matrix_10x_hdf5 <- function(mat,
-                                  path,
-                                  barcodes = colnames(mat),
-                                  feature_ids = rownames(mat),
-                                  feature_names = rownames(mat),
-                                  feature_types = "Gene Expression",
-                                  feature_metadata = list(),
-                                  buffer_size = 16384L,
-                                  chunk_size = 1024L,
-                                  gzip_level = 0L) {
+write_matrix_10x_hdf5 <- function(
+    mat,
+    path,
+    barcodes = colnames(mat),
+    feature_ids = rownames(mat),
+    feature_names = rownames(mat),
+    feature_types = "Gene Expression",
+    feature_metadata = list(),
+    buffer_size = 16384L,
+    chunk_size = 1024L,
+    gzip_level = 0L,
+    type = c("uint32_t", "double", "float", "auto")
+) {
+  type <- match.arg(type)
   assert_is(mat, "IterableMatrix")
   assert_is(path, "character")
   if (mat@transpose) {
-    stop("Matrix must have column-major storage order.\nCall t() or transpose_storage_order() first.")
+    stop(
+      "Matrix must have column-major storage order.\n", 
+      "Call t() or transpose_storage_order() first."
+    )
   }
-  if (matrix_type(mat) != "uint32_t") {
-    warning("Converting to integer matrix for output to 10x format")
-    mat <- convert_matrix_type(mat, "uint32_t")
+  if (type == "auto") {
+    type <- matrix_type(mat)
+  }
+  if (matrix_type(mat) != type) {
+    warning(
+      "Converting from ", matrix_type(mat), " to ", type, 
+      " matrix for output to 10x format"
+    )
+    mat <- convert_matrix_type(mat, type)
   }
   assert_is(barcodes, "character")
   assert_len(barcodes, ncol(mat))
@@ -1788,12 +1824,13 @@ write_matrix_10x_hdf5 <- function(mat,
   assert_is(buffer_size, "integer")
   assert_is(chunk_size, "integer")
   assert_is(gzip_level, "integer")
-
+  
   path <- normalizePath(path, mustWork = FALSE)
   it <- iterate_matrix(mat)
   write_matrix_10x_hdf5_cpp(
     it,
     path,
+    type = matrix_type(x = mat),
     barcodes,
     feature_ids,
     feature_names,

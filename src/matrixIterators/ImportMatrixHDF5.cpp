@@ -3,19 +3,18 @@
 namespace BPCells {
 
 // Reader interfaces for 10x and AnnData matrices
-
-StoredMatrix<uint32_t> open10xFeatureMatrix(
+template <typename T>
+StoredMatrix<T> open10xFeatureMatrix(
     std::string file,
+    std::string group,
     uint32_t buffer_size,
     std::unique_ptr<StringReader> &&row_names,
     std::unique_ptr<StringReader> &&col_names,
     uint32_t read_size
 ) {
-    HighFive::File f = openH5ForReading(file);
-
-    // Most up-to-date matrix format
-    if (f.exist("matrix")) {
-        H5ReaderBuilder rb(file, "matrix", buffer_size, read_size);
+    H5ReaderBuilder rb(file, group, buffer_size, read_size);
+    if (rb.getGroup().exist("features/id")) {
+        // Most up-to-date matrix format (cellranger V3+)
         uint32_t rows = rb.openUIntReader("shape").read_one();
         if (row_names.get() == nullptr) {
             row_names = rb.openStringReader("features/id");
@@ -25,7 +24,7 @@ StoredMatrix<uint32_t> open10xFeatureMatrix(
         }
         return StoredMatrix(
             rb.openULongReader("indices").convert<uint32_t>(),
-            rb.openUIntReader("data"),
+            rb.open<T>("data"),
             rb.openULongReader("indptr"),
             rows,
             std::move(row_names),
@@ -34,14 +33,6 @@ StoredMatrix<uint32_t> open10xFeatureMatrix(
     }
 
     // Older-style 10x matrix format
-    std::vector<std::string> genomes = f.listObjectNames();
-    if (genomes.size() != 1) {
-        throw std::runtime_error(
-            "Loading multi-genome matrices from old-style 10x hdf5 files is unsupported"
-        );
-    }
-
-    H5ReaderBuilder rb(file, genomes[0], buffer_size, read_size);
     uint32_t rows = rb.openUIntReader("shape").read_one();
     if (row_names.get() == nullptr) {
         row_names = rb.openStringReader("genes");
@@ -51,7 +42,7 @@ StoredMatrix<uint32_t> open10xFeatureMatrix(
     }
     return StoredMatrix(
         rb.openULongReader("indices").convert<uint32_t>(),
-        rb.openUIntReader("data"),
+        rb.open<T>("data"),
         rb.openULongReader("indptr"),
         rows,
         std::move(row_names),
@@ -59,10 +50,13 @@ StoredMatrix<uint32_t> open10xFeatureMatrix(
     );
 }
 
-StoredMatrix<uint32_t>
-open10xFeatureMatrix(std::string file, uint32_t buffer_size, uint32_t read_size) {
-    return open10xFeatureMatrix(
+template <typename T>
+StoredMatrix<T> open10xFeatureMatrix(
+    std::string file, std::string group, uint32_t buffer_size, uint32_t read_size
+) {
+    return open10xFeatureMatrix<T>(
         file,
+        group,
         buffer_size,
         std::unique_ptr<StringReader>(nullptr),
         std::unique_ptr<StringReader>(nullptr),
@@ -70,7 +64,8 @@ open10xFeatureMatrix(std::string file, uint32_t buffer_size, uint32_t read_size)
     );
 }
 
-StoredMatrixWriter<uint32_t> create10xFeatureMatrix(
+template <typename T>
+StoredMatrixWriter<T> create10xFeatureMatrix(
     std::string file_path,
     StringReader &&barcodes,
     StringReader &&feature_ids,
@@ -96,7 +91,7 @@ StoredMatrixWriter<uint32_t> create10xFeatureMatrix(
 
     return StoredMatrixWriter(
         wb.createULongWriter("indices").convert<uint32_t>(),
-        wb.createUIntWriter("data"),
+        wb.create<T>("data"),
         wb.createULongWriter("indptr"),
         wb.createUIntWriter("shape"),
         std::make_unique<NullStringWriter>(),
@@ -104,6 +99,99 @@ StoredMatrixWriter<uint32_t> create10xFeatureMatrix(
         std::make_unique<NullStringWriter>()
     );
 }
+
+// Explicit template instantiations for 10x matrix
+template StoredMatrix<uint32_t> open10xFeatureMatrix<uint32_t>(
+    std::string file,
+    std::string group,
+    uint32_t buffer_size,
+    std::unique_ptr<StringReader> &&row_names,
+    std::unique_ptr<StringReader> &&col_names,
+    uint32_t read_size
+);
+template StoredMatrix<uint64_t> open10xFeatureMatrix<uint64_t>(
+    std::string file,
+    std::string group,
+    uint32_t buffer_size,
+    std::unique_ptr<StringReader> &&row_names,
+    std::unique_ptr<StringReader> &&col_names,
+    uint32_t read_size
+);
+template StoredMatrix<float> open10xFeatureMatrix<float>(
+    std::string file,
+    std::string group,
+    uint32_t buffer_size,
+    std::unique_ptr<StringReader> &&row_names,
+    std::unique_ptr<StringReader> &&col_names,
+    uint32_t read_size
+);
+template StoredMatrix<double> open10xFeatureMatrix<double>(
+    std::string file,
+    std::string group,
+    uint32_t buffer_size,
+    std::unique_ptr<StringReader> &&row_names,
+    std::unique_ptr<StringReader> &&col_names,
+    uint32_t read_size
+);
+
+template StoredMatrix<uint32_t> open10xFeatureMatrix<uint32_t>(
+    std::string file, std::string group, uint32_t buffer_size, uint32_t read_size
+);
+template StoredMatrix<uint64_t> open10xFeatureMatrix<uint64_t>(
+    std::string file, std::string group, uint32_t buffer_size, uint32_t read_size
+);
+template StoredMatrix<float> open10xFeatureMatrix<float>(
+    std::string file, std::string group, uint32_t buffer_size, uint32_t read_size
+);
+template StoredMatrix<double> open10xFeatureMatrix<double>(
+    std::string file, std::string group, uint32_t buffer_size, uint32_t read_size
+);
+
+template StoredMatrixWriter<uint32_t> create10xFeatureMatrix<uint32_t>(
+    std::string file_path,
+    StringReader &&barcodes,
+    StringReader &&feature_ids,
+    StringReader &&feature_names,
+    StringReader &&feature_types,
+    const std::map<std::string, std::unique_ptr<StringReader>> &feature_metadata,
+    uint32_t buffer_size,
+    uint32_t chunk_size,
+    uint32_t gzip_level
+);
+template StoredMatrixWriter<uint64_t> create10xFeatureMatrix<uint64_t>(
+    std::string file_path,
+    StringReader &&barcodes,
+    StringReader &&feature_ids,
+    StringReader &&feature_names,
+    StringReader &&feature_types,
+    const std::map<std::string, std::unique_ptr<StringReader>> &feature_metadata,
+    uint32_t buffer_size,
+    uint32_t chunk_size,
+    uint32_t gzip_level
+);
+template StoredMatrixWriter<float> create10xFeatureMatrix<float>(
+    std::string file_path,
+    StringReader &&barcodes,
+    StringReader &&feature_ids,
+    StringReader &&feature_names,
+    StringReader &&feature_types,
+    const std::map<std::string, std::unique_ptr<StringReader>> &feature_metadata,
+    uint32_t buffer_size,
+    uint32_t chunk_size,
+    uint32_t gzip_level
+);
+template StoredMatrixWriter<double> create10xFeatureMatrix<double>(
+    std::string file_path,
+    StringReader &&barcodes,
+    StringReader &&feature_ids,
+    StringReader &&feature_names,
+    StringReader &&feature_types,
+    const std::map<std::string, std::unique_ptr<StringReader>> &feature_metadata,
+    uint32_t buffer_size,
+    uint32_t chunk_size,
+    uint32_t gzip_level
+);
+// End explicit template instantiations for 10x matrix
 
 void assertAnnDataSparse(std::string file, std::string group) {
     // Check for a dense matrix where we expect a sparse matrix
@@ -173,7 +261,8 @@ StoredMatrix<T> openAnnDataMatrix(
             row_ids = "obs/" + row_ids;
             row_names = std::make_unique<H5StringReader>(root, row_ids);
             // Handle matrices that aren't dims (obs x var)
-            if (row_names->size() != dims[0]) row_names = std::make_unique<VecStringReader>(std::vector<std::string>());
+            if (row_names->size() != dims[0])
+                row_names = std::make_unique<VecStringReader>(std::vector<std::string>());
         }
         if (col_names.get() == nullptr) {
             std::string col_ids;
@@ -181,7 +270,8 @@ StoredMatrix<T> openAnnDataMatrix(
             col_ids = "var/" + col_ids;
             col_names = std::make_unique<H5StringReader>(root, col_ids);
             // Handle matrices that aren't dims (obs x var)
-            if (col_names->size() != dims[1]) col_names = std::make_unique<VecStringReader>(std::vector<std::string>());
+            if (col_names->size() != dims[1])
+                col_names = std::make_unique<VecStringReader>(std::vector<std::string>());
         }
     } else {
         throw std::runtime_error(
@@ -427,7 +517,9 @@ std::string getAnnDataMatrixType(std::string file, std::string group) {
     H5ReaderBuilder rb(file, group, 1024, 1024);
     HighFive::SilenceHDF5 s;
     HighFive::DataType t = rb.getGroup().getDataSet("data").getDataType();
-    if (t == HighFive::AtomicType<uint32_t>()) {
+    if (t == HighFive::AtomicType<int>()) {
+        return "uint32_t";
+    } else if (t == HighFive::AtomicType<uint32_t>()) {
         return "uint32_t";
     } else if (t == HighFive::AtomicType<uint64_t>()) {
         return "uint64_t";
@@ -438,6 +530,26 @@ std::string getAnnDataMatrixType(std::string file, std::string group) {
     }
     throw std::runtime_error(
         "getAnnDataMatrixType: unrecognized type for group " + group + " in file " + file
+    );
+}
+
+std::string get10xMatrixType(std::string file, std::string group) {
+    H5ReaderBuilder rb(file, group, 1024, 1024);
+    HighFive::SilenceHDF5 s;
+    HighFive::DataType t = rb.getGroup().getDataSet("data").getDataType();
+    if (t == HighFive::AtomicType<int>()) {
+        return "uint32_t";
+    } else if (t == HighFive::AtomicType<uint32_t>()) {
+        return "uint32_t";
+    } else if (t == HighFive::AtomicType<uint64_t>()) {
+        return "uint64_t";
+    } else if (t == HighFive::AtomicType<float>()) {
+        return "float";
+    } else if (t == HighFive::AtomicType<double>()) {
+        return "double";
+    }
+    throw std::runtime_error(
+        "get10xMatrixType: unrecognized type for group " + group + " in file " + file
     );
 }
 

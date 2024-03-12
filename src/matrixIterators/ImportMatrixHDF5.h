@@ -25,19 +25,24 @@ template <class T> class SingletonNumReader : public BulkNumReader<T> {
 };
 
 // Reader interfaces for 10x and AnnData matrices
+// Open 10x matrix should not assume uint32_t
+template <typename T>
+StoredMatrix<T> open10xFeatureMatrix(
+    std::string file, std::string group, uint32_t buffer_size, uint32_t read_size = 1024
+);
 
-StoredMatrix<uint32_t>
-open10xFeatureMatrix(std::string file, uint32_t buffer_size, uint32_t read_size = 1024);
-
-StoredMatrix<uint32_t> open10xFeatureMatrix(
+template <typename T>
+StoredMatrix<T> open10xFeatureMatrix(
     std::string file,
+    std::string group,
     uint32_t buffer_size,
     std::unique_ptr<StringReader> &&row_names,
     std::unique_ptr<StringReader> &&col_names,
     uint32_t read_size = 1024
 );
 
-StoredMatrixWriter<uint32_t> create10xFeatureMatrix(
+template <typename T>
+StoredMatrixWriter<T> create10xFeatureMatrix(
     std::string file,
     StringReader &&barcodes,
     StringReader &&feature_ids,
@@ -51,12 +56,12 @@ StoredMatrixWriter<uint32_t> create10xFeatureMatrix(
 
 // Read AnnData sparse matrix, with an implicit transpose to CSC format for
 // any data stored in CSR format
-template<typename T>
+template <typename T>
 StoredMatrix<T> openAnnDataMatrix(
     std::string file, std::string group, uint32_t buffer_size, uint32_t read_size = 1024
 );
 
-template<typename T>
+template <typename T>
 StoredMatrix<T> openAnnDataMatrix(
     std::string file,
     std::string group,
@@ -67,7 +72,7 @@ StoredMatrix<T> openAnnDataMatrix(
 );
 
 // Write a Sparse Array to an AnnData file
-template<typename T>
+template <typename T>
 StoredMatrixWriter<T> createAnnDataMatrix(
     std::string file,
     std::string group,
@@ -80,15 +85,13 @@ StoredMatrixWriter<T> createAnnDataMatrix(
 // Add obs + var metadata to an anndata file if needed.
 // Draw from the matrix row/col names if present, or otherwise
 // insert dummy identifiers.
-template<typename T>
+template <typename T>
 void createAnnDataObsVarIfMissing(
-    MatrixLoader<T> &mat,
-    std::string file,
-    bool row_major,
-    uint32_t gzip_level
+    MatrixLoader<T> &mat, std::string file, bool row_major, uint32_t gzip_level
 );
 
 std::string getAnnDataMatrixType(std::string file, std::string group);
+std::string get10xMatrixType(std::string file, std::string group);
 
 bool isRowOrientedAnnDataMatrix(std::string file, std::string group);
 
