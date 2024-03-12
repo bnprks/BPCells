@@ -34,26 +34,28 @@ test_that("Conversion to base types works", {
 })
 
 test_that("Conversion to dense matrix keep data types", {
-  m_double <- as(generate_sparse_matrix(10, 10), "IterableMatrix")
+  m <- generate_sparse_matrix(10, 10)
+  m_double <- as(m, "IterableMatrix")
   # convert to double matrix
   expect_identical(matrix_type(m_double), "double")
-  expect_identical(storage.mode(as.matrix(m_double)), "double")
+  expect_identical(as.matrix(m_double), as.matrix(m))
   # convert to double matrix
   m_float <- convert_matrix_type(m_double, "float")
   expect_identical(matrix_type(m_float), "float")
-  expect_identical(storage.mode(as.matrix(m_float)), "double")
+  expect_identical(as.matrix(m_float), as.matrix(m))
   # convert to integer matrix
   m_integer <- convert_matrix_type(m_double, "uint32_t")
   expect_identical(matrix_type(m_integer), "uint32_t")
-  expect_identical(storage.mode(as.matrix(m_integer)), "integer")
+  expect_identical(as.matrix(m_integer), matrix(as.integer(as.matrix(m)), nrow=nrow(m)))
   # value exceed `.Machine$integer.max` return double mode and warn message
   m_large <- generate_dense_matrix(10, 10)
   m_large[1L] <- m_large[1L] + .Machine$integer.max
-  m_large <- as(as(m_large, "dgCMatrix"), "IterableMatrix")
-  m_large_integer <- convert_matrix_type(m_large, "uint32_t")
+  m_large_integer <- as(m_large, "dgCMatrix") %>%
+    as("IterableMatrix") %>%
+    convert_matrix_type("uint32_t")
   expect_identical(matrix_type(m_large_integer), "uint32_t")
-  expect_warning(dense_mat <- as.matrix(m_large_integer))
-  expect_identical(storage.mode(dense_mat), "double")
+  expect_warning(dense_mat <- as.matrix(m_large_integer), "integer.max")
+  expect_identical(dense_mat, m_large)
 })
 
 test_that("Chained subsetting works", {
