@@ -1747,7 +1747,7 @@ open_matrix_10x_hdf5 <- function(path, feature_type = NULL, buffer_size = 16384L
   if (length(mats) == 1) {
     return(mats[[1]])
   }
-  rlang::inform("The input HDF5 file contain multiple sparse matrices, return a list")
+  rlang::inform("The input HDF5 file contains multiple sparse matrices, returning a list")
   return(mats)
 }
 
