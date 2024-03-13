@@ -350,7 +350,7 @@ StoredMatrixWriter<T> createAnnDataMatrix(
     return StoredMatrixWriter<T>(
         wb.createUIntWriter("indices"),
         wb.create<T>("data"),
-        wb.createULongWriter("indptr"),
+        wb.createLongWriter("indptr").convert<uint64_t>(),
         UIntWriter(std::make_unique<H5AttributeNumWriter<uint32_t>>(g, "shape"), 16),
         std::make_unique<NullStringWriter>(),
         std::make_unique<NullStringWriter>(),

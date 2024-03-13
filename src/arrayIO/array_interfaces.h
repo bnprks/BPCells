@@ -246,6 +246,8 @@ template <class T> class NumReader {
     }
 };
 
+using IntReader = NumReader<int32_t>;
+using LongReader = NumReader<int64_t>;
 using UIntReader = NumReader<uint32_t>;
 using ULongReader = NumReader<uint64_t>;
 using FloatReader = NumReader<float>;
@@ -359,6 +361,8 @@ template <class T> class NumWriter {
     }
 };
 
+using IntWriter = NumWriter<int32_t>;
+using LongWriter = NumWriter<int64_t>;
 using UIntWriter = NumWriter<uint32_t>;
 using ULongWriter = NumWriter<uint64_t>;
 using FloatWriter = NumWriter<float>;
