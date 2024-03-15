@@ -128,10 +128,33 @@ class H5WriterBuilder final : public WriterBuilder {
         bool allow_exists = false,
         uint32_t gzip_level = 0
     );
+    IntWriter createIntWriter(std::string name);
+    LongWriter createLongWriter(std::string name);
     UIntWriter createUIntWriter(std::string name) override;
     ULongWriter createULongWriter(std::string name) override;
     FloatWriter createFloatWriter(std::string name) override;
     DoubleWriter createDoubleWriter(std::string name) override;
+    template <class T> NumWriter<T> create(std::string name) {
+        if constexpr (std::is_same_v<T, int32_t>) {
+            return createIntWriter(name);
+        }
+        if constexpr (std::is_same_v<T, int64_t>) {
+            return createLongWriter(name);
+        }
+        if constexpr (std::is_same_v<T, uint32_t>) {
+            return createUIntWriter(name);
+        }
+        if constexpr (std::is_same_v<T, uint64_t>) {
+            return createULongWriter(name);
+        }
+        if constexpr (std::is_same_v<T, float>) {
+            return createFloatWriter(name);
+        }
+        if constexpr (std::is_same_v<T, double>) {
+            return createDoubleWriter(name);
+        }
+    }
+
     std::unique_ptr<StringWriter> createStringWriter(std::string name) override;
     void writeVersion(std::string version) override;
     void deleteWriter(std::string name) override;
@@ -153,10 +176,32 @@ class H5ReaderBuilder final : public ReaderBuilder {
     H5ReaderBuilder(
         std::string file, std::string group, uint64_t buffer_size, uint64_t read_size = 1024
     );
+    IntReader openIntReader(std::string name);
+    LongReader openLongReader(std::string name);
     UIntReader openUIntReader(std::string name) override;
     ULongReader openULongReader(std::string name) override;
     FloatReader openFloatReader(std::string name) override;
     DoubleReader openDoubleReader(std::string name) override;
+    template <class T> NumReader<T> open(std::string name) {
+        if constexpr (std::is_same_v<T, int32_t>) {
+            return openIntReader(name);
+        }
+        if constexpr (std::is_same_v<T, int64_t>) {
+            return openLongReader(name);
+        }
+        if constexpr (std::is_same_v<T, uint32_t>) {
+            return openUIntReader(name);
+        }
+        if constexpr (std::is_same_v<T, uint64_t>) {
+            return openULongReader(name);
+        }
+        if constexpr (std::is_same_v<T, float>) {
+            return openFloatReader(name);
+        }
+        if constexpr (std::is_same_v<T, double>) {
+            return openDoubleReader(name);
+        }
+    }
     std::unique_ptr<StringReader> openStringReader(std::string name) override;
     std::string readVersion() override;
     HighFive::Group &getGroup();

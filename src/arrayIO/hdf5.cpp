@@ -102,6 +102,18 @@ H5WriterBuilder::H5WriterBuilder(
     , chunk_size(chunk_size)
     , gzip_level(gzip_level) {}
 
+IntWriter H5WriterBuilder::createIntWriter(std::string name) {
+    return IntWriter(
+        std::make_unique<H5NumWriter<int32_t>>(group, name, chunk_size, gzip_level), buffer_size
+    );
+}
+
+LongWriter H5WriterBuilder::createLongWriter(std::string name) {
+    return LongWriter(
+        std::make_unique<H5NumWriter<int64_t>>(group, name, chunk_size, gzip_level), buffer_size
+    );
+}
+
 UIntWriter H5WriterBuilder::createUIntWriter(std::string name) {
     return UIntWriter(
         std::make_unique<H5NumWriter<uint32_t>>(group, name, chunk_size, gzip_level), buffer_size
@@ -164,6 +176,16 @@ H5ReaderBuilder::H5ReaderBuilder(
     : group(openH5ForReading(file).getGroup(group == "" ? std::string("/") : group))
     , buffer_size(buffer_size)
     , read_size(read_size) {}
+
+IntReader H5ReaderBuilder::openIntReader(std::string name) {
+    return IntReader(std::make_unique<H5NumReader<int32_t>>(group, name), buffer_size, read_size);
+}
+
+LongReader H5ReaderBuilder::openLongReader(std::string name) {
+    return LongReader(
+        std::make_unique<H5NumReader<int64_t>>(group, name), buffer_size, read_size
+    );
+}
 
 UIntReader H5ReaderBuilder::openUIntReader(std::string name) {
     return UIntReader(std::make_unique<H5NumReader<uint32_t>>(group, name), buffer_size, read_size);
