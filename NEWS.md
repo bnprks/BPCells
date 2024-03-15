@@ -84,6 +84,8 @@ Contributions welcome :)
 - Fixed issue with losing dimnames on subset assignment `[<-`. Thanks to @Yunuuuu for identifying the issue #67
 - Fixed incorrect results with some cases of scaling matrix after shifting. Thanks to @Yunuuuu for identifying the issue #72
 - Fixed infinite loop bug when calling `transpose_storage_order()` on a densely-transformed matrix. Thanks to @Yunuuuu for reporting this in issue #71
+- h5ad outputs will now subset properly when loaded by the Python anndata package (Thanks to issue described by @ggruenhagen3 in issue #49 and fixed by @ycli1995 in pull #81)
+
 # BPCells 0.1.0
 
 ## Features
