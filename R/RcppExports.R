@@ -709,6 +709,10 @@ matrix_value_histogram_cpp <- function(matrix, max_value) {
     .Call(`_BPCells_matrix_value_histogram_cpp`, matrix, max_value)
 }
 
+matrix_value_md5_double_cpp <- function(matrix) {
+    .Call(`_BPCells_matrix_value_md5_double_cpp`, matrix)
+}
+
 matrix_identical_uint32_t_cpp <- function(mat1, mat2) {
     .Call(`_BPCells_matrix_identical_uint32_t_cpp`, mat1, mat2)
 }

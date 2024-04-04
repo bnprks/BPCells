@@ -2613,3 +2613,19 @@ setMethod("svds", signature(A="IterableMatrix"), function (A, k, nu = k, nv = k,
     A@transpose
   )
 })
+
+#' Calculate IterableMatrix MD5 checksum as a string.
+#' @export
+setGeneric("iterable_matrix_md5sum", function(matrix) standardGeneric("iterable_matrix_md5sum"))
+
+#' @describeIn Calculate the MD5 checksum of an IterableMatrix.
+#' @param matrix IterableMatrix object
+#' @return string MD5 checksum.
+#' @export
+setMethod("iterable_matrix_md5sum", signature(matrix="IterableMatrix"), function(matrix) {
+    assert_is(matrix, "IterableMatrix")
+
+    iter <- iterate_matrix(BPCells:::convert_matrix_type(matrix, "double"))
+    matrix_value_md5_double_cpp(iter)
+})
+

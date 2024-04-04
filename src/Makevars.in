@@ -49,7 +49,8 @@ matrixTransforms/Pow.o \
 matrixTransforms/Round.o \
 matrixTransforms/SCTransform.o \
 matrixTransforms/Scale.o \
-matrixTransforms/Shift.o 
+matrixTransforms/Shift.o  \
+md5.o
 
 # r_wrapper.o \
 # profiler.o \

@@ -21,6 +21,9 @@
 #include "R_interrupts.h"
 #include "R_xptr_wrapper.h"
 
+#include "utils/md5.h"
+#include <cstdio>
+
 using namespace BPCells;
 using namespace Rcpp;
 
@@ -458,6 +461,59 @@ NumericVector matrix_value_histogram_cpp(SEXP matrix, uint32_t max_value) {
         }
     }
     return Rcpp::wrap(result);
+}
+
+// Compute the MD5 checksum of a double precision matrix.
+// [[Rcpp::export]]
+StringVector matrix_value_md5_double_cpp(SEXP matrix) {
+    MatrixIterator<double> it(take_unique_xptr<MatrixLoader<double>>(matrix));
+    int i;
+    int iv;
+    double v;
+    char hash[48];
+    md5_byte_t digest[16];
+    md5_state_t md5s;
+
+    md5_init(&md5s);
+
+    iv = 1;
+    if(*((char *)&iv) == 1) {
+      // Little endian architecture.
+      while (it.nextCol()) {
+          while (it.nextValue()) {
+              v = it.val();
+              md5_append(&md5s, (md5_byte_t *)&v, (size_t)8);
+          }
+      }
+    }
+    else {
+      // Big endian architecture. Untested on 20240404.
+      uint8_t bswap[8];
+      uint8_t *ptr;
+      while (it.nextCol()) {
+          while (it.nextValue()) {
+              v = it.val();
+              ptr = (uint8_t *)&v;
+              bswap[7] = *(ptr);
+              bswap[6] = *(++ptr);
+              bswap[5] = *(++ptr);
+              bswap[4] = *(++ptr);
+              bswap[3] = *(++ptr);
+              bswap[2] = *(++ptr);
+              bswap[1] = *(++ptr);
+              bswap[0] = *(++ptr);
+              md5_append(&md5s, (md5_byte_t *)bswap, (size_t)8);
+          }
+      }
+    }
+
+    md5_finish(&md5s, digest);
+
+    for(i=0; i < 16; ++i) {
+        snprintf(&(hash[i*2]), (size_t)3, "%02x", digest[i]);
+    }
+    StringVector svec(hash);
+    return Rcpp::wrap(svec);
 }
 
 // [[Rcpp::export]]

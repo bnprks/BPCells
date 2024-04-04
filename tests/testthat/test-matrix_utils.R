@@ -752,3 +752,12 @@ test_that("Generic methods work", {
     }
   }
 })
+
+test_that("IterableMatrix md6sum works", {
+  dm  <- matrix(c(1,2,3,4,5,6,7,8,9,10,11,12), nrow=3)
+  sm  <- as(dm, "dgCMatrix")
+  bpm <- as(sm, "IterableMatrix")
+
+  md5sum <- iterable_matrix_md5sum(bpm)
+  expect_identical(md5sum, "9f1958b017f0dd10afd57537db648bbf")  
+})
