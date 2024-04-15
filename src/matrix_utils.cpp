@@ -21,7 +21,7 @@
 #include "R_interrupts.h"
 #include "R_xptr_wrapper.h"
 
-#include "utils/md5.h"
+#include "lib/md5.h"
 #include <cstdio>
 
 using namespace BPCells;
@@ -465,46 +465,70 @@ NumericVector matrix_value_histogram_cpp(SEXP matrix, uint32_t max_value) {
 
 // Compute the MD5 checksum of a double precision matrix.
 // [[Rcpp::export]]
-StringVector matrix_value_md5_double_cpp(SEXP matrix) {
+StringVector matrix_value_checksum_double_cpp(SEXP matrix) {
     MatrixIterator<double> it(take_unique_xptr<MatrixLoader<double>>(matrix));
     int i;
     int iv;
-    double v;
-    char hash[48];
+    md5_byte_t buffer[16];
     md5_byte_t digest[16];
+    char hash[48];
     md5_state_t md5s;
 
     md5_init(&md5s);
 
     iv = 1;
     if(*((char *)&iv) == 1) {
-      // Little endian architecture.
-      while (it.nextCol()) {
-          while (it.nextValue()) {
-              v = it.val();
-              md5_append(&md5s, (md5_byte_t *)&v, (size_t)8);
-          }
-      }
+        // Little endian architecture.
+        double *pval;
+        uint32_t *prow;
+        uint32_t *pcol;
+        pval = (double *)buffer;
+        prow = (uint32_t *)&(buffer[8]);
+        pcol = (uint32_t *)&(buffer[12]);
+        while (it.nextCol()) {
+            while (it.nextValue()) {
+                *pval = it.val();
+                *prow = it.row();
+                *pcol = it.col();
+                md5_append(&md5s, (md5_byte_t *)buffer, (size_t)16);
+            }
+        }
     }
     else {
-      // Big endian architecture. Untested on 20240404.
-      uint8_t bswap[8];
-      uint8_t *ptr;
-      while (it.nextCol()) {
-          while (it.nextValue()) {
-              v = it.val();
-              ptr = (uint8_t *)&v;
-              bswap[7] = *(ptr);
-              bswap[6] = *(++ptr);
-              bswap[5] = *(++ptr);
-              bswap[4] = *(++ptr);
-              bswap[3] = *(++ptr);
-              bswap[2] = *(++ptr);
-              bswap[1] = *(++ptr);
-              bswap[0] = *(++ptr);
-              md5_append(&md5s, (md5_byte_t *)bswap, (size_t)8);
-          }
-      }
+        // Big endian architecture. Untested on 20240404.
+        double dval;
+        uint32_t ival;
+        uint8_t *ptr;
+        while (it.nextCol()) {
+            while (it.nextValue()) {
+                dval = it.val();
+                ptr = (uint8_t *)&dval;
+                buffer[7] = *(ptr);
+                buffer[6] = *(++ptr);
+                buffer[5] = *(++ptr);
+                buffer[4] = *(++ptr);
+                buffer[3] = *(++ptr);
+                buffer[2] = *(++ptr);
+                buffer[1] = *(++ptr);
+                buffer[0] = *(++ptr);
+  
+                ival = it.row();
+                ptr = (uint8_t *)&ival;
+                buffer[11] = *(ptr);
+                buffer[10] = *(++ptr);
+                buffer[9]  = *(++ptr);
+                buffer[8]  = *(++ptr);
+  
+                ival = it.col();
+                ptr = (uint8_t *)&ival;
+                buffer[15] = *(ptr);
+                buffer[14] = *(++ptr);
+                buffer[13] = *(++ptr);
+                buffer[12] = *(++ptr);
+  
+                md5_append(&md5s, (md5_byte_t *)buffer, (size_t)16);
+            }
+        }
     }
 
     md5_finish(&md5s, digest);

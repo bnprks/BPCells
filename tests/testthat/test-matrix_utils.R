@@ -758,6 +758,6 @@ test_that("IterableMatrix md6sum works", {
   sm  <- as(dm, "dgCMatrix")
   bpm <- as(sm, "IterableMatrix")
 
-  md5sum <- iterable_matrix_md5sum(bpm)
-  expect_identical(md5sum, "9f1958b017f0dd10afd57537db648bbf")  
+  md5sum <- checksum(bpm)
+  expect_identical(md5sum, "cb048b91c018cbddc34974cb4350056c")  
 })
