@@ -2354,14 +2354,14 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// matrix_value_checksum_double_cpp
-StringVector matrix_value_checksum_double_cpp(SEXP matrix);
-RcppExport SEXP _BPCells_matrix_value_checksum_double_cpp(SEXP matrixSEXP) {
+// checksum_double_cpp
+StringVector checksum_double_cpp(SEXP matrix);
+RcppExport SEXP _BPCells_checksum_double_cpp(SEXP matrixSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< SEXP >::type matrix(matrixSEXP);
-    rcpp_result_gen = Rcpp::wrap(matrix_value_checksum_double_cpp(matrix));
+    rcpp_result_gen = Rcpp::wrap(checksum_double_cpp(matrix));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -2556,7 +2556,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_BPCells_wilcoxon_rank_sum_pval_double_cpp", (DL_FUNC) &_BPCells_wilcoxon_rank_sum_pval_double_cpp, 2},
     {"_BPCells_svds_cpp", (DL_FUNC) &_BPCells_svds_cpp, 6},
     {"_BPCells_matrix_value_histogram_cpp", (DL_FUNC) &_BPCells_matrix_value_histogram_cpp, 2},
-    {"_BPCells_matrix_value_checksum_double_cpp", (DL_FUNC) &_BPCells_matrix_value_checksum_double_cpp, 1},
+    {"_BPCells_checksum_double_cpp", (DL_FUNC) &_BPCells_checksum_double_cpp, 1},
     {"_BPCells_matrix_identical_uint32_t_cpp", (DL_FUNC) &_BPCells_matrix_identical_uint32_t_cpp, 2},
     {NULL, NULL, 0}
 };

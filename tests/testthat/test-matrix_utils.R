@@ -753,7 +753,7 @@ test_that("Generic methods work", {
   }
 })
 
-test_that("IterableMatrix md6sum works", {
+test_that("IterableMatrix md5sum works", {
   dm  <- matrix(c(1,2,3,4,5,6,7,8,9,10,11,12), nrow=3)
   sm  <- as(dm, "dgCMatrix")
   bpm <- as(sm, "IterableMatrix")

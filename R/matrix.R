@@ -2641,6 +2641,6 @@ checksum <- function(matrix) {
     assert_is(matrix, "IterableMatrix")
 
     iter <- iterate_matrix(BPCells:::convert_matrix_type(matrix, "double"))
-    matrix_value_checksum_double_cpp(iter)
+    checksum_double_cpp(iter)
 }
 

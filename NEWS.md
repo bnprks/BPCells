@@ -40,6 +40,7 @@ Contributions welcome :)
   entries.
 - Added `knn_to_geodesic_graph()`, which matches the Scanpy default construction for
   graph-based clustering
+- Add `checksum()`, which allows for calculating an MD5 checksum of a matrix contents. Thanks to @brgrew for submitting this improvement in pull request #83
 
 ## Improvements
 - Merging fragments with `c()` now handles inputs with mismatched chromosome names.

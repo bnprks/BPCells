@@ -5,9 +5,6 @@
 #' @importFrom magrittr %>%
 NULL
 
-#' @importMethodsFrom Matrix t 
-#' @export 
-Matrix::t
 #' @importMethodsFrom Matrix rowSums
 #' @export
 Matrix::rowSums

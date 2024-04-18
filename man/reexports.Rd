@@ -3,7 +3,6 @@
 \docType{import}
 \name{reexports}
 \alias{reexports}
-\alias{t}
 \alias{rowSums}
 \alias{colSums}
 \alias{rowMeans}
@@ -15,6 +14,6 @@ These objects are imported from other packages. Follow the links
 below to see their documentation.
 
 \describe{
-  \item{Matrix}{\code{\link[Matrix:colSums]{colMeans}}, \code{\link[Matrix]{colSums}}, \code{\link[Matrix:colSums]{rowMeans}}, \code{\link[Matrix:colSums]{rowSums}}, \code{\link[Matrix]{t}}}
+  \item{Matrix}{\code{\link[Matrix:colSums]{colMeans}}, \code{\link[Matrix]{colSums}}, \code{\link[Matrix:colSums]{rowMeans}}, \code{\link[Matrix:colSums]{rowSums}}}
 }}
 
