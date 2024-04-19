@@ -68,7 +68,7 @@ genomic-ranges-like reference for details)"><!-- mathjax --><script src="https:/
 
     <div class="ref-description section level2">
     <p>BPCells fragments can be interconverted with GRanges and data.frame R objects.
-The main conversion method is R's builtin <code>as()</code> function, though the
+The main conversion method is R's builtin <code><a href="https://rdrr.io/r/methods/as.html" class="external-link">as()</a></code> function, though the
 <code>convert_to_fragments()</code> helper is also available. For all R objects except
 GRanges, BPCells assumes a 0-based, end-exclusive coordinate system. (See
 <a href="genomic-ranges-like.html">genomic-ranges-like</a> reference for details)</p>
@@ -77,13 +77,13 @@ GRanges, BPCells assumes a 0-based, end-exclusive coordinate system. (See
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="co"># Convert from R to BPCells</span></span>
-<span><span class="fu">convert_to_fragments</span><span class="op">(</span><span class="va">x</span>, zero_based_coords <span class="op">=</span> <span class="op">!</span><span class="fu">is</span><span class="op">(</span><span class="va">x</span>, <span class="st">"GRanges"</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="fu">as</span><span class="op">(</span><span class="va">x</span>, <span class="st">"IterableFragments"</span><span class="op">)</span></span>
+<span><span class="fu">convert_to_fragments</span><span class="op">(</span><span class="va">x</span>, zero_based_coords <span class="op">=</span> <span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/methods/is.html" class="external-link">is</a></span><span class="op">(</span><span class="va">x</span>, <span class="st">"GRanges"</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/methods/as.html" class="external-link">as</a></span><span class="op">(</span><span class="va">x</span>, <span class="st">"IterableFragments"</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># Convert from BPCells to R</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/as.data.frame.html" class="external-link">as.data.frame</a></span><span class="op">(</span><span class="va">bpcells_fragments</span><span class="op">)</span></span>
-<span><span class="fu">as</span><span class="op">(</span><span class="va">bpcells_fragments</span>, <span class="st">"data.frame"</span><span class="op">)</span></span>
-<span><span class="fu">as</span><span class="op">(</span><span class="va">bpcells_fragments</span>, <span class="st">"GRanges"</span><span class="op">)</span></span></code></pre></div>
+<span><span class="fu"><a href="https://rdrr.io/r/methods/as.html" class="external-link">as</a></span><span class="op">(</span><span class="va">bpcells_fragments</span>, <span class="st">"data.frame"</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/methods/as.html" class="external-link">as</a></span><span class="op">(</span><span class="va">bpcells_fragments</span>, <span class="st">"GRanges"</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">

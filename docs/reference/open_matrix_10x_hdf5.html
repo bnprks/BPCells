@@ -76,7 +76,8 @@
 <span>  feature_metadata <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span>,</span>
 <span>  buffer_size <span class="op">=</span> <span class="fl">16384L</span>,</span>
 <span>  chunk_size <span class="op">=</span> <span class="fl">1024L</span>,</span>
-<span>  gzip_level <span class="op">=</span> <span class="fl">0L</span></span>
+<span>  gzip_level <span class="op">=</span> <span class="fl">0L</span>,</span>
+<span>  type <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"uint32_t"</span>, <span class="st">"double"</span>, <span class="st">"float"</span>, <span class="st">"auto"</span><span class="op">)</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -128,6 +129,12 @@ to store for each feature</p></dd>
 
 <dt>gzip_level</dt>
 <dd><p>Gzip compression level. Default is 0 (no compression)</p></dd>
+
+
+<dt>type</dt>
+<dd><p>Data type of the output matrix. Default is <code>uint32_t</code> to match a
+matrix of 10x UMI counts. Non-integer data types include <code>float</code> and
+<code>double</code>. If <code>auto</code>, will use the data type of <code>mat</code>.</p></dd>
 
 </dl></div>
     <div class="section level2">
