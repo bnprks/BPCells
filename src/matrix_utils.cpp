@@ -476,12 +476,16 @@ bool is_little_endian() {
 StringVector checksum_double_cpp(SEXP matrix) {
     MatrixIterator<double> it(take_unique_xptr<MatrixLoader<double>>(matrix));
 
+    uint32_t nrow, ncol;
     md5_byte_t buffer[16];
     md5_byte_t digest[16];
     char hash[48];
     md5_state_t md5s;
 
     md5_init(&md5s);
+
+    nrow = it.rows();
+    ncol = it.cols();
 
     if (is_little_endian()) {
         // Little endian architecture.
@@ -500,6 +504,10 @@ StringVector checksum_double_cpp(SEXP matrix) {
                 md5_append(&md5s, (md5_byte_t *)buffer, (size_t)16);
             }
         }
+
+        // Include numbers of rows and columns.
+        md5_append(&md5s, (md5_byte_t *)&nrow, sizeof(nrow));
+        md5_append(&md5s, (md5_byte_t *)&ncol, sizeof(ncol));
     } else {
         // Big endian architecture. Untested on 20240404.
         double dval;
@@ -536,6 +544,34 @@ StringVector checksum_double_cpp(SEXP matrix) {
                 md5_append(&md5s, (md5_byte_t *)buffer, (size_t)16);
             }
         }
+        // Include numbers of rows and columns.
+        ival = (uint32_t)nrow;
+        ptr = (uint8_t *)&ival;
+        buffer[3] = *(ptr);
+        buffer[2] = *(++ptr);
+        buffer[1] = *(++ptr);
+        buffer[0] = *(++ptr);
+        md5_append(&md5s, (md5_byte_t *)buffer, (size_t)4);
+
+        ival = (uint32_t)ncol;
+        ptr = (uint8_t *)&ival;
+        buffer[3] = *(ptr);
+        buffer[2] = *(++ptr);
+        buffer[1] = *(++ptr);
+        buffer[0] = *(++ptr);
+        md5_append(&md5s, (md5_byte_t *)buffer, (size_t)4);
+    }
+
+    // Include row and column names.
+    for (uint32_t i = 0; i < nrow; ++i) {
+      if (it.rowNames(i) != NULL) {
+        md5_append(&md5s, (md5_byte_t *)it.rowNames(i), strlen(it.rowNames(i)));
+      }
+    }
+    for (uint32_t i = 0; i < ncol; ++i) {
+      if (it.colNames(i) != NULL) {
+        md5_append(&md5s, (md5_byte_t *)it.colNames(i), strlen(it.colNames(i)));
+      }
     }
 
     md5_finish(&md5s, digest);
