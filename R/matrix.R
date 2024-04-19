@@ -2613,3 +2613,35 @@ setMethod("svds", signature(A="IterableMatrix"), function (A, k, nu = k, nv = k,
     A@transpose
   )
 })
+
+#' Calculate the MD5 checksum of an IterableMatrix
+#'
+#' @description
+#'   Calculate the MD5 checksum of an IterableMatrix and return the checksum in
+#'   hexidecimal format.
+#' @details
+#'   `checksum()` converts the non-zero elements of the sparse input matrix to double
+#'   precision, concatenates each element value with the element row and column index words,
+#'   and uses these 16-byte blocks along with the matrix dimensions and row and column
+#'   names to calculate the checksum. The checksum value depends on the storage order so
+#'   column- and row-order matrices with the same element values give different checksum
+#'   values. `checksum()` uses element and index values in little-endian CPU storage order.
+#'   It converts to little-endian order on big-endian architecture although this has not
+#'   been tested.
+#' @param matrix IterableMatrix object
+#' @return MD5 checksum string in hexidecimal format.
+#' @examples
+#' library(Matrix)
+#' library(BPCells)
+#' m1 <- matrix(seq(1,12), nrow=3)
+#' m2 <- as(m1, 'dgCMatrix')
+#' m3 <- as(m2, 'IterableMatrix')
+#' checksum(m3)
+#' @export
+checksum <- function(matrix) {
+    assert_is(matrix, "IterableMatrix")
+
+    iter <- iterate_matrix(BPCells:::convert_matrix_type(matrix, "double"))
+    checksum_double_cpp(iter)
+}
+

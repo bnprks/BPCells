@@ -21,6 +21,9 @@
 #include "R_interrupts.h"
 #include "R_xptr_wrapper.h"
 
+#include "lib/md5/md5.h"
+#include <cstdio>
+
 using namespace BPCells;
 using namespace Rcpp;
 
@@ -411,7 +414,9 @@ List matrix_stats_cpp(SEXP matrix, int row_stats, int col_stats) {
 // [[Rcpp::export]]
 Eigen::MatrixXd wilcoxon_rank_sum_pval_uint32_t_cpp(SEXP matrix, std::vector<uint32_t> groups) {
     return run_with_R_interrupt_check(
-        &wilcoxon_rank_sum<uint32_t>, take_unique_xptr<MatrixLoader<uint32_t>>(matrix), std::cref(groups)
+        &wilcoxon_rank_sum<uint32_t>,
+        take_unique_xptr<MatrixLoader<uint32_t>>(matrix),
+        std::cref(groups)
     );
 }
 
@@ -425,16 +430,16 @@ Eigen::MatrixXd wilcoxon_rank_sum_pval_float_cpp(SEXP matrix, std::vector<uint32
 // [[Rcpp::export]]
 Eigen::MatrixXd wilcoxon_rank_sum_pval_double_cpp(SEXP matrix, std::vector<uint32_t> groups) {
     return run_with_R_interrupt_check(
-        &wilcoxon_rank_sum<double>, take_unique_xptr<MatrixLoader<double>>(matrix), std::cref(groups)
+        &wilcoxon_rank_sum<double>,
+        take_unique_xptr<MatrixLoader<double>>(matrix),
+        std::cref(groups)
     );
 }
 
 // [[Rcpp::export]]
-SEXP svds_cpp(SEXP matrix, int k, int n_cv, int maxit, double tol, bool transpose) { 
+SEXP svds_cpp(SEXP matrix, int k, int n_cv, int maxit, double tol, bool transpose) {
     auto mat = take_unique_xptr<MatrixLoader<double>>(matrix);
-    SVDResult res = run_with_R_interrupt_check(
-        svd, mat.get(), k, n_cv, maxit, tol, transpose
-    );
+    SVDResult res = run_with_R_interrupt_check(svd, mat.get(), k, n_cv, maxit, tol, transpose);
     if (!res.success) warning("SVD calculation did not converge");
     return List::create(
         Named("d") = res.d,
@@ -458,6 +463,124 @@ NumericVector matrix_value_histogram_cpp(SEXP matrix, uint32_t max_value) {
         }
     }
     return Rcpp::wrap(result);
+}
+
+// Check if we're currently running on an
+bool is_little_endian() {
+    int iv = 1;
+    return *((char *)&iv) == 1;
+}
+
+// Compute the MD5 checksum of a double precision matrix.
+// [[Rcpp::export]]
+StringVector checksum_double_cpp(SEXP matrix) {
+    MatrixIterator<double> it(take_unique_xptr<MatrixLoader<double>>(matrix));
+
+    uint32_t nrow, ncol;
+    md5_byte_t buffer[16];
+    md5_byte_t digest[16];
+    char hash[48];
+    md5_state_t md5s;
+
+    md5_init(&md5s);
+
+    nrow = it.rows();
+    ncol = it.cols();
+
+    if (is_little_endian()) {
+        // Little endian architecture.
+        double *pval;
+        uint32_t *prow;
+        uint32_t *pcol;
+        pval = (double *)buffer;
+        prow = (uint32_t *)&(buffer[8]);
+        pcol = (uint32_t *)&(buffer[12]);
+        while (it.nextCol()) {
+            Rcpp::checkUserInterrupt();
+            while (it.nextValue()) {
+                *pval = it.val();
+                *prow = it.row();
+                *pcol = it.col();
+                md5_append(&md5s, (md5_byte_t *)buffer, (size_t)16);
+            }
+        }
+
+        // Include numbers of rows and columns.
+        md5_append(&md5s, (md5_byte_t *)&nrow, sizeof(nrow));
+        md5_append(&md5s, (md5_byte_t *)&ncol, sizeof(ncol));
+    } else {
+        // Big endian architecture. Untested on 20240404.
+        double dval;
+        uint32_t ival;
+        uint8_t *ptr;
+        while (it.nextCol()) {
+            Rcpp::checkUserInterrupt();
+            while (it.nextValue()) {
+                dval = it.val();
+                ptr = (uint8_t *)&dval;
+                buffer[7] = *(ptr);
+                buffer[6] = *(++ptr);
+                buffer[5] = *(++ptr);
+                buffer[4] = *(++ptr);
+                buffer[3] = *(++ptr);
+                buffer[2] = *(++ptr);
+                buffer[1] = *(++ptr);
+                buffer[0] = *(++ptr);
+
+                ival = it.row();
+                ptr = (uint8_t *)&ival;
+                buffer[11] = *(ptr);
+                buffer[10] = *(++ptr);
+                buffer[9] = *(++ptr);
+                buffer[8] = *(++ptr);
+
+                ival = it.col();
+                ptr = (uint8_t *)&ival;
+                buffer[15] = *(ptr);
+                buffer[14] = *(++ptr);
+                buffer[13] = *(++ptr);
+                buffer[12] = *(++ptr);
+
+                md5_append(&md5s, (md5_byte_t *)buffer, (size_t)16);
+            }
+        }
+        // Include numbers of rows and columns.
+        ival = (uint32_t)nrow;
+        ptr = (uint8_t *)&ival;
+        buffer[3] = *(ptr);
+        buffer[2] = *(++ptr);
+        buffer[1] = *(++ptr);
+        buffer[0] = *(++ptr);
+        md5_append(&md5s, (md5_byte_t *)buffer, (size_t)4);
+
+        ival = (uint32_t)ncol;
+        ptr = (uint8_t *)&ival;
+        buffer[3] = *(ptr);
+        buffer[2] = *(++ptr);
+        buffer[1] = *(++ptr);
+        buffer[0] = *(++ptr);
+        md5_append(&md5s, (md5_byte_t *)buffer, (size_t)4);
+    }
+
+    // Include row and column names.
+    for (uint32_t i = 0; i < nrow; ++i) {
+      if (it.rowNames(i) != NULL) {
+        md5_append(&md5s, (md5_byte_t *)it.rowNames(i), strlen(it.rowNames(i)));
+      }
+    }
+    for (uint32_t i = 0; i < ncol; ++i) {
+      if (it.colNames(i) != NULL) {
+        md5_append(&md5s, (md5_byte_t *)it.colNames(i), strlen(it.colNames(i)));
+      }
+    }
+
+    md5_finish(&md5s, digest);
+
+    for (int i = 0; i < 16; ++i) {
+        snprintf(&(hash[i * 2]), (size_t)3, "%02x", digest[i]);
+    }
+    StringVector svec(hash);
+    return Rcpp::wrap(svec);
 }
 
 // [[Rcpp::export]]

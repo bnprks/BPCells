@@ -752,3 +752,20 @@ test_that("Generic methods work", {
     }
   }
 })
+
+test_that("IterableMatrix md5sum works", {
+  dm  <- matrix(c(1,2,3,4,5,6,7,8,9,10,11,12), nrow=3)
+  sm  <- as(dm, "dgCMatrix")
+  bpm <- as(sm, "IterableMatrix")
+
+  md5sum <- checksum(bpm)
+  expect_identical(md5sum, "8a6bf37ef376f7d74b4642a2ed0fc58d")  
+
+  # Check that setting colnames and rownames changes checksum
+  rownames(bpm) <- paste0("row", seq_len(nrow(bpm)))
+  expect_false(checksum(bpm) == md5sum)
+  rownames(bpm) <- NULL
+  expect_identical(checksum(bpm), md5sum)
+  colnames(bpm) <- paste0("col", seq_len(ncol(bpm)))
+  expect_false(checksum(bpm) == md5sum)
+})

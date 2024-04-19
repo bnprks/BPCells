@@ -46,6 +46,19 @@ License: http://www.boost.org/LICENSE_1_0.txt
 URL: https://github.com/skarupke/heap
 
 ------------------------------------------------------------------------------
+MD5 (Independent implementation)
+
+The linked implementation combines provides a combined header/implementation
+file, which has been split into a .c and .h file. Some additional includes
+and macro definitions have been supplied to allow compilation without errors.
+
+cpp/vendor/md5/*: Zlib
+Authors: L. Peter Deutsch, <ghost@aladdin.com>
+Copyright (C) 1999, 2000, 2002 Aladdin Enterprises
+License: <cpp/vendor/md5/md5.h>
+URL: https://root.cern.ch/doc/v610/md5_8inl_source.html
+
+------------------------------------------------------------------------------
 libdivide
 
 Algorithms from this source file have been adapted for portable SIMD 
