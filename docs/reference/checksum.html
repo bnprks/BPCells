@@ -86,11 +86,12 @@ hexidecimal format.</p>
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
     <p><code>checksum()</code> converts the non-zero elements of the sparse input matrix to double
 precision, concatenates each element value with the element row and column index words,
-and uses these 16-byte blocks to calculate the checksum. The checksum value depends on
-the storage order so column- and row-order matrices with the same element values give
-different checksum values. <code>checksum()</code> uses element and index values in little-endian
-CPU storage order. It converts to little-endian order on big-endian architecture
-although this has not been tested.</p>
+and uses these 16-byte blocks along with the matrix dimensions and row and column
+names to calculate the checksum. The checksum value depends on the storage order so
+column- and row-order matrices with the same element values give different checksum
+values. <code>checksum()</code> uses element and index values in little-endian CPU storage order.
+It converts to little-endian order on big-endian architecture although this has not
+been tested.</p>
     </div>
 
     <div class="section level2">
@@ -101,7 +102,7 @@ although this has not been tested.</p>
 <span class="r-in"><span><span class="va">m2</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/methods/as.html" class="external-link">as</a></span><span class="op">(</span><span class="va">m1</span>, <span class="st">'dgCMatrix'</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">m3</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/methods/as.html" class="external-link">as</a></span><span class="op">(</span><span class="va">m2</span>, <span class="st">'IterableMatrix'</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu">checksum</span><span class="op">(</span><span class="va">m3</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "cb048b91c018cbddc34974cb4350056c"</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "8a6bf37ef376f7d74b4642a2ed0fc58d"</span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc"><h2>On this page</h2>

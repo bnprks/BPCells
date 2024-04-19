@@ -760,4 +760,12 @@ test_that("IterableMatrix md5sum works", {
 
   md5sum <- checksum(bpm)
   expect_identical(md5sum, "8a6bf37ef376f7d74b4642a2ed0fc58d")  
+
+  # Check that setting colnames and rownames changes checksum
+  rownames(bpm) <- paste0("row", seq_len(nrow(bpm)))
+  expect_false(checksum(bpm) == md5sum)
+  rownames(bpm) <- NULL
+  expect_identical(checksum(bpm), md5sum)
+  colnames(bpm) <- paste0("col", seq_len(ncol(bpm)))
+  expect_false(checksum(bpm) == md5sum)
 })
