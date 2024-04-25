@@ -190,6 +190,23 @@ test_that("rbind and cbind check types (#68 regression)", {
   )
 })
 
+test_that("rbind and cbind work with unusual arguments", {
+  # See (https://github.com/satijalab/seurat/issues/8799)
+  m <- generate_sparse_matrix(5, 10)
+  m_bp <- as(m, "IterableMatrix")
+  
+  # Single-argument cbind/rbind is no-op
+  expect_identical(cbind(m_bp), m_bp)
+  expect_identical(rbind(m_bp), m_bp)
+
+  # Concatenation with dgCMatrix will perform standard conversions
+  expect_identical(cbind(m_bp, m) |> as("dgCMatrix"), cbind(m, m))
+  expect_identical(cbind(m, m_bp) |> as("dgCMatrix"), cbind(m, m))
+
+  expect_identical(rbind(m_bp, m) |> as("dgCMatrix"), rbind(m, m))
+  expect_identical(rbind(m, m_bp) |> as("dgCMatrix"), rbind(m, m))
+})
+
 test_that("Subsetting to 0 dimensions works", {
   m1 <- generate_dense_matrix(10, 5) %>% as("dgCMatrix")
   m2 <- as(m1, "IterableMatrix")

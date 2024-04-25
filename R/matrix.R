@@ -992,6 +992,11 @@ setMethod("rbind2", signature(x = "IterableMatrix", y = "IterableMatrix"), funct
   new("RowBindMatrices", matrix_list = matrix_list, dim = c(nrow(x) + nrow(y), ncol(x)), dimnames = list(row_names, col_names), transpose = FALSE)
 })
 
+# Helper methods for unusual rbind2 calls
+setMethod("rbind2", signature(x = "IterableMatrix", y = "missing"), function(x, y, ...) x)
+setMethod("rbind2", signature(x = "IterableMatrix", y = "dgCMatrix"), function(x, y, ...) rbind2(x, as(y, "IterableMatrix")))
+setMethod("rbind2", signature(x = "dgCMatrix", y = "IterableMatrix"), function(x, y, ...) rbind2(as(x, "IterableMatrix"), y))
+
 #' Set matrix op thread count
 #'
 #' Set number of threads to use for sparse-dense multiply and matrix_stats.
@@ -1077,6 +1082,11 @@ setMethod("cbind2", signature(x = "IterableMatrix", y = "IterableMatrix"), funct
 
   new("ColBindMatrices", matrix_list = matrix_list, dim = c(nrow(x), ncol(x) + ncol(y)), dimnames = list(row_names, col_names), transpose = FALSE)
 })
+
+# Helper methods for unusual cbind2 calls
+setMethod("cbind2", signature(x = "IterableMatrix", y = "missing"), function(x, y, ...) x)
+setMethod("cbind2", signature(x = "IterableMatrix", y = "dgCMatrix"), function(x, y, ...) cbind2(x, as(y, "IterableMatrix")))
+setMethod("cbind2", signature(x = "dgCMatrix", y = "IterableMatrix"), function(x, y, ...) cbind2(as(x, "IterableMatrix"), y))
 
 # Row bind needs specialization because there's not a default row-seek operation
 setMethod("[", "RowBindMatrices", function(x, i, j, ...) {
