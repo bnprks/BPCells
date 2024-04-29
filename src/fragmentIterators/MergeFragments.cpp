@@ -1,4 +1,5 @@
 #include "MergeFragments.h"
+#include <algorithm>
 #include <cstring>
 #include <functional>
 #include <unordered_map>
