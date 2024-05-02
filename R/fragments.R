@@ -354,7 +354,7 @@ write_fragments_dir <- function(fragments, dir, compress = TRUE, buffer_size = 1
     overwrite_path <- tempfile("overwrite")
   }
 
-  dir <- path.expand(dir)
+  dir <- normalizePath(dir, mustWork=FALSE)
   did_tmp_copy <- FALSE
   if (overwrite && dir.exists(dir)) {
     fragments <- write_fragments_dir(fragments, overwrite_path, compress, buffer_size)
@@ -380,9 +380,9 @@ open_fragments_dir <- function(dir, buffer_size = 1024L) {
   assert_is_file(dir)
   assert_is(buffer_size, "integer")
 
-  dir <- path.expand(dir)
+  dir <-normalizePath(dir, mustWork=FALSE)
   info <- info_fragments_file_cpp(dir, buffer_size)
-  new("FragmentsDir", dir = path.expand(dir), compressed = info$compressed, buffer_size = buffer_size, cell_names = info$cell_names, chr_names = info$chr_names)
+  new("FragmentsDir", dir = dir, compressed = info$compressed, buffer_size = buffer_size, cell_names = info$cell_names, chr_names = info$chr_names)
 }
 
 setClass("FragmentsHDF5",
@@ -492,7 +492,7 @@ open_fragments_hdf5 <- function(path, group = "fragments", buffer_size = 16384L)
   assert_is(group, "character")
   assert_is(buffer_size, "integer")
 
-  path <- path.expand(path)
+  path <- normalizePath(path, mustWork=FALSE)
   info <- info_fragments_hdf5_cpp(path, group, buffer_size)
   new("FragmentsHDF5", path = path, group = group, compressed = info$compressed, buffer_size = buffer_size, cell_names = info$cell_names, chr_names = info$chr_names)
 }
