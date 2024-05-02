@@ -78,8 +78,7 @@ knn_to_snn_graph <- function(knn, min_val = 1 / 15, self_loops = FALSE, return_t
   # Return as a sparse matrix
   Matrix::sparseMatrix(
     i = snn$i + 1L, j = snn$j + 1L, x = snn$weight,
-    dims = c(snn$dim, snn$dim),
-    repr="C"
+    dims = c(snn$dim, snn$dim)
   )
 }
 
@@ -117,8 +116,7 @@ knn_to_geodesic_graph <- function(knn, return_type=c("matrix", "list"), threads=
   # Return as a sparse matrix
   Matrix::sparseMatrix(
     i = graph$i + 1L, j = graph$j + 1L, x = graph$weight,
-    dims = c(graph$dim, graph$dim),
-    repr="C"
+    dims = c(graph$dim, graph$dim)
   )
 }
 
