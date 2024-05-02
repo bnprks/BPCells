@@ -42,6 +42,7 @@ Imports:
 Suggests:
     IRanges,
     GenomicRanges,
-    matrixStats
+    matrixStats,
+    igraph
 Depends: 
     R (>= 2.10)

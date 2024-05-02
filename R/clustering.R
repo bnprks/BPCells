@@ -107,7 +107,7 @@ knn_to_snn_graph <- function(knn, min_val = 1 / 15, self_loops = FALSE, return_t
 #' @export
 knn_to_geodesic_graph <- function(knn, return_type=c("matrix", "list"), threads=0L) {
   return_type <- match.arg(return_type)
-  graph <- build_umap_graph_cpp(knn$dist, knn$idx)
+  graph <- build_umap_graph_cpp(knn$dist, knn$idx, threads=threads)
   
   graph$dim <- nrow(knn$idx)
   if (return_type == "list") {
@@ -132,6 +132,7 @@ knn_to_geodesic_graph <- function(knn, return_type=c("matrix", "list"), threads=
 #' @return Factor vector containing the cluster assignment for each cell.
 #' @export
 cluster_graph_leiden <- function(snn, resolution = 1e-3, seed = 12531, ...) {
+  assert_has_package("igraph")
   # Set seed without permanently changing seed state
   prev_seed <- get_seed()
   on.exit(restore_seed(prev_seed), add = TRUE)
@@ -148,6 +149,7 @@ cluster_graph_leiden <- function(snn, resolution = 1e-3, seed = 12531, ...) {
 #' @details **cluster_graph_louvain**: Louvain graph clustering algorithm `igraph::cluster_louvain()`
 #' @export
 cluster_graph_louvain <- function(snn, resolution = 1, seed = 12531) {
+  assert_has_package("igraph")
   # Set seed without permanently changing seed state
   prev_seed <- get_seed()
   on.exit(restore_seed(prev_seed), add = TRUE)
