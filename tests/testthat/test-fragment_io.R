@@ -54,6 +54,25 @@ test_that("Binary File Fragments example data round-trip", {
   expect_identical(raw_fragments, write_fragments_memory(packed, compress = FALSE))
 })
 
+test_that("Fragments dir/hdf5 use absolute paths", {
+  tmp_dir <- withr::local_tempdir()
+
+  in_path <- "../data/mini_fragments.tsv.gz" #nolint
+  raw_fragments <- write_fragments_memory(open_fragments_10x(in_path), compress = FALSE)
+
+  # Open/create the fragments file using relative paths in a different working directory
+  withr::with_dir(tmp_dir, {
+    frags1 <- write_fragments_dir(raw_fragments, "frags")
+    frags2 <- open_fragments_dir("frags")
+    frags3 <- write_fragments_hdf5(raw_fragments, "frags.h5")
+    frags4 <- open_fragments_hdf5("frags.h5")
+  })
+
+  expect_identical(raw_fragments, write_fragments_memory(frags1, compress=FALSE))
+  expect_identical(raw_fragments, write_fragments_memory(frags2, compress=FALSE))  
+  expect_identical(raw_fragments, write_fragments_memory(frags3, compress=FALSE))
+  expect_identical(raw_fragments, write_fragments_memory(frags4, compress=FALSE))  
+})
 
 test_that("HDF5 File Fragments example data round-trip", {
   dir <- withr::local_tempdir()
