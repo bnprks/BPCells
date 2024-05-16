@@ -20,6 +20,7 @@ to_vector <- function(x) {
 
 
 test_that("MatrixStats basic test", {
+  skip_if_not_installed("matrixStats")
   withr::local_seed(195123)
 
   m1 <- generate_sparse_matrix(5, 1000)
@@ -51,6 +52,7 @@ test_that("MatrixStats basic test", {
 # Given a dgCMatrix m1 and its equivalent IterableMatrix i1, check
 # that all permutations of matrix_stats work as expeected
 test_stats_comprehensive <- function(m1, i1, threads=0L) {
+  skip_if_not_installed("matrixStats")
   m2 <- t(m1)
   i2 <- t(i1)
   for (row_stats in c("none", "nonzero", "mean", "variance")) {
@@ -123,6 +125,15 @@ test_that("MatrixStats multithreaded works", {
   test_stats_comprehensive(m1, i1, threads=2)
 })
 
+equal_svds <- function(ans, mine) {
+  k <- length(mine$d)
+  sign_flip <- sign(ans$u[1,1:k]) * sign(mine$u[1,])
+
+  expect_equal(ans$d[1:k], mine$d)
+  expect_equal(ans$u[,1:k], multiply_cols(mine$u, sign_flip))
+  expect_equal(ans$v[,1:k], multiply_cols(mine$v, sign_flip))
+}
+
 test_that("svds works", {
   withr::local_seed(195123)
   m1 <- matrix(runif(240), nrow=10)
@@ -138,14 +149,6 @@ test_that("svds works", {
   mine_threaded <- svds(i1, k=5, threads=2)
   mine_t_threaded <- svds(i1_t, k=5, threads=2)
 
-  equal_svds <- function(ans, mine) {
-    k <- length(mine$d)
-    sign_flip <- sign(ans$u[1,1:k]) * sign(mine$u[1,])
-
-    expect_equal(ans$d[1:k], mine$d)
-    expect_equal(ans$u[,1:k], multiply_cols(mine$u, sign_flip))
-    expect_equal(ans$v[,1:k], multiply_cols(mine$v, sign_flip))
-  }
   equal_svds(ans, mine)
   equal_svds(ans_t, mine_t)
 
@@ -153,4 +156,18 @@ test_that("svds works", {
   equal_svds(ans_t, mine_t_threaded)
 
   equal_svds(ans_t, svds(t(i1), k=5))
+})
+
+test_that("svds registers generic with RSpectra", {
+  skip_if_not_installed("RSpectra")
+
+  withr::local_seed(195123)
+  m1 <- matrix(runif(240), nrow=10)
+  i1 <- as(m1, "dgCMatrix") %>% as("IterableMatrix")
+
+  ans <- svd(m1)
+  
+  # Ensure RSpectra works with BPCells and BPCells works with RSpectra
+  equal_svds(ans, RSpectra::svds(i1, k=5))
+  equal_svds(ans, BPCells::svds(m1, k=5))
 })

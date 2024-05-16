@@ -78,3 +78,14 @@ cpp/vendor/Spectra/*: MPL-2.0
 Authors: <cpp/vendor/Spectra/Authors.md>
 License: http://mozilla.org/MPL/2.0/
 URL: https://github.com/yixuan/spectra
+
+------------------------------------------------------------------------------
+RSpectra
+
+Documentation from the RSpectra package was adapted for BPCells. As the 
+RSpectra package is originally distributed under MPL-2.0, this one source
+file containing only documentation is also licensed under MPL-2.0
+
+r/R/matrix-svds-docs.R: MPL-2.0
+License: http://mozilla.org/MPL/2.0/
+URL: https://github.com/yixuan/RSpectra
