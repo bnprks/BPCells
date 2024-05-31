@@ -67,10 +67,10 @@ set_trackplot_label <- function(plot, labels) {
   })
   if (is(plot$facet, "FacetNull")) {
     if (length(labels) != 1) stop(sprintf("Can only add single label to non-faceted plot. Got %d labels", length(labels)))
-    return(plot + facet_wrap(NULL, strip.position="left", labeller=labeller))
+    return(plot + ggplot2::facet_wrap(NULL, strip.position="left", labeller=labeller))
   } else if (is(plot$facet, "FacetWrap")) {
     y <- plot
-    y$facet <- ggproto(NULL, FacetWrap, shrink=y$facet$shrink, params=y$facet$params)
+    y$facet <- ggplot2::ggproto(NULL, ggplot2::FacetWrap, shrink=y$facet$shrink, params=y$facet$params)
     y$facet$params$labeller <- labeller
     return(y)
   } else {
