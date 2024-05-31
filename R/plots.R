@@ -1,6 +1,6 @@
 
 
-#' Discrete color palettes
+#' Color palettes
 #'
 #' These color palettes are derived from the ArchR color palettes, and provide
 #' large sets of distinguishable colors
@@ -8,8 +8,12 @@
 #' If the requested number of colors is too large, a new palette will be constructed
 #' via interpolation from the requested palette
 #'
-#' @param name Name of the color palette
+#' @param name Name of the color palette. Valid discrete palettes are: `stallion`, `calm`, `kelly`, `bear`,
+#'             `ironMan`, `circus`, `paired`, `grove`, `summerNight`, and `captain`. Valid continuous palettes
+#'             are `bluePurpleDark`
 #' @param n Minimum number of colors needed
+#' @return Character vector of hex color codes
+#' @rdname palettes
 #' @export
 discrete_palette <- function(name, n = 1) {
   palettes <- list(
@@ -66,6 +70,19 @@ discrete_palette <- function(name, n = 1) {
   if (n > length(palette)) {
     palette <- grDevices::colorRampPalette(palette, space = "Lab")(n)
   }
+  return(palette)
+}
+
+#' @rdname palettes
+#' @export
+continuous_palette <- function(name) {
+  palettes <- list(
+    "bluePurpleDark" = c(RColorBrewer::brewer.pal(9, "BuPu")[-(1:2)], "#000000")
+  )
+  if (!(name %in% names(palettes))) {
+    stop(sprintf("palette name must be one of: %s", toString(names(palettes))))
+  }
+  palette <- palettes[[name]]
   return(palette)
 }
 

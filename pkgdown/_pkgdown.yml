@@ -139,10 +139,13 @@ reference:
 - subtitle: "Genomic track plots"
 - desc: Genome-browser style plotting function
 - contents:
-  - draw_trackplot_grid
-  - trackplot_bulk
+  - trackplot_combine
+  - trackplot_coverage
   - trackplot_gene
+  - trackplot_loop
+  - trackplot_scalebar
   - gene_region
+  - set_trackplot_label
 
 - subtitle: "Plotting utilities"
 - contents:

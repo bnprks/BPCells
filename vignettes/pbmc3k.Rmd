@@ -47,7 +47,7 @@ Install cran dependencies:
 - ggplot2 version <=3.3.5 or >=3.4.1 (hexbin was broken for versions 3.3.6-3.4.0)
 
 ```{r, eval=FALSE}
-install.packages(c("irlba", "uwot", "RcppHNSW", "igraph", "BiocManager", "devtools", "ggplot2"))
+install.packages(c("irlba", "uwot", "RcppHNSW", "igraph", "BiocManager", "remotes", "ggplot2"))
 ```
 
 Bioconductor dependencies:
@@ -64,7 +64,7 @@ Github:
 - [motifmatchr](https://github.com/GreenleafLab/motifmatchr) (TF motif scanning)
 - [chromVARmotifs](https://github.com/GreenleafLab/chromVARmotifs) (TF motif database)
 ```{r, eval=FALSE}
-devtools::install_github(c("GreenleafLab/motifmatchr", "GreenleafLab/chromVARmotifs"), repos=BiocManager::repositories())
+remotes::install_github(c("GreenleafLab/motifmatchr", "GreenleafLab/chromVARmotifs"), repos=BiocManager::repositories())
 ```
 
 </details>
@@ -72,23 +72,28 @@ devtools::install_github(c("GreenleafLab/motifmatchr", "GreenleafLab/chromVARmot
 <details>
   <summary>**Install BPCells**</summary>
 ```{r, eval=FALSE}
-devtools::install_github(c("bnprks/BPCells"))
+remotes::install_github(c("bnprks/BPCells"))
 ```
 
 </details>
 ## Set up analysis folder
 ```{r "setup", include=FALSE}
+# For execution on laptop
 data_dir <- file.path(tempdir(), "pbmc-3k")
 data_dir <- file.path("pbmc-3k-data")
 dir.create(data_dir, recursive = TRUE, showWarnings = FALSE)
+devtools::load_all()
 knitr::opts_knit$set(root.dir = data_dir)
+
+suppressPackageStartupMessages({
+  library(dplyr)
+})
 ```
 
-```{r}
+```{r, eval=FALSE}
 library(BPCells)
 suppressPackageStartupMessages({
   library(dplyr)
-  library(patchwork)
 })
 
 # Substitute your preferred working directory for data_dir
@@ -389,10 +394,13 @@ mat_norm <- (mat_norm - gene_means) / gene_vars
 ```
 
 ## PCA and UMAP
-PCA can be performed with a standard solver like that in `irlba`.
+PCA can be performed with a standard solver like that in `irlba`, though 
+BPCells also provides a C++-level solver based on the `Spectra` package which
+has built-in parallelization support.
 
 ```{r, results='hold'}
-svd <- irlba::irlba(mat_norm, nv=50)
+svd <- BPCells::svds(mat_norm, k=50)
+# Alternate option: irlba::irlba(mat_norm, nv=50)
 pca <- multiply_cols(svd$v, svd$d)
 
 cat(sprintf("PCA dimensions: %s\n", toString(dim(pca))))
@@ -548,7 +556,7 @@ mat_lsi_norm <- mat_lsi %>%
 ```
 
 ```{r}
-svd_atac <- irlba::irlba(mat_lsi_norm, nv=10)
+svd_atac <- BPCells::svds(mat_lsi_norm, k=10)
 pca_atac <- multiply_cols(svd_atac$v, svd_atac$d)
 pca_atac[1:4,1:4]
 ```
@@ -592,7 +600,7 @@ should maintain the same cell ordering by default.
   <summary>**What if we skip z-score normalization on the LSI matrix?**</summary>
 
 ```{r, message=FALSE}
-svd_atac_no_norm <- irlba::irlba(mat_lsi, nv=10)
+svd_atac_no_norm <- BPCells::svds(mat_lsi, k=10)
 pca_atac_no_norm <- multiply_cols(svd_atac_no_norm$v, svd_atac$d)
 ```
 
@@ -662,7 +670,7 @@ ggplot2::ggplot(cor_between_loadings, ggplot2::aes(pca_atac, pca_atac_no_norm, f
 ```
 
 Finally, the UMAP generated once we exclude the first PC is fairly similar, though
-with a notable difference in positioning for cluster 18 (subset of dendritic cells)
+with a notable difference in positioning for some of the dendritic cells
 ```{r}
 set.seed(12341512)
 umap_atac_no_norm <- uwot::umap(pca_atac_no_norm[,-1])
@@ -754,14 +762,14 @@ themselves. We can see a small peak in the center that is mainly present in B
 cells (top row), but it is unclear where this sits relative to the B-cell marker
 CD19.
 ```{r}
-bulk_plot <- trackplot_bulk(
+coverage_plot <- trackplot_coverage(
   frags,
   region = region, 
   groups=cell_types,
   read_counts,
   bins=500
 )
-bulk_plot
+coverage_plot
 ```
 
 This is much more useful with a gene annotation track added in. For this we'll
@@ -777,12 +785,24 @@ gene_plot <- trackplot_gene(transcripts, region)
 gene_plot
 ```
 
-Finally, we can put these elements together and make a combined trackplot. Now
+And optionally a scale bar.
+```{r, fig.height=1, fig.width=6}
+scalebar_plot <- trackplot_scalebar(region)
+scalebar_plot
+```
+
+Finally, we can stack these elements with `trackplot_combine()`. Now
 we see that the small peak is just upstream of the CD19 gene.
 ```{r}
-draw_trackplot_grid(
-  bulk_plot,
-  gene_plot,
-  labels = list("Cell Types", "Genes")
+# We list plots in order from top to bottom to combine.
+
+# Notice that our inputs are also just ggplot objects, so we can make modifications
+# like removing the color legend from our gene track.
+trackplot_combine(
+  list(
+    scalebar_plot, 
+    coverage_plot, 
+    gene_plot + ggplot2::guides(color="none")
+  )
 )
 ```

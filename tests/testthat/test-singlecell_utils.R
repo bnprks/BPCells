@@ -38,16 +38,17 @@ test_that("Wilcoxon rank sum matches immunogenomics::presto", {
     skip_if_not_installed("pbmc3k.SeuratData")
     skip_if_not_installed("Seurat")
     skip_if_not_installed("presto")
-    pbmc <- pbmc3k.SeuratData::pbmc3k.final
-    res_presto <- presto::wilcoxauc(pbmc@assays$RNA@data, Seurat::Idents(pbmc)) %>%
+    mat <- pbmc3k.SeuratData::pbmc3k.final@assays$RNA@data
+    clusters <- pbmc3k.SeuratData::pbmc3k.final@active.ident
+    res_presto <- presto::wilcoxauc(mat, clusters) %>%
         tibble::as_tibble()
     
-    mat_bpcells <- pbmc@assays$RNA@data %>% 
+    mat_bpcells <- mat %>% 
         t() %>% 
         as("IterableMatrix") %>% 
         t()
-    res_bpcells <- marker_features(mat_bpcells, Seurat::Idents(pbmc)) %>%
-        dplyr::arrange(match(foreground, levels(Seurat::Idents(pbmc))), match(feature, rownames(pbmc)))
+    res_bpcells <- marker_features(mat_bpcells, clusters) %>%
+        dplyr::arrange(match(foreground, levels(clusters)), match(feature, rownames(mat)))
     
     expect_equal(res_bpcells$feature, res_presto$feature)
     expect_equal(res_bpcells$foreground, res_presto$group)

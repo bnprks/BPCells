@@ -14,6 +14,6 @@ These objects are imported from other packages. Follow the links
 below to see their documentation.
 
 \describe{
-  \item{Matrix}{\code{\link[Matrix:colSums]{colMeans}}, \code{\link[Matrix]{colSums}}, \code{\link[Matrix:colSums]{rowMeans}}, \code{\link[Matrix:colSums]{rowSums}}}
+  \item{Matrix}{\code{\link[Matrix:colSums-methods]{colMeans}}, \code{\link[Matrix:colSums-methods]{colSums}}, \code{\link[Matrix:colSums-methods]{rowMeans}}, \code{\link[Matrix:colSums-methods]{rowSums}}}
 }}
 

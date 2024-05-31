@@ -7,40 +7,44 @@
 trackplot_gene(
   transcripts,
   region,
-  exon_size = 3,
-  gene_size = 1,
-  label_size = 3,
+  exon_size = 2.5,
+  gene_size = 0.5,
+  label_size = 11 * 0.8/ggplot2::.pt,
+  track_label = "Genes",
   return_data = FALSE
 )
 }
 \arguments{
-\item{transcripts}{GRanges, list, or data.frame of transcript features to plot.
-Required attributes are:
+\item{transcripts}{Transcipt features given as GRanges, data.frame, or list. See \code{help("genomic-ranges-like")} for details on format and coordinate systems. Required attributes:
 \itemize{
 \item \code{chr}, \code{start}, \code{end}: genomic position
-\item \code{strand}: "+"/"-" or TRUE/FALSE for positive or negative strand
-\item \code{feature} (only entries marked as \code{"transcript"} or \code{"exon"} will be considered)
-\item \code{transcript_id}
-\item \code{gene_name}
-See \link{genomic-ranges} for more details
-}}
+\item \code{strand}: +/- or TRUE/FALSE for positive or negative strand
+\item \code{feature}: Only entries marked as \code{"transcript"} or \code{"exon"} will be considered
+\item \code{gene_name}: Symbol or gene ID to display
+\item \code{transcript_id}: Transcritp identifier to link transcripts and exons
+}
 
-\item{region}{GRanges of length 1 with region to plot, or list/data.frame with
-one entry each for chr, start, end. See \code{gene_region()} or \link{genomic-ranges} for details}
+Usually given as the output from \code{read_gencode_transcripts()}}
 
-\item{exon_size}{size for exon lines}
+\item{region}{Region to plot, e.g. output from \code{gene_region()}. String of format "chr1:100-200",
+or list/data.frame/GRanges of length 1 specifying chr, start, end. See \code{help("genomic-ranges-like")} for details}
 
-\item{label_size}{size for transcript labels}
+\item{exon_size}{size for exon lines in units of mm}
+
+\item{label_size}{size for transcript labels in units of mm}
 
 \item{return_data}{If true, return data from just before plotting rather than a plot.}
 
 \item{labels}{Character vector with labels for each item in transcripts. NA for items that should not be labeled}
 
-\item{transcript_size}{size for transcript lines}
+\item{transcript_size}{size for transcript lines in units of mm}
 }
 \value{
 Plot of gene locations
 }
 \description{
 Plot transcript models
+}
+\seealso{
+\code{trackplot_combine()}, \code{trackplot_coverage()}, \code{trackplot_loop()}, \code{trackplot_scalebar()}
 }

@@ -2,14 +2,22 @@
 % Please edit documentation in R/plots.R
 \name{discrete_palette}
 \alias{discrete_palette}
-\title{Discrete color palettes}
+\alias{continuous_palette}
+\title{Color palettes}
 \usage{
 discrete_palette(name, n = 1)
+
+continuous_palette(name)
 }
 \arguments{
-\item{name}{Name of the color palette}
+\item{name}{Name of the color palette. Valid discrete palettes are: \code{stallion}, \code{calm}, \code{kelly}, \code{bear},
+\code{ironMan}, \code{circus}, \code{paired}, \code{grove}, \code{summerNight}, and \code{captain}. Valid continuous palettes
+are \code{bluePurpleDark}}
 
 \item{n}{Minimum number of colors needed}
+}
+\value{
+Character vector of hex color codes
 }
 \description{
 These color palettes are derived from the ArchR color palettes, and provide

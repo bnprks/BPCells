@@ -7,30 +7,31 @@
 gene_region(
   genes,
   gene_symbol,
-  extend_bp = 10000,
+  extend_bp = c(10000, 10000),
   gene_mapping = human_gene_mapping
 )
 }
 \arguments{
-\item{genes}{GRanges, list, or data.frame of transcript features to plot.
-Required attributes are:
+\item{genes}{Transcipt features given as GRanges, data.frame, or list. See \code{help("genomic-ranges-like")} for details on format and coordinate systems. Required attributes:
 \itemize{
 \item \code{chr}, \code{start}, \code{end}: genomic position
+\item \code{strand}: +/- or TRUE/FALSE for positive or negative strand
 \item \code{gene_name}: Symbol or gene ID
 }}
 
 \item{gene_symbol}{Name of gene symbol or ID}
 
-\item{extend_bp}{Bases to extend region upstream and downstream of gene}
+\item{extend_bp}{Bases to extend region upstream and downstream of gene. If length 1, extension is
+symmetric. If length 2, provide upstream extension then downstream extension as positive distances.}
 
 \item{gene_mapping}{Named vector where names are gene symbols or IDs and values are
 canonical gene symbols}
 }
 \value{
-list of chr, start, end positions for use with , etc.
+List of chr, start, end positions for use with trackplot functions.
 }
 \description{
 Conveniently look up the region of a gene by gene symbol. The value returned by this function
 can be used as the \code{region} argument for trackplot functions such as
-\code{trackplot_bulk()} or \code{trackplot_gene()}
+\code{trackplot_coverage()} or \code{trackplot_gene()}
 }

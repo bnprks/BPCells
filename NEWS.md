@@ -11,6 +11,14 @@ Contributions welcome :)
 - New slots have been added to 10x matrix objects, so any saved RDS files may need to have
   their 10x matrix inputs re-opened and replaced by calling `all_matrix_inputs()`. Outside of
   loading old RDS files no changes should be needed.
+- `trackplot_gene()` now returns a plot with a facet label to match the new trackplot system.
+  This label can be removed by by calling `trackplot_gene(...) + ggplot2::facet_null()` to be 
+  equivalent to the old function's output.
+
+## Deprecations
+- `draw_trackplot_grid()` deprecated, replaced by `trackplot_combine()` with simplified arguments
+- `trackplot_bulk()` has been deprecated, replaced by `trackplot_coverage()` with equivalent functionality
+- The old function names will output deprecation warnings, but otherwise work as before. 
 
 ## Features
 - New `svds()` function, based on the excellent Spectra C++ library (used in RSpectra) by Yixuan Qiu.
@@ -62,6 +70,15 @@ Contributions welcome :)
 - `as.matrix()` will produce integer matrices when appropriate (Thanks to @Yunuuuu in pull #77)
 - 10x HDF5 matrices can now read and write non-integer types when requested (Thanks to @ycli1995 in pull #75)
 - Old-style 10x files from cellranger v2 can now read multi-genome files, which are returned as a list (Thanks to @ycli1995 in pull #75)
+- Trackplots have received several improvements
+  - Trackplots now use faceting to provide per-plot labels, leading to an easier-to-use `trackplot_combine()` 
+  - `trackplot_gene()` now draws arrows for the direction of transcription
+  - `trackplot_loop()` is a new track type allows plotting interactions between genomic regions, for instance peak-gene correlations
+    or loop calls from Hi-C
+  - `trackplot_scalebar()` is added to show genomic scale
+  - All trackplot functions now return ggplot objects with additional metadata stored for the plotting height of each track
+  - Labels and heights for trackplots can be adjusted using `set_trackplot_label()` and `set_trackplot_height()`
+  - The getting started pbmc 3k vignette now includes the updated trackplot APIs in its final example
 
 ## Bug-fixes
 - Fixed a few fragment transforms where using `chrNames(frags) <- val` or `cellNames(frags) <- val` could cause
@@ -86,6 +103,8 @@ Contributions welcome :)
 - Fixed incorrect results with some cases of scaling matrix after shifting. Thanks to @Yunuuuu for identifying the issue #72
 - Fixed infinite loop bug when calling `transpose_storage_order()` on a densely-transformed matrix. Thanks to @Yunuuuu for reporting this in issue #71
 - h5ad outputs will now subset properly when loaded by the Python anndata package (Thanks to issue described by @ggruenhagen3 in issue #49 and fixed by @ycli1995 in pull #81)
+- Disk-backed fragment objects now load via absolute path, matching the behavior of matrices and making it so objects 
+  loaded via `readRDS()` can be used from different working directories.
 
 # BPCells 0.1.0
 

@@ -2,8 +2,7 @@
 % Please edit documentation in R/trackplots.R
 \name{draw_trackplot_grid}
 \alias{draw_trackplot_grid}
-\title{Combine ggplot track plots into an aligned grid.
-Uses patchwork to perform the alignment}
+\title{Combine ggplot track plots into an aligned grid.}
 \usage{
 draw_trackplot_grid(
   ...,
@@ -37,6 +36,8 @@ the text label, y-axis, and plot body. The relative height of each row is given
 by heights. A shared title and x-axis are put at the top.
 }
 \description{
-Combine ggplot track plots into an aligned grid.
-Uses patchwork to perform the alignment
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#deprecated}{\figure{lifecycle-deprecated.svg}{options: alt='[Deprecated]'}}}{\strong{[Deprecated]}}
+
+This function has been renamed to \code{trackplot_combine()}.
 }
+\keyword{internal}

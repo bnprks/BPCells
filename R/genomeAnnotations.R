@@ -313,26 +313,30 @@ canonical_gene_symbol <- function(query, gene_mapping = human_gene_mapping) {
 #'
 #' Conveniently look up the region of a gene by gene symbol. The value returned by this function
 #' can be used as the `region` argument for trackplot functions such as
-#' `trackplot_bulk()` or `trackplot_gene()`
+#' `trackplot_coverage()` or `trackplot_gene()`
 #'
 #' @inheritParams match_gene_symbol
-#' @param genes GRanges, list, or data.frame of transcript features to plot.
-#' Required attributes are:
-#' - `chr`, `start`, `end`: genomic position
-#' - `gene_name`: Symbol or gene ID
+#' @param genes `r document_granges("Transcipt features", strand="default", extras=c("gene_name"="Symbol or gene ID"))`
 #' @param gene_symbol Name of gene symbol or ID
-#' @param extend_bp Bases to extend region upstream and downstream of gene
-#' @return list of chr, start, end positions for use with , etc.
+#' @param extend_bp Bases to extend region upstream and downstream of gene. If length 1, extension is 
+#'     symmetric. If length 2, provide upstream extension then downstream extension as positive distances.
+#' @return List of chr, start, end positions for use with trackplot functions.
 #' @export
-gene_region <- function(genes, gene_symbol, extend_bp = 1e4, gene_mapping = human_gene_mapping) {
-  genes <- normalize_ranges(genes, metadata_cols = c("gene_name"))
+gene_region <- function(genes, gene_symbol, extend_bp = c(1e4, 1e4), gene_mapping = human_gene_mapping) {
+  genes <- normalize_ranges(genes, metadata_cols = c("strand", "gene_name"))
   idx <- match_gene_symbol(gene_symbol, genes$gene_name)
   if (is.na(idx)) {
     rlang::stop("Could not locate gene")
   }
+  if (length(extend_bp) == 1) {
+    extend_bp <- c(extend_bp, extend_bp)
+  }
+  if (isFALSE(genes$strand[idx])) {
+    extend_bp <- rev(extend_bp)
+  }
   return(list(
     chr = as.character(genes$chr[idx]),
-    start = genes$start[idx] - extend_bp,
-    end = genes$end[idx] + extend_bp
+    start = genes$start[idx] - extend_bp[1],
+    end = genes$end[idx] + extend_bp[2]
   ))
 }

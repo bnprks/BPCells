@@ -60,6 +60,11 @@ specify the labels for each track. If \code{return_data} or \code{return_plot_li
 \code{TRUE}, the return value will be modified accordingly.
 }
 \description{
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#deprecated}{\figure{lifecycle-deprecated.svg}{options: alt='[Deprecated]'}}}{\strong{[Deprecated]}}
+
+This function has been renamed to \code{trackplot_coverage()}
+
 Plot a pseudobulk genome track, showing the number of fragment insertions
 across a region.
 }
+\keyword{internal}
