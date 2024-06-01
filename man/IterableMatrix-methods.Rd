@@ -11,6 +11,8 @@
 \alias{colSums,IterableMatrix-method}
 \alias{rowMeans,IterableMatrix-method}
 \alias{colMeans,IterableMatrix-method}
+\alias{colVars}
+\alias{rowVars}
 \alias{log1p,IterableMatrix-method}
 \alias{log1p_slow}
 \alias{expm1,IterableMatrix-method}
@@ -45,6 +47,26 @@ storage_order(x)
 \S4method{rowMeans}{IterableMatrix}(x)
 
 \S4method{colMeans}{IterableMatrix}(x)
+
+colVars(
+  x,
+  rows = NULL,
+  cols = NULL,
+  na.rm = FALSE,
+  center = NULL,
+  ...,
+  useNames = TRUE
+)
+
+rowVars(
+  x,
+  rows = NULL,
+  cols = NULL,
+  na.rm = FALSE,
+  center = NULL,
+  ...,
+  useNames = TRUE
+)
 
 \S4method{log1p}{IterableMatrix}(x)
 
@@ -107,6 +129,14 @@ pow_slow(x, exponent)
 \itemize{
 \item \code{colMeans()}: vector of col means
 }
+
+\itemize{
+\item \code{colVars()}: vector of col variance
+}
+
+\itemize{
+\item \code{rowVars()}: vector of row variance
+}
 }
 \description{
 Generic methods and built-in functions for IterableMatrix objects
@@ -130,6 +160,10 @@ Generic methods and built-in functions for IterableMatrix objects
 \item \code{rowMeans(IterableMatrix)}: Calculate rowMeans
 
 \item \code{colMeans(IterableMatrix)}: Calculate colMeans
+
+\item \code{colVars()}: Calculate colVars (replacement for \code{matrixStats::colVars()})
+
+\item \code{rowVars()}: Calculate rowVars (replacement for \code{matrixStats::rowVars()})
 
 \item \code{log1p(IterableMatrix)}: Calculate log(x + 1)
 

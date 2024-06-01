@@ -50,6 +50,7 @@ Contributions welcome :)
   graph-based clustering
 - Add `checksum()`, which allows for calculating an MD5 checksum of a matrix contents. Thanks to @brgrew for submitting this improvement in pull request #83
 
+
 ## Improvements
 - Merging fragments with `c()` now handles inputs with mismatched chromosome names.
 - Merging fragments is now 2-3.5x faster 
@@ -79,6 +80,11 @@ Contributions welcome :)
   - All trackplot functions now return ggplot objects with additional metadata stored for the plotting height of each track
   - Labels and heights for trackplots can be adjusted using `set_trackplot_label()` and `set_trackplot_height()`
   - The getting started pbmc 3k vignette now includes the updated trackplot APIs in its final example
+- Add `rowVars()` and `colVars()` functions, as convenience wrappers around `matrix_stats()`. 
+  If `matrixStats` or `MatrixGenerics` packages are installed, `BPCells::rowVars()` will fall back to
+  their implementations for non-BPCells objects. Unfortunately, `matrixStats::rowVars()` is not generic, so either `BPCells::rowVars()` or 
+  `BPCells::colVars()`
+- Optimize mean and variance calculations for matrices added to a per-row or per-column constant.
 
 ## Bug-fixes
 - Fixed a few fragment transforms where using `chrNames(frags) <- val` or `cellNames(frags) <- val` could cause

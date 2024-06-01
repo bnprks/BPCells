@@ -577,6 +577,69 @@ setMethod("rowMeans", signature(x = "IterableMatrix"), function(x) rowSums(x) / 
 setMethod("colMeans", signature(x = "IterableMatrix"), function(x) colSums(x) / nrow(x))
 
 
+# Strategy for rowVars and colVars:
+#  - matrixStats::rowVars and matrixStats::colVars are not generic, and don't accept BPCells objects
+#  - The bioconductor MatrixGenerics package would be inconvenient to add as a hard dependency because it's not in CRAN
+#  - BPCells registers S3 methods BPCells::rowVars and BPCells::colVars which work with BPCells objects, and will
+#    fall back to matrixStats or MatrixGenerics implementations if available (otherwise erroring for other matrix inputs)
+#  - If MatrixGenerics in installed, BPCells will also register as a generic with it
+#  - In summary, BPCells::rowVars and BPCells::colVars will work on all inputs, and so will MatrixGenerics::rowVars and
+#    MatrixGenerics::colVars. matrixStats::rowVars and matrixStats::colVars will only work on base R matrix objects.
+
+#' @describeIn IterableMatrix-methods Calculate colVars (replacement for `matrixStats::colVars()`)
+#' @return * `colVars()`: vector of col variance
+#' @export
+colVars <- function(x, rows = NULL, cols = NULL, na.rm = FALSE, center = NULL, ..., useNames = TRUE) UseMethod("colVars")
+#' @export
+colVars.default <- function(x, rows = NULL, cols = NULL, na.rm = FALSE, center = NULL, ..., useNames = TRUE) {
+  if (requireNamespace("MatrixGenerics", quietly = TRUE)) {
+    MatrixGenerics::colVars(x, rows=rows, cols=cols, na.rm=na.rm, center=center, ..., useNames=useNames)
+  } else if (requireNamespace("matrixStats", quietly = TRUE)) {
+    matrixStats::colVars(x, rows=rows, cols=cols, na.rm=na.rm, center=center, ..., useNames=useNames)
+  } else {
+    stop("Can't run colVars on a non-BPCells object unless MatrixGenerics or matrixStats are installed.")
+  }
+}
+#' @export
+colVars.IterableMatrix <- function(x, rows = NULL, cols = NULL, na.rm = FALSE, center = NULL, ..., useNames = TRUE) {
+  if (!is.null(rows) || !is.null(cols) || !isFALSE(na.rm) || !is.null(center) || !isTRUE(useNames)) {
+    stop("colVars(IterableMatrix) doesn't support extra arguments rows, cols, na.rm, center, or useNames")
+  }
+  matrix_stats(x, col_stats="variance")$col_stats["variance",]
+}
+rlang::on_load({
+  if (requireNamespace("MatrixGenerics", quietly=TRUE)) {
+    setMethod(MatrixGenerics::colVars, "IterableMatrix", colVars.IterableMatrix)
+  }
+})
+
+#' @describeIn IterableMatrix-methods Calculate rowVars (replacement for `matrixStats::rowVars()`)
+#' @return * `rowVars()`: vector of row variance
+#' @export
+rowVars <- function(x, rows = NULL, cols = NULL, na.rm = FALSE, center = NULL, ..., useNames = TRUE) UseMethod("rowVars")
+#' @export
+rowVars.default <- function(x, rows = NULL, cols = NULL, na.rm = FALSE, center = NULL, ..., useNames = TRUE) {
+  if (requireNamespace("MatrixGenerics", quietly = TRUE)) {
+    MatrixGenerics::rowVars(x, rows=rows, cols=cols, na.rm=na.rm, center=center, ..., useNames=useNames)
+  } else if (requireNamespace("matrixStats", quietly = TRUE)) {
+    matrixStats::rowVars(x, rows=rows, cols=cols, na.rm=na.rm, center=center, ..., useNames=useNames)
+  } else {
+    stop("Can't run rowVars on a non-BPCells object unless MatrixGenerics or matrixStats are installed.")
+  }
+}
+#' @export
+rowVars.IterableMatrix <- function(x, rows = NULL, cols = NULL, na.rm = FALSE, center = NULL, ..., useNames = TRUE) {
+  if (!is.null(rows) || !is.null(cols) || !isFALSE(na.rm) || !is.null(center) || !isTRUE(useNames)) {
+    stop("rowVars(IterableMatrix) doesn't support extra arguments rows, cols, na.rm, center, or useNames")
+  }
+  matrix_stats(x, row_stats="variance")$row_stats["variance",]
+}
+rlang::on_load({
+  if (requireNamespace("MatrixGenerics", quietly=TRUE)) {
+    setMethod(MatrixGenerics::rowVars, "IterableMatrix", rowVars.IterableMatrix)
+  }
+})
+
 # Index subsetting
 setClass("MatrixSubset",
   contains = "IterableMatrix",
@@ -2609,4 +2672,5 @@ checksum <- function(matrix) {
     iter <- iterate_matrix(BPCells:::convert_matrix_type(matrix, "double"))
     checksum_double_cpp(iter)
 }
+
 

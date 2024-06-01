@@ -428,7 +428,9 @@ test_that("Dense matrix-vector multiply works", {
 })
 
 # Test rows/col sum/mean given dgCMatrix m1 and equivalent iterable matrix i1
-test_rowsum_colsum_rowmean_colmean <- function(m1, i1) {
+test_rowsum_colsum_rowmean_colmean_rowvar_colvar <- function(m1, i1) {
+  expect_s4_class(m1, "dgCMatrix")
+  expect_s4_class(i1, "IterableMatrix")
   m2 <- t(m1)
   i2 <- t(i1)
 
@@ -441,6 +443,11 @@ test_rowsum_colsum_rowmean_colmean <- function(m1, i1) {
   expect_identical(rowMeans(i2), rowMeans(m2))
   expect_identical(colMeans(i1), colMeans(m1))
   expect_identical(colMeans(i2), colMeans(m2))
+
+  expect_equal(BPCells::rowVars(i1), BPCells::rowVars(as.matrix(m1)))
+  expect_equal(BPCells::rowVars(i2), BPCells::rowVars(as.matrix(m2)))
+  expect_equal(BPCells::colVars(i1), BPCells::colVars(as.matrix(m1)))
+  expect_equal(BPCells::colVars(i2), BPCells::colVars(as.matrix(m2)))
 
   # Check that everything works fine with integers
   i3 <- convert_matrix_type(i1, "uint32_t")
@@ -455,12 +462,17 @@ test_rowsum_colsum_rowmean_colmean <- function(m1, i1) {
   expect_identical(rowMeans(i4), rowMeans(m2))
   expect_identical(colMeans(i3), colMeans(m1))
   expect_identical(colMeans(i4), colMeans(m2))
+
+  expect_equal(BPCells::rowVars(i3), BPCells::rowVars(as.matrix(m1)))
+  expect_equal(BPCells::rowVars(i4), BPCells::rowVars(as.matrix(m2)))
+  expect_equal(BPCells::colVars(i3), BPCells::colVars(as.matrix(m1)))
+  expect_equal(BPCells::colVars(i4), BPCells::colVars(as.matrix(m2)))
 }
 
-test_that("Row/Col sum/mean works", { #nolint
+test_that("Row/Col sum/mean/var works", { #nolint
   m1 <- generate_sparse_matrix(5, 1000)
   i1 <- as(m1, "IterableMatrix")
-  test_rowsum_colsum_rowmean_colmean(m1, i1)
+  test_rowsum_colsum_rowmean_colmean_rowvar_colvar(m1, i1)
 })
 
 test_that("rbind Math works", {
@@ -472,7 +484,7 @@ test_that("rbind Math works", {
 
   i1 <- do.call(rbind, mat_list)
   test_dense_multiply_ops(m1, i1)
-  test_rowsum_colsum_rowmean_colmean(m1, i1)
+  test_rowsum_colsum_rowmean_colmean_rowvar_colvar(m1, i1)
 
 
   # Test for the specialized multiply ops with MatrixSubset of RowBind/ColBind
@@ -482,7 +494,7 @@ test_that("rbind Math works", {
 
   i1 <- set_threads(i1, 3)
   test_dense_multiply_ops(m1, i1)
-  test_rowsum_colsum_rowmean_colmean(m1, i1)
+  test_rowsum_colsum_rowmean_colmean_rowvar_colvar(m1, i1)
 })
 
 test_that("cbind Math works", {
@@ -494,7 +506,7 @@ test_that("cbind Math works", {
 
   i1 <- do.call(cbind, mat_list)
   test_dense_multiply_ops(m1, i1)
-  test_rowsum_colsum_rowmean_colmean(m1, i1)
+  test_rowsum_colsum_rowmean_colmean_rowvar_colvar(m1, i1)
 
   # Test for the specialized multiply ops with MatrixSubset of RowBind/ColBind
   row_permute <- sample.int(nrow(m1))
@@ -503,7 +515,7 @@ test_that("cbind Math works", {
 
   i1 <- set_threads(i1, 3)
   test_dense_multiply_ops(m1, i1)
-  test_rowsum_colsum_rowmean_colmean(m1, i1)
+  test_rowsum_colsum_rowmean_colmean_rowvar_colvar(m1, i1)
 })
 
 test_that("LinearOperator works", {
