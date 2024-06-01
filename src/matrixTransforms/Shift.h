@@ -27,6 +27,10 @@ class ShiftRows : public MatrixTransformDense {
     Eigen::VectorXd vecMultiplyLeft(
         const Eigen::Map<Eigen::VectorXd> v, std::atomic<bool> *user_interrupt = NULL
     ) override;
+
+    StatsResult computeMatrixStats(
+        Stats row_stats, Stats col_stats, std::atomic<bool> *user_interrupt = NULL
+    ) override;
 };
 
 class ShiftCols : public MatrixTransformDense {
@@ -48,6 +52,10 @@ class ShiftCols : public MatrixTransformDense {
     ) override;
     Eigen::VectorXd vecMultiplyLeft(
         const Eigen::Map<Eigen::VectorXd> v, std::atomic<bool> *user_interrupt = NULL
+    ) override;
+
+    StatsResult computeMatrixStats(
+        Stats row_stats, Stats col_stats, std::atomic<bool> *user_interrupt = NULL
     ) override;
 };
 

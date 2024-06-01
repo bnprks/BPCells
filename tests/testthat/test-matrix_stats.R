@@ -117,6 +117,15 @@ test_that("rbind MatrixStats comprehensive tests", {
   test_stats_comprehensive(m1, i1)
 })
 
+test_that("MatrixStats with row/col shift comprehensive tests", {
+  withr::local_seed(195123)
+  m1 <- generate_sparse_matrix(100, 50)
+  i1 <- as(m1, "IterableMatrix")
+
+  test_stats_comprehensive(add_cols(m1, seq_len(ncol(m1))), add_cols(i1, seq_len(ncol(m1))))
+  test_stats_comprehensive(add_rows(m1, seq_len(nrow(m1))), add_rows(i1, seq_len(nrow(m1))))
+})
+
 test_that("MatrixStats multithreaded works", {
   withr::local_seed(195123)
   m1 <- generate_sparse_matrix(5, 1000)
