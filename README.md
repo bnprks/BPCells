@@ -24,7 +24,7 @@ Additionally, BPCells exposes its optimized data processing infrastructure for u
 BPCells is easiest to install directly from github:
 
 ```R
-remotes::install_github("bnprks/BPCells")
+remotes::install_github("bnprks/BPCells/r")
 ```
 Before installing, you must have the HDF5 library installed and accessible on your system.
 HDF5 can be installed from your choice of package manager. 

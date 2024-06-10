@@ -1,0 +1,6 @@
+Package: BPCells.installation.moved
+Title: Dummy package to provide new BPCells installation location
+Version: 0.0.0.9000
+Description: This package prints an error message upon attempted installation
+License: Apache-2.0 or MIT
+Encoding: UTF-8
