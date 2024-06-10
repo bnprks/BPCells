@@ -1,0 +1,9 @@
+build/
+*.egg-info
+__pycache__
+.envrc
+.direnv
+
+src/bpcells/version.py
+
+test.py

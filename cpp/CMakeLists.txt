@@ -4,23 +4,79 @@ project(BPCells)
 find_package(HDF5 REQUIRED)
 find_package(ZLIB REQUIRED)
 find_package(Eigen3 REQUIRED NO_MODULE)
+find_package(HWY REQUIRED NO_MODULE)
 
 option(TARGET_ARM "Whether to build SIMD tests for ARM architectures (rather than x86)")
 
 set(CMAKE_CXX_STANDARD 17)
 
+# if (NOT CMAKE_BUILD_TYPE)
+#   set(CMAKE_BUILD_TYPE RelWithDebInfo)
+# endif()
 
-set(SRC ../../src)
+# add_compile_options(-fsanitize=address -fsanitize=undefined)
+# add_link_options(-fsanitize=address -fsanitize=undefined)
+
+set(SRC bpcells-cpp)
 add_library(
     bitpacking 
-    ${SRC}/bitpacking/bp128.cpp  
-    ${SRC}/bitpacking/simd_vec.cpp
+    ${SRC}/simd/bp128/d1_maxbits.cpp
+    ${SRC}/simd/bp128/d1_pack.cpp
+    ${SRC}/simd/bp128/d1_unpack.cpp
+    ${SRC}/simd/bp128/d1z_maxbits.cpp
+    ${SRC}/simd/bp128/d1z_pack.cpp
+    ${SRC}/simd/bp128/d1z_unpack.cpp
+    ${SRC}/simd/bp128/diff_maxbits.cpp
+    ${SRC}/simd/bp128/diff_pack.cpp
+    ${SRC}/simd/bp128/diff_unpack.cpp
+    ${SRC}/simd/bp128/for_maxbits.cpp
+    ${SRC}/simd/bp128/for_pack.cpp
+    ${SRC}/simd/bp128/for_unpack.cpp
+    ${SRC}/simd/bp128/vanilla_maxbits.cpp
+    ${SRC}/simd/bp128/vanilla_pack.cpp
+    ${SRC}/simd/bp128/vanilla_unpack.cpp
+)
+target_link_libraries(
+    bitpacking
+    hwy::hwy
 )
 target_include_directories(
     bitpacking
     PUBLIC
+    ${HWY_INCLUDE_DIRS}
     ${SRC}
 )
+
+add_library(
+    simd_math
+    ${SRC}/simd/math.cpp
+)
+target_link_libraries(
+    simd_math
+    hwy::hwy
+)
+target_include_directories(
+    simd_math
+    PUBLIC
+    ${HWY_INCLUDE_DIRS}
+    ${SRC}
+)
+
+add_library(
+    simd_overlaps
+    ${SRC}/simd/overlaps.cpp
+)
+target_link_libraries(
+    simd_overlaps
+    hwy::hwy
+)
+target_include_directories(
+    simd_overlaps
+    PUBLIC
+    ${HWY_INCLUDE_DIRS}
+    ${SRC}
+)
+
 
 add_library(
     arrayIO
@@ -60,6 +116,7 @@ add_library(
 target_link_libraries(
     fragmentIterators 
     arrayIO
+    simd_math
     ${ZLIB_LIBRARIES}
 )
 target_include_directories(
@@ -79,7 +136,7 @@ endif()
 include(FetchContent)
 FetchContent_Declare(
   googletest
-  URL https://github.com/google/googletest/archive/e2239ee6043f73722e7aa812a459f54a28552929.zip
+  URL https://github.com/google/googletest/archive/40412d85124f7c6f3d88454583c4633e5e10fc8c.zip
 )
 
 FetchContent_MakeAvailable(googletest)
@@ -87,64 +144,50 @@ include(GoogleTest)
 
 
 # Build bitpacking tests for all available SIMD modes
-if(TARGET_ARM)
-    list(APPEND BP128_ARCH_FLAG -march=native -march=armv8-a+nosimd)
-    list(APPEND BP128_ARCH_NAME neon fallback)
-    list(APPEND BP128_ARCH_ENUM 3 0)
-else()
-    list(APPEND BP128_ARCH_FLAG -march=native -mno-sse4 -mno-sse2)
-    list(APPEND BP128_ARCH_NAME x86_full x86 fallback)
-    list(APPEND BP128_ARCH_ENUM 1 2 0)
-endif()
-list(LENGTH BP128_ARCH_FLAG targets_len)
-math(EXPR targets_len "${targets_len} - 1")
-foreach(arch_idx RANGE ${targets_len})
-    list(GET BP128_ARCH_FLAG ${arch_idx} flag)
-    list(GET BP128_ARCH_NAME ${arch_idx} label)
-    list(GET BP128_ARCH_ENUM ${arch_idx} enum)
-    add_executable(bitpacking_test_${label} test-bitpacking.cpp)
-    target_link_libraries(bitpacking_test_${label} bitpacking gtest gmock)
-    target_compile_options(bitpacking_test_${label} PUBLIC ${flag})
-    gtest_discover_tests(bitpacking_test_${label} EXTRA_ARGS --arch ${enum})
-endforeach()
-
 add_executable(
-    array_io_test
-    test-arrayIO.cpp
+    test-bp128
+    tests/test-bp128.cpp
 )
-target_link_libraries(array_io_test arrayIO gtest_main)
-gtest_discover_tests(array_io_test)
+target_link_libraries(test-bp128 bitpacking gtest_main gmock)
+gtest_discover_tests(test-bp128)
 
 add_executable(
-    fragment_io_test
-    test-fragmentIO.cpp
+    test-arrayIO
+    tests/test-arrayIO.cpp
 )
-target_link_libraries(fragment_io_test fragmentIterators gtest)
-gtest_discover_tests(fragment_io_test EXTRA_ARGS ${CMAKE_CURRENT_SOURCE_DIR}/../data/mini_fragments.tsv.gz)
-
+target_link_libraries(test-arrayIO arrayIO gtest_main)
+gtest_discover_tests(test-arrayIO)
 
 add_executable(
-    fragment_utils_test
-    test-fragmentUtils.cpp
+    test-fragmentIO
+    tests/test-fragmentIO.cpp
 )
-target_link_libraries(fragment_utils_test fragmentIterators gtest_main)
-gtest_discover_tests(fragment_utils_test)
+target_link_libraries(test-fragmentIO fragmentIterators gtest)
+gtest_discover_tests(test-fragmentIO EXTRA_ARGS ${CMAKE_CURRENT_SOURCE_DIR}/../r/tests/data/mini_fragments.tsv.gz)
+
 
 add_executable(
-    matrix_io_test
-    test-matrixIO.cpp
+    test-fragmentUtils
+    tests/test-fragmentUtils.cpp
+)
+target_link_libraries(test-fragmentUtils fragmentIterators gtest_main)
+gtest_discover_tests(test-fragmentUtils)
+
+add_executable(
+    test-matrixIO
+    tests/test-matrixIO.cpp
     ${SRC}/matrixIterators/ImportMatrixHDF5.cpp
 )
-target_link_libraries(matrix_io_test arrayIO Eigen3::Eigen gtest_main gmock)
-gtest_discover_tests(matrix_io_test)
+target_link_libraries(test-matrixIO arrayIO Eigen3::Eigen gtest_main gmock)
+gtest_discover_tests(test-matrixIO)
 
 add_executable(
-    matrix_transpose_test
-    test-matrixTranspose.cpp
+    test-matrixTranspose
+    tests/test-matrixTranspose.cpp
     ${SRC}/matrixIterators/ImportMatrixHDF5.cpp
 )
-target_link_libraries(matrix_transpose_test arrayIO Eigen3::Eigen gtest_main)
-gtest_discover_tests(matrix_transpose_test)
+target_link_libraries(test-matrixTranspose arrayIO Eigen3::Eigen gtest_main)
+gtest_discover_tests(test-matrixTranspose)
 
 # Build matrix math test for all available SIMD backends
 if(TARGET_ARM)
@@ -157,52 +200,31 @@ else()
     list(APPEND SLEEF_ARCH_ENUM 3 2 1 0)
 endif()
 
-list(LENGTH SLEEF_ARCH_FLAG targets_len)
-math(EXPR targets_len "${targets_len} - 1")
-foreach(arch_idx RANGE ${targets_len})
-    list(GET SLEEF_ARCH_FLAG ${arch_idx} flag)
-    list(GET SLEEF_ARCH_NAME ${arch_idx} label)
-    list(GET SLEEF_ARCH_ENUM ${arch_idx} enum)
-    add_executable(matrix_math_test_${label} 
-        test-matrixMath.cpp
-        ${SRC}/matrixTransforms/MatrixTransform.cpp
-        ${SRC}/matrixTransforms/Log1p.cpp
-        ${SRC}/matrixTransforms/Pow.cpp
-        ${SRC}/matrixTransforms/Min.cpp
-        ${SRC}/matrixTransforms/Scale.cpp
-        ${SRC}/matrixTransforms/Shift.cpp
-    )
-    
-    target_include_directories(matrix_math_test_${label} PUBLIC ${SRC})
-    target_link_libraries(matrix_math_test_${label} Eigen3::Eigen gtest gmock)
-    target_compile_options(matrix_math_test_${label} PUBLIC ${flag})
-    gtest_discover_tests(matrix_math_test_${label} EXTRA_ARGS --arch ${enum})
-endforeach()
 
+add_executable(test-matrixMath
+    tests/test-matrixMath.cpp
+    ${SRC}/matrixTransforms/MatrixTransform.cpp
+    ${SRC}/matrixTransforms/Log1p.cpp
+    ${SRC}/matrixTransforms/Pow.cpp
+    ${SRC}/matrixTransforms/Min.cpp
+    ${SRC}/matrixTransforms/Scale.cpp
+    ${SRC}/matrixTransforms/Shift.cpp
+)
 
-# Build sleef simd math test for all available SIMD backends
-list(LENGTH SLEEF_ARCH_FLAG targets_len)
-math(EXPR targets_len "${targets_len} - 1")
-foreach(arch_idx RANGE ${targets_len})
-    list(GET SLEEF_ARCH_FLAG ${arch_idx} flag)
-    list(GET SLEEF_ARCH_NAME ${arch_idx} label)
-    list(GET SLEEF_ARCH_ENUM ${arch_idx} enum)
-    add_executable(simd_sleef_test_${label} test-simdSleef.cpp)
-    
-    target_include_directories(simd_sleef_test_${label} PUBLIC ${SRC})
-    target_link_libraries(simd_sleef_test_${label} gtest gmock)
-    target_compile_options(simd_sleef_test_${label} PUBLIC ${flag})
-    gtest_discover_tests(simd_sleef_test_${label} EXTRA_ARGS --arch ${enum})
-endforeach()
+target_include_directories(test-matrixMath PUBLIC ${SRC})
+target_link_libraries(test-matrixMath simd_math Eigen3::Eigen gtest_main gmock)
+gtest_discover_tests(test-matrixMath)
 
 add_executable(
-    peak_matrix_test
-    test-peakMatrix.cpp
+    test-peakMatrix
+    tests/test-peakMatrix.cpp
     ${SRC}/matrixIterators/PeakMatrix.cpp
     ${SRC}/matrixIterators/TileMatrix.cpp
+    ${SRC}/simd/overlaps.cpp
 )
-target_link_libraries(peak_matrix_test 
+target_link_libraries(test-peakMatrix 
     Eigen3::Eigen
     fragmentIterators 
+    simd_overlaps
     gtest_main)
-gtest_discover_tests(peak_matrix_test)
+gtest_discover_tests(test-peakMatrix)

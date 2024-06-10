@@ -1,0 +1,6 @@
+docs/
+
+tools/cxx17_filesystem
+tools/h5write
+tools/highway
+vignettes/pbmc-3k-data

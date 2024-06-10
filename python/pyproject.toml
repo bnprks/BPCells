@@ -1,0 +1,73 @@
+[build-system]
+requires = [
+    "setuptools>=61",
+    "pybind11>=2.10.0",
+    "setuptools-scm>=7.0,<8.0",
+]
+build-backend = "setuptools.build_meta"
+
+
+[project]
+name = "bpcells"
+dynamic = ["version"]
+
+dependencies = [
+    "numpy",
+    "pandas",
+    "scipy",
+]
+
+authors = [
+  { name="Ben Parks", email="bnprks+github@gmail.com" },
+]
+description = "BPCells python bindings"
+readme = "README.md"
+requires-python = ">=3.8"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "License :: OSI Approved :: Apache Software License",
+    "Operating System :: OS Independent",
+]
+
+[project.urls]
+"Homepage" = "https://github.com/bnprks/BPCells"
+"Bug Tracker" = "https://github.com/bnprks/BPCells/issues"
+
+[project.optional-dependencies]
+test = [
+    'pytest',
+    'scipy',
+    'h5py',
+    'anndata',
+]
+
+build-docs = [
+    'Sphinx',
+    'pydata-sphinx-theme',
+    'jupytext',
+    'myst_nb',
+    'myst_parser',
+]
+
+[tool.setuptools_scm]
+root = ".."
+write_to="python/src/bpcells/version.py"
+
+[tool.pytest.ini_options]
+pythonpath = "tests"
+addopts = [
+    "--import-mode=importlib",
+]
+
+
+[tool.cibuildwheel]
+skip = "*-musllinux_* pp*"
+[tool.cibuildwheel.linux]
+before-all = [
+    "yum install -y hdf5-devel eigen3-devel wget",
+    "bash {package}/scripts/install_highway_cmake.sh",
+]
+archs = ["auto64"]
+
+environment = { CPATH="/usr/include/eigen3" }

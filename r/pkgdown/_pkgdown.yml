@@ -1,0 +1,155 @@
+url: https://bnprks.github.io/BPCells
+template:
+  bootstrap: 5
+  bootswatch: simplex
+  bslib:
+    pkgdown-nav-height: 75px
+  navbar: 
+    bg: light
+  includes:
+    in_header: |
+       <script defer data-domain="benparks.net" src="https://plausible.benparks.net/js/visit-counts.js"></script>
+    after_body: |
+       <img src="https://plausible.benparks.net/flask-plausible/bpcells-docs.png" style="position:absolute;" />
+
+navbar:
+  structure:
+    left: [introduction, reference, articles, news]
+    right: [search, github]
+  components:
+    introduction:
+      text: "Get Started"
+      href: "articles/pbmc3k.html"
+    news:
+      text: "News"
+      href: "news/index.html"
+
+articles:
+- title: "Articles from dropdown list"
+  navbar: ~
+  contents:
+  - "pbmc3k"
+  - "web-only/benchmarks"
+  - "web-only/how-it-works"
+- title: "Additional articles"
+  contents:
+  - "web-only/bitpacking-format"
+  - "web-only/programming-efficiency"
+  - "web-only/programming-philosophy"
+  - "web-only/developer-notes"
+
+# cosmo, flatly, united, sandstone all look reasonable
+# pulse, lumen, zephyr
+reference:
+- title: "ATAC-seq Fragments"
+
+- subtitle: "Fragment I/O"
+- desc: "Read & write fragment objects"
+- contents:
+  - open_fragments_10x
+  - write_fragments_memory
+  - convert_to_fragments
+
+- subtitle: "ATAC Analysis"
+- contents:
+  - qc_scATAC
+  - nucleosome_counts
+  - footprint
+  - peak_matrix
+  - tile_matrix
+  - gene_score_weights_archr
+  - call_peaks_tile
+  - merge_peaks_iterative
+  - write_insertion_bedgraph
+
+- subtitle: "Fragment Operations"
+- contents:
+  - shift_fragments
+  - select_chromosomes
+  - select_cells
+  - merge_cells
+  - subset_lengths
+  - select_regions
+  - prefix_cell_names
+  - IterableFragments-methods
+  - fragments_identical
+
+- subtitle: "Genomic Range Calculations"
+- contents:
+  - genomic-ranges-like
+  - order_ranges
+  - range_distance_to_nearest
+  - extend_ranges
+  - gene_score_tiles_archr
+  - normalize_ranges
+
+- title: "Matrix Operations (RNA + ATAC)"
+- subtitle: "Matrix I/O"
+- desc: "Reading & write sparse matrices"
+- contents:
+  - open_matrix_10x_hdf5
+  - open_matrix_anndata_hdf5
+  - write_matrix_memory
+  - import_matrix_market
+  - matrix_R_conversion
+
+- subtitle: "Matrix Operations"
+- contents:
+  - marker_features
+  - matrix_stats
+  - svds
+  - convert_matrix_type
+  - transpose_storage_order
+  - sctransform_pearson
+  - min_scalar
+  - add_rows
+  - binarize
+  - IterableMatrix-methods
+  - all_matrix_inputs
+  - checksum
+
+- title: "Reference Annotations"
+- contents:
+  - human_gene_mapping
+  - match_gene_symbol
+  - read_gtf
+  - read_bed
+  - read_ucsc_chrom_sizes
+
+- title: "Clustering"
+- contents:
+  - knn_hnsw
+  - cluster_graph_leiden
+  - knn_to_graph
+  - cluster_membership_matrix
+
+
+- title: "Plots"
+
+- subtitle: "Single cell plots"
+- desc: Plots for single-cell analysis
+- contents:
+  - plot_read_count_knee
+  - plot_embedding
+  - plot_dot
+  - plot_fragment_length
+  - plot_tf_footprint
+  - plot_tss_profile
+  - plot_tss_scatter
+
+- subtitle: "Genomic track plots"
+- desc: Genome-browser style plotting function
+- contents:
+  - trackplot_combine
+  - trackplot_coverage
+  - trackplot_gene
+  - trackplot_loop
+  - trackplot_scalebar
+  - gene_region
+  - set_trackplot_label
+
+- subtitle: "Plotting utilities"
+- contents:
+  - discrete_palette
+  - collect_features
+  - rotate_x_labels
