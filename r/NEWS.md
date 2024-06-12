@@ -89,6 +89,7 @@ Contributions welcome :)
   - Adds run-time detection of CPU features to eliminate architecture-specific compilation
   - For now, the `Pow` SIMD implementation is removed, but `Square` gets a new SIMD implementation
   - Empirically, most operations using SIMD math instructions are about 2x faster. This includes `log1p()`, and `sctransform_pearson()`
+  - Minor speedups on dense-sparse matrix multiply functions (1.1-1.5x faster)
 
 ## Bug-fixes
 - Fixed a few fragment transforms where using `chrNames(frags) <- val` or `cellNames(frags) <- val` could cause

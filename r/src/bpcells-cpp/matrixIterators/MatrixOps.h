@@ -13,6 +13,7 @@
 
 #include "MatrixIterator.h"
 #include "MatrixStats.h"
+#include "simd/dense-multiply.h"
 
 namespace BPCells {
 // Calculate matrix-matrix product A*B where A (this) is sparse and B is a dense matrix.
@@ -27,17 +28,23 @@ Eigen::MatrixXd MatrixLoader<T>::denseMultiplyRight(
     // it may be worth paying the price of additional transpose operations
     if (cols() != B.rows()) throw std::runtime_error("Incompatible dimensions for matrix multiply");
     Eigen::MatrixXd res(B.cols(), rows());
+    Eigen::VectorXd B_row;
     res.setZero();
     restart();
     while (nextCol()) {
         const uint32_t col = currentCol();
+        B_row = B.row(col);
         if (user_interrupt != NULL && *user_interrupt) return res;
         while (load()) {
-            const T *val_data = valData();
-            const uint32_t *row_data = rowData();
-            const uint32_t count = capacity();
-            for (uint32_t i = 0; i < count; i++) {
-                res.col(row_data[i]) += ((double)val_data[i]) * B.row(col);
+            if constexpr (std::is_same_v<T, double>) {
+                simd::denseMultiplyRightHelper(rowData(), valData(), capacity(), res.data(), B_row.data(), B.cols());
+            } else {
+                const T *val_data = valData();
+                const uint32_t *row_data = rowData();
+                const uint32_t count = capacity();
+                for (uint32_t i = 0; i < count; i++) {
+                    res.col(row_data[i]) += ((double)val_data[i]) * B_row;
+                }
             }
         }
     }
@@ -55,16 +62,21 @@ Eigen::MatrixXd MatrixLoader<T>::denseMultiplyLeft(
         const uint32_t col = currentCol();
         if (user_interrupt != NULL && *user_interrupt) return res;
         while (load()) {
-            const T *val_data = valData();
-            const uint32_t *row_data = rowData();
-            const uint32_t count = capacity();
-            for (uint32_t i = 0; i < count; i++) {
-                res.col(col) += ((double)val_data[i]) * B.col(row_data[i]);
+            if constexpr (std::is_same_v<T, double>) {
+                simd::denseMultiplyLeftHelper(rowData(), valData(), capacity(), res.data()+res.rows()*col, B.data(), B.rows());
+            } else {
+                const T *val_data = valData();
+                const uint32_t *row_data = rowData();
+                const uint32_t count = capacity();
+                for (uint32_t i = 0; i < count; i++) {
+                    res.col(col) += ((double)val_data[i]) * B.col(row_data[i]);
+                }
             }
         }
     }
     return res;
 }
+
 // Calculate matrix-vector product A*v where A (this) is sparse and B is a dense matrix.
 template <typename T>
 Eigen::VectorXd MatrixLoader<T>::vecMultiplyRight(

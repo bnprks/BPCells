@@ -376,12 +376,12 @@ test_that("Transposing a 0 dimension matrix works", {
 })
 
 # Test dense multiplication ops given dgCMatrix m1 and equivalent iterable matrix i1
-test_dense_multiply_ops <- function(m1, i1) {
+test_dense_multiply_ops <- function(m1, i1, inner_dim=12) {
   withr::local_seed(195123) 
   m2 <- t(m1)
   i2 <- t(i1)
-  b1 <- generate_dense_matrix(nrow(m1), 12)
-  b2 <- generate_dense_matrix(ncol(m1), 12)
+  b1 <- generate_dense_matrix(nrow(m1), inner_dim)
+  b2 <- generate_dense_matrix(ncol(m1), inner_dim)
 
   expect_identical(to_matrix(t(b1) %*% m1), t(b1) %*% i1)
   expect_identical(to_matrix(m2 %*% b1), i2 %*% b1)
@@ -432,7 +432,12 @@ test_that("Dense matrix-vector multiply works", {
   m1 <- generate_sparse_matrix(5, 1000)
   i1 <- as(m1, "IterableMatrix")
 
-  test_dense_multiply_ops(m1, i1)
+  # Test several inner dimensions to hit the various cases
+  # of blocked operators in the matrix multiply helper code
+  # (Want to hit blocked vector; vector; and scalar loops)
+  for (dim in c(1, 2, 8, 9, 12, 64, 65)) {
+    test_dense_multiply_ops(m1, i1, inner_dim=dim)
+  }
 })
 
 # Test rows/col sum/mean given dgCMatrix m1 and equivalent iterable matrix i1

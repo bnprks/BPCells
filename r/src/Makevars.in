@@ -67,6 +67,7 @@ bpcells-cpp/simd/bp128/vanilla_maxbits.o \
 bpcells-cpp/simd/bp128/vanilla_pack.o \
 bpcells-cpp/simd/bp128/vanilla_unpack.o \
 bpcells-cpp/simd/current_target.o \
+bpcells-cpp/simd/dense-multiply.o \
 bpcells-cpp/simd/math.o \
 bpcells-cpp/simd/overlaps.o \
 bpcells-cpp/simd/sctransform.o \
