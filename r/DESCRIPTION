@@ -1,12 +1,13 @@
 Package: BPCells
 Title: Single Cell Counts Matrices to PCA
-Version: 0.1.0
+Version: 0.2.0
 Authors@R: c(
     person(given = "Benjamin",
            family = "Parks",
            role = c("aut", "cre", "cph"),
-           email = "bparks@stanford.edu",
+           email = "bparks@alumni.stanford.edu",
            comment = c(ORCID = "0000-0002-0261-7472")),
+    person("Stanford University", role=c("cph", "fnd")),
     person("Genentech, Inc.", role=c("cph", "fnd")))
 Description: > Efficient operations for single cell ATAC-seq fragments and
     RNA counts matrices. Interoperable with standard file formats, and introduces

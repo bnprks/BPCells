@@ -21,7 +21,7 @@ Python package release. (So we can have one folder for R and one for Python, rat
 the R files sit in the root folder). This is a breaking change and requires a slightly
 modified installation command.
 
-Thanks to @brgrew, @ycli1995, and @Yunuuuu for pull requests that contributed to this release, as
+Thanks to @brgew, @ycli1995, and @Yunuuuu for pull requests that contributed to this release, as
 well as all users who submitted github issues to help identify and fix bugs.
 
 ## Breaking changes
