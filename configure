@@ -1,4 +1,15 @@
 #!/bin/bash
+
+# This curl request helps count daily installs prior to CRAN release:
+# No identifiable information or IP addresses are saved, and server logs are
+# deleted every 14 days. More information on data privacy policy: https://plausible.io/data-policy
+# You can delete the line `ENABLE_INSTALL_COUNTING="yes"` if you do not want your installation counted.
+ENABLE_INSTALL_COUNTING="yes"
+if [ -n $ENABLE_INSTALL_COUNTING ]; then
+    curl --silent "https://plausible.benparks.net/flask-plausible/bpcells-moved-location" > /dev/null 2> /dev/null \
+        || true
+fi
+
 echo ""
 echo ""
 echo "################################################"
