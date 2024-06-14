@@ -8,6 +8,13 @@ Helper scripts included for building docs and running tests. Within `r`, `python
 run `bash scripts/run_tests.sh` or `bash scripts/build_docs.sh`. Run from the root directory
 to run tests/docs for all languages in one command.
 
+## Building docs
+Warning: Docs setup may change as python and C++ docs get created
+1. Docs site is built into the root folder of the docs-html branch
+2. Run `git worktree add r/docs docs-html` to put a copy of the docs-html branch in the r/docs folder
+3. In `r` folder, run `pkgdown::build_site()`
+4. In `r/docs` folder, run git commit
+
 ## R
 
 

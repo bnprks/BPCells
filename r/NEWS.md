@@ -6,8 +6,28 @@
 
 Contributions welcome :)
 
-# BPCells 0.2.0 (github main branch - in progress)
+# BPCells 0.2.1 (main branch - in progress)
+Nothing new yet
+
+# BPCells 0.2.0 (6/14/2024)
+
+We are finally declaring a new release version, covering a large amount of changes and improvements
+over the past year. Among the major features here are parallelization options for `svds()` and 
+`matrix_stats()`, improved genomic track plots, and runtime CPU feature detection for SIMD code (enables
+higher performance, more portable builds). Full details of changes below.
+
+This version also comes with a new installation path, which is done in preparation for a future 
+Python package release. (So we can have one folder for R and one for Python, rather than having all
+the R files sit in the root folder). This is a breaking change and requires a slightly
+modified installation command.
+
+Thanks to @brgrew, @ycli1995, and @Yunuuuu for pull requests that contributed to this release, as
+well as all users who submitted github issues to help identify and fix bugs.
+
 ## Breaking changes
+- Installation location has changed, to make room for a future python package release. New
+  installs will have to use `remotes::install_github("bnprks/BPCells/r")` (note the additional `/r`)
+  - r-universe mirrors will have to add `"subdir": "r"` to their `packages.json` config.
 - New slots have been added to 10x matrix objects, so any saved RDS files may need to have
   their 10x matrix inputs re-opened and replaced by calling `all_matrix_inputs()`. Outside of
   loading old RDS files no changes should be needed.
@@ -118,7 +138,7 @@ Contributions welcome :)
   loaded via `readRDS()` can be used from different working directories.
 - `footprints()` now respects user interrupts via Ctrl-C
 
-# BPCells 0.1.0
+# BPCells 0.1.0 (4/7/2023)
 
 ## Features
 - ATAC-seq Analysis
