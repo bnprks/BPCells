@@ -91,14 +91,6 @@ SEXP convert_matrix_float_double_cpp(SEXP matrix) {
 }
 
 // [[Rcpp::export]]
-SEXP build_csparse_matrix_double_cpp(SEXP matrix) {
-    CSparseMatrixWriter<double> writer;
-    auto mat = take_unique_xptr<MatrixLoader<double>>(matrix);
-    run_with_R_interrupt_check(&CSparseMatrixWriter<double>::write, &writer, std::ref(*mat));
-    return Rcpp::wrap(writer.getMat());
-}
-
-// [[Rcpp::export]]
 SEXP iterate_matrix_col_select_uint32_t_cpp(SEXP matrix, std::vector<uint32_t> col_selection) {
     return make_unique_xptr<MatrixColSelect<uint32_t>>(
         take_unique_xptr<MatrixLoader<uint32_t>>(matrix), col_selection

@@ -561,10 +561,6 @@ convert_matrix_float_double_cpp <- function(matrix) {
     .Call(`_BPCells_convert_matrix_float_double_cpp`, matrix)
 }
 
-build_csparse_matrix_double_cpp <- function(matrix) {
-    .Call(`_BPCells_build_csparse_matrix_double_cpp`, matrix)
-}
-
 iterate_matrix_col_select_uint32_t_cpp <- function(matrix, col_selection) {
     .Call(`_BPCells_iterate_matrix_col_select_uint32_t_cpp`, matrix, col_selection)
 }

@@ -141,31 +141,5 @@ class CSparseMatrixWriter : public MatrixWriter<T> {
     const Eigen::SparseMatrix<T> getMat() { return eigen_mat; }
 };
 
-template<typename T>
-class CSparseTransposeMatrixWriter : public MatrixWriter<T> {
-  private:
-    Eigen::SparseMatrix<T> eigen_mat;
-
-  public:
-    void write(MatrixLoader<T> &loader, std::atomic<bool> *user_interrupt = NULL) override {
-        MatrixIterator<T> mat((std::unique_ptr<MatrixLoader<T>>(&loader)));
-        // Don't take ownership of our input loader
-        mat.preserve_input_loader();
-        uint32_t count = 0;
-        std::vector<Eigen::Triplet<T>> triplets;
-
-        while (mat.nextCol()) {
-            while (mat.nextValue()) {
-                triplets.push_back(Eigen::Triplet<T>(mat.col(), mat.row(), mat.val()));
-                if (count++ % 8192 == 0 && user_interrupt != NULL && *user_interrupt) return;
-            }
-        }
-
-        eigen_mat = Eigen::SparseMatrix<T>(mat.cols(), mat.rows());
-        eigen_mat.setFromTriplets(triplets.begin(), triplets.end());
-    };
-
-    const Eigen::SparseMatrix<T> getMat() { return eigen_mat; }
-};
 
 } // end namespace BPCells

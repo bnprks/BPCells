@@ -542,6 +542,19 @@ test_that("LinearOperator works", {
   expect_identical(as.numeric(y %*% as.matrix(m1)), as.numeric(y %*% op))
 })
 
+build_csparse_from_pointer <- function(it) {
+  m <- BPCells:::write_unpacked_matrix_mem_double_cpp(it, row_major=FALSE)
+  m[["dimnames"]] <- BPCells:::normalized_dimnames(m$row_names, m$col_names)
+  m$dim <- m$shape
+  m$transpose <- m$storage_order == "row"
+  m$row_names <- NULL
+  m$col_names <- NULL
+  m$shape <- NULL
+  m$storage_order <- NULL
+  res <- do.call(new, c("UnpackedMatrixMem_double", m))
+  as(res, "dgCMatrix")
+}
+
 test_that("Garbage collection between iterate_matrix doesn't mess things up", {
   m <- generate_sparse_matrix(20, 20) 
   # Apply log1p %>% square %>% pow(0.5) %>% expm1
@@ -555,7 +568,8 @@ test_that("Garbage collection between iterate_matrix doesn't mess things up", {
   # Garbage collect so R will destroy any intermediate data it has on the pointers
   gc()
   # Make sure everything still works
-  res <- build_csparse_matrix_double_cpp(it)
+  #
+  res <- build_csparse_from_pointer(it)
   expect_equal(m, res, tolerance=testthat_tolerance())
 })
 
@@ -581,7 +595,7 @@ test_that("Adverserial garbage collection of dgCMatrix doesn't mess things up", 
     # Don't want GC to happen for the matrix we're iterating on, since the iterator object should maintain a reference
     expect_false(gc_flags[["gc_1"]])
     expect_true(gc_flags[["gc_2"]])
-    res <- BPCells:::build_csparse_matrix_double_cpp(it)
+    res <- build_csparse_from_pointer(it)
     gc()
     # Now we do want GC to happen, since there's no longer a reference to maintain
     expect_true(gc_flags[["gc_1"]])
@@ -785,7 +799,7 @@ test_that("Generic methods work", {
     # Delete any trailing XPtr references from R
     gc()
     # Check that the C++ iterator still works
-    res <- build_csparse_matrix_double_cpp(it)
+    res <- build_csparse_from_pointer(it)
     res@Dimnames <- m@Dimnames
     if (i %in% c("shift_scale_1", "shift_scale_2")) {
       expect_identical(as.matrix(res), as.matrix(m))

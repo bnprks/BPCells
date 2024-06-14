@@ -2596,13 +2596,34 @@ setMethod("iterate_matrix", "dgCMatrix", function(x) {
 })
 
 setAs("IterableMatrix", "dgCMatrix", function(from) {
-  iter <- iterate_matrix(convert_matrix_type(from, "double"))
-  res <- build_csparse_matrix_double_cpp(iter)
-  if (from@transpose) {
-    res <- t(res)
+  res <- write_matrix_memory(convert_matrix_type(from, "double"), compress=FALSE)
+  if (length(res@index) >= 2^31-1) {
+    rlang::abort(c(
+      "Error converting IterableMatrix to dgCMatrix",
+      "dgCMatrix objects cannot hold more than 2^31 non-zero entries",
+      sprintf("Input matrix has %d entries", length(res@index))
+    ))
   }
-  res@Dimnames <- from@dimnames
-  return(res)
+  if (from@transpose) {
+    res <- Matrix::sparseMatrix(
+      j = res@index,
+      p = res@idxptr,
+      x = res@val,
+      index1=FALSE,
+      dims = dim(res),
+      dimnames = dimnames(res)
+    )
+    return(as(res, "dgCMatrix"))
+  } else {
+    return(Matrix::sparseMatrix(
+      i = res@index,
+      p = res@idxptr,
+      x = res@val,
+      index1=FALSE,
+      dims = dim(res),
+      dimnames = dimnames(res)
+    ))
+  }
 })
 
 # Add conversion to base R dense matrices

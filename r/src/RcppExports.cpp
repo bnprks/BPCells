@@ -1902,17 +1902,6 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// build_csparse_matrix_double_cpp
-SEXP build_csparse_matrix_double_cpp(SEXP matrix);
-RcppExport SEXP _BPCells_build_csparse_matrix_double_cpp(SEXP matrixSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< SEXP >::type matrix(matrixSEXP);
-    rcpp_result_gen = Rcpp::wrap(build_csparse_matrix_double_cpp(matrix));
-    return rcpp_result_gen;
-END_RCPP
-}
 // iterate_matrix_col_select_uint32_t_cpp
 SEXP iterate_matrix_col_select_uint32_t_cpp(SEXP matrix, std::vector<uint32_t> col_selection);
 RcppExport SEXP _BPCells_iterate_matrix_col_select_uint32_t_cpp(SEXP matrixSEXP, SEXP col_selectionSEXP) {
@@ -2570,7 +2559,6 @@ static const R_CallMethodDef CallEntries[] = {
     {"_BPCells_convert_matrix_double_float_cpp", (DL_FUNC) &_BPCells_convert_matrix_double_float_cpp, 1},
     {"_BPCells_convert_matrix_float_uint32_t_cpp", (DL_FUNC) &_BPCells_convert_matrix_float_uint32_t_cpp, 1},
     {"_BPCells_convert_matrix_float_double_cpp", (DL_FUNC) &_BPCells_convert_matrix_float_double_cpp, 1},
-    {"_BPCells_build_csparse_matrix_double_cpp", (DL_FUNC) &_BPCells_build_csparse_matrix_double_cpp, 1},
     {"_BPCells_iterate_matrix_col_select_uint32_t_cpp", (DL_FUNC) &_BPCells_iterate_matrix_col_select_uint32_t_cpp, 2},
     {"_BPCells_iterate_matrix_col_select_float_cpp", (DL_FUNC) &_BPCells_iterate_matrix_col_select_float_cpp, 2},
     {"_BPCells_iterate_matrix_col_select_double_cpp", (DL_FUNC) &_BPCells_iterate_matrix_col_select_double_cpp, 2},
