@@ -17,6 +17,10 @@ authors:
     roles: [cre]
     text: "Created by"
 
+repo:
+  url:
+    source: https://github.com/bnprks/BPCells/tree/main/r/
+
 navbar:
   structure:
     left: [introduction, reference, articles, news]
