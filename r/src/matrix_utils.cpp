@@ -584,6 +584,47 @@ StringVector checksum_double_cpp(SEXP matrix) {
 }
 
 // [[Rcpp::export]]
+List apply_matrix_double_cpp(SEXP mat_sexp, Function f, bool row_major) {
+    std::unique_ptr<MatrixLoader<double>> mat = take_unique_xptr<MatrixLoader<double>>(mat_sexp);
+    List ret(mat->cols());
+    std::vector<char> called_col(mat->cols(), 0);
+
+    std::vector<double> val;
+    std::vector<int> row;
+    while (mat->nextCol()) {
+        int col = mat->currentCol();
+        val.clear();
+        row.clear();
+        while (mat->load()) {
+            row.insert(row.end(), mat->rowData(), mat->rowData() + mat->capacity());
+            val.insert(val.end(), mat->valData(), mat->valData() + mat->capacity());
+        }
+        for (auto &r : row) r += 1;
+        if (row_major) {
+            ret[col] = f(val, col + 1, row);
+        } else {
+            ret[col] = f(val, row, col + 1);
+        }
+        called_col[col] = 1;
+    }
+
+    // Check any columns that got skipped and call them
+    val.clear();
+    row.clear();
+    for (size_t i = 0; i < mat->cols(); i++) {
+        if (!called_col[i]) {
+            if (row_major) {
+                ret[i] = f(val, i+1, row);
+            } else {
+                ret[i] = f(val, row, i+1);
+            }
+        }
+    }
+
+    return ret;
+}
+
+// [[Rcpp::export]]
 bool matrix_identical_uint32_t_cpp(SEXP mat1, SEXP mat2) {
     MatrixIterator<uint32_t> i1(take_unique_xptr<MatrixLoader<uint32_t>>(mat1));
     MatrixIterator<uint32_t> i2(take_unique_xptr<MatrixLoader<uint32_t>>(mat2));

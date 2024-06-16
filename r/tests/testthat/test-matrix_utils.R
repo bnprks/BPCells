@@ -825,3 +825,34 @@ test_that("IterableMatrix md5sum works", {
   colnames(bpm) <- paste0("col", seq_len(ncol(bpm)))
   expect_false(checksum(bpm) == md5sum)
 })
+
+test_that("apply_by_row and apply_by_col works", {
+  mat <- generate_sparse_matrix(4, 5) %>% as("IterableMatrix")
+
+  # Test function: mean, argmax, col
+  res_mean <- apply_by_col(mat, function(val, row, col) {sum(val)/nrow(mat)}) %>% unlist()
+  expect_equal(res_mean, colMeans(mat))
+
+  res_argmax <- apply_by_col(mat, function(val, row, col) {if (length(val) > 0) row[which.max(val)] else 1L}) %>% unlist()
+  expect_identical(res_argmax, apply(as.matrix(mat), 2, which.max))
+
+  res_col <- apply_by_col(mat, function(val, row, col) col) %>% unlist()
+  expect_identical(res_col, seq_len(ncol(mat)))
+
+  # Expect error on transpose
+  expect_error(apply_by_row(mat, c), "transpose_storage_order")
+
+  # Same test functions but with the transpose of the matrix
+  tmat <- t(mat)
+  res_mean <- apply_by_row(tmat, function(val, row, col) {sum(val)/ncol(tmat)}) %>% unlist()
+  expect_equal(res_mean, colMeans(mat))
+
+  res_argmax <- apply_by_row(tmat, function(val, row, col) {if (length(val) > 0) col[which.max(val)] else 1L}) %>% unlist()
+  expect_identical(res_argmax, apply(as.matrix(mat), 2, which.max))
+
+  res_col <- apply_by_row(tmat, function(val, row, col) row) %>% unlist()
+  expect_identical(res_col, seq_len(ncol(mat)))
+
+  # Expect error on transpose
+  expect_error(apply_by_col(tmat, c), "transpose_storage_order")
+})

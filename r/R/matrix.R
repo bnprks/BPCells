@@ -2809,4 +2809,53 @@ checksum <- function(matrix) {
     checksum_double_cpp(iter)
 }
 
+#' Apply a function to summarize rows/cols
+#'
+#' Apply a custom R function to each row/col of a BPCells matrix. This
+#' will run slower than the builtin C++-backed functions, but will 
+#' keep most of the memory benefits from disk-backed operations.
+#' @param mat IterableMatrix object
+#' @param fun `function(val, row, col)` that takes in a row/col of values and returns a summary output. Argument details:
+#'
+#'   1. `val` - Vector length (# non-zero values) with the value for each non-zero matrix entry
+#'   2. `row` - one-based row index (`apply_by_col`: vector length (# non-zero values), `apply_by_row`: single integer)
+#'   3. `col` - one-based col index (`apply_by_col`: single integer, `apply_by_row`: vector length (# non-zero values))
+#'   4. `...` - Optional additional arguments (should not be named row, col, or val)
+#' @param ... Optional additional arguments passed to `fun`
+#' @return **apply_by_row** - A list of length `nrow(matrix)` with the results returned by `fun()` on each row
+#' @details These functions require row-major matrix storage for apply_by_row and col-major storage for apply_by_col,
+#' so matrices stored in the wrong order may neeed a re-ordered copy created using `transpose_storage_order()` first.
+#' This is required to be able to keep memory-usage low and allow calculating the result with a single streaming pass of the
+#' input matrix.
+#' 
+#' If vector/matrix outputs are desired instead of lists, calling `unlist(x)` or `do.call(cbind, x)` or `do.call(rbind, x)`
+#' can convert the list output.
+#' @export
+apply_by_row <- function(mat, fun, ...) {
+  assert_is(mat, "IterableMatrix")
+  if (storage_order(mat) != "row") {
+    rlang::abort("Cannot call apply_by_row on a col-major matrix. Please call transpose_storage_order() first")
+  }
+  if (length(list(...)) > 0) {
+    f <- function(val, row, col) {fun(val, row, col, ...)}
+  } else {
+    f <- fun
+  }
+  apply_matrix_double_cpp(iterate_matrix(convert_matrix_type(mat, "double")), f, TRUE)
+}
+
+#' @return **apply_by_col** - A list of length `ncol(matrix)` with the results returned by `fun()` on each row
+#' @rdname apply_by_row
+#' @export
+apply_by_col <- function(mat, fun, ...) {
+  if (storage_order(mat) != "col") {
+    rlang::abort("Cannot call apply_by_col on a row-major matrix. Please call transpose_storage_order() first")
+  }
+  if (length(list(...)) > 0) {
+    f <- function(val, row, col) {fun(val, row, col, ...)}
+  } else {
+    f <- fun
+  }
+  apply_matrix_double_cpp(iterate_matrix(convert_matrix_type(mat, "double")), f, FALSE)
+}
 

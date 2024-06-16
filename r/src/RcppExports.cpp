@@ -2405,6 +2405,19 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// apply_matrix_double_cpp
+List apply_matrix_double_cpp(SEXP mat_sexp, Function f, bool row_major);
+RcppExport SEXP _BPCells_apply_matrix_double_cpp(SEXP mat_sexpSEXP, SEXP fSEXP, SEXP row_majorSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type mat_sexp(mat_sexpSEXP);
+    Rcpp::traits::input_parameter< Function >::type f(fSEXP);
+    Rcpp::traits::input_parameter< bool >::type row_major(row_majorSEXP);
+    rcpp_result_gen = Rcpp::wrap(apply_matrix_double_cpp(mat_sexp, f, row_major));
+    return rcpp_result_gen;
+END_RCPP
+}
 // matrix_identical_uint32_t_cpp
 bool matrix_identical_uint32_t_cpp(SEXP mat1, SEXP mat2);
 RcppExport SEXP _BPCells_matrix_identical_uint32_t_cpp(SEXP mat1SEXP, SEXP mat2SEXP) {
@@ -2600,6 +2613,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_BPCells_svds_cpp", (DL_FUNC) &_BPCells_svds_cpp, 6},
     {"_BPCells_matrix_value_histogram_cpp", (DL_FUNC) &_BPCells_matrix_value_histogram_cpp, 2},
     {"_BPCells_checksum_double_cpp", (DL_FUNC) &_BPCells_checksum_double_cpp, 1},
+    {"_BPCells_apply_matrix_double_cpp", (DL_FUNC) &_BPCells_apply_matrix_double_cpp, 3},
     {"_BPCells_matrix_identical_uint32_t_cpp", (DL_FUNC) &_BPCells_matrix_identical_uint32_t_cpp, 2},
     {NULL, NULL, 0}
 };

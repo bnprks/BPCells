@@ -7,7 +7,11 @@
 Contributions welcome :)
 
 # BPCells 0.2.1 (main branch - in progress)
-Nothing new yet
+
+## Features
+- `apply_by_col()` and `apply_by_row()` allow providing custom R functions to compute per row/col summaries.
+  In initial tests calculating row/col means using R functions is ~2x slower than the C++-based implementation but memory
+  usage remains low.
 
 # BPCells 0.2.0 (6/14/2024)
 

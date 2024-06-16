@@ -104,9 +104,10 @@ reference:
   - min_scalar
   - add_rows
   - binarize
-  - IterableMatrix-methods
   - all_matrix_inputs
   - checksum
+  - apply_by_row
+  - IterableMatrix-methods
 
 - title: "Reference Annotations"
 - contents:
