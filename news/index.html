@@ -10,7 +10,7 @@
     
     <a class="navbar-brand me-2" href="../index.html">BPCells</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.0</small>
 
     
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -68,13 +68,17 @@
 </div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.2.1" id="bpcells-021-main-branch---in-progress">BPCells 0.2.1 (main branch - in progress)<a class="anchor" aria-label="anchor" href="#bpcells-021-main-branch---in-progress"></a></h2>
-<p>Nothing new yet</p>
+<div class="section level3">
+<h3 id="features-0-2-1">Features<a class="anchor" aria-label="anchor" href="#features-0-2-1"></a></h3>
+<ul><li>
+<code><a href="../reference/apply_by_row.html">apply_by_col()</a></code> and <code><a href="../reference/apply_by_row.html">apply_by_row()</a></code> allow providing custom R functions to compute per row/col summaries. In initial tests calculating row/col means using R functions is ~2x slower than the C++-based implementation but memory usage remains low.</li>
+</ul></div>
 </div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.2.0" id="bpcells-020-6142024">BPCells 0.2.0 (6/14/2024)<a class="anchor" aria-label="anchor" href="#bpcells-020-6142024"></a></h2>
 <p>We are finally declaring a new release version, covering a large amount of changes and improvements over the past year. Among the major features here are parallelization options for <code><a href="../reference/svds.html">svds()</a></code> and <code><a href="../reference/matrix_stats.html">matrix_stats()</a></code>, improved genomic track plots, and runtime CPU feature detection for SIMD code (enables higher performance, more portable builds). Full details of changes below.</p>
 <p>This version also comes with a new installation path, which is done in preparation for a future Python package release. (So we can have one folder for R and one for Python, rather than having all the R files sit in the root folder). This is a breaking change and requires a slightly modified installation command.</p>
-<p>Thanks to <a href="https://github.com/brgrew" class="external-link">@brgrew</a>, <a href="https://github.com/ycli1995" class="external-link">@ycli1995</a>, and <a href="https://github.com/Yunuuuu" class="external-link">@Yunuuuu</a> for pull requests that contributed to this release, as well as all users who submitted github issues to help identify and fix bugs.</p>
+<p>Thanks to <a href="https://github.com/brgew" class="external-link">@brgew</a>, <a href="https://github.com/ycli1995" class="external-link">@ycli1995</a>, and <a href="https://github.com/Yunuuuu" class="external-link">@Yunuuuu</a> for pull requests that contributed to this release, as well as all users who submitted github issues to help identify and fix bugs.</p>
 <div class="section level3">
 <h3 id="breaking-changes-0-2-0">Breaking changes<a class="anchor" aria-label="anchor" href="#breaking-changes-0-2-0"></a></h3>
 <ul><li>Installation location has changed, to make room for a future python package release. New installs will have to use <code>remotes::install_github("bnprks/BPCells/r")</code> (note the additional <code>/r</code>)
@@ -160,7 +164,7 @@
 <li>Fixed bug writing fragment files with &gt;512 chromosomes.</li>
 <li>Fixed bug when reading fragment files with &gt;4 billion fragments.</li>
 <li>Fixed file permissions errors when using read-only hdf5 files (Issue <a href="https://github.com/bnprks/BPCells/issues/26" class="external-link">#26</a> reported thanks to <a href="https://github.com/ttumkaya" class="external-link">@ttumkaya</a>)</li>
-<li>Renaming <code><a href="https://rdrr.io/r/base/colnames.html" class="external-link">rownames()</a></code> or <code><a href="https://rdrr.io/r/base/colnames.html" class="external-link">colnames()</a></code> is now propagated when saving matrices (Issue <a href="https://github.com/bnprks/BPCells/issues/29" class="external-link">#29</a> reported thanks to <a href="https://github.com/realzehuali" class="external-link">@realzehuali</a>, with an additional fix after report thanks to <a href="https://github.com/Dario-Rocha" class="external-link">@Dario-Rocha</a>)</li>
+<li>Renaming <code><a href="https://rdrr.io/pkg/BiocGenerics/man/row_colnames.html" class="external-link">rownames()</a></code> or <code><a href="https://rdrr.io/pkg/BiocGenerics/man/row_colnames.html" class="external-link">colnames()</a></code> is now propagated when saving matrices (Issue <a href="https://github.com/bnprks/BPCells/issues/29" class="external-link">#29</a> reported thanks to <a href="https://github.com/realzehuali" class="external-link">@realzehuali</a>, with an additional fix after report thanks to <a href="https://github.com/Dario-Rocha" class="external-link">@Dario-Rocha</a>)</li>
 <li>Fixed 64-bit integer overflow (!) that could cause incorrect p-value calculations in <code><a href="../reference/marker_features.html">marker_features()</a></code> for features with more than 2.6 million zeros.</li>
 <li>Improved robustness of the Windows installation process for setups that do not need the -lsz linker flag to compile hdf5</li>
 <li>Fixed possible memory safety bug where wrapped R objects (such as dgCMatrix) could be potentially garbage collected while C++ was still trying to access the data in rare circumstances.</li>
@@ -229,7 +233,7 @@
 
 
     <footer><div class="pkgdown-footer-left">
-  <p>Developed by Benjamin Parks, Genentech, Inc..</p>
+  <p>Created by Benjamin Parks.</p>
 </div>
 
 <div class="pkgdown-footer-right">

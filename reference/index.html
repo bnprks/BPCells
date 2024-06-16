@@ -10,7 +10,7 @@
     
     <a class="navbar-brand me-2" href="../index.html">BPCells</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.0</small>
 
     
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -341,11 +341,6 @@
         <dd>Convert matrix elements to zeros and ones</dd>
       </dl><dl><dt>
           
-          <code><a href="IterableMatrix-methods.html">matrix_type()</a></code> <code><a href="IterableMatrix-methods.html">storage_order()</a></code> <code><a href="IterableMatrix-methods.html">show(<i>&lt;IterableMatrix&gt;</i>)</a></code> <code><a href="IterableMatrix-methods.html">t(<i>&lt;IterableMatrix&gt;</i>)</a></code> <code><a href="IterableMatrix-methods.html">`%*%`(<i>&lt;IterableMatrix&gt;</i>,<i>&lt;matrix&gt;</i>)</a></code> <code><a href="IterableMatrix-methods.html">rowSums(<i>&lt;IterableMatrix&gt;</i>)</a></code> <code><a href="IterableMatrix-methods.html">colSums(<i>&lt;IterableMatrix&gt;</i>)</a></code> <code><a href="IterableMatrix-methods.html">rowMeans(<i>&lt;IterableMatrix&gt;</i>)</a></code> <code><a href="IterableMatrix-methods.html">colMeans(<i>&lt;IterableMatrix&gt;</i>)</a></code> <code><a href="IterableMatrix-methods.html">colVars()</a></code> <code><a href="IterableMatrix-methods.html">rowVars()</a></code> <code><a href="IterableMatrix-methods.html">log1p(<i>&lt;IterableMatrix&gt;</i>)</a></code> <code><a href="IterableMatrix-methods.html">log1p_slow()</a></code> <code><a href="IterableMatrix-methods.html">expm1(<i>&lt;IterableMatrix&gt;</i>)</a></code> <code><a href="IterableMatrix-methods.html">expm1_slow()</a></code> <code><a href="IterableMatrix-methods.html">`^`(<i>&lt;IterableMatrix&gt;</i>,<i>&lt;numeric&gt;</i>)</a></code> <code><a href="IterableMatrix-methods.html">`&lt;`(<i>&lt;numeric&gt;</i>,<i>&lt;IterableMatrix&gt;</i>)</a></code> <code><a href="IterableMatrix-methods.html">`&gt;`(<i>&lt;IterableMatrix&gt;</i>,<i>&lt;numeric&gt;</i>)</a></code> <code><a href="IterableMatrix-methods.html">`&lt;=`(<i>&lt;numeric&gt;</i>,<i>&lt;IterableMatrix&gt;</i>)</a></code> <code><a href="IterableMatrix-methods.html">`&gt;=`(<i>&lt;IterableMatrix&gt;</i>,<i>&lt;numeric&gt;</i>)</a></code> <code><a href="IterableMatrix-methods.html">round(<i>&lt;IterableMatrix&gt;</i>)</a></code> <code><a href="IterableMatrix-methods.html">`*`(<i>&lt;IterableMatrix&gt;</i>,<i>&lt;numeric&gt;</i>)</a></code> <code><a href="IterableMatrix-methods.html">`+`(<i>&lt;IterableMatrix&gt;</i>,<i>&lt;numeric&gt;</i>)</a></code> <code><a href="IterableMatrix-methods.html">`/`(<i>&lt;IterableMatrix&gt;</i>,<i>&lt;numeric&gt;</i>)</a></code> <code><a href="IterableMatrix-methods.html">`-`(<i>&lt;IterableMatrix&gt;</i>,<i>&lt;numeric&gt;</i>)</a></code> 
-        </dt>
-        <dd>IterableMatrix methods</dd>
-      </dl><dl><dt>
-          
           <code><a href="all_matrix_inputs.html">all_matrix_inputs()</a></code> <code><a href="all_matrix_inputs.html">`all_matrix_inputs&lt;-`()</a></code> 
         </dt>
         <dd>Get/set inputs to a matrix transform</dd>
@@ -354,6 +349,16 @@
           <code><a href="checksum.html">checksum()</a></code> 
         </dt>
         <dd>Calculate the MD5 checksum of an IterableMatrix</dd>
+      </dl><dl><dt>
+          
+          <code><a href="apply_by_row.html">apply_by_row()</a></code> <code><a href="apply_by_row.html">apply_by_col()</a></code> 
+        </dt>
+        <dd>Apply a function to summarize rows/cols</dd>
+      </dl><dl><dt>
+          
+          <code><a href="IterableMatrix-methods.html">matrix_type()</a></code> <code><a href="IterableMatrix-methods.html">storage_order()</a></code> <code><a href="IterableMatrix-methods.html">show(<i>&lt;IterableMatrix&gt;</i>)</a></code> <code><a href="IterableMatrix-methods.html">t(<i>&lt;IterableMatrix&gt;</i>)</a></code> <code><a href="IterableMatrix-methods.html">`%*%`(<i>&lt;IterableMatrix&gt;</i>,<i>&lt;matrix&gt;</i>)</a></code> <code><a href="IterableMatrix-methods.html">rowSums(<i>&lt;IterableMatrix&gt;</i>)</a></code> <code><a href="IterableMatrix-methods.html">colSums(<i>&lt;IterableMatrix&gt;</i>)</a></code> <code><a href="IterableMatrix-methods.html">rowMeans(<i>&lt;IterableMatrix&gt;</i>)</a></code> <code><a href="IterableMatrix-methods.html">colMeans(<i>&lt;IterableMatrix&gt;</i>)</a></code> <code><a href="IterableMatrix-methods.html">colVars()</a></code> <code><a href="IterableMatrix-methods.html">rowVars()</a></code> <code><a href="IterableMatrix-methods.html">log1p(<i>&lt;IterableMatrix&gt;</i>)</a></code> <code><a href="IterableMatrix-methods.html">log1p_slow()</a></code> <code><a href="IterableMatrix-methods.html">expm1(<i>&lt;IterableMatrix&gt;</i>)</a></code> <code><a href="IterableMatrix-methods.html">expm1_slow()</a></code> <code><a href="IterableMatrix-methods.html">`^`(<i>&lt;IterableMatrix&gt;</i>,<i>&lt;numeric&gt;</i>)</a></code> <code><a href="IterableMatrix-methods.html">`&lt;`(<i>&lt;numeric&gt;</i>,<i>&lt;IterableMatrix&gt;</i>)</a></code> <code><a href="IterableMatrix-methods.html">`&gt;`(<i>&lt;IterableMatrix&gt;</i>,<i>&lt;numeric&gt;</i>)</a></code> <code><a href="IterableMatrix-methods.html">`&lt;=`(<i>&lt;numeric&gt;</i>,<i>&lt;IterableMatrix&gt;</i>)</a></code> <code><a href="IterableMatrix-methods.html">`&gt;=`(<i>&lt;IterableMatrix&gt;</i>,<i>&lt;numeric&gt;</i>)</a></code> <code><a href="IterableMatrix-methods.html">round(<i>&lt;IterableMatrix&gt;</i>)</a></code> <code><a href="IterableMatrix-methods.html">`*`(<i>&lt;IterableMatrix&gt;</i>,<i>&lt;numeric&gt;</i>)</a></code> <code><a href="IterableMatrix-methods.html">`+`(<i>&lt;IterableMatrix&gt;</i>,<i>&lt;numeric&gt;</i>)</a></code> <code><a href="IterableMatrix-methods.html">`/`(<i>&lt;IterableMatrix&gt;</i>,<i>&lt;numeric&gt;</i>)</a></code> <code><a href="IterableMatrix-methods.html">`-`(<i>&lt;IterableMatrix&gt;</i>,<i>&lt;numeric&gt;</i>)</a></code> 
+        </dt>
+        <dd>IterableMatrix methods</dd>
       </dl></div><div class="section level2">
       <h2 id="reference-annotations">Reference Annotations<a class="anchor" aria-label="anchor" href="#reference-annotations"></a></h2>
       
@@ -551,7 +556,7 @@
 
 
     <footer><div class="pkgdown-footer-left">
-  <p>Developed by Benjamin Parks, Genentech, Inc..</p>
+  <p>Created by Benjamin Parks.</p>
 </div>
 
 <div class="pkgdown-footer-right">
