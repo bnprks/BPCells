@@ -33,7 +33,6 @@ void pack_diff(
 ) {
     using namespace hwy::HWY_NAMESPACE;
     using D = Full128<uint32_t>;
-    using Vec = Vec<D>;
     D d;
     pack_mask(in, out, bit, [&ref, d](auto v) {
         v = Sub(v, LoadU(d, ref));

@@ -28,7 +28,6 @@ namespace BPCells::simd::bp128::HWY_NAMESPACE {
 uint32_t maxbits_diff(const uint32_t *HWY_RESTRICT ref, const uint32_t *HWY_RESTRICT in) {
     using namespace hwy::HWY_NAMESPACE;
     using D = Full128<uint32_t>;
-    using Vec = Vec<D>;
     D d;
     return maxbits(in, [&ref, d](auto v) {
         v = Sub(v, LoadU(d, ref));

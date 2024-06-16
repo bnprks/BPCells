@@ -58,7 +58,7 @@ void writeInsertionBedgraph(
         std::string chr_name(fragments.chrNames(it.chr()));
         uint32_t count = 0;
 
-        for (int i = 0; i < output_paths.size(); i++) {
+        for (size_t i = 0; i < output_paths.size(); i++) {
             last_base[i] = UINT32_MAX;
             tally[i] = 0;
         }
@@ -95,7 +95,7 @@ void writeInsertionBedgraph(
             if (user_interrupt != nullptr && count++ % 65536 == 0 && *user_interrupt) return;
         }
         // Cleanup at the end of the chromosome
-        for (int i = 0; i < files.size(); i++) {
+        for (size_t i = 0; i < files.size(); i++) {
             if (last_base[i] == UINT32_MAX) continue;
             uint32_t bytes_written = gzprintf(
                 *files[i],

@@ -33,7 +33,6 @@ void unpack_diff(
 ) {
     using namespace hwy::HWY_NAMESPACE;
     using D = Full128<uint32_t>;
-    using Vec = Vec<D>;
     D d;
     unpack(in, out, bit, [&ref, d](auto v) {
         v = Add(v, LoadU(d, ref));
