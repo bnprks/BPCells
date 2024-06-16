@@ -12,6 +12,11 @@ template:
     after_body: |
        <img src="https://plausible.benparks.net/flask-plausible/bpcells-docs.png" style="position:absolute;" />
 
+authors:
+  footer:
+    roles: [cre]
+    text: "Created by"
+
 navbar:
   structure:
     left: [introduction, reference, articles, news]

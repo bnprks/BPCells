@@ -49,3 +49,12 @@ Warning: Docs setup may change as python and C++ docs get created
 - Python: autoDocstring
 - C++: Doxygen Documentation Generator
 
+To avoid multiple copies of results for C++ files and searches, add to `.vscode/settings.json`:
+```json
+"search.exclude": {
+    "r/src/bpcells-cpp/**": true,
+    "python/src/bpcells-cpp/**": true,
+    "r/src/vendor/**": true,
+    "python/src/vendor/**": true
+}
+```
