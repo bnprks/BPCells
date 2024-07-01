@@ -33,7 +33,7 @@ Read speeds for 10k random cells from the 15M human cells (range of 5 random tes
 ## Demo data setup
 
 ```{code-cell} ipython3
-import bpcells
+import bpcells.experimental
 
 import os
 import tempfile
@@ -63,7 +63,7 @@ mat.toarray()
 ## Basic usage from scipy.sparse
 
 ```{code-cell} ipython3
-bp_mat = bpcells.DirMatrix.from_scipy_sparse(mat, "basic_mat")
+bp_mat = bpcells.experimental.DirMatrix.from_scipy_sparse(mat, "basic_mat")
 bp_mat
 ```
 
@@ -104,7 +104,7 @@ The matrix path has 13 files (for compressed integer matrices), which contain da
 ```
 
 ```{code-cell} ipython3
-bp_mat = bpcells.DirMatrix("basic_mat")
+bp_mat = bpcells.experimental.DirMatrix("basic_mat")
 ```
 
 ## Import from h5ad
@@ -112,7 +112,7 @@ bp_mat = bpcells.DirMatrix("basic_mat")
 ```{code-cell} ipython3
 import anndata
 anndata.AnnData(mat).write("mat.h5ad")
-bp_mat = bpcells.DirMatrix.from_h5ad("mat.h5ad", "basic_mat_from_h5ad")
+bp_mat = bpcells.experimental.DirMatrix.from_h5ad("mat.h5ad", "basic_mat_from_h5ad")
 bp_mat[:,:].toarray()
 ```
 
@@ -123,14 +123,14 @@ bp_mat[:,:].toarray()
 We can concatenate multiple matrices to a single file on disk with low memory usage. This allows importing many samples in parallel, then concatenating them together into a single matrix
 
 ```{code-cell} ipython3
-bpcells.DirMatrix.from_hstack(
+bpcells.experimental.DirMatrix.from_hstack(
     [bp_mat, bp_mat], 
     "basic_mat_hstack"
 )[:,:].toarray()
 ```
 
 ```{code-cell} ipython3
-bpcells.DirMatrix.from_vstack(
+bpcells.experimental.DirMatrix.from_vstack(
     [bp_mat, bp_mat], 
     "basic_mat_vstack"
 )[:,:].toarray()
@@ -156,7 +156,7 @@ For neural network training use-cases, fast slicing performance may be critical 
 Loading can only be performed from an existing BPCells matrix directory, and the current version involves re-compressing the data in-memory at load time (avoidable, but a bit trickier to code so direct loading isn't implemented yet)
 
 ```{code-cell} ipython3
-bp_mat_mem = bpcells.MemMatrix("basic_mat")
+bp_mat_mem = bpcells.experimental.MemMatrix("basic_mat")
 bp_mat_mem.threads = 8
 bp_mat_mem[:,:].toarray()
 ```

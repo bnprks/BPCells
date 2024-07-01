@@ -1,4 +1,4 @@
-# BPCells Python
+# Python Docs
 
 
 The current API *will change*. This version is just enough to allow basic queries needed by
@@ -6,9 +6,20 @@ deep learning models.
 
 :::{toctree}
 :hidden:
+:caption: API Reference
 :maxdepth: 2
 
-python
+api/fragments
+api/matrix
+:::
+
+:::{toctree}
+:hidden:
+:caption: Tutorials
+:maxdepth: 2
+
+notebooks/fragment_basics
+notebooks/matrix_basics
 :::
 
 ## Installation

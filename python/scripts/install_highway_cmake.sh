@@ -30,4 +30,9 @@ cmake .. \
 make -j4 install
 
 cd ../../
+
+# Manually copy the math-inl contrib folder. (This is much faster than having to build all the vectorized sort algorithms)
+mkdir "$1/include/hwy/contrib/math"
+cp -r highway-1.1.0/hwy/contrib/math/math-inl.h "$1/include/hwy/contrib/math"
+
 rm -r highway-1.1.0

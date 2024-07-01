@@ -32,3 +32,42 @@ BPCells uses pytest, so just running `pytest` will run man unit tests.
 Certain slow-running tests that require downloading data will only run if
 the environment variable `BPCELLS_PYTEST_DATA` is set, pointing to the
 directory that should be used to cache file downloads.
+
+### Test dependencies
+
+`pip install pytest h5py anndata`
+
+
+### Documentation dependencies
+
+`pip install sphinx myst_nb pydata_sphinx_theme jupytext`
+
+## Example `.envrc`
+
+One easy way to get set up with environment variables and a virtual environment for development is
+with [`direnv`](https://direnv.net/). If you install direnv, you can make a `.envrc` in this folder
+and it will automatically enable a virtualenv and set environment variables whenever you switch
+into this folder.
+
+The exact right setup will depend on your OS, but this works well for Ubuntu
+```bash
+layout python3
+
+# Eigen3 installation path (depends on your OS setup; this works for Ubuntu/Debian)
+export CPATH="${CPATH:+$CPATH:}/usr/include/eigen3"
+
+# HDF5 installation path (depends on your OS setup; this works for Ubuntu/Debian)
+export CPATH="${CPATH:+$CPATH:}/usr/include/hdf5/serial"
+export LIBRARY_PATH="${LIBRARY_PATH:+$LIBRARY_PATH:}/usr/lib/x86_64-linux-gnu/hdf5/serial"
+
+# Export highway lib path for building
+export HWY_INCLUDE_DIR=$(pwd)/highway/include
+export HWY_LIB_DIR=$(pwd)/highway/lib
+
+# Use ccache to speed up re-compilation cycles
+export CXX="ccache g++"
+export CC="ccache gcc"
+
+# Directory for real test data
+export BPCELLS_PYTEST_DATA_CACHE="$(pwd)/tests/data"
+```

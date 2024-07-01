@@ -17,7 +17,7 @@ import numpy as np
 import scipy
 import h5py
 
-import bpcells
+import bpcells.experimental
 
 import pytest
 
@@ -45,7 +45,7 @@ def test_500_pbmc_matrix(tmp_path, fetch_cached_file):
 
     # Convert BPCells fragments
     bpcells_path = os.path.join(tmp_path, "fragments")
-    bpcells.import_10x_fragments(fragments_path, bpcells_path, shift_end=1)
+    bpcells.experimental.import_10x_fragments(fragments_path, bpcells_path, shift_end=1)
 
     # Get a non-overlapping subset of the peaks
     peaks = pd.read_csv(peaks_path, sep="\t", comment="#", names=["chrom", "start", "end"])
@@ -64,7 +64,7 @@ def test_500_pbmc_matrix(tmp_path, fetch_cached_file):
     clusts = cell_metadata.barcode.str.slice(0,2)
     group_order = sorted(clusts.unique())
 
-    groups = bpcells.build_cell_groups(
+    groups = bpcells.experimental.build_cell_groups(
         bpcells_path,
         cell_ids = cell_metadata.barcode,
         group_ids = clusts,
@@ -85,14 +85,14 @@ def test_500_pbmc_matrix(tmp_path, fetch_cached_file):
     pseudobulk_mat = pseudobulk_mat[:,~too_wide & ~overlaps & peaks.chrom.isin(chr_subset)]
 
     # Calculate the BPCells matrices
-    basepair_matrix = bpcells.pseudobulk_insertion_counts(
+    basepair_matrix = bpcells.experimental.pseudobulk_insertion_counts(
         bpcells_path,
         peak_subset,
         groups,
         bin_size = 1
     )
 
-    peak_matrix = bpcells.pseudobulk_insertion_counts(
+    peak_matrix = bpcells.experimental.pseudobulk_insertion_counts(
         bpcells_path,
         peak_subset,
         groups,
@@ -110,14 +110,14 @@ def test_500_pbmc_matrix(tmp_path, fetch_cached_file):
     precalculated_path = os.path.join(tmp_path, "precalculated_mat")
     chrom_sizes = pd.read_csv(chrom_sizes_path, sep="\t", names=["chrom", "size"])
     chrom_sizes = {t.chrom: t.size for t in chrom_sizes.itertuples() if t.chrom in chr_subset}
-    bpcells.precalculate_insertion_counts(
+    bpcells.experimental.precalculate_insertion_counts(
         bpcells_path,
         precalculated_path,
         groups,
         chrom_sizes,
         threads=4
     )
-    m = bpcells.PrecalculatedInsertionMatrix(precalculated_path)
+    m = bpcells.experimental.PrecalculatedInsertionMatrix(precalculated_path)
     assert m.shape[0] == len(group_order)
     basepair_precalculated = m.get_counts(peak_subset)
     assert np.all(basepair_precalculated == basepair_matrix)

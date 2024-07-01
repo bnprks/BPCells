@@ -5,6 +5,9 @@ __pycache__
 .direnv
 .tox
 
+highway/
+tests/data
+
 src/bpcells/version.py
 
 test.py

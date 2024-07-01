@@ -10,6 +10,9 @@ kernelspec:
   display_name: Python 3 (ipykernel)
   language: python
   name: python3
+mystnb:
+  execution_timeout: 120
+    
 ---
 
 # Basepair insertion counts tutorial
@@ -44,12 +47,12 @@ Storage location: Local SSD. Networked file systems will be slower
 # Usage Demo
 
 ```{code-cell} ipython3
-import bpcells
+import bpcells.experimental
 
 import pandas as pd
 ```
 
-### Data download
+## Data download
 We use a public 500-cell 10x dataset
 
 ```{code-cell} ipython3
@@ -60,13 +63,13 @@ tmpdir = tempfile.TemporaryDirectory()
 fragments_10x_path = os.path.join(tmpdir.name, "atac_fragments.tsv.gz")
 
 data_url = "https://cf.10xgenomics.com/samples/cell-atac/2.0.0/atac_pbmc_500_nextgem/atac_pbmc_500_nextgem_fragments.tsv.gz"
-subprocess.run(["curl", data_url], stdout=open(fragments_10x_path, "w"))
+subprocess.run(["curl", "--silent", data_url], stdout=open(fragments_10x_path, "w"))
 ```
 
 ```{code-cell} ipython3
 metadata_url = "https://cf.10xgenomics.com/samples/cell-atac/2.0.0/atac_pbmc_500_nextgem/atac_pbmc_500_nextgem_singlecell.csv"
 metadata_path = os.path.join(tmpdir.name, "cell_metadata.csv")
-subprocess.run(["curl", metadata_url], stdout=open(metadata_path, "w"))
+subprocess.run(["curl", "--silent", metadata_url], stdout=open(metadata_path, "w"))
 
 cell_metadata = pd.read_csv(metadata_path)
 cell_metadata = cell_metadata[cell_metadata.is__cell_barcode == 1].reset_index()
@@ -83,7 +86,7 @@ Notice that the conversion allows for adjusting the start/end coordinates, as we
 ```{code-cell} ipython3
 %%time
 fragments_bpcells_path = os.path.join(tmpdir.name, "bpcells_fragments")
-bpcells.import_10x_fragments(
+bpcells.experimental.import_10x_fragments(
     input = fragments_10x_path, 
     output = fragments_bpcells_path, 
     shift_end=1, 
@@ -102,14 +105,14 @@ barcodes = cell_metadata.barcode
 clusters = cell_metadata.barcode.str.slice(0,2)
 cluster_order = sorted(set(clusters))
 
-cell_groups_array = bpcells.build_cell_groups(fragments_bpcells_path, barcodes, clusters, cluster_order)
+cell_groups_array = bpcells.experimental.build_cell_groups(fragments_bpcells_path, barcodes, clusters, cluster_order)
 
 # We could provide a dict or local file path, but URL is easier
 chrom_sizes = "http://hgdownload.cse.ucsc.edu/goldenpath/hg38/bigZips/hg38.chrom.sizes"
 
 insertions_matrix_path = os.path.join(tmpdir.name, "bpcells_insertions_matrix")
 
-bpcells.precalculate_insertion_counts(
+bpcells.experimental.precalculate_insertion_counts(
     fragments_bpcells_path, 
     insertions_matrix_path, 
     cell_groups_array, 
@@ -123,7 +126,7 @@ bpcells.precalculate_insertion_counts(
 We can load the pre-calculated matrix from its input path.
 
 ```{code-cell} ipython3
-mat = bpcells.PrecalculatedInsertionMatrix(insertions_matrix_path)
+mat = bpcells.experimental.PrecalculatedInsertionMatrix(insertions_matrix_path)
 mat
 ```
 
@@ -167,7 +170,7 @@ class BPCellsDataset:
         self.regions = regions[["chrom", "start", "end"]]
 
         matrix_dir = str(os.path.abspath(os.path.expanduser(matrix_dir)))
-        self.mat = bpcells.PrecalculatedInsertionMatrix(matrix_dir)
+        self.mat = bpcells.experimental.PrecalculatedInsertionMatrix(matrix_dir)
         
         peak_width = self.regions.end[0] - self.regions.start[0]
         assert (self.regions.end - self.regions.start == peak_width).all()

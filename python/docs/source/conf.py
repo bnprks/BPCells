@@ -17,6 +17,13 @@ project = 'bpcells'
 copyright = '2023, Ben Parks'
 author = 'Ben Parks'
 
+# Determine what version of docs this is for the version history dropdown
+# version = bpcells.version.version
+# if ".dev" in version:
+#     version = "dev"
+# else:
+#     version = f"v{version}"
+
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
 
@@ -45,6 +52,19 @@ html_context = {
 html_sidebars = {
     "**": ["search-field", "sidebar-nav-bs"],
 }
+
+# -- Options for PyData Theme -------------------------------------------------
+# https://pydata-sphinx-theme.readthedocs.io/en/stable/user_guide/layout.html#references
+html_theme_options = {
+    "github_url": "https://github.com/bnprks/BPCells",
+    # "switcher": {
+    #     # "json_url": "https://bnprks.github.io/BPCells/python/_static/switcher.json",
+    #     "json_url": "_static/switcher.json",
+    #     "version_match": version,
+    # },
+    "navbar_end": ["theme-switcher", "navbar-icon-links"] #, "version-switcher"]
+}
+
 
 # -- Options for autodoc ----------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/extensions/autodoc.html#configuration
@@ -122,4 +142,8 @@ def linkcode_resolve(domain, info):
     fn = os.path.relpath(fn, start=os.path.dirname(bpcells.__file__))
 
     return f"https://github.com/bnprks/bpcells/blob/main/python/src/bpcells/{fn}{linespec}"
-    
+
+# See: https://www.sphinx-doc.org/en/master/development/html_themes/index.html#defining-custom-template-functions
+# To Do: Might be able to get the top header section nav working better  
+# def setup(app):
+#     app.connect("")
