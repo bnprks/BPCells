@@ -63,6 +63,15 @@ addopts = [
 
 [tool.cibuildwheel]
 skip = "*-musllinux_* pp*"
+
+# Build using the new manylinux2014 image with fixed CentOS mirrorlist
+manylinux-x86_64-image = "quay.io/pypa/manylinux2014_x86_64:2024.07.02-0"
+manylinux-i686-image = "quay.io/pypa/manylinux2014_i686:2024.07.02-0"
+manylinux-pypy_x86_64-image = "quay.io/pypa/manylinux2014_x86_64:2024.07.02-0"
+manylinux-aarch64-image = "quay.io/pypa/manylinux2014_aarch64:2024.07.02-0"
+manylinux-pypy_aarch64-image = "quay.io/pypa/manylinux2014_aarch64:2024.07.02-0"
+manylinux-pypy_i686-image = "quay.io/pypa/manylinux2014_i686:2024.07.02-0"
+
 [tool.cibuildwheel.linux]
 before-all = [
     "yum install -y hdf5-devel eigen3-devel wget",
