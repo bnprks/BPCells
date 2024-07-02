@@ -62,6 +62,7 @@ addopts = [
 
 
 [tool.cibuildwheel]
+build = "cp38*"
 skip = "*-musllinux_* pp*"
 
 # Build using the new manylinux2014 image with fixed CentOS mirrorlist
