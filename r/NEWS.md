@@ -13,6 +13,9 @@ Contributions welcome :)
   In initial tests calculating row/col means using R functions is ~2x slower than the C++-based implementation but memory
   usage remains low.
 
+## Bug-fixes
+- Fixed error message when a matrix is too large to be converted to dgCMatrix (Thanks to @RookieA1 for reporting issue #95)
+
 # BPCells 0.2.0 (6/14/2024)
 
 We are finally declaring a new release version, covering a large amount of changes and improvements

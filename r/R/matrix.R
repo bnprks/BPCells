@@ -2601,7 +2601,7 @@ setAs("IterableMatrix", "dgCMatrix", function(from) {
     rlang::abort(c(
       "Error converting IterableMatrix to dgCMatrix",
       "dgCMatrix objects cannot hold more than 2^31 non-zero entries",
-      sprintf("Input matrix has %d entries", length(res@index))
+      sprintf("Input matrix has %0.f entries", length(res@index))
     ))
   }
   if (from@transpose) {
