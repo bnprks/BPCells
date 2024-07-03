@@ -1,27 +1,31 @@
+*Note:* In preparation of `v3` of HighFive, we've started merging breaking
+changes into the main branch. More information and opportunity to comment can
+be found at:
+https://github.com/BlueBrain/HighFive/issues/864
+
 # HighFive - HDF5 header-only C++ Library
 
-[![Build Status](https://travis-ci.org/BlueBrain/HighFive.svg?branch=master)](https://travis-ci.org/BlueBrain/HighFive)
-[![Doxygen -> gh-pages](https://github.com/BlueBrain/HighFive/workflows/gh-pages/badge.svg)](https://BlueBrain.github.io/HighFive)
+[![Doxygen -> gh-pages](https://github.com/BlueBrain/HighFive/workflows/gh-pages/badge.svg?branch=master)](https://BlueBrain.github.io/HighFive/actions/workflows/gh-pages.yml?query=branch%3Amaster)
 [![codecov](https://codecov.io/gh/BlueBrain/HighFive/branch/master/graph/badge.svg?token=UBKxHEn7RS)](https://codecov.io/gh/BlueBrain/HighFive)
 [![HighFive_Integration_tests](https://github.com/BlueBrain/HighFive-testing/actions/workflows/integration.yml/badge.svg)](https://github.com/BlueBrain/HighFive-testing/actions/workflows/integration.yml)
+[![Zenodo](https://zenodo.org/badge/47755262.svg)](https://zenodo.org/doi/10.5281/zenodo.10679422)
 
 Documentation: https://bluebrain.github.io/HighFive/
 
 ## Brief
 
-HighFive is a modern header-only C++11 friendly interface for libhdf5.
+HighFive is a modern header-only C++14 friendly interface for libhdf5.
 
-HighFive supports STL vector/string, Boost::UBLAS, Boost::Multi-array, Eigen and Xtensor. It handles C++ from/to HDF5 with automatic type mapping.
-HighFive does not require additional libraries (see dependencies) and supports both HDF5 thread safety and Parallel HDF5 (contrary to the official hdf5 cpp)
+HighFive supports STL vector/string, Boost::UBLAS, Boost::Multi-array and Xtensor. It handles C++ from/to HDF5 with automatic type mapping.
+HighFive does not require additional libraries (see dependencies).
 
 It integrates nicely with other CMake projects by defining (and exporting) a HighFive target.
-
 
 ### Design
 - Simple C++-ish minimalist interface
 - No other dependency than libhdf5
 - Zero overhead
-- Support C++11
+- Support C++14
 
 ### Feature support
 - create/read/write files, datasets, attributes, groups, dataspaces.
@@ -36,12 +40,17 @@ It integrates nicely with other CMake projects by defining (and exporting) a Hig
 - etc... (see [ChangeLog](./CHANGELOG.md))
 
 ### Dependencies
-- hdf5 (dev)
-- hdf5-mpi (optional, opt-in with -D*HIGHFIVE_PARALLEL_HDF5*=ON)
-- boost >= 1.41 (recommended, opt-out with -D*HIGHFIVE_USE_BOOST*=OFF)
-- eigen3 (optional, opt-in with -D*HIGHFIVE_USE_EIGEN*=ON)
-- xtensor (optional, opt-in with -D*HIGHFIVE_USE_XTENSOR*=ON)
-- half (optional, opt-in with -D*HIGHFIVE_USE_HALF_FLOAT*=ON)
+- HDF5 or pHDF5, including headers
+- boost >= 1.41 (recommended)
+- eigen3 (optional)
+- xtensor (optional)
+- half (optional)
+
+### Known flaws
+- HighFive is not thread-safe. At best it has the same limitations as the HDF5 library. However, HighFive objects modify their members without protecting these writes. Users have reported that HighFive is not thread-safe even when using the threadsafe HDF5 library, e.g., https://github.com/BlueBrain/HighFive/discussions/675.
+- Eigen support in core HighFive was broken until v3.0. See https://github.com/BlueBrain/HighFive/issues/532. H5Easy was not
+  affected.
+- The support of fixed length strings isn't ideal.
 
 
 ## Examples
@@ -49,7 +58,7 @@ It integrates nicely with other CMake projects by defining (and exporting) a Hig
 #### Write a std::vector<int> to 1D HDF5 dataset and read it back
 
 ```c++
-#include <highfive/H5File.hpp>
+#include <highfive/highfive.hpp>
 
 using namespace HighFive;
 
@@ -78,7 +87,8 @@ std::string filename = "/tmp/new_file.h5";
 }
 ```
 
-**Note:** `H5File.hpp` is the top-level header of HighFive core which should be always included.
+**Note:** As of 2.8.0, one can use `highfive/highfive.hpp` to include
+everything HighFive. Prior to 2.8.0 one would include `highfive/H5File.hpp`.
 
 **Note:** For advanced usecases the dataset can be created without immediately
 writing to it. This is common in MPI-IO related patterns, or when growing a
@@ -105,12 +115,6 @@ See [create_attribute_string_integer.cpp](https://github.com/BlueBrain/HighFive/
 See [src/examples/](https://github.com/BlueBrain/HighFive/blob/master/src/examples/) subdirectory for more info.
 
 
-### Compiling with HighFive
-
-```bash
-c++ -o program -I/path/to/highfive/include source.cpp  -lhdf5
-```
-
 ### H5Easy
 
 For several 'standard' use cases the [highfive/H5Easy.hpp](include/highfive/H5Easy.hpp) interface is available. It allows:
@@ -120,11 +124,11 @@ For several 'standard' use cases the [highfive/H5Easy.hpp](include/highfive/H5Ea
     - scalars (to/from an extendible DataSet),
     - strings,
     - vectors (of standard types),
-    - [Eigen::Matrix](http://eigen.tuxfamily.org) (optional, enable CMake option `HIGHFIVE_USE_EIGEN`),
+    - [Eigen::Matrix](http://eigen.tuxfamily.org) (optional),
     - [xt::xarray](https://github.com/QuantStack/xtensor) and [xt::xtensor](https://github.com/QuantStack/xtensor)
-      (optional, enable CMake option `HIGHFIVE_USE_XTENSOR`).
+      (optional).
     - [cv::Mat_](https://docs.opencv.org/master/df/dfc/classcv_1_1Mat__.html)
-      (optional, enable CMake option `HIGHFIVE_USE_OPENCV`).
+      (optional).
 
 * Getting in a single line:
 
@@ -146,66 +150,94 @@ int main() {
 }
 ```
 
-whereby the `int` type of this example can be replaced by any of the above types. See [easy_load_dump.cpp](src/examples/easy_load_dump.cpp) for more details.
+whereby the `int` type of this example can be replaced by any of the above
+types. See [easy_load_dump.cpp](src/examples/easy_load_dump.cpp) for more
+details.
 
-**Note:** Classes such as `H5Easy::File` are just short for the regular `HighFive` classes (in this case `HighFive::File`). They can thus be used interchangeably.
+**Note:** Classes such as `H5Easy::File` are just short for the regular
+`HighFive` classes (in this case `HighFive::File`). They can thus be used
+interchangeably.
 
 
 ## CMake integration
+There's two common paths of integrating HighFive into a CMake based project.
+The first is to "vendor" HighFive, the second is to install HighFive as a
+normal C++ library. Since HighFive makes choices about how to integrate HDF5,
+sometimes following the third Bailout Approach is needed.
 
-HighFive can easily be used by other C++ CMake projects.
+Regular HDF5 CMake variables can be used. Interesting variables include:
 
-You may use HighFive from a folder in your project (typically a git submodule).
+* `HDF5_USE_STATIC_LIBRARIES` to link statically against the HDF5 library.
+* `HDF5_PREFER_PARALLEL` to prefer pHDF5.
+* `HDF5_IS_PARALLEL` to check if HDF5 is parallel.
+
+Please consult `tests/cmake_integration` for examples of how to write libraries
+or applications using HighFive.
+
+### Vendoring HighFive
+
+In this approach the HighFive sources are included in a subdirectory of the
+project (typically as a git submodule), for example in `third_party/HighFive`.
+
+The projects `CMakeLists.txt` add the following lines
 ```cmake
-cmake_minimum_required(VERSION 3.1 FATAL_ERROR)
-project(foo)
-set(CMAKE_CXX_STANDARD 11)
-
-add_subdirectory(highfive_folder)
-add_executable(bar bar.cpp)
-target_link_libraries(bar HighFive)
+add_subdirectory(third_party/HighFive)
+target_link_libraries(foo HighFive)
 ```
 
-Alternativelly you can install HighFive once and use it in several projects via `find_package()`.
+**Note:** `add_subdirectory(third_party/HighFive)` will search and "link" HDF5
+but wont search or link any optional dependencies such as Boost.
 
-A HighFive target will bring the compilation settings to find HighFive headers and all chosen dependencies.
+### Regular Installation of HighFive
 
+Alternatively, HighFive can be install and "found" like regular software.
+
+The project's `CMakeLists.txt` should add the following:
 ```cmake
-# ...
 find_package(HighFive REQUIRED)
-add_executable(bar bar.cpp)
-target_link_libraries(bar HighFive)
-```
-**Note:** Like with other libraries you may need to provide CMake the location to find highfive: `CMAKE_PREFIX_PATH=<highfive_install_dir>`
-
-**Note:** `find_package(HighFive)` will search dependencies as well (e.g. Boost if requested). In order to use the same dependencies found at HighFive install time (e.g. for system deployments) you may set `HIGHFIVE_USE_INSTALL_DEPS=YES`
-
-### Installing
-When installing via CMake, besides the headers, a HighFiveConfig.cmake is generated which provides the HighFive target, as seen before. Note: You may need to set `CMAKE_INSTALL_PREFIX`:
-```bash
-mkdir build && cd build
-# Look up HighFive CMake options, consider inspecting with `ccmake`
-cmake .. -DHIGHFIVE_EXAMPLES=OFF -DCMAKE_INSTALL_PREFIX="<highfive_install_dir>"
-make install
+target_link_libraries(foo HighFive)
 ```
 
-### Test Compilation
-As a header-only library, HighFive doesn't require compilation. You may however build tests and examples.
+**Note:** `find_package(HighFive)` will search for HDF5. "Linking" to
+`HighFive` includes linking with HDF5. The two commands will not search for or
+"link" to optional dependencies such as Boost.
 
-```bash
-mkdir build && cd build
-cmake ../
-make  # build tests and examples
-make test  # build and run unit tests
+### Bailout Approach
+
+To prevent HighFive from searching or "linking" to HDF5 the project's
+`CMakeLists.txt` should contain the following:
+
+```cmake
+# Prevent HighFive CMake code from searching for HDF5:
+set(HIGHFIVE_FIND_HDF5 Off)
+
+# Then "find" HighFive as usual:
+find_package(HighFive REQUIRED)
+# alternatively, when vendoring:
+# add_subdirectory(third_party/HighFive)
+
+# Finally, use the target `HighFive::Include` which
+# doesn't add a dependency on HDF5.
+target_link_libraries(foo HighFive::Include)
+
+# Proceed to find and link HDF5 as required.
 ```
 
-**Note:** Unit tests require Boost. In case it's unavailable you may use `-DHIGHFIVE_USE_BOOST=OFF`.
-HighFive with disable support for Boost types as well as unit tests (though most examples will build).
+### Optional Dependencies
 
-### Code formatting
-If you want to propose pull requests to this project, do not forget to format code with
-clang-format version 12.
-The .clang-format is at the root of the git repository.
+HighFive does not attempt to find or "link" to any optional dependencies, such
+as Boost, Eigen, etc. Any project using HighFive with any of the optional
+dependencies must include the respective header:
+```
+#include <highfive/boost.hpp>
+#include <highfive/eigen.hpp>
+```
+and add the required CMake code to find and link against the dependencies. For
+Boost the required lines might be
+```
+find_package(Boost REQUIRED)
+target_link_libraries(foo PUBLIC Boost::headers)
+```
 
 # Questions?
 
@@ -213,9 +245,15 @@ Do you have questions on how to use HighFive? Would you like to share an interes
 discuss HighFive features? Head over to the [Discussions](https://github.com/BlueBrain/HighFive/discussions)
 forum and join the community.
 
+For bugs and issues please use [Issues](https://github.com/BlueBrain/HighFive/issues).
+
 # Funding & Acknowledgment
  
 The development of this software was supported by funding to the Blue Brain Project, a research center of the École polytechnique fédérale de Lausanne (EPFL), from the Swiss government's ETH Board of the Swiss Federal Institutes of Technology.
+
+HighFive releases are uploaded to Zenodo. If you wish to cite HighFive in a
+scientific publication you can use the DOIs for the
+[Zenodo records](https://zenodo.org/doi/10.5281/zenodo.10679422).
  
 Copyright © 2015-2022 Blue Brain Project/EPFL
 

@@ -240,6 +240,29 @@ test_that("Transpose storage order on dense-transformed matrix (#71 regression t
   expect_identical(as.matrix(res), mat + 1)
 })
 
+test_that("AnnData read backwards compatibility", {
+  # Make a copy since apparently reading the test hdf5 file causes modifications that git detects
+  dir <- withr::local_tempdir()
+
+  ans <- matrix(c(1., 2., 0., 3., 0., 
+                  0., 0., 2., 2., 1., 
+                  0., 0., 2., 0., 2.), ncol=3) %>%
+         as("dgCMatrix")
+  rownames(ans) <- as.character(0:4)
+  colnames(ans) <- as.character(0:2)
+
+  test_files <- c("mini_mat.h5ad", "mini_mat.anndata-v0.6.22.h5ad", "mini_mat.anndata-v0.7.h5ad", "mini_mat.anndata-v0.7.8.h5ad")
+  for (f in test_files) {
+    file.copy(file.path("../data", f), file.path(dir, f))
+    open_matrix_anndata_hdf5(file.path(dir, f)) %>%
+      as("dgCMatrix") %>%
+      expect_identical(ans)
+    open_matrix_anndata_hdf5(file.path(dir, f), group="layers/transpose") %>%
+      as("dgCMatrix") %>%
+      expect_identical(ans)
+  }
+})
+
 test_that("AnnData subset hasn't regressed", {
   dir <- withr::local_tempdir()
   # Make a copy since apparently reading the test hdf5 file causes modifications that git detects

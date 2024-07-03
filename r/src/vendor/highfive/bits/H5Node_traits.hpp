@@ -6,15 +6,20 @@
  *          http://www.boost.org/LICENSE_1_0.txt)
  *
  */
-#ifndef H5NODE_TRAITS_HPP
-#define H5NODE_TRAITS_HPP
+#pragma once
 
 #include <string>
 
 #include "../H5PropertyList.hpp"
 #include "H5_definitions.hpp"
+#include "H5Converter_misc.hpp"
 
 namespace HighFive {
+
+enum class IndexType : std::underlying_type<H5_index_t>::type {
+    NAME = H5_INDEX_NAME,
+    CRT_ORDER = H5_INDEX_CRT_ORDER,
+};
 
 ///
 /// \brief NodeTraits: Base class for Group and File
@@ -48,7 +53,7 @@ class NodeTraits {
     /// \param accessProps A property list with data set access properties
     /// \param parents Create intermediate groups if needed. Default: true.
     /// \return DataSet Object
-    template <typename Type>
+    template <typename T>
     DataSet createDataSet(const std::string& dataset_name,
                           const DataSpace& space,
                           const DataSetCreateProps& createProps = DataSetCreateProps::Default(),
@@ -72,13 +77,6 @@ class NodeTraits {
                           const DataSetAccessProps& accessProps = DataSetAccessProps::Default(),
                           bool parents = true);
 
-
-    template <std::size_t N>
-    DataSet createDataSet(const std::string& dataset_name,
-                          const FixedLenStringArray<N>& data,
-                          const DataSetCreateProps& createProps = DataSetCreateProps::Default(),
-                          const DataSetAccessProps& accessProps = DataSetAccessProps::Default(),
-                          bool parents = true);
 
     ///
     /// \brief get an existing dataset in the current file
@@ -112,6 +110,14 @@ class NodeTraits {
     Group getGroup(const std::string& group_name) const;
 
     ///
+    /// \brief open a commited datatype with the name type_name
+    /// \param type_name
+    /// \return the datatype object
+    DataType getDataType(
+        const std::string& type_name,
+        const DataTypeAccessProps& accessProps = DataTypeAccessProps::Default()) const;
+
+    ///
     /// \brief return the number of leaf objects of the node / group
     /// \return number of leaf objects
     size_t getNumberObjects() const;
@@ -133,8 +139,11 @@ class NodeTraits {
 
     ///
     /// \brief list all leaf objects name of the node / group
+    /// \param idx_type tell if the list should be ordered by Name or CreationOrderTime.
+    /// CreationOrderTime can be use only if the file/group has been created with
+    /// the HighFive::LinkCreationTime property.
     /// \return number of leaf objects
-    std::vector<std::string> listObjectNames() const;
+    std::vector<std::string> listObjectNames(IndexType idx_type = IndexType::NAME) const;
 
     ///
     /// \brief check a dataset or group exists in the current node / group
@@ -187,6 +196,20 @@ class NodeTraits {
                             const LinkAccessProps& linkAccessProps = LinkAccessProps(),
                             const bool parents = true);
 
+    ///
+    /// \brief Creates hardlinks
+    /// \param link_name The name of the link
+    /// \param target_obj The target object
+    /// \param linkCreateProps A Link_Create property list. Notice "parents=true" overrides
+    /// \param linkAccessProps The Link_Access property list
+    /// \param parents Whether parent groups should be created: Default: true
+    template <typename T, typename = decltype(&T::getPath)>
+    void createHardLink(const std::string& link_name,
+                        const T& target_obj,
+                        LinkCreateProps linkCreateProps = LinkCreateProps(),
+                        const LinkAccessProps& linkAccessProps = LinkAccessProps(),
+                        const bool parents = true);
+
   private:
     using derivate_type = Derivate;
 
@@ -194,10 +217,6 @@ class NodeTraits {
     // It makes behavior consistent among versions and by default transforms
     // errors to exceptions
     bool _exist(const std::string& node_name, bool raise_errors = true) const;
-
-    // Opens an arbitrary object to obtain info
-    Object _open(const std::string& node_name,
-                 const DataSetAccessProps& accessProps = DataSetAccessProps::Default()) const;
 };
 
 
@@ -213,6 +232,3 @@ enum class LinkType {
 
 
 }  // namespace HighFive
-
-
-#endif  // H5NODE_TRAITS_HPP

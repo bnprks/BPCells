@@ -6,13 +6,13 @@
  *          http://www.boost.org/LICENSE_1_0.txt)
  *
  */
-#ifndef H5EXCEPTION_MISC_HPP
-#define H5EXCEPTION_MISC_HPP
+#pragma once
 
 #include <cstdlib>
 #include <sstream>
 
-#include <H5Epublic.h>
+#include "h5_wrapper.hpp"
+#include "h5e_wrapper.hpp"
 
 namespace HighFive {
 
@@ -22,14 +22,14 @@ struct HDF5ErrMapper {
         auto** e_iter = static_cast<ExceptionType**>(client_data);
         (void) n;
 
-        const char* major_err = H5Eget_major(err_desc->maj_num);
-        const char* minor_err = H5Eget_minor(err_desc->min_num);
+        const char* major_err = detail::nothrow::h5e_get_major(err_desc->maj_num);
+        const char* minor_err = detail::nothrow::h5e_get_minor(err_desc->min_num);
 
         std::ostringstream oss;
         oss << '(' << major_err << ") " << minor_err;
 
-        free((void*) major_err);
-        free((void*) minor_err);
+        detail::nothrow::h5_free_memory((void*) major_err);
+        detail::nothrow::h5_free_memory((void*) minor_err);
 
         auto* e = new ExceptionType(oss.str());
         e->_err_major = err_desc->maj_num;
@@ -46,8 +46,11 @@ struct HDF5ErrMapper {
             ExceptionType e("");
             ExceptionType* e_iter = &e;
 
-            H5Ewalk2(err_stack, H5E_WALK_UPWARD, &HDF5ErrMapper::stackWalk<ExceptionType>, &e_iter);
-            H5Eclear2(err_stack);
+            detail::nothrow::h5e_walk2(err_stack,
+                                       H5E_WALK_UPWARD,
+                                       &HDF5ErrMapper::stackWalk<ExceptionType>,
+                                       &e_iter);
+            detail::nothrow::h5e_clear2(err_stack);
 
             const char* next_err_msg = (e.nextException() != NULL) ? (e.nextException()->what())
                                                                    : ("");
@@ -61,5 +64,3 @@ struct HDF5ErrMapper {
 };
 
 }  // namespace HighFive
-
-#endif  // H5OBJECT_MISC_HPP

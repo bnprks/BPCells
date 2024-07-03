@@ -27,7 +27,7 @@ inline void H5StringReader::ensureDataReady() {
         uint64_t bytes = type.getSize();
         uint64_t elements = dataset.getDimensions()[0];
         std::vector<char> char_data(bytes * elements);
-        dataset.read(char_data.data(), type);
+        dataset.read_raw(char_data.data(), type);
         data.resize(elements);
         for (uint64_t i = 0; i < elements; i++) {
             data[i] = std::string(char_data.data() + bytes * i, char_data.data() + bytes * (i + 1));

@@ -8,13 +8,12 @@
 
 #pragma once
 
-
 #include "array_interfaces.h"
 
-#include "../../vendor/highfive/H5DataSet.hpp"
-#include "../../vendor/highfive/H5DataSpace.hpp"
-#include "../../vendor/highfive/H5File.hpp"
-#include "../../vendor/highfive/H5Utility.hpp"
+#include <highfive/H5DataSet.hpp>
+#include <highfive/H5DataSpace.hpp>
+#include <highfive/H5File.hpp>
+#include <highfive/H5Utility.hpp>
 
 namespace BPCells {
 
@@ -88,7 +87,7 @@ template <class T> class H5NumReader : public BulkNumReader<T> {
     // Copy up to `count` integers into `out`, returning the actual number copied.
     // Will always load >0 unless there is no more input
     uint64_t load(T *out, uint64_t count) override {
-        dataset.select({pos}, {count}).read(out, datatype);
+        dataset.select({pos}, {count}).read_raw(out, datatype);
         pos += count;
         return count;
     }

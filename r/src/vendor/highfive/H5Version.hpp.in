@@ -6,12 +6,28 @@
  *          http://www.boost.org/LICENSE_1_0.txt)
  *
  */
-#ifndef H5VERSION_HPP
-#define H5VERSION_HPP
+#pragma once
 
 #define HIGHFIVE_VERSION_MAJOR @PROJECT_VERSION_MAJOR@
 #define HIGHFIVE_VERSION_MINOR @PROJECT_VERSION_MINOR@
 #define HIGHFIVE_VERSION_PATCH @PROJECT_VERSION_PATCH@
+
+/** \brief Concatenated representation of the HighFive version.
+ *
+ *  \warning The macro `HIGHFIVE_VERSION` by itself isn't valid C/C++.
+ *
+ *  However, it can be stringified with two layers of macros, e.g.,
+ *  \code{.cpp}
+ *  #define STRINGIFY_VALUE(s) STRINGIFY_NAME(s)
+ *  #define STRINGIFY_NAME(s) #s
+ *
+ *  std::cout << STRINGIFY_VALUE(HIGHFIVE_VERSION) << "\n";
+ *  \endcode
+ */
 #define HIGHFIVE_VERSION @PROJECT_VERSION@
 
-#endif // H5VERSION_HPP
+/** \brief String representation of the HighFive version.
+ *
+ *  \warning This macro only exists from 2.7.1 onwards.
+ */
+#define HIGHFIVE_VERSION_STRING "@PROJECT_VERSION@"

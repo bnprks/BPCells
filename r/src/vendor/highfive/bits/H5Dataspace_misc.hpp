@@ -6,8 +6,7 @@
  *          http://www.boost.org/LICENSE_1_0.txt)
  *
  */
-#ifndef H5DATASPACE_MISC_HPP
-#define H5DATASPACE_MISC_HPP
+#pragma once
 
 #include <array>
 #include <initializer_list>
@@ -18,6 +17,7 @@
 
 #include "H5Utils.hpp"
 #include "H5Converter_misc.hpp"
+#include "h5s_wrapper.hpp"
 
 namespace HighFive {
 
@@ -39,9 +39,15 @@ template <class IT, typename>
 inline DataSpace::DataSpace(const IT begin, const IT end) {
     std::vector<hsize_t> real_dims(begin, end);
 
-    if ((_hid = H5Screate_simple(int(real_dims.size()), real_dims.data(), NULL)) < 0) {
-        throw DataSpaceException("Impossible to create dataspace");
-    }
+    _hid = detail::h5s_create_simple(int(real_dims.size()), real_dims.data(), nullptr);
+}
+
+inline DataSpace DataSpace::Scalar() {
+    return DataSpace(DataSpace::dataspace_scalar);
+}
+
+inline DataSpace DataSpace::Null() {
+    return DataSpace(DataSpace::dataspace_null);
 }
 
 inline DataSpace::DataSpace(const std::vector<size_t>& dims, const std::vector<size_t>& maxdims) {
@@ -58,14 +64,12 @@ inline DataSpace::DataSpace(const std::vector<size_t>& dims, const std::vector<s
                  static_cast<hsize_t>(DataSpace::UNLIMITED),
                  H5S_UNLIMITED);
 
-    if ((_hid = H5Screate_simple(int(dims.size()), real_dims.data(), real_maxdims.data())) < 0) {
-        throw DataSpaceException("Impossible to create dataspace");
-    }
-}  // namespace HighFive
+    _hid = detail::h5s_create_simple(int(dims.size()), real_dims.data(), real_maxdims.data());
+}
 
-inline DataSpace::DataSpace(DataSpace::DataspaceType dtype) {
+inline DataSpace::DataSpace(DataSpace::DataspaceType space_type) {
     H5S_class_t h5_dataspace_type;
-    switch (dtype) {
+    switch (space_type) {
     case DataSpace::dataspace_scalar:
         h5_dataspace_type = H5S_SCALAR;
         break;
@@ -78,48 +82,34 @@ inline DataSpace::DataSpace(DataSpace::DataspaceType dtype) {
             "dataspace_scalar or dataspace_null");
     }
 
-    if ((_hid = H5Screate(h5_dataspace_type)) < 0) {
-        throw DataSpaceException("Unable to create dataspace");
-    }
+    _hid = detail::h5s_create(h5_dataspace_type);
 }
 
 inline DataSpace DataSpace::clone() const {
     DataSpace res;
-    if ((res._hid = H5Scopy(_hid)) < 0) {
-        throw DataSpaceException("Unable to copy dataspace");
-    }
+    res._hid = detail::h5s_copy(_hid);
     return res;
 }
 
 inline size_t DataSpace::getNumberDimensions() const {
-    const int ndim = H5Sget_simple_extent_ndims(_hid);
-    if (ndim < 0) {
-        HDF5ErrMapper::ToException<DataSetException>(
-            "Unable to get dataspace number of dimensions");
-    }
-    return size_t(ndim);
+    return static_cast<size_t>(detail::h5s_get_simple_extent_ndims(_hid));
 }
 
 inline std::vector<size_t> DataSpace::getDimensions() const {
     std::vector<hsize_t> dims(getNumberDimensions());
     if (!dims.empty()) {
-        if (H5Sget_simple_extent_dims(_hid, dims.data(), NULL) < 0) {
-            HDF5ErrMapper::ToException<DataSetException>("Unable to get dataspace dimensions");
-        }
+        detail::h5s_get_simple_extent_dims(_hid, dims.data(), nullptr);
     }
     return details::to_vector_size_t(std::move(dims));
 }
 
 inline size_t DataSpace::getElementCount() const {
-    const std::vector<size_t>& dims = getDimensions();
-    return std::accumulate(dims.begin(), dims.end(), size_t{1u}, std::multiplies<size_t>());
+    return static_cast<size_t>(detail::h5s_get_simple_extent_npoints(_hid));
 }
 
 inline std::vector<size_t> DataSpace::getMaxDimensions() const {
     std::vector<hsize_t> maxdims(getNumberDimensions());
-    if (H5Sget_simple_extent_dims(_hid, NULL, maxdims.data()) < 0) {
-        HDF5ErrMapper::ToException<DataSetException>("Unable to get dataspace dimensions");
-    }
+    detail::h5s_get_simple_extent_dims(_hid, nullptr, maxdims.data());
 
     std::replace(maxdims.begin(),
                  maxdims.end(),
@@ -141,31 +131,11 @@ inline DataSpace DataSpace::FromCharArrayStrings(const char (&)[N][Width]) {
 
 namespace details {
 
-/// dimension checks @internal
-inline bool checkDimensions(const DataSpace& mem_space, size_t input_dims) {
-    size_t dataset_dims = mem_space.getNumberDimensions();
-    if (input_dims == dataset_dims)
-        return true;
-
-    const std::vector<size_t>& dims = mem_space.getDimensions();
-    for (auto i = dims.crbegin(); i != --dims.crend() && *i == 1; ++i)
-        --dataset_dims;
-
-    if (input_dims == dataset_dims)
-        return true;
-
-    dataset_dims = dims.size();
-    for (auto i = dims.cbegin(); i != --dims.cend() && *i == 1; ++i)
-        --dataset_dims;
-
-    if (input_dims == dataset_dims)
-        return true;
-
-    // The final tests is for scalars
-    return input_dims == 0 && dataset_dims == 1 && dims.back() == 1;
+inline bool checkDimensions(const DataSpace& mem_space,
+                            size_t min_dim_requested,
+                            size_t max_dim_requested) {
+    return checkDimensions(mem_space.getDimensions(), min_dim_requested, max_dim_requested);
 }
 
 }  // namespace details
 }  // namespace HighFive
-
-#endif  // H5DATASPACE_MISC_HPP

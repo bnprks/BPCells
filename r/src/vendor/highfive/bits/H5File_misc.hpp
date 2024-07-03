@@ -6,8 +6,7 @@
  *          http://www.boost.org/LICENSE_1_0.txt)
  *
  */
-#ifndef H5FILE_MISC_HPP
-#define H5FILE_MISC_HPP
+#pragma once
 
 #include <string>
 
@@ -15,6 +14,7 @@
 
 #include "../H5Utility.hpp"
 #include "H5Utils.hpp"
+#include "h5f_wrapper.hpp"
 
 namespace HighFive {
 
@@ -63,7 +63,7 @@ inline File::File(const std::string& filename,
         if (openOrCreate)
             silencer.reset(new SilenceHDF5());
 
-        _hid = H5Fopen(filename.c_str(), openMode, fileAccessProps.getId());
+        _hid = detail::nothrow::h5f_open(filename.c_str(), openMode, fileAccessProps.getId());
 
         if (isValid())
             return;  // Done
@@ -79,79 +79,60 @@ inline File::File(const std::string& filename,
 
     auto fcpl = fileCreateProps.getId();
     auto fapl = fileAccessProps.getId();
-    if ((_hid = H5Fcreate(filename.c_str(), createMode, fcpl, fapl)) < 0) {
-        HDF5ErrMapper::ToException<FileException>(std::string("Unable to create file " + filename));
-    }
+    _hid = detail::h5f_create(filename.c_str(), createMode, fcpl, fapl);
 }
 
-inline const std::string& File::getName() const noexcept {
+inline const std::string& File::getName() const {
     if (_filename.empty()) {
-        _filename = details::get_name(
-            [this](char* buffer, size_t length) { return H5Fget_name(getId(), buffer, length); });
+        _filename = details::get_name([this](char* buffer, size_t length) {
+            return detail::h5f_get_name(getId(), buffer, length);
+        });
     }
     return _filename;
 }
 
 inline hsize_t File::getMetadataBlockSize() const {
-    hsize_t size;
     auto fapl = getAccessPropertyList();
-    if (H5Pget_meta_block_size(fapl.getId(), &size) < 0) {
-        HDF5ErrMapper::ToException<FileException>(
-            std::string("Unable to access file metadata block size"));
-    }
-    return size;
+    return MetadataBlockSize(fapl).getSize();
 }
 
 inline std::pair<H5F_libver_t, H5F_libver_t> File::getVersionBounds() const {
-    H5F_libver_t low;
-    H5F_libver_t high;
     auto fapl = getAccessPropertyList();
-    if (H5Pget_libver_bounds(fapl.getId(), &low, &high) < 0) {
-        HDF5ErrMapper::ToException<FileException>(
-            std::string("Unable to access file version bounds"));
-    }
-    return std::make_pair(low, high);
+    auto fileVer = FileVersionBounds(fapl);
+    return fileVer.getVersion();
 }
 
 #if H5_VERSION_GE(1, 10, 1)
 inline H5F_fspace_strategy_t File::getFileSpaceStrategy() const {
     auto fcpl = getCreatePropertyList();
-
-    H5F_fspace_strategy_t strategy;
-    hbool_t persist;
-    hsize_t threshold;
-
-    if (H5Pget_file_space_strategy(fcpl.getId(), &strategy, &persist, &threshold) < 0) {
-        HDF5ErrMapper::ToException<FileException>(std::string("Unable to get file space strategy"));
-    }
-
-    return strategy;
+    FileSpaceStrategy spaceStrategy(fcpl);
+    return spaceStrategy.getStrategy();
 }
 
 inline hsize_t File::getFileSpacePageSize() const {
     auto fcpl = getCreatePropertyList();
-    hsize_t page_size;
 
     if (getFileSpaceStrategy() != H5F_FSPACE_STRATEGY_PAGE) {
         HDF5ErrMapper::ToException<FileException>(
             std::string("Cannot obtain page size as paged allocation is not used."));
     }
 
-    if (H5Pget_file_space_page_size(fcpl.getId(), &page_size) < 0) {
-        HDF5ErrMapper::ToException<FileException>(
-            std::string("Unable to get file space page size"));
-    }
-
-    return page_size;
+    return FileSpacePageSize(fcpl).getPageSize();
 }
 #endif
 
 inline void File::flush() {
-    if (H5Fflush(_hid, H5F_SCOPE_GLOBAL) < 0) {
-        HDF5ErrMapper::ToException<FileException>(std::string("Unable to flush file " + getName()));
-    }
+    detail::h5f_flush(_hid, H5F_SCOPE_GLOBAL);
+}
+
+inline size_t File::getFileSize() const {
+    hsize_t sizeValue = 0;
+    detail::h5f_get_filesize(_hid, &sizeValue);
+    return static_cast<size_t>(sizeValue);
+}
+
+inline size_t File::getFreeSpace() const {
+    return static_cast<size_t>(detail::h5f_get_freespace(_hid));
 }
 
 }  // namespace HighFive
-
-#endif  // H5FILE_MISC_HPP
