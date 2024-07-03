@@ -616,7 +616,7 @@ colVars.IterableMatrix <- function(x, rows = NULL, cols = NULL, na.rm = FALSE, c
 }
 rlang::on_load({
   if (requireNamespace("MatrixGenerics", quietly=TRUE)) {
-    setMethod(MatrixGenerics::colVars, "IterableMatrix", colVars.IterableMatrix)
+    methods::setMethod(MatrixGenerics::colVars, "IterableMatrix", colVars.IterableMatrix)
   }
 })
 
@@ -643,7 +643,7 @@ rowVars.IterableMatrix <- function(x, rows = NULL, cols = NULL, na.rm = FALSE, c
 }
 rlang::on_load({
   if (requireNamespace("MatrixGenerics", quietly=TRUE)) {
-    setMethod(MatrixGenerics::rowVars, "IterableMatrix", rowVars.IterableMatrix)
+    methods::setMethod(MatrixGenerics::rowVars, "IterableMatrix", rowVars.IterableMatrix)
   }
 })
 
