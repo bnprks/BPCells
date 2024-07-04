@@ -844,7 +844,12 @@ setMethod("[", "MatrixSubset", function(x, i, j, ...) {
   i <- if(length(x@row_selection) == 0 && !x@zero_dims[1]) rlang::missing_arg() else x@row_selection
   j <- if(length(x@col_selection) == 0 && !x@zero_dims[2]) rlang::missing_arg() else x@col_selection
   res <- x@matrix[rlang::maybe_missing(i), rlang::maybe_missing(j)]
-  dimnames(res) <- dimnames(x)
+  # If we are the final operation (signified by having non-null dimnames), make sure
+  # those dimnames are preserved as the inner matrix becomes the new outer matrix.
+  # If we are an inner operation (signified by having null dimnames), then setting
+  # things here will cause C++ to no longer find the correct dimnames. (See issue #97)
+  if (!is.null(rownames(x))) rownames(res) <- rownames(x)
+  if (!is.null(colnames(x))) colnames(res) <- colnames(x)
   res
 })
 

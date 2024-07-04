@@ -187,6 +187,22 @@ test_that("Subsetting RowBindMatrices/ColBindMatrices works", {
   }
 })
 
+test_that("Subset, op, subset dimnames are preserved (#97 regression)", {
+  m1 <- generate_sparse_matrix(10, 5) 
+  rownames(m1) <- paste0("row", seq_len(nrow(m1)))
+  colnames(m1) <- paste0("col", seq_len(ncol(m1)))
+
+  m2 <- as(m1, "IterableMatrix")
+  m2 <- m2[1:5,1:3] |> convert_matrix_type("uint32_t") 
+  m2 <- m2[1:3,]
+  expect_identical(m1[1:3,1:3], as(write_matrix_memory(m2), "dgCMatrix"))
+
+  m2 <- as(m1, "IterableMatrix")
+  m2 <- m2[1:5,1:3] * 1
+  m2 <- m2[1:3,]
+  expect_identical(m1[1:3,1:3], as(write_matrix_memory(m2), "dgCMatrix"))
+})
+
 test_that("rbind and cbind check types (#68 regression)", {
   m <- generate_dense_matrix(10, 5) %>% as("dgCMatrix") %>% as("IterableMatrix")
 
