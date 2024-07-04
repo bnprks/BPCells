@@ -1210,7 +1210,10 @@ setMethod("[", "RowBindMatrices", function(x, i, j, ...) {
   if (length(new_mats) > 1) {
     x@matrix_list <- new_mats
   } else if(length(new_mats) == 1) {
-    dimnames(new_mats[[1]]) <- dimnames(x)
+    # Only set dimnames here if we know non-null ones, otherwise it might
+    # prevent name propagation at the C++ level. (See "[" for MatrixSubset)
+    if (!is.null(rownames(x))) rownames(new_mats[[1]]) <- rownames(x)
+    if (!is.null(colnames(x))) colnames(new_mats[[1]]) <- colnames(x)
     x <- new_mats[[1]]
   } else {
     stop("Subset RowBindMatrix error: got 0-length matrix_list after subsetting (please report this BPCells bug)")
@@ -1270,7 +1273,10 @@ setMethod("[", "ColBindMatrices", function(x, i, j, ...) {
   if (length(new_mats) > 1) {
     x@matrix_list <- new_mats
   } else if(length(new_mats) == 1) {
-    dimnames(new_mats[[1]]) <- dimnames(x)
+    # Only set dimnames here if we know non-null ones, otherwise it might
+    # prevent name propagation at the C++ level. (See "[" for MatrixSubset)
+    if (!is.null(rownames(x))) rownames(new_mats[[1]]) <- rownames(x)
+    if (!is.null(colnames(x))) colnames(new_mats[[1]]) <- colnames(x)
     x <- new_mats[[1]]
   } else {
     stop("Subset ColBindMatrix error: got 0-length matrix_list after subsetting (please report this BPCells bug)")

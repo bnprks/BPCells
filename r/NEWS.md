@@ -15,6 +15,8 @@ Contributions welcome :)
 
 ## Bug-fixes
 - Fixed error message when a matrix is too large to be converted to dgCMatrix (Thanks to @RookieA1 for reporting issue #95)
+- Fixed forgetting dimnames when subsetting after certain sets of
+  operations (Thanks to @Yunuuuu for reporting issues #97 and #100)
 
 # BPCells 0.2.0 (6/14/2024)
 
