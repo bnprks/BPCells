@@ -203,6 +203,22 @@ test_that("Subset, op, subset dimnames are preserved (#97 regression)", {
   expect_identical(m1[1:3,1:3], as(write_matrix_memory(m2), "dgCMatrix"))
 })
 
+test_that("Subset rbind/cbind dimnames are preserved (#100 regression)", {
+  m1 <- generate_sparse_matrix(10, 5)
+  rownames(m1) <- paste0("row", seq_len(nrow(m1)))
+  colnames(m1) <- paste0("col", seq_len(ncol(m1)))
+
+  m2 <- rbind(as(m1, "IterableMatrix"), as(m1, "IterableMatrix")) %>%
+    convert_matrix_type("uint32_t") %>%
+    .[1:5, 1:5]
+  expect_identical(m1[1:5,1:5], as(write_matrix_memory(m2), "dgCMatrix"))
+
+  m2 <- cbind(as(m1, "IterableMatrix"), as(m1, "IterableMatrix")) %>%
+    convert_matrix_type("uint32_t")%>%
+    .[1:5, 1:5]
+  expect_identical(m1[1:5,1:5], as(write_matrix_memory(m2), "dgCMatrix"))
+})
+
 test_that("rbind and cbind check types (#68 regression)", {
   m <- generate_dense_matrix(10, 5) %>% as("dgCMatrix") %>% as("IterableMatrix")
 
