@@ -2870,3 +2870,89 @@ apply_by_col <- function(mat, fun, ...) {
   apply_matrix_double_cpp(iterate_matrix(convert_matrix_type(mat, "double")), f, FALSE)
 }
 
+#' Apply Functions Over matrix Margins
+#'
+#' @param X An `IterableMatrix` object.
+#' @param MARGIN A single number giving the subscripts which the function will
+#' be applied over, `1` indicates rows, `2` indicates columns.
+#' @param FUN Function to be applied. `FUN` is found by a call to [match.fun]
+#' and typically is either a function or a symbol (e.g., a backquoted name) or a
+#' character string specifying a function to be searched for from the
+#' environment of the call to apply.
+#' @inheritParams base::apply
+#' @return
+#' If each call to `FUN` returns a vector of length `n`, and simplify is `TRUE`,
+#' then `apply` returns an array of dimension `c(n, dim(X)[MARGIN])` if `n > 1`.
+#' If `n` equals `1`, `apply` returns a vector if `MARGIN` has length 1 and an
+#' array of dimension `dim(X)[MARGIN]` otherwise. If `n` is `0`, the result has
+#' length 0 but not necessarily the ‘correct’ dimension.
+#'
+#' If the calls to `FUN` return vectors of different lengths, or if `simplify`
+#' is `FALSE`, `apply` returns a list of length `dim(X)[MARGIN]`.
+#' @export
+apply <- function(X, MARGIN, FUN, ..., simplify = TRUE) {
+  assert_is(X, "IterableMatrix")
+  FUN <- match.fun(FUN)
+  if (length(MARGIN) != 1L || !is.numeric(MARGIN)) {
+    rlang::abort("`MARGIN` must be a single number")
+  } else if (is.na(MARGIN)) {
+    rlang::abort("`MARGIN` cannot be `NA`")
+  }
+  X_dim <- dim(X)
+  MARGIN <- as.integer(MARGIN)
+  if (MARGIN < 1L || MARGIN > length(X_dim)) {
+    rlang::abort("`MARGIN` must be >= 1 and <= length(dim(X))")
+  }
+  if (X_dim[[MARGIN]] == 0L) { # copied from DelayedArray::apply
+    ## base::apply seems to be doing something like that!
+    ans <- FUN(X, ...)
+    return(as.vector(ans[0L]))
+  }
+  # initial values for row/col
+  values <- integer(dim(X)[3L - MARGIN]) # nolint
+  nms <- switch(MARGIN,
+    rownames(X),
+    colnames(X)
+  )
+  .fun <- switch(MARGIN,
+    function(.value, .row_index, .col_index, ...) {
+      # restore zero values
+      values[.col_index] <- .value
+      FUN(values, ...)
+    },
+    function(.value, .row_index, .col_index, ...) {
+      # restore zero values
+      values[.row_index] <- .value
+      FUN(values, ...)
+    }
+  )
+  ans <- switch(MARGIN,
+    {
+      if (storage_order(X) == "col") {
+        X <- transpose_storage_order(X)
+      }
+      apply_by_row(mat = X, fun = .fun, ...)
+    },
+    {
+      if (storage_order(X) == "row") {
+        X <- transpose_storage_order(X)
+      }
+      apply_by_col(mat = X, fun = .fun, ...)
+    }
+  )
+  if (simplify) {
+    lens <- lengths(ans)
+    if (all(lens == .subset(lens, 1L))) {
+      if (.subset(lens, 1L) == 1L) {
+        ans <- unlist(ans, recursive = FALSE, use.names = FALSE)
+        names(ans) <- nms
+      } else {
+        ans <- do.call(cbind, ans)
+        colnames(ans) <- nms
+      }
+    }
+  } else {
+    names(ans) <- nms
+  }
+  ans
+}

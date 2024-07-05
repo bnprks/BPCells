@@ -866,7 +866,7 @@ test_that("apply_by_row and apply_by_col works", {
   expect_equal(res_mean, colMeans(mat))
 
   res_argmax <- apply_by_col(mat, function(val, row, col) {if (length(val) > 0) row[which.max(val)] else 1L}) %>% unlist()
-  expect_identical(res_argmax, apply(as.matrix(mat), 2, which.max))
+  expect_identical(res_argmax, base::apply(as.matrix(mat), 2, which.max))
 
   res_col <- apply_by_col(mat, function(val, row, col) col) %>% unlist()
   expect_identical(res_col, seq_len(ncol(mat)))
@@ -880,11 +880,71 @@ test_that("apply_by_row and apply_by_col works", {
   expect_equal(res_mean, colMeans(mat))
 
   res_argmax <- apply_by_row(tmat, function(val, row, col) {if (length(val) > 0) col[which.max(val)] else 1L}) %>% unlist()
-  expect_identical(res_argmax, apply(as.matrix(mat), 2, which.max))
+  expect_identical(res_argmax, base::apply(as.matrix(mat), 2, which.max))
 
   res_col <- apply_by_row(tmat, function(val, row, col) row) %>% unlist()
   expect_identical(res_col, seq_len(ncol(mat)))
 
   # Expect error on transpose
   expect_error(apply_by_col(tmat, c), "transpose_storage_order")
+})
+
+test_that("apply works as expected", {
+  mat <- generate_sparse_matrix(4, 5)
+  obj <- as(mat, "IterableMatrix")
+
+  # row operations --------------------------
+  expect_equal(apply(obj, 1, sum), base::apply(mat, 1, sum))
+  expect_equal(
+    apply(transpose_storage_order(obj), 1, sum),
+    base::apply(mat, 1, sum)
+  )
+
+  expect_equal(apply(obj, 1, mean), base::apply(mat, 1, mean))
+  expect_equal(
+    apply(transpose_storage_order(obj), 1, mean),
+    base::apply(mat, 1, mean)
+  )
+
+  expect_equal(
+    apply(obj, 1, stats::quantile),
+    base::apply(mat, 1, stats::quantile)
+  )
+  expect_equal(
+    apply(obj, 1, stats::quantile, simplify = FALSE),
+    base::apply(mat, 1, stats::quantile, simplify = FALSE)
+  )
+  expect_equal(
+    apply(transpose_storage_order(obj), 1, stats::quantile),
+    base::apply(mat, 1, stats::quantile)
+  )
+
+
+  # column operations --------------------------
+  expect_equal(apply(obj, 2L, sum), base::apply(mat, 2L, sum))
+  expect_equal(
+    apply(transpose_storage_order(obj), 2L, sum),
+    base::apply(mat, 2L, sum)
+  )
+
+
+  expect_equal(apply(obj, 2L, mean), base::apply(mat, 2L, mean))
+  expect_equal(
+    apply(transpose_storage_order(obj), 2L, mean),
+    base::apply(mat, 2L, mean)
+  )
+
+
+  expect_equal(
+    apply(obj, 2L, stats::quantile),
+    base::apply(mat, 2L, stats::quantile)
+  )
+  expect_equal(
+    apply(obj, 2L, stats::quantile, simplify = FALSE),
+    base::apply(mat, 2L, stats::quantile, simplify = FALSE)
+  )
+  expect_equal(
+    apply(transpose_storage_order(obj), 2L, stats::quantile),
+    base::apply(mat, 2L, stats::quantile)
+  )
 })
