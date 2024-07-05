@@ -79,6 +79,7 @@ well as all users who submitted github issues to help identify and fix bugs.
   graph-based clustering
 - Add `checksum()`, which allows for calculating an MD5 checksum of a matrix contents. Thanks to @brgrew for submitting this improvement in pull request #83
 - `write_insertion_bedgraph()` allows exporting pseudobulk insertion data to bedgraph format
+- Add `row_max()` and `col_max()` functions, which return the maximum value in each row or column of a matrix.
 
 ## Improvements
 - Merging fragments with `c()` now handles inputs with mismatched chromosome names.

@@ -24,7 +24,6 @@
 #include "bpcells-cpp/matrixIterators/SVD.h"
 #include "bpcells-cpp/matrixIterators/TSparseMatrixWriter.h"
 #include "bpcells-cpp/matrixUtils/WilcoxonRankSum.h"
-
 #include "R_array_io.h"
 #include "R_interrupts.h"
 #include "R_xptr_wrapper.h"
@@ -622,6 +621,32 @@ List apply_matrix_double_cpp(SEXP mat_sexp, Function f, bool row_major) {
     }
 
     return ret;
+}
+
+// Compute the max of each row
+// [[Rcpp::export]]
+NumericVector matrix_compute_max_per_row(SEXP matrix) {
+    MatrixIterator<double> it(take_unique_xptr<MatrixLoader<double>>(matrix));
+    std::vector<double> result(it.rows());
+    std::fill(result.begin(), result.end(), 0.0);
+    while (it.nextCol()) {
+        while (it.nextValue()) {
+            result[it.row()] = std::max(result[it.row()], it.val());
+    }}
+    return Rcpp::wrap(result);
+}
+
+// Computer the max of each col
+// [[Rcpp::export]]
+NumericVector matrix_compute_max_per_col(SEXP matrix) {
+    MatrixIterator<double> it(take_unique_xptr<MatrixLoader<double>>(matrix));
+    std::vector<double> result(it.cols());
+    std::fill(result.begin(), result.end(), 0.0);
+    while (it.nextCol()) {
+        while (it.nextValue()) {
+            result[it.col()] = std::max(result[it.col()], it.val());
+    }}
+    return Rcpp::wrap(result);
 }
 
 // [[Rcpp::export]]

@@ -2418,6 +2418,28 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// matrix_compute_max_per_row
+NumericVector matrix_compute_max_per_row(SEXP matrix);
+RcppExport SEXP _BPCells_matrix_compute_max_per_row(SEXP matrixSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type matrix(matrixSEXP);
+    rcpp_result_gen = Rcpp::wrap(matrix_compute_max_per_row(matrix));
+    return rcpp_result_gen;
+END_RCPP
+}
+// matrix_compute_max_per_col
+NumericVector matrix_compute_max_per_col(SEXP matrix);
+RcppExport SEXP _BPCells_matrix_compute_max_per_col(SEXP matrixSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type matrix(matrixSEXP);
+    rcpp_result_gen = Rcpp::wrap(matrix_compute_max_per_col(matrix));
+    return rcpp_result_gen;
+END_RCPP
+}
 // matrix_identical_uint32_t_cpp
 bool matrix_identical_uint32_t_cpp(SEXP mat1, SEXP mat2);
 RcppExport SEXP _BPCells_matrix_identical_uint32_t_cpp(SEXP mat1SEXP, SEXP mat2SEXP) {
@@ -2614,6 +2636,8 @@ static const R_CallMethodDef CallEntries[] = {
     {"_BPCells_matrix_value_histogram_cpp", (DL_FUNC) &_BPCells_matrix_value_histogram_cpp, 2},
     {"_BPCells_checksum_double_cpp", (DL_FUNC) &_BPCells_checksum_double_cpp, 1},
     {"_BPCells_apply_matrix_double_cpp", (DL_FUNC) &_BPCells_apply_matrix_double_cpp, 3},
+    {"_BPCells_matrix_compute_max_per_row", (DL_FUNC) &_BPCells_matrix_compute_max_per_row, 1},
+    {"_BPCells_matrix_compute_max_per_col", (DL_FUNC) &_BPCells_matrix_compute_max_per_col, 1},
     {"_BPCells_matrix_identical_uint32_t_cpp", (DL_FUNC) &_BPCells_matrix_identical_uint32_t_cpp, 2},
     {NULL, NULL, 0}
 };

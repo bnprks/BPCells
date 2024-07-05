@@ -27,7 +27,6 @@ setClass("IterableMatrix",
   )
 )
 
-
 #' Construct an S4 matrix object wrapping another matrix object
 #'
 #' Helps to avoid duplicate storage of dimnames
@@ -157,6 +156,36 @@ all_matrix_inputs <- function(x) {
   matrix_inputs(x) <- direct_inputs
   x
 }
+
+#' Get the max of each row in an iterable matrix
+#' @param x IterableMatrix object/dgCMatrix object
+#' @export
+row_max <- function(x) {
+  iter <- iterate_matrix(convert_matrix_type(x, "double"))
+  if(x@transpose == TRUE) {
+    res <- matrix_compute_max_per_col(iter)
+  } else {
+    res <- matrix_compute_max_per_row(iter)
+  }
+  names(res) <- rownames(x)
+  res
+}
+
+
+#' Get the max of each col in an interable matrix
+#' @param x IterableMatrix/dgCMatrix object
+#' @export
+col_max <- function(x) {
+  iter <- iterate_matrix(convert_matrix_type(x, "double"))
+  if(x@transpose == TRUE) {
+    res <- matrix_compute_max_per_row(iter)
+  } else {
+    res <- matrix_compute_max_per_col(iter)
+  }
+  names(res) <- colnames(x)
+  res
+}
+
 
 setMethod("short_description", "IterableMatrix", function(x) {
   character(0)

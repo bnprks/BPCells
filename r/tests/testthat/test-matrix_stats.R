@@ -188,3 +188,61 @@ test_that("svds registers generic with RSpectra", {
   equal_svds(ans, RSpectra::svds(i1, k=5))
   equal_svds(ans, BPCells::svds(m1, k=5))
 })
+
+test_that("row_max works for iterable matrices", {
+  withr::local_seed(195123)
+  m1 <- matrix(1, nrow = 3, ncol = 4)
+  i1 <- m1 %>% as("dgCMatrix") %>% as("IterableMatrix")
+  expect_equal(row_max(i1), matrixStats::rowMaxs(as.matrix(m1)))
+})
+
+test_that("row_max works with some rows set to 0", {
+  withr::local_seed(195123)
+  m1 <- matrix(1, nrow = 3, ncol = 4)
+  m1[2,] <- 0
+  i1 <- m1 %>% as("dgCMatrix") %>% as("IterableMatrix")
+  expect_equal(row_max(i1), matrixStats::rowMaxs(as.matrix(m1)))
+})
+
+test_that("row_max works with all rows set to 0", {
+  withr::local_seed(195123)
+  m1 <- matrix(0, nrow = 3, ncol = 4)
+  i1 <- m1 %>% as("dgCMatrix") %>% as("IterableMatrix")
+  expect_equal(row_max(i1), matrixStats::rowMaxs(as.matrix(m1)))
+})
+
+test_that("row_max works after transposing the matrix", {
+  withr::local_seed(195123)
+  m1 <- matrix(1, nrow = 3, ncol = 4)
+  i1 <- m1 %>% as("dgCMatrix") %>% as("IterableMatrix")
+  expect_equal(row_max(t(i1)), matrixStats::rowMaxs(t(as.matrix(m1))))
+})
+
+test_that("col_max works for iterable matrices", {
+  withr::local_seed(195123)
+  m1 <- matrix(1, nrow = 3, ncol = 4)
+  i1 <- m1 %>% as("dgCMatrix") %>% as("IterableMatrix")
+  expect_equal(col_max(i1), matrixStats::colMaxs(as.matrix(m1)))
+})
+
+test_that("col_max works with col set to 0", {
+  withr::local_seed(195123)
+  m1 <- matrix(1, nrow = 3, ncol = 4)
+  m1[,2] <- 0
+  i1 <- m1 %>% as("dgCMatrix") %>% as("IterableMatrix")
+  expect_equal(col_max(i1), matrixStats::colMaxs(as.matrix(m1)))
+})
+
+test_that("col_max works with all cols set to 0", {
+  withr::local_seed(195123)
+  m1 <- matrix(0, nrow = 3, ncol = 4)
+  i1 <- m1 %>% as("dgCMatrix") %>% as("IterableMatrix")
+  expect_equal(col_max(i1), matrixStats::colMaxs(as.matrix(m1)))
+})
+
+test_that("col_max works after transposing the matrix", {
+  withr::local_seed(195123)
+  m1 <- matrix(1, nrow = 3, ncol = 4)
+  i1 <- m1 %>% as("dgCMatrix") %>% as("IterableMatrix")
+  expect_equal(col_max(t(i1)), matrixStats::colMaxs(t(as.matrix(m1))))
+})
