@@ -22,6 +22,15 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// register_highfive_logging_callback
+void register_highfive_logging_callback();
+RcppExport SEXP _BPCells_register_highfive_logging_callback() {
+BEGIN_RCPP
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    register_highfive_logging_callback();
+    return R_NilValue;
+END_RCPP
+}
 // read_integer_vector
 IntegerVector read_integer_vector(SEXP input);
 RcppExport SEXP _BPCells_read_integer_vector(SEXP inputSEXP) {
@@ -2433,6 +2442,7 @@ END_RCPP
 
 static const R_CallMethodDef CallEntries[] = {
     {"_BPCells_convert_ulong_to_numeric", (DL_FUNC) &_BPCells_convert_ulong_to_numeric, 1},
+    {"_BPCells_register_highfive_logging_callback", (DL_FUNC) &_BPCells_register_highfive_logging_callback, 0},
     {"_BPCells_read_integer_vector", (DL_FUNC) &_BPCells_read_integer_vector, 1},
     {"_BPCells_open_file_reader", (DL_FUNC) &_BPCells_open_file_reader, 1},
     {"_BPCells_open_bp128_d1z", (DL_FUNC) &_BPCells_open_bp128_d1z, 5},

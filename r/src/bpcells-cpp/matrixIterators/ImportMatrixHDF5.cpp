@@ -615,14 +615,15 @@ void readMember(HighFive::DataSet &&dataset, std::string name, std::vector<T> &o
         ss << "Member \"" << name << "\" not found in compound data type";
         throw HighFive::DataTypeException(ss.str());
     }
+    // Since HDF5 is pretty good about compatibility, we can ask for a "type" that has just the one field we care about
     HighFive::CompoundType subtype({{name.c_str(), field_type}});
 
     out.resize(dims[0]);
     // Use a data-converter like the fancy read function (makes string conversion etc. work)
-    auto r = HighFive::details::data_converter::get_reader<std::vector<T>>(dims, out);
-    dataset.read(r.get_pointer(), subtype);
+    auto r = HighFive::details::data_converter::get_reader<std::vector<T>>(dims, out, field_type);
+    dataset.read_raw(r.getPointer(), subtype);
     // re-arrange results
-    r.unserialize();
+    r.unserialize(out);
 }
 
 } // end namespace BPCells

@@ -6,8 +6,7 @@
  *          http://www.boost.org/LICENSE_1_0.txt)
  *
  */
-#ifndef H5PROPERTY_LIST_HPP
-#define H5PROPERTY_LIST_HPP
+#pragma once
 
 #include <vector>
 
@@ -23,11 +22,71 @@
 
 namespace HighFive {
 
+/// \defgroup PropertyLists Property Lists
+/// HDF5 is configured through what they call property lists. In HDF5 the
+/// process has four steps:
+///
+/// 1. Create a property list. As users we now have an `hid_t` identifying the
+/// property list.
+/// 2. Set properties as desired.
+/// 3. Pass the HID to the HDF5 function to be configured.
+/// 4. Free the property list.
+///
+/// Note that the mental picture is that one creates a settings object, and
+/// then passes those settings to a function such as `H5Dwrite`. In and of
+/// themselves the settings don't change the behaviour of HDF5. Rather they
+/// need to be used to take affect.
+///
+/// The second aspect is that property lists represent any number of related
+/// settings, e.g. there's property lists anything related to creating files
+/// and another for accessing files, same for creating and accessing datasets,
+/// etc. Settings that affect creating files, must be passed a file creation
+/// property list, while settings that affect file access require a file access
+/// property list.
+///
+/// In HighFive the `PropertyList` works similar in that it's a object
+/// representing the settings, i.e. internally it's just the property lists
+/// HID. Just like in HDF5 one adds the settings to the settings object; and
+/// then passes the settings object to the respective method. Example:
+///
+///
+///     // Create an object which contains the setting to
+///     // open files with MPI-IO.
+///     auto fapl = FileAccessProps();
+///     fapl.add(MPIOFileAccess(MPI_COMM_WORLD, MPI_INFO_NULL);
+///
+///     // To open a specific file with MPI-IO, we do:
+///     auto file = File("foo.h5", File::ReadOnly, fapl);
+///
+/// Note that the `MPIOFileAccess` object by itself doesn't affect the
+/// `FileAccessProps`. Rather it needs to be explicitly added to the `fapl`
+/// (the group of file access related settings), and then the `fapl` needs to
+/// be passed to the constructor of `File` for the settings to take affect.
+///
+/// This is important to understand when reading properties. Example:
+///
+///     // Obtain the file access property list:
+///     auto fapl = file.getAccessPropertyList()
+///
+///     // Extracts a copy of the collective MPI-IO metadata settings from
+///     // the group of file access related setting, i.e. the `fapl`:
+///     auto mpio_metadata = MPIOCollectiveMetadata(fapl);
+///
+///     if(mpio_metadata.isCollectiveRead()) {
+///       // something specific if meta data is read collectively.
+///     }
+///
+///     // Careful, this only affects the `mpio_metadata` object, but not the
+///     //  `fapl`, and also not whether `file` uses collective MPI-IO for
+///     // metadata.
+///     mpio_metadata = MPIOCollectiveMetadata(false, false);
+///
+/// @{
+
 ///
 /// \brief Types of property lists
 ///
 enum class PropertyType : int {
-    OBJECT_CREATE,
     FILE_CREATE,
     FILE_ACCESS,
     DATASET_CREATE,
@@ -39,7 +98,6 @@ enum class PropertyType : int {
     DATATYPE_ACCESS,
     STRING_CREATE,
     ATTRIBUTE_CREATE,
-    OBJECT_COPY,
     LINK_CREATE,
     LINK_ACCESS,
 };
@@ -49,7 +107,7 @@ template <typename T, typename U>
 T get_plist(const U& obj, hid_t (*f)(hid_t)) {
     auto hid = f(obj.getId());
     if (hid < 0) {
-        HDF5ErrMapper::ToException<PropertyException>(std::string("Unable to get property list"));
+        HDF5ErrMapper::ToException<PropertyException>("Unable to get property list");
     }
     T t{};
     t._hid = hid;
@@ -73,6 +131,26 @@ class PropertyListBase: public Object {
     friend T details::get_plist(const U&, hid_t (*f)(hid_t));
 };
 
+/// \interface PropertyInterface
+/// \brief HDF5 file property object
+///
+/// A property is an object which is expected to have a method with the
+/// following signature `void apply(hid_t hid) const`
+///
+/// \sa Instructions to document C++20 concepts with Doxygen: https://github.com/doxygen/doxygen/issues/2732#issuecomment-509629967
+///
+/// \cond
+#if HIGHFIVE_HAS_CONCEPTS && __cplusplus >= 202002L
+template <typename P>
+concept PropertyInterface = requires(P p, const hid_t hid) {
+    {p.apply(hid)};
+};
+
+#else
+#define PropertyInterface typename
+#endif
+/// \endcond
+
 ///
 /// \brief HDF5 property Lists
 ///
@@ -89,8 +167,8 @@ class PropertyList: public PropertyListBase {
     /// Add a property to this property list.
     /// A property is an object which is expected to have a method with the
     /// following signature void apply(hid_t hid) const
-    ///
-    template <typename P>
+    /// \tparam PropertyInterface
+    template <PropertyInterface P>
     void add(const P& property);
 
     ///
@@ -99,11 +177,22 @@ class PropertyList: public PropertyListBase {
         return static_cast<const PropertyList<T>&>(PropertyListBase::Default());
     }
 
+    /// Return a property list created via a call to `H5Pcreate`.
+    ///
+    /// An empty property is needed when one wants `getId()` to immediately
+    /// point at a valid HID. This is important when interfacing directly with
+    /// HDF5 to set properties that haven't been wrapped by HighFive.
+    static PropertyList<T> Empty() {
+        auto plist = PropertyList<T>();
+        plist._initializeIfNeeded();
+
+        return plist;
+    }
+
   protected:
     void _initializeIfNeeded();
 };
 
-using ObjectCreateProps = PropertyList<PropertyType::OBJECT_CREATE>;
 using FileCreateProps = PropertyList<PropertyType::FILE_CREATE>;
 using FileAccessProps = PropertyList<PropertyType::FILE_ACCESS>;
 using DataSetCreateProps = PropertyList<PropertyType::DATASET_CREATE>;
@@ -115,7 +204,6 @@ using DataTypeCreateProps = PropertyList<PropertyType::DATATYPE_CREATE>;
 using DataTypeAccessProps = PropertyList<PropertyType::DATATYPE_ACCESS>;
 using StringCreateProps = PropertyList<PropertyType::STRING_CREATE>;
 using AttributeCreateProps = PropertyList<PropertyType::ATTRIBUTE_CREATE>;
-using ObjectCopyProps = PropertyList<PropertyType::OBJECT_COPY>;
 using LinkCreateProps = PropertyList<PropertyType::LINK_CREATE>;
 using LinkAccessProps = PropertyList<PropertyType::LINK_ACCESS>;
 
@@ -139,35 +227,38 @@ class RawPropertyList: public PropertyList<T> {
 ///
 class MPIOFileAccess {
   public:
-    MPIOFileAccess(MPI_Comm comm, MPI_Info info)
-        : _comm(comm)
-        , _info(info) {}
-
-    void apply(const hid_t list) const {
-        if (H5Pset_fapl_mpio(list, _comm, _info) < 0) {
-            HDF5ErrMapper::ToException<FileException>("Unable to set-up MPIO Driver configuration");
-        }
-    }
+    MPIOFileAccess(MPI_Comm comm, MPI_Info info);
 
   private:
+    friend FileAccessProps;
+    void apply(const hid_t list) const;
+
     MPI_Comm _comm;
     MPI_Info _info;
 };
 
+
+#if H5_VERSION_GE(1, 10, 0)
 ///
-/// \brief Use collective MPI-IO for metadata read and write?
+/// \brief Use collective MPI-IO for metadata read and write.
 ///
 /// See `MPIOCollectiveMetadataRead` and `MPIOCollectiveMetadataWrite`.
 ///
 class MPIOCollectiveMetadata {
   public:
-    explicit MPIOCollectiveMetadata(bool collective = true)
-        : collective_(collective) {}
+    explicit MPIOCollectiveMetadata(bool collective = true);
+    explicit MPIOCollectiveMetadata(const FileAccessProps& plist);
+
+    bool isCollectiveRead() const;
+    bool isCollectiveWrite() const;
+
 
   private:
     friend FileAccessProps;
     void apply(hid_t plist) const;
-    bool collective_;
+
+    bool collective_read_;
+    bool collective_write_;
 };
 
 ///
@@ -185,8 +276,10 @@ class MPIOCollectiveMetadata {
 ///
 class MPIOCollectiveMetadataRead {
   public:
-    explicit MPIOCollectiveMetadataRead(bool collective = true)
-        : collective_(collective) {}
+    explicit MPIOCollectiveMetadataRead(bool collective = true);
+    explicit MPIOCollectiveMetadataRead(const FileAccessProps& plist);
+
+    bool isCollective() const;
 
   private:
     friend FileAccessProps;
@@ -209,8 +302,10 @@ class MPIOCollectiveMetadataRead {
 ///
 class MPIOCollectiveMetadataWrite {
   public:
-    explicit MPIOCollectiveMetadataWrite(bool collective = true)
-        : collective_(collective) {}
+    explicit MPIOCollectiveMetadataWrite(bool collective = true);
+    explicit MPIOCollectiveMetadataWrite(const FileAccessProps& plist);
+
+    bool isCollective() const;
 
   private:
     friend FileAccessProps;
@@ -221,6 +316,7 @@ class MPIOCollectiveMetadataWrite {
     bool collective_;
 };
 
+#endif
 #endif
 
 ///
@@ -241,19 +337,17 @@ class MPIOCollectiveMetadataWrite {
 ///
 class FileVersionBounds {
   public:
-    FileVersionBounds(H5F_libver_t low, H5F_libver_t high)
-        : _low(low)
-        , _high(high) {}
+    FileVersionBounds(H5F_libver_t low, H5F_libver_t high);
+    explicit FileVersionBounds(const FileAccessProps& fapl);
+
+    std::pair<H5F_libver_t, H5F_libver_t> getVersion() const;
 
   private:
     friend FileAccessProps;
-    void apply(const hid_t list) const {
-        if (H5Pset_libver_bounds(list, _low, _high) < 0) {
-            HDF5ErrMapper::ToException<PropertyException>("Error setting file version bounds");
-        }
-    }
-    const H5F_libver_t _low;
-    const H5F_libver_t _high;
+    void apply(const hid_t list) const;
+
+    H5F_libver_t _low;
+    H5F_libver_t _high;
 };
 
 ///
@@ -263,17 +357,15 @@ class FileVersionBounds {
 ///
 class MetadataBlockSize {
   public:
-    MetadataBlockSize(hsize_t size)
-        : _size(size) {}
+    explicit MetadataBlockSize(hsize_t size);
+    explicit MetadataBlockSize(const FileAccessProps& fapl);
+
+    hsize_t getSize() const;
 
   private:
     friend FileAccessProps;
-    void apply(const hid_t list) const {
-        if (H5Pset_meta_block_size(list, _size) < 0) {
-            HDF5ErrMapper::ToException<PropertyException>("Error setting metadata block size");
-        }
-    }
-    const hsize_t _size;
+    void apply(const hid_t list) const;
+    hsize_t _size;
 };
 
 #if H5_VERSION_GE(1, 10, 1)
@@ -292,6 +384,11 @@ class FileSpaceStrategy {
     /// \param persist Should free space managers be persisted across file closing and reopening.
     /// \param threshold The free-space manager wont track sections small than this threshold.
     FileSpaceStrategy(H5F_fspace_strategy_t strategy, hbool_t persist, hsize_t threshold);
+    explicit FileSpaceStrategy(const FileCreateProps& fcpl);
+
+    H5F_fspace_strategy_t getStrategy() const;
+    hbool_t getPersist() const;
+    hsize_t getThreshold() const;
 
   private:
     friend FileCreateProps;
@@ -319,10 +416,12 @@ class FileSpacePageSize {
     ///
     /// \param page_size The page size in bytes.
     explicit FileSpacePageSize(hsize_t page_size);
+    explicit FileSpacePageSize(const FileCreateProps& fcpl);
+
+    hsize_t getPageSize() const;
 
   private:
     friend FileCreateProps;
-
     void apply(const hid_t list) const;
 
     hsize_t _page_size;
@@ -351,12 +450,18 @@ class PageBufferSize {
                             unsigned min_meta_percent = 0,
                             unsigned min_raw_percent = 0);
 
+    explicit PageBufferSize(const FileAccessProps& fapl);
+
+    size_t getPageBufferSize() const;
+    unsigned getMinMetaPercent() const;
+    unsigned getMinRawPercent() const;
+
   private:
     friend FileAccessProps;
 
     void apply(hid_t list) const;
 
-    hsize_t _page_buffer_size;
+    size_t _page_buffer_size;
     unsigned _min_meta;
     unsigned _min_raw;
 };
@@ -364,47 +469,55 @@ class PageBufferSize {
 #endif
 
 /// \brief Set hints as to how many links to expect and their average length
+/// \implements PropertyInterface
 ///
 class EstimatedLinkInfo {
   public:
-    explicit EstimatedLinkInfo(unsigned entries, unsigned length)
-        : _entries(entries)
-        , _length(length) {}
+    /// \brief Create a property with the request parameters.
+    ///
+    /// @param entries The estimated number of links in a group.
+    /// @param length The estimated length of the names of links.
+    explicit EstimatedLinkInfo(unsigned entries, unsigned length);
+
+    explicit EstimatedLinkInfo(const GroupCreateProps& gcpl);
+
+    /// \brief The estimated number of links in a group.
+    unsigned getEntries() const;
+
+    /// \brief The estimated length of the names of links.
+    unsigned getNameLength() const;
 
   private:
     friend GroupCreateProps;
     void apply(hid_t hid) const;
-    const unsigned _entries;
-    const unsigned _length;
+    unsigned _entries;
+    unsigned _length;
 };
 
 
+/// \implements PropertyInterface
 class Chunking {
   public:
-    explicit Chunking(const std::vector<hsize_t>& dims)
-        : _dims(dims) {}
-
-    Chunking(const std::initializer_list<hsize_t>& items)
-        : Chunking(std::vector<hsize_t>{items}) {}
+    explicit Chunking(const std::vector<hsize_t>& dims);
+    Chunking(const std::initializer_list<hsize_t>& items);
 
     template <typename... Args>
-    explicit Chunking(hsize_t item, Args... args)
-        : Chunking(std::vector<hsize_t>{item, static_cast<hsize_t>(args)...}) {}
+    explicit Chunking(hsize_t item, Args... args);
 
-    const std::vector<hsize_t>& getDimensions() const noexcept {
-        return _dims;
-    }
+    explicit Chunking(DataSetCreateProps& plist, size_t max_dims = 32);
+
+    const std::vector<hsize_t>& getDimensions() const noexcept;
 
   private:
     friend DataSetCreateProps;
     void apply(hid_t hid) const;
-    const std::vector<hsize_t> _dims;
+    std::vector<hsize_t> _dims;
 };
 
+/// \implements PropertyInterface
 class Deflate {
   public:
-    explicit Deflate(unsigned level)
-        : _level(level) {}
+    explicit Deflate(unsigned level);
 
   private:
     friend DataSetCreateProps;
@@ -413,12 +526,14 @@ class Deflate {
     const unsigned _level;
 };
 
+/// \implements PropertyInterface
 class Szip {
   public:
     explicit Szip(unsigned options_mask = H5_SZIP_EC_OPTION_MASK,
-                  unsigned pixels_per_block = H5_SZIP_MAX_PIXELS_PER_BLOCK)
-        : _options_mask(options_mask)
-        , _pixels_per_block(pixels_per_block) {}
+                  unsigned pixels_per_block = H5_SZIP_MAX_PIXELS_PER_BLOCK);
+
+    unsigned getOptionsMask() const;
+    unsigned getPixelsPerBlock() const;
 
   private:
     friend DataSetCreateProps;
@@ -427,6 +542,7 @@ class Szip {
     const unsigned _pixels_per_block;
 };
 
+/// \implements PropertyInterface
 class Shuffle {
   public:
     Shuffle() = default;
@@ -441,10 +557,13 @@ class Shuffle {
 /// The precise time of when HDF5 requests space to store the dataset
 /// can be configured. Please, consider the upstream documentation for
 /// `H5Pset_alloc_time`.
+/// \implements PropertyInterface
 class AllocationTime {
   public:
-    explicit AllocationTime(H5D_alloc_time_t alloc_time)
-        : _alloc_time(alloc_time) {}
+    explicit AllocationTime(H5D_alloc_time_t alloc_time);
+    explicit AllocationTime(const DataSetCreateProps& dcpl);
+
+    H5D_alloc_time_t getAllocationTime();
 
   private:
     friend DataSetCreateProps;
@@ -455,52 +574,170 @@ class AllocationTime {
 
 /// Dataset access property to control chunk cache configuration.
 /// Do not confuse with the similar file access property for H5Pset_cache
+/// \implements PropertyInterface
 class Caching {
   public:
     /// https://support.hdfgroup.org/HDF5/doc/RM/H5P/H5Pset_chunk_cache.html for
     /// details.
     Caching(const size_t numSlots,
             const size_t cacheSize,
-            const double w0 = static_cast<double>(H5D_CHUNK_CACHE_W0_DEFAULT))
-        : _numSlots(numSlots)
-        , _cacheSize(cacheSize)
-        , _w0(w0) {}
+            const double w0 = static_cast<double>(H5D_CHUNK_CACHE_W0_DEFAULT));
+
+    explicit Caching(const DataSetCreateProps& dcpl);
+
+    size_t getNumSlots() const;
+    size_t getCacheSize() const;
+    double getW0() const;
 
   private:
     friend DataSetAccessProps;
     void apply(hid_t hid) const;
-    const size_t _numSlots;
-    const size_t _cacheSize;
-    const double _w0;
+    size_t _numSlots;
+    size_t _cacheSize;
+    double _w0;
 };
 
+/// \implements PropertyInterface
 class CreateIntermediateGroup {
   public:
-    explicit CreateIntermediateGroup(bool create = true)
-        : _create(create) {}
+    explicit CreateIntermediateGroup(bool create = true);
+
+    explicit CreateIntermediateGroup(const LinkCreateProps& lcpl);
+
+    bool isSet() const;
+
+  protected:
+    void fromPropertyList(hid_t hid);
 
   private:
-    friend ObjectCreateProps;
     friend LinkCreateProps;
     void apply(hid_t hid) const;
-    const bool _create;
+    bool _create;
 };
 
 #ifdef H5_HAVE_PARALLEL
+/// \implements PropertyInterface
 class UseCollectiveIO {
   public:
-    explicit UseCollectiveIO(bool enable = true)
-        : _enable(enable) {}
+    explicit UseCollectiveIO(bool enable = true);
+
+    explicit UseCollectiveIO(const DataTransferProps& dxpl);
+
+    /// \brief Does the property request collective IO?
+    bool isCollective() const;
 
   private:
     friend DataTransferProps;
     void apply(hid_t hid) const;
     bool _enable;
 };
+
+
+/// \brief The cause for non-collective I/O.
+///
+/// The cause refers to the most recent I/O with data transfer property list  `dxpl` at time of
+/// creation of this object. This object will not update automatically for later data transfers,
+/// i.e. `H5Pget_mpio_no_collective_cause` is called in the constructor, and not when fetching
+/// a value, such as `wasCollective`.
+/// \implements PropertyInterface
+class MpioNoCollectiveCause {
+  public:
+    explicit MpioNoCollectiveCause(const DataTransferProps& dxpl);
+
+    /// \brief Was the datatransfer collective?
+    bool wasCollective() const;
+
+    /// \brief The local cause for a non-collective I/O.
+    uint32_t getLocalCause() const;
+
+    /// \brief The global cause for a non-collective I/O.
+    uint32_t getGlobalCause() const;
+
+    /// \brief A pair of the local and global cause for non-collective I/O.
+    std::pair<uint32_t, uint32_t> getCause() const;
+
+  private:
+    friend DataTransferProps;
+    uint32_t _local_cause;
+    uint32_t _global_cause;
+};
 #endif
+
+struct CreationOrder {
+    enum _CreationOrder {
+        Tracked = H5P_CRT_ORDER_TRACKED,
+        Indexed = H5P_CRT_ORDER_INDEXED,
+    };
+};
+
+///
+/// \brief Track and index creation order time
+///
+/// Let user retrieve objects by creation order time instead of name.
+///
+/// \implements PropertyInterface
+class LinkCreationOrder {
+  public:
+    ///
+    /// \brief Create the property
+    /// \param flags Should be a composition of HighFive::CreationOrder.
+    ///
+    explicit LinkCreationOrder(unsigned flags)
+        : _flags(flags) {}
+
+    explicit LinkCreationOrder(const FileCreateProps& fcpl);
+    explicit LinkCreationOrder(const GroupCreateProps& gcpl);
+
+    unsigned getFlags() const;
+
+  protected:
+    void fromPropertyList(hid_t hid);
+
+  private:
+    friend FileCreateProps;
+    friend GroupCreateProps;
+    void apply(hid_t hid) const;
+    unsigned _flags;
+};
+
+
+///
+/// \brief Set threshold for attribute storage.
+///
+/// HDF5 can store Attributes in the object header (compact) or in the B-tree
+/// (dense). This property sets the threshold when attributes are moved to one
+/// or the other storage format.
+///
+/// Please refer to the upstream documentation of `H5Pset_attr_phase_change` or
+/// Section 8 (Attributes) in the User Guide, in particular Subsection 8.5.
+///
+/// \implements PropertyInterface
+class AttributePhaseChange {
+  public:
+    ///
+    /// \brief Create the property from the threshold values.
+    ///
+    /// When the number of attributes hits `max_compact` the attributes are
+    /// moved to dense storage, once the number drops to below `min_dense` the
+    /// attributes are moved to compact storage.
+    AttributePhaseChange(unsigned max_compact, unsigned min_dense);
+
+    /// \brief Extract threshold values from property list.
+    explicit AttributePhaseChange(const GroupCreateProps& gcpl);
+
+    unsigned max_compact() const;
+    unsigned min_dense() const;
+
+  private:
+    friend GroupCreateProps;
+    void apply(hid_t hid) const;
+
+    unsigned _max_compact;
+    unsigned _min_dense;
+};
+
+/// @}
 
 }  // namespace HighFive
 
 #include "bits/H5PropertyList_misc.hpp"
-
-#endif  // H5PROPERTY_LIST_HPP

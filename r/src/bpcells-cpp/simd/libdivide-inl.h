@@ -14,7 +14,7 @@
 #define BPCELLS_SIMD_LIBDIVIDE_INL_H_
 #endif
 
-#include "../../vendor/libdivide/libdivide.h"
+#include <libdivide/libdivide.h>
 #include <hwy/highway.h>
 
 HWY_BEFORE_NAMESPACE();

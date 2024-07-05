@@ -19,6 +19,7 @@ their own copyright notices and license terms:
 HighFive
 
 cpp/vendor/highfive/*: BSL-1.0 license
+Copyright 2015-2022 Blue Brain Project/EPFL
 License: listed in cpp/vendor/highfive/LICENSE
 Authors: listed in cpp/vendor/highfive/AUTHORS.txt
 URL: https://github.com/BlueBrain/HighFive
@@ -66,8 +67,8 @@ implementations elsewhere in the BPCells code, with inline comments citing
 libdivide 
 
 cpp/vendor/libdivide/*: BSL-1.0, and Zlib
-Copyright (C) 2010 - 2019 ridiculous_fish, <libdivide@ridiculousfish.com>
-Copyright (C) 2016 - 2019 Kim Walisch, <kim.walisch@gmail.com>
+Copyright (C) 2010 - 2022 ridiculous_fish, <libdivide@ridiculousfish.com>
+Copyright (C) 2016 - 2022 Kim Walisch, <kim.walisch@gmail.com>
 License: https://github.com/ridiculousfish/libdivide/blob/master/LICENSE.txt
 URL: https://github.com/ridiculousfish/libdivide
 

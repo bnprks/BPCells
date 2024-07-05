@@ -1,6 +1,6 @@
 # CXX_STD = CXX17
 
-PKG_CXXFLAGS = %HDF5_CFLAGS% %HWY_CFLAGS% -std=c++17 -DRCPP_EIGEN -DEIGEN_PERMANENTLY_DISABLE_STUPID_WARNINGS -Wno-ignored-attributes -Wno-unknown-pragmas # -Wall -Wextra -Wpedantic
+PKG_CXXFLAGS = %HDF5_CFLAGS% %HWY_CFLAGS% -Ivendor -std=c++17 -DRCPP_EIGEN -DEIGEN_PERMANENTLY_DISABLE_STUPID_WARNINGS -Wno-ignored-attributes -Wno-unknown-pragmas # -Wall -Wextra -Wpedantic
 PKG_LIBS = -lz %HDF5_LIBS% %CXX_FS_FLAG% %HWY_LIBS%
 
 # PKG_CXXFLAGS = -Wno-deprecated-declarations -Wno-unused-but-set-variable -fsanitize=undefined %HDF5_CFLAGS% %HWY_CFLAGS% -std=c++17 -DRCPP_EIGEN -DEIGEN_PERMANENTLY_DISABLE_STUPID_WARNINGS -Wno-ignored-attributes -Wno-unknown-pragmas # -Wall -Wextra -Wpedantic
@@ -15,6 +15,7 @@ matrix_io.o \
 matrix_transforms.o \
 matrix_utils.o \
 R_array_io.o \
+R_highfive_logger.o \
 RcppExports.o \
 bpcells-cpp/arrayIO/array_interfaces.o \
 bpcells-cpp/arrayIO/binaryfile.o \

@@ -8,7 +8,8 @@
  */
 #pragma once
 
-#include "H5Tpublic.h"
+#include <H5Tpublic.h>
+#include "H5Inspector_misc.hpp"
 #include "H5Utils.hpp"
 
 namespace HighFive {
@@ -19,9 +20,13 @@ template <typename T>
 using unqualified_t = typename std::remove_const<typename std::remove_reference<T>::type>::type;
 
 // Find the type of an eventual char array, otherwise void
-template <typename>
+template <typename T>
 struct type_char_array {
-    using type = void;
+    using type = typename std::conditional<
+        std::is_same<typename inspector<T>::base_type, std::string>::value,
+        std::string,
+        void>::type;
+    static constexpr bool is_char_array = false;
 };
 
 template <typename T>
@@ -29,6 +34,7 @@ struct type_char_array<T*> {
     using type = typename std::conditional<std::is_same<unqualified_t<T>, char>::value,
                                            char*,
                                            typename type_char_array<T>::type>::type;
+    static constexpr bool is_char_array = true;
 };
 
 template <typename T, std::size_t N>
@@ -36,6 +42,7 @@ struct type_char_array<T[N]> {
     using type = typename std::conditional<std::is_same<unqualified_t<T>, char>::value,
                                            char[N],
                                            typename type_char_array<T>::type>::type;
+    static constexpr bool is_char_array = true;
 };
 
 template <typename T>
@@ -43,18 +50,22 @@ struct BufferInfo {
     using type_no_const = typename std::remove_const<T>::type;
     using elem_type = typename details::inspector<type_no_const>::base_type;
     using char_array_t = typename details::type_char_array<type_no_const>::type;
-    static constexpr bool is_char_array = !std::is_same<char_array_t, void>::value;
+    static constexpr bool is_char_array = details::type_char_array<type_no_const>::is_char_array;
 
-    enum Operation { read, write };
+    enum class Operation { read, write };
     const Operation op;
 
     template <class F>
     BufferInfo(const DataType& dtype, F getName, Operation _op);
 
+    size_t getRank(const T& array) const;
+    size_t getMinRank() const;
+    size_t getMaxRank() const;
+
     // member data for info depending on the destination dataset type
     const bool is_fixed_len_string;
-    const size_t n_dimensions;
     const DataType data_type;
+    const size_t rank_correction;
 };
 
 // details implementation
@@ -63,17 +74,41 @@ struct string_type_checker {
     static DataType getDataType(const DataType&, const DataType&);
 };
 
+inline void enforce_ascii_hack(const DataType& dst, const DataType& src) {
+    // Note: constness only refers to constness of the DataType object, which
+    // is just an ID, we can/will change properties of `dst`.
+
+    // TEMP. CHANGE: Ensure that the character set is properly configured to prevent
+    // converter issues on HDF5 <=v1.12.0 when loading ASCII strings first.
+    // See https://github.com/HDFGroup/hdf5/issues/544 for further information.
+
+    bool is_dst_string = detail::h5t_get_class(dst.getId()) == H5T_STRING;
+    bool is_src_string = detail::h5t_get_class(src.getId()) == H5T_STRING;
+
+    if (is_dst_string && is_src_string) {
+        if (detail::h5t_get_cset(src.getId()) == H5T_CSET_ASCII) {
+            detail::h5t_set_cset(dst.getId(), H5T_CSET_ASCII);
+        }
+    }
+}
+
 template <>
 struct string_type_checker<void> {
     inline static DataType getDataType(const DataType& element_type, const DataType& dtype) {
-        // TEMP. CHANGE: Ensure that the character set is properly configured to prevent
-        // converter issues on HDF5 <=v1.12.0 when loading ASCII strings first.
-        // See https://github.com/HDFGroup/hdf5/issues/544 for further information.
-        if (H5Tget_class(element_type.getId()) == H5T_STRING &&
-            H5Tget_cset(dtype.getId()) == H5T_CSET_ASCII) {
-            H5Tset_cset(element_type.getId(), H5T_CSET_ASCII);
+        if (detail::h5t_get_class(element_type.getId()) == H5T_STRING) {
+            enforce_ascii_hack(element_type, dtype);
         }
         return element_type;
+    }
+};
+
+template <>
+struct string_type_checker<std::string> {
+    inline static DataType getDataType(const DataType&, const DataType& file_datatype) {
+        // The StringBuffer ensures that the data is transformed such that it
+        // matches the datatype of the dataset, i.e. `file_datatype` and
+        // `mem_datatype` are the same.
+        return file_datatype;
     }
 };
 
@@ -82,10 +117,7 @@ struct string_type_checker<char[FixedLen]> {
     inline static DataType getDataType(const DataType& element_type, const DataType& dtype) {
         DataType return_type = (dtype.isFixedLenStr()) ? AtomicType<char[FixedLen]>()
                                                        : element_type;
-        // TEMP. CHANGE: See string_type_checker<void> definition
-        if (H5Tget_cset(dtype.getId()) == H5T_CSET_ASCII) {
-            H5Tset_cset(return_type.getId(), H5T_CSET_ASCII);
-        }
+        enforce_ascii_hack(return_type, dtype);
         return return_type;
     }
 };
@@ -93,48 +125,55 @@ struct string_type_checker<char[FixedLen]> {
 template <>
 struct string_type_checker<char*> {
     inline static DataType getDataType(const DataType&, const DataType& dtype) {
-        if (dtype.isFixedLenStr())
+        if (dtype.isFixedLenStr()) {
             throw DataSetException("Can't output variable-length to fixed-length strings");
-        // TEMP. CHANGE: See string_type_checker<void> definition
-        DataType return_type = AtomicType<std::string>();
-        if (H5Tget_cset(dtype.getId()) == H5T_CSET_ASCII) {
-            H5Tset_cset(return_type.getId(), H5T_CSET_ASCII);
         }
+        DataType return_type = AtomicType<std::string>();
+        enforce_ascii_hack(return_type, dtype);
         return return_type;
     }
 };
 
 template <typename T>
 template <class F>
-BufferInfo<T>::BufferInfo(const DataType& dtype, F getName, Operation _op)
+BufferInfo<T>::BufferInfo(const DataType& file_data_type, F getName, Operation _op)
     : op(_op)
-    , is_fixed_len_string(dtype.isFixedLenStr())
+    , is_fixed_len_string(file_data_type.isFixedLenStr())
     // In case we are using Fixed-len strings we need to subtract one dimension
-    , n_dimensions(details::inspector<type_no_const>::recursive_ndim -
-                   ((is_fixed_len_string && is_char_array) ? 1 : 0))
-    , data_type(
-          string_type_checker<char_array_t>::getDataType(create_datatype<elem_type>(), dtype)) {
-    if (is_fixed_len_string && std::is_same<elem_type, std::string>::value) {
-        throw DataSetException(
-            "Can't output std::string as fixed-length. "
-            "Use raw arrays or FixedLenStringArray");
-    }
+    , data_type(string_type_checker<char_array_t>::getDataType(create_datatype<elem_type>(),
+                                                               file_data_type))
+    , rank_correction((is_fixed_len_string && is_char_array) ? 1 : 0) {
     // We warn. In case they are really not convertible an exception will rise on read/write
-    if (dtype.getClass() != data_type.getClass()) {
-        std::cerr << "HighFive WARNING \"" << getName()
-                  << "\": data and hdf5 dataset have different types: " << data_type.string()
-                  << " -> " << dtype.string() << std::endl;
-    } else if ((dtype.getClass() & data_type.getClass()) == DataTypeClass::Float) {
-        if ((op == read) && (dtype.getSize() > data_type.getSize())) {
-            std::clog << "HighFive WARNING \"" << getName()
-                      << "\": hdf5 dataset has higher floating point precision than data on read: "
-                      << dtype.string() << " -> " << data_type.string() << std::endl;
-        } else if ((op == write) && (dtype.getSize() < data_type.getSize())) {
-            std::clog << "HighFive WARNING \"" << getName()
-                      << "\": data has higher floating point precision than hdf5 dataset on write: "
-                      << data_type.string() << " -> " << dtype.string() << std::endl;
-        }
+    if (file_data_type.getClass() != data_type.getClass()) {
+        HIGHFIVE_LOG_WARN(getName() + "\": data and hdf5 dataset have different types: " +
+                          data_type.string() + " -> " + file_data_type.string());
+    } else if ((file_data_type.getClass() & data_type.getClass()) == DataTypeClass::Float) {
+        HIGHFIVE_LOG_WARN_IF(
+            (op == Operation::read) && (file_data_type.getSize() > data_type.getSize()),
+            getName() + "\": hdf5 dataset has higher floating point precision than data on read: " +
+                file_data_type.string() + " -> " + data_type.string());
+
+        HIGHFIVE_LOG_WARN_IF(
+            (op == Operation::write) && (file_data_type.getSize() < data_type.getSize()),
+            getName() +
+                "\": data has higher floating point precision than hdf5 dataset on write: " +
+                data_type.string() + " -> " + file_data_type.string());
     }
+}
+
+template <typename T>
+size_t BufferInfo<T>::getRank(const T& array) const {
+    return details::inspector<type_no_const>::getRank(array) - rank_correction;
+}
+
+template <typename T>
+size_t BufferInfo<T>::getMinRank() const {
+    return details::inspector<T>::min_ndim - rank_correction;
+}
+
+template <typename T>
+size_t BufferInfo<T>::getMaxRank() const {
+    return details::inspector<T>::max_ndim - rank_correction;
 }
 
 }  // namespace details

@@ -6,12 +6,10 @@
  *          http://www.boost.org/LICENSE_1_0.txt)
  *
  */
-#ifndef H5FILE_HPP
-#define H5FILE_HPP
+#pragma once
 
 #include <string>
 
-#include "H5FileDriver.hpp"
 #include "H5Object.hpp"
 #include "H5PropertyList.hpp"
 #include "bits/H5Annotate_traits.hpp"
@@ -60,7 +58,7 @@ class File: public Object, public NodeTraits<File>, public AnnotateTraits<File> 
     /// \brief File
     /// \param filename: filepath of the HDF5 file
     /// \param openFlags: Open mode / flags ( ReadOnly, ReadWrite)
-    /// \param fileAccessProps: the file create properties
+    /// \param fileCreateProps: the file create properties
     /// \param fileAccessProps: the file access properties
     ///
     /// Open or create a new HDF5 file
@@ -72,7 +70,7 @@ class File: public Object, public NodeTraits<File>, public AnnotateTraits<File> 
     ///
     /// \brief Return the name of the file
     ///
-    const std::string& getName() const noexcept;
+    const std::string& getName() const;
 
 
     /// \brief Object path of a File is always "/"
@@ -111,9 +109,22 @@ class File: public Object, public NodeTraits<File>, public AnnotateTraits<File> 
         return details::get_plist<FileAccessProps>(*this, H5Fget_access_plist);
     }
 
-  private:
+    /// \brief Get the size of this file in bytes
+    size_t getFileSize() const;
+
+    /// \brief Get the amount of tracked, unused space in bytes.
+    ///
+    /// Note, this is a wrapper for `H5Fget_freespace` and returns the number
+    /// bytes in the free space manager. This might be different from the total
+    /// amount of unused space in the HDF5 file, since the free space manager
+    /// might not track everything or not track across open-close cycles.
+    size_t getFreeSpace() const;
+
+  protected:
+    File() = default;
     using Object::Object;
 
+  private:
     mutable std::string _filename{};
 
     template <typename>
@@ -127,5 +138,3 @@ class File: public Object, public NodeTraits<File>, public AnnotateTraits<File> 
 #include "bits/H5File_misc.hpp"
 #include "bits/H5Node_traits_misc.hpp"
 #include "bits/H5Path_traits_misc.hpp"
-
-#endif  // H5FILE_HPP

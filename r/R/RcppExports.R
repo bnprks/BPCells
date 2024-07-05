@@ -5,6 +5,10 @@ convert_ulong_to_numeric <- function(ulong_vec) {
     .Call(`_BPCells_convert_ulong_to_numeric`, ulong_vec)
 }
 
+register_highfive_logging_callback <- function() {
+    invisible(.Call(`_BPCells_register_highfive_logging_callback`))
+}
+
 read_integer_vector <- function(input) {
     .Call(`_BPCells_read_integer_vector`, input)
 }

@@ -6,8 +6,7 @@
  *          http://www.boost.org/LICENSE_1_0.txt)
  *
  */
-#ifndef H5UTILS_HPP
-#define H5UTILS_HPP
+#pragma once
 
 // internal utilities functions
 #include <algorithm>
@@ -17,16 +16,14 @@
 #include <string>
 #include <type_traits>
 #include <vector>
+#include <sstream>
 
 #include <H5public.h>
 
 #include "../H5Exception.hpp"
+#include "H5Friends.hpp"
 
 namespace HighFive {
-
-// If ever used, recognize dimensions of FixedLenStringArray
-template <std::size_t N>
-class FixedLenStringArray;
 
 namespace details {
 // converter function for hsize_t -> size_t when hsize_t != size_t
@@ -64,7 +61,18 @@ inline std::string get_name(T fct) {
     return std::string(bigBuffer.data(), length);
 }
 
+template <class Container>
+inline std::string format_vector(const Container& container) {
+    auto sout = std::stringstream{};
+
+    sout << "[ ";
+    for (size_t i = 0; i < container.size(); ++i) {
+        sout << container[i] << (i == container.size() - 1 ? "" : ", ");
+    }
+    sout << "]";
+
+    return sout.str();
+}
+
 }  // namespace details
 }  // namespace HighFive
-
-#endif  // H5UTILS_HPP

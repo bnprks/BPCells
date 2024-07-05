@@ -14,7 +14,7 @@
 #include "../fragmentIterators/FragmentIterator.h"
 #include "MatrixAccumulators.h"
 #include "MatrixIterator.h"
-#include "../../vendor/libdivide/libdivide.h"
+#include <libdivide/libdivide.h>
 
 namespace BPCells {
 
