@@ -12,7 +12,7 @@
 #include <functional>
 #include <unordered_map>
 
-#include "../vendor/dary_heap/dary_heap.hpp"
+#include <dary_heap/dary_heap.hpp>
 #include "../utils/radix_sort.h"
 
 namespace BPCells {

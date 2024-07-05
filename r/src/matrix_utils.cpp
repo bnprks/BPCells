@@ -29,7 +29,7 @@
 #include "R_interrupts.h"
 #include "R_xptr_wrapper.h"
 
-#include "vendor/md5/md5.h"
+#include <md5/md5.h>
 #include <cstdio>
 
 using namespace BPCells;

@@ -8,7 +8,7 @@
 
 #pragma once
 
-#include "../../vendor/libdivide/libdivide.h"
+#include <libdivide/libdivide.h>
 #include <cstdint>
 
 namespace BPCells::simd {

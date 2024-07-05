@@ -1,7 +1,7 @@
 #include "SVD.h"
 
 #include <algorithm>
-#include "../../vendor/Spectra/SymEigsSolver.h"
+#include <Spectra/SymEigsSolver.h>
 #include <Eigen/Core>
 namespace BPCells {
 

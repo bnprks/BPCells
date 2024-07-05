@@ -50,6 +50,9 @@ TileMatrix::TileMatrix(
     for (size_t i = 0; i < chr.size(); i++) {
         if (chr[i] >= this->chr_levels->size())
             throw std::invalid_argument("chr has values higher than length of chr_levels");
+        if (width[i] == 0)
+            throw std::invalid_argument("0 widths not supported");
+        
         Tile t;
         t.start = start[i];
         t.end = end[i];

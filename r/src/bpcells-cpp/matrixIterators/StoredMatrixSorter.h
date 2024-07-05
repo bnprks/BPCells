@@ -14,7 +14,7 @@
 #include "../arrayIO/array_interfaces.h"
 #include "../arrayIO/binaryfile.h"
 #include "../arrayIO/vector.h"
-#include "../../vendor/dary_heap/dary_heap.hpp"
+#include <dary_heap/dary_heap.hpp>
 #include "../utils/radix_sort.h"
 #include "MatrixIterator.h"
 #include "StoredMatrix.h"
