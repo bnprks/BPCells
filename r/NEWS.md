@@ -12,6 +12,7 @@ Contributions welcome :)
 - `apply_by_col()` and `apply_by_row()` allow providing custom R functions to compute per row/col summaries.
   In initial tests calculating row/col means using R functions is ~2x slower than the C++-based implementation but memory
   usage remains low.
+- Add `row_max()` and `colMaxs()` functions, which return the maximum value in each row or column of a matrix. If `matrixStats` or `MatrixGenerics` packages are installed, `BPCells::row_max()` will fall back to their implementations for non-BPCells objects.
 
 ## Bug-fixes
 - Fixed error message when a matrix is too large to be converted to dgCMatrix (Thanks to @RookieA1 for reporting issue #95)
@@ -79,7 +80,6 @@ well as all users who submitted github issues to help identify and fix bugs.
   graph-based clustering
 - Add `checksum()`, which allows for calculating an MD5 checksum of a matrix contents. Thanks to @brgrew for submitting this improvement in pull request #83
 - `write_insertion_bedgraph()` allows exporting pseudobulk insertion data to bedgraph format
-- Add `row_max()` and `col_max()` functions, which return the maximum value in each row or column of a matrix.
 
 ## Improvements
 - Merging fragments with `c()` now handles inputs with mismatched chromosome names.

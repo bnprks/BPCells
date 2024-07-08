@@ -159,32 +159,72 @@ all_matrix_inputs <- function(x) {
 
 #' Get the max of each row in an iterable matrix
 #' @param x IterableMatrix object/dgCMatrix object
+#' @return *vector of maxes for every row
+#' @describeIn IterableMatrix-methods Calculate rowMax (replacement for `matrixStats::rowMax()`)
 #' @export
-row_max <- function(x) {
+rowMaxs <- function(x, rows = NULL, cols = NULL, na.rm = FALSE, ...) UseMethod("rowMaxs")
+#' @export
+rowMaxs.default <- function(x, rows = NULL, cols = NULL, na.rm = FALSE, ...) {
+  if (requireNamespace("MatrixGenerics", quietly = TRUE)) {
+    MatrixGenerics::rowMaxs(x, rows = rows, cols = cols, na.rm = na.rm, ...)
+  } else if (requireNamespace("matrixStats", quietly = TRUE)) {
+    matrixStats::rowMaxs(x, rows = rows, cols = cols, na.rm = na.rm, ...)
+  }
+  else {
+    stop("Can't run rowMaxs on a non-BPCells object unless MatrixGenerics or matrixStats are installed.")
+  }
+}
+#' @export
+rowMaxs.IterableMatrix <- function(x, rows = NULL, cols = NULL, na.rm = FALSE, ...) {
+  if(!is.null(rows) || !is.null(cols) || !isFALSE(na.rm)) {
+    stop("rowMaxs(IterableMatrix) doesn't support extra arguments rows, cols, or na.rm")
+  }
   iter <- iterate_matrix(convert_matrix_type(x, "double"))
   if(x@transpose == TRUE) {
-    res <- matrix_compute_max_per_col(iter)
+    res <- matrix_max_per_col_cpp(iter)
   } else {
-    res <- matrix_compute_max_per_row(iter)
+    res <- matrix_max_per_row_cpp(iter)
   }
   names(res) <- rownames(x)
-  res
+  return(res)
 }
-
+if (requireNamespace("MatrixGenerics", quietly=TRUE)) {
+  setMethod(MatrixGenerics::rowMaxs, "IterableMatrix", rowMaxs.IterableMatrix)
+}
 
 #' Get the max of each col in an interable matrix
 #' @param x IterableMatrix/dgCMatrix object
+#' @return * `colMaxs()`: vector of column maxes
+#' @describeIn IterableMatrix-methods Calculate colMax (replacement for `matrixStats::colMax()`)
 #' @export
-col_max <- function(x) {
+colMaxs <- function(x, rows = NULL, cols = NULL, na.rm = FALSE, ...) UseMethod("colMaxs")
+#' @export
+colMaxs.default <- function(x, rows = NULL, cols = NULL, na.rm = FALSE, ...) {
+  if (requireNamespace("MatrixGenerics", quietly = TRUE)) {
+    MatrixGenerics::colMaxs(x, rows = rows, cols = cols, na.rm = na.rm, ...)
+  } else if (requireNamespace("matrixStats", quietly = TRUE)) {
+    matrixStats::colMaxs(x, rows = rows, cols = cols, na.rm = na.rm, ...)
+  }
+  else {
+    stop("Can't run colMaxs on a non-BPCells object unless MatrixGenerics or matrixStats are installed.")
+  }
+}
+#' @export
+colMaxs.IterableMatrix <- function(x, rows = NULL, cols = NULL, na.rm = FALSE, ...) {
   iter <- iterate_matrix(convert_matrix_type(x, "double"))
   if(x@transpose == TRUE) {
-    res <- matrix_compute_max_per_row(iter)
+    res <- matrix_max_per_row_cpp(iter)
   } else {
-    res <- matrix_compute_max_per_col(iter)
+    res <- matrix_max_per_col_cpp(iter)
   }
   names(res) <- colnames(x)
-  res
+  return(res)
 }
+rlang::on_load({
+  if (requireNamespace("MatrixGenerics", quietly=TRUE)) {
+    setMethod(MatrixGenerics::colMaxs, "IterableMatrix", colMaxs.IterableMatrix)
+  }
+})
 
 
 setMethod("short_description", "IterableMatrix", function(x) {
