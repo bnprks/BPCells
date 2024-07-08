@@ -625,29 +625,49 @@ List apply_matrix_double_cpp(SEXP mat_sexp, Function f, bool row_major) {
 
 // Compute the max of each row
 // [[Rcpp::export]]
-NumericVector matrix_compute_max_per_row(SEXP matrix) {
+NumericVector matrix_max_per_row_cpp(SEXP matrix) {
     MatrixIterator<double> it(take_unique_xptr<MatrixLoader<double>>(matrix));
     std::vector<double> result(it.rows());
-    std::fill(result.begin(), result.end(), 0.0);
+    std::vector<uint32_t> row_count(it.rows(), 0);
+    std::fill(result.begin(), result.end(), -INFINITY);
+    // keep track of the number of times we've seen each row
     while (it.nextCol()) {
         while (it.nextValue()) {
             result[it.row()] = std::max(result[it.row()], it.val());
+            row_count[it.row()]++;
     }}
+    // If we've seen a row less than the num of cols, we know there's at least one 0
+    for (size_t i = 0; i < it.rows(); i++) {
+        if (row_count[i] < it.cols()) {
+            result[i] = std::max(0.0, result[i]);
+        }
+    }
     return Rcpp::wrap(result);
 }
 
-// Computer the max of each col
+
+// Compute the max of each col
 // [[Rcpp::export]]
-NumericVector matrix_compute_max_per_col(SEXP matrix) {
+NumericVector matrix_max_per_col_cpp(SEXP matrix) {
     MatrixIterator<double> it(take_unique_xptr<MatrixLoader<double>>(matrix));
-    std::vector<double> result(it.cols());
-    std::fill(result.begin(), result.end(), 0.0);
+    std::vector<double> result(it.cols(), -INFINITY);
+    // std::fill(result.begin(), result.end(), 0);
+    // keep track of the number of times we've seen each col
+    std::vector<uint32_t> col_count(it.cols(), 0);
     while (it.nextCol()) {
         while (it.nextValue()) {
             result[it.col()] = std::max(result[it.col()], it.val());
+            col_count[it.col()]++;
     }}
+    // If we've seen a col less than the num of rows, we know there's at least one 0
+    for (size_t i = 0; i < it.cols(); i++) {
+        if (col_count[i] < it.rows()) {
+            result[i] = std::max(0.0, result[i]);
+        }
+    }
     return Rcpp::wrap(result);
 }
+
 
 // [[Rcpp::export]]
 bool matrix_identical_uint32_t_cpp(SEXP mat1, SEXP mat2) {
