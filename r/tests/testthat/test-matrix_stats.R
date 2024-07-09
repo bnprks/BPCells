@@ -189,65 +189,22 @@ test_that("svds registers generic with RSpectra", {
   equal_svds(ans, BPCells::svds(m1, k=5))
 })
 
-test_that("row_max and colMaxs works with negative only matrices", {
-  withr::local_seed(195123)
-  m1 <- matrix(runif(12, min=-10, max=-1), nrow = 3, ncol = 4)
-  i1 <- m1 %>% as("dgCMatrix") %>% as("IterableMatrix")
-  expect_equal(rowMaxs(i1), matrixStats::rowMaxs(m1))
-  expect_equal(colMaxs(i1), matrixStats::colMaxs(m1))
-})
-
-test_that("row_max and colMaxs works with dense matrices", {
-  withr::local_seed(195123)
-  m1_dense <- generate_dense_matrix(4, 64)
-  i1_dense <- m1_dense %>% as("dgCMatrix") %>% as("IterableMatrix")
-  expect_equal(rowMaxs(i1_dense), matrixStats::rowMaxs(m1_dense))
-  expect_equal(colMaxs(i1_dense), matrixStats::colMaxs(m1_dense))
-})
-
-test_that("row_max and colMaxs works with sparse matrices", {
-  withr::local_seed(195123)
-  m1_sparse <- generate_sparse_matrix(4, 64)
-  i1_sparse <- m1_sparse %>% as("dgCMatrix") %>% as("IterableMatrix")
-  expect_equal(rowMaxs(i1_sparse), matrixStats::rowMaxs(as.matrix(m1_sparse)))
-  expect_equal(colMaxs(i1_sparse), matrixStats::colMaxs(as.matrix(m1_sparse)))
-})
-
-test_that("row_max works for iterable matrices", {
-  withr::local_seed(195123)
-  m1_dense <- generate_dense_matrix(4, 64)
-  i1_dense <- m1_dense %>% as("dgCMatrix") %>% as("IterableMatrix")
-  expect_equal(rowMaxs(i1_dense), matrixStats::rowMaxs(as.matrix(m1_dense)))
-})
-
-
-test_that("row_max and colMaxs tranpose works", {
-  withr::local_seed(195123)
-  m1 <- generate_sparse_matrix(4, 64)
-  i1_t <- t(m1) %>% as("dgCMatrix") %>% as("IterableMatrix")
-  i2_t <- m1 %>% as("dgCMatrix") %>% as("IterableMatrix") %>% t()
-  # for the case of pre-tranposed matrics prior to conversion to IterableMatrix
-  expect_equal(rowMaxs(i1_t), matrixStats::rowMaxs(as.matrix(t(m1))))
-  expect_equal(colMaxs(i1_t), matrixStats::colMaxs(as.matrix(t(m1))))
-  # case of transposing after conversion to IterableMatrix
-  expect_equal(rowMaxs(i2_t), matrixStats::rowMaxs(as.matrix(t(m1))))
-  expect_equal(colMaxs(i2_t), matrixStats::colMaxs(as.matrix(t(m1))))
-})
-
-test_that("row_max and colMaxs works comprehensive", {
+test_that("rowMaxs and colMaxs works comprehensive", {
   withr::local_seed(195123)
   m1_neg <- matrix(runif(12, min = -10, max = -1), nrow = 3, ncol = 4)
   m2_dense <- generate_dense_matrix(4, 64)
-  m3_sparse <- generate_sparse_matrix(4, 64)
+  # Make a sparse matrix with half positive and half negative values
+  m3_sparse <- generate_sparse_matrix(4, 512)
+  m3_sparse@x <- m3_sparse@x * sample(c(-1,1), length(m3_sparse@x), replace=TRUE)
+
   m_test_cases <- list(m1_neg, m2_dense, m3_sparse)
   for (m in m_test_cases) {
-    i_tranpose_pre <- t(m) %>% as("dgCMatrix") %>% as("IterableMatrix")
+    i_transpose <- t(m) %>% as("dgCMatrix") %>% as("IterableMatrix")
     i <- m %>% as("dgCMatrix") %>% as("IterableMatrix")
-    i_transpose_post <- t(i)
-    m_tranpose_cases <- list(i_tranpose_pre, i_transpose_post, i)
+    m_tranpose_cases <- list(i_transpose, t(i_transpose), i, t(i))
     for (i in m_tranpose_cases) {
-      expect_equal(rowMaxs(i), matrixStats::rowMaxs(as.matrix(i)))
-      expect_equal(colMaxs(i), matrixStats::colMaxs(as.matrix(i)))
+      expect_identical(rowMaxs(i), matrixStats::rowMaxs(as.matrix(i)))
+      expect_identical(colMaxs(i), matrixStats::colMaxs(as.matrix(i)))
     }
   }
 })

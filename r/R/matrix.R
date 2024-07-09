@@ -648,8 +648,8 @@ rlang::on_load({
 
 #' Get the max of each row in an iterable matrix
 #' @param x IterableMatrix object/dgCMatrix object
-#' @return *vector of maxes for every row
-#' @describeIn IterableMatrix-methods Calculate rowMax (replacement for `matrixStats::rowMax()`)
+#' @return * `rowMaxs()`: vector of maxes for every row
+#' @describeIn IterableMatrix-methods Calculate rowMaxs (replacement for `matrixStats::rowMaxs()`)
 #' @export
 rowMaxs <- function(x, rows = NULL, cols = NULL, na.rm = FALSE, ...) UseMethod("rowMaxs")
 #' @export
@@ -677,9 +677,11 @@ rowMaxs.IterableMatrix <- function(x, rows = NULL, cols = NULL, na.rm = FALSE, .
   names(res) <- rownames(x)
   return(res)
 }
-if (requireNamespace("MatrixGenerics", quietly=TRUE)) {
-  setMethod(MatrixGenerics::rowMaxs, "IterableMatrix", rowMaxs.IterableMatrix)
-}
+rlang::on_load({
+  if (requireNamespace("MatrixGenerics", quietly=TRUE)) {
+    setMethod(MatrixGenerics::rowMaxs, "IterableMatrix", rowMaxs.IterableMatrix)
+  }
+})
 
 #' Get the max of each col in an interable matrix
 #' @param x IterableMatrix/dgCMatrix object
@@ -714,6 +716,7 @@ rlang::on_load({
     setMethod(MatrixGenerics::colMaxs, "IterableMatrix", colMaxs.IterableMatrix)
   }
 })
+
 
 # Index subsetting
 setClass("MatrixSubset",

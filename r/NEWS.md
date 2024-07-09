@@ -12,7 +12,9 @@ Contributions welcome :)
 - `apply_by_col()` and `apply_by_row()` allow providing custom R functions to compute per row/col summaries.
   In initial tests calculating row/col means using R functions is ~2x slower than the C++-based implementation but memory
   usage remains low.
-- Add `row_max()` and `colMaxs()` functions, which return the maximum value in each row or column of a matrix. If `matrixStats` or `MatrixGenerics` packages are installed, `BPCells::row_max()` will fall back to their implementations for non-BPCells objects.
+- Add `rowMaxs()` and `colMaxs()` functions, which return the maximum value in each row or column of a matrix. 
+  If `matrixStats` or `MatrixGenerics` packages are installed, `BPCells::rowMaxs()` will fall back to their implementations for non-BPCells objects.
+  Thanks to @immanuelazn for their first contribution as a new lab hire!
 
 ## Bug-fixes
 - Fixed error message when a matrix is too large to be converted to dgCMatrix (Thanks to @RookieA1 for reporting issue #95)
