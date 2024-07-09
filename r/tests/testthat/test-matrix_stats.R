@@ -188,3 +188,23 @@ test_that("svds registers generic with RSpectra", {
   equal_svds(ans, RSpectra::svds(i1, k=5))
   equal_svds(ans, BPCells::svds(m1, k=5))
 })
+
+test_that("rowMaxs and colMaxs works comprehensive", {
+  withr::local_seed(195123)
+  m1_neg <- matrix(runif(12, min = -10, max = -1), nrow = 3, ncol = 4)
+  m2_dense <- generate_dense_matrix(4, 64)
+  # Make a sparse matrix with half positive and half negative values
+  m3_sparse <- generate_sparse_matrix(4, 512)
+  m3_sparse@x <- m3_sparse@x * sample(c(-1,1), length(m3_sparse@x), replace=TRUE)
+
+  m_test_cases <- list(m1_neg, m2_dense, m3_sparse)
+  for (m in m_test_cases) {
+    i_transpose <- t(m) %>% as("dgCMatrix") %>% as("IterableMatrix")
+    i <- m %>% as("dgCMatrix") %>% as("IterableMatrix")
+    m_tranpose_cases <- list(i_transpose, t(i_transpose), i, t(i))
+    for (i in m_tranpose_cases) {
+      expect_identical(rowMaxs(i), matrixStats::rowMaxs(as.matrix(i)))
+      expect_identical(colMaxs(i), matrixStats::colMaxs(as.matrix(i)))
+    }
+  }
+})

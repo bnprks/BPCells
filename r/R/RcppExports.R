@@ -733,6 +733,14 @@ apply_matrix_double_cpp <- function(mat_sexp, f, row_major) {
     .Call(`_BPCells_apply_matrix_double_cpp`, mat_sexp, f, row_major)
 }
 
+matrix_max_per_row_cpp <- function(matrix) {
+    .Call(`_BPCells_matrix_max_per_row_cpp`, matrix)
+}
+
+matrix_max_per_col_cpp <- function(matrix) {
+    .Call(`_BPCells_matrix_max_per_col_cpp`, matrix)
+}
+
 matrix_identical_uint32_t_cpp <- function(mat1, mat2) {
     .Call(`_BPCells_matrix_identical_uint32_t_cpp`, mat1, mat2)
 }

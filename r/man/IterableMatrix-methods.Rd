@@ -13,6 +13,8 @@
 \alias{colMeans,IterableMatrix-method}
 \alias{colVars}
 \alias{rowVars}
+\alias{rowMaxs}
+\alias{colMaxs}
 \alias{log1p,IterableMatrix-method}
 \alias{log1p_slow}
 \alias{expm1,IterableMatrix-method}
@@ -67,6 +69,10 @@ rowVars(
   useNames = TRUE
 )
 
+rowMaxs(x, rows = NULL, cols = NULL, na.rm = FALSE, ..., useNames = TRUE)
+
+colMaxs(x, rows = NULL, cols = NULL, na.rm = FALSE, ..., useNames = TRUE)
+
 \S4method{log1p}{IterableMatrix}(x)
 
 log1p_slow(x)
@@ -96,7 +102,7 @@ expm1_slow(x)
 \S4method{-}{IterableMatrix,numeric}(e1, e2)
 }
 \arguments{
-\item{x}{IterableMatrix object}
+\item{x}{IterableMatrix/dgCMatrix object}
 
 \item{object}{IterableMatrix object}
 
@@ -134,6 +140,14 @@ expm1_slow(x)
 \itemize{
 \item \code{rowVars()}: vector of row variance
 }
+
+\itemize{
+\item \code{rowMaxs()}: vector of maxes for every row
+}
+
+\itemize{
+\item \code{colMaxs()}: vector of column maxes
+}
 }
 \description{
 Generic methods and built-in functions for IterableMatrix objects
@@ -161,6 +175,10 @@ Generic methods and built-in functions for IterableMatrix objects
 \item \code{colVars()}: Calculate colVars (replacement for \code{matrixStats::colVars()})
 
 \item \code{rowVars()}: Calculate rowVars (replacement for \code{matrixStats::rowVars()})
+
+\item \code{rowMaxs()}: Calculate rowMaxs (replacement for \code{matrixStats::rowMaxs()})
+
+\item \code{colMaxs()}: Calculate colMax (replacement for \code{matrixStats::colMax()})
 
 \item \code{log1p(IterableMatrix)}: Calculate log(x + 1)
 
