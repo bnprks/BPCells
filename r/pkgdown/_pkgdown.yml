@@ -19,7 +19,11 @@ authors:
 
 repo:
   url:
+    home: https://github.com/bnprks/BPCells
     source: https://github.com/bnprks/BPCells/tree/main/r/
+    issue: https://github.com/bnprks/BPCells/issues
+    user: https://github.com/
+
 
 navbar:
   structure:
