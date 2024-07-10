@@ -2912,6 +2912,10 @@ checksum <- function(matrix) {
 #' 
 #' If vector/matrix outputs are desired instead of lists, calling `unlist(x)` or `do.call(cbind, x)` or `do.call(rbind, x)`
 #' can convert the list output.
+#'
+#' @seealso For an interface more similar to `base::apply`, see the [BPCellsArray](https://github.com/Yunuuuu/BPCellsArray/)
+#' project. For calculating colMeans on a sparse single cell RNA matrix it is about 8x slower than `apply_by_col`, due to the
+#' `base::apply` interface not being sparsity-aware. (See [pull request #104](https://github.com/bnprks/BPCells/pull/104) for benchmarking.)
 #' @export
 apply_by_row <- function(mat, fun, ...) {
   assert_is(mat, "IterableMatrix")
