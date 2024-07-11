@@ -25,7 +25,7 @@ tools/*.exe
 vignettes/*.html
 vignettes/pbmc-3k-data
 cpp-tests
-
+*.Rproj
 
 # A few convenience igores for my development cruft
 failing_test.R

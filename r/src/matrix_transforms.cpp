@@ -18,6 +18,7 @@
 #include "bpcells-cpp/matrixTransforms/Pow.h"
 #include "bpcells-cpp/matrixTransforms/Round.h"
 #include "bpcells-cpp/matrixTransforms/SCTransform.h"
+#include "bpcells-cpp/matrixTransforms/LinearResidual.h"
 #include "bpcells-cpp/matrixTransforms/Scale.h"
 #include "bpcells-cpp/matrixTransforms/Shift.h"
 
@@ -156,6 +157,15 @@ SEXP iterate_matrix_sctransform_pearson_transpose_simd_cpp(
     return make_unique_xptr<SCTransformPearsonTransposeSIMD>(
         take_unique_xptr<MatrixLoader<double>>(matrix),
         TransformFit{cell_params, gene_params, global_params}
+    );
+}
+
+// [[Rcpp::export]]
+SEXP iterate_matrix_linear_residual_cpp(
+    SEXP matrix, Eigen::Map<Eigen::ArrayXXd> row_params, Eigen::Map<Eigen::ArrayXXd> col_params
+) {
+    return make_unique_xptr<LinearResidual>(
+        take_unique_xptr<MatrixLoader<double>>(matrix), TransformFit{row_params, col_params}
     );
 }
 
