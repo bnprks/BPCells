@@ -13,7 +13,7 @@
 
 namespace BPCells {
 
-// QR decomposition
+// Get linear residuals using QR decomposition
 class LinearResidual : public MatrixTransformDense {
 public:
     using MatrixTransformDense::MatrixTransformDense;

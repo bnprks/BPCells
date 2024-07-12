@@ -12,35 +12,22 @@
 namespace BPCells {
 
 bool LinearResidual::loadZeroSubtracted(MatrixLoader<double> &loader) {
-    if (!loader.load()) return false;
-
-    uint32_t *row_data = loader.rowData();
-    double *val_data = loader.valData();
-    uint32_t capacity = loader.capacity();
-
-    for (uint32_t i = 0; i < capacity; i++) {
-        double y0 = 0;
-        for (uint32_t j = 0; j < fit.col_params.rows(); j++) {
-            y0 += fit.col_params(j, currentCol()) * fit.row_params(j, row_data[i]);
-        }
-        val_data[i] -= y0;
-    }
-    return true;
+    return loader.load();
 }
 
 void LinearResidual::loadZero(
     double *values, uint32_t count, uint32_t start_row, uint32_t col
 ) {
-
     for (uint32_t i = 0; i < count; i++) {
-        double y = 0;
-        for (uint32_t j = 0; j < fit.col_params.rows(); j++) {
-            y -= fit.col_params(j, currentCol()) * fit.row_params(j, start_row + i);
-        }
-        values[i] = y;
+        double zero_val = 0;
+        // col_params = t(Q)
+        // row_params = Qty
+        // val = X - t(Qty) %*% t(Q)
+        // val = X - t(row_params) %*% col_params
+        Eigen::ArrayXXd prod_res = fit.row_params.col(start_row + i) * fit.col_params.col(col);
+        zero_val = -prod_res.sum();
+        values[i] = zero_val;
     }
 }
 
 } // namespace BPCells
-
-

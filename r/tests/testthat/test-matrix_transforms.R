@@ -298,3 +298,32 @@ test_that("sctransform works", {
         }
     }
 })
+
+test_that("linear regression works", {
+  seurat_linear_regress <- function(mat, latent_data) {
+    qr <- calc_qr(mat, latent_data)
+    mat_out <- matrix(nrow = nrow(mat), ncol = ncol(mat))
+    for (i in seq_len(nrow(mat))) {
+      regression_mat <- cbind(latent_data, mat[i, ])
+      colnames(regression_mat) <- c(colnames(latent_data), "GENE")
+      regression_mat <- qr.resid(qr = qr, y = mat[i, ])
+      mat_out[i, ] <- regression_mat
+    }
+    return(mat_out)
+  }
+  
+  nrow <- 50
+  ncol <- 30
+  for (j in seq_len(5)) {
+    m0 <- generate_sparse_matrix(nrow, ncol, max_val=10)
+    m <- as(m0, "IterableMatrix")
+    latent_data <- data.frame(
+      nUMI = colSums(m),
+      group = as.factor(sample(1:5, ncol, replace = TRUE)),
+      random = runif(ncol)
+    )
+    m1 <- linear_regress_out(m, latent_data = latent_data)
+    m2 <- seurat_linear_regress(m0, latent_data = latent_data)
+    expect_equal(as(m1, "matrix"), m2)
+  }
+})

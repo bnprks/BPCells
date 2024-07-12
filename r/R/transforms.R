@@ -826,7 +826,7 @@ setMethod("iterate_matrix", "TransformLinearResidual", function(x) {
   if (any(nrow(x@row_params) == 0, nrow(x@col_params) == 0)) {
     return(res)
   }
-  iterable_matrix_linear_residual_cpp(res, x@row_params, x@col_params)
+  iterate_matrix_linear_residual_cpp(res, x@row_params, x@col_params)
 })
 setMethod("short_description", "TransformLinearResidual", function(x) {
   # Return multiple lines, one for each transform active
@@ -835,21 +835,13 @@ setMethod("short_description", "TransformLinearResidual", function(x) {
     res <- c(res, sprintf("Linear regress out 0 variable"))
     return(res)
   }
-  res <- c(res, sprintf("Linear regress out %d variable(s)", nrow(x@row_params)))
+  res <- c(res, sprintf("Linear regress out %d variable(s)", nrow(x@row_params) - 1))
   res
 })
 
-#' Linear Residuals
+#' Linear Regression
 #'
-#' Calculate pearson residuals of a negative binomial sctransform model.
-#' Normalized values are calculated as `(X - mu) / sqrt(mu + mu^2/theta)`.
-#' mu is calculated as `cell_read_counts * gene_beta`.
-#' 
-#' The parameterization used is somewhat simplified compared to the original 
-#' SCTransform paper, in particular it uses a linear-scale rather than
-#' log-scale to represent the cell_read_counts and gene_beta variables. It also
-#' does not support the addition of arbitrary cell metadata (e.g. batch) to add to the 
-#' negative binomial regression.
+#' Calculate the residuals from a linear model fit. 
 #'
 #' @param mat IterableMatrix (raw counts)
 #' @param latent_data Extra data to regress out, should be cells x latent `data.frame`
@@ -859,18 +851,10 @@ linear_regress_out <- function(mat, latent_data = NULL) {
   if (length(latent_data) == 0) {
     return(mat)
   }
-  if (nrow(latent_data) != ncol(mat)) {
-    stop("Uneven number of cells between latent data and expression data")
-  }
-  vars_to_regress <- colnames(latent_data)
-  fmla <- paste("GENE ~", paste(vars.to.regress, collapse = "+"))
-  fmla <- as.formula(fmla)
-  data1 <- as.matrix(as(mat[1, ], "dgCMatrix"))
-  regression.mat <- cbind(latent.data, GENE = data1)
-  qr <- lm(fmla, data = regression.mat, qr = TRUE)$qr
+  qr <- calc_qr(mat = mat, latent_data = latent_data)
   Q <- as.matrix(qr.Q(qr))
   col_params <- t(Q)
-  Qty <- as.matrix(col_params %*% mat)
+  Qty <- t(as.matrix(mat %*% Q))  ## row_params = Qty
   wrapMatrix(
     "TransformLinearResidual", 
     convert_matrix_type(mat, "double"),
@@ -878,4 +862,21 @@ linear_regress_out <- function(mat, latent_data = NULL) {
     col_params = col_params,
     global_params = numeric()
   )
+}
+
+calc_qr <- function(mat, latent_data) {
+  if (nrow(latent_data) != ncol(mat)) {
+    stop("Uneven number of cells between latent data and expression data")
+  }
+  vars_to_regress <- colnames(latent_data)
+  fmla <- paste("GENE ~", paste(vars_to_regress, collapse = "+"))
+  fmla <- as.formula(fmla)
+  data1 <- mat[1, , drop = FALSE]
+  if (inherits(data1, "IterableMatrix")) {
+    data1 <- as(data1, "dgCMatrix")
+  }
+  regression_mat <- cbind(latent_data, data1[1, ])
+  colnames(regression_mat) <- c(vars_to_regress, "GENE")
+  qr <- lm(fmla, data = regression_mat, qr = TRUE)$qr
+  return(qr)
 }
