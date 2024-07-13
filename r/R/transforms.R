@@ -867,9 +867,11 @@ regress_out <- function(mat, latent_data = NULL, prediction_axis = c("row", "col
   Q <- qr.Q(qr(model_mat))
   
   if (prediction_axis == "row") {
+    # val = t(t(X) - Q %*% Qty) = X - t(row_params) %*% col_params
     col_params <- t(Q)
-    row_params <- col_params %*% t(mat)  ## row_params = Qty
+    row_params <- col_params %*% t(mat)
   } else {
+    # val = X - Q %*% Qty
     row_params <- t(Q)
     col_params <- row_params %*% mat ## col_params = Qty
   }

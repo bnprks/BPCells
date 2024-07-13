@@ -20,6 +20,19 @@ public:
 
     bool loadZeroSubtracted(MatrixLoader<double> &loader) override;
     void loadZero(double *values, uint32_t count, uint32_t start_row, uint32_t col) override;
+
+    Eigen::MatrixXd denseMultiplyRight(
+        const Eigen::Map<Eigen::MatrixXd> B, std::atomic<bool> *user_interrupt = NULL
+    ) override;
+    Eigen::MatrixXd denseMultiplyLeft(
+        const Eigen::Map<Eigen::MatrixXd> B, std::atomic<bool> *user_interrupt = NULL
+    ) override;
+    Eigen::VectorXd vecMultiplyRight(
+        const Eigen::Map<Eigen::VectorXd> v, std::atomic<bool> *user_interrupt = NULL
+    ) override;
+    Eigen::VectorXd vecMultiplyLeft(
+        const Eigen::Map<Eigen::VectorXd> v, std::atomic<bool> *user_interrupt = NULL
+    ) override;
 };
 
 } // namespace BPCells
