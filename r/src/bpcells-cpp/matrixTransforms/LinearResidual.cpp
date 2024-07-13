@@ -18,16 +18,21 @@ bool LinearResidual::loadZeroSubtracted(MatrixLoader<double> &loader) {
 void LinearResidual::loadZero(
     double *values, uint32_t count, uint32_t start_row, uint32_t col
 ) {
-    for (uint32_t i = 0; i < count; i++) {
-        double zero_val = 0;
-        // col_params = t(Q)
-        // row_params = Qty
-        // val = X - t(Qty) %*% t(Q)
-        // val = X - t(row_params) %*% col_params
-        Eigen::ArrayXXd prod_res = fit.row_params.col(start_row + i) * fit.col_params.col(col);
-        zero_val = -prod_res.sum();
-        values[i] = zero_val;
-    }
+    // for (uint32_t i = 0; i < count; i++) {
+    //     double zero_val = 0;
+    //     // col_params = t(Q)
+    //     // row_params = Qty
+    //     // val = X - t(Qty) %*% t(Q)
+    //     // val = X - t(row_params) %*% col_params
+    //     Eigen::ArrayXXd prod_res = fit.row_params.col(start_row + i) * fit.col_params.col(col);
+    //     zero_val = -prod_res.sum();
+    //     values[i] = zero_val;
+    // }
+    Eigen::Map<Eigen::VectorXd> values_vec(values, count);
+    // val = X - t(Qty) %*% t(Q)
+    // val = X - t(row_params) %*% col_params
+    values_vec = -fit.row_params.middleCols(start_row, count).matrix().transpose() * 
+      fit.col_params.col(col).matrix();
 }
 
 } // namespace BPCells

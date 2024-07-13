@@ -843,40 +843,35 @@ setMethod("short_description", "TransformLinearResidual", function(x) {
 #'
 #' Calculate the residuals from a linear model fit. 
 #'
-#' @param mat IterableMatrix (raw counts)
-#' @param latent_data Extra data to regress out, should be cells x latent `data.frame`
-#' @return IterableMatrix
+#' @param mat An IterableMatrix
+#' @param latent_data Extra data to regress out, should be a `data.frame` whose row number is equal to the column number of `mat`.
+#' @return An IterableMatrix. If input an empty `latent_data`, will return the `mat` itself.
 #' @export
-linear_regress_out <- function(mat, latent_data = NULL) {
+regress_out <- function(mat, latent_data = NULL) {
   if (length(latent_data) == 0) {
     return(mat)
   }
-  qr <- calc_qr(mat = mat, latent_data = latent_data)
-  Q <- as.matrix(qr.Q(qr))
+  assert_is(latent_data, "data.frame")
+  assert_true(nrow(latent_data) == ncol(mat))
+  fmla <- as.formula(paste("~", paste(colnames(latent_data), collapse="+")))
+  model_mat <- model.matrix(fmla, data = latent_data)
+  Q <- qr.Q(qr(model_mat))
+  
   col_params <- t(Q)
-  Qty <- t(as.matrix(mat %*% Q))  ## row_params = Qty
+  row_params <- col_params %*% t(mat)  ## row_params = Qty
+  
+  if (storage_order(mat) == "row") {
+    # The math works basically identically when transposed, so just swap parameters
+    tmp <- row_params
+    row_params <- col_params
+    col_params <- tmp
+  }
+  
   wrapMatrix(
     "TransformLinearResidual", 
     convert_matrix_type(mat, "double"),
-    row_params = Qty,
+    row_params = row_params,
     col_params = col_params,
     global_params = numeric()
   )
-}
-
-calc_qr <- function(mat, latent_data) {
-  if (nrow(latent_data) != ncol(mat)) {
-    stop("Uneven number of cells between latent data and expression data")
-  }
-  vars_to_regress <- colnames(latent_data)
-  fmla <- paste("GENE ~", paste(vars_to_regress, collapse = "+"))
-  fmla <- as.formula(fmla)
-  data1 <- mat[1, , drop = FALSE]
-  if (inherits(data1, "IterableMatrix")) {
-    data1 <- as(data1, "dgCMatrix")
-  }
-  regression_mat <- cbind(latent_data, data1[1, ])
-  colnames(regression_mat) <- c(vars_to_regress, "GENE")
-  qr <- lm(fmla, data = regression_mat, qr = TRUE)$qr
-  return(qr)
 }
