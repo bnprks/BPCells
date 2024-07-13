@@ -4,12 +4,17 @@
 \alias{regress_out}
 \title{Linear Regression}
 \usage{
-regress_out(mat, latent_data = NULL)
+regress_out(mat, latent_data = NULL, prediction_axis = c("row", "col"))
 }
 \arguments{
 \item{mat}{An IterableMatrix}
 
-\item{latent_data}{Extra data to regress out, should be a \code{data.frame} whose row number is equal to the column number of \code{mat}.}
+\item{latent_data}{Extra data to regress out, should be a \code{data.frame} where each column is a
+variable to regress out.}
+
+\item{prediction_axis}{Where the predicted values are. Options include "row" (default) and "col".
+The row number of \code{latent_data} should be equal to number of the other axis than \code{prediction_axis}
+in \code{mat}.}
 }
 \value{
 An IterableMatrix. If input an empty \code{latent_data}, will return the \code{mat} itself.

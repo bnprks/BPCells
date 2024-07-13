@@ -844,21 +844,35 @@ setMethod("short_description", "TransformLinearResidual", function(x) {
 #' Calculate the residuals from a linear model fit. 
 #'
 #' @param mat An IterableMatrix
-#' @param latent_data Extra data to regress out, should be a `data.frame` whose row number is equal to the column number of `mat`.
+#' @param latent_data Extra data to regress out, should be a `data.frame` where each column is a 
+#' variable to regress out.
+#' @param prediction_axis Where the predicted values are. Options include "row" (default) and "col". 
+#' The row number of `latent_data` should be equal to number of the other axis than `prediction_axis` 
+#' in `mat`.
 #' @return An IterableMatrix. If input an empty `latent_data`, will return the `mat` itself.
 #' @export
-regress_out <- function(mat, latent_data = NULL) {
+regress_out <- function(mat, latent_data = NULL, prediction_axis = c("row", "col")) {
   if (length(latent_data) == 0) {
     return(mat)
   }
+  prediction_axis <- match.arg(prediction_axis)
   assert_is(latent_data, "data.frame")
-  assert_true(nrow(latent_data) == ncol(mat))
+  if (prediction_axis == "row") {
+    assert_true(nrow(latent_data) == ncol(mat))
+  } else {
+    assert_true(nrow(latent_data) == nrow(mat))
+  }
   fmla <- as.formula(paste("~", paste(colnames(latent_data), collapse="+")))
   model_mat <- model.matrix(fmla, data = latent_data)
   Q <- qr.Q(qr(model_mat))
   
-  col_params <- t(Q)
-  row_params <- col_params %*% t(mat)  ## row_params = Qty
+  if (prediction_axis == "row") {
+    col_params <- t(Q)
+    row_params <- col_params %*% t(mat)  ## row_params = Qty
+  } else {
+    row_params <- t(Q)
+    col_params <- row_params %*% mat ## col_params = Qty
+  }
   
   if (storage_order(mat) == "row") {
     # The math works basically identically when transposed, so just swap parameters
@@ -867,6 +881,8 @@ regress_out <- function(mat, latent_data = NULL) {
     col_params <- tmp
   }
   
+  if (!inherits(row_params, "matrix")) row_params <- as.matrix(row_params)
+  if (!inherits(col_params, "matrix")) col_params <- as.matrix(col_params)
   wrapMatrix(
     "TransformLinearResidual", 
     convert_matrix_type(mat, "double"),

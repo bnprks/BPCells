@@ -319,12 +319,31 @@ test_that("linear regression works", {
     ans <- matrix(nrow = nrow, ncol = ncol)
     for (i in seq_len(nrow)) {
       regression_data <- cbind(latent_data, m0[i, ])
-      colnames(regression_data) <- c(colnames(latent_data), "GENE")
-      fmla <- fmla <- as.formula(paste("GENE ~", paste(colnames(latent_data), collapse="+")))
+      colnames(regression_data) <- c(colnames(latent_data), "y")
+      fmla <- fmla <- as.formula(paste("y ~", paste(colnames(latent_data), collapse="+")))
       ans[i,] <- lm(fmla, regression_data)$residuals
     }
     m1 <- regress_out(m, latent_data = latent_data)
     m1t <- regress_out(mt, latent_data = latent_data)
+    expect_equal(as(m1, "matrix"), ans)
+    expect_equal(as(m1t, "matrix"), ans)
+    
+    # Also test when the predicted variables are in the columns.
+    latent_data <- data.frame(
+      nUMI = rowSums(m),
+      group = as.factor(sample(1:5, nrow, replace = TRUE)),
+      random = runif(nrow),
+      cell1 = m0[, 4]
+    )
+    ans <- matrix(nrow = nrow, ncol = ncol)
+    for (i in seq_len(ncol)) {
+      regression_data <- cbind(latent_data, m0[, i])
+      colnames(regression_data) <- c(colnames(latent_data), "y")
+      fmla <- fmla <- as.formula(paste("y ~", paste(colnames(latent_data), collapse="+")))
+      ans[, i] <- lm(fmla, regression_data)$residuals
+    }
+    m1 <- regress_out(m, latent_data = latent_data, prediction_axis = "col")
+    m1t <- regress_out(mt, latent_data = latent_data, prediction_axis = "col")
     expect_equal(as(m1, "matrix"), ans)
     expect_equal(as(m1t, "matrix"), ans)
   }
