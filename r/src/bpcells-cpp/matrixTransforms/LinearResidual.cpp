@@ -32,28 +32,28 @@ Eigen::MatrixXd LinearResidual::denseMultiplyRight(
     const Eigen::Map<Eigen::MatrixXd> B, std::atomic<bool> *user_interrupt
 ) {
     Eigen::MatrixXd res = loader->denseMultiplyRight(B, user_interrupt);
-    res -= (fit.row_params.matrix().transpose() * fit.col_params.matrix()) * B;
+    res -= fit.row_params.matrix().transpose() * fit.col_params.matrix() * B;
     return res;
 }
 Eigen::MatrixXd LinearResidual::denseMultiplyLeft(
     const Eigen::Map<Eigen::MatrixXd> B, std::atomic<bool> *user_interrupt
 ) {
     Eigen::MatrixXd res = loader->denseMultiplyLeft(B, user_interrupt);
-    res -= B * (fit.row_params.matrix().transpose() * fit.col_params.matrix());
+    res -= B * fit.row_params.matrix().transpose() * fit.col_params.matrix();
     return res;
 }
 Eigen::VectorXd LinearResidual::vecMultiplyRight(
     const Eigen::Map<Eigen::VectorXd> v, std::atomic<bool> *user_interrupt
 ) {
     Eigen::VectorXd res = loader->vecMultiplyRight(v, user_interrupt);
-    res -= (fit.row_params.matrix().transpose() * fit.col_params.matrix()) * v;
+    res -= fit.row_params.matrix().transpose() * fit.col_params.matrix() * v;
     return res;
 }
 Eigen::VectorXd LinearResidual::vecMultiplyLeft(
     const Eigen::Map<Eigen::VectorXd> v, std::atomic<bool> *user_interrupt
 ) {
     Eigen::VectorXd res = loader->vecMultiplyLeft(v, user_interrupt);
-    res -= v.transpose() * (fit.row_params.matrix().transpose() * fit.col_params.matrix());
+    res -= v.transpose() * fit.row_params.matrix().transpose() * fit.col_params.matrix();
     return res;
 }
 
