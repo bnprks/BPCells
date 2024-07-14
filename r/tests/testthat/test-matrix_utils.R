@@ -408,54 +408,54 @@ test_that("Transposing a 0 dimension matrix works", {
 })
 
 # Test dense multiplication ops given dgCMatrix m1 and equivalent iterable matrix i1
-test_dense_multiply_ops <- function(m1, i1, inner_dim=12) {
+test_dense_multiply_ops <- function(m1, i1, inner_dim=12, test_func = expect_identical) {
   withr::local_seed(195123) 
   m2 <- t(m1)
   i2 <- t(i1)
   b1 <- generate_dense_matrix(nrow(m1), inner_dim)
   b2 <- generate_dense_matrix(ncol(m1), inner_dim)
 
-  expect_identical(to_matrix(t(b1) %*% m1), t(b1) %*% i1)
-  expect_identical(to_matrix(m2 %*% b1), i2 %*% b1)
+  test_func(to_matrix(t(b1) %*% m1), t(b1) %*% i1)
+  test_func(to_matrix(m2 %*% b1), i2 %*% b1)
 
-  expect_identical(to_matrix(t(m1) %*% b1), t(i1) %*% b1)
-  expect_identical(to_matrix(t(b1) %*% t(m2)), t(b1) %*% t(i2))
+  test_func(to_matrix(t(m1) %*% b1), t(i1) %*% b1)
+  test_func(to_matrix(t(b1) %*% t(m2)), t(b1) %*% t(i2))
 
-  expect_identical(to_matrix(t(b2) %*% m2), t(b2) %*% i2)
-  expect_identical(to_matrix(m1 %*% b2), i1 %*% b2)
+  test_func(to_matrix(t(b2) %*% m2), t(b2) %*% i2)
+  test_func(to_matrix(m1 %*% b2), i1 %*% b2)
 
-  expect_identical(to_matrix(t(m2) %*% b2), t(i2) %*% b2)
-  expect_identical(to_matrix(t(b2) %*% t(m1)), t(b2) %*% t(i1))
+  test_func(to_matrix(t(m2) %*% b2), t(i2) %*% b2)
+  test_func(to_matrix(t(b2) %*% t(m1)), t(b2) %*% t(i1))
 
   y1 <- as.numeric(generate_dense_matrix(nrow(m1), 1))
   y2 <- as.numeric(generate_dense_matrix(ncol(m1), 1))
-  expect_identical(y1 %*% as.matrix(m1), y1 %*% i1)
-  expect_identical(as.matrix(m2) %*% y1, i2 %*% y1)
+  test_func(y1 %*% as.matrix(m1), y1 %*% i1)
+  test_func(as.matrix(m2) %*% y1, i2 %*% y1)
 
-  expect_identical(y2 %*% as.matrix(m2), y2 %*% i2)
-  expect_identical(as.matrix(m1) %*% y2, i1 %*% y2)
+  test_func(y2 %*% as.matrix(m2), y2 %*% i2)
+  test_func(as.matrix(m1) %*% y2, i1 %*% y2)
 
   # Check that everything works fine with integers
   i3 <- convert_matrix_type(i1, "uint32_t")
   i4 <- convert_matrix_type(i2, "uint32_t")
 
-  expect_identical(to_matrix(t(b1) %*% m1), t(b1) %*% i3)
-  expect_identical(to_matrix(m2 %*% b1), i4 %*% b1)
+  test_func(to_matrix(t(b1) %*% m1), t(b1) %*% i3)
+  test_func(to_matrix(m2 %*% b1), i4 %*% b1)
 
-  expect_identical(to_matrix(t(m1) %*% b1), t(i3) %*% b1)
-  expect_identical(to_matrix(t(b1) %*% t(m2)), t(b1) %*% t(i4))
+  test_func(to_matrix(t(m1) %*% b1), t(i3) %*% b1)
+  test_func(to_matrix(t(b1) %*% t(m2)), t(b1) %*% t(i4))
 
-  expect_identical(to_matrix(t(b2) %*% m2), t(b2) %*% i4)
-  expect_identical(to_matrix(m1 %*% b2), i3 %*% b2)
+  test_func(to_matrix(t(b2) %*% m2), t(b2) %*% i4)
+  test_func(to_matrix(m1 %*% b2), i3 %*% b2)
 
-  expect_identical(to_matrix(t(m2) %*% b2), t(i4) %*% b2)
-  expect_identical(to_matrix(t(b2) %*% t(m1)), t(b2) %*% t(i3))
+  test_func(to_matrix(t(m2) %*% b2), t(i4) %*% b2)
+  test_func(to_matrix(t(b2) %*% t(m1)), t(b2) %*% t(i3))
 
-  expect_identical(y1 %*% as.matrix(m1), y1 %*% i3)
-  expect_identical(as.matrix(m2) %*% y1, i4 %*% y1)
+  test_func(y1 %*% as.matrix(m1), y1 %*% i3)
+  test_func(as.matrix(m2) %*% y1, i4 %*% y1)
 
-  expect_identical(y2 %*% as.matrix(m2), y2 %*% i4)
-  expect_identical(as.matrix(m1) %*% y2, i3 %*% y2)
+  test_func(y2 %*% as.matrix(m2), y2 %*% i4)
+  test_func(as.matrix(m1) %*% y2, i3 %*% y2)
 }
 
 test_that("Dense matrix-vector multiply works", {
@@ -469,6 +469,34 @@ test_that("Dense matrix-vector multiply works", {
   # (Want to hit blocked vector; vector; and scalar loops)
   for (dim in c(1, 2, 8, 9, 12, 64, 65)) {
     test_dense_multiply_ops(m1, i1, inner_dim=dim)
+  }
+})
+
+test_that("LinearResidual matrix-vector multiply works", {
+  withr::local_seed(195123)
+  
+  nrow <- 10
+  ncol <- 30
+  m0 <- generate_sparse_matrix(nrow, ncol, max_val = 10)
+  m <- as(m0, "IterableMatrix")
+  
+  latent_data <- data.frame(
+    nUMI = colSums(m),
+    group = as.factor(sample(1:5, ncol, replace = TRUE)),
+    random = runif(ncol),
+    gene1 = m0[3, ]
+  )
+  m1 <- matrix(nrow = nrow, ncol = ncol)
+  for (i in seq_len(nrow)) {
+    regression_data <- cbind(latent_data, m0[i, ])
+    colnames(regression_data) <- c(colnames(latent_data), "y")
+    fmla <- fmla <- as.formula(paste("y ~", paste(colnames(latent_data), collapse="+")))
+    m1[i, ] <- lm(fmla, regression_data, tol = 1e-10)$residuals
+  }
+  i1 <- regress_out(m, latent_data = latent_data)
+  
+  for (dim in c(1, 2, 8, 9, 12, 28, 29)) {
+    test_dense_multiply_ops(m1, i1, inner_dim=dim, test_func = expect_equal)
   }
 })
 
