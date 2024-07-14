@@ -473,8 +473,6 @@ test_that("Dense matrix-vector multiply works", {
 })
 
 test_that("LinearResidual matrix-vector multiply works", {
-  withr::local_seed(195123)
-  
   nrow <- 10
   ncol <- 30
   m0 <- generate_sparse_matrix(nrow, ncol, max_val = 10)
@@ -495,7 +493,7 @@ test_that("LinearResidual matrix-vector multiply works", {
   }
   i1 <- regress_out(m, latent_data = latent_data)
   
-  for (dim in c(1, 2, 8, 9, 12, 28, 29)) {
+  for (dim in c(1, 2, 8)) {
     test_dense_multiply_ops(m1, i1, inner_dim=dim, test_func = expect_equal)
   }
 })

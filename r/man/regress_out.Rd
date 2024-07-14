@@ -4,7 +4,7 @@
 \alias{regress_out}
 \title{Linear Regression}
 \usage{
-regress_out(mat, latent_data = NULL, prediction_axis = c("row", "col"))
+regress_out(mat, latent_data, prediction_axis = c("row", "col"))
 }
 \arguments{
 \item{mat}{An IterableMatrix}
@@ -17,8 +17,8 @@ The row number of \code{latent_data} should be equal to number of the other axis
 in \code{mat}.}
 }
 \value{
-An IterableMatrix. If input an empty \code{latent_data}, will return the \code{mat} itself.
+An IterableMatrix.
 }
 \description{
-Calculate the residuals from a linear model fit.
+Regress out the effects of given variables using a linear model.
 }

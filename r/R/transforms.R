@@ -819,7 +819,15 @@ multiply_cols <- function(mat, vec) {
 # Linear residual
 #################
 
-setClass("TransformLinearResidual", contains = "TransformedMatrix")
+setClass("TransformLinearResidual",
+  contains = "TransformedMatrix",
+  slots = c(
+    vars_to_regress = "character"
+  ),
+  prototype = list(
+    vars_to_regress = character()
+  )
+)
 setMethod("iterate_matrix", "TransformLinearResidual", function(x) {
   res <- iterate_matrix(x@matrix)
   
@@ -835,13 +843,16 @@ setMethod("short_description", "TransformLinearResidual", function(x) {
     res <- c(res, sprintf("Linear regress out 0 variable"))
     return(res)
   }
-  res <- c(res, sprintf("Linear regress out %d variable(s)", nrow(x@row_params) - 1))
+  res <- c(res, sprintf(
+    "Linear regress out %d variable(s): %s", length(x@vars_to_regress), 
+    pretty_print_vector(x@vars_to_regress)
+  ))
   res
 })
 
 #' Linear Regression
 #'
-#' Calculate the residuals from a linear model fit. 
+#' Regress out the effects of given variables using a linear model. 
 #'
 #' @param mat An IterableMatrix
 #' @param latent_data Extra data to regress out, should be a `data.frame` where each column is a 
@@ -849,20 +860,20 @@ setMethod("short_description", "TransformLinearResidual", function(x) {
 #' @param prediction_axis Where the predicted values are. Options include "row" (default) and "col". 
 #' The row number of `latent_data` should be equal to number of the other axis than `prediction_axis` 
 #' in `mat`.
-#' @return An IterableMatrix. If input an empty `latent_data`, will return the `mat` itself.
+#' @return An IterableMatrix. 
 #' @export
-regress_out <- function(mat, latent_data = NULL, prediction_axis = c("row", "col")) {
-  if (length(latent_data) == 0) {
-    return(mat)
-  }
+regress_out <- function(mat, latent_data, prediction_axis = c("row", "col")) {
   prediction_axis <- match.arg(prediction_axis)
+  assert_is(mat, "IterableMatrix")
   assert_is(latent_data, "data.frame")
+  assert_true(ncol(latent_data) > 0)
   if (prediction_axis == "row") {
     assert_true(nrow(latent_data) == ncol(mat))
   } else {
     assert_true(nrow(latent_data) == nrow(mat))
   }
-  fmla <- as.formula(paste("~", paste(colnames(latent_data), collapse="+")))
+  vars_to_regress <- colnames(latent_data)
+  fmla <- as.formula(paste("~", paste(vars_to_regress, collapse="+")))
   model_mat <- model.matrix(fmla, data = latent_data)
   Q <- qr.Q(qr(model_mat))
   
@@ -890,6 +901,7 @@ regress_out <- function(mat, latent_data = NULL, prediction_axis = c("row", "col
     convert_matrix_type(mat, "double"),
     row_params = row_params,
     col_params = col_params,
-    global_params = numeric()
+    global_params = numeric(),
+    vars_to_regress = vars_to_regress
   )
 }
