@@ -850,17 +850,35 @@ setMethod("short_description", "TransformLinearResidual", function(x) {
   res
 })
 
-#' Linear Regression
+#' Regress out unwanted variation
 #'
-#' Regress out the effects of given variables using a linear model. 
+#' Regress out the effects of confounding variables using a linear least squares regression model. 
 #'
-#' @param mat An IterableMatrix
-#' @param latent_data Extra data to regress out, should be a `data.frame` where each column is a 
+#' @details Conceptually, `regress_out` calculates a linear least squares best fit model for each row of the matrix. 
+#' (Or column if `prediction_axis` is `"col"`).
+#' The input data for each regression model are the columns of `latent_data`, and each model tries to 
+#' predict the values in the corresponding row (or column) of `mat`. After fitting each model, `regress_out`
+#' will subtract the model predictions from the input values, aiming to only retain effects that are
+#' not explained by the variables in `latent_data`.
+#'
+#' These models can be fit efficiently since they all share the same input data and so most of the 
+#' calculations for the closed-form best fit solution are shared. A QR factorization of the
+#' model matrix and a dense matrix-vector multiply are sufficient to fully calculate the residual values.
+#'
+#' *Efficiency considerations*: As the output matrix is dense rather than sparse, mean and variance calculations may
+#' run comparatively slowly. However, PCA and matrix/vector multiply operations can be performed at nearly the same
+#' cost as the input matrix due to mathematical simplifications. Memory usage scales with `n_features * ((nrow(mat) + ncol(mat))`.
+#' Generally, `n_features == ncol(latent_data)`, but for categorical variables in `latent_data`, each 
+#' category will be expanded into its own indicator variable. Memory usage will therefore be higher when
+#' using categorical input variables with many (i.e. >100) distinct values.
+#'
+#' @param mat Input IterableMatrix
+#' @param latent_data Data to regress out, as a `data.frame` where each column is a 
 #' variable to regress out.
-#' @param prediction_axis Where the predicted values are. Options include "row" (default) and "col". 
-#' The row number of `latent_data` should be equal to number of the other axis than `prediction_axis` 
-#' in `mat`.
-#' @return An IterableMatrix. 
+#' @param prediction_axis Which axis corresponds to prediction outputs from the linear models 
+#' (e.g. the gene axis in typical single cell analysis). Options include "row" (default) and "col". 
+#'
+#' @return IterableMatrix 
 #' @export
 regress_out <- function(mat, latent_data, prediction_axis = c("row", "col")) {
   prediction_axis <- match.arg(prediction_axis)
