@@ -840,11 +840,11 @@ setMethod("short_description", "TransformLinearResidual", function(x) {
   # Return multiple lines, one for each transform active
   res <- short_description(x@matrix)
   if (any(nrow(x@row_params) == 0, nrow(x@col_params) == 0)) {
-    res <- c(res, sprintf("Linear regress out 0 variable"))
+    res <- c(res, sprintf("Regress out 0 variables"))
     return(res)
   }
   res <- c(res, sprintf(
-    "Linear regress out %d variable(s): %s", length(x@vars_to_regress), 
+    "Regress out %d variable(s): %s", length(x@vars_to_regress), 
     pretty_print_vector(x@vars_to_regress)
   ))
   res
