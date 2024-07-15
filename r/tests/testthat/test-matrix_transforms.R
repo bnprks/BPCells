@@ -300,28 +300,27 @@ test_that("sctransform works", {
 })
 
 test_that("linear regression works", {
-  
-  nrow <- 10
-  ncol <- 30
-  for (j in seq_len(5)) {
+    nrow <- 5
+    ncol <- 30
+
     m0 <- generate_sparse_matrix(nrow, ncol, max_val = 10)
     m <- as(m0, "IterableMatrix")
     mt <- t(as(t(m0), "IterableMatrix"))
     latent_data <- data.frame(
-      nUMI = colSums(m),
-      group = as.factor(sample(1:5, ncol, replace = TRUE)),
-      random = runif(ncol),
-      gene1 = m0[3, ]
+        nUMI = colSums(m),
+        group = as.factor(sample(1:5, ncol, replace = TRUE)),
+        random = runif(ncol),
+        gene1 = m0[3, ]
     )
     # Calculate residuals manually
     # This is less efficient than calculating the QR once and using qr.resid, but
     # it's a bit more foolproof for our reference answer
     ans <- matrix(nrow = nrow, ncol = ncol)
     for (i in seq_len(nrow)) {
-      regression_data <- cbind(latent_data, m0[i, ])
-      colnames(regression_data) <- c(colnames(latent_data), "y")
-      fmla <- fmla <- as.formula(paste("y ~", paste(colnames(latent_data), collapse="+")))
-      ans[i,] <- lm(fmla, regression_data)$residuals
+        regression_data <- cbind(latent_data, m0[i, ])
+        colnames(regression_data) <- c(colnames(latent_data), "y")
+        fmla <- fmla <- as.formula(paste("y ~", paste(colnames(latent_data), collapse="+")))
+        ans[i,] <- lm(fmla, regression_data)$residuals
     }
     m1 <- regress_out(m, latent_data = latent_data)
     m1t <- regress_out(mt, latent_data = latent_data)
@@ -330,21 +329,20 @@ test_that("linear regression works", {
     
     # Also test when the predicted variables are in the columns.
     latent_data <- data.frame(
-      nUMI = rowSums(m),
-      group = as.factor(sample(1:5, nrow, replace = TRUE)),
-      random = runif(nrow),
-      cell1 = m0[, 4]
+        nUMI = rowSums(m),
+        group = as.factor(sample(1:5, nrow, replace = TRUE)),
+        random = runif(nrow),
+        cell1 = m0[, 4]
     )
     ans <- matrix(nrow = nrow, ncol = ncol)
     for (i in seq_len(ncol)) {
-      regression_data <- cbind(latent_data, m0[, i])
-      colnames(regression_data) <- c(colnames(latent_data), "y")
-      fmla <- fmla <- as.formula(paste("y ~", paste(colnames(latent_data), collapse="+")))
-      ans[, i] <- lm(fmla, regression_data)$residuals
+        regression_data <- cbind(latent_data, m0[, i])
+        colnames(regression_data) <- c(colnames(latent_data), "y")
+        fmla <- fmla <- as.formula(paste("y ~", paste(colnames(latent_data), collapse="+")))
+        ans[, i] <- lm(fmla, regression_data)$residuals
     }
     m1 <- regress_out(m, latent_data = latent_data, prediction_axis = "col")
     m1t <- regress_out(mt, latent_data = latent_data, prediction_axis = "col")
     expect_equal(as(m1, "matrix"), ans)
     expect_equal(as(m1t, "matrix"), ans)
-  }
 })

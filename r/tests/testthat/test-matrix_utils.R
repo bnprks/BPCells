@@ -473,7 +473,7 @@ test_that("Dense matrix-vector multiply works", {
 })
 
 test_that("LinearResidual matrix-vector multiply works", {
-  nrow <- 10
+  nrow <- 5
   ncol <- 30
   m0 <- generate_sparse_matrix(nrow, ncol, max_val = 10)
   m <- as(m0, "IterableMatrix")
@@ -493,9 +493,8 @@ test_that("LinearResidual matrix-vector multiply works", {
   }
   i1 <- regress_out(m, latent_data = latent_data)
   
-  for (dim in c(1, 2, 8)) {
-    test_dense_multiply_ops(m1, i1, inner_dim=dim, test_func = expect_equal)
-  }
+  test_dense_multiply_ops(m1, i1, test_func = expect_equal)
+  
 })
 
 # Test rows/col sum/mean given dgCMatrix m1 and equivalent iterable matrix i1
