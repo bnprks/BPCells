@@ -120,6 +120,7 @@ reference:
   - all_matrix_inputs
   - checksum
   - apply_by_row
+  - regress_out
   - IterableMatrix-methods
 
 - title: "Reference Annotations"

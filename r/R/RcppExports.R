@@ -525,6 +525,10 @@ iterate_matrix_sctransform_pearson_transpose_simd_cpp <- function(matrix, cell_p
     .Call(`_BPCells_iterate_matrix_sctransform_pearson_transpose_simd_cpp`, matrix, cell_params, gene_params, global_params)
 }
 
+iterate_matrix_linear_residual_cpp <- function(matrix, row_params, col_params) {
+    .Call(`_BPCells_iterate_matrix_linear_residual_cpp`, matrix, row_params, col_params)
+}
+
 iterate_matrix_scale_cpp <- function(matrix, row_scale, col_scale) {
     .Call(`_BPCells_iterate_matrix_scale_cpp`, matrix, row_scale, col_scale)
 }

@@ -812,3 +812,114 @@ multiply_cols <- function(mat, vec) {
   assert_true(length(vec) == ncol(mat))
   t(t(mat) * vec)
 }
+
+
+
+#################
+# Linear residual
+#################
+
+setClass("TransformLinearResidual",
+  contains = "TransformedMatrix",
+  slots = c(
+    vars_to_regress = "character"
+  ),
+  prototype = list(
+    vars_to_regress = character()
+  )
+)
+setMethod("iterate_matrix", "TransformLinearResidual", function(x) {
+  res <- iterate_matrix(x@matrix)
+  
+  if (any(nrow(x@row_params) == 0, nrow(x@col_params) == 0)) {
+    return(res)
+  }
+  iterate_matrix_linear_residual_cpp(res, x@row_params, x@col_params)
+})
+setMethod("short_description", "TransformLinearResidual", function(x) {
+  # Return multiple lines, one for each transform active
+  res <- short_description(x@matrix)
+  if (any(nrow(x@row_params) == 0, nrow(x@col_params) == 0)) {
+    res <- c(res, sprintf("Regress out 0 variables"))
+    return(res)
+  }
+  res <- c(res, sprintf(
+    "Regress out %d variable(s): %s", length(x@vars_to_regress), 
+    pretty_print_vector(x@vars_to_regress)
+  ))
+  res
+})
+
+#' Regress out unwanted variation
+#'
+#' Regress out the effects of confounding variables using a linear least squares regression model. 
+#'
+#' @details Conceptually, `regress_out` calculates a linear least squares best fit model for each row of the matrix. 
+#' (Or column if `prediction_axis` is `"col"`).
+#' The input data for each regression model are the columns of `latent_data`, and each model tries to 
+#' predict the values in the corresponding row (or column) of `mat`. After fitting each model, `regress_out`
+#' will subtract the model predictions from the input values, aiming to only retain effects that are
+#' not explained by the variables in `latent_data`.
+#'
+#' These models can be fit efficiently since they all share the same input data and so most of the 
+#' calculations for the closed-form best fit solution are shared. A QR factorization of the
+#' model matrix and a dense matrix-vector multiply are sufficient to fully calculate the residual values.
+#'
+#' *Efficiency considerations*: As the output matrix is dense rather than sparse, mean and variance calculations may
+#' run comparatively slowly. However, PCA and matrix/vector multiply operations can be performed at nearly the same
+#' cost as the input matrix due to mathematical simplifications. Memory usage scales with `n_features * ((nrow(mat) + ncol(mat))`.
+#' Generally, `n_features == ncol(latent_data)`, but for categorical variables in `latent_data`, each 
+#' category will be expanded into its own indicator variable. Memory usage will therefore be higher when
+#' using categorical input variables with many (i.e. >100) distinct values.
+#'
+#' @param mat Input IterableMatrix
+#' @param latent_data Data to regress out, as a `data.frame` where each column is a 
+#' variable to regress out.
+#' @param prediction_axis Which axis corresponds to prediction outputs from the linear models 
+#' (e.g. the gene axis in typical single cell analysis). Options include "row" (default) and "col". 
+#'
+#' @return IterableMatrix 
+#' @export
+regress_out <- function(mat, latent_data, prediction_axis = c("row", "col")) {
+  prediction_axis <- match.arg(prediction_axis)
+  assert_is(mat, "IterableMatrix")
+  assert_is(latent_data, "data.frame")
+  assert_true(ncol(latent_data) > 0)
+  if (prediction_axis == "row") {
+    assert_true(nrow(latent_data) == ncol(mat))
+  } else {
+    assert_true(nrow(latent_data) == nrow(mat))
+  }
+  vars_to_regress <- colnames(latent_data)
+  fmla <- as.formula(paste("~", paste(vars_to_regress, collapse="+")))
+  model_mat <- model.matrix(fmla, data = latent_data)
+  Q <- qr.Q(qr(model_mat))
+  
+  if (prediction_axis == "row") {
+    # val = t(t(X) - Q %*% Qty) = X - t(row_params) %*% col_params
+    col_params <- t(Q)
+    row_params <- col_params %*% t(mat)
+  } else {
+    # val = X - Q %*% Qty
+    row_params <- t(Q)
+    col_params <- row_params %*% mat ## col_params = Qty
+  }
+  
+  if (storage_order(mat) == "row") {
+    # The math works basically identically when transposed, so just swap parameters
+    tmp <- row_params
+    row_params <- col_params
+    col_params <- tmp
+  }
+  
+  if (!inherits(row_params, "matrix")) row_params <- as.matrix(row_params)
+  if (!inherits(col_params, "matrix")) col_params <- as.matrix(col_params)
+  wrapMatrix(
+    "TransformLinearResidual", 
+    convert_matrix_type(mat, "double"),
+    row_params = row_params,
+    col_params = col_params,
+    global_params = numeric(),
+    vars_to_regress = vars_to_regress
+  )
+}

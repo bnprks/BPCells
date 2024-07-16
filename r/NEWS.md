@@ -15,6 +15,8 @@ Contributions welcome :)
 - Add `rowMaxs()` and `colMaxs()` functions, which return the maximum value in each row or column of a matrix. 
   If `matrixStats` or `MatrixGenerics` packages are installed, `BPCells::rowMaxs()` will fall back to their implementations for non-BPCells objects.
   Thanks to @immanuelazn for their first contribution as a new lab hire!
+- `regress_out()` now allows removing unwanted sources of variation via least squares linear regression models.
+  Thanks to @ycli1995 for pull request #110
 
 ## Bug-fixes
 - Fixed error message when a matrix is too large to be converted to dgCMatrix (Thanks to @RookieA1 for reporting issue #95)

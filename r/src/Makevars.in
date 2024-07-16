@@ -42,6 +42,7 @@ bpcells-cpp/matrixIterators/MatrixStats.o \
 bpcells-cpp/matrixIterators/MatrixMarketImport.o \
 bpcells-cpp/matrixIterators/SVD.o \
 bpcells-cpp/matrixTransforms/Binarize.o \
+bpcells-cpp/matrixTransforms/LinearResidual.o \
 bpcells-cpp/matrixTransforms/Log1p.o \
 bpcells-cpp/matrixTransforms/Min.o \
 bpcells-cpp/matrixTransforms/MatrixTransform.o \
