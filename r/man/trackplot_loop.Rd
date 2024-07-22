@@ -41,5 +41,5 @@ Plot of loops connecting genomic coordinates
 Plot loops
 }
 \seealso{
-\code{trackplot_combine()}, \code{trackplot_coverage()}, \code{trackplot_gene()}, \code{trackplot_scalebar()}
+\code{trackplot_combine()}, \code{trackplot_coverage()}, \code{trackplot_gene()}, \code{trackplot_scalebar()}, \code{trackplot_genome_annotations()}
 }

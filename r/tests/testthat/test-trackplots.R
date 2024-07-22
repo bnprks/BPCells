@@ -64,3 +64,28 @@ test_that("get/set trackplot height works", {
     p <- set_trackplot_height(p, ggplot2::unit(3L, "pt"))
     expect_identical(get_trackplot_height(p), ggplot2::unit(3L, "pt"))
 })
+
+test_that("creating continuous trackplot arrows works", {
+    data1 <- tibble::tibble(
+        chr = c("chr1", "chr1", "chr1"),
+        start = c(10000, 20000, 10000),
+        end = c(15000, 25000, 15000),
+        strand = c(TRUE, FALSE, FALSE),
+        label = c("A", "B", "C")
+    )
+    region <- tibble::tibble(
+        chr = "chr1",
+        start = 10000,
+        end = 20000
+    )
+    segs <- trackplot_create_arrow_segs(data1, region, 100)
+    segs_expected <- tibble::tibble(
+        start = c(seq(10000, 14900, 100), seq(10000, 14900, 100)),
+        end = c(seq(10100, 15000, 100), seq(10100, 15000, 100))
+    )
+    expect_identical(segs, segs_expected)
+    segs_with_metadata <- trackplot_create_arrow_segs(data1, region, 100, c("strand"))
+    segs_expected_with_metadata <- segs_expected %>% 
+        tibble::add_column(strand = c(rep(TRUE, 50), rep(FALSE, 50)))
+    expect_identical(segs_with_metadata, segs_expected_with_metadata)
+})

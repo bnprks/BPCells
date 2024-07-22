@@ -63,6 +63,9 @@ discrete_palette <- function(name, n = 1) {
     # 11-colors
     grove = c("#1a1334", "#01545a", "#017351", "#03c383", "#aad962", "#fbbf45", "#ef6a32", "#ed0345", "#a12a5e", "#710162", "#3B9AB2"),
 
+    # 10-colors
+    tableau = c("#4E79A7", "#F28E2B", "#E15759", "#76B7B2", "#59A14F", "#EDC948", "#B07AA1", "#FF9DA7", "#9C755F", "#BAB0AC"),
+    
     # 7-colors
     summerNight = c("#2a7185", "#a64027", "#fbdf72", "#60824f", "#9cdff0", "#022336", "#725ca5"),
 
