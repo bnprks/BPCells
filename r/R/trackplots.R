@@ -138,15 +138,23 @@ trackplot_calculate_segment_height <- function(data, is_transcript = FALSE) {
   occupied_y <- rep(FALSE, total_positions) # Boolean vector, marking which y positions are open
   prev_seed <- get_seed()
   set.seed(12057235)
+  free_positions <- total_positions
   for (i in seq_len(nrow(boundaries))) {
     row <- boundaries[i, ]
     if (row$start) {
-      assigned_pos <- sample(which(!occupied_y), 1)
+      # if else block to account for sample interpreting int of length 1 as a range
+      if (free_positions == 1) {
+        assigned_pos <- which(!occupied_y)[1]
+      } else {
+        assigned_pos <- sample(which(!occupied_y), 1)
+      }
       y_pos[row$idx_col] <- assigned_pos
       occupied_y[assigned_pos] <- TRUE
+      free_positions <- free_positions - 1
     } else {
       assigned_pos <- y_pos[row$idx_col]
       occupied_y[assigned_pos] <- FALSE
+      free_positions <- free_positions + 1
     }
   }
   restore_seed(prev_seed)
