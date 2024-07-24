@@ -123,19 +123,19 @@ get_trackplot_height <- function(plot) {
 #' @return Vector of y coordinates, one per input row, such that no ranges at the same y coordinate overlap
 #' @keywords internal
 trackplot_calculate_segment_height <- function(data) {
-  data <- tibble::rownames_to_column(data, "idx_col")
+  data$row_number <- seq_len(nrow(data))
   boundaries <- data %>%
     {
       dplyr::bind_rows(
-        dplyr::transmute(., pos = start, idx_col, start = TRUE),
-        dplyr::transmute(., pos = end, idx_col, start = FALSE)
+        dplyr::mutate(., pos = start, row_number, start = TRUE, .keep="none"),
+        dplyr::mutate(., pos = end, row_number, start = FALSE, .keep="none")
       )
     } %>%
     dplyr::arrange(pos)
   
   if (nrow(data) > 0) total_positions <- max(cumsum(2 * boundaries$start - 1))
   else total_positions <- 0L
-  y_pos <- integer(0) # Names: tx_id, value: y position for transcript
+  y_pos <- integer(nrow(data))
   occupied_y <- rep(FALSE, total_positions) # Boolean vector, marking which y positions are open
   prev_seed <- get_seed()
   set.seed(12057235)
@@ -145,16 +145,15 @@ trackplot_calculate_segment_height <- function(data) {
       # if else block to account for sample interpreting int of length 1 as a range
       assigned_pos <- which(!occupied_y)
       if (length(assigned_pos) > 1) assigned_pos <- sample(assigned_pos, 1)
-      y_pos[row$idx_col] <- assigned_pos
+      y_pos[row$row_number] <- assigned_pos
       occupied_y[assigned_pos] <- TRUE
     } else {
-      assigned_pos <- y_pos[row$idx_col]
+      assigned_pos <- y_pos[row$row_number]
       occupied_y[assigned_pos] <- FALSE
     }
   }
   restore_seed(prev_seed)
-  data <- dplyr::mutate(data, y=y_pos[idx_col])
-  return(data$y)
+  return(y_pos)
 }
 
 #' Break up segments into smaller segments the length of the plot, divided by size
@@ -177,23 +176,65 @@ trackplot_create_arrow_segs <- function(data, region, size = 50, head_only = FAL
     }
     new_arrow <- tibble::tibble(start = endpoints[-length(endpoints)], end = endpoints[-1])
     if (nrow(new_arrow) > 0) {
-      arrow_list <- c(arrow_list, list(cbind(
+      arrow_list <- c(arrow_list, list(dplyr::bind_cols(
         new_arrow,
         data %>% dplyr::select(-c("start", "end")) %>% dplyr::slice(i)
       )))
     }
   }
-  #give the metadata columns from data
-  arrows <- dplyr::bind_rows(arrow_list) %>%
-    dplyr::filter(start >= region$start, start < region$end, end >= region$start, end < region$end)
+  arrows <- dplyr::bind_rows(arrow_list)
   if (head_only) {
-    # set start to be 1 bp before end if strand is positive, and end to be 1 bp after start if strand is negative
+    # Set segment size small enough to be invisible if head_only
     arrows <- arrows %>% dplyr::mutate(
-      start = ifelse(strand, end - 1, start),
-      end = ifelse(strand, end, start+1)
+      start = ifelse(strand, end - 1e-4, start),
+      end = ifelse(strand, end, start + 1e-4)
     )
   }
+  arrows <- dplyr::filter(arrows, start >= region$start, start < region$end, end >= region$start, end < region$end)
   return(arrows)
+}
+
+#' Normalize trackplot ranges data, while handling metadata argument renaming and type conversions
+#' Type conversions are as follows:
+#'    color -> factor or numeric
+#'    label -> string
+#' @param data Input ranges-like object
+#' @param metadata List of form e.g. list(color=color_by, label=label_by). The values can be either column names or data vectors.
+#'    Any NULL values will be skipped
+#' @return Tibble with normalized ranges and additional columns populated as requested in `metadata`
+trackplot_normalize_ranges_with_metadata <- function(data, metadata) {
+  metadata_column_names <- character(0)
+  metadata_values <- list()
+  # Check which columns need to be fetched in `normalize_ranges`
+  for (i in seq_along(metadata)) {
+    if (is.character(metadata[[i]]) && length(metadata[[i]]) == 1) {
+      metadata_column_names <- union(metadata_column_names, metadata[[i]])
+    } 
+  }
+  data <- normalize_ranges(data, metadata_cols = metadata_column_names)
+  # Collect the metadata
+  for (i in seq_along(metadata)) {
+    if (is.null(metadata[[i]])) next
+
+    col_name <- names(metadata)[i]
+    if (is.character(metadata[[i]]) && length(metadata[[i]]) == 1) {
+      metadata_values[[col_name]] <- data[[metadata[[i]]]]
+    } else {
+      if (length(metadata[[i]]) != nrow(data)) {
+        rlang::abort(sprintf("Metadata for '%s' must match length of input data frame if given as a data vector", col_name))
+      }
+      metadata_values[[col_name]] <- metadata[[i]]
+    }
+
+    if (col_name == "label") metadata_values[[col_name]] <- as.character(metadata_values[[col_name]])
+    if (col_name == "color") {
+      if (!is.numeric(metadata_values[[col_name]])) metadata_values[[col_name]] <- as.factor(metadata_values[[col_name]]) 
+    }
+  }
+
+  if (length(metadata_column_names) > 0) data <- dplyr::select(data, !dplyr::any_of(metadata_column_names))
+  if (length(metadata_values) > 0) data <- dplyr::bind_cols(data, tibble::as_tibble(metadata_values))
+  return(data)
 }
 
 #' Combine track plots
@@ -421,21 +462,25 @@ trackplot_gene <- function(transcripts, region, exon_size = 2.5, gene_size = 0.5
     if (return_data) {
       data$y <- numeric(0)
       data$facet_label <- character(0)
-      arrows <- tibble::tibble(start=numeric(0), end=numeric(0), y=integer(0), strand=logical(0), size=numeric(0))
-      return(list(data=data, arrows=arrows))
+      return(list(data=data, arrows=data))
     } else {
       return(trackplot_empty(region, label=track_label))
     }
   }
   # Calculate y positions of each transcript to avoid overlap
-  transcript_ids <- unique(data$transcript_id)
-  # need to sort to ensure that the transcript ids are in the same order as the y positions
-  heights <- trackplot_calculate_segment_height(dplyr::arrange(dplyr::filter(data, feature == "transcript"), "start", "stop"))
+  transcript_data <- dplyr::filter(data, feature=="transcript") %>%
+    dplyr::mutate(y = trackplot_calculate_segment_height(.))
+  if(anyDuplicated(transcript_data$transcript_id)) {
+    rlang::abort(sprintf("Found multiple feature == \"transcript\" rows with same ID (e.g. %s)", transcript_data$transcript_id[anyDuplicated(transcript_data$transcript_id)]))
+  }
   data <- dplyr::left_join(
     data,
-    tibble::tibble(transcript_id=transcript_ids, y=heights),
+    dplyr::select(transcript_data, transcript_id, y),
     by = "transcript_id"
   )
+  if(anyNA(data$y)) {
+    rlang::abort(sprintf("Found transcript ID with no feature == \"transcript\" rows: %s", data$transcript_id[which(is.na(data$y))[1]]))
+  }
   # Set up data for arrows
   transcript_coords <- dplyr::filter(data, feature == "transcript")
   arrows <- trackplot_create_arrow_segs(transcript_coords, region, 50)
@@ -484,10 +529,10 @@ trackplot_gene <- function(transcripts, region, exon_size = 2.5, gene_size = 0.5
 #' Plot range-based annotation tracks (e.g. peaks)
 #' @param loci `r document_granges("Genomic loci")`
 #' @inheritParams trackplot_coverage
-#' @param annotation_size size for peak annotations in mm
-#' @param label_by Name of a metadata column in `loci` to use for labeling, or a numeric vector with same length as loci  Column must be type character, factor or numeric
-#' @param label_size size for segment labels in units of mm
-#' @param color_by Name of a metadata column in `loci` to use for coloring, or a numeric vector with same length as loci.  Column must be type character, factor, or numeric
+#' @param annotation_size size for annotation lines in mm
+#' @param label_by Name of a metadata column in `loci` to use for labeling, or a data vector with same length as loci. Column must hold string data.
+#' @param label_size size for labels in units of mm
+#' @param color_by Name of a metadata column in `loci` to use for coloring, or a data vector with same length as loci. Column must be numeric or convertible to a factor.
 #' @param colors Vector of hex color codes to use for the color gradient
 #' @param show_strand bool to show strand direction of peaks if true
 #' @param track_label Label for the track
@@ -495,38 +540,37 @@ trackplot_gene <- function(transcripts, region, exon_size = 2.5, gene_size = 0.5
 #' @return Plot of genomic loci if return_data is FALSE, otherwise returns the data frame used to generate the plot
 #' @seealso `trackplot_combine()`, `trackplot_coverage()`, `trackplot_loop()`, `trackplot_scalebar()`, `trackplot_gene()`
 #' @export
-trackplot_genome_annotation <- function(loci, region, annotation_size = 3,  label_by = NULL, label_size = 11*.8/ggplot2::.pt, 
-                                         color_by = NULL, colors = NULL,  show_strand=FALSE, track_label="Peaks", return_data = FALSE) {
+trackplot_genome_annotation <- function(loci, region, color_by = NULL, colors = NULL, label_by = NULL, label_size = 11*.8/ggplot2::.pt, show_strand=FALSE,
+                                        annotation_size = 3, track_label="Peaks", return_data = FALSE) {
   region <- normalize_ranges(region)
-  assert_true(is.null(label_by) || is.character(label_by) || is.numeric(label_by) || is.factor(label_by))
-  assert_true(is.null(color_by) || is.character(color_by) || is.numeric(color_by) || is.factor(label_by))
-  # Set up metadata columns depending on columns passed in for styling
-  metadata_char_cols = character(0)
-  metadata_col_map <- list(label = label_by, color = color_by)
-  for (col_name in names(metadata_col_map)) {
-    if (is.character(metadata_col_map[[col_name]]) && length(metadata_col_map[[col_name]]) == 1) {
-      metadata_char_cols <- append(metadata_char_cols, (metadata_col_map[[col_name]]))
+  assert_true(is.null(label_by) || is.character(label_by))
+
+  data <- trackplot_normalize_ranges_with_metadata(
+    loci,
+    list("color" = color_by, "label" = label_by, "strand" = if (show_strand) "strand" else NULL)
+  )
+
+  if (!is.null(colors) && is.factor(data$color)) {
+    if (length(colors) < length(levels(data[["color"]]))) {
+      rlang::abort(sprintf("Insufficient values in manual color scale. %d needed but only %d provided.", length(levels(data[["color"]])), length(colors)))
     }
   }
-  if (show_strand) {metadata_char_cols <- append(metadata_char_cols, "strand")}
-  data <- normalize_ranges(loci, metadata_cols = metadata_char_cols)
-  for (col_name in names(metadata_col_map)) {
-    if ((is.character(metadata_col_map[[col_name]])) && (length(metadata_col_map[[col_name]]) == 1)) {
-      names(data)[names(data) == metadata_col_map[[col_name]]] <- col_name
-    }
-    else if (!is.null(metadata_col_map[[col_name]])) {
-      data[[col_name]] <- metadata_col_map[[col_name]]
-    }
+
+  # Auto-detect color_by label for data vector argument
+  if (!is.null(color_by) && !(is.character(color_by) && length(color_by) == 1)) {
+    color_by <- argument_name(color_by, 2)
   }
-  if (!is.null(colors)) {
-    assert_true(length(colors) >= length(unique(data[["color"]])))
-  }
+
   annotation_size <- annotation_size/.75
-  data <- dplyr::filter(data, as.character(chr) == as.character(region$chr), end > region$start & start < region$end)
+  data <- dplyr::filter(data, as.character(chr) == as.character(region$chr), end > region$start, start < region$end)
+
   # if data is empty, return data or empty plot
   if (nrow(data) == 0) {
     if (return_data) {
-      return(data)
+      data$y <- numeric(0)
+      data$facet_label <- character(0)
+      if (show_strand) return(list(data=data, arrows=data))
+      else return(list(data=data, arrows=NULL))
     } else {
       return(trackplot_empty(region, track_label))
     }
@@ -541,6 +585,12 @@ trackplot_genome_annotation <- function(loci, region, annotation_size = 3,  labe
     facet_label = track_label
   )
 
+  if (show_strand) arrows <- trackplot_create_arrow_segs(data, region, 50, head_only=TRUE)
+  else arrows <- NULL
+  if (return_data) {
+    return(list(data=data, arrows=arrows))
+  }
+
   plot <- ggplot2::ggplot(data, ggplot2::aes(x = start, xend = end, y =y, yend = y)) + 
     ggplot2::geom_segment(linewidth=annotation_size)  + 
     ggplot2::scale_x_continuous(limits = c(region$start, region$end), expand = c(0, 0), labels=scales::label_number()) +
@@ -551,21 +601,21 @@ trackplot_genome_annotation <- function(loci, region, annotation_size = 3,  labe
     trackplot_theme()
   # add in arrows
   if (show_strand) {
-    arrows <- trackplot_create_arrow_segs(data, region, 50, head_only=TRUE)
     arrow_angle <- 45
     default_linewidth <- 0.5
     # use trig identity to find arrow length based on annotation size, and account for the linewidth of the ends of arrow
     arrow_length <- ((annotation_size * 0.75/2) + default_linewidth*0.5*0.75*cos(arrow_angle*pi/180))/ sin(arrow_angle*pi/180)
     
     plot <- plot +
-      ggplot2::geom_segment(arrows, mapping=aes(
-        x = ifelse(strand == TRUE, start, end),
-        xend = ifelse(strand == TRUE, end, start),
+      ggplot2::geom_segment(arrows, mapping=ggplot2::aes(
+        x = ifelse(strand, start, end),
+        xend = ifelse(strand, end, start),
         y = y, yend = y,
       ),
       arrow=grid::arrow(length=grid::unit(arrow_length, "mm"), angle = arrow_angle),
       color="white")
   }
+
   # add labels if given
   if (!is.null(label_by)) {
     plot <- plot +
@@ -577,24 +627,23 @@ trackplot_genome_annotation <- function(loci, region, annotation_size = 3,  labe
         color="black"
       )
   }
-  # Route to different colouring aesthetic paths depending on color_by and color type/presence
+
+  # Set up continuous/discrete color scale based on data$color type
   if (!is.null(color_by)) {
-      plot <- plot + ggplot2::aes(color = color)
-      if (is.factor(data$color) || is.character(data$color)) {
-        if (is.null(colors)) {
-          if (length(levels(data$color)) > 2) {
-            colors <- discrete_palette("tableau", length(levels(data$color)))
-          }
-          # default continuous palette `c(munsell::mnsl("5P 3/12"), munsell::mnsl("5P 7/12"))`
-          else {colors <- c("#D099F2", "#6D2884")}
-        }
-        plot <- plot + ggplot2::scale_color_manual(values = colors)
-      } else {
-        if (is.null(colors)) {colors <- c("#D099F2", "#6D2884")}
-        plot <- plot + ggplot2::scale_color_gradientn(colors=colors)
-      }
-      plot <- plot + ggplot2::labs(color = color_by)
+    if (is.factor(data$color)) {
+      if (is.null(colors)) colors <- discrete_palette("tableau", length(levels(data$color)))
+      color_scale <- ggplot2::scale_color_manual(values=colors)
+    } else {
+      # default continuous palette `c(munsell::mnsl("5P 3/12"), munsell::mnsl("5P 7/12"))`
+      if (is.null(colors)) colors <- c("#D099F2", "#6D2884")
+      color_scale <- ggplot2::scale_color_gradientn(colors=colors, limits=c(min(data$color), max(data$color)))
     }
+    plot <- plot + 
+      ggplot2::aes(color = color) +
+      color_scale +
+      ggplot2::labs(color = color_by)
+  }
+
   wrap_trackplot(plot, height=ggplot2::unit(1, "null"))
 }
 
@@ -605,24 +654,29 @@ trackplot_genome_annotation <- function(loci, region, annotation_size = 3,  labe
 #'
 #' @param loops `r document_granges()`
 #' @param color_by Name of a metadata column in `loops` to use for coloring, or a numeric vector with same length as loops
-#' @param colors Vector of hex color codes to use for the color gradient
+#' @param colors Vector of hex color codes to use for the color scale. For numeric `color_by` data, this is passed to `ggplot2::scale_color_gradientn()`,
+#'               otherwise it is interpreted as a discrete color palette in `ggplot2::scale_color_manual()`
 #' @param allow_truncated If FALSE, remove any loops that are not fully contained within `region`
 #' @param curvature Curvature value between 0 and 1. 1 is a 180-degree arc, and 0 is flat lines.
 #' @inheritParams trackplot_coverage
 #' 
 #' @return Plot of loops connecting genomic coordinates
-#' @seealso `trackplot_combine()`, `trackplot_coverage()`, `trackplot_gene()`, `trackplot_scalebar()`, `trackplot_genome_annotations()`
+#' @seealso `trackplot_combine()`, `trackplot_coverage()`, `trackplot_gene()`, `trackplot_scalebar()`, `trackplot_genome_annotation()`
 #' @export
-trackplot_loop <- function(loops, region, color_by=NULL, colors=c("#bfd3e6","#8c96c6","#88419d","#4d004b"), allow_truncated=TRUE, curvature=0.75, track_label="Links", return_data = FALSE) {
+trackplot_loop <- function(loops, region, color_by=NULL, colors=NULL, allow_truncated=TRUE, curvature=0.75, track_label="Links", return_data = FALSE) {
   region <- normalize_ranges(region)
   assert_true(is.null(color_by) || is.numeric(color_by) || is.character(color_by))
   assert_is_numeric(curvature)
-  if (is.character(color_by)) {
-    loops <- normalize_ranges(loops, metadata_cols=color_by) %>%
-      dplyr::rename(color=dplyr::all_of(color_by))
-  } else if (is.numeric(color_by)) {
-    loops <- normalize_ranges(loops)
-    loops[["color"]] <- color_by
+  loops <- trackplot_normalize_ranges_with_metadata(loops, metadata=list("color"=color_by))
+  
+  if (!is.null(colors) && is.factor(loops$color)) {
+    if (length(colors) < length(levels(loops[["color"]]))) {
+      rlang::abort(sprintf("Insufficient values in manual color scale. %d needed but only %d provided.", length(levels(loops[["color"]])), length(colors)))
+    }
+  }
+
+  # Auto-detect color_by label for data vector argument
+  if (!is.null(color_by) && !(is.character(color_by) && length(color_by) == 1)) {
     color_by <- argument_name(color_by, 2)
   }
 
@@ -668,13 +722,7 @@ trackplot_loop <- function(loops, region, color_by=NULL, colors=c("#bfd3e6","#8c
       x = pmax(region$start, pmin(region$end, x))
     )
   
-  if (is.null(color_by)) {
-    plot <- ggplot2::ggplot(data, ggplot2::aes(x, y, group=loop_id))
-  } else {
-    plot <- ggplot2::ggplot(data, ggplot2::aes(x, y, color=color, group=loop_id))
-  }
-  
-  plot <- plot + 
+  plot <- ggplot2::ggplot(data, ggplot2::aes(x, y, group=loop_id)) + 
     ggplot2::geom_line() +
     ggplot2::scale_x_continuous(limits = c(region$start, region$end), expand = c(0, 0), labels=scales::label_number()) +
     ggplot2::scale_y_continuous(labels=NULL, breaks=NULL, expand = c(0.05, 0, 0, 0)) +
@@ -683,9 +731,19 @@ trackplot_loop <- function(loops, region, color_by=NULL, colors=c("#bfd3e6","#8c
     ggplot2::facet_wrap("facet_label", strip.position="left") + 
     trackplot_theme()
 
+  # Set up continuous/discrete color scale based on data$color type
   if (!is.null(color_by)) {
-    plot <- plot +
-      ggplot2::scale_color_gradientn(limits=c(min(data$color), max(data$color)), colors=colors) +
+    if (is.factor(data$color)) {
+      if (is.null(colors)) colors <- discrete_palette("tableau", length(levels(data$color)))
+      color_scale <- ggplot2::scale_color_manual(values=colors)
+    } else {
+      # default continuous palette subset from colorbrewer BuPu scheme
+      if (is.null(colors)) colors <- c("#bfd3e6","#8c96c6","#88419d","#4d004b")
+      color_scale <- ggplot2::scale_color_gradientn(colors=colors, limits=c(min(data$color), max(data$color)))
+    }
+    plot <- plot + 
+      ggplot2::aes(color = color) +
+      color_scale +
       ggplot2::labs(color = color_by)
   } 
 

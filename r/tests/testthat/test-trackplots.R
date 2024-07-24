@@ -80,7 +80,7 @@ test_that("creating continuous trackplot arrows works", {
         end = 20000
     )
     segs <- trackplot_create_arrow_segs(data1, region, 100)
-    segs_expected <- data.frame(
+    segs_expected <- tibble::tibble(
         start = c(seq(10000, 14900, 100), seq(10000, 14900, 100)),
         end = c(seq(10100, 15000, 100), seq(10100, 15000, 100)),
         strand = c(rep(TRUE, 50), rep(FALSE, 50))
@@ -92,4 +92,81 @@ test_that("creating continuous trackplot arrows works", {
             chr = c(rep("chr1", 100)),
             label = c(rep("A", 50), rep("C", 50)))
     expect_identical(segs_with_metadata, segs_expected_with_metadata)
+})
+
+test_that("trackplot_genome_annotation doesn't crash", {
+    test_data <- tibble::tibble(
+        chr = rep.int("chr1", 4),
+        start = c(1, 4, 5, 7),
+        end = start + 2,
+        strand = c("+", "-", "+", "-"),
+        cont_data = 1:4,
+        discrete_data = c("a", "b", "b", "a")
+    )
+    expect_no_condition(ggplot2::ggplot_build(trackplot_genome_annotation(test_data, "chr1:0-10")))
+    
+    # Check color variations
+    expect_no_condition(ggplot2::ggplot_build(trackplot_genome_annotation(test_data, "chr1:0-10", color_by="discrete_data")))
+    expect_no_condition(ggplot2::ggplot_build(trackplot_genome_annotation(test_data, "chr1:0-10", color_by="cont_data")))
+    expect_no_condition(ggplot2::ggplot_build(trackplot_genome_annotation(test_data, "chr1:0-10", color_by="strand")))
+    expect_no_condition(ggplot2::ggplot_build(trackplot_genome_annotation(test_data, "chr1:0-10", color_by=test_data$discrete_data)))
+    expect_no_condition(ggplot2::ggplot_build(trackplot_genome_annotation(test_data, "chr1:0-10", color_by=test_data$cont_data)))
+    
+    expect_no_condition(ggplot2::ggplot_build(trackplot_genome_annotation(test_data, "chr1:0-10", color_by="cont_data", colors=c("#222", "#ccc"))))
+    expect_no_condition(ggplot2::ggplot_build(trackplot_genome_annotation(test_data, "chr1:0-10", color_by="discrete_data", colors=c("#222", "#ccc"))))
+    expect_error(trackplot_genome_annotation(test_data, "chr1:0-10", color_by="discrete_data", colors=c("#222")), "Insufficient values in manual color scale")
+
+    # Check label variations
+    expect_no_condition(ggplot2::ggplot_build(trackplot_genome_annotation(test_data, "chr1:0-10", label_by="discrete_data")))
+    expect_no_condition(ggplot2::ggplot_build(trackplot_genome_annotation(test_data, "chr1:0-10", label_by="cont_data")))
+    expect_no_condition(ggplot2::ggplot_build(trackplot_genome_annotation(test_data, "chr1:0-10", label_by="strand")))
+    expect_no_condition(ggplot2::ggplot_build(trackplot_genome_annotation(test_data, "chr1:0-10", label_by=test_data$discrete_data)))
+
+    # Check data re-use for multiple metadata types
+    expect_no_condition(ggplot2::ggplot_build(trackplot_genome_annotation(test_data, "chr1:0-10", label_by="strand", color_by="strand", show_strand=TRUE)))
+
+    # Check empty plot with/without arrows
+    expect_no_condition(ggplot2::ggplot_build(trackplot_genome_annotation(test_data, "chr2:0-10", label_by="strand", color_by="strand", show_strand=TRUE)))
+    expect_no_condition(ggplot2::ggplot_build(trackplot_genome_annotation(test_data, "chr2:0-10", label_by="strand", color_by="strand", show_strand=FALSE)))
+
+    # Check return data works with/without show_strand
+    for (region in c("chr1:0-10", "chr2:0-10")) {
+        for (show_strand in c(TRUE, FALSE)) {
+            expect_named(
+                trackplot_genome_annotation(test_data, region, label_by="strand", color_by="strand", show_strand=show_strand, return_data=TRUE), 
+                c("data", "arrows")
+            )
+        }
+    }
+
+})
+
+test_that("trackplot_loop doesn't crash", {
+    test_data <- tibble::tibble(
+        chr = rep.int("chr1", 4),
+        start = c(1, 4, 5, 7),
+        end = start + 2,
+        strand = c("+", "-", "+", "-"),
+        cont_data = 1:4,
+        discrete_data = c("a", "b", "b", "a")
+    )
+
+    expect_no_condition(ggplot2::ggplot_build(trackplot_loop(test_data, "chr1:0-10", color_by="discrete_data")))
+    expect_no_condition(ggplot2::ggplot_build(trackplot_loop(test_data, "chr1:0-10", color_by="cont_data")))
+    expect_no_condition(ggplot2::ggplot_build(trackplot_loop(test_data, "chr1:0-10", color_by="strand")))
+    expect_no_condition(ggplot2::ggplot_build(trackplot_loop(test_data, "chr1:0-10", color_by=test_data$discrete_data)))
+    expect_no_condition(ggplot2::ggplot_build(trackplot_loop(test_data, "chr1:0-10", color_by=test_data$cont_data)))
+    
+    expect_no_condition(ggplot2::ggplot_build(trackplot_loop(test_data, "chr1:0-10", color_by="cont_data", colors=c("#222", "#ccc"))))
+    expect_no_condition(ggplot2::ggplot_build(trackplot_loop(test_data, "chr1:0-10", color_by="discrete_data", colors=c("#222", "#ccc"))))
+    expect_error(trackplot_loop(test_data, "chr1:0-10", color_by="discrete_data", colors=c("#222")), "Insufficient values in manual color scale")
+
+    # Check return data works
+    for (region in c("chr1:0-10", "chr2:0-10")) {
+        expect_is(
+            trackplot_loop(test_data, region, color_by="strand", return_data=TRUE), 
+            "tbl_df"
+        )
+    }
+    
 })
