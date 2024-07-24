@@ -30,7 +30,7 @@ or list/data.frame/GRanges of length 1 specifying chr, start, end. See \code{hel
 
 \item{label_by}{Name of a metadata column in \code{loci} to use for labeling, or a numeric vector with same length as loci  Column must be type character, factor or numeric}
 
-\item{label_size}{size for transcript labels in units of mm}
+\item{label_size}{size for segment labels in units of mm}
 
 \item{color_by}{Name of a metadata column in \code{loci} to use for coloring, or a numeric vector with same length as loci.  Column must be type character, factor, or numeric}
 

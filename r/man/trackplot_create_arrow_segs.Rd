@@ -21,3 +21,4 @@ Dataframe of segments broken up into smaller segments.  Has columns start, end, 
 \description{
 Break up segments into smaller segments the length of the plot, divided by size
 }
+\keyword{internal}
