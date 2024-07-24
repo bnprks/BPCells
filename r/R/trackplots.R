@@ -113,17 +113,17 @@ get_trackplot_height <- function(plot) {
   }
 }
 
-#' Calculate y positions for transcript segments to avoid overlap
+#' Calculate y positions for trackplot segments to avoid overlap
 #' Steps:
 #' 1. Calculate the maximum overlap depth of transcripts
-#' 2. Iterate through transcript start/end in sorted order
-#' 3. Randomly assign each transcript a y-coordinate between 1 and max overlap depth,
-#'   with the restriction that a transcript can't have the same y-coordinate
-#' If is a transcript, filter out the exons in determining overlap so there aren't repeated steps
-trackplot_calculate_segment_height <- function(data, is_transcript = FALSE) {
+#' 2. Iterate through start/end of segments in sorted order
+#' 3. Randomly assign each segment a y-coordinate between 1 and max overlap depth,
+#'   with the restriction that a segment can't have the same y-coordinate as an overlapping segment
+#' @param data tibble of genome ranges with start and end columns, assumed to be on same chromosome. 
+#' @return Vector of y coordinates, one per input row, such that no ranges at the same y coordinate overlap
+trackplot_calculate_segment_height <- function(data) {
   data <- tibble::rownames_to_column(data, "idx_col")
   boundaries <- data %>%
-    dplyr::filter(if(is_transcript) {!!as.symbol("feature") == "transcript"} else {TRUE}) %>%
     {
       dplyr::bind_rows(
         dplyr::transmute(., pos = start, idx_col, start = TRUE),
@@ -138,42 +138,31 @@ trackplot_calculate_segment_height <- function(data, is_transcript = FALSE) {
   occupied_y <- rep(FALSE, total_positions) # Boolean vector, marking which y positions are open
   prev_seed <- get_seed()
   set.seed(12057235)
-  free_positions <- total_positions
   for (i in seq_len(nrow(boundaries))) {
     row <- boundaries[i, ]
     if (row$start) {
       # if else block to account for sample interpreting int of length 1 as a range
-      if (free_positions == 1) {
-        assigned_pos <- which(!occupied_y)[1]
-      } else {
-        assigned_pos <- sample(which(!occupied_y), 1)
-      }
+      assigned_pos <- which(!occupied_y)
+      if (length(assigned_pos) > 1) assigned_pos <- sample(assigned_pos, 1)
       y_pos[row$idx_col] <- assigned_pos
       occupied_y[assigned_pos] <- TRUE
-      free_positions <- free_positions - 1
     } else {
       assigned_pos <- y_pos[row$idx_col]
       occupied_y[assigned_pos] <- FALSE
-      free_positions <- free_positions + 1
     }
   }
   restore_seed(prev_seed)
   data <- dplyr::mutate(data, y=y_pos[idx_col])
-  # Give exons the same y position as the transcript with same transcript id
-  if (is_transcript) {
-    data <- data %>% dplyr::group_by(transcript_id) %>%
-      dplyr::mutate(y = replace(y, is.na(y), max(y,na.rm=TRUE))) %>%
-      dplyr::ungroup()
-  }
-  return(data)
+  return(data$y)
 }
 
 #' Break up segments into smaller segments the length of the plot, divided by size
 #' @param data Dataframe of full segments to be broken up
 #' @param region Region to be plotted with end and start attr
 #' @param size int Number of arrows to span the x axis of track
-#' @param extra_cols Vector of characters of columns to keep from data
-trackplot_create_arrow_segs <- function(data, region, size = 150, extra_cols = c()) {
+#' @param head_only bool If TRUE, only the head of the segment will be plotted
+#' @return Dataframe of segments broken up into smaller segments.  Has columns start, end, and any additional metadata columns in original data
+trackplot_create_arrow_segs <- function(data, region, size = 50, head_only = FALSE) {
   # Get region to be plotted
   arrow_spacing <- (region$end - region$start) / size
   # Provide an initial arrow_list element to avoid schema errors if no transcripts are present
@@ -184,18 +173,24 @@ trackplot_create_arrow_segs <- function(data, region, size = 150, extra_cols = c
     } else {
       endpoints <- rev(seq(data$end[i], data$start[i], -arrow_spacing))
     }
-    arrow_list <- c(arrow_list, list(tibble::tibble(
-      start = endpoints[-length(endpoints)],
-      end = endpoints[-1],
-    )))
-    for (column in extra_cols) {
-      arrow_list[[length(arrow_list)]] <- arrow_list[[length(arrow_list)]] %>%
-        tibble::add_column(!!as.symbol(column) := data[[i, column]])
+    new_arrow <- tibble::tibble(start = endpoints[-length(endpoints)], end = endpoints[-1])
+    if (nrow(new_arrow) > 0) {
+      arrow_list <- c(arrow_list, list(cbind(
+        new_arrow,
+        data %>% dplyr::select(-c("start", "end")) %>% dplyr::slice(i)
+      )))
     }
   }
-  # Filter to only arrows within region
+  #give the metadata columns from data
   arrows <- dplyr::bind_rows(arrow_list) %>%
     dplyr::filter(start >= region$start, start < region$end, end >= region$start, end < region$end)
+  if (head_only) {
+    # set start to be 1 bp before end if strand is positive, and end to be 1 bp after start if strand is negative
+    arrows <- arrows %>% dplyr::mutate(
+      start = ifelse(strand, end - 1, start),
+      end = ifelse(strand, end, start+1)
+    )
+  }
   return(arrows)
 }
 
@@ -430,12 +425,18 @@ trackplot_gene <- function(transcripts, region, exon_size = 2.5, gene_size = 0.5
       return(trackplot_empty(region, label=track_label))
     }
   }
-
   # Calculate y positions of each transcript to avoid overlap
-  data <- trackplot_calculate_segment_height(data, TRUE)
+  transcript_ids <- unique(data$transcript_id)
+  # need to sort to ensure that the transcript ids are in the same order as the y positions
+  heights <- trackplot_calculate_segment_height(dplyr::arrange(dplyr::filter(data, feature == "transcript"), "start", "stop"))
+  data <- dplyr::left_join(
+    data,
+    tibble::tibble(transcript_id=transcript_ids, y=heights),
+    by = "transcript_id"
+  )
   # Set up data for arrows
   transcript_coords <- dplyr::filter(data, feature == "transcript")
-  arrows <- trackplot_create_arrow_segs(transcript_coords, region, 50, extra_cols = c("strand", "size", "y"))
+  arrows <- trackplot_create_arrow_segs(transcript_coords, region, 50)
   # Adjust the endpoints of any partially overlapping elements to fit within
   # the plot boundaries
   data <- dplyr::mutate(
@@ -478,58 +479,57 @@ trackplot_gene <- function(transcripts, region, exon_size = 2.5, gene_size = 0.5
   wrap_trackplot(plot, height=ggplot2::unit(1, "null"))
 }
 
-#' Plot peak tracks
+#' Plot range-based annotation tracks (e.g. peaks)
 #' @param loci `r document_granges("Genomic loci")`
 #' @inheritParams trackplot_coverage
-#' @param annotation_size size for peak annotations
+#' @param annotation_size size for peak annotations in mm
 #' @param label_by Name of a metadata column in `loci` to use for labeling, or a numeric vector with same length as loci  Column must be type character, factor or numeric
 #' @param label_size size for transcript labels in units of mm
 #' @param color_by Name of a metadata column in `loci` to use for coloring, or a numeric vector with same length as loci.  Column must be type character, factor, or numeric
 #' @param colors Vector of hex color codes to use for the color gradient
-#' @param direction_by Name of a metadata column in `loci` to use for determining direction of arrows
-#' @param arrow_angle Angle of the arrow head in degrees, if direction_by is provided
+#' @param show_strand bool to show strand direction of peaks if true
 #' @param track_label Label for the track
 #' @param return_data If TRUE, return the data frame used to generate the plot
 #' @return Plot of genomic loci if return_data is FALSE, otherwise returns the data frame used to generate the plot
 #' @seealso `trackplot_combine()`, `trackplot_coverage()`, `trackplot_loop()`, `trackplot_scalebar()`, `trackplot_gene()`
 #' @export
-trackplot_genome_annotations <- function(loci, region, annotation_size = 4,  label_by = NULL, label_size = 11*.8/ggplot2::.pt, 
-                                         color_by = NULL, colors = NULL,  direction_by = NULL, arrow_angle = 75, track_label="Peaks", return_data = FALSE) {
+trackplot_genome_annotation <- function(loci, region, annotation_size = 3,  label_by = NULL, label_size = 11*.8/ggplot2::.pt, 
+                                         color_by = NULL, colors = NULL,  show_strand=FALSE, track_label="Peaks", return_data = FALSE) {
   region <- normalize_ranges(region)
-  assert_true(is.null(label_by) || is.character(label_by) || is.numeric(label_by))
-  assert_true(is.null(color_by) || is.character(color_by) || is.numeric(color_by))
-  assert_true(is.null(direction_by) || is.character(direction_by) || is.numeric(direction_by))
+  assert_true(is.null(label_by) || is.character(label_by) || is.numeric(label_by) || is.factor(label_by))
+  assert_true(is.null(color_by) || is.character(color_by) || is.numeric(color_by) || is.factor(label_by))
   # Set up metadata columns depending on columns passed in for styling
-  metadata_char_cols = c()
-  metadata_vec_cols = c()
-  for (col in c(label_by, color_by, direction_by)) {
-    if (is.character(col)) {
-      metadata_char_cols <- append(metadata_char_cols, col)
-    } else {
-      metadata_vec_cols <- append(metadata_vec_cols, col)
+  metadata_char_cols = character(0)
+  metadata_col_map <- list(label = label_by, color = color_by)
+  for (col_name in names(metadata_col_map)) {
+    if (is.character(metadata_col_map[[col_name]]) && length(metadata_col_map[[col_name]]) == 1) {
+      metadata_char_cols <- append(metadata_char_cols, (metadata_col_map[[col_name]]))
     }
   }
-  #check length of metadata char cols
-  if (length(metadata_char_cols) == 0) {
-    loci <- normalize_ranges(loci)
-  } else {
-    loci <- normalize_ranges(loci, metadata_cols=metadata_char_cols)
+  if (show_strand) {metadata_char_cols <- append(metadata_char_cols, "strand")}
+  data <- normalize_ranges(loci, metadata_cols = metadata_char_cols)
+  for (col_name in names(metadata_col_map)) {
+    if ((is.character(metadata_col_map[[col_name]])) && (length(metadata_col_map[[col_name]]) == 1)) {
+      names(data)[names(data) == metadata_col_map[[col_name]]] <- col_name
+    }
+    else if (!is.null(metadata_col_map[[col_name]])) {
+      data[[col_name]] <- metadata_col_map[[col_name]]
+    }
   }
-  for (col in metadata_vec_cols) {loci[[col]] <- col}
-  # filter data to segments only within region
-  data <- loci %>%
-    tibble::as_tibble() %>%
-    dplyr::filter(as.character(chr) == as.character(region$chr), end > region$start & start < region$end)
-  
+  if (!is.null(colors)) {
+    assert_true(length(colors) >= length(unique(data[["color"]])))
+  }
+  annotation_size <- annotation_size/.75
+  data <- dplyr::filter(data, as.character(chr) == as.character(region$chr), end > region$start & start < region$end)
   # if data is empty, return data or empty plot
-  if (nrow(loci) == 0) {
+  if (nrow(data) == 0) {
     if (return_data) {
-      return(loci)
+      return(data)
     } else {
       return(trackplot_empty(region, track_label))
     }
   }
-  data <- trackplot_calculate_segment_height(data)
+  data$y <- trackplot_calculate_segment_height(data)
   # Adjust the endpoints of any partially overlapping elements to fit within
   # the plot boundaries
   data <- dplyr::mutate(
@@ -543,55 +543,56 @@ trackplot_genome_annotations <- function(loci, region, annotation_size = 4,  lab
     ggplot2::geom_segment(linewidth=annotation_size)  + 
     ggplot2::scale_x_continuous(limits = c(region$start, region$end), expand = c(0, 0), labels=scales::label_number()) +
     ggplot2::scale_y_discrete(labels = NULL, breaks = NULL) +
-    ggplot2::labs(x = "Genomic Position (bp)", y = NULL) + 
+    ggplot2::labs(x = "Genomic Position (bp)", y = NULL) +
     ggplot2::guides(size="none", linewidth="none") +
     ggplot2::facet_wrap("facet_label", strip.position="left") +
     trackplot_theme()
+  # add in arrows
+  if (show_strand) {
+    arrows <- trackplot_create_arrow_segs(data, region, 50, head_only=TRUE)
+    arrow_angle <- 45
+    default_linewidth <- 0.5
+    # use trig identity to find arrow length based on annotation size, and account for the linewidth of the ends of arrow
+    arrow_length <- ((annotation_size * 0.75/2) + default_linewidth*0.5*0.75*cos(arrow_angle*pi/180))/ sin(arrow_angle*pi/180)
+    
+    plot <- plot +
+      ggplot2::geom_segment(arrows, mapping=aes(
+        x = ifelse(strand == TRUE, start, end),
+        xend = ifelse(strand == TRUE, end, start),
+        y = y, yend = y,
+      ),
+      arrow=grid::arrow(length=grid::unit(arrow_length, "mm"), angle = arrow_angle),
+      color="white")
+  }
   # add labels if given
   if (!is.null(label_by)) {
     plot <- plot +
       ggrepel::geom_text_repel(
         data = data,
-        ggplot2::aes(label = !!as.symbol(label_by)),
+        ggplot2::aes(label = label),
         size = label_size,
-        position = ggrepel::position_nudge_repel(y = 0.25)
+        position = ggrepel::position_nudge_repel(y = 0.25),
+        color="black"
       )
-  }
-  # add in arrows
-  if (!is.null(direction_by)) {
-    arrows <- trackplot_create_arrow_segs(data, region, 150, c(direction_by, "y"))
-    plot <- plot + 
-      ggplot2::geom_segment(arrows, mapping=aes(
-        x = ifelse(!!as.symbol(direction_by) == TRUE, start, end),
-        xend = ifelse(!!as.symbol(direction_by) == TRUE, end, start),
-        y = y, yend = y,
-      ),
-      arrow=grid::arrow(length=grid::unit(annotation_size/sin(arrow_angle*pi/180)*.3, "mm"), angle = arrow_angle),
-      colour = "black",)
   }
   # Route to different colouring aesthetic paths depending on color_by and color type/presence
   if (!is.null(color_by)) {
-    plot <- plot + ggplot2::aes(color = .data[[color_by]])
-    if (is.character(data[[color_by]]) || is.factor(data[[color_by]])) {
-      if (!is.null(colors)) {
-        assert_true(length(colors) >= length(unique(data[[color_by]])))
+      plot <- plot + ggplot2::aes(color = color)
+      if (is.factor(data$color) || is.character(data$color)) {
+        if (is.null(colors)) {
+          if (length(levels(data$color)) > 2) {
+            colors <- discrete_palette("tableau", length(levels(data$color)))
+          }
+          # default continuous palette `c(munsell::mnsl("5P 3/12"), munsell::mnsl("5P 7/12"))`
+          else {colors <- c("#D099F2", "#6D2884")}
+        }
         plot <- plot + ggplot2::scale_color_manual(values = colors)
       } else {
-        plot <- plot + ggplot2::scale_color_manual(values = discrete_palette("tableau", length(unique(data[[color_by]]))))
-      }
-    } else if (is.numeric(data[[color_by]])) {
-      if (!is.null(colors)) {
-        assert_true(length(colors) >= 2,
-                  "Length of colors must be greater than or equal to 2")
+        if (is.null(colors)) {colors <- c("#D099F2", "#6D2884")}
         plot <- plot + ggplot2::scale_color_gradientn(colors=colors)
-      } else {
-        plot <- plot + ggplot2::scale_color_gradient(
-          high = munsell::mnsl("5P 3/12"), 
-          low = munsell::mnsl("5P 7/12"),
-        )
       }
+      plot <- plot + ggplot2::labs(color = color_by)
     }
-  }
   wrap_trackplot(plot, height=ggplot2::unit(1, "null"))
 }
 
@@ -1004,4 +1005,81 @@ trackplot_bulk <- function(fragments, region, groups,
     plot$patchwork$labels <- names(trackplots)
     return(plot)
   }
+}
+
+
+trackplot_helper_v2d <- function(gene=NULL, region=NULL, clusters, fragments, cell_read_counts,
+                                 transcripts, loops, loop_color, expression_matrix=NULL,
+                                 flank=1e5, loop_label="loop", plot_title="", highlights=NULL, cmap=NULL) {
+  
+  if (!is.null(region)){
+    if (is.character(region)) {
+      region <- BPCells:::normalize_ranges(region)
+      region$end <- region$end + 1L
+    } else {
+      region <- BPCells:::normalize_ranges(region)
+    }
+  } 
+  if (!is.null(gene)){
+    if (is.null(region)) {
+      region <- gene_region(transcripts, gene, extend_bp = flank)
+    }
+    plot_title <- gene
+  }
+  
+  if (is.null(gene) && is.null(region)) {
+    stop("Must supply either a gene or a region to plot!")
+  }
+  
+  if (is.null(cmap)){
+    pal <- BPCells::discrete_palette("stallion", n=length(unique(clusters)))
+  } else{
+    pal <- cmap
+  }
+  
+  base_size <- 11
+  scale_plot <- trackplot_scalebar(region, font_pt=base_size)
+  bulk_plot <- trackplot_coverage(
+    fragments,
+    region=region,
+    groups=clusters,
+    cell_read_counts=cell_read_counts,
+    colors=pal,
+    bins=500
+  )
+  
+  if (!is.null(highlights)){
+    annotations <- list()
+    for (i in seq_len(nrow(highlights))) {
+      annotations <- c(annotations, list(
+        ggplot2::annotate("rect", alpha=highlights$alpha[i],
+                          xmin=highlights$xmin[i], xmax=highlights$xmax[i],
+                          ymin=highlights$ymin[i], ymax=highlights$ymax[i],
+                          fill=highlights$color[i])
+      ))
+    }
+    bulk_plot <- Reduce(`+`, c(list(bulk_plot, annotations)))
+  }
+  
+  gene_plot <- trackplot_gene(transcripts, region) + ggplot2::guides(color="none")
+  
+  loop_plot <- trackplot_loop(loops, region, color_by=loop_color, track_label=loop_label)
+  
+  if (!is.null(gene) & !is.null(expression_matrix)){
+    expression <- collect_features(expression_matrix, gene)
+    names(expression) <- "gene"
+    
+    expression_plot <- ggplot2::ggplot(expression, ggplot2::aes(clusters, gene, fill=clusters)) +
+      ggplot2::geom_boxplot() +
+      ggplot2::guides(y="none", fill="none") +
+      ggplot2::labs(x=NULL, y="RNA normalized expression") +
+      ggplot2::scale_fill_manual(values=pal, drop=FALSE) +
+      trackplot_theme()
+    
+    trackplot_combine(list(scale_plot, bulk_plot, gene_plot, loop_plot), side_plot=expression_plot, title=gene)
+  } else{
+    trackplot_combine(list(scale_plot, bulk_plot, gene_plot, loop_plot), title=plot_title) &
+      ggplot2::theme(legend.direction="vertical")
+  }
+  
 }

@@ -4,7 +4,7 @@
 \alias{trackplot_create_arrow_segs}
 \title{Break up segments into smaller segments the length of the plot, divided by size}
 \usage{
-trackplot_create_arrow_segs(data, region, size = 150, extra_cols = c())
+trackplot_create_arrow_segs(data, region, size = 50, head_only = FALSE)
 }
 \arguments{
 \item{data}{Dataframe of full segments to be broken up}
@@ -13,7 +13,10 @@ trackplot_create_arrow_segs(data, region, size = 150, extra_cols = c())
 
 \item{size}{int Number of arrows to span the x axis of track}
 
-\item{extra_cols}{Vector of characters of columns to keep from data}
+\item{head_only}{bool If TRUE, only the head of the segment will be plotted}
+}
+\value{
+Dataframe of segments broken up into smaller segments.  Has columns start, end, and any additional metadata columns in original data
 }
 \description{
 Break up segments into smaller segments the length of the plot, divided by size

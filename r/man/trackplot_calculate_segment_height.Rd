@@ -2,26 +2,30 @@
 % Please edit documentation in R/trackplots.R
 \name{trackplot_calculate_segment_height}
 \alias{trackplot_calculate_segment_height}
-\title{Calculate y positions for transcript segments to avoid overlap
+\title{Calculate y positions for trackplot segments to avoid overlap
 Steps:
 \enumerate{
 \item Calculate the maximum overlap depth of transcripts
-\item Iterate through transcript start/end in sorted order
-\item Randomly assign each transcript a y-coordinate between 1 and max overlap depth,
-with the restriction that a transcript can't have the same y-coordinate
-If is a transcript, filter out the exons in determining overlap so there aren't repeated steps
+\item Iterate through start/end of segments in sorted order
+\item Randomly assign each segment a y-coordinate between 1 and max overlap depth,
+with the restriction that a segment can't have the same y-coordinate as an overlapping segment
 }}
 \usage{
-trackplot_calculate_segment_height(data, is_transcript = FALSE)
+trackplot_calculate_segment_height(data)
+}
+\arguments{
+\item{data}{tibble of genome ranges with start and end columns, assumed to be on same chromosome.}
+}
+\value{
+Vector of y coordinates, one per input row, such that no ranges at the same y coordinate overlap
 }
 \description{
-Calculate y positions for transcript segments to avoid overlap
+Calculate y positions for trackplot segments to avoid overlap
 Steps:
 \enumerate{
 \item Calculate the maximum overlap depth of transcripts
-\item Iterate through transcript start/end in sorted order
-\item Randomly assign each transcript a y-coordinate between 1 and max overlap depth,
-with the restriction that a transcript can't have the same y-coordinate
-If is a transcript, filter out the exons in determining overlap so there aren't repeated steps
+\item Iterate through start/end of segments in sorted order
+\item Randomly assign each segment a y-coordinate between 1 and max overlap depth,
+with the restriction that a segment can't have the same y-coordinate as an overlapping segment
 }
 }
