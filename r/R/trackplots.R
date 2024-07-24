@@ -121,6 +121,7 @@ get_trackplot_height <- function(plot) {
 #'   with the restriction that a segment can't have the same y-coordinate as an overlapping segment
 #' @param data tibble of genome ranges with start and end columns, assumed to be on same chromosome. 
 #' @return Vector of y coordinates, one per input row, such that no ranges at the same y coordinate overlap
+#' @keywords internal
 trackplot_calculate_segment_height <- function(data) {
   data <- tibble::rownames_to_column(data, "idx_col")
   boundaries <- data %>%
@@ -162,6 +163,7 @@ trackplot_calculate_segment_height <- function(data) {
 #' @param size int Number of arrows to span the x axis of track
 #' @param head_only bool If TRUE, only the head of the segment will be plotted
 #' @return Dataframe of segments broken up into smaller segments.  Has columns start, end, and any additional metadata columns in original data
+#' @keywords internal
 trackplot_create_arrow_segs <- function(data, region, size = 50, head_only = FALSE) {
   # Get region to be plotted
   arrow_spacing <- (region$end - region$start) / size
@@ -484,7 +486,7 @@ trackplot_gene <- function(transcripts, region, exon_size = 2.5, gene_size = 0.5
 #' @inheritParams trackplot_coverage
 #' @param annotation_size size for peak annotations in mm
 #' @param label_by Name of a metadata column in `loci` to use for labeling, or a numeric vector with same length as loci  Column must be type character, factor or numeric
-#' @param label_size size for transcript labels in units of mm
+#' @param label_size size for segment labels in units of mm
 #' @param color_by Name of a metadata column in `loci` to use for coloring, or a numeric vector with same length as loci.  Column must be type character, factor, or numeric
 #' @param colors Vector of hex color codes to use for the color gradient
 #' @param show_strand bool to show strand direction of peaks if true
