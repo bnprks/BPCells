@@ -17,6 +17,10 @@ Contributions welcome :)
   Thanks to @immanuelazn for their first contribution as a new lab hire!
 - Add `regress_out()` to allow removing unwanted sources of variation via least squares linear regression models.
   Thanks to @ycli1995 for pull request #110
+- Add `trackplot_genome_annotation()` for plotting peaks, with options for directional arrows, colors, labels, and peak widths. (pull request #113)
+
+## Improvements
+- `trackplot_loop()` now accepts discrete color scales
 
 ## Bug-fixes
 - Fixed error message when a matrix is too large to be converted to dgCMatrix (Thanks to @RookieA1 for reporting issue #95)

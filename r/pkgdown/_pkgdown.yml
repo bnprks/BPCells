@@ -159,6 +159,7 @@ reference:
   - trackplot_coverage
   - trackplot_gene
   - trackplot_loop
+  - trackplot_genome_annotation
   - trackplot_scalebar
   - gene_region
   - set_trackplot_label

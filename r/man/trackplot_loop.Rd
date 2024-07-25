@@ -8,7 +8,7 @@ trackplot_loop(
   loops,
   region,
   color_by = NULL,
-  colors = c("#bfd3e6", "#8c96c6", "#88419d", "#4d004b"),
+  colors = NULL,
   allow_truncated = TRUE,
   curvature = 0.75,
   track_label = "Links",
@@ -24,9 +24,10 @@ trackplot_loop(
 \item{region}{Region to plot, e.g. output from \code{gene_region()}. String of format "chr1:100-200",
 or list/data.frame/GRanges of length 1 specifying chr, start, end. See \code{help("genomic-ranges-like")} for details}
 
-\item{color_by}{Name of a metadata column in \code{loops} to use for coloring, or a numeric vector with same length as loops}
+\item{color_by}{Name of a metadata column in \code{loops} to use for coloring, or a data vector with same length as loci. Column must be numeric or convertible to a factor.}
 
-\item{colors}{Vector of hex color codes to use for the color gradient}
+\item{colors}{Vector of hex color codes to use for the color scale. For numeric \code{color_by} data, this is passed to \code{ggplot2::scale_color_gradientn()},
+otherwise it is interpreted as a discrete color palette in \code{ggplot2::scale_color_manual()}}
 
 \item{allow_truncated}{If FALSE, remove any loops that are not fully contained within \code{region}}
 
@@ -41,5 +42,5 @@ Plot of loops connecting genomic coordinates
 Plot loops
 }
 \seealso{
-\code{trackplot_combine()}, \code{trackplot_coverage()}, \code{trackplot_gene()}, \code{trackplot_scalebar()}
+\code{trackplot_combine()}, \code{trackplot_coverage()}, \code{trackplot_gene()}, \code{trackplot_scalebar()}, \code{trackplot_genome_annotation()}
 }
