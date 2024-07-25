@@ -170,3 +170,53 @@ test_that("trackplot_loop doesn't crash", {
     }
     
 })
+
+test_that("trackplot_coverage doesn't crash", {
+    frags <- open_fragments_10x("../data/mini_fragments.tsv.gz") %>%
+        write_fragments_memory()
+    cell_names <- cellNames(frags)
+    frags_metadata <- tibble::tibble(
+      id = cell_names,
+      atac_reads = as.integer(seq(from=0, to=10, length.out=length(cell_names))),
+      cell_type = sample(c("T", "B", "NK"), size = length(cell_names), replace=TRUE)
+    )
+    region <- GenomicRanges::GRanges(
+        seqnames = S4Vectors::Rle(c("chr15")),
+        ranges = IRanges::IRanges(30000000:52806155)
+    )
+    expect_no_condition(
+        ggplot2::ggplot_build(trackplot_coverage(
+              frags,
+              region=region,
+              groups=frags_metadata$cell_type,
+              cell_read_counts=frags_metadata$atac_reads,
+              bins=500
+            )
+        )
+    )
+    # checks for only one cluster
+    frags_metadata_one_cluster <- frags_metadata[frags_metadata$cell_type == "T",]
+    frags_one_cluster <- select_cells(frags,  frags_metadata_one_cluster$id)
+    expect_no_condition(
+        ggplot2::ggplot_build(trackplot_coverage(
+              frags_one_cluster,
+              region=region,
+              groups=frags_metadata_one_cluster$cell_type,
+              cell_read_counts=frags_metadata_one_cluster$atac_reads,
+              bins=500
+            )
+        )
+    )
+    # Check return data works
+    expect_is(
+        trackplot_coverage(
+            frags_one_cluster,
+            region=region,
+            groups=frags_metadata_one_cluster$cell_type,
+            cell_read_counts=frags_metadata_one_cluster$atac_reads,
+            bins=500,
+            return_data=TRUE
+        ),
+        "tbl_df"
+    )
+})
