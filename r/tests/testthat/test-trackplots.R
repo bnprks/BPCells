@@ -180,9 +180,10 @@ test_that("trackplot_coverage doesn't crash", {
       atac_reads = as.integer(seq(from=0, to=10, length.out=length(cell_names))),
       cell_type = sample(c("T", "B", "NK"), size = length(cell_names), replace=TRUE)
     )
-    region <- GenomicRanges::GRanges(
-        seqnames = S4Vectors::Rle(c("chr15")),
-        ranges = IRanges::IRanges(30000000:52806155)
+    region <- tibble::tibble(
+        chr = "chr15",
+        start = 30000000,
+        end = 52806155,
     )
     expect_no_condition(
         ggplot2::ggplot_build(trackplot_coverage(
