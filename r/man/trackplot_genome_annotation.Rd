@@ -7,12 +7,12 @@
 trackplot_genome_annotation(
   loci,
   region,
-  annotation_size = 3,
-  label_by = NULL,
-  label_size = 11 * 0.8/ggplot2::.pt,
   color_by = NULL,
   colors = NULL,
+  label_by = NULL,
+  label_size = 11 * 0.8/ggplot2::.pt,
   show_strand = FALSE,
+  annotation_size = 3,
   track_label = "Peaks",
   return_data = FALSE
 )
@@ -26,21 +26,20 @@ trackplot_genome_annotation(
 \item{region}{Region to plot, e.g. output from \code{gene_region()}. String of format "chr1:100-200",
 or list/data.frame/GRanges of length 1 specifying chr, start, end. See \code{help("genomic-ranges-like")} for details}
 
-\item{annotation_size}{size for peak annotations in mm}
+\item{color_by}{Name of a metadata column in \code{loci} to use for coloring, or a data vector with same length as loci. Column must be numeric or convertible to a factor.}
 
-\item{label_by}{Name of a metadata column in \code{loci} to use for labeling, or a numeric vector with same length as loci  Column must be type character, factor or numeric}
+\item{colors}{Vector of hex color codes to use for the color scale. For numeric \code{color_by} data, this is passed to \code{ggplot2::scale_color_gradientn()},
+otherwise it is interpreted as a discrete color palette in \code{ggplot2::scale_color_manual()}}
 
-\item{label_size}{size for segment labels in units of mm}
+\item{label_by}{Name of a metadata column in \code{loci} to use for labeling, or a data vector with same length as loci. Column must hold string data.}
 
-\item{color_by}{Name of a metadata column in \code{loci} to use for coloring, or a numeric vector with same length as loci.  Column must be type character, factor, or numeric}
+\item{label_size}{size for labels in units of mm}
 
-\item{colors}{Vector of hex color codes to use for the color gradient}
+\item{show_strand}{If TRUE, show strand direction as arrows}
 
-\item{show_strand}{bool to show strand direction of peaks if true}
+\item{annotation_size}{size for annotation lines in mm}
 
-\item{track_label}{Label for the track}
-
-\item{return_data}{If TRUE, return the data frame used to generate the plot}
+\item{return_data}{If true, return data from just before plotting rather than a plot.}
 }
 \value{
 Plot of genomic loci if return_data is FALSE, otherwise returns the data frame used to generate the plot

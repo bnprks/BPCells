@@ -202,6 +202,7 @@ trackplot_create_arrow_segs <- function(data, region, size = 50, head_only = FAL
 #' @param metadata List of form e.g. list(color=color_by, label=label_by). The values can be either column names or data vectors.
 #'    Any NULL values will be skipped
 #' @return Tibble with normalized ranges and additional columns populated as requested in `metadata`
+#' @keywords internal
 trackplot_normalize_ranges_with_metadata <- function(data, metadata) {
   metadata_column_names <- character(0)
   metadata_values <- list()
@@ -533,10 +534,9 @@ trackplot_gene <- function(transcripts, region, exon_size = 2.5, gene_size = 0.5
 #' @param label_by Name of a metadata column in `loci` to use for labeling, or a data vector with same length as loci. Column must hold string data.
 #' @param label_size size for labels in units of mm
 #' @param color_by Name of a metadata column in `loci` to use for coloring, or a data vector with same length as loci. Column must be numeric or convertible to a factor.
-#' @param colors Vector of hex color codes to use for the color gradient
-#' @param show_strand bool to show strand direction of peaks if true
-#' @param track_label Label for the track
-#' @param return_data If TRUE, return the data frame used to generate the plot
+#' @param colors Vector of hex color codes to use for the color scale. For numeric `color_by` data, this is passed to `ggplot2::scale_color_gradientn()`,
+#'               otherwise it is interpreted as a discrete color palette in `ggplot2::scale_color_manual()`
+#' @param show_strand If TRUE, show strand direction as arrows
 #' @return Plot of genomic loci if return_data is FALSE, otherwise returns the data frame used to generate the plot
 #' @seealso `trackplot_combine()`, `trackplot_coverage()`, `trackplot_loop()`, `trackplot_scalebar()`, `trackplot_gene()`
 #' @export
@@ -653,7 +653,7 @@ trackplot_genome_annotation <- function(loci, region, color_by = NULL, colors = 
 #' Plot loops
 #'
 #' @param loops `r document_granges()`
-#' @param color_by Name of a metadata column in `loops` to use for coloring, or a numeric vector with same length as loops
+#' @param color_by Name of a metadata column in `loops` to use for coloring, or a data vector with same length as loci. Column must be numeric or convertible to a factor.
 #' @param colors Vector of hex color codes to use for the color scale. For numeric `color_by` data, this is passed to `ggplot2::scale_color_gradientn()`,
 #'               otherwise it is interpreted as a discrete color palette in `ggplot2::scale_color_manual()`
 #' @param allow_truncated If FALSE, remove any loops that are not fully contained within `region`
