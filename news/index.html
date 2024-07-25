@@ -57,8 +57,13 @@
 <ul><li>
 <code><a href="../reference/apply_by_row.html">apply_by_col()</a></code> and <code><a href="../reference/apply_by_row.html">apply_by_row()</a></code> allow providing custom R functions to compute per row/col summaries. In initial tests calculating row/col means using R functions is ~2x slower than the C++-based implementation but memory usage remains low.</li>
 <li>Add <code><a href="../reference/IterableMatrix-methods.html">rowMaxs()</a></code> and <code><a href="../reference/IterableMatrix-methods.html">colMaxs()</a></code> functions, which return the maximum value in each row or column of a matrix. If <code>matrixStats</code> or <code>MatrixGenerics</code> packages are installed, <code><a href="../reference/IterableMatrix-methods.html">BPCells::rowMaxs()</a></code> will fall back to their implementations for non-BPCells objects. Thanks to <a href="https://github.com/immanuelazn" class="external-link">@immanuelazn</a> for their first contribution as a new lab hire!</li>
-<li>
-<code><a href="../reference/regress_out.html">regress_out()</a></code> now allows removing unwanted sources of variation via least squares linear regression models. Thanks to <a href="https://github.com/ycli1995" class="external-link">@ycli1995</a> for pull request <a href="https://github.com/bnprks/BPCells/issues/110" class="external-link">#110</a></li>
+<li>Add <code><a href="../reference/regress_out.html">regress_out()</a></code> to allow removing unwanted sources of variation via least squares linear regression models. Thanks to <a href="https://github.com/ycli1995" class="external-link">@ycli1995</a> for pull request <a href="https://github.com/bnprks/BPCells/issues/110" class="external-link">#110</a></li>
+<li>Add <code><a href="../reference/trackplot_genome_annotation.html">trackplot_genome_annotation()</a></code> for plotting peaks, with options for directional arrows, colors, labels, and peak widths. (pull request <a href="https://github.com/bnprks/BPCells/issues/113" class="external-link">#113</a>)</li>
+</ul></div>
+<div class="section level3">
+<h3 id="improvements-0-2-1">Improvements<a class="anchor" aria-label="anchor" href="#improvements-0-2-1"></a></h3>
+<ul><li>
+<code><a href="../reference/trackplot_loop.html">trackplot_loop()</a></code> now accepts discrete color scales</li>
 </ul></div>
 <div class="section level3">
 <h3 id="bug-fixes-0-2-1">Bug-fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-0-2-1"></a></h3>
