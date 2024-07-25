@@ -23,9 +23,10 @@ Contributions welcome :)
 - `trackplot_loop()` now accepts discrete color scales
 
 ## Bug-fixes
-- Fixed error message when a matrix is too large to be converted to dgCMatrix (Thanks to @RookieA1 for reporting issue #95)
+- Fixed error message when a matrix is too large to be converted to dgCMatrix. (Thanks to @RookieA1 for reporting issue #95)
 - Fixed forgetting dimnames when subsetting after certain sets of
-  operations (Thanks to @Yunuuuu for reporting issues #97 and #100)
+  operations. (Thanks to @Yunuuuu for reporting issues #97 and #100)
+- Fixed plotting crashes when running `trackplot_coverage` with fragments from a single cluster. (Thanks to @sjessa for directly reporting this bug and coming up with a fix)
 
 # BPCells 0.2.0 (6/14/2024)
 
