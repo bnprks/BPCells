@@ -12,7 +12,7 @@ trackplot_genome_annotation(
   label_by = NULL,
   label_size = 11 * 0.8/ggplot2::.pt,
   show_strand = FALSE,
-  annotation_size = 3,
+  annotation_size = 2.5,
   track_label = "Peaks",
   return_data = FALSE
 )

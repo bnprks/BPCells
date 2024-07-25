@@ -439,6 +439,7 @@ trackplot_coverage <- function(fragments, region, groups,
 #' @inheritParams trackplot_coverage
 #' @param labels Character vector with labels for each item in transcripts. NA for items that should not be labeled
 #' @param exon_size size for exon lines in units of mm
+#' @param gene_size size for intron/gene lines in units of mm
 #' @param transcript_size size for transcript lines in units of mm
 #' @param label_size size for transcript labels in units of mm
 #' @return Plot of gene locations
@@ -541,7 +542,7 @@ trackplot_gene <- function(transcripts, region, exon_size = 2.5, gene_size = 0.5
 #' @seealso `trackplot_combine()`, `trackplot_coverage()`, `trackplot_loop()`, `trackplot_scalebar()`, `trackplot_gene()`
 #' @export
 trackplot_genome_annotation <- function(loci, region, color_by = NULL, colors = NULL, label_by = NULL, label_size = 11*.8/ggplot2::.pt, show_strand=FALSE,
-                                        annotation_size = 3, track_label="Peaks", return_data = FALSE) {
+                                        annotation_size = 2.5, track_label="Peaks", return_data = FALSE) {
   region <- normalize_ranges(region)
   assert_true(is.null(label_by) || is.character(label_by))
 

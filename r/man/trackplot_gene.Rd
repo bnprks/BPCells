@@ -31,6 +31,8 @@ or list/data.frame/GRanges of length 1 specifying chr, start, end. See \code{hel
 
 \item{exon_size}{size for exon lines in units of mm}
 
+\item{gene_size}{size for intron/gene lines in units of mm}
+
 \item{label_size}{size for transcript labels in units of mm}
 
 \item{return_data}{If true, return data from just before plotting rather than a plot.}
