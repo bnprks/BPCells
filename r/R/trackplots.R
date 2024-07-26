@@ -389,7 +389,7 @@ trackplot_coverage <- function(fragments, region, groups,
     as("dgCMatrix") %>%
     as("matrix")
   # Discard any partial bins
-  mat <- mat[seq_along(bin_centers), ]
+  mat <- mat[seq_along(bin_centers), , drop = FALSE]
 
   data <- tibble::tibble(
     pos = rep(bin_centers, ncol(mat)),
