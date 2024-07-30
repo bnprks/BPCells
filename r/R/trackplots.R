@@ -180,14 +180,22 @@ trackplot_create_arrow_segs <- function(data, region, size = 50, head_only = FAL
         new_arrow,
         data %>% dplyr::select(-c("start", "end")) %>% dplyr::slice(i)
       )))
+    } else {
+      arrow_list <- c(arrow_list, list(dplyr::slice(data, i)))
     }
   }
   arrows <- dplyr::bind_rows(arrow_list)
   if (head_only) {
     # Set segment size small enough to be invisible if head_only
+    # Cannot swap values with if-else mutation block due to sequential evaluation
+    arrows_shortened <- dplyr::mutate(
+      arrows,
+      start = ifelse(strand, arrows$end - 1e-4, arrows$start),
+      end = ifelse(strand, arrows$end, arrows$start+1e-4)
+    )
     arrows <- arrows %>% dplyr::mutate(
-      start = ifelse(strand, end - 1e-4, start),
-      end = ifelse(strand, end, start + 1e-4)
+      start = arrows_shortened$start,
+      end = arrows_shortened$end
     )
   }
   arrows <- dplyr::filter(arrows, start >= region$start, start < region$end, end >= region$start, end < region$end)
@@ -370,7 +378,7 @@ trackplot_coverage <- function(fragments, region, groups,
   assert_true(length(cellNames(fragments)) == length(cell_read_counts))
 
 
-  region$tile_width <- (region$end - region$start) %/% bins
+  region$tile_width <- max(((region$end - region$start) %/% bins), 1)
 
   membership_matrix <- cluster_membership_matrix(groups, group_order)
   group_read_counts <- multiply_rows(membership_matrix, cell_read_counts) %>%
@@ -382,7 +390,7 @@ trackplot_coverage <- function(fragments, region, groups,
   }
   colors <- colors[seq_len(ncol(membership_matrix))]
 
-  bin_centers <- seq(region$start, region$end - 1, region$tile_width) + region$tile_width / 2
+  bin_centers <- seq(region$start, region$end - 1, region$tile_width) + region$tile_width %/% 2
   bin_centers <- pmin(bin_centers, region$end - 1)
 
   mat <- (tile_matrix(fragments, region, explicit_tile_names = TRUE) %*% membership_matrix) %>%
@@ -585,7 +593,6 @@ trackplot_genome_annotation <- function(loci, region, color_by = NULL, colors = 
     end = pmax(region$start, pmin(region$end, end)),
     facet_label = track_label
   )
-
   if (show_strand) arrows <- trackplot_create_arrow_segs(data, region, 50, head_only=TRUE)
   else arrows <- NULL
   if (return_data) {

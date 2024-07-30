@@ -74,6 +74,11 @@ test_that("creating continuous trackplot arrows works", {
     data2 <- data1 %>% tibble::add_column(
         chr = c("chr1", "chr1", "chr1"),
         label = c("A", "B", "C"))
+    data3 <- tibble::tibble(
+        start = c(10000, 10050, 20001),
+        end = c(10010, 10060, 20005),
+        strand = c(TRUE, FALSE, FALSE),
+    )
     region <- tibble::tibble(
         chr = "chr1",
         start = 10000,
@@ -92,6 +97,13 @@ test_that("creating continuous trackplot arrows works", {
             chr = c(rep("chr1", 100)),
             label = c(rep("A", 50), rep("C", 50)))
     expect_identical(segs_with_metadata, segs_expected_with_metadata)
+    segs_small <- trackplot_create_arrow_segs(data3, region, 100)
+    segs_expected_small <- tibble::tibble(
+        start = c(10000, 10050),
+        end = c(10010, 10060),
+        strand = c(TRUE, FALSE)
+    )
+    expect_identical(segs_small, segs_expected_small)
 })
 
 test_that("trackplot_genome_annotation doesn't crash", {
@@ -180,44 +192,54 @@ test_that("trackplot_coverage doesn't crash", {
       atac_reads = as.integer(seq(from=0, to=10, length.out=length(cell_names))),
       cell_type = sample(c("T", "B", "NK"), size = length(cell_names), replace=TRUE)
     )
-    region <- tibble::tibble(
+    # general region
+    region1 <- tibble::tibble(
         chr = "chr15",
         start = 30000000,
         end = 52806155,
     )
-    expect_no_condition(
-        ggplot2::ggplot_build(trackplot_coverage(
-              frags,
-              region=region,
-              groups=frags_metadata$cell_type,
-              cell_read_counts=frags_metadata$atac_reads,
-              bins=500
-            )
-        )
+    # for small motifs
+    region2 <- tibble::tibble(
+        chr = "chr15",
+        start = 31283779,# 31277136,
+        end = 31283870#31322748
     )
-    # checks for only one cluster
     frags_metadata_one_cluster <- frags_metadata[frags_metadata$cell_type == "T",]
+    # checks for only one cluster
     frags_one_cluster <- select_cells(frags,  frags_metadata_one_cluster$id)
-    expect_no_condition(
-        ggplot2::ggplot_build(trackplot_coverage(
-              frags_one_cluster,
-              region=region,
-              groups=frags_metadata_one_cluster$cell_type,
-              cell_read_counts=frags_metadata_one_cluster$atac_reads,
-              bins=500
+    for (region in list(region1, region2)) {
+        expect_no_condition(
+            ggplot2::ggplot_build(trackplot_coverage(
+                  frags,
+                  region=region,
+                  groups=frags_metadata$cell_type,
+                  cell_read_counts=frags_metadata$atac_reads,
+                  bins=500
+                )
             )
         )
-    )
-    # Check return data works
-    expect_is(
-        trackplot_coverage(
-            frags_one_cluster,
-            region=region,
-            groups=frags_metadata_one_cluster$cell_type,
-            cell_read_counts=frags_metadata_one_cluster$atac_reads,
-            bins=500,
-            return_data=TRUE
-        ),
-        "tbl_df"
-    )
+        
+        expect_no_condition(
+            ggplot2::ggplot_build(trackplot_coverage(
+                  frags_one_cluster,
+                  region=region,
+                  groups=frags_metadata_one_cluster$cell_type,
+                  cell_read_counts=frags_metadata_one_cluster$atac_reads,
+                  bins=500
+                )
+            )
+        )
+        # Check return data works
+        expect_is(
+            trackplot_coverage(
+                frags_one_cluster,
+                region=region,
+                groups=frags_metadata_one_cluster$cell_type,
+                cell_read_counts=frags_metadata_one_cluster$atac_reads,
+                bins=500,
+                return_data=TRUE
+            ),
+            "tbl_df"
+        )
+    }
 })
