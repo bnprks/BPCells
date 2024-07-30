@@ -91,12 +91,24 @@ test_that("creating continuous trackplot arrows works", {
         strand = c(rep(TRUE, 50), rep(FALSE, 50))
     )
     expect_identical(segs, segs_expected)
+
+    segs_expected_head_only <- tibble::tibble(
+        start = c(seq(10100, 15000, 100) - 1e-4, seq(10000, 14900, 100)),
+        end = c(seq(10100, 15000, 100), seq(10000, 14900, 100) + 1e-4),
+        strand = c(rep(TRUE, 50), rep(FALSE, 50))
+    )
+    expect_identical(
+        trackplot_create_arrow_segs(data1, region, 100, head_only=TRUE), 
+        segs_expected_head_only
+    )
+
     segs_with_metadata <- trackplot_create_arrow_segs(data2, region, 100)
     segs_expected_with_metadata <- segs_expected %>% 
         tibble::add_column(
             chr = c(rep("chr1", 100)),
             label = c(rep("A", 50), rep("C", 50)))
     expect_identical(segs_with_metadata, segs_expected_with_metadata)
+
     segs_small <- trackplot_create_arrow_segs(data3, region, 100)
     segs_expected_small <- tibble::tibble(
         start = c(10000, 10050),
@@ -104,6 +116,16 @@ test_that("creating continuous trackplot arrows works", {
         strand = c(TRUE, FALSE)
     )
     expect_identical(segs_small, segs_expected_small)
+
+    segs_expected_small_head_only <- tibble::tibble(
+        start = c(10010-1e-4, 10050),
+        end = c(10010, 10050+1e-4),
+        strand = c(TRUE, FALSE)
+    )
+    expect_identical(
+        trackplot_create_arrow_segs(data3, region, 100, head_only=TRUE),
+        segs_expected_small_head_only
+    )
 })
 
 test_that("trackplot_genome_annotation doesn't crash", {

@@ -62,7 +62,7 @@ For MacOS, installing HDF5 through homebrew seems to be most reliable: `brew ins
 
 ### General Installation troubleshooting
 BPCells tries to print informative error messages during compilation to help diagnose the problem. For a more
-verbose set of information, run `Sys.setenv(BPCELLS_DEBUG_INSTALL="true")` prior to `remotes::install_github("bnprks/BPCells")`. If you still can't solve the issue with that additional information, feel free to file a Github issue, being
+verbose set of information, run `Sys.setenv(BPCELLS_DEBUG_INSTALL="true")` prior to `remotes::install_github("bnprks/BPCells/r")`. If you still can't solve the issue with that additional information, feel free to file a Github issue, being
 sure to use a [collapsible section](https://docs.github.com/en/get-started/writing-on-github/working-with-advanced-formatting/organizing-information-with-collapsed-sections) for the verbose installation log.
 
 
