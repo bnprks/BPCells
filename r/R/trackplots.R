@@ -331,6 +331,11 @@ trackplot_combine <- function(tracks, side_plot = NULL, title = NULL, side_plot_
     tracks[[i]] <- tracks[[i]] + ggplot2::theme(plot.margin=ggplot2::unit(5.5*plot.margin, "pt"))
   }
 
+  # Reduce cut-off y-axis labels. Put plots with y axis labels later in the plot list, as they will take layer priority with patchwork
+  has_y_axis <- vapply(tracks, function(t) is(t, "ggplot") && !is.null(t$labels$y), logical(1))
+  tracks <- c(tracks[!has_y_axis], tracks[has_y_axis])
+  areas <- c(areas[!has_y_axis], areas[has_y_axis])
+
   if (is.null(side_plot)) {
     widths <- c(1)
   } else {
