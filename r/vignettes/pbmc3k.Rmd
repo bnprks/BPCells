@@ -72,7 +72,7 @@ remotes::install_github(c("GreenleafLab/motifmatchr", "GreenleafLab/chromVARmoti
 <details>
   <summary>**Install BPCells**</summary>
 ```{r, eval=FALSE}
-remotes::install_github(c("bnprks/BPCells"))
+remotes::install_github(c("bnprks/BPCells/r"))
 ```
 
 </details>

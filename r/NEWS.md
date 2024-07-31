@@ -26,7 +26,8 @@ Contributions welcome :)
 - Fixed error message when a matrix is too large to be converted to dgCMatrix. (Thanks to @RookieA1 for reporting issue #95)
 - Fixed forgetting dimnames when subsetting after certain sets of
   operations. (Thanks to @Yunuuuu for reporting issues #97 and #100)
-- Fixed plotting crashes when running `trackplot_coverage` with fragments from a single cluster. (Thanks to @sjessa for directly reporting this bug and coming up with a fix)
+- Fixed plotting crashes when running `trackplot_coverage()` with fragments from a single cluster. (Thanks to @sjessa for directly reporting this bug and coming up with a fix)
+- Fixed issues with `trackplot_coverage()` when called with ranges less than 500 bp in length (Thanks to @bettybliu for directly reporting this bug.)
 
 # BPCells 0.2.0 (6/14/2024)
 
