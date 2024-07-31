@@ -334,8 +334,17 @@ trackplot_combine <- function(tracks, side_plot = NULL, title = NULL, side_plot_
   if (is.null(side_plot)) {
     widths <- c(1)
   } else {
+    # Decide whether to put legends below/above side plot by adding up the height of all relatively-sized tracks
+    height_above <- sum(as.vector(heights)[seq_along(heights) < side_plot_row & grid::unitType(heights) == "null"])
+    height_below <- sum(as.vector(heights)[seq_along(heights) > side_plot_row & grid::unitType(heights) == "null"])
+    if (height_above < height_below) {
+      guide_position <- patchwork::area(side_plot_row+1L, 2, length(tracks))
+    } else {
+      guide_position <- patchwork::area(1L, 2, side_plot_row-1L)
+    }
+    
     widths <- c(1, side_plot_width)
-    areas <- c(areas, list(patchwork::area(side_plot_row, 2), patchwork::area(side_plot_row+1L, 2, length(tracks))))
+    areas <- c(areas, list(patchwork::area(side_plot_row, 2), guide_position))
     # Make adjustments to the side plot style to fit in with tracks
     side_plot <- side_plot + 
       ggplot2::scale_x_discrete(limits=rev, position="top") +
