@@ -212,7 +212,7 @@ test_that("trackplot_coverage doesn't crash", {
     frags_metadata <- tibble::tibble(
       id = cell_names,
       atac_reads = as.integer(seq(from=0, to=10, length.out=length(cell_names))),
-      cell_type = sample(c("T", "B", "NK"), size = length(cell_names), replace=TRUE)
+      cell_type = rep(c("NK", "B", "T"), ceiling(length(cell_names)/3))[1:length(cell_names)]
     )
     # general region
     region1 <- tibble::tibble(
@@ -223,8 +223,8 @@ test_that("trackplot_coverage doesn't crash", {
     # for small motifs
     region2 <- tibble::tibble(
         chr = "chr15",
-        start = 31283779,# 31277136,
-        end = 31283870#31322748
+        start = 31283779,
+        end = 31283870
     )
     frags_metadata_one_cluster <- frags_metadata[frags_metadata$cell_type == "T",]
     # checks for only one cluster

@@ -188,14 +188,11 @@ trackplot_create_arrow_segs <- function(data, region, size = 50, head_only = FAL
   if (head_only) {
     # Set segment size small enough to be invisible if head_only
     # Cannot swap values with if-else mutation block due to sequential evaluation
-    arrows_shortened <- dplyr::mutate(
-      arrows,
-      start = ifelse(strand, arrows$end - 1e-4, arrows$start),
-      end = ifelse(strand, arrows$end, arrows$start+1e-4)
-    )
     arrows <- arrows %>% dplyr::mutate(
-      start = arrows_shortened$start,
-      end = arrows_shortened$end
+        start_tmp = start,
+        start = ifelse(strand, end-1e-4, start),
+        end = ifelse(strand, end, start_tmp+1e-4),
+        start_tmp = NULL
     )
   }
   arrows <- dplyr::filter(arrows, start >= region$start, start < region$end, end >= region$start, end < region$end)
@@ -390,7 +387,7 @@ trackplot_coverage <- function(fragments, region, groups,
   }
   colors <- colors[seq_len(ncol(membership_matrix))]
 
-  bin_centers <- seq(region$start, region$end - 1, region$tile_width) + region$tile_width %/% 2
+  bin_centers <- seq(region$start, region$end - 1, region$tile_width) + ((region$tile_width-1) / 2)
   bin_centers <- pmin(bin_centers, region$end - 1)
 
   mat <- (tile_matrix(fragments, region, explicit_tile_names = TRUE) %*% membership_matrix) %>%
@@ -413,7 +410,7 @@ trackplot_coverage <- function(fragments, region, groups,
 
   ymax <- quantile(data$normalized_insertions, clip_quantile)
   # Set precision of y-axis range label to within 1% of the max value
-  ymax_accuracy <- 10^as.integer(log10(0.01 * ymax))
+  ymax_accuracy <- 10^floor(log10(0.01 * ymax))
   range_label <- sprintf("[0-%s]", scales::label_comma(accuracy = ymax_accuracy, big.mark=" ")(ymax))
 
   data$normalized_insertions <- pmin(data$normalized_insertions, ymax)
