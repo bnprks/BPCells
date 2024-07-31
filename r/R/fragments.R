@@ -758,14 +758,19 @@ setMethod("short_description", "ChrSelectIndex", function(x) {
 #' Subset, translate, or reorder chromosome IDs
 #' 
 #' @param fragments Input fragments object
-#' @param chromosome_selection List of chromosme IDs (numeric), or names (character).
-#'    The output chromosome ID `n` will be taken
-#'    from the input fragments chromosome with ID/name `chromosome_selection[n]`.
+#' @param chromosome_selection List of chromosme IDs (numeric), or names (character), or logical mask.
+#'
+#' @details Numeric chromosome IDs will be re-assigned in the order of `chromosome_selection`.
+#' The output chromosome ID `n` will be taken from the input chromosome with ID/name `chromosome_selection[n]`.
+#' 
 #' @export
 select_chromosomes <- function(fragments, chromosome_selection) {
   assert_is(fragments, "IterableFragments")
+  assert_is(chromosome_selection, c("character", "numeric", "logical"))
+  if (is.logical(chromosome_selection)) {
+    chromosome_selection <- which(chromosome_selection)
+  }
   assert_distinct(chromosome_selection)
-  assert_is(chromosome_selection, c("character", "numeric"))
   if (is.numeric(chromosome_selection)) {
     assert_greater_than_zero(chromosome_selection)
     new_names <- NA_character_
@@ -837,14 +842,20 @@ setMethod("short_description", "CellSelectIndex", function(x) {
 })
 #' Subset, translate, or reorder cell IDs
 #' @param fragments Input fragments object
-#' @param cell_selection List of chromosme IDs (numeric), or names (character).
-#'    The output cell ID `n` will be taken
-#'    from the input cell with ID/name `cell_selection[n]`.
+#' @param cell_selection List of cell IDs (numeric), names (character), or logical mask.
+#'
+#' @details Numeric cell IDs will be re-assigned in the order of `cell_selection`.
+#' The output cell ID `n` will be taken from the input cell with ID/name `cell_selection[n]`.
+#' 
 #' @export
 select_cells <- function(fragments, cell_selection) {
   assert_is(fragments, "IterableFragments")
+  assert_is(cell_selection, c("character", "numeric", "logical"))
+  if (is.logical(cell_selection)) {
+    cell_selection <- which(cell_selection)
+  }
   assert_distinct(cell_selection)
-  assert_is(cell_selection, c("character", "numeric"))
+  
   if (is.numeric(cell_selection)) {
     assert_greater_than_zero(cell_selection)
     new_names <- NA_character_
