@@ -9,10 +9,12 @@ select_chromosomes(fragments, chromosome_selection)
 \arguments{
 \item{fragments}{Input fragments object}
 
-\item{chromosome_selection}{List of chromosme IDs (numeric), or names (character).
-The output chromosome ID \code{n} will be taken
-from the input fragments chromosome with ID/name \code{chromosome_selection[n]}.}
+\item{chromosome_selection}{List of chromosme IDs (numeric), or names (character), or logical mask.}
 }
 \description{
 Subset, translate, or reorder chromosome IDs
+}
+\details{
+Numeric chromosome IDs will be re-assigned in the order of \code{chromosome_selection}.
+The output chromosome ID \code{n} will be taken from the input chromosome with ID/name \code{chromosome_selection[n]}.
 }

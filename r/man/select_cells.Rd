@@ -9,10 +9,12 @@ select_cells(fragments, cell_selection)
 \arguments{
 \item{fragments}{Input fragments object}
 
-\item{cell_selection}{List of chromosme IDs (numeric), or names (character).
-The output cell ID \code{n} will be taken
-from the input cell with ID/name \code{cell_selection[n]}.}
+\item{cell_selection}{List of cell IDs (numeric), names (character), or logical mask.}
 }
 \description{
 Subset, translate, or reorder cell IDs
+}
+\details{
+Numeric cell IDs will be re-assigned in the order of \code{cell_selection}.
+The output cell ID \code{n} will be taken from the input cell with ID/name \code{cell_selection[n]}.
 }

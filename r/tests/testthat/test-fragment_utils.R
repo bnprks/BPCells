@@ -42,6 +42,7 @@ test_that("Chromosome name/index select works", { #nolint
   short_chrs_ans <- as(short_chrs, "data.frame")
   short_chrs_ans <- short_chrs_ans[as.character(short_chrs_ans$chr) %in% paste0("chr", chr_selection),] %>%
     dplyr::mutate(chr = factor(as.character(chr), levels=paste0("chr", chr_selection)))
+  rownames(short_chrs_ans) <- seq_along(rownames(short_chrs_ans))
 
   short_chrs_2 <- select_chromosomes(short_chrs, chr_selection) %>%
     as("data.frame")
@@ -49,8 +50,19 @@ test_that("Chromosome name/index select works", { #nolint
   short_chrs_3 <- select_chromosomes(short_chrs, paste0("chr", chr_selection)) %>%
     as("data.frame")
 
-  expect_equal(short_chrs_ans, short_chrs_2, check.attributes = FALSE)
-  expect_equal(short_chrs_ans, short_chrs_3, check.attributes = FALSE)
+  expect_identical(short_chrs_ans, short_chrs_2)
+  expect_identical(short_chrs_ans, short_chrs_3)
+
+  # Test a subset with logical mask
+  chr_selection_sequential <- sort(chr_selection)
+  short_chrs_ans_sequential <- as(short_chrs, "data.frame")
+  short_chrs_ans_sequential <- short_chrs_ans_sequential[as.character(short_chrs_ans_sequential$chr) %in% paste0("chr", chr_selection),] %>%
+    dplyr::mutate(chr = factor(as.character(chr), levels=paste0("chr", chr_selection_sequential)))
+  rownames(short_chrs_ans_sequential) <- seq_along(rownames(short_chrs_ans_sequential))
+
+  short_chrs_4 <- select_chromosomes(short_chrs, seq_along(chrNames(short_chrs)) %in% chr_selection_sequential) %>% as("data.frame")
+  expect_identical(short_chrs_ans_sequential, short_chrs_4)
+
 })
 
 test_that("Chromosome select reordering works", {
@@ -130,6 +142,22 @@ test_that("Cell name/index select works", { #nolint
 
   expect_identical(frags_ans, frags_2)
   expect_identical(frags_ans, frags_3)
+
+  # Test a subset with logical mask
+  cell_selection_sequential <- sort(cell_selection)
+  frags_ans_sequential <- tibble_to_fragments(
+    frags_tibble %>%
+      dplyr::filter(cell_id %in% cell_selection_sequential) %>%
+      dplyr::mutate(cell_id = match(cell_id, cell_selection_sequential)),
+    frags@chr_names,
+    frags@cell_names[cell_selection_sequential]
+  ) %>%
+    write_fragments_memory() %>%
+    as("data.frame")
+
+  frags_4 <- select_cells(frags, seq_len(ncells) %in% cell_selection_sequential) %>%
+    as("data.frame")
+  expect_identical(frags_ans_sequential, frags_4)
 })
 
 test_that("Merge cells works", {
