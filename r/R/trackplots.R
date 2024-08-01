@@ -21,20 +21,29 @@ trackplot_theme <- function(base_size=11) {
     strip.text.y.left = ggplot2::element_text(angle=0, hjust=1, size=ggplot2::rel(1.2)),
     strip.background = ggplot2::element_blank(),
     strip.placement = "outside",
-    axis.title.y.left = ggplot2::element_text(size=ggplot2::rel(1)),
-    legend.direction="horizontal", 
-    legend.title.position = "top"
+    axis.title.y.left = ggplot2::element_text(size=ggplot2::rel(1))
   )
 }
 
-wrap_trackplot <- function(plot, height=NULL, takes_sideplot=FALSE) {
+# Attributes on trackplots
+# - height (length-1 unit): Height of trackplot. "null" units give relative sizes to other tracks, and other units give absolute sizes
+# - takes_sideplot (length-1 bool): Whether this trackplot is an appropriate place to put a sideplot (for now just `trackplot_coverage()`)
+# - region (list with chr, start, end): The genome region this plot covers.
+# - keep_vertical_margin (length-1 bool): Whether this trackplot should retain vertical margin even when stacking.
+#                               `trackplot_scalebar()` is the only FALSE case for now.
+wrap_trackplot <- function(plot, height=NULL, takes_sideplot=FALSE, region=NULL, keep_vertical_margin=FALSE) {
   if (!is.null(height)) {
     assert_is(height, "unit")
   }
+  if (!is.null(region)) {
+    assert_has_names(region, c("chr", "start", "end"))
+    region <- sprintf("%s:%d-%d", region[["chr"]], region[["start"]], region[["end"]])
+  }
+  assert_is(keep_vertical_margin, "logical")
   if (!is(plot, "trackplot")) {
     class(plot) <- c("trackplot", class(plot))
   }
-  plot$trackplot <- list(height=height, takes_sideplot=takes_sideplot)
+  plot$trackplot <- list(height=height, takes_sideplot=takes_sideplot, region=region, keep_vertical_margin=keep_vertical_margin)
   plot
 }
 
@@ -250,7 +259,7 @@ trackplot_normalize_ranges_with_metadata <- function(data, metadata) {
 #'
 #' @param tracks List of tracks in order from top to bottom, generally ggplots as output from
 #'    the other `trackplot_*()` functions.
-#' @param side_plot Optional plot to align to the right (e.g. RNA expression per cluster). Will be aligned to a
+#' @param side_plot Optional plot to align to the right (e.g. RNA expression per cluster). Will be aligned to the first
 #'    `trackplot_coverage()` output if present, or else the first generic ggplot in the alignment. Should be in horizontal orientation and 
 #'    in the same cluster ordering as the coverage plots.
 #' @param title Text for overarching title of the plot
@@ -268,36 +277,79 @@ trackplot_combine <- function(tracks, side_plot = NULL, title = NULL, side_plot_
     assert_is(side_plot, "ggplot")
   }
 
+  # Calculate layout information on the plots
   heights <- list()
-  side_plot_row <- 1L
+  collapse_upper_margin <- rep.int(TRUE, length(tracks))
+  side_plot_row <- NULL
   areas <- NULL
+  last_region <- NULL
   for (i in seq_along(tracks)) {
     if (is(tracks[[i]], "trackplot")) {
-      if (tracks[[i]]$trackplot$takes_sideplot) {
+      if (tracks[[i]]$trackplot$takes_sideplot && is.null(side_plot_row)) {
         side_plot_row <- i
-      } else if (side_plot_row == i) {
-        side_plot_row <- side_plot_row + 1L
       }
+      # If we switch regions, don't collapse margins into the track above
+      if (!is.null(tracks[[i]]$trackplot$region)) {
+        if (!is.null(last_region) && last_region != tracks[[i]]$trackplot$region && i > 1) collapse_upper_margin[i] <- FALSE 
+        last_region <- tracks[[i]]$trackplot$region
+      }
+
+      # Preserve top and bottom margins if `keep_vertical_margin`
+      if (tracks[[i]]$trackplot$keep_vertical_margin) {
+        collapse_upper_margin[i] <- FALSE
+        if (i < length(tracks)) collapse_upper_margin[i+1] <- FALSE
+      }
+    } else {
+      if (is.null(side_plot_row)) side_plot_row <- i
     }
     heights <- c(heights, list(get_trackplot_height(tracks[[i]])))
-    if (i != length(tracks)) {
-      tracks[[i]] <- tracks[[i]] + 
-        ggplot2::guides(x="none") +
-        ggplot2::labs(x=NULL) +
-        ggplot2::theme(plot.margin=ggplot2::unit(c(0,0,0,0), "pt"))
-    } else {
-      bottom_margin <- if(is.null(side_plot)) c(0,5.5,5.5,5.5) else c(0,0,5.5,5.5)
-      tracks[[i]] <- tracks[[i]] + ggplot2::theme(plot.margin=ggplot2::unit(bottom_margin, "pt"))
-    }
     areas <- c(areas, list(patchwork::area(i, 1)))
   }
   heights <- do.call(grid::unit.c, heights)
+  if (!is.null(side_plot) && is.null(side_plot_row)) {
+    rlang::warn("Did not find a row to place the side_plot: no trackplot_coverage() or base ggplot tracks found. Defaulting to first row")
+    side_plot_row <- 1L
+  }
+
+  # Collapse margins as needed among plots
+  for (i in seq_along(tracks)) {
+    plot.margin <- c(TRUE, TRUE, TRUE, TRUE) # Top, right, bottom, left
+    if (!is.null(side_plot)) plot.margin[2] <- FALSE # Side plot should be flush on right side
+    if (i < length(tracks) && collapse_upper_margin[i+1]) plot.margin[3] <- FALSE # Plot below should be flush
+    if (collapse_upper_margin[i]) plot.margin[1] <- FALSE
+
+    if (!plot.margin[3]) {
+      tracks[[i]] <- tracks[[i]] +
+        ggplot2::guides(x="none") +
+        ggplot2::labs(x=NULL)
+    }
+
+    # Independent of showing the axis, we'll remove the bottom margin if the next row has the side_plot, since the
+    # axis tick labels will add in some natural margin already
+    if (i+1 == side_plot_row) plot.margin[3] <- FALSE
+
+    tracks[[i]] <- tracks[[i]] + ggplot2::theme(plot.margin=ggplot2::unit(5.5*plot.margin, "pt"))
+  }
+
+  # Reduce cut-off y-axis labels. Put plots with y axis labels later in the plot list, as they will take layer priority with patchwork
+  has_y_axis <- vapply(tracks, function(t) is(t, "ggplot") && !is.null(t$labels$y), logical(1))
+  tracks <- c(tracks[!has_y_axis], tracks[has_y_axis])
+  areas <- c(areas[!has_y_axis], areas[has_y_axis])
 
   if (is.null(side_plot)) {
     widths <- c(1)
   } else {
+    # Decide whether to put legends below/above side plot by adding up the height of all relatively-sized tracks
+    height_above <- sum(as.vector(heights)[seq_along(heights) < side_plot_row & grid::unitType(heights) == "null"])
+    height_below <- sum(as.vector(heights)[seq_along(heights) > side_plot_row & grid::unitType(heights) == "null"])
+    if (height_above < height_below) {
+      guide_position <- patchwork::area(side_plot_row+1L, 2, length(tracks))
+    } else {
+      guide_position <- patchwork::area(1L, 2, side_plot_row-1L)
+    }
+    
     widths <- c(1, side_plot_width)
-    areas <- c(areas, list(patchwork::area(side_plot_row, 2), patchwork::area(side_plot_row+1L, 2, length(tracks))))
+    areas <- c(areas, list(patchwork::area(side_plot_row, 2), guide_position))
     # Make adjustments to the side plot style to fit in with tracks
     side_plot <- side_plot + 
       ggplot2::scale_x_discrete(limits=rev, position="top") +
@@ -311,10 +363,17 @@ trackplot_combine <- function(tracks, side_plot = NULL, title = NULL, side_plot_
     guide_area <- patchwork::guide_area() + ggplot2::theme(plot.margin=ggplot2::unit(c(0,0,0,0), "pt"))
     tracks <- c(tracks, list(side_plot, guide_area))
   }
-  
 
   patch <- patchwork::wrap_plots(tracks) +
     patchwork::plot_layout(ncol = 1, byrow = FALSE, heights = heights, widths=widths, guides = "collect", design=do.call(c, areas))
+  
+  if (!is.null(side_plot)) {
+    # If a side plot is present, switch legend layout to use the horizontal space better
+    patch <- patch * ggplot2::theme(
+      legend.direction="horizontal", 
+      legend.title.position = "top"
+    )
+  }
   if (!is.null(title)) {
     patch <- patch + patchwork::plot_annotation(title = title, theme = ggplot2::theme(plot.title = ggplot2::element_text(hjust = 0.5)))
   }
@@ -341,7 +400,7 @@ trackplot_combine <- function(tracks, side_plot = NULL, title = NULL, side_plot_
 #' @param clip_quantile (optional) Quantile of values for clipping y-axis limits. Default of 0.999 will crop out
 #'    just the most extreme outliers across the region. NULL to disable clipping
 #' @param colors Character vector of color values (optionally named by group)
-#' @param legend_label Custom label to put on the legend
+#' @param legend_label `r lifecycle::badge("deprecated")` Custom label to put on the legend (no longer used as color legend is not shown anymore)
 #'
 #' @return Returns a combined plot of pseudobulk genome tracks. For compatability with
 #' `draw_trackplot_grid()`, the extra attribute `$patches$labels` will be added to
@@ -354,7 +413,7 @@ trackplot_coverage <- function(fragments, region, groups,
                            group_order = NULL,
                            bins = 500, clip_quantile = 0.999,
                            colors = discrete_palette("stallion"),
-                           legend_label = "group",
+                           legend_label = NULL,
                            zero_based_coords = !is(region, "GRanges"),
                            return_data = FALSE) {
   assert_is(fragments, "IterableFragments")
@@ -368,7 +427,9 @@ trackplot_coverage <- function(fragments, region, groups,
   }
   assert_is(colors, "character")
   assert_true(length(colors) >= length(unique(groups)))
-  assert_is(legend_label, "character")
+  if (!is.null(legend_label)) {
+    lifecycle::deprecate_warn("0.2.0", "trackplot_coverage(legend_label)", details="Argument value is no longer used since color legend is not shown.")
+  }
 
   groups <- as.factor(groups)
   assert_true(length(cellNames(fragments)) == length(groups))
@@ -421,12 +482,12 @@ trackplot_coverage <- function(fragments, region, groups,
     ggplot2::scale_x_continuous(limits = c(region$start, region$end), expand = c(0, 0), labels=scales::label_number()) +
     ggplot2::scale_y_continuous(limits = c(0, ymax), expand = c(0, 0)) +
     ggplot2::annotate("text", x=region$start, y=ymax, label=range_label, vjust=1.5, hjust=-0.1, size=11*.8/ggplot2::.pt) +
-    ggplot2::labs(x = "Genomic Position (bp)", y = "Normalized Insertions (RPKM)", fill = legend_label) +
+    ggplot2::labs(x = "Genomic Position (bp)", y = "Insertions (RPKM)") +
     ggplot2::guides(y="none", fill="none") +
     ggplot2::facet_wrap("group", ncol=1, strip.position="left") +
     trackplot_theme() 
 
-  wrap_trackplot(plot, ggplot2::unit(ncol(mat), "null"), takes_sideplot=TRUE)
+  wrap_trackplot(plot, ggplot2::unit(ncol(mat), "null"), takes_sideplot=TRUE, region=region)
 }
 
 #    GRanges, list, or data.frame of transcript features to plot.
@@ -512,8 +573,9 @@ trackplot_gene <- function(transcripts, region, exon_size = 2.5, gene_size = 0.5
         linewidth = size
       )
     ) +
-    ggplot2::geom_segment(ggplot2::aes(color = dplyr::if_else(strand, "+", "-"))) +
-    ggplot2::geom_segment(ggplot2::aes(color = dplyr::if_else(strand, "+", "-")), data=arrows, arrow=grid::arrow(length=grid::unit(.4*exon_size, "mm"))) +
+    # Keep both levels in the color legend even if only one direction is in the viewport by using factors and show.legend=TRUE
+    ggplot2::geom_segment(ggplot2::aes(color = factor(strand, levels=c(TRUE,FALSE), labels=c("+","-"))), show.legend=TRUE) +
+    ggplot2::geom_segment(ggplot2::aes(color = factor(strand, levels=c(TRUE,FALSE), labels=c("+","-"))), data=arrows, arrow=grid::arrow(length=grid::unit(.4*exon_size, "mm")), show.legend=TRUE) +
     ggrepel::geom_text_repel(
       data = dplyr::filter(data, feature == "transcript"),
       ggplot2::aes(label = gene_name),
@@ -522,7 +584,7 @@ trackplot_gene <- function(transcripts, region, exon_size = 2.5, gene_size = 0.5
     ) +
     ggplot2::scale_size(range = size_range, limits = size_range) +
     ggplot2::scale_linewidth(range = linewidth_range, limits = linewidth_range) +
-    ggplot2::scale_color_manual(values = c("+" = "black", "-" = "darkgrey")) +
+    ggplot2::scale_color_manual(values = c("+" = "black", "-" = "darkgrey"), drop=FALSE) +
     ggplot2::scale_x_continuous(limits = c(region$start, region$end), expand = c(0, 0), labels=scales::label_number()) +
     ggplot2::scale_y_discrete(labels = NULL, breaks = NULL) +
     ggplot2::labs(x = "Genomic Position (bp)", y = NULL, color = "strand") +
@@ -530,7 +592,7 @@ trackplot_gene <- function(transcripts, region, exon_size = 2.5, gene_size = 0.5
     ggplot2::facet_wrap("facet_label", strip.position="left") +
     trackplot_theme()
 
-  wrap_trackplot(plot, height=ggplot2::unit(1, "null"))
+  wrap_trackplot(plot, height=ggplot2::unit(1, "null"), region=region)
 }
 
 #' Plot range-based annotation tracks (e.g. peaks)
@@ -649,7 +711,7 @@ trackplot_genome_annotation <- function(loci, region, color_by = NULL, colors = 
       ggplot2::labs(color = color_by)
   }
 
-  wrap_trackplot(plot, height=ggplot2::unit(1, "null"))
+  wrap_trackplot(plot, height=ggplot2::unit(1, "null"), region=region)
 }
 
 
@@ -752,7 +814,7 @@ trackplot_loop <- function(loops, region, color_by=NULL, colors=NULL, allow_trun
       ggplot2::labs(color = color_by)
   } 
 
-  wrap_trackplot(plot, ggplot2::unit(1, "null"))
+  wrap_trackplot(plot, ggplot2::unit(1, "null"), region=region)
 }
 
 #' Plot scale bar
@@ -786,13 +848,13 @@ trackplot_scalebar <- function(region, font_pt=11) {
   )
 
   plot <- ggplot2::ggplot() +
-    ggplot2::geom_text(data=region_data, ggplot2::aes(x=left, y=0, label=text), size=10/ggplot2::.pt, hjust="left") +
-    ggplot2::geom_text(data=scale_label_data, ggplot2::aes(x=right, y=0, label=text), size=10/ggplot2::.pt, hjust=1.1) +
+    ggplot2::geom_text(data=region_data, ggplot2::aes(x=left, y=0, label=text), size=font_pt/ggplot2::.pt, hjust="left") +
+    ggplot2::geom_text(data=scale_label_data, ggplot2::aes(x=right, y=0, label=text), size=font_pt/ggplot2::.pt, hjust=1.1) +
     ggplot2::geom_errorbar(data=bar_data, ggplot2::aes(xmin=left, xmax=right, y=0), width=1) +
     ggplot2::scale_x_continuous(limits = c(region$start, region$end), expand = c(0, 0), labels=scales::label_number()) +
     ggplot2::theme_void() 
   
-  wrap_trackplot(plot, height=ggplot2::unit(font_pt*1.1, "pt"))
+  wrap_trackplot(plot, height=ggplot2::unit(font_pt*1.1, "pt"), region=region, keep_vertical_margin=TRUE)
 }
 
 # This is a still-private all-in-one helper function that is subject to change.

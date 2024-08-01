@@ -21,6 +21,7 @@ Contributions welcome :)
 
 ## Improvements
 - `trackplot_loop()` now accepts discrete color scales
+- `trackplot_combine()` now has smarter layout logic for margins, as well as detecting when plots are being combined that cover different genomic regions. (pull request #116)
 
 ## Bug-fixes
 - Fixed error message when a matrix is too large to be converted to dgCMatrix. (Thanks to @RookieA1 for reporting issue #95)
@@ -28,6 +29,9 @@ Contributions welcome :)
   operations. (Thanks to @Yunuuuu for reporting issues #97 and #100)
 - Fixed plotting crashes when running `trackplot_coverage()` with fragments from a single cluster. (Thanks to @sjessa for directly reporting this bug and coming up with a fix)
 - Fixed issues with `trackplot_coverage()` when called with ranges less than 500 bp in length (Thanks to @bettybliu for directly reporting this bug.)
+
+## Deprecations
+- `trackplot_coverage()` `legend_label` argument is now ignored, as the color legend is no longer shown by default for coverage plots.
 
 # BPCells 0.2.0 (6/14/2024)
 

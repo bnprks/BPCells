@@ -15,7 +15,7 @@ trackplot_combine(
 \item{tracks}{List of tracks in order from top to bottom, generally ggplots as output from
 the other \verb{trackplot_*()} functions.}
 
-\item{side_plot}{Optional plot to align to the right (e.g. RNA expression per cluster). Will be aligned to a
+\item{side_plot}{Optional plot to align to the right (e.g. RNA expression per cluster). Will be aligned to the first
 \code{trackplot_coverage()} output if present, or else the first generic ggplot in the alignment. Should be in horizontal orientation and
 in the same cluster ordering as the coverage plots.}
 

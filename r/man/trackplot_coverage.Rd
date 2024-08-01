@@ -13,7 +13,7 @@ trackplot_coverage(
   bins = 500,
   clip_quantile = 0.999,
   colors = discrete_palette("stallion"),
-  legend_label = "group",
+  legend_label = NULL,
   zero_based_coords = !is(region, "GRanges"),
   return_data = FALSE
 )
@@ -37,7 +37,7 @@ just the most extreme outliers across the region. NULL to disable clipping}
 
 \item{colors}{Character vector of color values (optionally named by group)}
 
-\item{legend_label}{Custom label to put on the legend}
+\item{legend_label}{\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#deprecated}{\figure{lifecycle-deprecated.svg}{options: alt='[Deprecated]'}}}{\strong{[Deprecated]}} Custom label to put on the legend (no longer used as color legend is not shown anymore)}
 
 \item{zero_based_coords}{Whether to convert the ranges from a 1-based end-inclusive
 coordinate system to a 0-based end-exclusive coordinate system. Defaults to true
