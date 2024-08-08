@@ -17,6 +17,69 @@
 
 namespace BPCells {
 
+// Write bedgraph files including chr, start, end with only 1bp insertions,
+// only considering a subset of cells given by the cells vector
+// Args:
+// - fragments: source of fragments to convert to insertions
+// - cells: For each cell in fragments, the index of the pseudobulk to assign it to
+// - cell_of_interest: The pseudobulk to write the bedgraph for
+// - output_path: The file path to save the bedgraph
+// - mode: StartOnly = include only start coords, EndOnly = include only end coords, Both = include start + end coords
+void writeInsertionBedByPseudobulk(
+    FragmentLoader &fragments,
+    const std::vector<uint32_t> &cells,
+    const uint32_t &group_of_interest,
+    const std::string &output_path,
+    const BedgraphInsertionMode mode,
+    std::atomic<bool> *user_interrupt
+) {
+    InsertionIterator it(fragments);
+    const uint32_t buffer_size = 1 << 20;
+    gzFileWrapper file(output_path, "w", buffer_size);
+    
+    while (it.nextChr()) {
+        if (fragments.chrNames(it.chr()) == NULL) {
+            throw std::runtime_error("writeBedgraph: No chromosome name found for ID: " + std::to_string(it.chr()));
+        }
+        std::string chr_name(fragments.chrNames(it.chr()));
+        uint32_t count = 0;
+        uint32_t last_base = UINT32_MAX;
+        while (it.nextInsertion()) {
+            if (cells[it.cell()] != group_of_interest) continue;
+            if (mode == BedgraphInsertionMode::StartOnly && !it.isStart()) continue;
+            if (mode == BedgraphInsertionMode::EndOnly && it.isStart()) continue;
+            if (last_base == it.coord()) continue;
+            // Handle the case where this is not the same basepair we saw last
+            if (last_base != UINT32_MAX) {
+                uint32_t bytes_written = gzprintf(
+                    *file,
+                    "%s\t%d\t%d\n",
+                    chr_name.c_str(),
+                    last_base,
+                    last_base + 1
+                );
+                if (bytes_written <= 0) {
+                    throw std::runtime_error("writeBedgraph: Failed to write data");
+                }
+            }
+            last_base = it.coord();
+            if (user_interrupt != nullptr && count++ % 65536 == 0 && *user_interrupt) return;
+        }
+        // cleanup at the end of the chromosome
+        if (last_base != UINT32_MAX) {
+            uint32_t bytes_written = gzprintf(
+                *file,
+                "%s\t%d\t%d\n",
+                chr_name.c_str(),
+                last_base,
+                last_base + 1
+            );
+            if (bytes_written <= 0) {
+                throw std::runtime_error("writeBedgraph: Failed to write data");
+            }
+        }
+    }
+}
 
 // Write bedgraph coverage files for insertions computed from fragment pseudobulks.
 // Args:

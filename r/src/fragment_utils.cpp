@@ -256,6 +256,37 @@ Eigen::MatrixXd footprint_matrix_cpp(
 }
 
 // [[Rcpp::export]]
+void write_insertion_bed_by_pseudobulk_cpp(
+    SEXP fragments,
+    std::vector<uint32_t> cells,
+    uint32_t group_of_interest,
+    std::string output_path,
+    std::string mode_string
+) {
+    BedgraphInsertionMode mode;
+    if (mode_string == "both") {
+        mode = BedgraphInsertionMode::Both;
+    } else if (mode_string == "start_only") {
+        mode = BedgraphInsertionMode::StartOnly;
+    } else if (mode_string == "end_only") {
+        mode = BedgraphInsertionMode::EndOnly;
+    } else {
+        throw std::runtime_error("write_bedgraph_cpp: invalid mode found: " + mode_string);
+    }
+
+    auto frags = take_unique_xptr<FragmentLoader>(fragments);
+    
+    run_with_R_interrupt_check(
+        &writeInsertionBedByPseudobulk,
+        std::ref(*frags),
+        std::cref(cells),
+        std::cref(group_of_interest),
+        std::cref(output_path),
+        mode
+    );
+}
+
+// [[Rcpp::export]]
 void write_insertion_bedgraph_cpp(
     SEXP fragments,
     std::vector<uint32_t> cell_groups,

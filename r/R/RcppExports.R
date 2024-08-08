@@ -185,6 +185,10 @@ footprint_matrix_cpp <- function(fragments, chr, center, strand, flank_width, ch
     .Call(`_BPCells_footprint_matrix_cpp`, fragments, chr, center, strand, flank_width, chr_levels, cell_groups, cell_weights)
 }
 
+write_insertion_bed_by_pseudobulk_cpp <- function(fragments, cells, group_of_interest, output_path, mode_string) {
+    invisible(.Call(`_BPCells_write_insertion_bed_by_pseudobulk_cpp`, fragments, cells, group_of_interest, output_path, mode_string))
+}
+
 write_insertion_bedgraph_cpp <- function(fragments, cell_groups, output_paths, mode_string) {
     invisible(.Call(`_BPCells_write_insertion_bedgraph_cpp`, fragments, cell_groups, output_paths, mode_string))
 }

@@ -616,6 +616,20 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// write_insertion_bed_by_pseudobulk_cpp
+void write_insertion_bed_by_pseudobulk_cpp(SEXP fragments, std::vector<uint32_t> cells, uint32_t group_of_interest, std::string output_path, std::string mode_string);
+RcppExport SEXP _BPCells_write_insertion_bed_by_pseudobulk_cpp(SEXP fragmentsSEXP, SEXP cellsSEXP, SEXP group_of_interestSEXP, SEXP output_pathSEXP, SEXP mode_stringSEXP) {
+BEGIN_RCPP
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type fragments(fragmentsSEXP);
+    Rcpp::traits::input_parameter< std::vector<uint32_t> >::type cells(cellsSEXP);
+    Rcpp::traits::input_parameter< uint32_t >::type group_of_interest(group_of_interestSEXP);
+    Rcpp::traits::input_parameter< std::string >::type output_path(output_pathSEXP);
+    Rcpp::traits::input_parameter< std::string >::type mode_string(mode_stringSEXP);
+    write_insertion_bed_by_pseudobulk_cpp(fragments, cells, group_of_interest, output_path, mode_string);
+    return R_NilValue;
+END_RCPP
+}
 // write_insertion_bedgraph_cpp
 void write_insertion_bedgraph_cpp(SEXP fragments, std::vector<uint32_t> cell_groups, std::vector<std::string> output_paths, std::string mode_string);
 RcppExport SEXP _BPCells_write_insertion_bedgraph_cpp(SEXP fragmentsSEXP, SEXP cell_groupsSEXP, SEXP output_pathsSEXP, SEXP mode_stringSEXP) {
@@ -2522,6 +2536,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_BPCells_nucleosome_counts_cpp", (DL_FUNC) &_BPCells_nucleosome_counts_cpp, 2},
     {"_BPCells_fragment_lengths_cpp", (DL_FUNC) &_BPCells_fragment_lengths_cpp, 1},
     {"_BPCells_footprint_matrix_cpp", (DL_FUNC) &_BPCells_footprint_matrix_cpp, 8},
+    {"_BPCells_write_insertion_bed_by_pseudobulk_cpp", (DL_FUNC) &_BPCells_write_insertion_bed_by_pseudobulk_cpp, 5},
     {"_BPCells_write_insertion_bedgraph_cpp", (DL_FUNC) &_BPCells_write_insertion_bedgraph_cpp, 4},
     {"_BPCells_iterate_peak_matrix_cpp", (DL_FUNC) &_BPCells_iterate_peak_matrix_cpp, 6},
     {"_BPCells_iterate_tile_matrix_cpp", (DL_FUNC) &_BPCells_iterate_tile_matrix_cpp, 7},

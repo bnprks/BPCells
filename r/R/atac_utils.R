@@ -403,6 +403,102 @@ write_insertion_bedgraph <- function(fragments, path, cell_groups = NULL, insert
   write_insertion_bedgraph_cpp(iterate_fragments(fragments), cell_groups, path, insertion_mode)
 }
 
+#' Call MACS2/3 peaks using fragments. UNFINISHED.
+#' @param fragments IterableFragments object
+#' @param cell_names Character vector of cluster assignments for each cell. If is null, all cells are treated as one group.
+#' @param path Path to save MACS2/3 output files. If `cell_names` is provided, this must be a character vector with one name for each level in `cell_names` 
+#' @param insertion_mode Which fragment ends to use for insertion counts calculation. One of "both", "start_only", or "end_only"
+#' @param threads Number of threads to use
+#' @export
+prep_macs_inputs <- function(fragments, cell_names,
+                             path, insertion_mode = c("both", "start_only", "end_only"),
+                             threads=1) {
+  assert_is(fragments, "IterableFragments")
+  assert_is(cell_names, c("character", "factor"))
+  assert_is_character(path)
+  assert_is_wholenumber(threads)
+  insertion_mode <- match.arg(insertion_mode)
+
+  # Prep inputs
+  if (is.null(cell_names)) {
+    cell_names <- rep.int("all", length(cellNames(fragments)))
+  } else {
+    assert_len(cell_names, length(cellNames(fragments)))
+    cell_names <- as.factor(cell_names)
+    cell_names_int <- as.integer(cell_names)
+  }
+  # Parallelize writing bed inputs into MACS
+  parallel::mclapply(seq_along(levels(cell_names)), function(i) {
+    write_insertion_bed_by_pseudobulk_cpp(
+      iterate_fragments(fragments),
+      cell_names_int,
+      i,
+      path[i],
+      insertion_mode
+    )
+  }, mc.cores = threads)
+}
+
+
+#' Call MACS2/3 peaks using fragments. UNFINISHED.
+#' @param fragments IterableFragments object
+#' @param cell_names Character vector of cluster assignments for each cell. If is null, all cells are treated as one group.
+#' @param genome_size Effective genome size for MACS2/3
+#' @param path Directory to save MACS output files.  Stores all clusters in one directory, with the name of the cluster as the prefix.
+#' @param insertion_mode Which fragment ends to use for insertion counts calculation. One of "both", "start_only", or "end_only"
+#' @param step Which step to run. One of  "prep-inputs", "run-macs", "read-outputs".  If "prep-inputs", create the input bedfiles for macs,
+#' and provides a shell script per cluster with the command to run macs.  If run-macs, also run bash scripts to execute macs.
+#' If read-outputs, read the outputs into tibbles.
+#' @param macs_version Which version of MACS to use. One of "macs2" or "macs3"
+#' @param threads Number of threads to use
+#' @export
+call_macs_peaks <- function(fragments, cell_names, genome_size,
+                             path, insertion_mode = c("both", "start_only", "end_only"),
+                             step = c("prep-inputs", "run-macs", "read-outputs"), 
+                             macs_version = c("macs2", "macs3"),
+                             threads=1) {
+  assert_is(fragments, "IterableFragments")
+  assert_is(cell_names, c("character", "factor"))
+  assert_is_numeric(genome_size)
+  assert_is_character(path)
+  assert_is_wholenumber(threads)
+  insertion_mode <- match.arg(insertion_mode)
+  step <- match.arg(step)
+  macs_version <- match.arg(macs_version)
+  cell_names <- as.factor(cell_names)
+  path_bed <- paste0(path, "/", levels(cell_names), ".bed")
+  names(path_bed) <- levels(cell_names)
+
+  # Create macs call
+  macs_call_template <- c("macs2 callpeak -g %s --name %s --treatment %s",
+                          "--outdir %s --format BED --call-summits",
+                          "--keep-dup all --nomodel --nolambda")
+  macs_call_template <- paste(macs_call_template, collapse = " ")
+  macs_call <- sprintf(macs_call_template,
+                       genome_size, levels(cell_names), path_bed, path)
+  # Prep inputs
+  # create the input bedfiles for macs
+  prep_macs_inputs(fragments, cell_names, path_bed, insertion_mode, threads)
+  # create the shell script to run macs
+  if (step == "prep-inputs") {
+    return(macs_call)
+  }
+  system(paste(macs_call, collapse = "; "))
+  if (step == "read-outputs") {
+    peaks <- list()
+    for (cluster in levels(cell_names)) {
+      peak_path <- paste0(path, "/", cluster, "_peaks.narrowPeak")
+      # read as tibble
+      peaks[[cluster]] <- readr::read_tsv(peak_path, 
+                                          col_names=c("chr", "start", "end", "name", 
+                                                      "score", "strand", "signalValue", 
+                                                      "pValue", "qValue", "pointSource"),
+                                          show_col_types = FALSE)
+    }
+    return(peaks)
+  }
+}
+
 range_overlaps <- function(a, b) {
   a <- normalize_ranges(a)
   b <- normalize_ranges(b)
