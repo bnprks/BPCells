@@ -155,3 +155,91 @@ test_that("write_insertion_bedgraph works", {
     )
   }
 })
+
+test_that("prep_macs_inputs works", {
+  dir <- withr::local_tempdir()
+  chr1 <- tibble::tibble(
+    chr = "chr1",
+    start = sort(sample.int(1000, 1000, replace=TRUE)),
+    end = start + sample.int(150, 1000, replace=TRUE),
+    cell_id = sample(LETTERS, 1000, replace=TRUE)
+  )
+  chr2 <- tibble::tibble(
+    chr = "chr2",
+    start = sort(sample.int(1000, 1000, replace=TRUE)),
+    end = start + sample.int(150, 1000, replace=TRUE),
+    cell_id = sample(LETTERS, 1000, replace=TRUE)
+  )
+  frags <- convert_to_fragments(dplyr::bind_rows(chr1, chr2))
+  frags_vowel <- convert_to_fragments(dplyr::filter(dplyr::bind_rows(chr1, chr2), cell_id %in% c("A", "E", "I", "O", "U")))
+  cell_groups <- dplyr::if_else(cellNames(frags) %in% c("A", "E", "I", "O", "U"), "vowel", "consonant")
+
+  frag_table <- dplyr::bind_rows(chr1, chr2) %>%
+    dplyr::mutate(cell_group = dplyr::if_else(cell_id %in% c("A", "E", "I", "O", "U"), "vowel", "consonant"))
+
+  coverage_start <- frag_table %>%
+    dplyr::mutate(end=start+1L) %>%
+    dplyr::group_by(chr, start, end, cell_group) %>%
+    dplyr::summarize(value = dplyr::n(), .groups="drop")
+  
+  coverage_end <- frag_table %>%
+    dplyr::mutate(start=end-1L) %>%
+    dplyr::group_by(chr, start, end, cell_group) %>%
+    dplyr::summarize(value = dplyr::n(), .groups="drop")
+  
+  coverage <- dplyr::bind_rows(coverage_start, coverage_end) %>%
+    dplyr::group_by(chr, start, end, cell_group) %>%
+    dplyr::summarize(value = sum(value), .groups="drop")
+
+  answers <- list(
+    "start_only" = coverage_start,
+    "end_only" = coverage_end,
+    "both" = coverage
+  )
+  browser()
+  prep_macs_inputs(
+    frags_vowel, 
+    rep("vowel", length(cellNames(frags_vowel))),
+    c("vowel"=file.path(dir, "vowel_only.bed")),
+    "start_only"
+  )
+  prep_macs_inputs(
+    frags_vowel, 
+    cell_names = NULL,
+    c("vowel"=file.path(dir, "no_labels.bed")),
+    "start_only"
+  )
+  expect_identical(
+    dplyr::filter(coverage_start, cell_group == "vowel") %>% dplyr::select(-c(cell_group, value)) %>% data.frame(), 
+    data.frame(readr::read_tsv(file.path(dir, "vowel_only.bed"), col_names=c("chr", "start", "end"), col_types="cii")),
+  )
+  expect_identical(
+    dplyr::filter(coverage_start, cell_group == "vowel") %>% dplyr::select(-c(cell_group, value)) %>% data.frame(), 
+    data.frame(readr::read_tsv(file.path(dir, "no_labels.bed"), col_names=c("chr", "start", "end"), col_types="cii")))
+  
+  for (mode in c("start_only", "end_only", "both")) {
+    for (threads in c(1, 2)) {
+      prep_macs_inputs(
+        frags,
+        cell_groups,
+        c("vowel"=file.path(dir, "vowel.bed"), "consonant"=file.path(dir, "consonant.bed.gz")),
+        mode,
+        threads=threads
+      )
+      # read in the bed.gz files
+      result <- list(
+        "vowel" = readr::read_tsv(file.path(dir, "vowel.bed"), col_names=c("chr", "start", "end"), col_types="cii"),
+        "consonant" = readr::read_tsv(file.path(dir, "consonant.bed.gz"), col_names=c("chr", "start", "end"), col_types="cii")
+      )
+      expect_identical(
+        dplyr::filter(answers[[mode]], cell_group == "vowel") %>% dplyr::select(-c(cell_group, value)) %>% data.frame(), 
+        data.frame(result[["vowel"]])
+      )
+      expect_identical(
+        dplyr::filter(answers[[mode]], cell_group == "consonant") %>% dplyr::select(-c(cell_group, value)) %>% data.frame(), 
+        data.frame(result[["consonant"]])
+      )
+      
+    }
+  }
+})

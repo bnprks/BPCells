@@ -7,14 +7,11 @@
 // except according to those terms.
 
 #include "BedgraphWriter.h"
-
 #include <zlib.h>
-
 #include "../fragmentIterators/FragmentIterator.h"
 #include "InsertionIterator.h"
 #include "../utils/filesystem_compat.h"
 #include "../utils/gzfile_wrapper.h"
-
 namespace BPCells {
 
 // Write bedgraph files including chr, start, end with only 1bp insertions,
@@ -36,7 +33,6 @@ void writeInsertionBedByPseudobulk(
     InsertionIterator it(fragments);
     const uint32_t buffer_size = 1 << 20;
     gzFileWrapper file(output_path, "w", buffer_size);
-    
     while (it.nextChr()) {
         if (fragments.chrNames(it.chr()) == NULL) {
             throw std::runtime_error("writeBedgraph: No chromosome name found for ID: " + std::to_string(it.chr()));
