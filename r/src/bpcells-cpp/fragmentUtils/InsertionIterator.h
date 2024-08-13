@@ -132,7 +132,11 @@ class InsertionIterator {
         bool ret = frags.nextChr();
         if (ret) current_chr = frags.currentChr();
         start_data.resize(0);
+        start_cell.resize(0);
+        end_data.resize(0);
+        end_data_buf.resize(0);
         end_capacity = 0;
+        end_cell.resize(0);
         return ret;
     }
     inline bool nextInsertion() {
