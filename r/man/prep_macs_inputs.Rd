@@ -17,7 +17,8 @@ prep_macs_inputs(
 
 \item{cell_names}{Character vector of cluster assignments for each cell. If is null, all cells are treated as one group.}
 
-\item{path}{Path to save MACS2/3 output files. If \code{cell_names} is provided, this must be a character vector with one name for each level in \code{cell_names}}
+\item{path}{Path to save MACS2/3 output files. If \code{cell_names} is provided, this must be a character vector with one name for each level in \code{cell_names}
+Else, this must be a character vector of length 1.}
 
 \item{insertion_mode}{Which fragment ends to use for insertion counts calculation. One of "both", "start_only", or "end_only"}
 
