@@ -261,7 +261,8 @@ void write_insertion_bed_by_pseudobulk_cpp(
     std::vector<uint32_t> cells,
     uint32_t group_of_interest,
     std::string output_path,
-    std::string mode_string
+    std::string mode_string,
+    bool keep_dups
 ) {
     BedgraphInsertionMode mode;
     if (mode_string == "both") {
@@ -282,7 +283,8 @@ void write_insertion_bed_by_pseudobulk_cpp(
         std::cref(cells),
         std::cref(group_of_interest),
         std::cref(output_path),
-        mode
+        mode,
+        keep_dups
     );
 }
 

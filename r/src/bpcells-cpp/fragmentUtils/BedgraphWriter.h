@@ -31,12 +31,14 @@ enum class BedgraphInsertionMode {
 // - cell_of_interest: The pseudobulk to write the bedgraph for
 // - output_path: The file path to save the bedgraph
 // - mode: StartOnly = include only start coords, EndOnly = include only end coords, Both = include start + end coords
+// - keep_dups: If true, keep duplicate insertions in the bedfile
 void writeInsertionBedByPseudobulk(
     FragmentLoader &fragments,
     const std::vector<uint32_t> &cells,
     const uint32_t &group_of_interest,
     const std::string &output_path,
-    const BedgraphInsertionMode mode,
+    const BedgraphInsertionMode &mode,
+    bool keep_dups,
     std::atomic<bool> *user_interrupt
 );
 

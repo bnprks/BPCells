@@ -22,12 +22,14 @@ namespace BPCells {
 // - cell_of_interest: The pseudobulk to write the bedgraph for
 // - output_path: The file path to save the bedgraph
 // - mode: StartOnly = include only start coords, EndOnly = include only end coords, Both = include start + end coords
+// - keep_dups: If true, keep duplicate insertions in the bedfile
 void writeInsertionBedByPseudobulk(
     FragmentLoader &fragments,
     const std::vector<uint32_t> &cells,
     const uint32_t &group_of_interest,
     const std::string &output_path,
-    const BedgraphInsertionMode mode,
+    const BedgraphInsertionMode &mode,
+    bool keep_dups,
     std::atomic<bool> *user_interrupt
 ) {
     InsertionIterator it(fragments);
@@ -44,7 +46,7 @@ void writeInsertionBedByPseudobulk(
             if (cells[it.cell()] != group_of_interest) continue;
             if (mode == BedgraphInsertionMode::StartOnly && !it.isStart()) continue;
             if (mode == BedgraphInsertionMode::EndOnly && it.isStart()) continue;
-            if (last_base == it.coord()) continue;
+            if ((last_base == it.coord()) && !keep_dups) continue;
             // Handle the case where this is not the same basepair we saw last
             if (last_base != UINT32_MAX) {
                 uint32_t bytes_written = gzprintf(

@@ -23,9 +23,8 @@ struct Insertion {
     Insertion(uint32_t coord, uint32_t cell, bool is_start, uint32_t chrom) : coord(coord), cell(cell), is_start(is_start), chrom(chrom) {}
 };
 struct CompareInsertion {
-    // Compare insertions by coordinate, picking 
     bool operator()(const Insertion &a, const Insertion &b) {
-        return a.coord < b.coord;
+        return a.coord >= b.coord;
     }
 };
 
@@ -89,7 +88,6 @@ class InsertionIterator {
         frags.restart();
         std::priority_queue<Insertion, std::vector<Insertion>, CompareInsertion> emp;
         std::swap(frag_queue, emp);
-        highest_start = 0;
     }
 
     inline bool nextInsertion(bool rec = false) {

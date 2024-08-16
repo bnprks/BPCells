@@ -8,39 +8,52 @@ Also can be used to run only one of these steps.}
 \usage{
 call_macs_peaks(
   fragments = NULL,
-  cell_names = NULL,
+  cell_names,
   genome_size = 2.7e+09,
   path,
   insertion_mode = c("both", "start_only", "end_only"),
+  keep_dups = TRUE,
   step = c("prep-inputs", "run-macs", "read-outputs", "all"),
   macs_version = c("macs2", "macs3"),
+  additionalParams = "--keep-dup all --nomodel --nolambda",
+  quiet = FALSE,
+  use_gz = FALSE,
   threads = 1
 )
 }
 \arguments{
 \item{fragments}{IterableFragments object. Only used if step is "prep-inputs" or "all"}
 
-\item{cell_names}{Character vector of cluster assignments for each cell.
-Only used if step is "prep-inputs" or "all" Must be same length as cellNames(fragments)}
+\item{cell_names}{Character vector of cluster assignments for each cell.}
 
-\item{genome_size}{Numeric of length 1 representing Effective genome size.
-Used if step is "prep-inputs", "run-macs", or "all"}
+\item{genome_size}{Numeric of length 1 representing Effective genome size.}
 
 \item{path}{Character vector of length 1 representing parent directory to store MACS inputs and outputs.
 Inputs are stored in \verb{<path>/input/} and outputs in \verb{<path>/output/<cluster>/}.}
 
 \item{insertion_mode}{Which fragment ends to use for insertion counts calculation. One of "both", "start_only", or "end_only"}
 
-\item{step}{Which step to run. One of  "all", "prep-inputs", "run-macs", "read-outputs".  If "prep-inputs", create the input bedfiles for macs,
+\item{keep_dups}{Character describing Whether to keep duplicate reads with the same chrom, start, end and cell in bedfile creation. Default is TRUE.}
+
+\item{step}{Character describing which step to run. One of  "all", "prep-inputs", "run-macs", "read-outputs".  If "prep-inputs", create the input bedfiles for macs,
 and provides a shell script per cluster with the command to run macs.  If run-macs, also run bash scripts to execute macs.
 If read-outputs, read the outputs into tibbles.}
 
-\item{macs_version}{Which version of MACS to use. One of "macs2" or "macs3"  Only used if step is "prep-inputs", "run-macs", or "all"}
+\item{macs_version}{Character describing which version of MACS to use. One of "macs2" or "macs3"}
 
-\item{threads}{Number of threads to use}
+\item{quiet}{boolean of whether to suppress output from MACS. Only used if step is "run-macs" or "all".  Default is FALSE.}
+
+\item{use_gz}{boolean of whether to use gzip compression for bed files. Only used if step is "prep-inputs" or "all".  User should
+expect that not using gzip would result in sizes of bed files that are 2-3x larger.  Default is FALSE.}
+
+\item{threads}{Number of threads to use. Default is 1.}
+
+\item{additional_params}{Character describing additional parameters to pass to MACS2/3.  Default is "--nomodel --nolambda"}
 }
 \value{
-If step is "prep-inputs", returns a shell script to run MACS2/3. If step is "read-outputs" or "all", returns a list of tibbles with peaks for each cluster.
+If step is "prep-inputs", script paths for each cluster given as a character vector.
+If step is "run-macs", return NULL
+If step is "read-outputs" or "all", returns a list of tibbles with peaks for each cluster.
 }
 \description{
 Call MACS2/3 peaks using fragments and cluster assignments.

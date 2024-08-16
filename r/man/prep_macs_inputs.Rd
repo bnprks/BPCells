@@ -2,13 +2,14 @@
 % Please edit documentation in R/atac_utils.R
 \name{prep_macs_inputs}
 \alias{prep_macs_inputs}
-\title{Call MACS2/3 peaks using fragments. UNFINISHED.}
+\title{Create bed files for MACS2/3 input}
 \usage{
 prep_macs_inputs(
   fragments,
   cell_names,
   path,
   insertion_mode = c("both", "start_only", "end_only"),
+  keep_dups = TRUE,
   threads = 1
 )
 }
@@ -22,8 +23,10 @@ Else, this must be a character vector of length 1.}
 
 \item{insertion_mode}{Which fragment ends to use for insertion counts calculation. One of "both", "start_only", or "end_only"}
 
+\item{keep_dups}{Whether to keep duplicate reads with the same chrom, start, end and cell. Default is TRUE.}
+
 \item{threads}{Number of threads to use}
 }
 \description{
-Call MACS2/3 peaks using fragments. UNFINISHED.
+Create bed files for MACS2/3 input
 }
