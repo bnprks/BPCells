@@ -416,7 +416,7 @@ write_insertion_bedgraph <- function(fragments, path, cell_groups = NULL, insert
 prep_macs_inputs <- function(fragments, cell_names,
                              path, insertion_mode = c("both", "start_only", "end_only"),
                              keep_dups = TRUE,
-                             threads=1) {
+                             threads = 1) {
   assert_is(fragments, "IterableFragments")
   assert_is(keep_dups, "logical")
   assert_is(cell_names, c("character", "factor", "NULL"))
@@ -479,7 +479,7 @@ call_macs_peaks <- function(fragments = NULL, cell_names, genome_size = 2.7e9,
                             additionalParams = "--keep-dup all --nomodel --nolambda",
                             quiet = FALSE,
                             use_gz = FALSE,
-                            threads=1) {
+                            threads = 1) {
   assert_is(fragments, c("IterableFragments", "NULL"))
   assert_is(cell_names, c("character", "factor"))
   assert_is_numeric(genome_size)
@@ -514,7 +514,7 @@ call_macs_peaks <- function(fragments = NULL, cell_names, genome_size = 2.7e9,
       writeLines(macs_call[cluster_idx], con = shell_paths[cluster_idx])
     }
     if (step == "prep-inputs") {
-      # Create a shell file for each cluster
+      # Create a shell file for each cluster so that the user can easily parallelize the macs call
       return(shell_paths)
     }
   }
@@ -545,8 +545,9 @@ call_macs_peaks <- function(fragments = NULL, cell_names, genome_size = 2.7e9,
                                                       "score", "strand", "signalValue", 
                                                       "pValue", "qValue", "pointSource"),
                                           show_col_types = FALSE)
-      # We want to treat users files as the ground truth, so we give a warning if this gives different information than what 
     }
+    # We want to treat users files as the ground truth, so we give a warning if this gives different information than what we 
+    # expect given cell_names
     if (length(peaks) != length(levels(cell_names))) warning("Number of output files does not match number of clusters")
     return(peaks)
   }
