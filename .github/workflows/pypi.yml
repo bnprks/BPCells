@@ -1,6 +1,11 @@
 name: Publish to PyPI
 
-on: workflow_dispatch
+on: 
+  workflow_dispatch:
+    inputs: 
+      tag:
+        description: Git tag to publish (default to current commit)
+        default: ''
 
 jobs:
   build-wheels:
@@ -14,6 +19,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.print_tags }} 
 
       - name: Build wheels
         uses: pypa/cibuildwheel@v2.20.0
@@ -37,6 +44,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
+      with:
+        ref: ${{ inputs.print_tags }} 
     - name: Set up Python
       uses: actions/setup-python@v5
       with:
@@ -53,7 +62,7 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: sdist
-        path: dist/
+        path: python/dist
 
   publish-to-pypi:
     name: >-
