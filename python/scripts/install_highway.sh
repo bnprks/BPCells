@@ -16,9 +16,9 @@ else
 fi
 
 
-wget https://github.com/google/highway/archive/refs/tags/1.1.0.tar.gz
-tar -xzf 1.1.0.tar.gz
-rm 1.1.0.tar.gz
+curl -L https://github.com/google/highway/archive/refs/tags/1.1.0.tar.gz > highway.tar.gz
+tar -xzf highway.tar.gz
+rm highway.tar.gz
 
 cd highway-1.1.0
 mkdir -p build-dir
@@ -38,4 +38,4 @@ cd ../../
 mkdir -p "$INSTALL_DIR/include/hwy/contrib/math"
 cp -r highway-1.1.0/hwy/contrib/math/math-inl.h "$INSTALL_DIR/include/hwy/contrib/math"
 
-rm -r highway-1.1.0
+rm -rf highway-1.1.0

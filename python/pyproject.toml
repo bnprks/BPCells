@@ -75,8 +75,9 @@ manylinux-pypy_i686-image = "quay.io/pypa/manylinux2014_i686:2024.07.02-0"
 
 [tool.cibuildwheel.linux]
 before-all = [
-    "yum install -y hdf5-devel eigen3-devel wget",
-    "bash {package}/scripts/install_highway_cmake.sh",
+    "bash {package}/scripts/install_eigen.sh",
+    "bash {package}/scripts/install_hdf5.sh",
+    "bash {package}/scripts/install_highway.sh",
 ]
 archs = ["auto64"]
 
