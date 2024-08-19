@@ -44,7 +44,7 @@ else:
 # Plan: take an environment variable for the libs
 # - HWY_INCLUDE_DIR: Include path for hwy library
 # - HWY_LIB_DIR: Lib path for hwy library
-include_dirs = ["src/bpcells-cpp"]
+include_dirs = ["src/bpcells-cpp", "src/vendor"]
 library_dirs = []
 if "HWY_INCLUDE_DIR" in os.environ:
     include_dirs.append(os.environ["HWY_INCLUDE_DIR"])
