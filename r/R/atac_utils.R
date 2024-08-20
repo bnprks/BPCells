@@ -468,8 +468,9 @@ write_insertion_bed <- function(fragments, cell_groups,
 #' @param macs_executable Path to either macs3 or macs2 executable. Character. Default is `macs3`.
 #' @param additional_params Additional parameters to pass to MACS2/3. Character. Default is `--keep-dup all --shift -75 --extsize 150 --nomodel --nolambda`.
 #' @param verbose Whether to provide verbose output from MACS. Only used if step is `run-macs` or `all`. Boolean. Default is `FALSE`.
-#' @param use_gz Whether to use gzip compression for bed files. Only used if step is `prep-inputs` or `all`.  User should
-#' expect that not using gzip would result in sizes of bed files that are 2-3x larger. Boolean. Default is `FALSE`.
+#' @param use_gz Whether to use gzip compression for bed files. Only used if step is `prep-inputs` or `all`. Default is `FALSE`.
+#' 
+#' We find that using gzip compression on a 2600 cell dataset reduces the size of the bed files by approximately 3.8x.
 #' @param threads Number of threads to use. Integer. Default is `1`.
 #' @return
 #'  - If step is `prep-inputs`, script paths for each cluster given as a character vector.

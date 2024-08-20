@@ -27,7 +27,7 @@ cluster IDs}
 \item{path}{Character vector of length 1 representing parent directory to store MACS inputs and outputs.
 Inputs are stored in \verb{<path>/input/} and outputs in \verb{<path>/output/<cluster>/}.}
 
-\item{effective_genome_size}{effective genome size for MACS. Numeric. Default is 2.7e9.}
+\item{effective_genome_size}{effective genome size for MACS. Numeric. Default is \code{2.7e9}.}
 
 \item{insertion_mode}{Which fragment ends to use for coverage calculation. Character. One of \code{both}, \code{start_only}, or \code{end_only}.}
 
@@ -37,19 +37,20 @@ If read-outputs, read the outputs into tibbles.}
 
 \item{additional_params}{Additional parameters to pass to MACS2/3. Character. Default is \verb{--keep-dup all --shift -75 --extsize 150 --nomodel --nolambda}.}
 
-\item{verbose}{Whether to provide verbose output from MACS. Only used if step is \code{run-macs} or \code{all}. Boolean. Default is FALSE.}
+\item{verbose}{Whether to provide verbose output from MACS. Only used if step is \code{run-macs} or \code{all}. Boolean. Default is \code{FALSE}.}
 
-\item{use_gz}{Whether to use gzip compression for bed files. Only used if step is \code{prep-inputs} or \code{all}.  User should
-expect that not using gzip would result in sizes of bed files that are 2-3x larger. Boolean. Default is FALSE.}
+\item{use_gz}{Whether to use gzip compression for bed files. Only used if step is \code{prep-inputs} or \code{all}. Default is \code{FALSE}.
 
-\item{threads}{Number of threads to use. Integer. Default is 1.}
+We find that using gzip compression on a 2600 cell dataset reduces the size of the bed files by approximately 3.8x.}
+
+\item{threads}{Number of threads to use. Integer. Default is \code{1}.}
 
 \item{macs_executable}{Path to either macs3 or macs2 executable. Character. Default is \code{macs3}.}
 }
 \value{
 \itemize{
 \item If step is \code{prep-inputs}, script paths for each cluster given as a character vector.
-\item If step is \code{run-macs}, return NULL.
+\item If step is \code{run-macs}, return \code{NULL}.
 \item If step is \code{read-outputs} or \code{all}, returns a tibble with all the peaks from each cluster concatenated.
 Columnns are \code{chr}, \code{start}, \code{end}, \code{cluster}, \code{name}, \code{score}, \code{strand}, \code{signalValue}, \code{pValue}, \code{qValue}, \code{pointSource}
 }
