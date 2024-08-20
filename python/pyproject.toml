@@ -2,14 +2,15 @@
 requires = [
     "setuptools>=61",
     "pybind11>=2.10.0",
-    "setuptools-scm>=7.0,<8.0",
+    "setuptools-scm>=7.0",
 ]
 build-backend = "setuptools.build_meta"
 
 
 [project]
 name = "bpcells"
-dynamic = ["version"]
+version = "0.0.2rc1"
+# dynamic = ["version"]
 
 dependencies = [
     "numpy",
@@ -62,23 +63,5 @@ addopts = [
 
 
 [tool.cibuildwheel]
-build = "cp38*"
 skip = "*-musllinux_* pp*"
-
-# Build using the new manylinux2014 image with fixed CentOS mirrorlist
-manylinux-x86_64-image = "quay.io/pypa/manylinux2014_x86_64:2024.07.02-0"
-manylinux-i686-image = "quay.io/pypa/manylinux2014_i686:2024.07.02-0"
-manylinux-pypy_x86_64-image = "quay.io/pypa/manylinux2014_x86_64:2024.07.02-0"
-manylinux-aarch64-image = "quay.io/pypa/manylinux2014_aarch64:2024.07.02-0"
-manylinux-pypy_aarch64-image = "quay.io/pypa/manylinux2014_aarch64:2024.07.02-0"
-manylinux-pypy_i686-image = "quay.io/pypa/manylinux2014_i686:2024.07.02-0"
-
-[tool.cibuildwheel.linux]
-before-all = [
-    "bash {package}/scripts/install_eigen.sh",
-    "bash {package}/scripts/install_hdf5.sh",
-    "bash {package}/scripts/install_highway.sh",
-]
 archs = ["auto64"]
-
-environment = { CPATH="/usr/include/eigen3" }

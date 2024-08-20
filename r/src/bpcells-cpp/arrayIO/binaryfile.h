@@ -17,6 +17,13 @@
 
 #include "array_interfaces.h"
 
+#ifdef _MSC_VER
+#include <stdlib.h>
+#define bswap_32(x) _byteswap_ulong(x)
+#else
+#define bswap_32(x) __builtin_bswap32(x)
+#endif
+
 namespace BPCells {
 
 template <class T> static std::pair<uint32_t, uint32_t> file_header_magic_number() {
@@ -91,8 +98,8 @@ template <class T> class FileNumReader final : public BulkNumReader<T> {
         if (header[0] == magic_number.first && header[1] == magic_number.second) {
             // Don't do anything here now, since we removed bytswapping given
             // a lack of accessible testing on big-endian architectures
-        } else if (__builtin_bswap32(header[0]) == magic_number.first &&
-                __builtin_bswap32(header[1]) == magic_number.second ) {
+        } else if (bswap_32(header[0]) == magic_number.first &&
+                bswap_32(header[1]) == magic_number.second ) {
             throw std::invalid_argument(
                 std::string("Support for big-endian architectures not yet implemented")
             );
