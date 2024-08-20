@@ -6,7 +6,7 @@
 // option. This file may not be copied, modified, or distributed
 // except according to those terms.
 
-#include "BedgraphWriter.h"
+#include "BedWriter.h"
 #include <zlib.h>
 #include "../fragmentIterators/FragmentIterator.h"
 #include "InsertionIterator.h"
@@ -15,21 +15,16 @@
 namespace BPCells {
 
 // Write bedgraph files including chr, start, end with only 1bp insertions,
-// only considering a subset of cells given by the cells vector
+// only considering a subset of cells given by the cells vector. Leave duplicates in the bedfile.
 // Args:
 // - fragments: source of fragments to convert to insertions
-// - cells: For each cell in fragments, the index of the pseudobulk to assign it to
-// - cell_of_interest: The pseudobulk to write the bedgraph for
 // - output_path: The file path to save the bedgraph
 // - mode: StartOnly = include only start coords, EndOnly = include only end coords, Both = include start + end coords
 // - keep_dups: If true, keep duplicate insertions in the bedfile
-void writeInsertionBedByPseudobulk(
+void writeInsertionBed(
     FragmentLoader &fragments,
-    const std::vector<uint32_t> &cells,
-    const uint32_t &group_of_interest,
     const std::string &output_path,
     const BedgraphInsertionMode &mode,
-    bool keep_dups,
     std::atomic<bool> *user_interrupt
 ) {
     InsertionIterator it(fragments);
@@ -37,16 +32,14 @@ void writeInsertionBedByPseudobulk(
     gzFileWrapper file(output_path, "w", buffer_size);
     while (it.nextChr()) {
         if (fragments.chrNames(it.chr()) == NULL) {
-            throw std::runtime_error("writeBedgraph: No chromosome name found for ID: " + std::to_string(it.chr()));
+            throw std::runtime_error("writeInsertionBed: No chromosome name found for ID: " + std::to_string(it.chr()));
         }
         std::string chr_name(fragments.chrNames(it.chr()));
         uint32_t count = 0;
         uint32_t last_base = UINT32_MAX;
         while (it.nextInsertion()) {
-            if (cells[it.cell()] != group_of_interest) continue;
             if (mode == BedgraphInsertionMode::StartOnly && !it.isStart()) continue;
             if (mode == BedgraphInsertionMode::EndOnly && it.isStart()) continue;
-            if ((last_base == it.coord()) && !keep_dups) continue;
             // Handle the case where this is not the same basepair we saw last
             if (last_base != UINT32_MAX) {
                 uint32_t bytes_written = gzprintf(
@@ -57,7 +50,7 @@ void writeInsertionBedByPseudobulk(
                     last_base + 1
                 );
                 if (bytes_written <= 0) {
-                    throw std::runtime_error("writeBedgraph: Failed to write data");
+                    throw std::runtime_error("writeInserionBed: Failed to write data");
                 }
             }
             last_base = it.coord();
@@ -73,7 +66,7 @@ void writeInsertionBedByPseudobulk(
                 last_base + 1
             );
             if (bytes_written <= 0) {
-                throw std::runtime_error("writeBedgraph: Failed to write data");
+                throw std::runtime_error("writeInsertionBed: Failed to write data");
             }
         }
     }

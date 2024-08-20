@@ -24,21 +24,16 @@ enum class BedgraphInsertionMode {
 
 
 // Write bedgraph files including chr, start, end with only 1bp insertions,
-// only considering a subset of cells given by the cells vector
+// only considering a subset of cells given by the cells vector. Leave duplicates in the bedfile.
 // Args:
 // - fragments: source of fragments to convert to insertions
-// - cells: For each cell in fragments, the index of the pseudobulk to assign it to
-// - cell_of_interest: The pseudobulk to write the bedgraph for
 // - output_path: The file path to save the bedgraph
 // - mode: StartOnly = include only start coords, EndOnly = include only end coords, Both = include start + end coords
 // - keep_dups: If true, keep duplicate insertions in the bedfile
-void writeInsertionBedByPseudobulk(
+void writeInsertionBed(
     FragmentLoader &fragments,
-    const std::vector<uint32_t> &cells,
-    const uint32_t &group_of_interest,
     const std::string &output_path,
     const BedgraphInsertionMode &mode,
-    bool keep_dups,
     std::atomic<bool> *user_interrupt
 );
 

@@ -25,7 +25,7 @@
 #include "bpcells-cpp/fragmentIterators/RegionSelect.h"
 #include "bpcells-cpp/fragmentIterators/Rename.h"
 #include "bpcells-cpp/fragmentIterators/ShiftCoords.h"
-#include "bpcells-cpp/fragmentUtils/BedgraphWriter.h"
+#include "bpcells-cpp/fragmentUtils/BedWriter.h"
 #include "bpcells-cpp/fragmentUtils/FootprintMatrix.h"
 
 #include "bpcells-cpp/matrixIterators/PeakMatrix.h"
@@ -256,13 +256,10 @@ Eigen::MatrixXd footprint_matrix_cpp(
 }
 
 // [[Rcpp::export]]
-void write_insertion_bed_by_pseudobulk_cpp(
+void write_insertion_bed_cpp(
     SEXP fragments,
-    std::vector<uint32_t> cells,
-    uint32_t group_of_interest,
     std::string output_path,
-    std::string mode_string,
-    bool keep_dups
+    std::string mode_string
 ) {
     BedgraphInsertionMode mode;
     if (mode_string == "both") {
@@ -272,19 +269,15 @@ void write_insertion_bed_by_pseudobulk_cpp(
     } else if (mode_string == "end_only") {
         mode = BedgraphInsertionMode::EndOnly;
     } else {
-        throw std::runtime_error("write_bedgraph_cpp: invalid mode found: " + mode_string);
+        throw std::runtime_error("write_insertion_bed_cpp: invalid mode found: " + mode_string);
     }
-
     auto frags = take_unique_xptr<FragmentLoader>(fragments);
-    
+
     run_with_R_interrupt_check(
-        &writeInsertionBedByPseudobulk,
+        &writeInsertionBed,
         std::ref(*frags),
-        std::cref(cells),
-        std::cref(group_of_interest),
         std::cref(output_path),
-        mode,
-        keep_dups
+        mode
     );
 }
 

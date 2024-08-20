@@ -32,7 +32,7 @@ bpcells-cpp/fragmentIterators/RegionSelect.o \
 bpcells-cpp/fragmentIterators/Rename.o \
 bpcells-cpp/fragmentIterators/ShiftCoords.o \
 bpcells-cpp/fragmentIterators/StoredFragments.o \
-bpcells-cpp/fragmentUtils/BedgraphWriter.o \
+bpcells-cpp/fragmentUtils/BedWriter.o \
 bpcells-cpp/fragmentUtils/FootprintMatrix.o \
 bpcells-cpp/fragmentUtils/InsertionIterator.o \
 bpcells-cpp/matrixIterators/ImportMatrixHDF5.o \

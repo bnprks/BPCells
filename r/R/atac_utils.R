@@ -381,7 +381,7 @@ call_peaks_tile <- function(fragments, chromosome_sizes, cell_groups = rep.int("
 #' @param fragments IterableFragments object
 #' @param path Path(s) to save bedgraph to, optionally ending in ".gz" to add gzip compression. If `cell_groups` is provided,
 #'   `path` must be a named character vector, with one name for each level in `cell_groups`
-#' @param insertion_mode Which fragment ends to use for insertion counts calculation. One of "both", "start_only", or "end_only"
+#' @param insertion_mode Which fragment ends to use for coverage calculation. One of "both", "start_only", or "end_only"
 #' @inheritParams footprint
 #' @export
 write_insertion_bedgraph <- function(fragments, path, cell_groups = NULL, insertion_mode=c("both", "start_only", "end_only")) {
@@ -403,135 +403,181 @@ write_insertion_bedgraph <- function(fragments, path, cell_groups = NULL, insert
   write_insertion_bedgraph_cpp(iterate_fragments(fragments), cell_groups, path, insertion_mode)
 }
 
-#' Create bed files for MACS2/3 input
-#' @param fragments IterableFragments object
-#' @param cell_names Character vector of cluster assignments for each cell. If is null, all cells are treated as one group.
-#' @param path Path to save MACS2/3 output files. If `cell_names` is provided, this must be a character vector with one name for each level in `cell_names` 
+#' Create bed files from fragments split by cell group.
+#' @param cell_groups Character vector of cluster assignments for each cell. If is null, all cells are treated as one group.
+#' @param path Path to save bed files. If `cell_groups` is provided, this must be a character vector with one name for each level in `cell_groups` 
 #' Else, this must be a character vector of length 1.
-#' @param insertion_mode Which fragment ends to use for insertion counts calculation. One of "both", "start_only", or "end_only"
-#' @param keep_dups Whether to keep duplicate reads with the same chrom, start, end and cell. Default is TRUE.
-#' @param threads Number of threads to use
+#' @param threads Number of threads to use. Integer. Default is 1.
+#' @param verbose Whether to provide verbose progress output to console. Boolean. Default is FALSE.
 #' @return NULL
-#' @export
-prep_macs_inputs <- function(fragments, cell_names,
-                             path, insertion_mode = c("both", "start_only", "end_only"),
-                             keep_dups = TRUE,
-                             threads = 1) {
+#' @inheritParams write_insertion_bedgraph
+#' @keywords internal
+write_insertion_bed <- function(fragments, cell_groups,
+                                path, insertion_mode = c("start_only", "both", "end_only"),
+                                verbose = FALSE,
+                                threads = 1) {
   assert_is(fragments, "IterableFragments")
-  assert_is(keep_dups, "logical")
-  assert_is(cell_names, c("character", "factor", "NULL"))
+  assert_is(cell_groups, c("character", "factor", "NULL"))
   assert_is_character(path)
   assert_is_wholenumber(threads)
+  assert_is(verbose, "logical")
   insertion_mode <- match.arg(insertion_mode)
 
   # Prep inputs
-  if (is.null(cell_names)) {
-    cell_names <- as.factor(rep.int("all", length(cellNames(fragments))))
+  if (is.null(cell_groups)) {
+    cell_groups <- as.factor(rep.int("all", length(cellNames(fragments))))
     names(path) <- "all"
   } else {
-    assert_len(cell_names, length(cellNames(fragments)))
-    cell_names <- as.factor(cell_names)
+    assert_len(cell_groups, length(cellNames(fragments)))
+    cell_groups <- as.factor(cell_groups)
   }
-  cell_names_int <- as.integer(cell_names)
-  cluster_name_mapping <- levels(cell_names)
+  cell_groups_int <- as.integer(cell_groups)
+  cluster_name_mapping <- levels(cell_groups)
   # Parallelize writing bed inputs into MACS
+  if (verbose) {
+   print(paste0(Sys.time(), " Writing bed file for clusters:"))
+    for (i in cluster_name_mapping) {
+      print(i)
+    }
+  }
   parallel::mclapply(seq_along(cluster_name_mapping), function(i) {
-    write_insertion_bed_by_pseudobulk_cpp(
-      iterate_fragments(fragments),
-      cell_names_int,
-      i,
+    fragments_by_cluster <- select_cells(fragments, cell_groups_int == i)
+    write_insertion_bed_cpp(
+      iterate_fragments(fragments_by_cluster),
       path[cluster_name_mapping[[i]]],
-      insertion_mode,
-      keep_dups
+      insertion_mode
     )
   }, mc.cores = threads, mc.preschedule = FALSE)
+  if (verbose) {
+    print(paste0(Sys.time(), " Finished writing bed files"))
+  }
 }
 
 
 #' Call MACS2/3 peaks using fragments and cluster assignments.
-#' First creates the input bedfiles for each cluster for input to MACS2/3, then runs MACS2/3, and finally reads the outputs into tibbles.
-#' Also can be used to run only one of these steps.
-#' @param fragments IterableFragments object. Only used if step is "prep-inputs" or "all"
-#' @param cell_names Character vector of cluster assignments for each cell.
-#' @param genome_size Numeric of length 1 representing Effective genome size.
+#'
+#' First creates the input bed files for each cluster for input to MACS2/3, then runs MACS2/3, and finally reads the outputs into tibbles.
+#' Also allows the user to choose whether to run all steps, or only one of the steps.
 #' @param path Character vector of length 1 representing parent directory to store MACS inputs and outputs.
 #' Inputs are stored in `<path>/input/` and outputs in `<path>/output/<cluster>/`.
-#' @param insertion_mode Which fragment ends to use for insertion counts calculation. One of "both", "start_only", or "end_only"
-#' @param keep_dups Character describing Whether to keep duplicate reads with the same chrom, start, end and cell in bedfile creation. Default is TRUE.
-#' @param step Character describing which step to run. One of  "all", "prep-inputs", "run-macs", "read-outputs".  If "prep-inputs", create the input bedfiles for macs,
+#' @param effective_genome_size effective genome size for MACS. Numeric. Default is `2.7e9`.
+#' @param insertion_mode Which fragment ends to use for coverage calculation. Character. One of `both`, `start_only`, or `end_only`.
+#' @param step Which step to run. One of  `all`, `prep-inputs`, `run-macs`, `read-outputs`.  If `prep-inputs`, create the input bed files for macs,
 #' and provides a shell script per cluster with the command to run macs.  If run-macs, also run bash scripts to execute macs.
 #' If read-outputs, read the outputs into tibbles.
-#' @param macs_version Character describing which version of MACS to use. One of "macs2" or "macs3"
-#' @param additional_params Character describing additional parameters to pass to MACS2/3.  Default is "--nomodel --nolambda"
-#' @param quiet  boolean of whether to suppress output from MACS. Only used if step is "run-macs" or "all".  Default is FALSE.
-#' @param use_gz boolean of whether to use gzip compression for bed files. Only used if step is "prep-inputs" or "all".  User should
-#' expect that not using gzip would result in sizes of bed files that are 2-3x larger.  Default is FALSE.
-#' @param threads Number of threads to use. Default is 1.
-#' @return If step is "prep-inputs", script paths for each cluster given as a character vector.
-#' If step is "run-macs", return NULL
-#' If step is "read-outputs" or "all", returns a list of tibbles with peaks for each cluster.
+#' @param macs_executable Path to either macs3 or macs2 executable. Character. Default is `macs3`.
+#' @param additional_params Additional parameters to pass to MACS2/3. Character. Default is `--keep-dup all --shift -75 --extsize 150 --nomodel --nolambda`.
+#' @param verbose Whether to provide verbose output from MACS. Only used if step is `run-macs` or `all`. Boolean. Default is `FALSE`.
+#' @param use_gz Whether to use gzip compression for bed files. Only used if step is `prep-inputs` or `all`.  User should
+#' expect that not using gzip would result in sizes of bed files that are 2-3x larger. Boolean. Default is `FALSE`.
+#' @param threads Number of threads to use. Integer. Default is `1`.
+#' @return
+#'  - If step is `prep-inputs`, script paths for each cluster given as a character vector.
+#'  - If step is `run-macs`, return `NULL`.
+#'  - If step is `read-outputs` or `all`, returns a tibble with all the peaks from each cluster concatenated.  
+#' Columnns are `chr`, `start`, `end`, `cluster`, `name`, `score`, `strand`, `signalValue`, `pValue`, `qValue`, `pointSource`
+#' @details 
+#' File format:
+#'  - Inputs are written such that a bed file, as well as a shell file are written for each cluster.
+#'  - Bed files are written at `<path>/input/<cluster>.bed(.gz)`.
+#'  - shell commands are written at `<path>/input/<cluster>.sh`.
+#'
+#' Outputs are written to an output directory with a subdirectory for each cluster. 
+#' Each cluster's output directory contains a file for narrowPeaks, peaks, and summits.
+#'  - NarrowPeaks are written at `<path>/output/<cluster>/<cluster>_peaks.narrowPeak`.
+#'  - Peaks are written at `<path>/output/<cluster>/<cluster>_peaks.xls`.
+#'  - Summits are written at `<path>/output/<cluster>/<cluster>_summits.bed`.
+#' Only the narrowPeaks file is read into a tibble and returned.
+#' @inheritParams call_peaks_tile
 #' @export
-call_macs_peaks <- function(fragments = NULL, cell_names, genome_size = 2.7e9,
-                            path, insertion_mode = c("both", "start_only", "end_only"),
-                            keep_dups = TRUE,
-                            step = c("prep-inputs", "run-macs", "read-outputs", "all"), 
-                            macs_version = c("macs2", "macs3"),
-                            additionalParams = "--keep-dup all --nomodel --nolambda",
-                            quiet = FALSE,
+call_macs_peaks <- function(fragments, cell_groups, path, effective_genome_size = 2.7e9,
+                            insertion_mode = c("start_only", "both", "end_only"),
+                            step = c("all", "prep-inputs", "run-macs", "read-outputs"),
+                            macs_version = c("macs3", "macs2"),
+                            additional_params = "--keep-dup all --shift -75 --extsize 150 --nomodel --nolambda",
+                            verbose = FALSE,
                             use_gz = FALSE,
                             threads = 1) {
   assert_is(fragments, c("IterableFragments", "NULL"))
-  assert_is(cell_names, c("character", "factor"))
-  assert_is_numeric(genome_size)
+  assert_is(cell_groups, c("character", "factor"))
+  assert_is_numeric(effective_genome_size)
   assert_is_character(path)
-  assert_is(keep_dups, "logical")
   assert_is(use_gz, "logical")
   assert_is_wholenumber(threads)
   insertion_mode <- match.arg(insertion_mode)
   step <- match.arg(step)
   macs_version <- match.arg(macs_version)
-  cell_names <- as.factor(cell_names)
+  cell_groups <- as.factor(cell_groups)
+  stop_run <- FALSE
+
+  # Change cell group spaces into underscores
+  levels(cell_groups) <- gsub(" ", "_", levels(cell_groups))
   if (use_gz) {
-    path_bed_input <- paste0(path, "/input/", levels(cell_names), ".bed.gz")
+    path_bed_input <- paste0(path, "/input/", levels(cell_groups), ".bed.gz")
   } else {
-    path_bed_input <- paste0(path, "/input/", levels(cell_names), ".bed")
+    path_bed_input <- paste0(path, "/input/", levels(cell_groups), ".bed")
   }
-  names(path_bed_input) <- levels(cell_names)
-  path_macs_output <- paste0(path, "/output/", levels(cell_names))
+  names(path_bed_input) <- levels(cell_groups)
+  path_macs_output <- paste0(path, "/output/", levels(cell_groups))
+  # Create paths
+  dir.create(file.path(path, "input"), showWarnings = FALSE, recursive = TRUE)
+  # Check if MACS can be run
+  if (step %in% c("run-macs", "all")) {
+    if (system(paste0(macs_version, " --version"), intern = FALSE, ignore.stdout = TRUE, ignore.stderr = TRUE) == 0) {
+      log_message <- paste0(" Using", macs_version)
+    } else if (system("macs3  --version", intern = FALSE, ignore.stdout = TRUE, ignore.stderr = TRUE) == 0) {
+      macs_version <- "macs3"
+      log_message <- paste0("Provided executable ", macs_version, "not found. Using MACS3")
+      # write to each output/cluster log file to indicate that macs3 is being used
+    } else if (system("macs2  --version", intern = FALSE, ignore.stdout = TRUE, ignore.stderr = TRUE) == 0) {
+      macs_version <- "macs2"
+      log_message <- paste0("Provided executable ", macs_version, "not found. Using MACS2")
+    } else {
+      log_message <- paste0(" MACS not found. Please install MACS3 or MACS2")
+      stop_run <- TRUE
+    }
+  }
+  if (stop_run) {
+    stop(paste0(Sys.time(), log_message))
+  }
   # prep macs call
   macs_call_template <- c("%s callpeak -g %s --name %s --treatment %s",
                           "--outdir %s --format BED --call-summits",
                           "%s")
   macs_call_template <- paste(macs_call_template, collapse = " ")
   macs_call <- sprintf(macs_call_template,
-                       macs_version, genome_size, levels(cell_names),
-                       path_bed_input, path_macs_output, additionalParams)
+                       macs_version, effective_genome_size, levels(cell_groups),
+                       path_bed_input, path_macs_output, additional_params)
   if (step %in% c("prep-inputs", "all")) {
-    dir.create(file.path(path, "input"), showWarnings = FALSE, recursive = TRUE)
-    prep_macs_inputs(fragments, cell_names, path_bed_input, insertion_mode, keep_dups, threads)
-    shell_paths <- paste0(path, "/input/", levels(cell_names), ".sh")
-    for (cluster_idx in seq_along(levels(cell_names))) {
+    write_insertion_bed(fragments, cell_groups, path_bed_input, insertion_mode, threads, verbose = verbose)
+    shell_paths <- paste0(path, "/input/", levels(cell_groups), ".sh")
+    for (cluster_idx in seq_along(levels(cell_groups))) { 
       writeLines(macs_call[cluster_idx], con = shell_paths[cluster_idx])
     }
-    if (step == "prep-inputs") {
-      # Create a shell file for each cluster so that the user can easily parallelize the macs call
-      return(shell_paths)
-    }
+    if (step == "prep-inputs") return(shell_paths)
   }
+  
   # Run macs
   if (step %in% c("run-macs", "all")) {
-    # create output dirs
-    dir.create(file.path(path, "output"), showWarnings = FALSE, recursive = TRUE)
-    for (cluster in levels(cell_names)) {
-      dir.create(file.path(path, "output", cluster), showWarnings = FALSE, recursive = TRUE)
-    }
     # Run macs through the shell files created in the previous step
-    file_names <- list.files(file.path(path, "input"), pattern = "\\.sh$", full.names = TRUE)
-    if (length(file_names) != length(levels(cell_names))) {
+    dir.create(file.path(path, "output"), showWarnings = FALSE, recursive = TRUE)
+    file_names <- list.files(file.path(path, "input"), pattern = "\\.sh$", full.names = FALSE)
+    if (length(file_names) != length(levels(cell_groups))) {
       warning("Number of shell files does not match number of clusters")
     }
     for (shell_file in file_names) {
-      system2("bash", shell_file, stdout = !quiet, stderr = !quiet)
+      cluster <- gsub(".sh$", "", shell_file)
+      if (verbose) print(paste0(Sys.time(), " Running MACS for cluster: ", cluster))
+      dir.create(file.path(path, "output", cluster), showWarnings = FALSE, recursive = TRUE)
+      log_file <- paste0(path, "/output/", cluster, "/log.txt")
+      writeLines(paste0(Sys.time(), log_message), con = log_file)
+      macs_message <- system2("bash", file.path(path, "input", shell_file),
+                              stdout = TRUE, stderr = TRUE)
+      writeLines(macs_message, con = log_file)
+      if (verbose) {
+        print(paste0(Sys.time(), " Finished running MACS for cluster: ", cluster))
+        print(paste0(Sys.time(), " MACS log file written to: ", log_file))
+      }
     }
   }
   # Read outputs
@@ -540,15 +586,18 @@ call_macs_peaks <- function(fragments = NULL, cell_names, genome_size = 2.7e9,
     output_dirs <- list.dirs(file.path(path, "output"), full.names = FALSE, recursive = FALSE)
     for (cluster in output_dirs) {
       peak_path <- paste0(path, "/output/", cluster, "/", cluster, "_peaks.narrowPeak")
-      peaks[[cluster]] <- readr::read_tsv(peak_path, 
+      peaks[[cluster]] <- readr::read_tsv(peak_path,
                                           col_names=c("chr", "start", "end", "name", 
                                                       "score", "strand", "signalValue", 
                                                       "pValue", "qValue", "pointSource"),
                                           show_col_types = FALSE)
+      peaks[[cluster]]$cluster <- cluster
     }
     # We want to treat users files as the ground truth, so we give a warning if this gives different information than what we 
-    # expect given cell_names
-    if (length(peaks) != length(levels(cell_names))) warning("Number of output files does not match number of clusters")
+    # expect given cell_groups
+    if (length(peaks) != length(levels(cell_groups))) warning("Number of output files does not match number of clusters")
+    #  combine all peaks together into a single dataframe
+    peaks <- dplyr::bind_rows(peaks)
     return(peaks)
   }
 }

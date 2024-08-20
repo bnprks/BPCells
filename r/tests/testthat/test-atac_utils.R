@@ -153,7 +153,7 @@ test_that("write_insertion_bedgraph works", {
   }
 })
 
-test_that("prep_macs_inputs works", {
+test_that("write_insertion_bed works", {
   dir <- withr::local_tempdir()
   chr1 <- tibble::tibble(
     chr = "chr1",
@@ -193,62 +193,54 @@ test_that("prep_macs_inputs works", {
     "end_only" = coverage_end,
     "both" = coverage
   )
-  prep_macs_inputs(
-    frags_vowel, 
+  write_insertion_bed(
+    frags_vowel,
     rep("vowel", length(cellNames(frags_vowel))),
-    c("vowel"=file.path(dir, "vowel_only.bed")),
-    "start_only", FALSE
+    c("vowel" = file.path(dir, "vowel_only.bed")),
+    insertion_mode = "start_only", 
+    verbose = FALSE,
+    threads = 1
   )
-  prep_macs_inputs(
-    frags_vowel, 
-    cell_names = NULL,
-    c("vowel"=file.path(dir, "no_labels.bed")),
-    "start_only",
-    FALSE
+  write_insertion_bed(
+    frags_vowel,
+    cell_groups = NULL,
+    c("vowel" = file.path(dir, "no_labels.bed")),
+    insertion_mode = "start_only",
+    verbose = FALSE,
+    threads = 1
   )
   ## check with all insertions in same group
   expect_identical(
-    dplyr::filter(coverage_start, cell_group == "vowel") %>% dplyr::select(-c(cell_group, value)) %>% data.frame(), 
-    data.frame(readr::read_tsv(file.path(dir, "vowel_only.bed"), col_names=c("chr", "start", "end"), col_types="cii")),
+    dplyr::filter(coverage_start, cell_group == "vowel") %>% tidyr::uncount(value) %>% dplyr::select(-c(cell_group))  %>% data.frame(), 
+    data.frame(readr::read_tsv(file.path(dir, "vowel_only.bed"), col_names = c("chr", "start", "end"), col_types = "cii")),
   )
   ## check with all insertions in same group without labels
   expect_identical(
-    dplyr::filter(coverage_start, cell_group == "vowel") %>% dplyr::select(-c(cell_group, value)) %>% data.frame(), 
-    data.frame(readr::read_tsv(file.path(dir, "no_labels.bed"), col_names=c("chr", "start", "end"), col_types="cii")))
-  
-  prep_macs_inputs(
-    frags_vowel, 
-    rep("vowel", length(cellNames(frags_vowel))),
-    c("vowel"=file.path(dir, "vowel_only_with_dupes.bed")),
-    "start_only", TRUE
-  )
-  ## check with all insertions in same group with duplicates
-  expect_identical(
-    dplyr::filter(coverage_start, cell_group == "vowel") %>%  tidyr::uncount(value) %>% dplyr::select(-c(cell_group)) %>% data.frame(), 
-    data.frame(readr::read_tsv(file.path(dir, "vowel_only_with_dupes.bed"), col_names=c("chr", "start", "end"), col_types="cii"))
+    dplyr::filter(coverage_start, cell_group == "vowel") %>% tidyr::uncount(value) %>% dplyr::select(-c(cell_group)) %>% data.frame(), 
+    data.frame(readr::read_tsv(file.path(dir, "no_labels.bed"), col_names = c("chr", "start", "end"), col_types = "cii"))
   )
   # test across all modes and single/multiple thread counts
   for (mode in c("start_only", "end_only", "both")) {
     for (threads in c(1, 2)) {
-      prep_macs_inputs(
+      write_insertion_bed(
         frags,
         cell_groups,
-        c("vowel"=file.path(dir, "vowel.bed"), "consonant"=file.path(dir, "consonant.bed.gz")),
+        c("vowel" = file.path(dir, "vowel.bed"), "consonant" = file.path(dir, "consonant.bed.gz")),
         mode,
-        threads=threads,
-        FALSE
+        verbose = FALSE,
+        threads = threads
       )
       # read in the bed.gz files
       result <- list(
-        "vowel" = readr::read_tsv(file.path(dir, "vowel.bed"), col_names=c("chr", "start", "end"), col_types="cii"),
-        "consonant" = readr::read_tsv(file.path(dir, "consonant.bed.gz"), col_names=c("chr", "start", "end"), col_types="cii")
+        "vowel" = readr::read_tsv(file.path(dir, "vowel.bed"), col_names = c("chr", "start", "end"), col_types="cii"),
+        "consonant" = readr::read_tsv(file.path(dir, "consonant.bed.gz"), col_names = c("chr", "start", "end"), col_types="cii")
       )
       expect_identical(
-        dplyr::filter(answers[[mode]], cell_group == "vowel") %>% dplyr::select(-c(cell_group, value)) %>% data.frame(), 
+        dplyr::filter(answers[[mode]], cell_group == "vowel") %>% tidyr::uncount(value) %>% dplyr::select(-c(cell_group)) %>% data.frame(), 
         data.frame(result[["vowel"]])
       )
       expect_identical(
-        dplyr::filter(answers[[mode]], cell_group == "consonant") %>% dplyr::select(-c(cell_group, value)) %>% data.frame(), 
+        dplyr::filter(answers[[mode]], cell_group == "consonant") %>% tidyr::uncount(value) %>% dplyr::select(-c(cell_group)) %>% data.frame(), 
         data.frame(result[["consonant"]])
       )
     }
@@ -257,6 +249,7 @@ test_that("prep_macs_inputs works", {
 
 test_that("macs_e2e_works", {
   dir <- withr::local_tempdir()
+  
   chr1 <- tibble::tibble(
     chr = "chr1",
     start = sort(sample.int(1000, 1000, replace=TRUE)),
@@ -274,14 +267,13 @@ test_that("macs_e2e_works", {
   # call each step seperately and hold in memory
   macs_prep <- call_macs_peaks(
     fragments = frags,
-    cell_names = cell_groups,
-    genome_size = 2.7e9,
+    cell_groups = cell_groups,
+    effective_genome_size = 2.7e9,
     path = dir,
     insertion_mode = "both",
-    keep_dups = TRUE,
     step = "prep-inputs",
     macs_version = "macs2",
-    quiet = TRUE,
+    verbose = FALSE,
     use_gz = TRUE,
     threads = 2
   )
@@ -290,17 +282,17 @@ test_that("macs_e2e_works", {
     expect_true(file.exists(file.path(dir, "input", paste0(cluster, ".bed.gz"))))
     expect_true(file.exists(file.path(dir, "input", paste0(cluster, ".sh"))))
   }
+  
   # call macs using the prepared inputs
   macs_call <- call_macs_peaks(
     fragments = frags,
-    cell_names = cell_groups,
-    genome_size = 2.7e9,
+    cell_groups = cell_groups,
+    effective_genome_size = 2.7e9,
     path = dir,
     insertion_mode = "both",
-    keep_dups = TRUE,
     step = "run-macs",
     macs_version = "macs2",
-    quiet = TRUE,
+    verbose = FALSE,
     use_gz = TRUE,
     threads = 2
   )
@@ -313,29 +305,27 @@ test_that("macs_e2e_works", {
   # Read in the outputs
   macs_read <- call_macs_peaks(
     fragments = frags,
-    cell_names = cell_groups,
-    genome_size = 2.7e9,
+    cell_groups = cell_groups,
+    effective_genome_size = 2.7e9,
     path = dir,
     insertion_mode = "both",
-    keep_dups = TRUE,
     step = "read-outputs",
     macs_version = "macs2",
-    quiet = TRUE,
+    verbose = FALSE,
     use_gz = TRUE,
     threads = 2
   )
   # Check length to see if the same number of clusters are returned
-  expect_equal(length(macs_read), length(unique(cell_groups)))
+  expect_equal(length(unique(macs_read$cluster)), length(unique(cell_groups)))
   macs_read_full_pipeline <- call_macs_peaks(
     fragments = frags,
-    cell_names = cell_groups,
-    genome_size = 2.7e9,
+    cell_groups = cell_groups,
+    effective_genome_size = 2.7e9,
     path = dir,
     insertion_mode = "both",
-    keep_dups = TRUE,
     step = "all",
     macs_version = "macs2",
-    quiet = TRUE,
+    verbose = FALSE,
     use_gz = TRUE,
     threads = 2
   )

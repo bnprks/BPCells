@@ -62,9 +62,9 @@ class InsertionIterator {
 
         // Insert start and end fragments into the priority queue
         for (uint32_t i = 0; i < frags.capacity(); ++i) {
-            frag_queue.push(Insertion(*(starts + i), *(cells + i), true, current_chr));
-            highest_start = std::max(highest_start, *(starts + i));
-            frag_queue.push(Insertion(*(ends+i) - 1, *(cells + i), false, current_chr));
+            frag_queue.push(Insertion(starts[i], cells[i], true, current_chr));
+            highest_start = std::max(highest_start, starts[i]);
+            frag_queue.push(Insertion(ends[i] - 1, cells[i], false, current_chr));
         }
         return true;
     }

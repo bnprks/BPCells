@@ -74,6 +74,7 @@ reference:
   - call_peaks_tile
   - merge_peaks_iterative
   - write_insertion_bedgraph
+  - call_macs_peaks
 
 - subtitle: "Fragment Operations"
 - contents:

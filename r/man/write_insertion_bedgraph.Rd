@@ -20,7 +20,7 @@ write_insertion_bedgraph(
 \item{cell_groups}{Character or factor assigning a group to each cell, in order of
 \code{cellNames(fragments)}}
 
-\item{insertion_mode}{Which fragment ends to use for insertion counts calculation. One of "both", "start_only", or "end_only"}
+\item{insertion_mode}{Which fragment ends to use for coverage calculation. One of "both", "start_only", or "end_only"}
 }
 \description{
 Write insertion counts data for one or more pseudobulks to bedgraph format. This reports the total
