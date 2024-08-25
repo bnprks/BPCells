@@ -9,8 +9,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "bpcells"
-version = "0.0.2rc1"
-# dynamic = ["version"]
+dynamic = ["version"]
 
 dependencies = [
     "numpy",
