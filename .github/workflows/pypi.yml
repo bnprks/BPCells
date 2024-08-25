@@ -78,12 +78,14 @@ jobs:
             LIB_CACHE=/host/$LIB_CACHE bash {package}/scripts/install_hdf5.sh &&
             LIB_CACHE=/host/$LIB_CACHE bash {package}/scripts/install_highway.sh
 
+          # We need to set MACOSX_DEPLOYMENT_TARGET="10.15" on macos-13 because otherwise
+          # it tries to target a MacOS verision before std::filesystem is available (10.9 currently)
           CIBW_ENVIRONMENT_MACOS: >-
             CXX="ccache g++"
             LIB_CACHE="${{ steps.work-dir.outputs.dir }}/lib-cache"
             CPATH="$(pwd)/lib-root/include"
             LIBRARY_PATH="$(pwd)/lib-root/lib:$(pwd)/lib-root/lib64"
-            MACOSX_DEPLOYMENT_TARGET="10.15"
+            ${{ matrix.os == 'macos-13' && 'MACOSX_DEPLOYMENT_TARGET="10.15"' || '' }}
           CIBW_BEFORE_ALL_MACOS: >
             brew install ccache &&
             mkdir -p $LIB_CACHE &&

@@ -8,7 +8,8 @@ else
     INSTALL_DIR="/usr/local"
 fi
 
-# Check for cached files
+# Check for cached files if LIB_CACHE is set.
+# (This is useful for CI builds to not re-build dependencies from scratch)
 if [ ! -z "${LIB_CACHE+x}" ] && [ -f "${LIB_CACHE}/hdf5/lib/libhdf5.so" ]; then
     echo "Copying hdf5 from cache"
     mkdir -p "$INSTALL_DIR"/include "$INSTALL_DIR"/lib 

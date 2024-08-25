@@ -14,13 +14,14 @@ Additionally, BPCells exposes its optimized data processing infrastructure for u
 
 ## [Learn more at our website](https://bnprks.github.io/BPCells/)
 
+- [Python docs](https://bnprks.github.io/BPCells/python/index.html)
 - [Benchmarks](https://bnprks.github.io/BPCells/articles/web-only/benchmarks.html)
 - [Multiomic analysis example](https://bnprks.github.io/BPCells/articles/pbmc3k.html)
 - [How BPCells works](https://bnprks.github.io/BPCells/articles/web-only/how-it-works.html)
 - [Function documentation](https://bnprks.github.io/BPCells/reference/index.html)
 - [News](https://bnprks.github.io/BPCells/news/index.html)
 
-## Installation
+## R Installation
 BPCells is easiest to install directly from github:
 
 ```R
@@ -29,12 +30,12 @@ remotes::install_github("bnprks/BPCells/r")
 Before installing, you must have the HDF5 library installed and accessible on your system.
 HDF5 can be installed from your choice of package manager. 
 
-You will also need a C/C++ compiler either gcc >=8.0 (>=9.1 recommended), or clang >= 7.0 (>= 9.0 recommended).
-This corresponds to versions from late-2018 and newer. Older versions may work in some cases so long as they
-have basic C++17 support, but they are not officially supported.
+<details>
+<summary>Click here for operating system specific installation information</summary>
 
 ### Linux
 Obtaining the HDF5 dependency is usually pretty straightforward on Linux
+
 - apt: `sudo apt-get install libhdf5-dev` 
 - yum: `sudo yum install hdf5-devel`
 - conda: `conda install -c anaconda hdf5` 
@@ -60,12 +61,27 @@ For MacOS, installing HDF5 through homebrew seems to be most reliable: `brew ins
   C++17 filesystem features. See [issue #3](https://github.com/bnprks/BPCells/issues/3#issuecomment-1375238635) for
   tips getting a newer compiler set up via homebrew.
 
+### Supported compilers
+In most cases, you will already have an appropriate compiler. BPCells requires
+gcc >=8.0 (>=9.1 recommended), or clang >= 7.0 (>= 9.0 recommended). 
+This corresponds to versions from late-2018 and newer. 
+Older versions may work in some cases so long as they
+have basic C++17 support, but they are not officially supported.
+
 ### General Installation troubleshooting
 BPCells tries to print informative error messages during compilation to help diagnose the problem. For a more
 verbose set of information, run `Sys.setenv(BPCELLS_DEBUG_INSTALL="true")` prior to `remotes::install_github("bnprks/BPCells/r")`. If you still can't solve the issue with that additional information, feel free to file a Github issue, being
 sure to use a [collapsible section](https://docs.github.com/en/get-started/writing-on-github/working-with-advanced-formatting/organizing-information-with-collapsed-sections) for the verbose installation log.
 
+</details>
 
+## Python Installation
+
+BPCells can be directly installed via pip:
+
+```shell
+python -m pip install bpcells
+```
 
 ## Contributing
 BPCells is an open source project, and we welcome quality contributions. If you

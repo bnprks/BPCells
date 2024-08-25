@@ -13,7 +13,8 @@ else
     INSTALL_DIR="/usr/local"
 fi
 
-# Check for cached files
+# Check for cached files if LIB_CACHE is set.
+# (This is useful for CI builds to not re-build dependencies from scratch)
 if [ ! -z "${LIB_CACHE+x}" ] && [ -f "${LIB_CACHE}/hwy/lib64/libhwy.a" ]; then
     echo "Copying hwy from cache"
     mkdir -p "$INSTALL_DIR"/include "$INSTALL_DIR"/lib

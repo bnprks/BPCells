@@ -1,8 +1,19 @@
 # Python Docs
 
+The BPCells python bindings are still experimental and the API is subject to change.
 
-The current API *will change*. This version is just enough to allow basic queries needed by
-deep learning models.
+The existing functionality is mainly focused on allowing read/write access to BPCells
+file formats for integer matrices and scATAC fragments. Future updates will add the
+data-processing functions present in the R interface (e.g. streaming normalization, PCA,
+or ATAC-seq peak/tile matrix creation). This will provide Python access to the shared
+C++ core code.
+
+Notably, plotting functionality is not currently planned for implementation, as it is 
+written primarily in R and relies on R plotting libraries not present in Python. There
+are a few other helper functions in R BPCells that are implemented in pure R and thus
+are unlikely to be added in Python in the near future. If any of this functionality
+is of interest to you, we would welcome your contributions -- you would be able
+to write most of the code in pure Python. Reach out via github/email if interested.
 
 :::{toctree}
 :hidden:

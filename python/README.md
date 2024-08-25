@@ -1,74 +1,26 @@
-## BPCells python bindings
+# BPCells
+
+BPCells is a package for high performance single cell analysis on RNA-seq and ATAC-seq datasets. It can analyze a 1.3M cell dataset with 2GB of RAM in around 10 minutes (benchmarks). This makes analysis of million-cell datasets practical on a laptop.
+
+The main BPCells interface is in R and the python bindings are still in an 
+experimental phase, so the API is subject to change.
+
+The existing functionality is mainly focused on allowing read/write access to BPCells
+file formats for integer matrices and scATAC fragments. Future updates will add the
+data-processing functions present in the R interface (e.g. streaming normalization, PCA,
+or ATAC-seq peak/tile matrix creation). This will provide Python access to the shared
+C++ core code.
+
+Notably, plotting functionality is not currently planned for implementation, as it is 
+written primarily in R and relies on R plotting libraries not present in Python. There
+are a few other helper functions in R BPCells that are implemented in pure R and thus
+are unlikely to be added in Python in the near future. If any of this functionality
+is of interest to you, we would welcome your contributions -- you would be able
+to write most of the code in pure Python. Reach out via github/email if interested.
 
 The current BPCells python bindings provide limited access to BPCells functionality. This
 mainly focuses on integer matrix slicing / import, and pseudobulk fragment insertion counts.
-The API is subject to change somewhat once a full-featured port of the BPCells R functionality is
-completed.
+The API is subject to change somewhat once a full-featured port of the BPCells R 
+functionality is completed.
 
-For more information, see our [github](https://github.com/bnprks/BPCells) and [website](https://bnprks.github.io/BPCells).
-
-## Building from source
-
-1. Install required C++ dependencies, setting any required environment variables for
-   compilation:
-    - Eigen3:
-        - Typically available via package managers, e.g. `apt-get install libeigen3-dev`
-        - Installation path must be passed via standard environment variables, e.g. 
-        `export CPATH="${CPATH:+$CPATH:}/usr/include/eigen3"` (note that typical installations
-        prefix with the eigen3 directory, necessitating this CPATH modification)
-    - HDF5:
-        - Typically available via package managers, e.g. `apt-get install libhdf5-dev`
-        - Any non-standard installation paths must be passed via the standard environment variables `CPATH` for include and `LIBRARY_PATH` for lib, 
-        e.g. `export CPATH="${CPATH:+$CPATH:}/usr/include/hdf5/serial"` and `export LIBRARY_PATH=${LIBRARY_PATH:+$LIBRARY_PATH:}/usr/lib/hdf5/serial`
-    - Highway:
-        - Available [here](https://github.com/google/highway/), and also for Debian available via
-        `apt-get install libhwy-dev`. Requires cmake to build from source
-        - `bash ./scripts/install_highway_cmake.sh $(pwd)/highway` will fetch source and install, taking one optional
-        command-line argument to pass installation prefix
-        - Non-standard installation paths can be specified by setting `CPATH` and `LIBRARY_PATH` as with HDF5, e.g. `export CPATH=${CPATH:+$CPATH:}$(pwd)/highway/include; export LIBRARY_PATH=${LIBRARY_PATH:+$LIBRARY_PATH:}$(pwd)/highway/lib`
-2. Run `pip install .`
-
-## Running tests
-BPCells uses pytest, so just running `pytest` will run man unit tests.
-Certain slow-running tests that require downloading data will only run if
-the environment variable `BPCELLS_PYTEST_DATA` is set, pointing to the
-directory that should be used to cache file downloads.
-
-### Test dependencies
-
-`pip install pytest h5py anndata`
-
-
-### Documentation dependencies
-
-`pip install sphinx myst_nb pydata_sphinx_theme jupytext`
-
-## Example `.envrc`
-
-One easy way to get set up with environment variables and a virtual environment for development is
-with [`direnv`](https://direnv.net/). If you install direnv, you can make a `.envrc` in this folder
-and it will automatically enable a virtualenv and set environment variables whenever you switch
-into this folder.
-
-The exact right setup will depend on your OS, but this works well for Ubuntu
-```bash
-layout python3
-
-# Eigen3 installation path (depends on your OS setup; this works for Ubuntu/Debian)
-export CPATH="${CPATH:+$CPATH:}/usr/include/eigen3"
-
-# HDF5 installation path (depends on your OS setup; this works for Ubuntu/Debian)
-export CPATH="${CPATH:+$CPATH:}/usr/include/hdf5/serial"
-export LIBRARY_PATH="${LIBRARY_PATH:+$LIBRARY_PATH:}/usr/lib/x86_64-linux-gnu/hdf5/serial"
-
-# Export highway lib path for building
-export CPATH="${CPATH:+$CPATH:}$(pwd)/highway/include"
-export LIBRARY_PATH="${LIBRARY_PATH:+$LIBRARY_PATH:}$(pwd)/highway/lib"
-
-# Use ccache to speed up re-compilation cycles
-export CXX="ccache g++"
-export CC="ccache gcc"
-
-# Directory for real test data
-export BPCELLS_PYTEST_DATA_CACHE="$(pwd)/tests/data"
-```
+For more information, see our [github](https://github.com/bnprks/BPCells), [python docs](https://bnprks.github.io/BPCells/python), and [R docs](https://bnprks.github.io/BPCells/).
