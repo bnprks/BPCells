@@ -7,31 +7,31 @@ import platform
 from pybind11.setup_helpers import Pybind11Extension, ParallelCompile
 
 from setuptools import setup
-from setuptools.command.install import install
+from setuptools.command.build import build
 import setuptools_scm
 
 
 # Handle improperly checked-out symlinks from git by manual copying
 # This happens for certain Windows users depending on git config
-if not os.path.islink("src/bpcells-cpp") and not os.path.isdir("src/bpcells-cpp"):
-    import shutil
-    contents = open("src/bpcells-cpp", "rb").read()
-    os.remove("src/bpcells-cpp")
-    shutil.copytree("../r/src/bpcells-cpp", "src/bpcells-cpp")
-    open("src/bpcells-cpp/old-bpcells-cpp", "wb").write(contents)
+import shutil
+for path in ["bpcells-cpp", "vendor"]:
+    if not os.path.islink(f"src/{path}") and not os.path.isdir(f"src/{path}"):
+        contents = open(f"src/{path}", "rb").read()
+        os.remove(f"src/{path}")
+        shutil.copytree(f"../r/src/{path}", f"src/{path}")
+        open(f"src/{path}/old-{path}", "wb").write(contents)
 
-class InstallHook(install):
-    def run(self):
-        # Build HWY if needed
-        
-        install.run(self)
-
-        # Undo the manual copying of symlinks
-        if not os.path.islink("src/bpcells-cpp") and os.path.isfile("src/bpcells-cpp/old-bpcells-cpp"):
-            import shutil
-            contents = open("src/bpcells-cpp/old-bpcells-cpp", "rb").read()
-            shutil.rmtree("src/bpcells-cpp")
-            open("src/bpcells-cpp", "wb").write(contents)
+class BuildHook(build):
+    def run(self): 
+        try:
+            build.run(self)
+        finally:
+            # Undo the manual copying of symlinks
+            for path in ["bpcells-cpp", "vendor"]:
+                if not os.path.islink(f"src/{path}") and os.path.isfile(f"src/{path}/old-{path}"):
+                    contents = open(f"src/{path}/old-{path}", "rb").read()
+                    shutil.rmtree(f"src/{path}")
+                    open(f"src/{path}", "wb").write(contents)
 
 extra_compile_args = []
 if "BPCELLS_DEBUG" in os.environ:
@@ -109,7 +109,7 @@ ext_modules = [
 ParallelCompile("BPCELLS_NUM_BUILD_JOBS").install()
 
 setup(
-    cmdclass={"install":InstallHook},
+    cmdclass={"build":BuildHook},
     ext_modules=ext_modules,
     extras_require={"test": "pytest"},
 )
