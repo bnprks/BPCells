@@ -10,10 +10,15 @@ to run tests/docs for all languages in one command.
 
 ## Building docs
 Warning: Docs setup may change as python and C++ docs get created
+
 1. Docs site is built into the root folder of the docs-html branch
 2. Run `git worktree add r/docs docs-html` to put a copy of the docs-html branch in the r/docs folder
 3. In `r` folder, run `pkgdown::build_site()`
-4. In `r/docs` folder, run git commit
+4. In `python` folder, run `sphinx-build -M html docs/source docs/build`
+    - Optionally run `rm -r docs/build/html` to get a clean re-generation
+5. Run `cp -r docs/build/html/* ../r/docs/python`
+6. Pull up website in local browser to check it's okay
+7. In `r/docs` folder, run git commit
 
 ## R
 

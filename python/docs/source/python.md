@@ -15,6 +15,25 @@ are unlikely to be added in Python in the near future. If any of this functional
 is of interest to you, we would welcome your contributions -- you would be able
 to write most of the code in pure Python. Reach out via github/email if interested.
 
+## Installation
+
+BPCells can be directly installed via pip:
+
+```shell
+python -m pip install bpcells
+```
+
+## Tutorials
+
+- [Matrix slicing](notebooks/matrix_basics)
+- [Basepair insertion dataloading](notebooks/fragment_basics)
+
+## API Reference
+
+- [Fragment functions](api/fragments)
+- [Matrix functions](api/matrix)
+
+
 :::{toctree}
 :hidden:
 :caption: API Reference
@@ -32,17 +51,3 @@ api/matrix
 notebooks/fragment_basics
 notebooks/matrix_basics
 :::
-
-## Installation
-
-Coming soon to PyPI (hopefully)
-
-## Tutorials
-
-- [Matrix slicing](notebooks/matrix_basics)
-- [Basepair insertion dataloading](notebooks/fragment_basics)
-
-## API Reference
-
-- [Fragment functions](api/fragments)
-- [Matrix functions](api/matrix)
