@@ -99,9 +99,10 @@ jobs:
             LIBRARY_PATH="C:\\vcpkg\\installed\\x64-windows\\lib"
             CPATH="C:\\vcpkg\\installed\\x64-windows\\include"
             BPCELLS_PYTEST_DATA_CACHE="C:\\Users\\runneradmin\\AppData\\Local\\Temp\\bpcells-pytest-data-cache"
+          # As of 8/26/2024, a delvewheel dependency version bump (pefile) broke delvewheel, so pin these 
           CIBW_BEFORE_ALL_WINDOWS: >-
             vcpkg install hdf5 eigen3 highway[contrib] zlib && 
-            pip install delvewheel
+            pip install delvewheel==1.8.0 pefile==2023.2.7
           # See https://github.com/adang1345/delvewheel/issues/54 for explanation of `--add-path C:/Windows/System32`
           CIBW_REPAIR_WHEEL_COMMAND_WINDOWS: >-
             delvewheel repair --add-path C:/vcpkg/installed/x64-windows/bin --add-path C:/Windows/System32 --wheel-dir {dest_dir} {wheel} 
