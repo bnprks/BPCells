@@ -98,12 +98,18 @@ jobs:
             VCPKG_BINARY_SOURCES="clear;x-gha,readwrite" 
             LIBRARY_PATH="C:\\vcpkg\\installed\\x64-windows\\lib"
             CPATH="C:\\vcpkg\\installed\\x64-windows\\include"
+            BPCELLS_PYTEST_DATA_CACHE="C:\\Users\\runneradmin\\AppData\\Local\\Temp\\bpcells-pytest-data-cache"
           CIBW_BEFORE_ALL_WINDOWS: >-
             vcpkg install hdf5 eigen3 highway[contrib] zlib && 
             pip install delvewheel
           # See https://github.com/adang1345/delvewheel/issues/54 for explanation of `--add-path C:/Windows/System32`
           CIBW_REPAIR_WHEEL_COMMAND_WINDOWS: >-
             delvewheel repair --add-path C:/vcpkg/installed/x64-windows/bin --add-path C:/Windows/System32 --wheel-dir {dest_dir} {wheel} 
+
+          CIBW_TEST_REQUIRES: pytest h5py anndata
+          CIBW_TEST_COMMAND: BPCELLS_PYTEST_DATA_CACHE=/tmp/bpcells-pytest-data-cache pytest {package}/tests
+          # Data cache folder is already set
+          CIBW_TEST_COMMAND_WINDOWS: pytest {package}/tests
 
       - uses: actions/upload-artifact@v4
         with:
