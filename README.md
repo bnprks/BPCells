@@ -1,7 +1,8 @@
 # BPCells
 
 BPCells is a package for high performance single cell analysis on RNA-seq and ATAC-seq datasets. It can analyze
-a 1.3M cell dataset with 2GB of RAM in under 10 minutes. This makes analysis of million-cell datasets practical on a laptop.
+a 1.3M cell dataset with 2GB of RAM in around 10 minutes ([benchmarks](https://bnprks.github.io/BPCells/articles/web-only/benchmarks.html)).
+This makes analysis of million-cell datasets practical on a laptop.
 
 BPCells provides:
 
@@ -18,11 +19,12 @@ Additionally, BPCells exposes its optimized data processing infrastructure for u
 - [Benchmarks](https://bnprks.github.io/BPCells/articles/web-only/benchmarks.html)
 - [Multiomic analysis example](https://bnprks.github.io/BPCells/articles/pbmc3k.html)
 - [How BPCells works](https://bnprks.github.io/BPCells/articles/web-only/how-it-works.html)
+- [Additional articles](https://bnprks.github.io/BPCells/articles/index.html)
 - [Function documentation](https://bnprks.github.io/BPCells/reference/index.html)
 - [News](https://bnprks.github.io/BPCells/news/index.html)
 
 ## R Installation
-BPCells is easiest to install directly from github:
+The BPCells R library is easiest to install directly from github:
 
 ```R
 remotes::install_github("bnprks/BPCells/r")
@@ -62,8 +64,8 @@ For MacOS, installing HDF5 through homebrew seems to be most reliable: `brew ins
   tips getting a newer compiler set up via homebrew.
 
 ### Supported compilers
-In most cases, you will already have an appropriate compiler. BPCells requires
-gcc >=8.0 (>=9.1 recommended), or clang >= 7.0 (>= 9.0 recommended). 
+In most cases, you will already have an appropriate compiler. BPCells recommends
+gcc >=9.1, or clang >= 9.0. 
 This corresponds to versions from late-2018 and newer. 
 Older versions may work in some cases so long as they
 have basic C++17 support, but they are not officially supported.

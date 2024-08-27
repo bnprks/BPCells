@@ -3,7 +3,8 @@
 *This site is for the R package. Python site [here](python/index.html) (experimental)*
 
 BPCells is a package for high performance single cell analysis on RNA-seq and ATAC-seq datasets. It can analyze
-a 1.3M cell dataset with 2GB of RAM in around 10 minutes ([benchmarks](articles/web-only/benchmarks.html)). This makes analysis of million-cell datasets practical on a laptop.
+a 1.3M cell dataset with 2GB of RAM in around 10 minutes ([benchmarks](articles/web-only/benchmarks.html)).
+This makes analysis of million-cell datasets practical on a laptop.
 
 BPCells provides:
 
