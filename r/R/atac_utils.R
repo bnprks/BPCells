@@ -478,9 +478,10 @@ write_insertion_bed <- function(fragments, path,
 #' Columnns are `chr`, `start`, `end`, `cluster`, `name`, `score`, `strand`, `signalValue`, `pValue`, `qValue`, `pointSource`
 #' @details 
 #' File format:
-#'  - Inputs are written such that a bed file, as well as a shell file are written for each cluster.
-#'  - Bed files are written at `<path>/input/<cluster>.bed(.gz)`.
-#'  - shell commands for running MACS are written at `<path>/input/<cluster>.sh`.
+#'  - Inputs are written such that a bed file used as input into MACS, 
+#' as well as a shell file containing a call to MACS are written for each cluster.
+#'  - Bed files containing `chr`, `start`, and `end` coordinates of insertions are written at `<path>/input/<cluster>.bed(.gz)`.
+#'  - shell commands are written at `<path>/input/<cluster>.sh`.
 #'
 #' Outputs are written to an output directory with a subdirectory for each cluster.
 #' Each cluster's output directory contains a file for narrowPeaks, peaks, and summits.

@@ -63,9 +63,10 @@ Also allows the user to choose whether to run all steps, or only one of the step
 \details{
 File format:
 \itemize{
-\item Inputs are written such that a bed file, as well as a shell file are written for each cluster.
-\item Bed files are written at \verb{<path>/input/<cluster>.bed(.gz)}.
-\item shell commands for running MACS are written at \verb{<path>/input/<cluster>.sh}.
+\item Inputs are written such that a bed file used as input into MACS,
+as well as a shell file containing a call to MACS are written for each cluster.
+\item Bed files containing \code{chr}, \code{start}, and \code{end} coordinates of insertions are written at \verb{<path>/input/<cluster>.bed(.gz)}.
+\item shell commands are written at \verb{<path>/input/<cluster>.sh}.
 }
 
 Outputs are written to an output directory with a subdirectory for each cluster.
