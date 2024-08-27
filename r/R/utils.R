@@ -44,3 +44,9 @@ document_granges <- function(
     "%s"
   ), intro_noun, bullets)
 }
+
+# Function which prints a message using shell echo
+# Useful for printing messages from inside mclapply when running in Rstudio
+message_parallel <- function(msg){
+  system(sprintf('echo "%s"', paste0(msg, collapse="")))
+}

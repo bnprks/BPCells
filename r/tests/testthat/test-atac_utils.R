@@ -194,17 +194,17 @@ test_that("write_insertion_bed works", {
     "both" = coverage
   )
   write_insertion_bed(
-    frags_vowel,
-    rep("vowel", length(cellNames(frags_vowel))),
-    c("vowel" = file.path(dir, "vowel_only.bed")),
-    insertion_mode = "start_only", 
-    verbose = FALSE,
+    fragments = frags_vowel,
+    path = c("vowel" = file.path(dir, "vowel_only.bed")),
+    cell_groups = rep("vowel", length(cellNames(frags_vowel))),
+    insertion_mode = "start_only",
+    verbose = TRUE,
     threads = 1
   )
   write_insertion_bed(
-    frags_vowel,
+    fragments = frags_vowel,
+    path = c("vowel" = file.path(dir, "no_labels.bed")),
     cell_groups = NULL,
-    c("vowel" = file.path(dir, "no_labels.bed")),
     insertion_mode = "start_only",
     verbose = FALSE,
     threads = 1
@@ -223,10 +223,10 @@ test_that("write_insertion_bed works", {
   for (mode in c("start_only", "end_only", "both")) {
     for (threads in c(1, 2)) {
       write_insertion_bed(
-        frags,
-        cell_groups,
-        c("vowel" = file.path(dir, "vowel.bed"), "consonant" = file.path(dir, "consonant.bed.gz")),
-        mode,
+        fragments = frags,
+        path = c("vowel" = file.path(dir, "vowel.bed"), "consonant" = file.path(dir, "consonant.bed.gz")),
+        cell_groups = cell_groups,
+        insertion_mode = mode,
         verbose = FALSE,
         threads = threads
       )
@@ -248,6 +248,11 @@ test_that("write_insertion_bed works", {
 })
 
 test_that("macs_e2e_works", {
+  # only run if macs2 is installed
+  if ((suppressWarnings((system2("macs2", args = "--version", stdout = FALSE, stderr = FALSE) != 0)) ||
+      (!grepl("macs", system2("macs2", args = "--version", stdout = TRUE))))) {
+    skip("macs2 not installed")
+  }
   dir <- withr::local_tempdir()
   
   chr1 <- tibble::tibble(
@@ -272,9 +277,9 @@ test_that("macs_e2e_works", {
     path = dir,
     insertion_mode = "both",
     step = "prep-inputs",
-    macs_version = "macs2",
+    macs_executable = "macs2",
     verbose = FALSE,
-    use_gz = TRUE,
+    compress_inputs = TRUE,
     threads = 2
   )
   # Check to see if bed/shell files are created
@@ -291,9 +296,9 @@ test_that("macs_e2e_works", {
     path = dir,
     insertion_mode = "both",
     step = "run-macs",
-    macs_version = "macs2",
+    macs_executable = "macs2",
     verbose = FALSE,
-    use_gz = TRUE,
+    compress_inputs = TRUE,
     threads = 2
   )
   # Check to see if the output files are created
@@ -310,9 +315,9 @@ test_that("macs_e2e_works", {
     path = dir,
     insertion_mode = "both",
     step = "read-outputs",
-    macs_version = "macs2",
+    macs_executable = "macs2",
     verbose = FALSE,
-    use_gz = TRUE,
+    compress_inputs = TRUE,
     threads = 2
   )
   # Check length to see if the same number of clusters are returned
@@ -324,9 +329,9 @@ test_that("macs_e2e_works", {
     path = dir,
     insertion_mode = "both",
     step = "all",
-    macs_version = "macs2",
+    macs_executable = "macs2",
     verbose = FALSE,
-    use_gz = TRUE,
+    compress_inputs = TRUE,
     threads = 2
   )
   # Make sure the outputs are the same
