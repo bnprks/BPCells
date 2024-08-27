@@ -11,10 +11,11 @@ call_macs_peaks(
   effective_genome_size = 2.7e+09,
   insertion_mode = c("start_only", "both", "end_only"),
   step = c("all", "prep-inputs", "run-macs", "read-outputs"),
-  macs_version = c("macs3", "macs2"),
-  additional_params = "--keep-dup all --shift -75 --extsize 150 --nomodel --nolambda",
+  macs_executable = NULL,
+  additional_params =
+    "--call-summits --keep-dup all --shift -75 --extsize 150 --nomodel --nolambda",
   verbose = FALSE,
-  use_gz = FALSE,
+  compress_inputs = FALSE,
   threads = 1
 )
 }
@@ -25,7 +26,7 @@ call_macs_peaks(
 cluster IDs}
 
 \item{path}{Character vector of length 1 representing parent directory to store MACS inputs and outputs.
-Inputs are stored in \verb{<path>/input/} and outputs in \verb{<path>/output/<cluster>/}.}
+Inputs are stored in \verb{<path>/input/} and outputs in \verb{<path>/output/<cluster>/}.  Further information on directory structure is provided in the details.}
 
 \item{effective_genome_size}{effective genome size for MACS. Numeric. Default is \code{2.7e9}.}
 
@@ -35,17 +36,17 @@ Inputs are stored in \verb{<path>/input/} and outputs in \verb{<path>/output/<cl
 and provides a shell script per cluster with the command to run macs.  If run-macs, also run bash scripts to execute macs.
 If read-outputs, read the outputs into tibbles.}
 
+\item{macs_executable}{Path to either macs3 or macs2 executable. Character. Default is \code{NULL}.}
+
 \item{additional_params}{Additional parameters to pass to MACS2/3. Character. Default is \verb{--keep-dup all --shift -75 --extsize 150 --nomodel --nolambda}.}
 
 \item{verbose}{Whether to provide verbose output from MACS. Only used if step is \code{run-macs} or \code{all}. Boolean. Default is \code{FALSE}.}
 
-\item{use_gz}{Whether to use gzip compression for bed files. Only used if step is \code{prep-inputs} or \code{all}. Default is \code{FALSE}.
+\item{compress_inputs}{Whether to use gzip compression when writing bedfiles. Only used if step is \code{prep-inputs} or \code{all}. Default is \code{FALSE}.
 
-We find that using gzip compression on a 2600 cell dataset reduces the size of the bed files by approximately 3.8x.}
+We find that using gzip compression on a 2600 cell dataset reduces the size of the bed files by approximately 3.8x, while increasing runtime duration by about 20\%.}
 
 \item{threads}{Number of threads to use. Integer. Default is \code{1}.}
-
-\item{macs_executable}{Path to either macs3 or macs2 executable. Character. Default is \code{macs3}.}
 }
 \value{
 \itemize{
@@ -64,7 +65,7 @@ File format:
 \itemize{
 \item Inputs are written such that a bed file, as well as a shell file are written for each cluster.
 \item Bed files are written at \verb{<path>/input/<cluster>.bed(.gz)}.
-\item shell commands are written at \verb{<path>/input/<cluster>.sh}.
+\item shell commands for running MACS are written at \verb{<path>/input/<cluster>.sh}.
 }
 
 Outputs are written to an output directory with a subdirectory for each cluster.
@@ -73,6 +74,8 @@ Each cluster's output directory contains a file for narrowPeaks, peaks, and summ
 \item NarrowPeaks are written at \verb{<path>/output/<cluster>/<cluster>_peaks.narrowPeak}.
 \item Peaks are written at \verb{<path>/output/<cluster>/<cluster>_peaks.xls}.
 \item Summits are written at \verb{<path>/output/<cluster>/<cluster>_summits.bed}.
-Only the narrowPeaks file is read into a tibble and returned.
 }
+
+Only the narrowPeaks file is read into a tibble and returned.
+For more information on outputs from MACS, visit the \href{https://macs3-project.github.io/MACS/docs/callpeak.html}{MACS docs}
 }

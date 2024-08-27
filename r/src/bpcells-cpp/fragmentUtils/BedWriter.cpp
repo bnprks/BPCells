@@ -36,38 +36,20 @@ void writeInsertionBed(
         }
         std::string chr_name(fragments.chrNames(it.chr()));
         uint32_t count = 0;
-        uint32_t last_base = UINT32_MAX;
         while (it.nextInsertion()) {
             if (mode == BedgraphInsertionMode::StartOnly && !it.isStart()) continue;
             if (mode == BedgraphInsertionMode::EndOnly && it.isStart()) continue;
-            // Handle the case where this is not the same basepair we saw last
-            if (last_base != UINT32_MAX) {
-                uint32_t bytes_written = gzprintf(
-                    *file,
-                    "%s\t%d\t%d\n",
-                    chr_name.c_str(),
-                    last_base,
-                    last_base + 1
-                );
-                if (bytes_written <= 0) {
-                    throw std::runtime_error("writeInserionBed: Failed to write data");
-                }
-            }
-            last_base = it.coord();
-            if (user_interrupt != nullptr && count++ % 65536 == 0 && *user_interrupt) return;
-        }
-        // cleanup at the end of the chromosome
-        if (last_base != UINT32_MAX) {
             uint32_t bytes_written = gzprintf(
                 *file,
                 "%s\t%d\t%d\n",
                 chr_name.c_str(),
-                last_base,
-                last_base + 1
+                it.coord(),
+                it.coord() + 1
             );
             if (bytes_written <= 0) {
-                throw std::runtime_error("writeInsertionBed: Failed to write data");
+                throw std::runtime_error("writeInserionBed: Failed to write data");
             }
+            if (user_interrupt != nullptr && count++ % 65536 == 0 && *user_interrupt) return;
         }
     }
 }
