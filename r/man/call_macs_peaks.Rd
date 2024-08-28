@@ -76,6 +76,7 @@ Only the narrowPeaks file is read into a tibble and returned.
 For more information on outputs from MACS, visit the \href{https://macs3-project.github.io/MACS/docs/callpeak.html}{MACS docs}
 
 \strong{Performance}:
+
 Running on a 2600 cell dataset and taking both start and end insertions into account, written input bedfiles and MACS outputs
 used 364 MB and 158 MB of space respectively.  With 4 threads, running this function end to end took 74 seconds, with 61 of those seconds spent on running MACS.
 }

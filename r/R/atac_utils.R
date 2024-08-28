@@ -490,6 +490,7 @@ write_insertion_bed <- function(fragments, path,
 #' For more information on outputs from MACS, visit the [MACS docs](https://macs3-project.github.io/MACS/docs/callpeak.html)
 #'
 #' \strong{Performance}:
+#' 
 #' Running on a 2600 cell dataset and taking both start and end insertions into account, written input bedfiles and MACS outputs 
 #' used 364 MB and 158 MB of space respectively.  With 4 threads, running this function end to end took 74 seconds, with 61 of those seconds spent on running MACS.
 #'
