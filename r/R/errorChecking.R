@@ -153,6 +153,34 @@ assert_has_package <- function(packages, n = 1) {
   }
 }
 
+#' Adjust a set of (unique) potential file names to not include any
+#' invalid characters. 
+#' @kewords internal
+normalize_unique_file_names <- function(names, replacement="_") {
+    assert_distinct(names)
+
+    # Loosely inspired by: https://github.com/r-lib/fs/blob/cb107acf193caf0fbd62b4ca5c49b7129149ae8f/R/sanitize.R
+    if (.Platform$OS.type == "windows") {
+        invalid_characters <- "[<>:\"/\\|?*]"
+    } else {
+        invalid_characters <- "[/]"
+    }
+    # Non-printing ascii characters
+    control <- "[[:cntrl:]]"
+    
+    valid_names <- gsub(invalid_characters, replacement, names)
+    valid_names <- gsub(control, replacement, valid_names)
+    if (!all(valid_names == names)) {
+        changed <- valid_names != names
+        changed <- sprintf("%s -> %s", names[changed], valid_names[changed])
+        if (length(changed) > 3) changed <- c(changed[1:3], "[list truncated]")
+        rlang::warn(c("Sanitized inputs to form valid file names:", changed))
+    }
+    if (anyDuplicated(valid_names)) {
+        rlang::abort("Names are no longer unique after sanitizing for file names")
+    }
+    return(valid_names)
+}
 
 #' Normalize an object representing genomic ranges
 #'
