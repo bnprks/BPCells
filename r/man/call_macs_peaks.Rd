@@ -15,7 +15,6 @@ call_macs_peaks(
   additional_params =
     "--call-summits --keep-dup all --shift -75 --extsize 150 --nomodel --nolambda",
   verbose = FALSE,
-  compress_inputs = FALSE,
   threads = 1
 )
 }
@@ -36,24 +35,20 @@ Inputs are stored in \verb{<path>/input/} and outputs in \verb{<path>/output/<cl
 and provides a shell script per cluster with the command to run macs.  If run-macs, also run bash scripts to execute macs.
 If read-outputs, read the outputs into tibbles.}
 
-\item{macs_executable}{Path to either macs3 or macs2 executable. Character. Default is \code{NULL}.}
+\item{macs_executable}{Path to either MACS2/3 executable. Character. Default is \code{NULL} (autodetect from PATH).}
 
 \item{additional_params}{Additional parameters to pass to MACS2/3. Character. Default is \verb{--keep-dup all --shift -75 --extsize 150 --nomodel --nolambda}.}
 
 \item{verbose}{Whether to provide verbose output from MACS. Only used if step is \code{run-macs} or \code{all}. Boolean. Default is \code{FALSE}.}
 
-\item{compress_inputs}{Whether to use gzip compression when writing bedfiles. Only used if step is \code{prep-inputs} or \code{all}. Default is \code{FALSE}.
-
-We find that using gzip compression on a 2600 cell dataset reduces the size of the bed files by approximately 3.8x, while increasing runtime duration by about 20\%.}
-
 \item{threads}{Number of threads to use. Integer. Default is \code{1}.}
 }
 \value{
 \itemize{
-\item If step is \code{prep-inputs}, script paths for each cluster given as a character vector.
+\item If step is \code{prep-inputs}, return script paths for each cluster given as a character vector.
 \item If step is \code{run-macs}, return \code{NULL}.
 \item If step is \code{read-outputs} or \code{all}, returns a tibble with all the peaks from each cluster concatenated.
-Columnns are \code{chr}, \code{start}, \code{end}, \code{cluster}, \code{name}, \code{score}, \code{strand}, \code{signalValue}, \code{pValue}, \code{qValue}, \code{pointSource}
+Columnns are \code{chr}, \code{start}, \code{end}, \code{cluster}, \code{name}, \code{score}, \code{strand}, \code{fold_enrichment}, \code{log10_pvalue}, \code{log10_qvalue}, \code{summit_offset}
 }
 }
 \description{
@@ -61,12 +56,12 @@ First creates the input bed files for each cluster for input to MACS2/3, then ru
 Also allows the user to choose whether to run all steps, or only one of the steps.
 }
 \details{
-File format:
+\strong{File format}:
 \itemize{
 \item Inputs are written such that a bed file used as input into MACS,
 as well as a shell file containing a call to MACS are written for each cluster.
-\item Bed files containing \code{chr}, \code{start}, and \code{end} coordinates of insertions are written at \verb{<path>/input/<cluster>.bed(.gz)}.
-\item shell commands are written at \verb{<path>/input/<cluster>.sh}.
+\item Bed files containing \code{chr}, \code{start}, and \code{end} coordinates of insertions are written at \verb{<path>/input/<cluster>.bed.gz}.
+\item Shell commands are written at \verb{<path>/input/<cluster>.sh}.
 }
 
 Outputs are written to an output directory with a subdirectory for each cluster.
@@ -79,4 +74,8 @@ Each cluster's output directory contains a file for narrowPeaks, peaks, and summ
 
 Only the narrowPeaks file is read into a tibble and returned.
 For more information on outputs from MACS, visit the \href{https://macs3-project.github.io/MACS/docs/callpeak.html}{MACS docs}
+
+\strong{Performance}:
+Running on a 2600 cell dataset and taking both start and end insertions into account, written input bedfiles and MACS outputs
+used 364 MB and 158 MB of space respectively.  With 4 threads, running this function end to end took 74 seconds, with 61 of those seconds spent on running MACS.
 }

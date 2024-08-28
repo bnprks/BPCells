@@ -198,7 +198,7 @@ test_that("write_insertion_bed works", {
     path = c("vowel" = file.path(dir, "vowel_only.bed")),
     cell_groups = rep("vowel", length(cellNames(frags_vowel))),
     insertion_mode = "start_only",
-    verbose = TRUE,
+    verbose = FALSE,
     threads = 1
   )
   write_insertion_bed(
@@ -248,11 +248,14 @@ test_that("write_insertion_bed works", {
 })
 
 test_that("macs_e2e_works", {
-  # only run if macs2 is installed
-  if ((suppressWarnings((system2("macs2", args = "--version", stdout = FALSE, stderr = FALSE) != 0)) ||
-      (!grepl("macs", system2("macs2", args = "--version", stdout = TRUE))))) {
-    skip("macs2 not installed")
-  }
+  # only run if macs2 or macs3 is installed
+  if ((suppressWarnings((system2("macs3", args = "--version", stdout = FALSE, stderr = FALSE) != 0)) ||
+      (!grepl("macs", system2("macs3", args = "--version", stdout = TRUE))))) {
+    if ((suppressWarnings((system2("macs2", args = "--version", stdout = FALSE, stderr = FALSE) != 0)) ||
+        (!grepl("macs", system2("macs2", args = "--version", stdout = TRUE))))) {
+      skip("macs2 not installed")
+    } else macs_executable <- "macs2"
+  } else macs_executable <- "macs3"
   dir <- withr::local_tempdir()
   
   chr1 <- tibble::tibble(
@@ -268,7 +271,7 @@ test_that("macs_e2e_works", {
     cell_id = sample(LETTERS, 1000, replace=TRUE)
   )
   frags <- convert_to_fragments(dplyr::bind_rows(chr1, chr2))
-  cell_groups <- dplyr::if_else(cellNames(frags) %in% c("A", "E", "I", "O", "U"), "vowel", "consonant")
+  cell_groups <- dplyr::if_else(cellNames(frags) %in% c("A", "E", "I", "O", "U"), "v o w e l", "consonant;")
   # call each step seperately and hold in memory
   macs_prep <- call_macs_peaks(
     fragments = frags,
@@ -277,13 +280,12 @@ test_that("macs_e2e_works", {
     path = dir,
     insertion_mode = "both",
     step = "prep-inputs",
-    macs_executable = "macs2",
+    macs_executable = macs_executable,
     verbose = FALSE,
-    compress_inputs = TRUE,
     threads = 2
   )
   # Check to see if bed/shell files are created
-  for (cluster in c("vowel", "consonant")) {
+  for (cluster in c("v o w e l", "consonant;")) {
     expect_true(file.exists(file.path(dir, "input", paste0(cluster, ".bed.gz"))))
     expect_true(file.exists(file.path(dir, "input", paste0(cluster, ".sh"))))
   }
@@ -296,18 +298,17 @@ test_that("macs_e2e_works", {
     path = dir,
     insertion_mode = "both",
     step = "run-macs",
-    macs_executable = "macs2",
+    macs_executable = macs_executable,
     verbose = FALSE,
-    compress_inputs = TRUE,
     threads = 2
   )
   # Check to see if the output files are created
-  for (cluster in c("vowel", "consonant")) {
+  for (cluster in c("v o w e l", "consonant;")) {
     expect_true(file.exists(file.path(dir, "output", cluster, paste0(cluster, "_peaks.narrowPeak"))))
     expect_true(file.exists(file.path(dir, "output", cluster, paste0(cluster, "_peaks.xls"))))
     expect_true(file.exists(file.path(dir, "output", cluster, paste0(cluster, "_summits.bed"))))
   }
-  # Read in the outputs
+  # Read i%sn the outputs
   macs_read <- call_macs_peaks(
     fragments = frags,
     cell_groups = cell_groups,
@@ -315,13 +316,12 @@ test_that("macs_e2e_works", {
     path = dir,
     insertion_mode = "both",
     step = "read-outputs",
-    macs_executable = "macs2",
+    macs_executable = macs_executable,
     verbose = FALSE,
-    compress_inputs = TRUE,
     threads = 2
   )
   # Check length to see if the same number of clusters are returned
-  expect_equal(length(unique(macs_read$cluster)), length(unique(cell_groups)))
+  expect_equal(length(unique(macs_read$group)), length(unique(cell_groups)))
   macs_read_full_pipeline <- call_macs_peaks(
     fragments = frags,
     cell_groups = cell_groups,
@@ -329,9 +329,8 @@ test_that("macs_e2e_works", {
     path = dir,
     insertion_mode = "both",
     step = "all",
-    macs_executable = "macs2",
+    macs_executable = macs_executable,
     verbose = FALSE,
-    compress_inputs = TRUE,
     threads = 2
   )
   # Make sure the outputs are the same

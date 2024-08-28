@@ -154,8 +154,8 @@ assert_has_package <- function(packages, n = 1) {
 }
 
 #' Adjust a set of (unique) potential file names to not include any
-#' invalid characters. 
-#' @kewords internal
+#' invalid characters.
+#' @keywords internal
 normalize_unique_file_names <- function(names, replacement="_") {
     assert_distinct(names)
 

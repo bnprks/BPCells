@@ -17,11 +17,9 @@ write_insertion_bed(
 \item{fragments}{IterableFragments object}
 
 \item{path}{Path to save bed files. If \code{cell_groups} is provided, this must be a character vector with one name for each level in \code{cell_groups}
-Else, this must be a character vector of length 1.
-#' @param cell_groups Character vector of cluster assignments for each cell. If is null, all cells are treated as one group. Default is NULL.}
+Else, this must be a character vector of length 1.}
 
-\item{cell_groups}{Character or factor assigning a group to each cell, in order of
-\code{cellNames(fragments)}}
+\item{cell_groups}{Character vector of cluster assignments for each cell. If is null, all cells are treated as one group. Default is NULL.}
 
 \item{insertion_mode}{Which fragment ends to use for coverage calculation. One of "both", "start_only", or "end_only"}
 

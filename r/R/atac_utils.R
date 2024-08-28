@@ -406,7 +406,7 @@ write_insertion_bedgraph <- function(fragments, path, cell_groups = NULL, insert
 #' Create bed files from fragments split by cell group.
 #' @param path Path to save bed files. If `cell_groups` is provided, this must be a character vector with one name for each level in `cell_groups` 
 #' Else, this must be a character vector of length 1.
-#' #' @param cell_groups Character vector of cluster assignments for each cell. If is null, all cells are treated as one group. Default is NULL.
+#' @param cell_groups Character vector of cluster assignments for each cell. If is null, all cells are treated as one group. Default is NULL.
 #' @param threads Number of threads to use. Integer. Default is 1.
 #' @param verbose Whether to provide verbose progress output to console. Boolean. Default is FALSE.
 #' @return NULL
@@ -431,21 +431,21 @@ write_insertion_bed <- function(fragments, path,
   } else {
     assert_len(cell_groups, length(cellNames(fragments)))
     cell_groups <- as.factor(cell_groups)
+    levels(cell_groups) <- normalize_unique_file_names(levels(cell_groups))
   }
   cell_groups_int <- as.integer(cell_groups)
   cluster_name_mapping <- levels(cell_groups)
   # Parallelize writing bed inputs into MACS
   parallel::mclapply(seq_along(cluster_name_mapping), function(i) {
-    if (verbose) message_parallel(paste0(format(Sys.time(), "%Y-%m-%d %H:%M:%S"), " Writing bed file for cluster: ", cluster_name_mapping[[i]]))
+    if (verbose) log_progress(paste0("Writing bed file for cluster: ", cluster_name_mapping[[i]]))
     fragments_by_cluster <- select_cells(fragments, cell_groups_int == i)
     write_insertion_bed_cpp(
       iterate_fragments(fragments_by_cluster),
       path[cluster_name_mapping[[i]]],
       insertion_mode
     )
-    if (verbose) message_parallel(paste0(format(Sys.time(), "%Y-%m-%d %H:%M:%S"), 
-                                         " Bed file for cluster: ", cluster_name_mapping[[i]],
-                                         " written to: ", path[cluster_name_mapping[[i]]]))
+    if (verbose) log_progress(paste0("Bed file for cluster: ", cluster_name_mapping[[i]],
+                                     " written to: ", path[cluster_name_mapping[[i]]]))
   }, mc.cores = threads, mc.preschedule = FALSE)
   if (verbose) {
     message(paste0(format(Sys.time(), "%Y-%m-%d %H:%M:%S"), " Finished writing bed files"))
@@ -464,24 +464,21 @@ write_insertion_bed <- function(fragments, path,
 #' @param step Which step to run. One of  `all`, `prep-inputs`, `run-macs`, `read-outputs`.  If `prep-inputs`, create the input bed files for macs,
 #' and provides a shell script per cluster with the command to run macs.  If run-macs, also run bash scripts to execute macs.
 #' If read-outputs, read the outputs into tibbles.
-#' @param macs_executable Path to either macs3 or macs2 executable. Character. Default is `NULL`.
+#' @param macs_executable Path to either MACS2/3 executable. Character. Default is `NULL` (autodetect from PATH).
 #' @param additional_params Additional parameters to pass to MACS2/3. Character. Default is `--keep-dup all --shift -75 --extsize 150 --nomodel --nolambda`.
 #' @param verbose Whether to provide verbose output from MACS. Only used if step is `run-macs` or `all`. Boolean. Default is `FALSE`.
-#' @param compress_inputs Whether to use gzip compression when writing bedfiles. Only used if step is `prep-inputs` or `all`. Default is `FALSE`.
-#'
-#' We find that using gzip compression on a 2600 cell dataset reduces the size of the bed files by approximately 3.8x, while increasing runtime duration by about 20%.
 #' @param threads Number of threads to use. Integer. Default is `1`.
 #' @return
-#'  - If step is `prep-inputs`, script paths for each cluster given as a character vector.
+#'  - If step is `prep-inputs`, return script paths for each cluster given as a character vector.
 #'  - If step is `run-macs`, return `NULL`.
 #'  - If step is `read-outputs` or `all`, returns a tibble with all the peaks from each cluster concatenated.
-#' Columnns are `chr`, `start`, `end`, `cluster`, `name`, `score`, `strand`, `signalValue`, `pValue`, `qValue`, `pointSource`
+#' Columnns are `chr`, `start`, `end`, `cluster`, `name`, `score`, `strand`, `fold_enrichment`, `log10_pvalue`, `log10_qvalue`, `summit_offset`
 #' @details 
-#' File format:
+#' \strong{File format}:
 #'  - Inputs are written such that a bed file used as input into MACS, 
 #' as well as a shell file containing a call to MACS are written for each cluster.
-#'  - Bed files containing `chr`, `start`, and `end` coordinates of insertions are written at `<path>/input/<cluster>.bed(.gz)`.
-#'  - shell commands are written at `<path>/input/<cluster>.sh`.
+#'  - Bed files containing `chr`, `start`, and `end` coordinates of insertions are written at `<path>/input/<cluster>.bed.gz`.
+#'  - Shell commands are written at `<path>/input/<cluster>.sh`.
 #'
 #' Outputs are written to an output directory with a subdirectory for each cluster.
 #' Each cluster's output directory contains a file for narrowPeaks, peaks, and summits.
@@ -491,6 +488,11 @@ write_insertion_bed <- function(fragments, path,
 #'
 #' Only the narrowPeaks file is read into a tibble and returned.
 #' For more information on outputs from MACS, visit the [MACS docs](https://macs3-project.github.io/MACS/docs/callpeak.html)
+#'
+#' \strong{Performance}:
+#' Running on a 2600 cell dataset and taking both start and end insertions into account, written input bedfiles and MACS outputs 
+#' used 364 MB and 158 MB of space respectively.  With 4 threads, running this function end to end took 74 seconds, with 61 of those seconds spent on running MACS.
+#'
 #' @inheritParams call_peaks_tile
 #' @export
 call_macs_peaks <- function(fragments, cell_groups, path, effective_genome_size = 2.7e9,
@@ -499,70 +501,46 @@ call_macs_peaks <- function(fragments, cell_groups, path, effective_genome_size 
                             macs_executable = NULL,
                             additional_params = "--call-summits --keep-dup all --shift -75 --extsize 150 --nomodel --nolambda",
                             verbose = FALSE,
-                            compress_inputs = FALSE,
                             threads = 1) {
   assert_is(fragments, c("IterableFragments", "NULL"))
   assert_is(cell_groups, c("character", "factor"))
   assert_is_numeric(effective_genome_size)
   assert_is_character(path)
-  assert_is(compress_inputs, "logical")
   assert_is_wholenumber(threads)
   insertion_mode <- match.arg(insertion_mode)
   step <- match.arg(step)
   cell_groups <- as.factor(cell_groups)
-
-  # Change cell group spaces into underscores
-  levels(cell_groups) <- gsub(" ", "_", levels(cell_groups))
-  levels(cell_groups) <- gsub("/", "_", levels(cell_groups))
-  if (compress_inputs) {
-    path_bed_input <- paste0(path, "/input/", levels(cell_groups), ".bed.gz")
-  } else {
-    path_bed_input <- paste0(path, "/input/", levels(cell_groups), ".bed")
-  }
+  levels(cell_groups) <- normalize_unique_file_names(levels(cell_groups))
+  path_bed_input <- paste0(path, "/input/", levels(cell_groups), ".bed.gz")
   names(path_bed_input) <- levels(cell_groups)
   path_macs_output <- paste0(path, "/output/", levels(cell_groups))
   # Create paths
   dir.create(file.path(path, "input"), showWarnings = FALSE, recursive = TRUE)
   # Check if MACS can be run
   if (!(step %in% c("read-outputs"))) {
-    # Autodetect macs executable if not provided
-    if (is.null(macs_executable)) {
-      # Check if can call version on macs and that macs is indeed being called
-      if ((suppressWarnings((system2("macs3", args = "--version", stdout = FALSE, stderr = FALSE) == 0)) &&
-          (grepl("macs", system2("macs3", args = "--version", stdout = TRUE))))) {
-        macs_executable <- "macs3"
-      } else if ((suppressWarnings((system2("macs2", args = "--version", stdout = FALSE, stderr = FALSE) == 0)) && 
-                 (grepl("macs", system2("macs2", args = "--version", stdout = TRUE))))) {
-        macs_executable <- "macs2"
-      } else {
-        stop(paste0(format(Sys.time(), "%Y-%m-%d %H:%M:%S"), 
-                    paste0(" MACS not found. Please install MACS3 or MACS2")))
-      }
-    # Check if macs executable is valid if provided
-    } else if ((suppressWarnings((system2(macs_executable, args = "--version", stdout = FALSE, stderr = FALSE) == 0)) &&
-               (grepl("macs", system2(macs_executable, args = "--version", stdout = TRUE))))) {
-    } else {
-      stop(paste0(format(Sys.time(), "%Y-%m-%d %H:%M:%S"), 
-                  sprintf(" MACS not found for MACS executable: %s \nPlease install MACS3 or MACS2", macs_executable)))
-    }
+    macs_executable <- macs_path_is_valid(macs_executable)
   }
+  # Write bed files as input into MACS
+  if (step %in% c("prep-inputs", "all")) {
+    write_insertion_bed(fragments, path_bed_input, cell_groups, insertion_mode, threads, verbose = verbose)
+  }
+
   # prep macs call
-  macs_call_template <- c('%s callpeak -g %s --name "%s" --treatment %s',
-                          '--outdir %s --format BED --call-summits',
+  macs_call_template <- c('%s callpeak -g %s --name "%s" --treatment "%s"',
+                          '--outdir "%s" --format BED',
                           '%s')
   macs_call_template <- paste(macs_call_template, collapse = " ")
   macs_call <- sprintf(macs_call_template,
                        macs_executable, effective_genome_size, levels(cell_groups),
                        path_bed_input, path_macs_output, additional_params)
-  if (step %in% c("prep-inputs", "all")) {
-    write_insertion_bed(fragments, path_bed_input, cell_groups, insertion_mode, threads, verbose = verbose)
+  
+  if (step %in% c("prep-inputs", "run-macs", "all")) {
     shell_paths <- paste0(path, "/input/", levels(cell_groups), ".sh")
     for (cluster_idx in seq_along(levels(cell_groups))) { 
       writeLines(macs_call[cluster_idx], con = shell_paths[cluster_idx])
     }
-    if (step == "prep-inputs") return(shell_paths)
   }
-
+  if (step == "prep-inputs") return(shell_paths)
   # Run macs
   if (step %in% c("run-macs", "all")) {
     # Run macs through the shell files created in the previous step
@@ -572,25 +550,21 @@ call_macs_peaks <- function(fragments, cell_groups, path, effective_genome_size 
       warning("Number of shell files does not match number of clusters")
     }
     parallel::mclapply(file_names, function(shell_file) {
-      Sys.setenv("OMP_NUM_THREADS" = "1")
       cluster <- gsub(".sh$", "", shell_file)
-      message(paste0(format(Sys.time(), "%Y-%m-%d %H:%M:%S"), " Running MACS for cluster: ", cluster))
-      if (verbose) message_parallel(paste0(format(Sys.time(), "%Y-%m-%d %H:%M:%S"), " Running MACS for cluster: ", cluster))
+      if (verbose) log_progress(paste0("Running MACS for cluster: ", cluster))
       dir.create(file.path(path, "output", cluster), showWarnings = FALSE, recursive = TRUE)
       log_file <- paste0(path, "/output/", cluster, "/log.txt")
-      macs_message <- system2("bash", file.path(path, "input", shell_file),
-                              stdout = log_file, stderr = log_file)
-      # Try detecting if macs failed before writing that cluster is finished.
+      macs_message <- system2("bash", sprintf("'%s'", file.path(path, "input", shell_file)),stdout = log_file, stderr = log_file, env = c("OMP_NUM_THREADS=1"))
+      # Try detecting if macs failed before writing that cluster is finished
       if (macs_message != 0) {
         stop(paste0(format(Sys.time(), "%Y-%m-%d %H:%M:%S"), " Error running MACS for cluster: ", cluster, "\n",
                     "MACS log file written to: ", log_file))
       } else if (verbose) {
-        message_parallel(paste0(format(Sys.time(), "%Y-%m-%d %H:%M:%S"), " Finished running MACS for cluster: ", cluster))
-        message_parallel(paste0(format(Sys.time(), "%Y-%m-%d %H:%M:%S"), " MACS log file written to: ", log_file))
+        log_progress(paste0(" Finished running MACS for cluster: ", cluster))
+        log_progress(paste0(" MACS log file written to: ", log_file))
       }
     }, mc.cores = threads, mc.preschedule = FALSE)
   }
-
   # Read outputs
   if (step %in%  c("read-outputs", "all")) {
     peaks <- list()
@@ -599,10 +573,10 @@ call_macs_peaks <- function(fragments, cell_groups, path, effective_genome_size 
       peak_path <- paste0(path, "/output/", cluster, "/", cluster, "_peaks.narrowPeak")
       peaks[[cluster]] <- readr::read_tsv(peak_path,
                                           col_names=c("chr", "start", "end", "name", 
-                                                      "score", "strand", "signalValue", 
-                                                      "pValue", "qValue", "pointSource"),
+                                                      "score", "strand", "fold_enrichment", 
+                                                      "log10_pvalue", "log10_qvalue", "summit_offset"),
                                           show_col_types = FALSE)
-      peaks[[cluster]]$cluster <- cluster
+      peaks[[cluster]]$group <- cluster
       # set cluster column as the fourth column
       peaks[[cluster]] <- peaks[[cluster]][, c(1:3, 11, 4:10)]
     }
@@ -615,6 +589,33 @@ call_macs_peaks <- function(fragments, cell_groups, path, effective_genome_size 
   }
 }
 
+#' Test if MACS executable is valid.
+#' If macs_executable is NULL, this function will try to auto-detect MACS from PATH, with preference for MACS3 over MACS2.
+#' If macs_executable is provided, this function will check if MACS can be called.
+#' @return MACS executable path.
+#' @inheritParams call_macs_peaks
+#' @keywords internal
+macs_path_is_valid <- function(macs_executable) {
+  if (is.null(macs_executable)) {
+    # Check if can call version on macs and that macs is indeed being called
+    if ((suppressWarnings((system2("macs3", args = "--version", stdout = FALSE, stderr = FALSE) == 0)) &&
+        (grepl("macs", system2("macs3", args = "--version", stdout = TRUE))))) {
+      macs_executable <- "macs3"
+    } else if ((suppressWarnings((system2("macs2", args = "--version", stdout = FALSE, stderr = FALSE) == 0)) && 
+               (grepl("macs", system2("macs2", args = "--version", stdout = TRUE))))) {
+      macs_executable <- "macs2"
+    } else {
+      stop(paste0(format(Sys.time(), "%Y-%m-%d %H:%M:%S"), 
+                  paste0(" MACS not found. Please install MACS3 or MACS2")))
+    }
+  # Only run if macs executable is provided and the executable is indeed macs
+  } else if (!(suppressWarnings((system2(macs_executable, args = "--version", stdout = FALSE, stderr = FALSE) == 0)) &&
+              (grepl("macs", system2(macs_executable, args = "--version", stdout = TRUE))))) {
+    stop(paste0(format(Sys.time(), "%Y-%m-%d %H:%M:%S"), 
+                sprintf(" MACS not found for MACS executable: %s \nPlease install MACS3 or MACS2", macs_executable)))
+  }
+  return(macs_executable)
+}
 range_overlaps <- function(a, b) {
   a <- normalize_ranges(a)
   b <- normalize_ranges(b)
