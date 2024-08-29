@@ -527,7 +527,7 @@ call_macs_peaks <- function(fragments, cell_groups, path, effective_genome_size 
   }
 
   # prep macs call
-  macs_call_template <- c('%s callpeak -g %s --name "%s" --treatment "%s"',
+  macs_call_template <- c('"%s" callpeak -g %s --name "%s" --treatment "%s"',
                           '--outdir "%s" --format BED',
                           '%s')
   macs_call_template <- paste(macs_call_template, collapse = " ")
