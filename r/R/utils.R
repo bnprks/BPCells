@@ -51,5 +51,9 @@ log_progress <- function(msg, add_timestamp = TRUE){
   if (add_timestamp) {
     msg <- paste0(format(Sys.time(), "%Y-%m-%d %H:%M:%S "), msg)
   }
-  system(sprintf('echo "%s"', paste0(msg, collapse="")))
+  if (.Platform$GUI == "RStudio") {
+    system(sprintf('echo "%s"', paste0(msg, collapse="")))
+  } else {
+    message(msg)
+  }
 }
