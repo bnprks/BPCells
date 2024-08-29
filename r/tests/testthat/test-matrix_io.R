@@ -573,3 +573,14 @@ test_that("Opening >64 matrices works", {
   expect_identical(colSums(matrix_rbind), colSums(as(matrix_rbind, "dgCMatrix")))
   expect_identical(colSums(matrix_cbind), colSums(as(matrix_cbind, "dgCMatrix")))
 })
+
+test_that("Regression test for Rcpp out-of-bounds warning", {
+  m <- Matrix::sparseMatrix(i=1, j=1, x=1, dims=c(1,1)) %>% as("dgCMatrix")
+  expect_no_warning({
+    m2 <- m %>%
+      as("IterableMatrix") %>%
+      write_matrix_memory() %>%
+      as("dgCMatrix")
+  })
+  expect_identical(m, m2)
+})

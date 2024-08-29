@@ -44,22 +44,24 @@ uint64_t RcppStringReader::size() { return data.size(); }
 S4ReaderBuilder::S4ReaderBuilder(S4 s4, uint32_t load_size) : s4(s4), load_size(load_size) {}
 UIntReader S4ReaderBuilder::openUIntReader(std::string name) {
     IntegerVector v = s4.slot(name);
-    return UIntReader(std::make_unique<VecUIntReader>((uint32_t *)&v[0], v.size()), load_size);
+    int32_t * data = v.begin();
+    return UIntReader(std::make_unique<VecUIntReader>((uint32_t *) data, v.size()), load_size);
 }
 ULongReader S4ReaderBuilder::openULongReader(std::string name) {
     NumericVector v = s4.slot(name);
     return DoubleReader(
-        std::make_unique<VecNumReader<double>>((double *)&v[0], v.size()), load_size
+        std::make_unique<VecNumReader<double>>(v.begin(), v.size()), load_size
     ).convert<uint64_t>();
 }
 FloatReader S4ReaderBuilder::openFloatReader(std::string name) {
     IntegerVector v = s4.slot(name);
-    return FloatReader(std::make_unique<VecNumReader<float>>((float *)&v[0], v.size()), load_size);
+    int32_t * data = v.begin();
+    return FloatReader(std::make_unique<VecNumReader<float>>((float *) data, v.size()), load_size);
 }
 DoubleReader S4ReaderBuilder::openDoubleReader(std::string name) {
     NumericVector v = s4.slot(name);
     return DoubleReader(
-        std::make_unique<VecNumReader<double>>((double *)&v[0], v.size()), load_size
+        std::make_unique<VecNumReader<double>>(v.begin(), v.size()), load_size
     );
 }
 std::unique_ptr<StringReader> S4ReaderBuilder::openStringReader(std::string name) {
