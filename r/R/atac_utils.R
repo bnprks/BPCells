@@ -379,23 +379,26 @@ call_peaks_tile <- function(fragments, chromosome_sizes, cell_groups = rep.int("
 #' number insertions at each basepair for each group listed in `cell_groups`.
 #'
 #' @param fragments IterableFragments object
-#' @param path Path(s) to save bedgraph to, optionally ending in ".gz" to add gzip compression. If `cell_groups` is provided,
+#' @param path (character vector) Path(s) to save bedgraph to, optionally ending in ".gz" to add gzip compression. If `cell_groups` is provided,
 #'   `path` must be a named character vector, with one name for each level in `cell_groups`
-#' @param insertion_mode Which fragment ends to use for coverage calculation. One of "both", "start_only", or "end_only"
+#' @param insertion_mode (string) Which fragment ends to use for coverage calculation. One of "both", "start_only", or "end_only"
 #' @inheritParams footprint
 #' @export
-write_insertion_bedgraph <- function(fragments, path, cell_groups = NULL, insertion_mode=c("both", "start_only", "end_only")) {
+write_insertion_bedgraph <- function(fragments, path, cell_groups = rlang::rep_along(cellNames(fragments), "all"), insertion_mode=c("both", "start_only", "end_only")) {
   assert_is(fragments, "IterableFragments")
   assert_is_character(path)
   insertion_mode <- match.arg(insertion_mode)
+  path_names <- names(path)
+  path <- suppressWarnings(normalizePath(path))
+  names(path) <- path_names
+  cell_groups <- as.factor(cell_groups)
+  assert_len(path, length(levels(cell_groups)))
   
-  if (is.null(cell_groups)) {
-    cell_groups <- rep.int(0L, length(cellNames(fragments)))
-    assert_len(path, 1)
+  if (length(levels(cell_groups)) == 1) {
+    names(path) <- "all"
   } else {
     assert_is(cell_groups, c("character", "factor"))
     assert_len(cell_groups, length(cellNames(fragments)))
-    cell_groups <- as.factor(cell_groups)
     assert_has_names(path, levels(cell_groups))
     path <- path[levels(cell_groups)]
     cell_groups <- as.integer(cell_groups) - 1L
@@ -404,34 +407,37 @@ write_insertion_bedgraph <- function(fragments, path, cell_groups = NULL, insert
 }
 
 #' Create bed files from fragments split by cell group.
-#' @param path Path to save bed files. If `cell_groups` is provided, this must be a character vector with one name for each level in `cell_groups` 
+#' @param path (character vector) Path to save bed files. If `cell_groups` is provided, this must be a character vector with one name for each level in `cell_groups` 
 #' Else, this must be a character vector of length 1.
-#' @param cell_groups Character vector of cluster assignments for each cell. If is null, all cells are treated as one group. Default is NULL.
-#' @param threads Number of threads to use. Integer. Default is 1.
-#' @param verbose Whether to provide verbose progress output to console. Boolean. Default is FALSE.
-#' @return NULL
+#' @param cell_groups (character vector or factor) Cluster assignments for each cell. If is null, all cells are treated as one group.
+#' @param threads (int) Number of threads to use.
+#' @param verbose (bool) Whether to provide verbose progress output to console.
+#' @return `NULL`
 #' @inheritParams write_insertion_bedgraph
 #' @keywords internal
 write_insertion_bed <- function(fragments, path,
-                                cell_groups = NULL,
+                                cell_groups = rlang::rep_along(cellNames(fragments), "all"),
                                 insertion_mode = c("start_only", "both", "end_only"),
                                 verbose = FALSE,
                                 threads = 1) {
   assert_is(fragments, "IterableFragments")
-  assert_is(cell_groups, c("character", "factor", "NULL"))
+  assert_is(cell_groups, c("character", "factor"))
   assert_is_character(path)
   assert_is_wholenumber(threads)
   assert_is(verbose, "logical")
   insertion_mode <- match.arg(insertion_mode)
+  path_names <- names(path)
+  path <- suppressWarnings(normalizePath(path))
+  names(path) <- path_names
+  cell_groups <- as.factor(cell_groups)
+  assert_len(path, length(levels(cell_groups)))
 
   # Prep inputs
-  if (is.null(cell_groups)) {
-    cell_groups <- as.factor(rep.int("all", length(cellNames(fragments))))
-    names(path) <- "all"
+  if (length(levels(cell_groups)) == 1) {
+    names(path) <- levels(cell_groups)
   } else {
     assert_len(cell_groups, length(cellNames(fragments)))
-    cell_groups <- as.factor(cell_groups)
-    levels(cell_groups) <- normalize_unique_file_names(levels(cell_groups))
+    assert_has_names(path, levels(cell_groups))
   }
   cell_groups_int <- as.integer(cell_groups)
   cluster_name_mapping <- levels(cell_groups)
@@ -453,50 +459,59 @@ write_insertion_bed <- function(fragments, path,
 }
 
 
-#' Call MACS2/3 peaks using fragments and cluster assignments.
+#' Call peaks using MACS2/3
+#' 
+#' Export pseudobulk bed files as input for MACS, then run MACS and read the output peaks as a tibble.
+#' Each step can can be run independently, allowing for quickly re-loading the results of an already completed call,
+#' or running MACS externally (e.g. via cluster job submisison) for increased parallelization. See details for more information.
 #'
-#' First creates the input bed files for each cluster for input to MACS2/3, then runs MACS2/3, and finally reads the outputs into tibbles.
-#' Also allows the user to choose whether to run all steps, or only one of the steps.
-#' @param path Character vector of length 1 representing parent directory to store MACS inputs and outputs.
-#' Inputs are stored in `<path>/input/` and outputs in `<path>/output/<cluster>/`.  Further information on directory structure is provided in the details.
-#' @param effective_genome_size effective genome size for MACS. Numeric. Default is `2.7e9`.
-#' @param insertion_mode Which fragment ends to use for coverage calculation. Character. One of `both`, `start_only`, or `end_only`.
-#' @param step Which step to run. One of  `all`, `prep-inputs`, `run-macs`, `read-outputs`.  If `prep-inputs`, create the input bed files for macs,
-#' and provides a shell script per cluster with the command to run macs.  If run-macs, also run bash scripts to execute macs.
-#' If read-outputs, read the outputs into tibbles.
-#' @param macs_executable Path to either MACS2/3 executable. Character. Default is `NULL` (autodetect from PATH).
-#' @param additional_params Additional parameters to pass to MACS2/3. Character. Default is `--keep-dup all --shift -75 --extsize 150 --nomodel --nolambda`.
-#' @param verbose Whether to provide verbose output from MACS. Only used if step is `run-macs` or `all`. Boolean. Default is `FALSE`.
-#' @param threads Number of threads to use. Integer. Default is `1`.
+#' @param path (string) Parent directory to store MACS inputs and outputs.
+#' Inputs are stored in `<path>/input/` and outputs in `<path>/output/<group>/`. See "File format" in details
+#' @param effective_genome_size (numeric) Effective genome size for MACS. Default is `2.9e9` following MACS default for GRCh38. See [deeptools](https://deeptools.readthedocs.io/en/develop/content/feature/effectiveGenomeSize.html)
+#'    for values for other common genomes.
+#' @param insertion_mode (string) Which fragment ends to use for coverage calculation. One of `both`, `start_only`, or `end_only`.
+#' @param step (string) Which step to run. One of  `all`, `prep-inputs`, `run-macs`, `read-outputs`.  If `prep-inputs`, create the input bed files for macs,
+#' and provides a shell script per cell group with the command to run macs.  If `run-macs`, also run bash scripts to execute macs.
+#' If `read-outputs`, read the outputs into tibbles.
+#' @param macs_executable (string) Path to either MACS2/3 executable. Default (`NULL`) will autodetect from PATH.
+#' @param additional_params (string) Additional parameters to pass to MACS2/3. 
+#' @param verbose (bool) Whether to provide verbose output from MACS. Only used if step is `run-macs` or `all`.
+#' @param threads (int) Number of threads to use.
 #' @return
-#'  - If step is `prep-inputs`, return script paths for each cluster given as a character vector.
+#'  - If step is `prep-inputs`, return script paths for each cell group given as a character vector.
 #'  - If step is `run-macs`, return `NULL`.
-#'  - If step is `read-outputs` or `all`, returns a tibble with all the peaks from each cluster concatenated.
-#' Columnns are `chr`, `start`, `end`, `cluster`, `name`, `score`, `strand`, `fold_enrichment`, `log10_pvalue`, `log10_qvalue`, `summit_offset`
+#'  - If step is `read-outputs` or `all`, returns a tibble with all the peaks from each cell group concatenated.
+#' Columnns are `chr`, `start`, `end`, `group`, `name`, `score`, `strand`, `fold_enrichment`, `log10_pvalue`, `log10_qvalue`, `summit_offset`
 #' @details 
-#' \strong{File format}:
+#' **File format**:
 #'  - Inputs are written such that a bed file used as input into MACS, 
-#' as well as a shell file containing a call to MACS are written for each cluster.
-#'  - Bed files containing `chr`, `start`, and `end` coordinates of insertions are written at `<path>/input/<cluster>.bed.gz`.
-#'  - Shell commands are written at `<path>/input/<cluster>.sh`.
+#' as well as a shell file containing a call to MACS are written for each cell group.
+#'  - Bed files containing `chr`, `start`, and `end` coordinates of insertions are written at `<path>/input/<group>.bed.gz`.
+#'  - Shell commands to run MACS manually are written at `<path>/input/<group>.sh`.
 #'
-#' Outputs are written to an output directory with a subdirectory for each cluster.
-#' Each cluster's output directory contains a file for narrowPeaks, peaks, and summits.
-#'  - NarrowPeaks are written at `<path>/output/<cluster>/<cluster>_peaks.narrowPeak`.
-#'  - Peaks are written at `<path>/output/<cluster>/<cluster>_peaks.xls`.
-#'  - Summits are written at `<path>/output/<cluster>/<cluster>_summits.bed`.
+#' Outputs are written to an output directory with a subdirectory for each cell group.
+#' Each cell group's output directory contains a file for narrowPeaks, peaks, and summits.
+#'  - NarrowPeaks are written at `<path>/output/<group>/<group>_peaks.narrowPeak`.
+#'  - Peaks are written at `<path>/output/<group>/<group>_peaks.xls`.
+#'  - Summits are written at `<path>/output/<group>/<group>_summits.bed`.
 #'
 #' Only the narrowPeaks file is read into a tibble and returned.
 #' For more information on outputs from MACS, visit the [MACS docs](https://macs3-project.github.io/MACS/docs/callpeak.html)
 #'
-#' \strong{Performance}:
+#' **Performance**:
 #' 
 #' Running on a 2600 cell dataset and taking both start and end insertions into account, written input bedfiles and MACS outputs 
 #' used 364 MB and 158 MB of space respectively.  With 4 threads, running this function end to end took 74 seconds, with 61 of those seconds spent on running MACS.
 #'
+#' **Running MACS manually**:
+#'
+#' To run MACS manually, you will first run `call_macs_peaks()` with `step="prep-inputs`. Then, manually run all of the
+#' shell scripts generated at `<path>/input/<group>.sh`. Finally, run `call_macs_peaks()` again with the same original arguments, but
+#' setting `step="read-outputs"`.
 #' @inheritParams call_peaks_tile
 #' @export
-call_macs_peaks <- function(fragments, cell_groups, path, effective_genome_size = 2.7e9,
+call_macs_peaks <- function(fragments, path,
+                            cell_groups = rlang::rep_along(cellNames(fragments), "all"), effective_genome_size = 2.7e9,
                             insertion_mode = c("start_only", "both", "end_only"),
                             step = c("all", "prep-inputs", "run-macs", "read-outputs"),
                             macs_executable = NULL,
@@ -512,6 +527,7 @@ call_macs_peaks <- function(fragments, cell_groups, path, effective_genome_size 
   step <- match.arg(step)
   cell_groups <- as.factor(cell_groups)
   levels(cell_groups) <- normalize_unique_file_names(levels(cell_groups))
+  path <- normalizePath(path)
   path_bed_input <- paste0(path, "/input/", levels(cell_groups), ".bed.gz")
   names(path_bed_input) <- levels(cell_groups)
   path_macs_output <- paste0(path, "/output/", levels(cell_groups))

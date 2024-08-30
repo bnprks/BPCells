@@ -9,7 +9,7 @@ If macs_executable is provided, this function will check if MACS can be called.}
 macs_path_is_valid(macs_executable)
 }
 \arguments{
-\item{macs_executable}{Path to either MACS2/3 executable. Character. Default is \code{NULL} (autodetect from PATH).}
+\item{macs_executable}{(string) Path to either MACS2/3 executable. Default (\code{NULL}) will autodetect from PATH.}
 }
 \value{
 MACS executable path.

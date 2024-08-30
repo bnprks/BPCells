@@ -7,7 +7,7 @@
 write_insertion_bed(
   fragments,
   path,
-  cell_groups = NULL,
+  cell_groups = rlang::rep_along(cellNames(fragments), "all"),
   insertion_mode = c("start_only", "both", "end_only"),
   verbose = FALSE,
   threads = 1
@@ -16,16 +16,19 @@ write_insertion_bed(
 \arguments{
 \item{fragments}{IterableFragments object}
 
-\item{path}{Path to save bed files. If \code{cell_groups} is provided, this must be a character vector with one name for each level in \code{cell_groups}
+\item{path}{(character vector) Path to save bed files. If \code{cell_groups} is provided, this must be a character vector with one name for each level in \code{cell_groups}
 Else, this must be a character vector of length 1.}
 
-\item{cell_groups}{Character vector of cluster assignments for each cell. If is null, all cells are treated as one group. Default is NULL.}
+\item{cell_groups}{(character vector or factor) Cluster assignments for each cell. If is null, all cells are treated as one group.}
 
-\item{insertion_mode}{Which fragment ends to use for coverage calculation. One of "both", "start_only", or "end_only"}
+\item{insertion_mode}{(string) Which fragment ends to use for coverage calculation. One of "both", "start_only", or "end_only"}
 
-\item{verbose}{Whether to provide verbose progress output to console. Boolean. Default is FALSE.}
+\item{verbose}{(bool) Whether to provide verbose progress output to console.}
 
-\item{threads}{Number of threads to use. Integer. Default is 1.}
+\item{threads}{(int) Number of threads to use.}
+}
+\value{
+\code{NULL}
 }
 \description{
 Create bed files from fragments split by cell group.

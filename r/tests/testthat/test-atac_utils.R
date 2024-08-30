@@ -204,7 +204,6 @@ test_that("write_insertion_bed works", {
   write_insertion_bed(
     fragments = frags_vowel,
     path = c("vowel" = file.path(dir, "no_labels.bed")),
-    cell_groups = NULL,
     insertion_mode = "start_only",
     verbose = FALSE,
     threads = 1
@@ -257,7 +256,6 @@ test_that("macs_e2e_works", {
     } else macs_executable <- "macs2"
   } else macs_executable <- "macs3"
   dir <- withr::local_tempdir()
-  
   chr1 <- tibble::tibble(
     chr = "chr1",
     start = sort(sample.int(1000, 1000, replace=TRUE)),
