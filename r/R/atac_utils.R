@@ -387,6 +387,7 @@ call_peaks_tile <- function(fragments, chromosome_sizes, cell_groups = rep.int("
 write_insertion_bedgraph <- function(fragments, path, cell_groups = rlang::rep_along(cellNames(fragments), "all"), insertion_mode=c("both", "start_only", "end_only")) {
   assert_is(fragments, "IterableFragments")
   assert_is_character(path)
+  assert_is(cell_groups, c("character", "factor"))
   insertion_mode <- match.arg(insertion_mode)
   path_names <- names(path)
   path <- suppressWarnings(normalizePath(path))
@@ -397,7 +398,6 @@ write_insertion_bedgraph <- function(fragments, path, cell_groups = rlang::rep_a
   if (length(levels(cell_groups)) == 1) {
     names(path) <- "all"
   } else {
-    assert_is(cell_groups, c("character", "factor"))
     assert_len(cell_groups, length(cellNames(fragments)))
     assert_has_names(path, levels(cell_groups))
     path <- path[levels(cell_groups)]
