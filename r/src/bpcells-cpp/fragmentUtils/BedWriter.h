@@ -22,6 +22,20 @@ enum class BedgraphInsertionMode {
     EndOnly
 };
 
+
+// Write bedgraph files including chr, start, end with only 1bp insertions,
+// only considering a subset of cells given by the cells vector. Leave duplicates in the bedfile.
+// Args:
+// - fragments: source of fragments to convert to insertions
+// - output_path: The file path to save the bedgraph
+// - mode: StartOnly = include only start coords, EndOnly = include only end coords, Both = include start + end coords
+void writeInsertionBed(
+    FragmentLoader &fragments,
+    const std::string &output_path,
+    const BedgraphInsertionMode &mode,
+    std::atomic<bool> *user_interrupt
+);
+
 // Write bedgraph coverage files for insertions computed from fragment pseudobulks.
 // Note that
 // Args:

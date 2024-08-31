@@ -6,17 +6,52 @@
 // option. This file may not be copied, modified, or distributed
 // except according to those terms.
 
-#include "BedgraphWriter.h"
-
+#include "BedWriter.h"
 #include <zlib.h>
-
 #include "../fragmentIterators/FragmentIterator.h"
 #include "InsertionIterator.h"
 #include "../utils/filesystem_compat.h"
 #include "../utils/gzfile_wrapper.h"
-
 namespace BPCells {
 
+// Write bedgraph files including chr, start, end with only 1bp insertions,
+// only considering a subset of cells given by the cells vector. Leave duplicates in the bedfile.
+// Args:
+// - fragments: source of fragments to convert to insertions
+// - output_path: The file path to save the bedgraph
+// - mode: StartOnly = include only start coords, EndOnly = include only end coords, Both = include start + end coords
+void writeInsertionBed(
+    FragmentLoader &fragments,
+    const std::string &output_path,
+    const BedgraphInsertionMode &mode,
+    std::atomic<bool> *user_interrupt
+) {
+    InsertionIterator it(fragments);
+    const uint32_t buffer_size = 1 << 20;
+    gzFileWrapper file(output_path, "w", buffer_size);
+    while (it.nextChr()) {
+        if (fragments.chrNames(it.chr()) == NULL) {
+            throw std::runtime_error("writeInsertionBed: No chromosome name found for ID: " + std::to_string(it.chr()));
+        }
+        std::string chr_name(fragments.chrNames(it.chr()));
+        uint32_t count = 0;
+        while (it.nextInsertion()) {
+            if (mode == BedgraphInsertionMode::StartOnly && !it.isStart()) continue;
+            if (mode == BedgraphInsertionMode::EndOnly && it.isStart()) continue;
+            uint32_t bytes_written = gzprintf(
+                *file,
+                "%s\t%d\t%d\n",
+                chr_name.c_str(),
+                it.coord(),
+                it.coord() + 1
+            );
+            if (bytes_written <= 0) {
+                throw std::runtime_error("writeInserionBed: Failed to write data");
+            }
+            if (user_interrupt != nullptr && count++ % 65536 == 0 && *user_interrupt) return;
+        }
+    }
+}
 
 // Write bedgraph coverage files for insertions computed from fragment pseudobulks.
 // Args:

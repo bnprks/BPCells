@@ -44,3 +44,16 @@ document_granges <- function(
     "%s"
   ), intro_noun, bullets)
 }
+
+# Function which prints a message using shell echo.
+# Useful for printing messages from inside mclapply when running in Rstudio.
+log_progress <- function(msg, add_timestamp = TRUE){
+  if (add_timestamp) {
+    msg <- paste0(format(Sys.time(), "%Y-%m-%d %H:%M:%S "), msg)
+  }
+  if (.Platform$GUI == "RStudio") {
+    system(sprintf('echo "%s"', paste0(msg, collapse="")))
+  } else {
+    message(msg)
+  }
+}

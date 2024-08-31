@@ -86,7 +86,6 @@ test_that("merge_peaks works", {
 
 test_that("write_insertion_bedgraph works", {
   dir <- withr::local_tempdir()
-
   # These parameters should make it virtually certain we have
   # counts of 0, 1, and >1 represented
   chr1 <- tibble::tibble(
@@ -127,8 +126,6 @@ test_that("write_insertion_bedgraph works", {
     "end_only" = coverage_end,
     "both" = coverage
   )
-
-
   # Test start + end insertions
   for (mode in c("start_only", "end_only", "both")) {
     write_insertion_bedgraph(
@@ -154,4 +151,186 @@ test_that("write_insertion_bedgraph works", {
       data.frame(result_consonant)
     )
   }
+})
+
+test_that("write_insertion_bed works", {
+  dir <- withr::local_tempdir()
+  chr1 <- tibble::tibble(
+    chr = "chr1",
+    start = sort(sample.int(1000, 1000, replace=TRUE)),
+    end = start + sample.int(150, 1000, replace=TRUE),
+    cell_id = sample(LETTERS, 1000, replace=TRUE)
+  )
+  chr2 <- tibble::tibble(
+    chr = "chr2",
+    start = sort(sample.int(1000, 1000, replace=TRUE)),
+    end = start + sample.int(150, 1000, replace=TRUE),
+    cell_id = sample(LETTERS, 1000, replace=TRUE)
+  )
+  frags <- convert_to_fragments(dplyr::bind_rows(chr1, chr2))
+  frags_vowel <- convert_to_fragments(dplyr::filter(dplyr::bind_rows(chr1, chr2), cell_id %in% c("A", "E", "I", "O", "U")))
+  cell_groups <- dplyr::if_else(cellNames(frags) %in% c("A", "E", "I", "O", "U"), "vowel", "consonant")
+
+  frag_table <- dplyr::bind_rows(chr1, chr2) %>%
+    dplyr::mutate(cell_group = dplyr::if_else(cell_id %in% c("A", "E", "I", "O", "U"), "vowel", "consonant"))
+
+  coverage_start <- frag_table %>%
+    dplyr::mutate(end=start+1L) %>%
+    dplyr::group_by(chr, start, end, cell_group) %>%
+    dplyr::summarize(value = dplyr::n(), .groups="drop")
+  
+  coverage_end <- frag_table %>%
+    dplyr::mutate(start=end-1L) %>%
+    dplyr::group_by(chr, start, end, cell_group) %>%
+    dplyr::summarize(value = dplyr::n(), .groups="drop")
+  
+  coverage <- dplyr::bind_rows(coverage_start, coverage_end) %>%
+    dplyr::group_by(chr, start, end, cell_group) %>%
+    dplyr::summarize(value = sum(value), .groups="drop")
+
+  answers <- list(
+    "start_only" = coverage_start,
+    "end_only" = coverage_end,
+    "both" = coverage
+  )
+  write_insertion_bed(
+    fragments = frags_vowel,
+    path = c("vowel" = file.path(dir, "vowel_only.bed")),
+    cell_groups = rep("vowel", length(cellNames(frags_vowel))),
+    insertion_mode = "start_only",
+    verbose = FALSE,
+    threads = 1
+  )
+  write_insertion_bed(
+    fragments = frags_vowel,
+    path = c("vowel" = file.path(dir, "no_labels.bed")),
+    insertion_mode = "start_only",
+    verbose = FALSE,
+    threads = 1
+  )
+  ## check with all insertions in same group
+  expect_identical(
+    dplyr::filter(coverage_start, cell_group == "vowel") %>% tidyr::uncount(value) %>% dplyr::select(-c(cell_group))  %>% data.frame(), 
+    data.frame(readr::read_tsv(file.path(dir, "vowel_only.bed"), col_names = c("chr", "start", "end"), col_types = "cii")),
+  )
+  ## check with all insertions in same group without labels
+  expect_identical(
+    dplyr::filter(coverage_start, cell_group == "vowel") %>% tidyr::uncount(value) %>% dplyr::select(-c(cell_group)) %>% data.frame(), 
+    data.frame(readr::read_tsv(file.path(dir, "no_labels.bed"), col_names = c("chr", "start", "end"), col_types = "cii"))
+  )
+  # test across all modes and single/multiple thread counts
+  for (mode in c("start_only", "end_only", "both")) {
+    for (threads in c(1, 2)) {
+      write_insertion_bed(
+        fragments = frags,
+        path = c("vowel" = file.path(dir, "vowel.bed"), "consonant" = file.path(dir, "consonant.bed.gz")),
+        cell_groups = cell_groups,
+        insertion_mode = mode,
+        verbose = FALSE,
+        threads = threads
+      )
+      # read in the bed.gz files
+      result <- list(
+        "vowel" = readr::read_tsv(file.path(dir, "vowel.bed"), col_names = c("chr", "start", "end"), col_types="cii"),
+        "consonant" = readr::read_tsv(file.path(dir, "consonant.bed.gz"), col_names = c("chr", "start", "end"), col_types="cii")
+      )
+      expect_identical(
+        dplyr::filter(answers[[mode]], cell_group == "vowel") %>% tidyr::uncount(value) %>% dplyr::select(-c(cell_group)) %>% data.frame(), 
+        data.frame(result[["vowel"]])
+      )
+      expect_identical(
+        dplyr::filter(answers[[mode]], cell_group == "consonant") %>% tidyr::uncount(value) %>% dplyr::select(-c(cell_group)) %>% data.frame(), 
+        data.frame(result[["consonant"]])
+      )
+    }
+  }
+})
+
+test_that("macs_e2e_works", {
+  # only run if macs2 or macs3 is installed
+  if ((suppressWarnings((system2("macs3", args = "--version", stdout = FALSE, stderr = FALSE) != 0)) ||
+      (!grepl("macs", system2("macs3", args = "--version", stdout = TRUE))))) {
+    if ((suppressWarnings((system2("macs2", args = "--version", stdout = FALSE, stderr = FALSE) != 0)) ||
+        (!grepl("macs", system2("macs2", args = "--version", stdout = TRUE))))) {
+      skip("macs2 not installed")
+    } else macs_executable <- "macs2"
+  } else macs_executable <- "macs3"
+  dir <- withr::local_tempdir()
+  chr1 <- tibble::tibble(
+    chr = "chr1",
+    start = sort(sample.int(1000, 1000, replace=TRUE)),
+    end = start + sample.int(150, 1000, replace=TRUE),
+    cell_id = sample(LETTERS, 1000, replace=TRUE)
+  )
+  chr2 <- tibble::tibble(
+    chr = "chr2",
+    start = sort(sample.int(1000, 1000, replace=TRUE)),
+    end = start + sample.int(150, 1000, replace=TRUE),
+    cell_id = sample(LETTERS, 1000, replace=TRUE)
+  )
+  frags <- convert_to_fragments(dplyr::bind_rows(chr1, chr2))
+  cell_groups <- dplyr::if_else(cellNames(frags) %in% c("A", "E", "I", "O", "U"), "v o w e l", "consonant;")
+  # call each step seperately and hold in memory
+  macs_prep <- call_macs_peaks(
+    fragments = frags,
+    cell_groups = cell_groups,
+    effective_genome_size = 2.9e9,
+    path = dir,
+    insertion_mode = "both",
+    step = "prep-inputs",
+    macs_executable = macs_executable,
+    verbose = FALSE,
+    threads = 2
+  )
+  # Check to see if bed/shell files are created
+  for (cluster in c("v o w e l", "consonant;")) {
+    expect_true(file.exists(file.path(dir, "input", paste0(cluster, ".bed.gz"))))
+    expect_true(file.exists(file.path(dir, "input", paste0(cluster, ".sh"))))
+  }
+  
+  # call macs using the prepared inputs
+  macs_call <- call_macs_peaks(
+    fragments = frags,
+    cell_groups = cell_groups,
+    effective_genome_size = 2.9e9,
+    path = dir,
+    insertion_mode = "both",
+    step = "run-macs",
+    macs_executable = macs_executable,
+    verbose = FALSE,
+    threads = 2
+  )
+  # Check to see if the output files are created
+  for (cluster in c("v o w e l", "consonant;")) {
+    expect_true(file.exists(file.path(dir, "output", cluster, paste0(cluster, "_peaks.narrowPeak"))))
+    expect_true(file.exists(file.path(dir, "output", cluster, paste0(cluster, "_peaks.xls"))))
+    expect_true(file.exists(file.path(dir, "output", cluster, paste0(cluster, "_summits.bed"))))
+  }
+  # Read in the outputs
+  macs_read <- call_macs_peaks(
+    fragments = frags,
+    cell_groups = cell_groups,
+    effective_genome_size = 2.9e9,
+    path = dir,
+    insertion_mode = "both",
+    step = "read-outputs",
+    macs_executable = macs_executable,
+    verbose = FALSE,
+    threads = 2
+  )
+  # Check length to see if the same number of clusters are returned
+  expect_equal(length(unique(macs_read$group)), length(unique(cell_groups)))
+  macs_read_full_pipeline <- call_macs_peaks(
+    fragments = frags,
+    cell_groups = cell_groups,
+    effective_genome_size = 2.9e9,
+    path = dir,
+    insertion_mode = "both",
+    step = "all",
+    macs_executable = macs_executable,
+    verbose = FALSE,
+    threads = 2
+  )
+  # Make sure the outputs are the same
+  expect_equal(macs_read, macs_read_full_pipeline)
 })
