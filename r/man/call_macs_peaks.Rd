@@ -8,7 +8,7 @@ call_macs_peaks(
   fragments,
   path,
   cell_groups = rlang::rep_along(cellNames(fragments), "all"),
-  effective_genome_size = 2.7e+09,
+  effective_genome_size = 2.9e+09,
   insertion_mode = c("start_only", "both", "end_only"),
   step = c("all", "prep-inputs", "run-macs", "read-outputs"),
   macs_executable = NULL,
