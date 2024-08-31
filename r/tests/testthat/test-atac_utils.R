@@ -306,7 +306,7 @@ test_that("macs_e2e_works", {
     expect_true(file.exists(file.path(dir, "output", cluster, paste0(cluster, "_peaks.xls"))))
     expect_true(file.exists(file.path(dir, "output", cluster, paste0(cluster, "_summits.bed"))))
   }
-  # Read i%sn the outputs
+  # Read in the outputs
   macs_read <- call_macs_peaks(
     fragments = frags,
     cell_groups = cell_groups,

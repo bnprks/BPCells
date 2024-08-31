@@ -29,7 +29,6 @@ enum class BedgraphInsertionMode {
 // - fragments: source of fragments to convert to insertions
 // - output_path: The file path to save the bedgraph
 // - mode: StartOnly = include only start coords, EndOnly = include only end coords, Both = include start + end coords
-// - keep_dups: If true, keep duplicate insertions in the bedfile
 void writeInsertionBed(
     FragmentLoader &fragments,
     const std::string &output_path,

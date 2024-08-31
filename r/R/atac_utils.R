@@ -409,7 +409,7 @@ write_insertion_bedgraph <- function(fragments, path, cell_groups = rlang::rep_a
 #' Create bed files from fragments split by cell group.
 #' @param path (character vector) Path to save bed files. If `cell_groups` is provided, this must be a character vector with one name for each level in `cell_groups` 
 #' Else, this must be a character vector of length 1.
-#' @param cell_groups (character vector or factor) Cluster assignments for each cell. If is null, all cells are treated as one group.
+#' @param cell_groups (character vector or factor) Cluster assignments for each cell.
 #' @param threads (int) Number of threads to use.
 #' @param verbose (bool) Whether to provide verbose progress output to console.
 #' @return `NULL`
