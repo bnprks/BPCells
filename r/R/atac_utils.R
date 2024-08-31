@@ -527,12 +527,12 @@ call_macs_peaks <- function(fragments, path,
   step <- match.arg(step)
   cell_groups <- as.factor(cell_groups)
   levels(cell_groups) <- normalize_unique_file_names(levels(cell_groups))
+  # Create paths
+  dir.create(file.path(path, "input"), showWarnings = FALSE, recursive = TRUE)
   path <- normalizePath(path)
   path_bed_input <- paste0(path, "/input/", levels(cell_groups), ".bed.gz")
   names(path_bed_input) <- levels(cell_groups)
   path_macs_output <- paste0(path, "/output/", levels(cell_groups))
-  # Create paths
-  dir.create(file.path(path, "input"), showWarnings = FALSE, recursive = TRUE)
   # Check if MACS can be run
   if (!(step %in% c("read-outputs"))) {
     macs_executable <- macs_path_is_valid(macs_executable)
