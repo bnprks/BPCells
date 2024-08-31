@@ -274,7 +274,7 @@ test_that("macs_e2e_works", {
   macs_prep <- call_macs_peaks(
     fragments = frags,
     cell_groups = cell_groups,
-    effective_genome_size = 2.7e9,
+    effective_genome_size = 2.9e9,
     path = dir,
     insertion_mode = "both",
     step = "prep-inputs",
@@ -292,7 +292,7 @@ test_that("macs_e2e_works", {
   macs_call <- call_macs_peaks(
     fragments = frags,
     cell_groups = cell_groups,
-    effective_genome_size = 2.7e9,
+    effective_genome_size = 2.9e9,
     path = dir,
     insertion_mode = "both",
     step = "run-macs",
@@ -310,7 +310,7 @@ test_that("macs_e2e_works", {
   macs_read <- call_macs_peaks(
     fragments = frags,
     cell_groups = cell_groups,
-    effective_genome_size = 2.7e9,
+    effective_genome_size = 2.9e9,
     path = dir,
     insertion_mode = "both",
     step = "read-outputs",
@@ -323,7 +323,7 @@ test_that("macs_e2e_works", {
   macs_read_full_pipeline <- call_macs_peaks(
     fragments = frags,
     cell_groups = cell_groups,
-    effective_genome_size = 2.7e9,
+    effective_genome_size = 2.9e9,
     path = dir,
     insertion_mode = "both",
     step = "all",

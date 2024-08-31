@@ -511,7 +511,7 @@ write_insertion_bed <- function(fragments, path,
 #' @inheritParams call_peaks_tile
 #' @export
 call_macs_peaks <- function(fragments, path,
-                            cell_groups = rlang::rep_along(cellNames(fragments), "all"), effective_genome_size = 2.7e9,
+                            cell_groups = rlang::rep_along(cellNames(fragments), "all"), effective_genome_size = 2.9e9,
                             insertion_mode = c("start_only", "both", "end_only"),
                             step = c("all", "prep-inputs", "run-macs", "read-outputs"),
                             macs_executable = NULL,
