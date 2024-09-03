@@ -31,8 +31,8 @@ LDFLAGS=$("${R_HOME}/bin/R" CMD config LDFLAGS)
 echo "Testing hdf5 by compiling example program..."
 
 # Vanilla install test
-HDF5_CFLAGS=""
-HDF5_LIBS="-lhdf5"
+HDF5_CFLAGS="${HDF5_CFLAGS-}"
+HDF5_LIBS="${HDF5_LIBS--lhdf5}"
 HDF5_OK=""
 $CC tools/h5write.c $CFLAGS $LDFLAGS $HDF5_CFLAGS $HDF5_LIBS -o tools/h5write 2>$ERR && HDF5_OK="yes";
 
