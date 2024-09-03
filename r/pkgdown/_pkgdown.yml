@@ -27,7 +27,7 @@ repo:
 
 navbar:
   structure:
-    left: [introduction, reference, articles, news]
+    left: [introduction, reference, articles, news, python]
     right: [search, github]
   components:
     introduction:
@@ -36,6 +36,10 @@ navbar:
     news:
       text: "News"
       href: "news/index.html"
+    python:
+      text: "Python Docs"
+      icon: "fa-arrow-up-right-from-square"
+      href: "python/index.html"
 
 articles:
 - title: "Articles from dropdown list"
