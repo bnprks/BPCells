@@ -749,6 +749,10 @@ matrix_max_per_col_cpp <- function(matrix) {
     .Call(`_BPCells_matrix_max_per_col_cpp`, matrix)
 }
 
+pseudobulk_counts_cpp <- function(matrix, approach, cell_groups) {
+    .Call(`_BPCells_pseudobulk_counts_cpp`, matrix, approach, cell_groups)
+}
+
 matrix_identical_uint32_t_cpp <- function(mat1, mat2) {
     .Call(`_BPCells_matrix_identical_uint32_t_cpp`, mat1, mat2)
 }

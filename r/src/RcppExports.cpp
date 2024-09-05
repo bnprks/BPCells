@@ -2474,6 +2474,19 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// pseudobulk_counts_cpp
+NumericMatrix pseudobulk_counts_cpp(SEXP matrix, std::string approach, std::vector<uint32_t> cell_groups);
+RcppExport SEXP _BPCells_pseudobulk_counts_cpp(SEXP matrixSEXP, SEXP approachSEXP, SEXP cell_groupsSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type matrix(matrixSEXP);
+    Rcpp::traits::input_parameter< std::string >::type approach(approachSEXP);
+    Rcpp::traits::input_parameter< std::vector<uint32_t> >::type cell_groups(cell_groupsSEXP);
+    rcpp_result_gen = Rcpp::wrap(pseudobulk_counts_cpp(matrix, approach, cell_groups));
+    return rcpp_result_gen;
+END_RCPP
+}
 // matrix_identical_uint32_t_cpp
 bool matrix_identical_uint32_t_cpp(SEXP mat1, SEXP mat2);
 RcppExport SEXP _BPCells_matrix_identical_uint32_t_cpp(SEXP mat1SEXP, SEXP mat2SEXP) {
@@ -2675,6 +2688,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_BPCells_apply_matrix_double_cpp", (DL_FUNC) &_BPCells_apply_matrix_double_cpp, 3},
     {"_BPCells_matrix_max_per_row_cpp", (DL_FUNC) &_BPCells_matrix_max_per_row_cpp, 1},
     {"_BPCells_matrix_max_per_col_cpp", (DL_FUNC) &_BPCells_matrix_max_per_col_cpp, 1},
+    {"_BPCells_pseudobulk_counts_cpp", (DL_FUNC) &_BPCells_pseudobulk_counts_cpp, 3},
     {"_BPCells_matrix_identical_uint32_t_cpp", (DL_FUNC) &_BPCells_matrix_identical_uint32_t_cpp, 2},
     {NULL, NULL, 0}
 };

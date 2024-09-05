@@ -24,6 +24,7 @@
 #include "bpcells-cpp/matrixIterators/SVD.h"
 #include "bpcells-cpp/matrixIterators/TSparseMatrixWriter.h"
 #include "bpcells-cpp/matrixUtils/WilcoxonRankSum.h"
+#include "bpcells-cpp/matrixIterators/MatrixAccumulators.h"
 #include "R_array_io.h"
 #include "R_interrupts.h"
 #include "R_xptr_wrapper.h"
@@ -667,8 +668,49 @@ NumericVector matrix_max_per_col_cpp(SEXP matrix) {
     }
     return Rcpp::wrap(result);
 }
+// Using the cell_group information, compute the mean and sum for each group for each feature.  
+// End up with a matrix of size n_features x n_groups
+// Args:
+// - matrix: matrix to compute pseudobulk counts from
+// - approach: either "mean" or "sum"
+// [[Rcpp::export]]
+NumericMatrix pseudobulk_counts_cpp(SEXP matrix, 
+                           std::string approach,  
+                           std::vector<uint32_t> cell_groups) {
+     // get number of unique entries in cell_groups
+    std::unordered_set<uint> unique_groups(cell_groups.begin(), cell_groups.end());
+    uint32_t n_groups = unique_groups.size();
 
+    MatrixIterator<double> it(take_unique_xptr<MatrixLoader<double>>(matrix));
+    MatrixAccumulator<uint32_t> res;
+    std::vector<std::vector<uint32_t>> group_sum(it.rows(), std::vector<uint32_t>(n_groups, 0));
+    std::vector<std::vector<uint32_t>> group_count(it.rows(), std::vector<uint32_t>(n_groups, 0));
+    //std::vector<std::vector<std::vector<uint32_t>>> group_vals(cell_groups.size(), std::vector<std::vector<uint32_t>>(it.cols(), std::vector<uint32_t>()));
 
+    while (it.nextCol()) {
+        while (it.nextValue()) {
+            uint32_t group = cell_groups[it.row()];
+            group_sum[group][it.col()] += it.val();
+            group_count[group][it.col()]++;
+            //group_vals[group][it.col()].push_back(it.val());
+        }
+    }
+    Rcpp::NumericMatrix res_mat(it.rows(), n_groups);
+    for (uint32_t feat = 0; feat < group_sum.size(); feat++) {
+        for (uint32_t group = 0; group < group_sum[feat].size(); group++) {
+            res_mat(feat, group) = group_sum[feat][group];
+        }
+    }
+
+    //if (approach == "sum") {
+    //    for (uint32_t feat = 0; feat < group_sum.size(); feat++) {
+    //        for (uint32_t group = 0; group < group_sum[feat].size(); group++) {
+    //            res.add_one(group, feat, group_sum[feat][group]);
+    //        }
+    //    }
+    //}
+    return res_mat;
+}
 // [[Rcpp::export]]
 bool matrix_identical_uint32_t_cpp(SEXP mat1, SEXP mat2) {
     MatrixIterator<uint32_t> i1(take_unique_xptr<MatrixLoader<uint32_t>>(mat1));
