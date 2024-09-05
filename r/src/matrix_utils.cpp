@@ -673,10 +673,13 @@ NumericVector matrix_max_per_col_cpp(SEXP matrix) {
 // Args:
 // - matrix: matrix to compute pseudobulk counts from
 // - approach: either "mean" or "sum"
+// - cell_groups: vector of cell group assignments
+// - clip_values: whether to only take the 99th percentile of values.
 // [[Rcpp::export]]
-NumericMatrix pseudobulk_counts_cpp(SEXP matrix, 
-                           std::string approach,  
-                           std::vector<uint32_t> cell_groups) {
+NumericMatrix pseudobulk_counts_cpp(SEXP matrix,
+                                    std::vector<uint32_t> cell_groups,
+                                    std::string approach,
+                                    bool clip_values) {
      // get number of unique entries in cell_groups
     std::unordered_set<uint> unique_groups(cell_groups.begin(), cell_groups.end());
     uint32_t n_groups = unique_groups.size();

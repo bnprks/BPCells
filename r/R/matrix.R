@@ -725,7 +725,9 @@ rlang::on_load({
 #' @inheritParams call_peaks_tile
 pseudobulk_counts <- function(x, cell_groups, approach = c("sum", "mean"), clip_values = TRUE) {
   assert_is(x, "IterableMatrix")
-  assert_is(cell_groups, "factor")
+  assert_is(cell_groups, c("factor", "character", "numeric"))
+  browser()
+  cell_groups <- as.factor(cell_groups)
   approach <- match.arg(approach)
   assert_is(clip_values, "logical")
   
