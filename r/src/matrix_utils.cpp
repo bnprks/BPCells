@@ -10,7 +10,7 @@
 #define RCPP_NO_SUGAR
 #include <Rcpp.h>
 #include <RcppEigen.h>
-
+#include <string>
 #include "bpcells-cpp/matrixIterators/CSparseMatrix.h"
 #include "bpcells-cpp/matrixIterators/ColwiseRank.h"
 #include "bpcells-cpp/matrixIterators/ConcatenateMatrix.h"
@@ -668,7 +668,8 @@ NumericVector matrix_max_per_col_cpp(SEXP matrix) {
     }
     return Rcpp::wrap(result);
 }
-// Using the cell_group information, compute the mean and sum for each group for each feature.  
+
+// Using the cell_group information, compute a summary of each feature in each group.
 // End up with a matrix of size n_features x n_groups
 // Args:
 // - matrix: matrix to compute pseudobulk counts from
@@ -676,44 +677,61 @@ NumericVector matrix_max_per_col_cpp(SEXP matrix) {
 // - cell_groups: vector of cell group assignments
 // - clip_values: whether to only take the 99th percentile of values.
 // [[Rcpp::export]]
-NumericMatrix pseudobulk_counts_cpp(SEXP matrix,
+Rcpp::DataFrame pseudobulk_counts_cpp(SEXP matrix,
                                     std::vector<uint32_t> cell_groups,
                                     std::string approach,
                                     bool clip_values) {
-     // get number of unique entries in cell_groups
-    std::unordered_set<uint> unique_groups(cell_groups.begin(), cell_groups.end());
-    uint32_t n_groups = unique_groups.size();
-
+    // get number of unique entries in cell_groups, and also get the names of the groups to set as column names
+    std::unordered_map<std::string, double> group_count;
+    std::unordered_map<std::string, uint32_t> group_map;
+    uint32_t group_num = 0;
+    
+    std::vector<std::string> group_names;
+    for (auto& cell_group : cell_groups) {
+        if (group_map.find(std::to_string(cell_group)) == group_map.end()) {
+            group_map[std::to_string(cell_group)] = group_num;
+            group_num++;
+            group_names.push_back(std::to_string(cell_group));
+            group_count[std::to_string(cell_group)] = 1;
+        } else {
+            group_count[std::to_string(cell_group)]++;
+        }
+    }
+    uint32_t n_groups = group_map.size();
     MatrixIterator<double> it(take_unique_xptr<MatrixLoader<double>>(matrix));
-    MatrixAccumulator<uint32_t> res;
-    std::vector<std::vector<uint32_t>> group_sum(it.rows(), std::vector<uint32_t>(n_groups, 0));
-    std::vector<std::vector<uint32_t>> group_count(it.rows(), std::vector<uint32_t>(n_groups, 0));
-    //std::vector<std::vector<std::vector<uint32_t>>> group_vals(cell_groups.size(), std::vector<std::vector<uint32_t>>(it.cols(), std::vector<uint32_t>()));
-
+    Eigen::ArrayXXd group_sum = Eigen::ArrayXXd(it.rows(), n_groups);
+    // construct matrix of group values.  Should be an O(m*n) operation where m is the number of features and n is the number of cells
     while (it.nextCol()) {
+        uint32_t group = group_map[std::to_string(cell_groups[it.col()])];
         while (it.nextValue()) {
-            uint32_t group = cell_groups[it.row()];
-            group_sum[group][it.col()] += it.val();
-            group_count[group][it.col()]++;
-            //group_vals[group][it.col()].push_back(it.val());
+            group_sum(it.row(), group) += it.val();
         }
     }
-    Rcpp::NumericMatrix res_mat(it.rows(), n_groups);
-    for (uint32_t feat = 0; feat < group_sum.size(); feat++) {
-        for (uint32_t group = 0; group < group_sum[feat].size(); group++) {
-            res_mat(feat, group) = group_sum[feat][group];
+    // Get the rownames
+    Rcpp::CharacterVector rownames;
+    for (uint32_t i = 0; i < it.rows(); ++i) {
+      if (it.rowNames(i) != NULL) {
+        rownames.push_back(it.rowNames(i));
+      }
+    }
+    if (approach == "mean") {
+        for (int group_idx = 0; group_idx < group_sum.cols(); group_idx++) {
+            std::string group_name = group_names[group_idx];
+            uint32_t divisor = group_count.at(group_name);
+            // divide and round to 6 decimal places
+            const double mult = std::pow(10.0, 6);
+            group_sum.col(group_idx) /= divisor;
+            group_sum.col(group_idx) = std::ceil(group_sum.col(group_idx) * multiplier) / multiplier;
         }
     }
-
-    //if (approach == "sum") {
-    //    for (uint32_t feat = 0; feat < group_sum.size(); feat++) {
-    //        for (uint32_t group = 0; group < group_sum[feat].size(); group++) {
-    //            res.add_one(group, feat, group_sum[feat][group]);
-    //        }
-    //    }
-    //}
+    SEXP res_mat_s = Rcpp::wrap(group_sum);
+    Rcpp::NumericMatrix res_mat(res_mat_s);
+    Rcpp::colnames(res_mat) = Rcpp::wrap(group_names);
+    Rcpp::rownames(res_mat) = rownames;
     return res_mat;
 }
+
+
 // [[Rcpp::export]]
 bool matrix_identical_uint32_t_cpp(SEXP mat1, SEXP mat2) {
     MatrixIterator<uint32_t> i1(take_unique_xptr<MatrixLoader<uint32_t>>(mat1));

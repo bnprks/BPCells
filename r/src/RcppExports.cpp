@@ -2475,7 +2475,7 @@ BEGIN_RCPP
 END_RCPP
 }
 // pseudobulk_counts_cpp
-NumericMatrix pseudobulk_counts_cpp(SEXP matrix, std::vector<uint32_t> cell_groups, std::string approach, bool clip_values);
+Rcpp::DataFrame pseudobulk_counts_cpp(SEXP matrix, std::vector<uint32_t> cell_groups, std::string approach, bool clip_values);
 RcppExport SEXP _BPCells_pseudobulk_counts_cpp(SEXP matrixSEXP, SEXP cell_groupsSEXP, SEXP approachSEXP, SEXP clip_valuesSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
