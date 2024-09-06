@@ -699,7 +699,7 @@ Rcpp::DataFrame pseudobulk_counts_cpp(SEXP matrix,
     }
     uint32_t n_groups = group_map.size();
     MatrixIterator<double> it(take_unique_xptr<MatrixLoader<double>>(matrix));
-    Eigen::ArrayXXd group_sum = Eigen::ArrayXXd(it.rows(), n_groups);
+    Eigen::ArrayXXd group_sum = Eigen::ArrayXXd::Zero(it.rows(), n_groups);
     // construct matrix of group values.  Should be an O(m*n) operation where m is the number of features and n is the number of cells
     while (it.nextCol()) {
         uint32_t group = group_map[std::to_string(cell_groups[it.col()])];
@@ -707,7 +707,7 @@ Rcpp::DataFrame pseudobulk_counts_cpp(SEXP matrix,
             group_sum(it.row(), group) += it.val();
         }
     }
-    // Get the rownames
+    // Get the rownames 
     Rcpp::CharacterVector rownames;
     for (uint32_t i = 0; i < it.rows(); ++i) {
       if (it.rowNames(i) != NULL) {
@@ -717,11 +717,8 @@ Rcpp::DataFrame pseudobulk_counts_cpp(SEXP matrix,
     if (approach == "mean") {
         for (int group_idx = 0; group_idx < group_sum.cols(); group_idx++) {
             std::string group_name = group_names[group_idx];
-            uint32_t divisor = group_count.at(group_name);
-            // divide and round to 6 decimal places
-            const double mult = std::pow(10.0, 6);
+            double divisor = group_count.at(group_name);
             group_sum.col(group_idx) /= divisor;
-            group_sum.col(group_idx) = std::ceil(group_sum.col(group_idx) * multiplier) / multiplier;
         }
     }
     SEXP res_mat_s = Rcpp::wrap(group_sum);
