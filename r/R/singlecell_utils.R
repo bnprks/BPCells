@@ -102,17 +102,19 @@ pseudobulk_counts <- function(mat, cell_groups, method = c("sum", "mean"), clip_
 #'  - `sum` 
 #'  - `mean`
 #' @param clip_values (logical) If TRUE, clip high values to the 99th percentile of the data.
+#' @param threads (integer) Number of threads to use.
 #' @return (data.frame) A data frame with row corresponding to features, and columns
 #' coresponding to the aggregated counts, with each column named by the cell group.
 #' @inheritParams marker_features
-pseudobulk_counts_matrix_multiply <- function(mat, cell_groups, method = c("sum", "mean"), clip_values = TRUE) {
+pseudobulk_counts_matrix_multiply <- function(mat, cell_groups, method = c("sum", "mean"), clip_values = TRUE, threads = 1L) {
   assert_is(mat, "IterableMatrix")
   assert_is(cell_groups, c("factor", "character", "numeric"))
   cell_groups <- as.factor(cell_groups)
   method <- match.arg(method)
   assert_is(clip_values, "logical")
+  assert_is(threads, "integer")
   
-  iter <- iterate_matrix(convert_matrix_type(mat, "double"))
+  iter <- iterate_matrix(parallel_split(mat, threads, threads*4))
   groups_membership_matrix <- cluster_membership_matrix(cell_groups, levels(cell_groups))
   if (method == "mean") {
     groups_membership_matrix <- multiply_cols(groups_membership_matrix, 1 / as.numeric(table(cell_groups)))
