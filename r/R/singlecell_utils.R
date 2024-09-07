@@ -69,3 +69,55 @@ marker_features <- function(mat, groups, method="wilcoxon") {
         background_mean = as.numeric(background_means)
     )
 }
+
+#' Aggregate counts matrices by cell group or feature.
+#' 
+#' Given a features x cells matrix, group cells by `cell_groups` and aggregate counts by `method` for each 
+#' feature.  If the matrix is instead transposed, aggregated counts by `method` for each cell group.
+#' @param method (string) Method to aggregate counts.  Current options are:
+#'  - `sum` 
+#'  - `mean`
+#' @param clip_values (logical) If TRUE, clip high values to the 99th percentile of the data.
+#' @return (data.frame) A data frame with row corresponding to the cell groups or features, and columns
+#' coresponding to the aggregated counts, with each column named by the cell group.
+#' @inheritParams marker_features
+pseudobulk_counts <- function(mat, cell_groups, method = c("sum", "mean"), clip_values = TRUE) {
+  assert_is(mat, "IterableMatrix")
+  assert_is(cell_groups, c("factor", "character", "numeric"))
+  cell_groups <- as.factor(cell_groups)
+  method <- match.arg(method)
+  assert_is(clip_values, "logical")
+  
+  iter <- iterate_matrix(convert_matrix_type(mat, "double"))
+  res <- pseudobulk_counts_cpp(iter, as.integer(cell_groups), method, clip_values, mat@transpose)
+  return(res)
+}
+
+
+#' Aggregate counts matrices by cell group or feature.
+#' 
+#' Given a features x cells matrix, group cells by `cell_groups` and aggregate counts by `method` for each 
+#' feature.
+#' @param method (string) Method to aggregate counts.  Current options are:
+#'  - `sum` 
+#'  - `mean`
+#' @param clip_values (logical) If TRUE, clip high values to the 99th percentile of the data.
+#' @return (data.frame) A data frame with row corresponding to features, and columns
+#' coresponding to the aggregated counts, with each column named by the cell group.
+#' @inheritParams marker_features
+pseudobulk_counts_matrix_multiply <- function(mat, cell_groups, method = c("sum", "mean"), clip_values = TRUE) {
+  assert_is(mat, "IterableMatrix")
+  assert_is(cell_groups, c("factor", "character", "numeric"))
+  cell_groups <- as.factor(cell_groups)
+  method <- match.arg(method)
+  assert_is(clip_values, "logical")
+  
+  iter <- iterate_matrix(convert_matrix_type(mat, "double"))
+  groups_membership_matrix <- cluster_membership_matrix(cell_groups, levels(cell_groups))
+  if (method == "mean") {
+    groups_membership_matrix <- multiply_cols(groups_membership_matrix, 1 / as.numeric(table(cell_groups)))
+  }
+  res <- as.matrix(as((mat %*% groups_membership_matrix), "dgCMatrix"))
+  res <- as.data.frame(res)
+  return(res)
+}

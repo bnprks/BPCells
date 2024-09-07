@@ -680,13 +680,14 @@ NumericVector matrix_max_per_col_cpp(SEXP matrix) {
 Rcpp::DataFrame pseudobulk_counts_cpp(SEXP matrix,
                                     std::vector<uint32_t> cell_groups,
                                     std::string approach,
-                                    bool clip_values) {
+                                    bool clip_values,
+                                    bool is_transposed) {
     // get number of unique entries in cell_groups, and also get the names of the groups to set as column names
     std::unordered_map<std::string, double> group_count;
     std::unordered_map<std::string, uint32_t> group_map;
     uint32_t group_num = 0;
-    
     std::vector<std::string> group_names;
+
     for (auto& cell_group : cell_groups) {
         if (group_map.find(std::to_string(cell_group)) == group_map.end()) {
             group_map[std::to_string(cell_group)] = group_num;
@@ -697,22 +698,41 @@ Rcpp::DataFrame pseudobulk_counts_cpp(SEXP matrix,
             group_count[std::to_string(cell_group)]++;
         }
     }
-    uint32_t n_groups = group_map.size();
     MatrixIterator<double> it(take_unique_xptr<MatrixLoader<double>>(matrix));
-    Eigen::ArrayXXd group_sum = Eigen::ArrayXXd::Zero(it.rows(), n_groups);
+    Eigen::ArrayXXd group_sum;
+    if (is_transposed) {
+        group_sum = Eigen::ArrayXXd::Zero(it.cols(), group_num);
+    } else {
+        group_sum = Eigen::ArrayXXd::Zero(it.rows(), group_num);
+    }
+    
     // construct matrix of group values.  Should be an O(m*n) operation where m is the number of features and n is the number of cells
     while (it.nextCol()) {
-        uint32_t group = group_map[std::to_string(cell_groups[it.col()])];
+        
         while (it.nextValue()) {
-            group_sum(it.row(), group) += it.val();
+            if (is_transposed) {
+                uint32_t group = group_map[std::to_string(cell_groups[it.row()])];
+                group_sum(it.col(), group) += it.val();
+            } else {
+                uint32_t group = group_map[std::to_string(cell_groups[it.col()])];
+                group_sum(it.row(), group) += it.val();
+            }
         }
     }
     // Get the rownames 
     Rcpp::CharacterVector rownames;
-    for (uint32_t i = 0; i < it.rows(); ++i) {
-      if (it.rowNames(i) != NULL) {
-        rownames.push_back(it.rowNames(i));
-      }
+    if (is_transposed) {
+        for (uint32_t i = 0; i < it.cols(); ++i) {
+            if (it.colNames(i) != NULL) {
+                rownames.push_back(it.colNames(i));
+            }
+        }
+    } else {
+        for (uint32_t i = 0; i < it.rows(); ++i) {
+              if (it.rowNames(i) != NULL) {
+                rownames.push_back(it.rowNames(i));
+            }
+        }
     }
     if (approach == "mean") {
         for (int group_idx = 0; group_idx < group_sum.cols(); group_idx++) {

@@ -717,28 +717,6 @@ rlang::on_load({
   }
 })
 
-#' Aggregate counts matrices by cell group.
-#' @param x IterableMatrix object
-#' @param approach (string) Method to aggregate counts.  Options are one of "sum" and "mean".
-#' @param clip_values (logical) If TRUE, clip high values to the 99th percentile of the data.
-#' @return * `pseudobulk_counts()`: Dense matrix of aggregated counts
-#' @inheritParams call_peaks_tile
-pseudobulk_counts <- function(x, cell_groups, approach = c("sum", "mean"), clip_values = TRUE) {
-  assert_is(x, "IterableMatrix")
-  assert_is(cell_groups, c("factor", "character", "numeric"))
-  cell_groups <- as.factor(cell_groups)
-  approach <- match.arg(approach)
-  assert_is(clip_values, "logical")
-  
-  iter <- iterate_matrix(convert_matrix_type(x, "double"))
-  if (x@transpose) {
-    res <- pseudobulk_counts_transpose_cpp(iter, as.integer(cell_groups), approach, clip_values)
-  } else {
-    res <- pseudobulk_counts_cpp(iter, as.integer(cell_groups), approach, clip_values)
-  }
-  return(res)
-}
-
 # Index subsetting
 setClass("MatrixSubset",
   contains = "IterableMatrix",
