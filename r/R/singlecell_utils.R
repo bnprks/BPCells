@@ -81,14 +81,22 @@ marker_features <- function(mat, groups, method="wilcoxon") {
 #' @return (data.frame) A data frame with row corresponding to the cell groups or features, and columns
 #' coresponding to the aggregated counts, with each column named by the cell group.
 #' @inheritParams marker_features
-pseudobulk_counts <- function(mat, cell_groups, method = c("sum", "mean"), clip_values = TRUE) {
+pseudobulk_counts <- function(mat, cell_groups, method = c("sum", "mean"), clip_values = FALSE) {
   assert_is(mat, "IterableMatrix")
   assert_is(cell_groups, c("factor", "character", "numeric"))
   cell_groups <- as.factor(cell_groups)
   method <- match.arg(method)
   assert_is(clip_values, "logical")
-  
   iter <- iterate_matrix(convert_matrix_type(mat, "double"))
+  if (clip_values) {
+    if (mat@transpose) {
+      percentile_values <- find_matrix_percentile_per_row_cpp(iter, 0.99)
+      mat <- min_by_row(mat, percentile_values)
+    } else {
+      percentile_values <- find_matrix_percentile_per_col_cpp(iter, 0.99)
+      mat <- min_by_col(mat, percentile_values)
+    }
+  }
   res <- pseudobulk_counts_cpp(iter, as.integer(cell_groups), method, clip_values, mat@transpose)
   return(res)
 }
@@ -106,20 +114,44 @@ pseudobulk_counts <- function(mat, cell_groups, method = c("sum", "mean"), clip_
 #' @return (data.frame) A data frame with row corresponding to features, and columns
 #' coresponding to the aggregated counts, with each column named by the cell group.
 #' @inheritParams marker_features
-pseudobulk_counts_matrix_multiply <- function(mat, cell_groups, method = c("sum", "mean"), clip_values = TRUE, threads = 1L) {
+pseudobulk_counts_matrix_multiply <- function(mat, cell_groups, method = c("sum", "mean"), clip_values = FALSE, threads = 1L) {
   assert_is(mat, "IterableMatrix")
   assert_is(cell_groups, c("factor", "character", "numeric"))
   cell_groups <- as.factor(cell_groups)
   method <- match.arg(method)
   assert_is(clip_values, "logical")
   assert_is(threads, "integer")
-  
   iter <- iterate_matrix(parallel_split(mat, threads, threads*4))
+  if (clip_values) {
+    if (mat@transpose) {
+      percentile_values <- find_matrix_percentile_per_row_cpp(iter, 0.99)
+      mat <- min_by_row(mat, percentile_values)
+    } else {
+      percentile_values <- find_matrix_percentile_per_col_cpp(iter, 0.99)
+      mat <- min_by_col(mat, percentile_values)
+    }
+  }
   groups_membership_matrix <- cluster_membership_matrix(cell_groups, levels(cell_groups))
   if (method == "mean") {
     groups_membership_matrix <- multiply_cols(groups_membership_matrix, 1 / as.numeric(table(cell_groups)))
   }
   res <- as.matrix(as((mat %*% groups_membership_matrix), "dgCMatrix"))
   res <- as.data.frame(res)
+  return(res)
+}
+
+#' Find the nth percentile value of each cell in a matrix.
+matrix_percentile_per_cell <- function(mat, percentile = 0.99, threads = 1L) {
+  assert_is(mat, "IterableMatrix")
+  assert_is(percentile, "numeric")
+  assert_true(percentile >= 0 && percentile < 1)
+  iter <- iterate_matrix(convert_matrix_type(mat, "double"))
+  if (mat@transpose) {
+    res <- matrix_percentile_per_row_cpp(iter, percentile)
+  } else {
+    res <- matrix_percentile_per_col_cpp(iter, percentile)
+    
+  }
+  names(res) <- colnames(mat)
   return(res)
 }

@@ -39,3 +39,20 @@ test_that("Pseudobulk aggregation works", {
     }
   }
 })
+
+test_that("Matrix percentiles work", {
+  m0 <- generate_sparse_matrix(20, 10)
+  m1 <- m0 |> as("IterableMatrix")
+  m0 <- as.matrix(m0)
+  m0_t <- t(m0)
+  m1_t <- t(m1)
+  for (matrices in list(list(m0, m1), list(m0_t, m1_t))) {
+    m <- matrices[[1]]
+    m_bpcells <- matrices[[2]]
+    for (percentile in c(0, 0.25, 0.5, 0.75, 0.99)) {
+      m_percentile <- tibble::as_tibble(m) %>% apply(2, quantile, probs = percentile, type = 1)
+      m_percentile_bpcells <- matrix_percentile_per_cell(m_bpcells, percentile)
+      expect_equal(m_percentile, m_percentile_bpcells)
+    }
+  }
+})

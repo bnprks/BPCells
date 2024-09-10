@@ -748,6 +748,51 @@ Rcpp::DataFrame pseudobulk_counts_cpp(SEXP matrix,
     return res_mat;
 }
 
+// Find the percentile for each column in an IterableMatrix.
+// Args:
+// - mat: matrix to compute percentiles from
+// - percentile: percentile to compute
+// [[Rcpp::export]]
+SEXP matrix_percentile_per_col_cpp(SEXP mat, double percentile) {
+    MatrixIterator<double> it(take_unique_xptr<MatrixLoader<double>>(mat));
+    uint32_t curr_num;
+    std::vector<double> result, curr;
+    percentile = std::min(1.0, std::max(0.0, percentile));
+    uint32_t percentile_idx = std::max(0.0, (std::ceil(percentile * it.rows()) - 1));
+    while (it.nextCol()) {
+        curr = std::vector<double>(it.rows(), 0);
+        curr_num = 0;
+        while (it.nextValue()) {
+            curr[curr_num] = it.val();
+            curr_num++;
+        }
+        std::nth_element(curr.begin(), curr.begin() + percentile_idx, curr.end());
+        result.push_back(curr[percentile_idx]);
+    }
+    return Rcpp::wrap(result);
+}
+
+// [[Rcpp::export]]
+SEXP matrix_percentile_per_row_cpp(SEXP mat, double percentile) {
+    MatrixIterator<double> it(take_unique_xptr<MatrixLoader<double>>(mat));
+    std::vector<double> result;
+    percentile = std::min(1.0, std::max(0.0, percentile));
+    uint32_t percentile_idx = std::max(0.0, (std::ceil(percentile * it.cols()) - 1));
+    std::vector<std::vector<double>> matrix(it.rows(), std::vector<double>(it.cols(), 0));
+    std::vector<uint32_t> row_count(it.rows(), 0);
+    while (it.nextCol()) {
+        while (it.nextValue()) {
+            matrix[it.row()][row_count[it.row()]] = it.val();
+            row_count[it.row()]++;
+        }
+    }
+    for (auto& row : matrix) {
+        std::nth_element(row.begin(), row.begin() + percentile_idx, row.end());
+        result.push_back(row[percentile_idx]);
+    }
+    return Rcpp::wrap(result);
+}
+
 
 // [[Rcpp::export]]
 bool matrix_identical_uint32_t_cpp(SEXP mat1, SEXP mat2) {
