@@ -22,19 +22,32 @@ test_that("Pseudobulk aggregation works", {
     groups_one_type <- c(rep.int(1, ncol(m)))
     groups_equal_length <- seq(ncol(m))
     for (cell_group in list(groups, groups_one_type, groups_equal_length)) {
+      min_vals  <- m %>% apply(2, quantile, 0.99, type = 1)
+      m_clipped <- m
+      for (idx in seq_along(min_vals)) {
+        m_clipped[,idx] <- pmin(m[,idx], min_vals[[idx]])
+      }
+      #m_clipped <- pmin(m, min_vals)
       # Test with mean and sum
       m_sum <- suppressWarnings(m %>% t() %>% tibble::as_tibble() %>% dplyr::mutate(group = cell_group) %>% dplyr::group_by(group) %>% dplyr::summarise_each(dplyr::funs(sum)) %>% t())
+      m_sum_clipped <- suppressWarnings(m_clipped %>% t() %>% tibble::as_tibble() %>% dplyr::mutate(group = cell_group) %>% dplyr::group_by(group) %>% dplyr::summarise_each(dplyr::funs(sum)) %>% t())
       m_mean <- suppressWarnings(m %>% t() %>% tibble::as_tibble() %>% dplyr::mutate(group = cell_group) %>% dplyr::group_by(group) %>% dplyr::summarise_each(dplyr::funs(mean)) %>% t())
       m_sum <- as.data.frame(m_sum)
+      m_sum_clipped <- as.data.frame(m_sum_clipped)
       m_mean <- as.data.frame(m_mean)
       # using this aggregation results in a row indicating group, so we remove it
       colnames(m_sum) <- m_sum[1,]
+      colnames(m_sum_clipped) <- m_sum[1,]
       colnames(m_mean) <- m_mean[1,]
       m_sum <- tail(m_sum, -1)
+      m_sum_clipped <- tail(m_sum_clipped,-1)
       m_mean <- tail(m_mean, -1)
+      
       m_bpcells_sum <- pseudobulk_counts_matrix_multiply(m_bpcells, cell_group, method = "sum")
+      m_bpcells_clipped <- pseudobulk_counts_matrix_multiply(m_bpcells, cell_group, method = "sum", clip_values = TRUE)
       m_bpcells_mean <- pseudobulk_counts_matrix_multiply(m_bpcells, cell_group, method = "mean")
       expect_equal(m_sum, m_bpcells_sum)
+      expect_equal(m_sum_clipped, m_bpcells_clipped)
       expect_equal(m_mean, m_bpcells_mean)
     }
   }
@@ -49,10 +62,10 @@ test_that("Matrix percentiles work", {
   for (matrices in list(list(m0, m1), list(m0_t, m1_t))) {
     m <- matrices[[1]]
     m_bpcells <- matrices[[2]]
-    for (percentile in c(0, 0.25, 0.5, 0.75, 0.99)) {
-      m_percentile <- tibble::as_tibble(m) %>% apply(2, quantile, probs = percentile, type = 1)
-      m_percentile_bpcells <- matrix_percentile_per_cell(m_bpcells, percentile)
-      expect_equal(m_percentile, m_percentile_bpcells)
+    for (quantile in c(0, 0.25, 0.5, 0.75, 0.99)) {
+      m_quantile <- tibble::as_tibble(m) %>% apply(2, quantile, probs = quantile, type = 1)
+      m_quantile_bpcells <- matrix_quantile_per_cell(m_bpcells, quantile)
+      expect_equal(m_quantile, m_quantile_bpcells)
     }
   }
 })

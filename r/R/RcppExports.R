@@ -753,12 +753,12 @@ pseudobulk_counts_cpp <- function(matrix, cell_groups, approach, clip_values, is
     .Call(`_BPCells_pseudobulk_counts_cpp`, matrix, cell_groups, approach, clip_values, is_transposed)
 }
 
-matrix_percentile_per_col_cpp <- function(mat, percentile) {
-    .Call(`_BPCells_matrix_percentile_per_col_cpp`, mat, percentile)
+matrix_quantile_per_col_cpp <- function(mat, quantile) {
+    .Call(`_BPCells_matrix_quantile_per_col_cpp`, mat, quantile)
 }
 
-matrix_percentile_per_row_cpp <- function(mat, percentile) {
-    .Call(`_BPCells_matrix_percentile_per_row_cpp`, mat, percentile)
+matrix_quantile_per_row_cpp <- function(mat, quantile) {
+    .Call(`_BPCells_matrix_quantile_per_row_cpp`, mat, quantile)
 }
 
 matrix_identical_uint32_t_cpp <- function(mat1, mat2) {

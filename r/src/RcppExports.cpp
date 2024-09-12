@@ -2489,27 +2489,27 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// matrix_percentile_per_col_cpp
-SEXP matrix_percentile_per_col_cpp(SEXP mat, double percentile);
-RcppExport SEXP _BPCells_matrix_percentile_per_col_cpp(SEXP matSEXP, SEXP percentileSEXP) {
+// matrix_quantile_per_col_cpp
+SEXP matrix_quantile_per_col_cpp(SEXP mat, double quantile);
+RcppExport SEXP _BPCells_matrix_quantile_per_col_cpp(SEXP matSEXP, SEXP quantileSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< SEXP >::type mat(matSEXP);
-    Rcpp::traits::input_parameter< double >::type percentile(percentileSEXP);
-    rcpp_result_gen = Rcpp::wrap(matrix_percentile_per_col_cpp(mat, percentile));
+    Rcpp::traits::input_parameter< double >::type quantile(quantileSEXP);
+    rcpp_result_gen = Rcpp::wrap(matrix_quantile_per_col_cpp(mat, quantile));
     return rcpp_result_gen;
 END_RCPP
 }
-// matrix_percentile_per_row_cpp
-SEXP matrix_percentile_per_row_cpp(SEXP mat, double percentile);
-RcppExport SEXP _BPCells_matrix_percentile_per_row_cpp(SEXP matSEXP, SEXP percentileSEXP) {
+// matrix_quantile_per_row_cpp
+SEXP matrix_quantile_per_row_cpp(SEXP mat, double quantile);
+RcppExport SEXP _BPCells_matrix_quantile_per_row_cpp(SEXP matSEXP, SEXP quantileSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< SEXP >::type mat(matSEXP);
-    Rcpp::traits::input_parameter< double >::type percentile(percentileSEXP);
-    rcpp_result_gen = Rcpp::wrap(matrix_percentile_per_row_cpp(mat, percentile));
+    Rcpp::traits::input_parameter< double >::type quantile(quantileSEXP);
+    rcpp_result_gen = Rcpp::wrap(matrix_quantile_per_row_cpp(mat, quantile));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -2715,8 +2715,8 @@ static const R_CallMethodDef CallEntries[] = {
     {"_BPCells_matrix_max_per_row_cpp", (DL_FUNC) &_BPCells_matrix_max_per_row_cpp, 1},
     {"_BPCells_matrix_max_per_col_cpp", (DL_FUNC) &_BPCells_matrix_max_per_col_cpp, 1},
     {"_BPCells_pseudobulk_counts_cpp", (DL_FUNC) &_BPCells_pseudobulk_counts_cpp, 5},
-    {"_BPCells_matrix_percentile_per_col_cpp", (DL_FUNC) &_BPCells_matrix_percentile_per_col_cpp, 2},
-    {"_BPCells_matrix_percentile_per_row_cpp", (DL_FUNC) &_BPCells_matrix_percentile_per_row_cpp, 2},
+    {"_BPCells_matrix_quantile_per_col_cpp", (DL_FUNC) &_BPCells_matrix_quantile_per_col_cpp, 2},
+    {"_BPCells_matrix_quantile_per_row_cpp", (DL_FUNC) &_BPCells_matrix_quantile_per_row_cpp, 2},
     {"_BPCells_matrix_identical_uint32_t_cpp", (DL_FUNC) &_BPCells_matrix_identical_uint32_t_cpp, 2},
     {NULL, NULL, 0}
 };

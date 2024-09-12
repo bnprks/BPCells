@@ -89,12 +89,11 @@ pseudobulk_counts <- function(mat, cell_groups, method = c("sum", "mean"), clip_
   assert_is(clip_values, "logical")
   iter <- iterate_matrix(convert_matrix_type(mat, "double"))
   if (clip_values) {
+    quantile_values <- matrix_quantile_per_cell(mat, 0.99, threads)
     if (mat@transpose) {
-      percentile_values <- find_matrix_percentile_per_row_cpp(iter, 0.99)
-      mat <- min_by_row(mat, percentile_values)
+      mat <- min_by_row(mat, quantile_values)
     } else {
-      percentile_values <- find_matrix_percentile_per_col_cpp(iter, 0.99)
-      mat <- min_by_col(mat, percentile_values)
+      mat <- min_by_col(mat, quantile_values)
     }
   }
   res <- pseudobulk_counts_cpp(iter, as.integer(cell_groups), method, clip_values, mat@transpose)
@@ -109,7 +108,7 @@ pseudobulk_counts <- function(mat, cell_groups, method = c("sum", "mean"), clip_
 #' @param method (string) Method to aggregate counts.  Current options are:
 #'  - `sum` 
 #'  - `mean`
-#' @param clip_values (logical) If TRUE, clip high values to the 99th percentile of the data.
+#' @param clip_values (logical) If TRUE, clip high values to the 99th percentile of each cell.
 #' @param threads (integer) Number of threads to use.
 #' @return (data.frame) A data frame with row corresponding to features, and columns
 #' coresponding to the aggregated counts, with each column named by the cell group.
@@ -121,35 +120,40 @@ pseudobulk_counts_matrix_multiply <- function(mat, cell_groups, method = c("sum"
   method <- match.arg(method)
   assert_is(clip_values, "logical")
   assert_is(threads, "integer")
-  iter <- iterate_matrix(parallel_split(mat, threads, threads*4))
+
   if (clip_values) {
-    if (mat@transpose) {
-      percentile_values <- find_matrix_percentile_per_row_cpp(iter, 0.99)
-      mat <- min_by_row(mat, percentile_values)
-    } else {
-      percentile_values <- find_matrix_percentile_per_col_cpp(iter, 0.99)
-      mat <- min_by_col(mat, percentile_values)
-    }
+    
+    quantile_values <- matrix_quantile_per_cell(mat, 0.99, threads)
+    mat <- min_by_col(mat, quantile_values)
+    
   }
+
+  iter <- iterate_matrix(parallel_split(mat, threads, threads*4))
   groups_membership_matrix <- cluster_membership_matrix(cell_groups, levels(cell_groups))
+  #browser()
   if (method == "mean") {
     groups_membership_matrix <- multiply_cols(groups_membership_matrix, 1 / as.numeric(table(cell_groups)))
   }
   res <- as.matrix(as((mat %*% groups_membership_matrix), "dgCMatrix"))
   res <- as.data.frame(res)
+  
   return(res)
 }
 
-#' Find the nth percentile value of each cell in a matrix.
-matrix_percentile_per_cell <- function(mat, percentile = 0.99, threads = 1L) {
+#' Find the nth quantile value of each cell in a matrix.
+#' 
+#' @param quantile (numeric) quantile value to be found from each cell, between [0, 1].
+#' @param threads (integer) number of threads to use.
+#' @return Numeric of cell quantile values with number of entries equal to number of rows.
+matrix_quantile_per_cell <- function(mat, quantile = 0.99, threads = 1L) {
   assert_is(mat, "IterableMatrix")
-  assert_is(percentile, "numeric")
-  assert_true(percentile >= 0 && percentile < 1)
+  assert_is(quantile, "numeric")
+  assert_true(quantile >= 0 && quantile < 1)
   iter <- iterate_matrix(convert_matrix_type(mat, "double"))
   if (mat@transpose) {
-    res <- matrix_percentile_per_row_cpp(iter, percentile)
+    res <- matrix_quantile_per_row_cpp(iter, quantile)
   } else {
-    res <- matrix_percentile_per_col_cpp(iter, percentile)
+    res <- matrix_quantile_per_col_cpp(iter, quantile)
     
   }
   names(res) <- colnames(mat)
