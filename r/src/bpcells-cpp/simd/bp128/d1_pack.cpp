@@ -1,5 +1,5 @@
 // Copyright 2023 BPCells contributors
-// 
+//
 // Licensed under the Apache License, Version 2.0 <LICENSE-APACHE or
 // https://www.apache.org/licenses/LICENSE-2.0> or the MIT license
 // <LICENSE-MIT or https://opensource.org/licenses/MIT>, at your
@@ -25,24 +25,25 @@ HWY_BEFORE_NAMESPACE();
 
 namespace BPCells::simd::bp128::HWY_NAMESPACE {
 
-void pack_d1(
+BP128_PACK_DECL(
+    pack_d1,
+    // Setup Code
+    Vec prevOffset = Set(d, initvalue);
+    ,
+    // Transform Code (InReg is the input data)
+    {
+        const auto tmp = InReg;
+        InReg = Sub(InReg, CombineShiftRightLanes<3>(d, InReg, prevOffset));
+        prevOffset = tmp;
+    },
+    // Call args in parens
+    (initvalue, in, out),
+    // Arguments
     uint32_t initvalue,
     const uint32_t *HWY_RESTRICT in,
-    uint32_t *HWY_RESTRICT out,
-    const uint32_t bit
-) {
-    using namespace hwy::HWY_NAMESPACE;
-    using D = Full128<uint32_t>;
-    using Vec = Vec<D>;
-    D d;
-    Vec prevOffset = Set(d, initvalue);
-    pack_mask(in, out, bit, [d, &prevOffset](auto v) {
-        // Input: [a,b,c,d]; [?,?,?,h]; Output [a-h, b-a, c-b, d-c]
-        const auto res = Sub(v, CombineShiftRightLanes<3>(d, v, prevOffset));
-        prevOffset = v;
-        return res;
-    });
-}
+    uint32_t *HWY_RESTRICT out
+)
+
 } // namespace BPCells::simd::bp128::HWY_NAMESPACE
 
 HWY_AFTER_NAMESPACE();

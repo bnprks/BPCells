@@ -25,21 +25,23 @@ HWY_BEFORE_NAMESPACE();
 
 namespace BPCells::simd::bp128::HWY_NAMESPACE {
 
-void pack_diff(
+BP128_PACK_DECL(
+    pack_diff,
+    // Setup Code
+    // (none)
+    ,
+    // Transform Code (InReg is the input data)
+    {
+        InReg = Sub(InReg, LoadU(d, ref));
+        ref += 4;
+    },
+    // Call args in parens
+    (ref, in, out),
+    // Arguments
     const uint32_t *HWY_RESTRICT ref,
     const uint32_t *HWY_RESTRICT in,
-    uint32_t *HWY_RESTRICT out,
-    const uint32_t bit
-) {
-    using namespace hwy::HWY_NAMESPACE;
-    using D = Full128<uint32_t>;
-    D d;
-    pack_mask(in, out, bit, [&ref, d](auto v) {
-        v = Sub(v, LoadU(d, ref));
-        ref += 4;
-        return v;
-    });
-}
+    uint32_t *HWY_RESTRICT out
+)
 
 } // namespace BPCells::simd::bp128::HWY_NAMESPACE
 

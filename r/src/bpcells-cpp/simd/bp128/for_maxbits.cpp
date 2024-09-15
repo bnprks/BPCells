@@ -25,15 +25,20 @@ HWY_BEFORE_NAMESPACE();
 
 namespace BPCells::simd::bp128::HWY_NAMESPACE {
 
-uint32_t maxbits_FOR(uint32_t offset, const uint32_t *HWY_RESTRICT in) {
-    using namespace hwy::HWY_NAMESPACE;
-    using D = Full128<uint32_t>;
-    using Vec = Vec<D>;
-    D d;
-    Vec offset_v = Set(d, offset);
 
-    return maxbits(in, [offset_v](auto v) { return Sub(v, offset_v); });
-}
+BP128_MAXBITS_DECL(
+    maxbits_FOR,
+    // Setup Code
+    Vec offset_v = Set(d, offset);
+    ,
+    // Transform Code (InReg is the input data)
+    {
+        InReg = Sub(InReg, offset_v);
+    },
+    // Arguments
+    uint32_t offset,
+    const uint32_t *HWY_RESTRICT in
+)
 
 } // namespace BPCells::simd::bp128::HWY_NAMESPACE
 
