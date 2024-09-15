@@ -94,68 +94,67 @@ std::string simd_version_bp128() {
 // Also, they don't report how much of the output memory buffer actually gets used which
 // is inconvenient for real-world use
 
-void copy_array_io(BulkNumReader<uint32_t> &from, BulkNumWriter<uint32_t> &to) {
-    uint32_t buf[1024];
-    uint32_t loaded;
-    while (true) {
-        loaded = from.load(buf, 1024);
-        if (loaded == 0) break;
-        uint32_t written = 0;
-        while (written < loaded) {
-            written += to.write(buf + written, loaded - written);
-        }
+void write_unbuffered(const uint32_t *input, size_t n, BulkNumWriter<uint32_t> &to, size_t chunk_size=2048) {
+    size_t i = 0;
+    std::vector<uint32_t> buf(chunk_size);
+    while (i < n) {
+        size_t write_size = std::min(chunk_size, n-i);
+        memcpy(buf.data(), input + i, sizeof(uint32_t) * write_size);
+        i += to.write(buf.data(), write_size);
     }
     to.finalize();
 }
 
+void read_unbuffered(BulkNumReader<uint32_t> &from, uint32_t *output, size_t capacity) {
+    size_t i = 0;
+    while (true) {
+        uint64_t loaded = from.load(output + i, capacity-i);
+        if (loaded == 0) break;
+        if (i == capacity) throw std::runtime_error("read_unbuffered(): Ran out of capacity in write destination");
+        i += loaded;
+    }
+}
+
 // [[Rcpp::export]]
 void write_bp128(IntegerVector input, IntegerVector out_data, IntegerVector out_idx, NumericVector out_idx_offsets) {
-    VecNumReader<uint32_t> reader((uint32_t *) &input[0], input.size());
-
     BP128UIntWriter writer(
         NumWriter<uint32_t>(std::make_unique<PointerNumWriter<uint32_t>>((uint32_t *) &out_data[0], out_data.size()),1024),
         NumWriter<uint32_t>(std::make_unique<PointerNumWriter<uint32_t>>((uint32_t *) &out_idx[0], out_idx.size()),1024),
         NumWriter<uint64_t>(std::make_unique<PointerNumWriter<uint64_t>>((uint64_t *) &out_idx_offsets[0], out_idx_offsets.size()),1024)
     );
-    copy_array_io(reader, writer);
+    write_unbuffered((uint32_t *) &input[0], input.size(), writer);
 }
 
 // [[Rcpp::export]]
 void write_bp128_for(IntegerVector input, IntegerVector out_data, IntegerVector out_idx, NumericVector out_idx_offsets) {
-    VecNumReader<uint32_t> reader((uint32_t *) &input[0], input.size());
-
     BP128_FOR_UIntWriter writer(
         NumWriter<uint32_t>(std::make_unique<PointerNumWriter<uint32_t>>((uint32_t *) &out_data[0], out_data.size()),1024),
         NumWriter<uint32_t>(std::make_unique<PointerNumWriter<uint32_t>>((uint32_t *) &out_idx[0], out_idx.size()),1024),
         NumWriter<uint64_t>(std::make_unique<PointerNumWriter<uint64_t>>((uint64_t *) &out_idx_offsets[0], out_idx_offsets.size()),1024)
     );
-    copy_array_io(reader, writer);
+    write_unbuffered((uint32_t *) &input[0], input.size(), writer);
 }
 
 // [[Rcpp::export]]
 void write_bp128_d1(IntegerVector input, IntegerVector out_data, IntegerVector out_idx, NumericVector out_idx_offsets, IntegerVector out_starts) {
-    VecNumReader<uint32_t> reader((uint32_t *) &input[0], input.size());
-
     BP128_D1_UIntWriter writer(
         NumWriter<uint32_t>(std::make_unique<PointerNumWriter<uint32_t>>((uint32_t *) &out_data[0], out_data.size()),1024),
         NumWriter<uint32_t>(std::make_unique<PointerNumWriter<uint32_t>>((uint32_t *) &out_idx[0], out_idx.size()),1024),
         NumWriter<uint64_t>(std::make_unique<PointerNumWriter<uint64_t>>((uint64_t *) &out_idx_offsets[0], out_idx_offsets.size()),1024),
         NumWriter<uint32_t>(std::make_unique<PointerNumWriter<uint32_t>>((uint32_t *) &out_starts[0], out_starts.size()), 1024)
     );
-    copy_array_io(reader, writer);
+    write_unbuffered((uint32_t *) &input[0], input.size(), writer);
 }
 
 // [[Rcpp::export]]
 void write_bp128_d1z(IntegerVector input, IntegerVector out_data, IntegerVector out_idx, NumericVector out_idx_offsets, IntegerVector out_starts) {
-    VecNumReader<uint32_t> reader((uint32_t *) &input[0], input.size());
-
     BP128_D1Z_UIntWriter writer(
         NumWriter<uint32_t>(std::make_unique<PointerNumWriter<uint32_t>>((uint32_t *) &out_data[0], out_data.size()),1024),
         NumWriter<uint32_t>(std::make_unique<PointerNumWriter<uint32_t>>((uint32_t *) &out_idx[0], out_idx.size()),1024),
         NumWriter<uint64_t>(std::make_unique<PointerNumWriter<uint64_t>>((uint64_t *) &out_idx_offsets[0], out_idx_offsets.size()),1024),
         NumWriter<uint32_t>(std::make_unique<PointerNumWriter<uint32_t>>((uint32_t *) &out_starts[0], out_starts.size()), 1024)
     );
-    copy_array_io(reader, writer);
+    write_unbuffered((uint32_t *) &input[0], input.size(), writer);
 }
 
 // [[Rcpp::export]]
@@ -167,9 +166,7 @@ void read_bp128(IntegerVector input_data, IntegerVector input_idx, NumericVector
         (uint64_t) count
     );
 
-    PointerNumWriter<uint32_t> writer((uint32_t *) &out[0], out.size());
-
-    copy_array_io(reader, writer);
+    read_unbuffered(reader, (uint32_t *) &out[0], out.size());
 }
 
 // [[Rcpp::export]]
@@ -181,9 +178,7 @@ void read_bp128_for(IntegerVector input_data, IntegerVector input_idx, NumericVe
         (uint64_t) count
     );
 
-    PointerNumWriter<uint32_t> writer((uint32_t *) &out[0], out.size());
-
-    copy_array_io(reader, writer);
+    read_unbuffered(reader, (uint32_t *) &out[0], out.size());
 }
 
 // [[Rcpp::export]]
@@ -196,10 +191,7 @@ void read_bp128_d1(IntegerVector input_data, IntegerVector input_idx, NumericVec
         (uint64_t) count
     );
 
-
-    PointerNumWriter<uint32_t> writer((uint32_t *) &out[0], out.size());
-
-    copy_array_io(reader, writer);
+    read_unbuffered(reader, (uint32_t *) &out[0], out.size());
 }
 
 // [[Rcpp::export]]
@@ -212,17 +204,14 @@ void read_bp128_d1z(IntegerVector input_data, IntegerVector input_idx, NumericVe
         (uint64_t) count
     );
 
-
-    PointerNumWriter<uint32_t> writer((uint32_t *) &out[0], out.size());
-
-    copy_array_io(reader, writer);
+    read_unbuffered(reader, (uint32_t *) &out[0], out.size());
 }
 
+// Performance note: This function does need to have a copy to avoid modifying the input `end` buffer
 // [[Rcpp::export]]
 void write_bp128_end(IntegerVector end, IntegerVector start, IntegerVector out_data, IntegerVector out_idx, NumericVector out_idx_offsets) {
     // Compress the result of end - start, mimicking the algorithm used within BPCells to store fragments
     // (i.e. do simd::sub or simd::add on each load step)
-    VecNumReader<uint32_t> reader((uint32_t *) &end[0], end.size());
 
     BP128UIntWriter writer(
         NumWriter<uint32_t>(std::make_unique<PointerNumWriter<uint32_t>>((uint32_t *) &out_data[0], out_data.size()),1024),
@@ -231,20 +220,20 @@ void write_bp128_end(IntegerVector end, IntegerVector start, IntegerVector out_d
     );
 
     uint32_t *start_data = (uint32_t *) &start[0];
+    uint32_t *end_data = (uint32_t *) &end[0];
+    size_t capacity = end.size();
 
-    uint32_t buf[1024];
-    uint32_t loaded;
+    constexpr uint64_t chunk_size = 2048;
+    uint32_t buf[chunk_size];
     uint64_t pos = 0;
-    while (true) {
-        loaded = reader.load(buf, 1024);
-        if (loaded == 0) break;
-        simd::sub(buf, start_data + pos, loaded);
+    while (pos < capacity) {
+        size_t write_size = std::min(chunk_size, capacity-pos);
+        memcpy(buf, end_data + pos, sizeof(uint32_t) * write_size);
 
-        uint32_t written = 0;
-        while (written < loaded) {
-            written += writer.write(buf + written, loaded - written);
-        }
-        pos += written;
+        if (write_size   == 0) break;
+        simd::sub(buf, start_data + pos, write_size);
+
+        pos += writer.write(buf, write_size);
     }
     writer.finalize();
 }
@@ -260,23 +249,17 @@ void read_bp128_end(IntegerVector input_data, IntegerVector input_idx, NumericVe
         (uint64_t) count
     );
 
-    PointerNumWriter<uint32_t> writer((uint32_t *) &out[0], out.size());
-
     uint32_t *start_data = (uint32_t *) &start[0];
+    uint32_t *output = (uint32_t *) &out[0];
+    size_t capacity = out.size();
+    uint64_t chunk_size = 2048;
 
-    uint32_t buf[1024];
-    uint32_t loaded;
-    uint64_t pos = 0;
+    size_t i = 0;
     while (true) {
-        loaded = reader.load(buf, 1024);
+        uint64_t loaded = reader.load(output + i, std::min(chunk_size, capacity-i));
         if (loaded == 0) break;
-        simd::add(buf, start_data + pos, loaded);
-
-        uint32_t written = 0;
-        while (written < loaded) {
-            written += writer.write(buf + written, loaded - written);
-        }
-        pos += written;
+        simd::add(output + i, start_data + i, loaded);
+        if (i == capacity) throw std::runtime_error("read_unbuffered(): Ran out of capacity in write destination");
+        i += loaded;
     }
-    writer.finalize();
 }
