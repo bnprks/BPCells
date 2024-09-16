@@ -748,6 +748,50 @@ Rcpp::DataFrame pseudobulk_counts_cpp(SEXP matrix,
     return res_mat;
 }
 
+// [[Rcpp::export]]
+SEXP calculate_variance_for_pseudobulk(SEXP mat, 
+                                       SEXP means, 
+                                       std::vector<uint32_t> cell_groups,
+                                       bool transpose) {
+    MatrixIterator<double> it_mat(take_unique_xptr<MatrixLoader<double>>(mat));
+    Eigen::MappedSparseMatrix  it_means(Rcpp::as<Eigen::MappedSparseMatrix<double>>(means));
+    Eigen::ArrayXXd res = Eigen::ArrayXXd::Zero(it_means.rows(), it_means.cols());
+    std::unordered_map<std::string, double> group_count;
+    std::unordered_map<std::string, uint32_t> group_map;
+    uint32_t group_num = 0;
+    std::vector<std::string> group_names;
+
+    for (auto& cell_group : cell_groups) {
+        if (group_map.find(std::to_string(cell_group)) == group_map.end()) {
+            group_map[std::to_string(cell_group)] = group_num;
+            group_num++;
+            group_names.push_back(std::to_string(cell_group));
+            group_count[std::to_string(cell_group)] = 1;
+        } else {
+            group_count[std::to_string(cell_group)]++;
+        }
+    }
+    while (it_mat.nextCol()) {
+        while (it_mat.nextValue()) {
+            
+            if (transpose) {
+                uint32_t group = group_map[std::to_string(cell_groups[it_mat.row()])];
+                double it_mean_val = it_means.coeff(it_mat.row(), group);
+                res(it_mat.col(), group) += std::pow((it_mat.val() - it_mean_val), 2);
+            } else {
+                uint32_t group = group_map[std::to_string(cell_groups[it_mat.col()])];
+                double it_mean_val = it_means.coeff(it_mat.row(), group);
+                res(it_mat.row(), group) += std::pow(it_mat.val() - it_mean_val, 2); 
+            }
+        }
+    }
+    for (int group_idx = 0; group_idx < res.cols(); group_idx++) {
+        res.col(group_idx) /= (group_count.at(group_names[group_idx]) - 1);
+    }
+    return Rcpp::wrap(res);
+
+}
+
 // Find the `quantile`th value for each column in an IterableMatrix.
 // Args:
 // - mat: matrix to compute quantiles from
@@ -796,6 +840,8 @@ SEXP matrix_quantile_per_row_cpp(SEXP mat, double quantile) {
     }
     return Rcpp::wrap(result);
 }
+
+
 
 
 // [[Rcpp::export]]
