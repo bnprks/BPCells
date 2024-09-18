@@ -2474,32 +2474,30 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// pseudobulk_counts_cpp
-Rcpp::DataFrame pseudobulk_counts_cpp(SEXP matrix, std::vector<uint32_t> cell_groups, std::string approach, bool clip_values, bool is_transposed);
-RcppExport SEXP _BPCells_pseudobulk_counts_cpp(SEXP matrixSEXP, SEXP cell_groupsSEXP, SEXP approachSEXP, SEXP clip_valuesSEXP, SEXP is_transposedSEXP) {
+// pseudobulk_matrix_nonzeros_cpp
+SEXP pseudobulk_matrix_nonzeros_cpp(SEXP mat, const std::vector<uint32_t>& cell_groups, bool transpose);
+RcppExport SEXP _BPCells_pseudobulk_matrix_nonzeros_cpp(SEXP matSEXP, SEXP cell_groupsSEXP, SEXP transposeSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< SEXP >::type matrix(matrixSEXP);
-    Rcpp::traits::input_parameter< std::vector<uint32_t> >::type cell_groups(cell_groupsSEXP);
-    Rcpp::traits::input_parameter< std::string >::type approach(approachSEXP);
-    Rcpp::traits::input_parameter< bool >::type clip_values(clip_valuesSEXP);
-    Rcpp::traits::input_parameter< bool >::type is_transposed(is_transposedSEXP);
-    rcpp_result_gen = Rcpp::wrap(pseudobulk_counts_cpp(matrix, cell_groups, approach, clip_values, is_transposed));
+    Rcpp::traits::input_parameter< SEXP >::type mat(matSEXP);
+    Rcpp::traits::input_parameter< const std::vector<uint32_t>& >::type cell_groups(cell_groupsSEXP);
+    Rcpp::traits::input_parameter< bool >::type transpose(transposeSEXP);
+    rcpp_result_gen = Rcpp::wrap(pseudobulk_matrix_nonzeros_cpp(mat, cell_groups, transpose));
     return rcpp_result_gen;
 END_RCPP
 }
-// calculate_variance_for_pseudobulk
-SEXP calculate_variance_for_pseudobulk(SEXP mat, SEXP means, std::vector<uint32_t> cell_groups, bool transpose);
-RcppExport SEXP _BPCells_calculate_variance_for_pseudobulk(SEXP matSEXP, SEXP meansSEXP, SEXP cell_groupsSEXP, SEXP transposeSEXP) {
+// pseudobulk_matrix_variance_cpp
+SEXP pseudobulk_matrix_variance_cpp(SEXP mat, SEXP means, const std::vector<uint32_t>& cell_groups, bool transpose);
+RcppExport SEXP _BPCells_pseudobulk_matrix_variance_cpp(SEXP matSEXP, SEXP meansSEXP, SEXP cell_groupsSEXP, SEXP transposeSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< SEXP >::type mat(matSEXP);
     Rcpp::traits::input_parameter< SEXP >::type means(meansSEXP);
-    Rcpp::traits::input_parameter< std::vector<uint32_t> >::type cell_groups(cell_groupsSEXP);
+    Rcpp::traits::input_parameter< const std::vector<uint32_t>& >::type cell_groups(cell_groupsSEXP);
     Rcpp::traits::input_parameter< bool >::type transpose(transposeSEXP);
-    rcpp_result_gen = Rcpp::wrap(calculate_variance_for_pseudobulk(mat, means, cell_groups, transpose));
+    rcpp_result_gen = Rcpp::wrap(pseudobulk_matrix_variance_cpp(mat, means, cell_groups, transpose));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -2728,8 +2726,8 @@ static const R_CallMethodDef CallEntries[] = {
     {"_BPCells_apply_matrix_double_cpp", (DL_FUNC) &_BPCells_apply_matrix_double_cpp, 3},
     {"_BPCells_matrix_max_per_row_cpp", (DL_FUNC) &_BPCells_matrix_max_per_row_cpp, 1},
     {"_BPCells_matrix_max_per_col_cpp", (DL_FUNC) &_BPCells_matrix_max_per_col_cpp, 1},
-    {"_BPCells_pseudobulk_counts_cpp", (DL_FUNC) &_BPCells_pseudobulk_counts_cpp, 5},
-    {"_BPCells_calculate_variance_for_pseudobulk", (DL_FUNC) &_BPCells_calculate_variance_for_pseudobulk, 4},
+    {"_BPCells_pseudobulk_matrix_nonzeros_cpp", (DL_FUNC) &_BPCells_pseudobulk_matrix_nonzeros_cpp, 3},
+    {"_BPCells_pseudobulk_matrix_variance_cpp", (DL_FUNC) &_BPCells_pseudobulk_matrix_variance_cpp, 4},
     {"_BPCells_matrix_quantile_per_col_cpp", (DL_FUNC) &_BPCells_matrix_quantile_per_col_cpp, 2},
     {"_BPCells_matrix_quantile_per_row_cpp", (DL_FUNC) &_BPCells_matrix_quantile_per_row_cpp, 2},
     {"_BPCells_matrix_identical_uint32_t_cpp", (DL_FUNC) &_BPCells_matrix_identical_uint32_t_cpp, 2},

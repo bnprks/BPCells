@@ -669,25 +669,21 @@ NumericVector matrix_max_per_col_cpp(SEXP matrix) {
     return Rcpp::wrap(result);
 }
 
-// Using the cell_group information, compute a summary of each feature in each group.
-// End up with a matrix of size n_features x n_groups
+// Compute the number of non-zero values in each row.
 // Args:
-// - matrix: matrix to compute pseudobulk counts from
-// - approach: either "mean" or "sum"
-// - cell_groups: vector of cell group assignments
-// - clip_values: whether to only take the 99th percentile of values.
+// - matrix: The input matrix.
+// - cell_groups: Mapping of columns to groups.
+// - transpose: Whether the matrix is transposed.
+// Returns:
+// - A vector of counts of non-zero values for each row or column.
 // [[Rcpp::export]]
-Rcpp::DataFrame pseudobulk_counts_cpp(SEXP matrix,
-                                    std::vector<uint32_t> cell_groups,
-                                    std::string approach,
-                                    bool clip_values,
-                                    bool is_transposed) {
-    // get number of unique entries in cell_groups, and also get the names of the groups to set as column names
+SEXP pseudobulk_matrix_nonzeros_cpp(SEXP mat, const std::vector<uint32_t>& cell_groups, bool transpose) {
+    MatrixIterator<double> it(take_unique_xptr<MatrixLoader<double>>(mat));
+    
     std::unordered_map<std::string, double> group_count;
     std::unordered_map<std::string, uint32_t> group_map;
     uint32_t group_num = 0;
     std::vector<std::string> group_names;
-
     for (auto& cell_group : cell_groups) {
         if (group_map.find(std::to_string(cell_group)) == group_map.end()) {
             group_map[std::to_string(cell_group)] = group_num;
@@ -698,30 +694,26 @@ Rcpp::DataFrame pseudobulk_counts_cpp(SEXP matrix,
             group_count[std::to_string(cell_group)]++;
         }
     }
-    MatrixIterator<double> it(take_unique_xptr<MatrixLoader<double>>(matrix));
-    Eigen::ArrayXXd group_sum;
-    if (is_transposed) {
-        group_sum = Eigen::ArrayXXd::Zero(it.cols(), group_num);
+    Eigen::ArrayXXd res;
+    if (transpose) {
+        res = Eigen::ArrayXXd::Zero(it.cols(), group_num);
     } else {
-        group_sum = Eigen::ArrayXXd::Zero(it.rows(), group_num);
+        res = Eigen::ArrayXXd::Zero(it.rows(), group_num);
     }
-    
-    // construct matrix of group values.  Should be an O(m*n) operation where m is the number of features and n is the number of cells
     while (it.nextCol()) {
-        
         while (it.nextValue()) {
-            if (is_transposed) {
-                uint32_t group = group_map[std::to_string(cell_groups[it.row()])];
-                group_sum(it.col(), group) += it.val();
+            uint32_t group;
+            if (transpose) {
+                group = group_map[std::to_string(cell_groups[it.row()])];
+                res(it.col(), group)++;
             } else {
-                uint32_t group = group_map[std::to_string(cell_groups[it.col()])];
-                group_sum(it.row(), group) += it.val();
+                group = group_map[std::to_string(cell_groups[it.col()])];
+                res(it.row(), group)++;
             }
         }
     }
-    // Get the rownames 
     Rcpp::CharacterVector rownames;
-    if (is_transposed) {
+    if (transpose) {
         for (uint32_t i = 0; i < it.cols(); ++i) {
             if (it.colNames(i) != NULL) {
                 rownames.push_back(it.colNames(i));
@@ -734,28 +726,32 @@ Rcpp::DataFrame pseudobulk_counts_cpp(SEXP matrix,
             }
         }
     }
-    if (approach == "mean") {
-        for (int group_idx = 0; group_idx < group_sum.cols(); group_idx++) {
-            std::string group_name = group_names[group_idx];
-            double divisor = group_count.at(group_name);
-            group_sum.col(group_idx) /= divisor;
-        }
-    }
-    SEXP res_mat_s = Rcpp::wrap(group_sum);
+    SEXP res_mat_s = Rcpp::wrap(res);
     Rcpp::NumericMatrix res_mat(res_mat_s);
     Rcpp::colnames(res_mat) = Rcpp::wrap(group_names);
     Rcpp::rownames(res_mat) = rownames;
-    return res_mat;
+    return Rcpp::wrap(res_mat);
 }
 
+
+// Calculate variance of the values in a matrix, for each pseudobulk.  Requires the means of each pseudobulk to be passed in.
+// Args:
+// - mat: Matrix to compute variance from.
+// - cell_groups: Mapping of columns to groups.
+// - transpose: Whether the matrix is transposed.
+// - means: Means for each pseudobulk, in the shape of (num_features, num_groups). Required for variance calculation.
+// Returns:
+// - A matrix of variances in the shape of (num_features, num_groups).
 // [[Rcpp::export]]
-SEXP calculate_variance_for_pseudobulk(SEXP mat, 
-                                       SEXP means, 
-                                       std::vector<uint32_t> cell_groups,
-                                       bool transpose) {
+SEXP pseudobulk_matrix_variance_cpp(SEXP mat,
+                                    SEXP means,
+                                    const std::vector<uint32_t>& cell_groups,
+                                    bool transpose
+                                    ) {
     MatrixIterator<double> it_mat(take_unique_xptr<MatrixLoader<double>>(mat));
-    Eigen::MappedSparseMatrix  it_means(Rcpp::as<Eigen::MappedSparseMatrix<double>>(means));
+    Eigen::MappedSparseMatrix it_means(Rcpp::as<Eigen::MappedSparseMatrix<double>>(means));
     Eigen::ArrayXXd res = Eigen::ArrayXXd::Zero(it_means.rows(), it_means.cols());
+    Eigen::ArrayXXd num_non_zero = Eigen::ArrayXXd::Zero(it_means.rows(), it_means.cols());
     std::unordered_map<std::string, double> group_count;
     std::unordered_map<std::string, uint32_t> group_map;
     uint32_t group_num = 0;
@@ -771,18 +767,34 @@ SEXP calculate_variance_for_pseudobulk(SEXP mat,
             group_count[std::to_string(cell_group)]++;
         }
     }
+
     while (it_mat.nextCol()) {
+        Rcpp::checkUserInterrupt();
         while (it_mat.nextValue()) {
-            
+            uint32_t group;
             if (transpose) {
-                uint32_t group = group_map[std::to_string(cell_groups[it_mat.row()])];
-                double it_mean_val = it_means.coeff(it_mat.row(), group);
+                group = group_map[std::to_string(cell_groups[it_mat.row()])];
+                num_non_zero(it_mat.col(), group)++;
+            } else {
+                group = group_map[std::to_string(cell_groups[it_mat.col()])];
+                num_non_zero(it_mat.row(), group)++;
+            }
+            // Using (val - pseudobulk_mean)^2
+            // Using a dgcmatrix here might not be optimal since coeffref operates in O(log(n)) time
+            if (transpose) {
+                double it_mean_val = it_means.coeffRef(it_mat.col(), group);
                 res(it_mat.col(), group) += std::pow((it_mat.val() - it_mean_val), 2);
             } else {
-                uint32_t group = group_map[std::to_string(cell_groups[it_mat.col()])];
-                double it_mean_val = it_means.coeff(it_mat.row(), group);
+                double it_mean_val = it_means.coeffRef(it_mat.row(), group);
                 res(it_mat.row(), group) += std::pow(it_mat.val() - it_mean_val, 2); 
             }
+        }
+    }
+    // adjust variance by the number of zero counts
+    for (int group_idx = 0; group_idx < res.cols(); group_idx++) {
+        uint32_t group_count_val = group_count.at(group_names[group_idx]);
+        for (int row_idx = 0; row_idx < res.rows(); row_idx++) {
+            res(row_idx, group_idx) += (group_count_val - num_non_zero(row_idx, group_idx)) * std::pow(it_means.coeff(row_idx, group_idx), 2);
         }
     }
     for (int group_idx = 0; group_idx < res.cols(); group_idx++) {
@@ -819,7 +831,8 @@ SEXP matrix_quantile_per_col_cpp(SEXP mat, double quantile) {
 // Find the quantile for each row in an IterableMatrix.
 // Args:
 // - mat: matrix to compute quantile from
-// - quantile: ercentile to compute from each row
+// - quantile: quantile to compute from each row
+// Note: This function will probably crash out for large matrices
 // [[Rcpp::export]]
 SEXP matrix_quantile_per_row_cpp(SEXP mat, double quantile) {
     MatrixIterator<double> it(take_unique_xptr<MatrixLoader<double>>(mat));
@@ -840,8 +853,6 @@ SEXP matrix_quantile_per_row_cpp(SEXP mat, double quantile) {
     }
     return Rcpp::wrap(result);
 }
-
-
 
 
 // [[Rcpp::export]]

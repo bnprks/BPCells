@@ -72,48 +72,18 @@ marker_features <- function(mat, groups, method="wilcoxon") {
 
 #' Aggregate counts matrices by cell group or feature.
 #' 
-#' Given a features x cells matrix, group cells by `cell_groups` and aggregate counts by `method` for each 
-#' feature.  If the matrix is instead transposed, aggregated counts by `method` for each cell group.
-#' @param method (string) Method to aggregate counts.  Current options are:
-#'  - `sum` 
-#'  - `mean`
-#' @param clip_values (logical) If TRUE, clip high values to the 99th percentile of the data.
-#' @return (data.frame) A data frame with row corresponding to the cell groups or features, and columns
-#' coresponding to the aggregated counts, with each column named by the cell group.
-#' @inheritParams marker_features
-pseudobulk_counts <- function(mat, cell_groups, method = c("sum", "mean"), clip_values = FALSE) {
-  assert_is(mat, "IterableMatrix")
-  assert_is(cell_groups, c("factor", "character", "numeric"))
-  cell_groups <- as.factor(cell_groups)
-  method <- match.arg(method)
-  assert_is(clip_values, "logical")
-  iter <- iterate_matrix(convert_matrix_type(mat, "double"))
-  if (clip_values) {
-    quantile_values <- matrix_quantile_per_cell(mat, 0.99, threads)
-    if (mat@transpose) {
-      mat <- min_by_row(mat, quantile_values)
-    } else {
-      mat <- min_by_col(mat, quantile_values)
-    }
-  }
-  res <- pseudobulk_counts_cpp(iter, as.integer(cell_groups), method, clip_values, mat@transpose)
-  return(res)
-}
-
-
-#' Aggregate counts matrices by cell group or feature.
-#' 
-#' Given a features x cells matrix, group cells by `cell_groups` and aggregate counts by `method` for each 
+#' Given a features x cells matrix, group cells by `cell_groups` and aggregate counts by `method` for each
 #' feature.
 #' @param method (string) Method to aggregate counts.  Current options are:
-#'  - `sum` 
+#'  - `sum`
 #'  - `mean`
 #' @param clip_values (logical) If TRUE, clip high values to the 99th percentile of each cell.
 #' @param threads (integer) Number of threads to use.
-#' @return (data.frame) A data frame with row corresponding to features, and columns
+#' @return (dgCMatrix) A Matrix row corresponding to features, and columns
 #' coresponding to the aggregated counts, with each column named by the cell group.
 #' @inheritParams marker_features
-pseudobulk_counts_matrix_multiply <- function(mat, cell_groups, method = c("sum", "mean"), clip_values = FALSE, threads = 1L) {
+#' @export
+pseudobulk_matrix <- function(mat, cell_groups, method = c("sum", "mean", "var", "non-zeros"), clip_values = FALSE, threads = 1L) {
   assert_is(mat, "IterableMatrix")
   assert_is(cell_groups, c("factor", "character", "numeric"))
   cell_groups <- as.factor(cell_groups)
@@ -122,40 +92,55 @@ pseudobulk_counts_matrix_multiply <- function(mat, cell_groups, method = c("sum"
   assert_is(threads, "integer")
 
   if (clip_values) {
-    
-    quantile_values <- matrix_quantile_per_cell(mat, 0.99, threads)
+    quantile_values <- matrix_quantile_per_cell(mat, 0.99)
     mat <- min_by_col(mat, quantile_values)
-    
   }
-
   iter <- iterate_matrix(parallel_split(mat, threads, threads*4))
+  if (method == "non-zeros") {
+    res_non_zero <- pseudobulk_matrix_nonzeros_cpp(iter, as.integer(cell_groups), mat@transpose)
+    res_non_zero <- as(as.matrix(res_non_zero), "dgCMatrix")
+    return(res_non_zero)
+  }
   groups_membership_matrix <- cluster_membership_matrix(cell_groups, levels(cell_groups))
-  #browser()
-  if (method == "mean") {
+  if (method == "mean" || method == "var") {
+    # Divide each number in groups_membership_matrix by the number of cells in each group
     groups_membership_matrix <- multiply_cols(groups_membership_matrix, 1 / as.numeric(table(cell_groups)))
   }
-  res <- as.matrix(as((mat %*% groups_membership_matrix), "dgCMatrix"))
-  res <- as.data.frame(res)
-  
+  res <- (mat %*% groups_membership_matrix)
+  if (method == "var") {
+    res_var <- pseudobulk_matrix_variance_cpp(mat = iter,  cell_groups = as.integer(cell_groups),
+                                              transpose = mat@transpose, means = as(res, "dgCMatrix"))
+    res_var <- as(res_var, "dgCMatrix")
+    rownames(res_var) <- rownames(res)
+    colnames(res_var) <- colnames(res)
+    return(res_var)
+  }
+  res <- as(res, "dgCMatrix")
   return(res)
 }
 
 #' Find the nth quantile value of each cell in a matrix.
-#' 
 #' @param quantile (numeric) quantile value to be found from each cell, between [0, 1].
-#' @param threads (integer) number of threads to use.
-#' @return Numeric of cell quantile values with number of entries equal to number of rows.
-matrix_quantile_per_cell <- function(mat, quantile = 0.99, threads = 1L) {
+#' @return (Numeric) cell quantile values with number of entries equal to number of rows.
+#' @inheritParams marker_features
+#' @export
+matrix_quantile_per_cell <- function(mat, quantile = 0.99) {
   assert_is(mat, "IterableMatrix")
   assert_is(quantile, "numeric")
   assert_true(quantile >= 0 && quantile < 1)
-  iter <- iterate_matrix(convert_matrix_type(mat, "double"))
+  
+  # NOTE: Have to keep the entire matrix in memory if doing `quantile_per_row()`
+  # for this operation which obviously doesn't mean it doesn't work if transposed.
+  # Instead I have a gnarly double call to transpose_storage_order(), which is suboptimal.
   if (mat@transpose) {
-    res <- matrix_quantile_per_row_cpp(iter, quantile)
-  } else {
+    iter <- iterate_matrix(convert_matrix_type(transpose_storage_order(mat), "double"))
     res <- matrix_quantile_per_col_cpp(iter, quantile)
-    
+    names(res) <- colnames(mat)
+    transpose_storage_order(mat)
+  } else {
+    iter <- iterate_matrix(convert_matrix_type(mat, "double"))
+    res <- matrix_quantile_per_col_cpp(iter, quantile)
+    names(res) <- colnames(mat)
   }
-  names(res) <- colnames(mat)
   return(res)
 }

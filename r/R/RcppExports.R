@@ -749,8 +749,12 @@ matrix_max_per_col_cpp <- function(matrix) {
     .Call(`_BPCells_matrix_max_per_col_cpp`, matrix)
 }
 
-pseudobulk_counts_cpp <- function(matrix, cell_groups, approach, clip_values, is_transposed) {
-    .Call(`_BPCells_pseudobulk_counts_cpp`, matrix, cell_groups, approach, clip_values, is_transposed)
+pseudobulk_matrix_nonzeros_cpp <- function(mat, cell_groups, transpose) {
+    .Call(`_BPCells_pseudobulk_matrix_nonzeros_cpp`, mat, cell_groups, transpose)
+}
+
+pseudobulk_matrix_variance_cpp <- function(mat, means, cell_groups, transpose) {
+    .Call(`_BPCells_pseudobulk_matrix_variance_cpp`, mat, means, cell_groups, transpose)
 }
 
 matrix_quantile_per_col_cpp <- function(mat, quantile) {

@@ -517,9 +517,7 @@ call_macs_peaks <- function(fragments, path,
                             macs_executable = NULL,
                             additional_params = "--call-summits --keep-dup all --shift -75 --extsize 150 --nomodel --nolambda",
                             verbose = FALSE,
-                            threads = 1,
-                            compress_inputs = TRUE) {
-  time.start <- Sys.time()
+                            threads = 1) {
   assert_is(fragments, c("IterableFragments", "NULL"))
   assert_is(cell_groups, c("character", "factor"))
   assert_is_numeric(effective_genome_size)
@@ -532,12 +530,7 @@ call_macs_peaks <- function(fragments, path,
   # Create paths
   dir.create(file.path(path, "input"), showWarnings = FALSE, recursive = TRUE)
   path <- normalizePath(path)
-  if (compress_inputs) {
-    path_bed_input  <- paste0(path, "/input/", levels(cell_groups), ".bed.gz")
-  } else {
-    path_bed_input  <- paste0(path, "/input/", levels(cell_groups), ".bed")
-  }
-  
+  path_bed_input <- paste0(path, "/input/", levels(cell_groups), ".bed.gz")
   names(path_bed_input) <- levels(cell_groups)
   path_macs_output <- paste0(path, "/output/", levels(cell_groups))
   # Check if MACS can be run
@@ -557,15 +550,13 @@ call_macs_peaks <- function(fragments, path,
   macs_call <- sprintf(macs_call_template,
                        macs_executable, effective_genome_size, levels(cell_groups),
                        path_bed_input, path_macs_output, additional_params)
-  
+
   if (step %in% c("prep-inputs", "run-macs", "all")) {
     shell_paths <- paste0(path, "/input/", levels(cell_groups), ".sh")
     for (cluster_idx in seq_along(levels(cell_groups))) { 
       writeLines(macs_call[cluster_idx], con = shell_paths[cluster_idx])
     }
   }
-  time.prep <- Sys.time()
-  print(paste0("Prep time: ", time.prep - time.start))
   if (step == "prep-inputs") return(shell_paths)
   # Run macs
   if (step %in% c("run-macs", "all")) {
@@ -591,11 +582,6 @@ call_macs_peaks <- function(fragments, path,
       }
     }, mc.cores = threads, mc.preschedule = FALSE)
   }
-  time.macs <- Sys.time()
-  #print(paste0("MACS time: ", time.macs - time.prep))
-  # print macs time in seconds
-  print(paste0("MACS time: ", as.numeric(difftime(time.macs, time.prep, units = "secs")), " seconds"))
-  return(NULL)
   # Read outputs
   if (step %in%  c("read-outputs", "all")) {
     peaks <- list()
@@ -616,9 +602,6 @@ call_macs_peaks <- function(fragments, path,
     if (length(peaks) != length(levels(cell_groups))) warning("Number of output files does not match number of clusters")
     #  combine all peaks together into a single dataframe
     peaks <- dplyr::bind_rows(peaks)
-    time.end <- Sys.time()
-    print(paste0("Read outputs time: ", time.end - time.macs))
-    print(paste0("Total time: ", time.end - time.start))
     return(peaks)
   }
 }
