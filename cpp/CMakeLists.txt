@@ -36,6 +36,7 @@ add_library(
     ${SRC}/simd/bp128/vanilla_maxbits.cpp
     ${SRC}/simd/bp128/vanilla_pack.cpp
     ${SRC}/simd/bp128/vanilla_unpack.cpp
+    ${SRC}/simd/bp128/bp128-Nx128.cpp
 )
 target_link_libraries(
     bitpacking

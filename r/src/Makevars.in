@@ -53,6 +53,7 @@ bpcells-cpp/matrixTransforms/Scale.o \
 bpcells-cpp/matrixTransforms/Shift.o \
 bpcells-cpp/matrixUtils/WilcoxonRankSum.o \
 bpcells-cpp/simd/bp128/current_target.o \
+bpcells-cpp/simd/bp128/bp128-Nx128.o \
 bpcells-cpp/simd/bp128/d1_maxbits.o \
 bpcells-cpp/simd/bp128/d1_pack.o \
 bpcells-cpp/simd/bp128/d1_unpack.o \
