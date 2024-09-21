@@ -12,7 +12,7 @@ matrix_quantile_per_cell(mat, quantile = 0.99)
 \item{quantile}{(numeric) quantile value to be found from each cell, between \link{0, 1}.}
 }
 \value{
-(Numeric) cell quantile values with number of entries equal to number of rows.
+(Numeric) cell quantile values with number of entries equal to number of colums in the matrix.
 }
 \description{
 Find the nth quantile value of each cell in a matrix.

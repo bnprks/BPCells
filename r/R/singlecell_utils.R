@@ -75,12 +75,18 @@ marker_features <- function(mat, groups, method="wilcoxon") {
 #' Given a features x cells matrix, group cells by `cell_groups` and aggregate counts by `method` for each
 #' feature.
 #' @param method (string) Method to aggregate counts.  Current options are:
+#'  - `non-zeros`
 #'  - `sum`
 #'  - `mean`
+#'  - `var`
 #' @param clip_values (logical) If TRUE, clip high values to the 99th percentile of each cell.
 #' @param threads (integer) Number of threads to use.
-#' @return (dgCMatrix) A Matrix row corresponding to features, and columns
-#' coresponding to the aggregated counts, with each column named by the cell group.
+#' @return (Named list) A list of matrices with each matrix representing a pseudobulk matrix with a different aggregation method.
+#' Each matrix is of shape (features x groups), and names are one of `non_zeros`, `sum`, `mean`, `var`.
+#' @details The stats are ordered by complexity: nonzero, sum, mean, then variance. All
+#' less complex stats are calculated in the process of calculating a more complicated stat.
+#' So to calculate mean and variance simultaneously, just ask for variance,
+#' which will compute mean and nonzero counts as a side-effect.
 #' @inheritParams marker_features
 #' @export
 pseudobulk_matrix <- function(mat, cell_groups, method = c("sum", "mean", "var", "non-zeros"), clip_values = FALSE, threads = 1L) {
@@ -96,32 +102,23 @@ pseudobulk_matrix <- function(mat, cell_groups, method = c("sum", "mean", "var",
     mat <- min_by_col(mat, quantile_values)
   }
   iter <- iterate_matrix(parallel_split(mat, threads, threads*4))
-  if (method == "non-zeros") {
-    res_non_zero <- pseudobulk_matrix_nonzeros_cpp(iter, as.integer(cell_groups), mat@transpose)
-    res_non_zero <- as(as.matrix(res_non_zero), "dgCMatrix")
-    return(res_non_zero)
+  cell_groups <- as.factor(cell_groups)
+  res <- pseudobulk_matrix_cpp(iter, cell_groups = as.integer(cell_groups), method = method, transpose = mat@transpose)
+  # give colnames and rownames for each matrix in res, which is a named list
+  for (res_slot in names(res)) {
+    if (length(res[[res_slot]]) == 0) {
+      res[[res_slot]] <- NULL
+    } else {
+      colnames(res[[res_slot]]) <- levels(cell_groups)
+      rownames(res[[res_slot]]) <- rownames(mat)
+    }
   }
-  groups_membership_matrix <- cluster_membership_matrix(cell_groups, levels(cell_groups))
-  if (method == "mean" || method == "var") {
-    # Divide each number in groups_membership_matrix by the number of cells in each group
-    groups_membership_matrix <- multiply_cols(groups_membership_matrix, 1 / as.numeric(table(cell_groups)))
-  }
-  res <- (mat %*% groups_membership_matrix)
-  if (method == "var") {
-    res_var <- pseudobulk_matrix_variance_cpp(mat = iter,  cell_groups = as.integer(cell_groups),
-                                              transpose = mat@transpose, means = as(res, "dgCMatrix"))
-    res_var <- as(res_var, "dgCMatrix")
-    rownames(res_var) <- rownames(res)
-    colnames(res_var) <- colnames(res)
-    return(res_var)
-  }
-  res <- as(res, "dgCMatrix")
   return(res)
 }
 
 #' Find the nth quantile value of each cell in a matrix.
 #' @param quantile (numeric) quantile value to be found from each cell, between [0, 1].
-#' @return (Numeric) cell quantile values with number of entries equal to number of rows.
+#' @return (Numeric) cell quantile values with number of entries equal to number of colums in the matrix.
 #' @inheritParams marker_features
 #' @export
 matrix_quantile_per_cell <- function(mat, quantile = 0.99) {
@@ -131,16 +128,9 @@ matrix_quantile_per_cell <- function(mat, quantile = 0.99) {
   
   # NOTE: Have to keep the entire matrix in memory if doing `quantile_per_row()`
   # for this operation which obviously doesn't mean it doesn't work if transposed.
-  # Instead I have a gnarly double call to transpose_storage_order(), which is suboptimal.
-  if (mat@transpose) {
-    iter <- iterate_matrix(convert_matrix_type(transpose_storage_order(mat), "double"))
-    res <- matrix_quantile_per_col_cpp(iter, quantile)
-    names(res) <- colnames(mat)
-    transpose_storage_order(mat)
-  } else {
-    iter <- iterate_matrix(convert_matrix_type(mat, "double"))
-    res <- matrix_quantile_per_col_cpp(iter, quantile)
-    names(res) <- colnames(mat)
-  }
+  if (mat@transpose) stop("matrix_quantile_per_cell() does not support transposed matrices. \nPlease use transpose_storage_order().")
+  iter <- iterate_matrix(convert_matrix_type(mat, "double"))
+  res <- matrix_quantile_per_col_cpp(iter, quantile)
+  names(res) <- colnames(mat)
   return(res)
 }

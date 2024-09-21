@@ -17,8 +17,10 @@ pseudobulk_matrix(
 
 \item{method}{(string) Method to aggregate counts.  Current options are:
 \itemize{
+\item \code{non-zeros}
 \item \code{sum}
 \item \code{mean}
+\item \code{var}
 }}
 
 \item{clip_values}{(logical) If TRUE, clip high values to the 99th percentile of each cell.}
@@ -26,10 +28,16 @@ pseudobulk_matrix(
 \item{threads}{(integer) Number of threads to use.}
 }
 \value{
-(dgCMatrix) A Matrix row corresponding to features, and columns
-coresponding to the aggregated counts, with each column named by the cell group.
+(Named list) A list of matrices with each matrix representing a pseudobulk matrix with a different aggregation method.
+Each matrix is of shape (features x groups), and names are one of \code{non_zeros}, \code{sum}, \code{mean}, \code{var}.
 }
 \description{
 Given a features x cells matrix, group cells by \code{cell_groups} and aggregate counts by \code{method} for each
 feature.
+}
+\details{
+The stats are ordered by complexity: nonzero, sum, mean, then variance. All
+less complex stats are calculated in the process of calculating a more complicated stat.
+So to calculate mean and variance simultaneously, just ask for variance,
+which will compute mean and nonzero counts as a side-effect.
 }
