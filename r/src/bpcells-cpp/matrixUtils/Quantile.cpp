@@ -21,10 +21,12 @@ std::vector<T> matrix_quantile_per_col(std::unique_ptr<MatrixLoader<T>>&& mat,
                                        double quantile, 
                                        std::atomic<bool> *user_interrupt) {
     MatrixIterator<T> it(std::move(mat));
+    // keep track of the current number of values in a column
     uint32_t curr_num;
     std::vector<T> res, curr;
+    // clamp quantile to [0,1]
     quantile = std::min(1.0, std::max(0.0, quantile));
-    // uint32_t quantile_idx = std::max(0.0, (std::ceil(quantile * it.rows()) - 1));
+    // represents the number of non-negative values so we can handle edge case between border of negative/zero and negative/positive values
     uint32_t num_neg = 0;
     while (it.nextCol()) {
         if (user_interrupt != NULL && *user_interrupt) return res;
@@ -41,7 +43,7 @@ std::vector<T> matrix_quantile_per_col(std::unique_ptr<MatrixLoader<T>>&& mat,
         uint32_t index = static_cast<uint32_t>(std::floor(pos));
         double h = pos - index;
         std::sort(curr.begin(), curr.end());
-        double col_num;
+        double col_num = 0;
         // type 7 quantiles requires a little bit of extra logic to handle edge cases when there are zeros
         if (index < num_neg) {
             if (index == num_neg - 1) {
@@ -60,26 +62,16 @@ std::vector<T> matrix_quantile_per_col(std::unique_ptr<MatrixLoader<T>>&& mat,
                 col_num = curr[index] * (1-h) + curr[index + 1] * h;
             }
         } else if (index < num_neg + num_zeros) {
-            if (index == num_neg + num_zeros - 1) {
-                if (index < it.rows() - 1) {
-                    // at the boundary between zeros and positive numbers
-                    col_num = curr[index - num_zeros + 1] * h;
-                } else {
-                    // at the last value
-                    col_num = 0;
-                }
-            } else {
-                // in the middle of the zeros
-                col_num = 0;
-            }
-        } else {
-            if (index == it.rows() - 1) {
-                // at the last positive value
+            // if at the boundary between zeros and positives
+            if ((index == num_neg + num_zeros - 1) && (index < it.rows() - 1)) {
+                col_num = curr[index - num_zeros + 1] * h;
+            } 
+        } else if (index == it.rows() -1) {
+            // at the last positive value
                 col_num = curr[-1];
-            } else {
-                // regular case for calculating quantiles
-                col_num = curr[index - num_zeros] * (1-h) + curr[index - num_zeros  + 1] * h;
-            }
+        } else {
+            // regular case for calculating quantiles for positive values
+            col_num = curr[index - num_zeros] * (1-h) + curr[index - num_zeros  + 1] * h;
         }
         res.push_back(col_num);
     }
