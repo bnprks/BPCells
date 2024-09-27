@@ -64,7 +64,7 @@ class InsertionIterator {
         // Copy data to remove our used insertions the start of end_data
         std::memmove(&end_data[0], &end_data[end_idx], sizeof(uint32_t) * (end_capacity - end_idx));
         std::memmove(&end_cell[0], &end_cell[end_idx], sizeof(uint32_t) * (end_capacity - end_idx));
-        // set capacity to of end to equal the number of remaining insertions
+        // set capacity of end to equal to the number of remaining insertions
         end_capacity -= end_idx;
         end_idx = 0;
         // orig_size is the size of end_data before we added the new data
