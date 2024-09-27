@@ -101,6 +101,7 @@ pseudobulk_matrix <- function(mat, cell_groups, method = "sum", clip_values = 1,
   methods <- c("var", "mean", "sum", "nonzeros")
   method <- match.arg(method, choices = methods, several.ok = TRUE)
   assert_is(clip_values, "numeric")
+  assert_true(all(clip_values >= 0 & clip_values <= 1))
   assert_is(threads, "integer")
   # if multiple methods are provided, only need to pass in the top method as it will also calculate the less complex stats
   top_method <- intersect(methods, method)[1]
