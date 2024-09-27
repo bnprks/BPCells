@@ -32,6 +32,7 @@ Contributions welcome :)
 - Fixed plotting crashes when running `trackplot_coverage()` with fragments from a single cluster. (Thanks to @sjessa for directly reporting this bug and coming up with a fix)
 - Fixed issues with `trackplot_coverage()` when called with ranges less than 500 bp in length (Thanks to @bettybliu for directly reporting this bug.)
 - Fix Rcpp warning created when handling compressed matrices with only one non-zero entry (pull request #123)
+- Fixed memory errors when running `writeInsertionBed()` and `writeInsertionBedGraph()` (pull request #{118, 134})
 
 ## Deprecations
 - `trackplot_coverage()` `legend_label` argument is now ignored, as the color legend is no longer shown by default for coverage plots.
