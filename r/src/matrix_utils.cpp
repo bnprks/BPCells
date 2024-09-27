@@ -674,18 +674,18 @@ NumericVector matrix_max_per_col_cpp(SEXP matrix) {
 
 // [[Rcpp::export]]
 List pseudobulk_matrix_cpp(SEXP mat,
-                             std::vector<uint32_t> cell_groups,
-                             std::string method,
-                             bool transpose) {
+                           std::vector<uint32_t> cell_groups,
+                           int method,
+                           bool transpose) {
     PseudobulkStats res = run_with_R_interrupt_check(
         &pseudobulk_matrix<double>,
         take_unique_xptr<MatrixLoader<double>>(mat),
         std::cref(cell_groups),
-        std::cref(method),
+        (PseudobulkStatsMethod)method,
         transpose
     );
     return List::create(
-        Named("non_zeros") = res.non_zeros,
+        Named("nonzeros") = res.non_zeros,
         Named("sum") = res.sum,
         Named("mean") = res.mean,
         Named("var") = res.var
@@ -696,15 +696,6 @@ List pseudobulk_matrix_cpp(SEXP mat,
 std::vector<double> matrix_quantile_per_col_cpp(SEXP mat, double quantile) {
     return run_with_R_interrupt_check(
         &matrix_quantile_per_col<double>,
-        take_unique_xptr<MatrixLoader<double>>(mat),
-        quantile
-    );
-}
-
-// [[Rcpp::export]]
-std::vector<double> matrix_quantile_per_row_cpp(SEXP mat, double quantile) {
-    return run_with_R_interrupt_check(
-        &matrix_quantile_per_row<double>,
         take_unique_xptr<MatrixLoader<double>>(mat),
         quantile
     );

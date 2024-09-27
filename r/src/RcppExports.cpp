@@ -2475,14 +2475,14 @@ BEGIN_RCPP
 END_RCPP
 }
 // pseudobulk_matrix_cpp
-List pseudobulk_matrix_cpp(SEXP mat, std::vector<uint32_t> cell_groups, std::string method, bool transpose);
+List pseudobulk_matrix_cpp(SEXP mat, std::vector<uint32_t> cell_groups, int method, bool transpose);
 RcppExport SEXP _BPCells_pseudobulk_matrix_cpp(SEXP matSEXP, SEXP cell_groupsSEXP, SEXP methodSEXP, SEXP transposeSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< SEXP >::type mat(matSEXP);
     Rcpp::traits::input_parameter< std::vector<uint32_t> >::type cell_groups(cell_groupsSEXP);
-    Rcpp::traits::input_parameter< std::string >::type method(methodSEXP);
+    Rcpp::traits::input_parameter< int >::type method(methodSEXP);
     Rcpp::traits::input_parameter< bool >::type transpose(transposeSEXP);
     rcpp_result_gen = Rcpp::wrap(pseudobulk_matrix_cpp(mat, cell_groups, method, transpose));
     return rcpp_result_gen;
@@ -2497,18 +2497,6 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< SEXP >::type mat(matSEXP);
     Rcpp::traits::input_parameter< double >::type quantile(quantileSEXP);
     rcpp_result_gen = Rcpp::wrap(matrix_quantile_per_col_cpp(mat, quantile));
-    return rcpp_result_gen;
-END_RCPP
-}
-// matrix_quantile_per_row_cpp
-std::vector<double> matrix_quantile_per_row_cpp(SEXP mat, double quantile);
-RcppExport SEXP _BPCells_matrix_quantile_per_row_cpp(SEXP matSEXP, SEXP quantileSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< SEXP >::type mat(matSEXP);
-    Rcpp::traits::input_parameter< double >::type quantile(quantileSEXP);
-    rcpp_result_gen = Rcpp::wrap(matrix_quantile_per_row_cpp(mat, quantile));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -2715,7 +2703,6 @@ static const R_CallMethodDef CallEntries[] = {
     {"_BPCells_matrix_max_per_col_cpp", (DL_FUNC) &_BPCells_matrix_max_per_col_cpp, 1},
     {"_BPCells_pseudobulk_matrix_cpp", (DL_FUNC) &_BPCells_pseudobulk_matrix_cpp, 4},
     {"_BPCells_matrix_quantile_per_col_cpp", (DL_FUNC) &_BPCells_matrix_quantile_per_col_cpp, 2},
-    {"_BPCells_matrix_quantile_per_row_cpp", (DL_FUNC) &_BPCells_matrix_quantile_per_row_cpp, 2},
     {"_BPCells_matrix_identical_uint32_t_cpp", (DL_FUNC) &_BPCells_matrix_identical_uint32_t_cpp, 2},
     {NULL, NULL, 0}
 };

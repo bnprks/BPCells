@@ -7,37 +7,43 @@
 pseudobulk_matrix(
   mat,
   cell_groups,
-  method = c("sum", "mean", "var", "non-zeros"),
-  clip_values = FALSE,
+  method = "sum",
+  clip_values = 1,
   threads = 1L
 )
 }
 \arguments{
 \item{mat}{IterableMatrix object of dimensions features x cells}
 
-\item{method}{(string) Method to aggregate counts.  Current options are:
+\item{cell_groups}{(Character/factor vector)  of cell groups/clusters. Length must be equal to the number of cells.}
+
+\item{method}{(Character vector) Method(s) to aggregate counts. If one method is provided, the output will be a matrix. If multiple methods are provided, the output will be a named list of matrices.
+
+Current options are:
 \itemize{
-\item \code{non-zeros}
+\item \code{nonzeros}
 \item \code{sum}
 \item \code{mean}
 \item \code{var}
 }}
 
-\item{clip_values}{(logical) If TRUE, clip high values to the 99th percentile of each cell.}
+\item{clip_values}{(integer) If set, clip matrix values to the \verb{<clip_values>}th quantile of each cell, between 0 and 1 inclusive.}
 
 \item{threads}{(integer) Number of threads to use.}
 }
 \value{
-(Named list) A list of matrices with each matrix representing a pseudobulk matrix with a different aggregation method.
-Each matrix is of shape (features x groups), and names are one of \code{non_zeros}, \code{sum}, \code{mean}, \code{var}.
+\itemize{
+\item If \code{method} is length \code{1}, returns a matrix of shape \verb{(features x groups)}.
+\item If \code{method} is greater than length \code{1}, returns A list of matrices with each matrix representing a pseudobulk matrix with a different aggregation method.
+Each matrix is of shape \verb{(features x groups)}, and names are one of \code{nonzeros}, \code{sum}, \code{mean}, \code{var}.
+}
 }
 \description{
-Given a features x cells matrix, group cells by \code{cell_groups} and aggregate counts by \code{method} for each
+Given a \verb{(features x cells)} matrix, group cells by \code{cell_groups} and aggregate counts by \code{method} for each
 feature.
 }
 \details{
 The stats are ordered by complexity: nonzero, sum, mean, then variance. All
 less complex stats are calculated in the process of calculating a more complicated stat.
-So to calculate mean and variance simultaneously, just ask for variance,
-which will compute mean and nonzero counts as a side-effect.
+That means it will not take additional time to calculate \code{mean} if \code{var} is also requested.
 }

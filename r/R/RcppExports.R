@@ -757,10 +757,6 @@ matrix_quantile_per_col_cpp <- function(mat, quantile) {
     .Call(`_BPCells_matrix_quantile_per_col_cpp`, mat, quantile)
 }
 
-matrix_quantile_per_row_cpp <- function(mat, quantile) {
-    .Call(`_BPCells_matrix_quantile_per_row_cpp`, mat, quantile)
-}
-
 matrix_identical_uint32_t_cpp <- function(mat1, mat2) {
     .Call(`_BPCells_matrix_identical_uint32_t_cpp`, mat1, mat2)
 }

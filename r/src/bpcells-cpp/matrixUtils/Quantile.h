@@ -19,22 +19,13 @@
 #include "../matrixIterators/ColwiseRank.h"
 namespace BPCells {
 
-
-// Find the quantile for each row in an IterableMatrix.
-// Args:
-// - mat: matrix to compute quantile from
-// - quantile: quantile to compute from each row, between [0,1]
-// Note: This function will probably crash out for large matrices
-template <typename T>
-std::vector<T> matrix_quantile_per_row(std::unique_ptr<MatrixLoader<T>>&& mat, 
-                                       double quantile, 
-                                       std::atomic<bool> *user_interrupt);
-
-
 // Find the `quantile`th value for each column in an IterableMatrix.
+// Uses type 7 quantile calculation, which is the default in R.
 // Args:
 // - mat: matrix to compute quantiles from
 // - quantile: quantile to compute from each column, between [0,1]
+// Returns:
+// - A vector of quantile values, one for each column.
 template <typename T>
 std::vector<T> matrix_quantile_per_col(std::unique_ptr<MatrixLoader<T>>&& mat, 
                                        double quantile, 

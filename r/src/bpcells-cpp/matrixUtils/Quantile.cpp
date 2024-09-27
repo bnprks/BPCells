@@ -9,73 +9,83 @@
 #include "Quantile.h"
 namespace BPCells {
 
-
-// Find the quantile for each row in an IterableMatrix.
-// Args:
-// - mat: matrix to compute quantile from
-// - quantile: quantile to compute from each row, between [0,1]
-// Note: This function will probably crash out for large matrices
-template <typename T>
-std::vector<T> matrix_quantile_per_row(std::unique_ptr<MatrixLoader<T>>&& mat, 
-                                       double quantile, 
-                                       std::atomic<bool> *user_interrupt) {
-    MatrixIterator<T> it(std::move(mat));
-    std::vector<T> res;
-    quantile = std::min(1.0, std::max(0.0, quantile));
-    uint32_t quantile_idx = std::max(0.0, (std::ceil(quantile * it.cols()) - 1));
-    std::vector<std::vector<T>> matrix(it.rows(), std::vector<T>(it.cols(), 0));
-    // need to hold all the rows in memory until all columns have been iterated through
-    // since matrix itself is still in CSR format
-    std::vector<uint32_t> row_count(it.rows(), 0);
-    while (it.nextCol()) {
-        if (user_interrupt != NULL && *user_interrupt) return res;
-        while (it.nextValue()) {
-            matrix[it.row()][row_count[it.row()]] = it.val();
-            row_count[it.row()]++;
-        }
-    }
-    for (auto& row : matrix) {
-        std::nth_element(row.begin(), row.begin() + quantile_idx, row.end());
-        res.push_back(row[quantile_idx]);
-    }
-    return res;
-};
-
 // Find the `quantile`th value for each column in an IterableMatrix.
+// Uses type 7 quantile calculation, which is the default in R.
 // Args:
 // - mat: matrix to compute quantiles from
 // - quantile: quantile to compute from each column, between [0,1]
+// Returns:
+// - A vector of quantile values, one for each column.
 template <typename T>
 std::vector<T> matrix_quantile_per_col(std::unique_ptr<MatrixLoader<T>>&& mat, 
-                                            double quantile, 
-                                            std::atomic<bool> *user_interrupt) {
+                                       double quantile, 
+                                       std::atomic<bool> *user_interrupt) {
     MatrixIterator<T> it(std::move(mat));
     uint32_t curr_num;
     std::vector<T> res, curr;
     quantile = std::min(1.0, std::max(0.0, quantile));
-    uint32_t quantile_idx = std::max(0.0, (std::ceil(quantile * it.rows()) - 1));
+    // uint32_t quantile_idx = std::max(0.0, (std::ceil(quantile * it.rows()) - 1));
+    uint32_t num_neg = 0;
     while (it.nextCol()) {
         if (user_interrupt != NULL && *user_interrupt) return res;
-        curr = std::vector<T>(it.rows(), 0);
+        curr.clear();
         curr_num = 0;
         while (it.nextValue()) {
-            curr[curr_num] = it.val();
+            if (it.val() < 0) num_neg++;
+            curr.push_back(it.val());
             curr_num++;
         }
-        std::nth_element(curr.begin(), curr.begin() + quantile_idx, curr.end());
-        res.push_back(curr[quantile_idx]);
+        uint32_t num_zeros = it.rows() - curr_num;
+        // calculate using type 7 quantile
+        double pos = quantile * (it.rows() - 1);
+        uint32_t index = static_cast<uint32_t>(std::floor(pos));
+        double h = pos - index;
+        std::sort(curr.begin(), curr.end());
+        double col_num;
+        // type 7 quantiles requires a little bit of extra logic to handle edge cases when there are zeros
+        if (index < num_neg) {
+            if (index == num_neg - 1) {
+                if (num_zeros > 0) {
+                    // at the boundary between non-zeros and zeros
+                    col_num = curr[index] * (1-h);
+                } else if (index < it.rows() - 1) {
+                    // there are no zeroes, and index is the last negative value
+                    col_num = curr[index] * (1-h) + curr[index + 1] * h;
+                } else {
+                    //there are no zeroes, and index is the last value
+                    col_num = curr[index];
+                }
+            } else {
+                // regular case for calculating quantiles
+                col_num = curr[index] * (1-h) + curr[index + 1] * h;
+            }
+        } else if (index < num_neg + num_zeros) {
+            if (index == num_neg + num_zeros - 1) {
+                if (index < it.rows() - 1) {
+                    // at the boundary between zeros and positive numbers
+                    col_num = curr[index - num_zeros + 1] * h;
+                } else {
+                    // at the last value
+                    col_num = 0;
+                }
+            } else {
+                // in the middle of the zeros
+                col_num = 0;
+            }
+        } else {
+            if (index == it.rows() - 1) {
+                // at the last positive value
+                col_num = curr[-1];
+            } else {
+                // regular case for calculating quantiles
+                col_num = curr[index - num_zeros] * (1-h) + curr[index - num_zeros  + 1] * h;
+            }
+        }
+        res.push_back(col_num);
     }
     return res;
 };
-template std::vector<double> matrix_quantile_per_row<double>(std::unique_ptr<MatrixLoader<double>>&& mat, 
-                                                             double quantile, 
-                                                             std::atomic<bool> *user_interrupt);
-template std::vector<float> matrix_quantile_per_row<float>(std::unique_ptr<MatrixLoader<float>>&& mat, 
-                                                           double quantile, 
-                                                           std::atomic<bool> *user_interrupt);
-template std::vector<uint32_t> matrix_quantile_per_row<uint32_t>(std::unique_ptr<MatrixLoader<uint32_t>>&& mat,
-                                                                 double quantile, 
-                                                                 std::atomic<bool> *user_interrupt);
+
 template std::vector<float> matrix_quantile_per_col<float>(std::unique_ptr<MatrixLoader<float>>&& mat, 
                                                            double quantile, 
                                                            std::atomic<bool> *user_interrupt);

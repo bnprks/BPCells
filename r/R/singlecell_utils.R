@@ -72,41 +72,56 @@ marker_features <- function(mat, groups, method="wilcoxon") {
 
 #' Aggregate counts matrices by cell group or feature.
 #' 
-#' Given a features x cells matrix, group cells by `cell_groups` and aggregate counts by `method` for each
+#' Given a `(features x cells)` matrix, group cells by `cell_groups` and aggregate counts by `method` for each
 #' feature.
-#' @param method (string) Method to aggregate counts.  Current options are:
-#'  - `non-zeros`
+#' @param cell_groups (Character/factor vector)  of cell groups/clusters. Length must be equal to the number of cells.
+#' @param method (Character vector) Method(s) to aggregate counts. If one method is provided, the output will be a matrix. If multiple methods are provided, the output will be a named list of matrices.
+#' 
+#' Current options are:
+#'  - `nonzeros`
 #'  - `sum`
 #'  - `mean`
 #'  - `var`
-#' @param clip_values (logical) If TRUE, clip high values to the 99th percentile of each cell.
+#' @param clip_values (integer) If set, clip matrix values to the `<clip_values>`th quantile of each cell, between 0 and 1 inclusive.
 #' @param threads (integer) Number of threads to use.
-#' @return (Named list) A list of matrices with each matrix representing a pseudobulk matrix with a different aggregation method.
-#' Each matrix is of shape (features x groups), and names are one of `non_zeros`, `sum`, `mean`, `var`.
+#' @return 
+#'  - If `method` is length `1`, returns a matrix of shape `(features x groups)`.
+#'  - If `method` is greater than length `1`, returns A list of matrices with each matrix representing a pseudobulk matrix with a different aggregation method.
+#' Each matrix is of shape `(features x groups)`, and names are one of `nonzeros`, `sum`, `mean`, `var`.
 #' @details The stats are ordered by complexity: nonzero, sum, mean, then variance. All
 #' less complex stats are calculated in the process of calculating a more complicated stat.
-#' So to calculate mean and variance simultaneously, just ask for variance,
-#' which will compute mean and nonzero counts as a side-effect.
+#' That means it will not take additional time to calculate `mean` if `var` is also requested.
 #' @inheritParams marker_features
 #' @export
-pseudobulk_matrix <- function(mat, cell_groups, method = c("sum", "mean", "var", "non-zeros"), clip_values = FALSE, threads = 1L) {
+pseudobulk_matrix <- function(mat, cell_groups, method = "sum", clip_values = 1, threads = 1L) {
   assert_is(mat, "IterableMatrix")
   assert_is(cell_groups, c("factor", "character", "numeric"))
   cell_groups <- as.factor(cell_groups)
-  method <- match.arg(method)
-  assert_is(clip_values, "logical")
+  assert_is(method, "character")
+  methods <- c("var", "mean", "sum", "nonzeros")
+  method <- match.arg(method, choices = methods, several.ok = TRUE)
+  assert_is(clip_values, "numeric")
   assert_is(threads, "integer")
-
-  if (clip_values) {
-    quantile_values <- matrix_quantile_per_cell(mat, 0.99)
+  # if multiple methods are provided, only need to pass in the top method as it will also calculate the less complex stats
+  top_method <- intersect(methods, method)[1]
+  top_method_number <- match(top_method, rev(methods)) - 1
+  if (clip_values != 1) {
+    quantile_values <- colQuantiles(mat, clip_values)
+    # if all values are 0, skip
     mat <- min_by_col(mat, quantile_values)
   }
   iter <- iterate_matrix(parallel_split(mat, threads, threads*4))
   cell_groups <- as.factor(cell_groups)
-  res <- pseudobulk_matrix_cpp(iter, cell_groups = as.integer(cell_groups), method = method, transpose = mat@transpose)
+  res <- pseudobulk_matrix_cpp(iter, cell_groups = as.integer(cell_groups), method = top_method_number, transpose = mat@transpose)
+  # if res is a single matrix, return with colnames and rownames
+  if (length(method) == 1) {
+    colnames(res[[method]]) <- levels(cell_groups)
+    rownames(res[[method]]) <- rownames(mat)
+    return(res[[method]])
+  }
   # give colnames and rownames for each matrix in res, which is a named list
   for (res_slot in names(res)) {
-    if (length(res[[res_slot]]) == 0) {
+    if ((length(res[[res_slot]]) == 0) || !(res_slot %in% method)) {
       res[[res_slot]] <- NULL
     } else {
       colnames(res[[res_slot]]) <- levels(cell_groups)
@@ -116,21 +131,39 @@ pseudobulk_matrix <- function(mat, cell_groups, method = c("sum", "mean", "var",
   return(res)
 }
 
-#' Find the nth quantile value of each cell in a matrix.
-#' @param quantile (numeric) quantile value to be found from each cell, between [0, 1].
-#' @return (Numeric) cell quantile values with number of entries equal to number of colums in the matrix.
-#' @inheritParams marker_features
+
+#' Find the nth quantile value of each column in a matrix.
+#' @param x IterableMatrix object or a matrix-like object.
+#' @param probs (Numeric) Quantile value(s) to be computed, between 0 and 1.
+#' @return Numeric vector of quantile values for each column.
+#' @describeIn IterableMatrix-methods Calculate colQuantiles (replacement for `matrixStats::colQuantiles`)
 #' @export
-matrix_quantile_per_cell <- function(mat, quantile = 0.99) {
-  assert_is(mat, "IterableMatrix")
-  assert_is(quantile, "numeric")
-  assert_true(quantile >= 0 && quantile < 1)
-  
-  # NOTE: Have to keep the entire matrix in memory if doing `quantile_per_row()`
-  # for this operation which obviously doesn't mean it doesn't work if transposed.
-  if (mat@transpose) stop("matrix_quantile_per_cell() does not support transposed matrices. \nPlease use transpose_storage_order().")
-  iter <- iterate_matrix(convert_matrix_type(mat, "double"))
-  res <- matrix_quantile_per_col_cpp(iter, quantile)
-  names(res) <- colnames(mat)
+colQuantiles <- function(x, probs = 0.99, ...) UseMethod("colQuantiles")
+#' @export
+colQuantiles.default <- function(x, probs = 0.99, ..., na.rm = FALSE, type = 7) {
+  if (requireNamespace("MatrixGenerics", quietly = TRUE)) {
+    MatrixGenerics::colQuantiles(x, probs = probs, na.rm = na.rm, type = type, ...)
+  } else if (requireNamespace("matrixStats", quietly = TRUE)) {
+    matrixStats::colQuantiles(x, probs = probs, na.rm = na.rm, type = type, ...)
+  } else {
+    stop("Cannot run colQuantiles on a non-BPCells object unless MatrixGenerics or matrixStats is installed.")
+  }
+}
+#' @export
+colQuantiles.IterableMatrix <- function(x, probs = 0.99, ...) {
+  assert_is(x, "IterableMatrix")
+  assert_is(probs, "numeric")
+  assert_true(all(probs >= 0 & probs <= 1))
+  if (x@transpose) {
+    stop("colQuantiles() does not support transposed matrices.\nPlease use transpose_storage_order().")
+  }
+  iter <- iterate_matrix(convert_matrix_type(x, "double"))
+  res <- matrix_quantile_per_col_cpp(iter, probs)
+  names(res) <- colnames(x)
   return(res)
 }
+rlang::on_load({
+  if (requireNamespace("MatrixGenerics", quietly = TRUE)) {
+    setMethod("colQuantiles", "IterableMatrix", colQuantiles.IterableMatrix)
+  }
+})

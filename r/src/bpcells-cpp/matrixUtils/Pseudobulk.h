@@ -18,7 +18,13 @@
 
 #include "../matrixIterators/ColwiseRank.h"
 namespace BPCells {
-
+// Enum to choose which statistic to compute for pseudobulk matrix creation
+enum class PseudobulkStatsMethod {
+    NonZeros = 0,
+    Sum = 1,
+    Mean = 2,
+    Variance = 3
+};
 struct PseudobulkStats {
     Eigen::ArrayXXd non_zeros;
     Eigen::ArrayXXd sum;
@@ -26,21 +32,20 @@ struct PseudobulkStats {
     Eigen::ArrayXXd var;
 };
 
-// Enum to choose which statistic to compute for pseudobulk matrix creation
-// enum class Stats { None = 0, NonZeroCount = 1, Mean = 2, Variance = 3 };
 
-// Take a matrix and do a pseudobulk aggregation on the matrix.  Av
+// Take a matrix and do a pseudobulk aggregation on the matrix.
+// Note that when calculating a more complex statistic, the simpler ones are also calculated.  The order of complexity is NonZeros < Sum < Mean < Variance.
 // Args:
 // - mat: Matrix to compute variance from.
 // - cell_groups: Mapping of columns to groups.
-// - method: Method to use.  One of "non-zeros", "sum", "mean", "variance",
-// - transpose: Whether the matrix is transposed.
+// - Method to use for calculating pseudobulk stats.
+// - transpose: Whether the matrix is transposed. Whether the matrix is transposed. If false, groups columns and calculates stats per-row. If true, groups rows and calculates stats per-column.
 // Returns:
-// - A matrix of variances in the shape of (num_features, num_groups).
+// - PseudobulkStats struct containing the requested pseudobulk aggregation, in the shape of (num_features, num_groups).
 template <typename T>
 PseudobulkStats pseudobulk_matrix(std::unique_ptr<MatrixLoader<T>> &&mat,
                                   const std::vector<uint32_t>& cell_groups,
-                                  const std::string& method,
+                                  PseudobulkStatsMethod method,
                                   bool transpose,
                                   std::atomic<bool> *user_interrupt);
 } // namespace BPCells
