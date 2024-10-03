@@ -7,16 +7,7 @@
 // except according to those terms.
 
 #pragma once
-
-#ifndef RCPP_EIGEN
-#include <Eigen/SparseCore>
-#else
-#define RCPP_NO_RTTI
-#define RCPP_NO_SUGAR
-#include <RcppEigen.h>
-#endif
-
-#include "../matrixIterators/ColwiseRank.h"
+#include "../matrixIterators/MatrixIterator.h"
 namespace BPCells {
 
 // Find the `quantile`th value for each column in an IterableMatrix.

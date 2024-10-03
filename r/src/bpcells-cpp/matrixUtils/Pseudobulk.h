@@ -7,16 +7,7 @@
 // except according to those terms.
 
 #pragma once
-
-#ifndef RCPP_EIGEN
-#include <Eigen/SparseCore>
-#else
-#define RCPP_NO_RTTI
-#define RCPP_NO_SUGAR
-#include <RcppEigen.h>
-#endif
-
-#include "../matrixIterators/ColwiseRank.h"
+#include "../matrixIterators/MatrixIterator.h"
 namespace BPCells {
 // Enum to choose which statistic to compute for pseudobulk matrix creation
 enum class PseudobulkStatsMethod {
@@ -25,13 +16,13 @@ enum class PseudobulkStatsMethod {
     Mean = 2,
     Variance = 3
 };
+
 struct PseudobulkStats {
     Eigen::ArrayXXd non_zeros;
     Eigen::ArrayXXd sum;
     Eigen::ArrayXXd mean;
     Eigen::ArrayXXd var;
 };
-
 
 // Take a matrix and do a pseudobulk aggregation on the matrix.
 // Note that when calculating a more complex statistic, the simpler ones are also calculated.  The order of complexity is NonZeros < Sum < Mean < Variance.
