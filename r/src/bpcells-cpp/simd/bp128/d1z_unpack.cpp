@@ -36,6 +36,7 @@ BP128_UNPACK_DECL(
     // Transform Code (OutReg is the data)
     {
         // Zigzag decode: (i >> 1) ^ -(i & 1)
+        // See https://lemire.me/blog/2022/11/25/making-all-your-integers-positive-with-zigzag-encoding/
         OutReg =
             Xor(ShiftRight<1>(OutReg), BitCast(d, Neg(BitCast(d_signed, And(OutReg, Set(d, 1))))));
 

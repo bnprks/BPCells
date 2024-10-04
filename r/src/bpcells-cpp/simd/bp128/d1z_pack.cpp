@@ -35,11 +35,12 @@ BP128_PACK_DECL(
     ,
     // Transform Code (InReg is the input data)
     {
-        // Delta encode: Input: [a,b,c,d]; [?,?,?,h]; Output [a-h, b-a, c-b, d-c]
+        // Delta encode: InReg=[a,b,c,d]; prevOffset=[?,?,?,h]; Output [a-h, b-a, c-b, d-c]
         const auto tmp = Sub(InReg, CombineShiftRightLanes<3>(d, InReg, prevOffset));
         // Update offset for next iteration
         prevOffset = InReg;
         // Zigzag encode: (i >> 31) ^ (i << 1)    (arithmetic shift right here)
+        // See https://lemire.me/blog/2022/11/25/making-all-your-integers-positive-with-zigzag-encoding/
         InReg = Xor(BitCast(d, ShiftRight<31>(BitCast(d_signed, tmp))), ShiftLeft<1>(tmp));
     },
     // Call args in parens

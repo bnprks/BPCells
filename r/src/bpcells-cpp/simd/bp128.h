@@ -13,6 +13,17 @@
 
 namespace BPCells::simd::bp128 {
 
+
+// ##############################################################################
+// #                           REFERENCE RESOURCES                              #
+// ##############################################################################
+// - Original BP-128 paper by Daniel Lemire: https://arxiv.org/pdf/1209.2137
+// - Check out pack128 and unpack128 from the tests in `test-bp128.cpp` for an easy-to-read implementation
+//   of the vanilla BP-128 logic
+// - Daniel Lemire repo with some of these functions implemented: https://github.com/lemire/simdcomp
+//    - A bit tough to read, but was an important reference for the original implementation
+
+
 /**
  * @brief Unpack 128 bitpacked 32-bit integers
  * 

@@ -33,6 +33,7 @@ BP128_PACK_DECL(
     // Transform Code (InReg is the input data)
     {
         const auto tmp = InReg;
+        // Delta encode: InReg=[a,b,c,d]; prevOffset=[?,?,?,h]; Output [a-h, b-a, c-b, d-c]
         InReg = Sub(InReg, CombineShiftRightLanes<3>(d, InReg, prevOffset));
         prevOffset = tmp;
     },
