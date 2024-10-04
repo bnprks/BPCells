@@ -18,7 +18,6 @@ set(CMAKE_CXX_STANDARD 17)
 # add_link_options(-fsanitize=address -fsanitize=undefined)
 
 set(SRC bpcells-cpp)
-set(SRC_INCLUDE bpcells-cpp vendor)
 add_library(
     bitpacking 
     ${SRC}/simd/bp128/d1_maxbits.cpp
@@ -36,7 +35,6 @@ add_library(
     ${SRC}/simd/bp128/vanilla_maxbits.cpp
     ${SRC}/simd/bp128/vanilla_pack.cpp
     ${SRC}/simd/bp128/vanilla_unpack.cpp
-    ${SRC}/simd/bp128/bp128-Nx128.cpp
 )
 target_link_libraries(
     bitpacking
@@ -46,7 +44,7 @@ target_include_directories(
     bitpacking
     PUBLIC
     ${HWY_INCLUDE_DIRS}
-    ${SRC_INCLUDE}
+    ${SRC}
 )
 
 add_library(
@@ -61,7 +59,7 @@ target_include_directories(
     simd_math
     PUBLIC
     ${HWY_INCLUDE_DIRS}
-    ${SRC_INCLUDE}
+    ${SRC}
 )
 
 add_library(
@@ -76,7 +74,7 @@ target_include_directories(
     simd_overlaps
     PUBLIC
     ${HWY_INCLUDE_DIRS}
-    ${SRC_INCLUDE}
+    ${SRC}
 )
 
 
@@ -98,7 +96,7 @@ target_include_directories(
     arrayIO 
     PUBLIC 
     ${HDF5_INCLUDE_DIRS}
-    ${SRC_INCLUDE}
+    ${SRC}
 )
 
 add_library(
@@ -125,7 +123,7 @@ target_include_directories(
     fragmentIterators 
     PUBLIC 
     ${ZLIB_INCLUDE_DIRS}
-    ${SRC_INCLUDE}
+    ${SRC}
 )
 
 ### TESTING ###
@@ -179,7 +177,6 @@ add_executable(
     test-matrixIO
     tests/test-matrixIO.cpp
     ${SRC}/matrixIterators/ImportMatrixHDF5.cpp
-    ${SRC}/simd/dense-multiply.cpp
 )
 target_link_libraries(test-matrixIO arrayIO Eigen3::Eigen gtest_main gmock)
 gtest_discover_tests(test-matrixIO)
@@ -188,7 +185,6 @@ add_executable(
     test-matrixTranspose
     tests/test-matrixTranspose.cpp
     ${SRC}/matrixIterators/ImportMatrixHDF5.cpp
-    ${SRC}/simd/dense-multiply.cpp
 )
 target_link_libraries(test-matrixTranspose arrayIO Eigen3::Eigen gtest_main)
 gtest_discover_tests(test-matrixTranspose)
@@ -213,7 +209,6 @@ add_executable(test-matrixMath
     ${SRC}/matrixTransforms/Min.cpp
     ${SRC}/matrixTransforms/Scale.cpp
     ${SRC}/matrixTransforms/Shift.cpp
-    ${SRC}/simd/dense-multiply.cpp
 )
 
 target_include_directories(test-matrixMath PUBLIC ${SRC})
@@ -226,7 +221,6 @@ add_executable(
     ${SRC}/matrixIterators/PeakMatrix.cpp
     ${SRC}/matrixIterators/TileMatrix.cpp
     ${SRC}/simd/overlaps.cpp
-    ${SRC}/simd/dense-multiply.cpp
 )
 target_link_libraries(test-peakMatrix 
     Eigen3::Eigen
