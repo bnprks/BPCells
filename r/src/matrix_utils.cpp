@@ -10,7 +10,6 @@
 #define RCPP_NO_SUGAR
 #include <Rcpp.h>
 #include <RcppEigen.h>
-#include <string>
 #include "bpcells-cpp/matrixIterators/CSparseMatrix.h"
 #include "bpcells-cpp/matrixIterators/ColwiseRank.h"
 #include "bpcells-cpp/matrixIterators/ConcatenateMatrix.h"
@@ -688,16 +687,18 @@ List pseudobulk_matrix_cpp(SEXP mat,
         Named("nonzeros") = res.non_zeros,
         Named("sum") = res.sum,
         Named("mean") = res.mean,
-        Named("var") = res.var
+        Named("variance") = res.var
     );
 }
 
 // [[Rcpp::export]]
-std::vector<double> matrix_quantile_per_col_cpp(SEXP mat, double quantile) {
+std::vector<double> matrix_quantile_per_col_cpp(SEXP mat, double quantile, double alpha, double beta) {
     return run_with_R_interrupt_check(
         &matrix_quantile_per_col<double>,
         take_unique_xptr<MatrixLoader<double>>(mat),
-        quantile
+        quantile,
+        alpha,
+        beta
     );
 }
 

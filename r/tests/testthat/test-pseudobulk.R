@@ -23,6 +23,7 @@ create_pseudobulk_r <- function(mat, cell_group, method) {
   )
   return(as.matrix(res))
 }
+
 test_that("Pseudobulk aggregation works", {
   m0 <- generate_sparse_matrix(20, 10, max_val = 10)
   m1 <- m0 |> as("IterableMatrix")
@@ -59,7 +60,7 @@ test_that("Pseudobulk aggregation works", {
       # make sure that we dont check for variances if we have number of groups == number of cells
       if (length(unique(cell_group)) < ncol(m)) {
         m_var <- create_pseudobulk_r(m, cell_group, "var")
-        m_bpcells_var <- pseudobulk_matrix(m_bpcells, cell_group, method = "var")
+        m_bpcells_var <- pseudobulk_matrix(m_bpcells, cell_group, method = "variance")
         expect_equal(m_var, m_bpcells_var)
       }
     }
@@ -72,7 +73,7 @@ test_that("Pseudobulk aggregation works with multiple return types", {
   m0 <- as.matrix(m0)
   m0_t <- t(m0)
   m1_t <- t(m1)
-  methods <- c("nonzeros", "sum", "mean", "var")
+  methods <- c("nonzeros", "sum", "mean", "variance")
   for (matrices in list(list(m0_t, m1_t), list(m0, m1))) {
     # Check across two equal groups, one group, and groups of equal length
     m <- matrices[[1]]
@@ -86,7 +87,7 @@ test_that("Pseudobulk aggregation works with multiple return types", {
       for (second_method_idx in seq(first_method_idx+1, length(methods))) {
         methods_of_interest <- c(methods[first_method_idx], methods[second_method_idx])
         m_bpcells_res <- pseudobulk_matrix(m_bpcells, cell_group, method = methods_of_interest)
-        if ("var" %in% methods_of_interest) {
+        if ("variance" %in% methods_of_interest) {
           expect_equal(m_var, m_bpcells_res$var)
         }
         if ("mean" %in% methods_of_interest) {
@@ -101,6 +102,9 @@ test_that("Pseudobulk aggregation works with multiple return types", {
       }
     }
   }
+  # Check that the function errors out when an invalid method is passed
+  expect_error(pseudobulk_matrix(m1, cell_group, method = "nonexistent_method"))
+  expect_error(pseudobulk_matrix(m1, cell_group, method = c("nonexistent_method", "sum")))
 })
 
 test_that("Matrix quantiles work", {
@@ -108,8 +112,11 @@ test_that("Matrix quantiles work", {
   m1 <- m0 |> as("IterableMatrix")
   m0 <- as.matrix(m0)
   for (quantile in c(0, 0.25, 0.5, 0.75, 0.99)) {
-    m_quantile <- tibble::as_tibble(m0) %>% apply(2, quantile, probs = quantile, type = 7)
-    m_quantile_bpcells <- colQuantiles(m1, quantile)
-    expect_equal(m_quantile, m_quantile_bpcells)
+    for (type in c(4, 5, 6, 7, 8, 9)) {
+      m_quantile <- tibble::as_tibble(m0) %>% apply(2, quantile, probs = quantile, type = type)
+      m_quantile_bpcells <- colQuantiles(m1, probs = quantile, type = type)
+      expect_equal(m_quantile, m_quantile_bpcells, info = paste("Quantile:", quantile, "Type:", type))
+    }
+    
   }
 })

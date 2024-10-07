@@ -28,19 +28,16 @@ PseudobulkStats pseudobulk_matrix(std::unique_ptr<MatrixLoader<T>> &&mat,
     MatrixIterator<T> it(std::move(mat));
     std::vector<double> group_count_vec;
     struct PseudobulkStats res;
-    uint32_t group_num = 0;
     for (auto& cell_group : cell_groups) {
-        if (cell_group > group_num) {
-            group_count_vec.push_back(1);
-            group_num++;
-        } else {
-            group_count_vec[cell_group - 1]++;
+        if (cell_group >= group_count_vec.size()) {
+            group_count_vec.resize(cell_group + 1);
         }
+        group_count_vec[cell_group]++;
     }
-    Eigen::ArrayXd group_count = Eigen::Map<Eigen::Array<double, 1, Eigen::Dynamic>>(group_count_vec.data(), group_count_vec.size());
+    Eigen::Map<Eigen::Array<double, 1, Eigen::Dynamic>> group_count(group_count_vec.data(), group_count_vec.size());
     // If transposed, also keep matrix transposed with groups as rows for cache-friendliness
-    uint32_t num_rows = transpose ? group_num : it.rows();
-    uint32_t num_cols = transpose ? it.cols() : group_num;
+    uint32_t num_rows = transpose ? group_count_vec.size() : it.rows();
+    uint32_t num_cols = transpose ? it.cols() : group_count_vec.size();
     res.non_zeros = Eigen::ArrayXXd::Zero(num_rows, num_cols);
     if (method != PseudobulkStatsMethod::NonZeros) res.sum = Eigen::ArrayXXd::Zero(num_rows, num_cols);
     if (method == PseudobulkStatsMethod::Variance || method == PseudobulkStatsMethod::Mean) res.mean = Eigen::ArrayXXd::Zero(num_rows, num_cols);
@@ -56,31 +53,31 @@ PseudobulkStats pseudobulk_matrix(std::unique_ptr<MatrixLoader<T>> &&mat,
             const uint32_t count = it.capacity();
             if (method == PseudobulkStatsMethod::Sum || method == PseudobulkStatsMethod::NonZeros) {
                 for (uint32_t i = 0; i < count; i++) {
-                    col_idx = transpose ? col : cell_groups[col] - 1;
-                    row_idx = transpose ? cell_groups[row_data[i]] - 1 : row_data[i];
+                    col_idx = transpose ? col : cell_groups[col];
+                    row_idx = transpose ? cell_groups[row_data[i]] : row_data[i];
                     res.non_zeros(row_idx, col_idx)++;
                 }
             }
             if (method != PseudobulkStatsMethod::NonZeros) {
                 // Although technically not required, we calculate sum for all methods except non-zeros
                 for (uint32_t i = 0; i < count; i++) {
-                    col_idx = transpose ? col : cell_groups[col] - 1;
-                    row_idx = transpose ? cell_groups[row_data[i]] - 1 : row_data[i];
+                    col_idx = transpose ? col : cell_groups[col];
+                    row_idx = transpose ? cell_groups[row_data[i]] : row_data[i];
                     res.sum(row_idx, col_idx) += val_data[i];
                 }
             }
             if (method == PseudobulkStatsMethod::Mean) {
                 for (uint32_t i = 0; i < count; i++) {
-                    col_idx = transpose ? col : cell_groups[col] - 1;
-                    row_idx = transpose ? cell_groups[row_data[i]] - 1 : row_data[i];
+                    col_idx = transpose ? col : cell_groups[col];
+                    row_idx = transpose ? cell_groups[row_data[i]] : row_data[i];
                     update_mean(val_data[i], res.non_zeros(row_idx, col_idx), res.mean(row_idx, col_idx));
                     // res.non_zeros(row_idx, col_idx)++;
                     // res.mean(row_idx, col_idx) += (val_data[i] - res.mean(row_idx, col_idx)) / res.non_zeros(row_idx, col_idx);
                 }
             } else if (method == PseudobulkStatsMethod::Variance) {
                 for (uint32_t i = 0; i < count; i++) {
-                    col_idx = transpose ? col : cell_groups[col] - 1;
-                    row_idx = transpose ? cell_groups[row_data[i]] - 1 : row_data[i];
+                    col_idx = transpose ? col : cell_groups[col];
+                    row_idx = transpose ? cell_groups[row_data[i]] : row_data[i];
                     update_mean_and_variance(val_data[i], res.non_zeros(row_idx, col_idx), res.mean(row_idx, col_idx), res.var(row_idx, col_idx));
                 }
             }
@@ -95,16 +92,13 @@ PseudobulkStats pseudobulk_matrix(std::unique_ptr<MatrixLoader<T>> &&mat,
         num_rows = num_cols;
     }
     if (method == PseudobulkStatsMethod::Mean || method == PseudobulkStatsMethod::Variance) {
-        // replicating group_count to match the shape of res.mean.  Element-wise operations aren't happy with using broadcasting for some reason
-        // instead of using Matrix/Vector type (rowwise keeps detecting array as a column vector even after transpose)
-        // StackOverflow says at compilation time it should be optimized to broadcast
-        Eigen::ArrayXXd broad_group_count = group_count.replicate(1, num_rows).transpose();
         if (method == PseudobulkStatsMethod::Variance) {
             // Fix variance calculation to consider non-zero count
-            res.var =  (res.var + (res.mean.square() * res.non_zeros * (broad_group_count - res.non_zeros) / broad_group_count)) / (broad_group_count - 1);
+            res.var =  (res.var + (res.mean.square() * res.non_zeros * (((-res.non_zeros).rowwise() + group_count).rowwise() / group_count))).rowwise() / (group_count - 1);
         }
         // Fix mean calculation to consider non-zero count
-        res.mean = (res.mean * res.non_zeros) / broad_group_count;
+        //res.mean = (res.mean * res.non_zeros) / broad_group_count;
+        res.mean = (res.mean * res.non_zeros).rowwise() / group_count;
     }
     return res;
 };

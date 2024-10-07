@@ -2489,14 +2489,16 @@ BEGIN_RCPP
 END_RCPP
 }
 // matrix_quantile_per_col_cpp
-std::vector<double> matrix_quantile_per_col_cpp(SEXP mat, double quantile);
-RcppExport SEXP _BPCells_matrix_quantile_per_col_cpp(SEXP matSEXP, SEXP quantileSEXP) {
+std::vector<double> matrix_quantile_per_col_cpp(SEXP mat, double quantile, double alpha, double beta);
+RcppExport SEXP _BPCells_matrix_quantile_per_col_cpp(SEXP matSEXP, SEXP quantileSEXP, SEXP alphaSEXP, SEXP betaSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< SEXP >::type mat(matSEXP);
     Rcpp::traits::input_parameter< double >::type quantile(quantileSEXP);
-    rcpp_result_gen = Rcpp::wrap(matrix_quantile_per_col_cpp(mat, quantile));
+    Rcpp::traits::input_parameter< double >::type alpha(alphaSEXP);
+    Rcpp::traits::input_parameter< double >::type beta(betaSEXP);
+    rcpp_result_gen = Rcpp::wrap(matrix_quantile_per_col_cpp(mat, quantile, alpha, beta));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -2702,7 +2704,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_BPCells_matrix_max_per_row_cpp", (DL_FUNC) &_BPCells_matrix_max_per_row_cpp, 1},
     {"_BPCells_matrix_max_per_col_cpp", (DL_FUNC) &_BPCells_matrix_max_per_col_cpp, 1},
     {"_BPCells_pseudobulk_matrix_cpp", (DL_FUNC) &_BPCells_pseudobulk_matrix_cpp, 4},
-    {"_BPCells_matrix_quantile_per_col_cpp", (DL_FUNC) &_BPCells_matrix_quantile_per_col_cpp, 2},
+    {"_BPCells_matrix_quantile_per_col_cpp", (DL_FUNC) &_BPCells_matrix_quantile_per_col_cpp, 4},
     {"_BPCells_matrix_identical_uint32_t_cpp", (DL_FUNC) &_BPCells_matrix_identical_uint32_t_cpp, 2},
     {NULL, NULL, 0}
 };

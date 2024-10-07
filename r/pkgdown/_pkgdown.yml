@@ -75,7 +75,6 @@ reference:
   - call_peaks_tile
   - merge_peaks_iterative
   - write_insertion_bedgraph
-  - pseudobulk_matrix
 
 - subtitle: "Fragment Operations"
 - contents:
@@ -124,6 +123,7 @@ reference:
   - apply_by_row
   - regress_out
   - IterableMatrix-methods
+  - pseudobulk_matrix
 
 - title: "Reference Annotations"
 - contents:
