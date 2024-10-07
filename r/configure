@@ -1,8 +1,9 @@
 #!/bin/bash
+
 if [ -z $BPCELLS_DEBUG_INSTALL ]; then 
-    ERR=/dev/null
+    exec 3>/dev/null
 else
-    ERR=/dev/stdout
+    exec 3>&1
     set -x
 fi
 
@@ -21,9 +22,11 @@ fi
 CC=$("${R_HOME}/bin/R" CMD config CC)
 CXX=$("${R_HOME}/bin/R" CMD config CXX)
 
-CFLAGS=$("${R_HOME}/bin/R" CMD config CFLAGS)
-CXXFLAGS=$("${R_HOME}/bin/R" CMD config CXXFLAGS)
-LDFLAGS=$("${R_HOME}/bin/R" CMD config LDFLAGS)
+ENV_CFLAGS="${CFLAGS-}"
+ENV_LDFLAGS="${LDFLAGS-}"
+CFLAGS="$("${R_HOME}/bin/R" CMD config CFLAGS) $ENV_CFLAGS"
+CXXFLAGS="$("${R_HOME}/bin/R" CMD config CXXFLAGS) $ENV_CFLAGS"
+LDFLAGS="$("${R_HOME}/bin/R" CMD config LDFLAGS) $ENV_LDFLAGS"
 ############################
 # HDF5 compatibility check
 ############################
@@ -34,14 +37,14 @@ echo "Testing hdf5 by compiling example program..."
 HDF5_CFLAGS=""
 HDF5_LIBS="-lhdf5"
 HDF5_OK=""
-$CC tools/h5write.c $CFLAGS $LDFLAGS $HDF5_CFLAGS $HDF5_LIBS -o tools/h5write 2>$ERR && HDF5_OK="yes";
+$CC tools/h5write.c $CFLAGS $LDFLAGS $HDF5_CFLAGS $HDF5_LIBS -o tools/h5write 2>&3 && HDF5_OK="yes";
 
 # pkg-config flags
 if [ -z $HDF5_OK ]; then
     printf "\n\nRetrying with pkg-config flags...\n"
-    if HDF5_CFLAGS="$(pkg-config hdf5 --cflags 2>$ERR)" && \
-        HDF5_LIBS="$(pkg-config hdf5 --libs 2>$ERR)"; then
-        $CC tools/h5write.c $CFLAGS $LDFLAGS $HDF5_CFLAGS $HDF5_LIBS -o tools/h5write 2>$ERR && HDF5_OK="yes";
+    if HDF5_CFLAGS="$(pkg-config hdf5 --cflags 2>&3)" && \
+        HDF5_LIBS="$(pkg-config hdf5 --libs 2>&3)"; then
+        $CC tools/h5write.c $CFLAGS $LDFLAGS $HDF5_CFLAGS $HDF5_LIBS -o tools/h5write 2>&3 && HDF5_OK="yes";
     else
         echo "Error running 'pkg-config hdf5 --cflags --libs'"
     fi
@@ -53,8 +56,8 @@ fi
 # The basic idea is to scrape -I, -L, -l, and -rpath arguments found from running h5cc -show and h5cc -showconfig
 if [ -z $HDF5_OK ]; then
     printf "\n\nSearching for config information with h5cc -showconfig and h5cc -show...\n"
-    if H5CC_CONFIG=$(h5cc -showconfig 2>$ERR) && \
-        H5CC_CONFIG=$(echo "$H5CC_CONFIG" | awk -F: '/FLAGS|Extra libraries:/ {printf("%s ", $2)}' 2>$ERR) &&\
+    if H5CC_CONFIG=$(h5cc -showconfig 2>&3) && \
+        H5CC_CONFIG=$(echo "$H5CC_CONFIG" | awk -F: '/FLAGS|Extra libraries:/ {printf("%s ", $2)}' 2>&3) &&\
         H5CC_CONFIG2=$(h5cc -show); then
         
         HDF5_CFLAGS=""
@@ -81,7 +84,7 @@ if [ -z $HDF5_OK ]; then
           esac
         done
         HDF5_LIBS="$HDF5_LIBS -lhdf5"
-        $CC tools/h5write.c $CFLAGS $LDFLAGS $HDF5_CFLAGS $HDF5_LIBS -o tools/h5write 2>$ERR && HDF5_OK="yes";
+        $CC tools/h5write.c $CFLAGS $LDFLAGS $HDF5_CFLAGS $HDF5_LIBS -o tools/h5write 2>&3 && HDF5_OK="yes";
     else
         echo "Failure running either 'h5cc -show' or: 'h5cc -showconfig | awk -F: '/FLAGS|Extra libraries:/ {printf("%s ", \$2)}'"
     fi
@@ -95,7 +98,7 @@ if [ -z $HDF5_OK ]; then
     else
         HDF5_CFLAGS="-I$CONDA_PREFIX/include"
         HDF5_LIBS="-Wl,-rpath,$CONDA_PREFIX/lib -L$CONDA_PREFIX/lib -lhdf5"
-        $CC tools/h5write.c $CFLAGS $LDFLAGS $HDF5_CFLAGS $HDF5_LIBS -o tools/h5write 2>$ERR && HDF5_OK="yes";
+        $CC tools/h5write.c $CFLAGS $LDFLAGS $HDF5_CFLAGS $HDF5_LIBS -o tools/h5write 2>&3 && HDF5_OK="yes";
     fi
 fi
 
@@ -114,11 +117,11 @@ echo "HDF5_LIBS='${HDF5_LIBS}'"
 CXX17_OK=""
 CXX_FS_FLAG=""
 printf "\nTesting C++17 filesystem feature support..."
-$CXX tools/cxx17_filesystem.cc $CXXFLAGS $LDFLAGS -std=c++17 $CXX_FS_FLAG -o tools/cxx17_filesystem 2>$ERR && CXX17_OK="yes";
+$CXX tools/cxx17_filesystem.cc $CXXFLAGS $LDFLAGS -std=c++17 $CXX_FS_FLAG -o tools/cxx17_filesystem 2>&3 && CXX17_OK="yes";
 if [ -z $CXX17_OK ]; then
     # Compiler support flag for gcc
     CXX_FS_FLAG="-lstdc++fs"
-    $CXX tools/cxx17_filesystem.cc $CXXFLAGS $LDFLAGS -std=c++17 $CXX_FS_FLAG -o tools/cxx17_filesystem 2>$ERR && CXX17_OK="yes";
+    $CXX tools/cxx17_filesystem.cc $CXXFLAGS $LDFLAGS -std=c++17 $CXX_FS_FLAG -o tools/cxx17_filesystem 2>&3 && CXX17_OK="yes";
     if [ ! -z $CXX17_OK ]; then
         printf "\nWarning: your compiler version is old, and may run in to compile errors with BPCells.\n"
         printf "Consider installing a newer compiler version and setting CC and CXX in ~/.R/Makevars\n"
@@ -129,7 +132,7 @@ fi
 if [ -z $CXX17_OK ]; then
     # Compiler support flag for llvm
     CXX_FS_FLAG="-lc++fs"
-    $CXX tools/cxx17_filesystem.cc $CXXFLAGS $LDFLAGS -std=c++17 $CXX_FS_FLAG -o tools/cxx17_filesystem 2>$ERR && CXX17_OK="yes";
+    $CXX tools/cxx17_filesystem.cc $CXXFLAGS $LDFLAGS -std=c++17 $CXX_FS_FLAG -o tools/cxx17_filesystem 2>&3 && CXX17_OK="yes";
     if [ ! -z $CXX17_OK ]; then
         printf "\nWarning: your compiler version is old, and may run in to compile errors with BPCells.\n"
         printf "Consider installing a newer compiler version and setting CC and CXX in ~/.R/Makevars\n"
@@ -149,7 +152,7 @@ printf "\nTesting availability of highway SIMD library..."
 HWY_OK=""
 HWY_CFLAGS="-Ibpcells-cpp"
 HWY_LIBS="-lhwy"
-$CXX tools/hwy-test.cpp $CXXFLAGS $LDFLAGS 2>$ERR && HWY_OK="yes";
+$CXX tools/hwy-test.cpp $CXXFLAGS $LDFLAGS 2>&3 && HWY_OK="yes";
 if [ -z $HWY_OK ]; then
     if [ ! -f tools/highway/lib/libhwy.a ]; then
         printf "\nBuilding highway SIMD library from source\n"
@@ -173,6 +176,8 @@ sed \
     -e "s|%CXX_FS_FLAG%|${CXX_FS_FLAG}|g" \
     -e "s|%HWY_CFLAGS%|${HWY_CFLAGS}|g" \
     -e "s|%HWY_LIBS%|${HWY_LIBS}|g" \
+    -e "s|%ENV_CFLAGS%|${ENV_CFLAGS}|g" \
+    -e "s|%ENV_LDFLAGS%|${ENV_LDFLAGS}|g" \
     src/Makevars.in > src/Makevars
 
 if [ -n $ENABLE_INSTALL_COUNTING ]; then

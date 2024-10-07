@@ -24,6 +24,7 @@ Contributions welcome :)
 - `trackplot_loop()` now accepts discrete color scales
 - `trackplot_combine()` now has smarter layout logic for margins, as well as detecting when plots are being combined that cover different genomic regions. (pull request #116)
 - `select_cells()` and `select_chromosomes()` now also allow using a logical mask for selection. (pull request #117)
+- BPCells installation can now also be configured by setting the `LDFLAGS` or `CFLAGS` as environment variables in addition to setting them in `~/.R/Makevars` (pull request #124)
 
 ## Bug-fixes
 - Fixed error message when a matrix is too large to be converted to dgCMatrix. (Thanks to @RookieA1 for reporting issue #95)
