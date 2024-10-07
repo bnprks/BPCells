@@ -11,6 +11,12 @@
 namespace BPCells {
 
 // I made literally everything else inline, but here we are...
-InsertionIterator::InsertionIterator(FragmentLoader &loader) : frags(loader) {}
+InsertionIterator::InsertionIterator(FragmentLoader &loader) : frags(loader) {
+    // Initialize buffers so we will always load at least 128 fragments
+    end_data.reserve(128);
+    end_data_buf.resize(end_data.capacity());
+    end_cell.reserve(end_data.capacity());
+    end_cell_buf.resize(end_data.capacity());
+}
 
 } // end namespace BPCells
