@@ -9,13 +9,22 @@
 #pragma once
 #include "../matrixIterators/MatrixIterator.h"
 namespace BPCells {
-// Enum to choose which statistic to compute for pseudobulk matrix creation
-enum class PseudobulkStatsMethod {
-    NonZeros = 0,
-    Sum = 1,
-    Mean = 2,
-    Variance = 3
+
+// Enum to choose which statistic to compute for pseudobulk matrix creation, with bitwise operators.
+enum class PseudobulkStatsMethod { 
+    NonZeros = 1 << 0,
+    Sum = 1 << 1,
+    Mean = 1 << 2,
+    Variance = 1 << 3
 };
+
+inline PseudobulkStatsMethod operator|(PseudobulkStatsMethod a, PseudobulkStatsMethod b) {
+    return static_cast<PseudobulkStatsMethod>(static_cast<int>(a) | static_cast<int>(b));
+}
+
+inline PseudobulkStatsMethod operator&(PseudobulkStatsMethod a, PseudobulkStatsMethod b) {
+    return static_cast<PseudobulkStatsMethod>(static_cast<int>(a) & static_cast<int>(b));
+}
 
 struct PseudobulkStats {
     Eigen::ArrayXXd non_zeros;
@@ -29,10 +38,10 @@ struct PseudobulkStats {
 // Args:
 // - mat: Matrix to compute variance from.
 // - cell_groups: Mapping of columns to groups.
-// - Method to use for calculating pseudobulk stats.
-// - transpose: Whether the matrix is transposed. Whether the matrix is transposed. If false, groups columns and calculates stats per-row. If true, groups rows and calculates stats per-column.
+// - method: method to use for calculating pseudobulk stats.
+// - transpose: Whether the matrix is transposed. If false, groups columns and calculates stats per-row. If true, groups rows and calculates stats per-column.
 // Returns:
-// - PseudobulkStats struct containing the requested pseudobulk aggregation, in the shape of (num_features, num_groups).
+// - PseudobulkStats struct containing each of the requested pseudobulk aggregations, in the shape of (num_features, num_groups).
 template <typename T>
 PseudobulkStats pseudobulk_matrix(std::unique_ptr<MatrixLoader<T>> &&mat,
                                   const std::vector<uint32_t>& cell_groups,

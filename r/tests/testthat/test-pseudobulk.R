@@ -38,6 +38,7 @@ test_that("Pseudobulk aggregation works", {
     groups_one_type <- c(rep.int(1, ncol(m)))
     groups_equal_length <- seq(ncol(m))
     for (cell_group in list(groups, groups_one_type, groups_equal_length)) {
+      
       m_sum <- create_pseudobulk_r(m, cell_group, "sum")
       m_mean <- create_pseudobulk_r(m, cell_group, "mean")
       m_non_zeros <- create_pseudobulk_r(m, cell_group, "non_zeros")
@@ -61,7 +62,7 @@ test_that("Pseudobulk aggregation works", {
       if (length(unique(cell_group)) < ncol(m)) {
         m_var <- create_pseudobulk_r(m, cell_group, "var")
         m_bpcells_var <- pseudobulk_matrix(m_bpcells, cell_group, method = "variance")
-        expect_equal(m_var, m_bpcells_var)
+        expect_equal(m_var, m_bpcells_var, info = paste("Transposed:", m_bpcells@transpose))
       }
     }
   }
@@ -107,16 +108,40 @@ test_that("Pseudobulk aggregation works with multiple return types", {
   expect_error(pseudobulk_matrix(m1, cell_group, method = c("nonexistent_method", "sum")))
 })
 
-test_that("Matrix quantiles work", {
+test_that("Matrix col quantiles works", {
   m0 <- generate_sparse_matrix(20, 10)
   m1 <- m0 |> as("IterableMatrix")
   m0 <- as.matrix(m0)
+  # For single quantiles
   for (quantile in c(0, 0.25, 0.5, 0.75, 0.99)) {
     for (type in c(4, 5, 6, 7, 8, 9)) {
       m_quantile <- tibble::as_tibble(m0) %>% apply(2, quantile, probs = quantile, type = type)
       m_quantile_bpcells <- colQuantiles(m1, probs = quantile, type = type)
       expect_equal(m_quantile, m_quantile_bpcells, info = paste("Quantile:", quantile, "Type:", type))
     }
-    
   }
+  # for multiple quantiles
+  for (quantiles in list(c(0, 0.25, 0.5, 0.75, 0.99), c(0.25, 0.5, 0.75))) {
+    for (type in c(4, 5, 6, 7, 8, 9)) {
+      m_quantile <- tibble::as_tibble(m0) %>% apply(2, quantile, probs = quantiles, type = type)
+      m_quantile_bpcells <- colQuantiles(m1, probs = quantiles, type = type)
+      expect_equal(m_quantile, m_quantile_bpcells, info = paste("Quantiles:", quantiles, "Type:", type))
+    }
+  }
+})
+
+test_that("Matrix row quantiles works with transposed matrices", {
+  m0 <- generate_sparse_matrix(20, 10)
+  m1 <- m0 |> as("IterableMatrix")
+  m0 <- as.matrix(m0)
+  # For single quantile
+  m_quantile <- tibble::as_tibble(m0) %>% apply(2, quantile, probs = 0.75, type = 7)
+  m_quantile_bpcells <- rowQuantiles(t(m1), probs = 0.75, type = 7)
+  expect_equal(m_quantile, m_quantile_bpcells)
+  # With multiple quantiles
+  m_quantiles <- tibble::as_tibble(m0) %>% apply(2, quantile, probs = c(0.25, 0.75), type = 7)
+  m_quantiles_bpcells <- rowQuantiles(t(m1), probs = c(0.25, 0.75), type = 7)
+  expect_equal(m_quantiles, m_quantiles_bpcells)
+  # We don't support non-transposed matrices for rowQuantiles() yet
+  expect_error(rowQuantiles(m1, probs = 0.75, type = 7))
 })

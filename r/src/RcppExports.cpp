@@ -2475,27 +2475,27 @@ BEGIN_RCPP
 END_RCPP
 }
 // pseudobulk_matrix_cpp
-List pseudobulk_matrix_cpp(SEXP mat, std::vector<uint32_t> cell_groups, int method, bool transpose);
+List pseudobulk_matrix_cpp(SEXP mat, std::vector<uint32_t> cell_groups, std::vector<std::string> method, bool transpose);
 RcppExport SEXP _BPCells_pseudobulk_matrix_cpp(SEXP matSEXP, SEXP cell_groupsSEXP, SEXP methodSEXP, SEXP transposeSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< SEXP >::type mat(matSEXP);
     Rcpp::traits::input_parameter< std::vector<uint32_t> >::type cell_groups(cell_groupsSEXP);
-    Rcpp::traits::input_parameter< int >::type method(methodSEXP);
+    Rcpp::traits::input_parameter< std::vector<std::string> >::type method(methodSEXP);
     Rcpp::traits::input_parameter< bool >::type transpose(transposeSEXP);
     rcpp_result_gen = Rcpp::wrap(pseudobulk_matrix_cpp(mat, cell_groups, method, transpose));
     return rcpp_result_gen;
 END_RCPP
 }
 // matrix_quantile_per_col_cpp
-std::vector<double> matrix_quantile_per_col_cpp(SEXP mat, double quantile, double alpha, double beta);
+Eigen::ArrayXXd matrix_quantile_per_col_cpp(SEXP mat, std::vector<double> quantile, double alpha, double beta);
 RcppExport SEXP _BPCells_matrix_quantile_per_col_cpp(SEXP matSEXP, SEXP quantileSEXP, SEXP alphaSEXP, SEXP betaSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< SEXP >::type mat(matSEXP);
-    Rcpp::traits::input_parameter< double >::type quantile(quantileSEXP);
+    Rcpp::traits::input_parameter< std::vector<double> >::type quantile(quantileSEXP);
     Rcpp::traits::input_parameter< double >::type alpha(alphaSEXP);
     Rcpp::traits::input_parameter< double >::type beta(betaSEXP);
     rcpp_result_gen = Rcpp::wrap(matrix_quantile_per_col_cpp(mat, quantile, alpha, beta));

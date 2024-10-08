@@ -29,9 +29,9 @@
 #include "R_array_io.h"
 #include "R_interrupts.h"
 #include "R_xptr_wrapper.h"
-
 #include <md5/md5.h>
 #include <cstdio>
+#include <string>
 
 using namespace BPCells;
 using namespace Rcpp;
@@ -674,13 +674,26 @@ NumericVector matrix_max_per_col_cpp(SEXP matrix) {
 // [[Rcpp::export]]
 List pseudobulk_matrix_cpp(SEXP mat,
                            std::vector<uint32_t> cell_groups,
-                           int method,
+                           std::vector<std::string> method,
                            bool transpose) {
+    PseudobulkStatsMethod methodFlags = static_cast<PseudobulkStatsMethod>(0);
+    for (std::string &m : method) {
+        if (m == "nonzeros") {
+            methodFlags = methodFlags | PseudobulkStatsMethod::NonZeros;
+        } else if (m == "sum") {
+            methodFlags = methodFlags | PseudobulkStatsMethod::Sum;
+        } else if (m == "mean") {
+            methodFlags = methodFlags | PseudobulkStatsMethod::NonZeros | PseudobulkStatsMethod::Mean;
+        } else if (m == "variance") {
+            methodFlags = methodFlags | PseudobulkStatsMethod::NonZeros | PseudobulkStatsMethod::Mean | PseudobulkStatsMethod::Variance;
+        }
+    }
+    
     PseudobulkStats res = run_with_R_interrupt_check(
         &pseudobulk_matrix<double>,
         take_unique_xptr<MatrixLoader<double>>(mat),
         std::cref(cell_groups),
-        (PseudobulkStatsMethod)method,
+        (PseudobulkStatsMethod)methodFlags,
         transpose
     );
     return List::create(
@@ -692,7 +705,7 @@ List pseudobulk_matrix_cpp(SEXP mat,
 }
 
 // [[Rcpp::export]]
-std::vector<double> matrix_quantile_per_col_cpp(SEXP mat, double quantile, double alpha, double beta) {
+Eigen::ArrayXXd matrix_quantile_per_col_cpp(SEXP mat, std::vector<double> quantile, double alpha, double beta) {
     return run_with_R_interrupt_check(
         &matrix_quantile_per_col<double>,
         take_unique_xptr<MatrixLoader<double>>(mat),

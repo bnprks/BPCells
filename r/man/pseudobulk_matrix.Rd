@@ -15,7 +15,7 @@ pseudobulk_matrix(
 \arguments{
 \item{mat}{IterableMatrix object of dimensions features x cells}
 
-\item{cell_groups}{(Character/factor vector)  of cell groups/clusters. Length must be equal to the number of cells.}
+\item{cell_groups}{(Character/factor) Vector of group/cluster assignments for each cell. Length must \code{ncol(mat)}.}
 
 \item{method}{(Character vector) Method(s) to aggregate counts. If one method is provided, the output will be a matrix. If multiple methods are provided, the output will be a named list of matrices.
 
@@ -24,7 +24,7 @@ Current options are:
 \item \code{nonzeros}
 \item \code{sum}
 \item \code{mean}
-\item \code{var}
+\item \code{variance}
 }}
 
 \item{clip_values}{(integer) If set, clip matrix values to the \verb{<clip_values>}th quantile of each cell, between 0 and 1 inclusive.}
@@ -35,7 +35,7 @@ Current options are:
 \itemize{
 \item If \code{method} is length \code{1}, returns a matrix of shape \verb{(features x groups)}.
 \item If \code{method} is greater than length \code{1}, returns A list of matrices with each matrix representing a pseudobulk matrix with a different aggregation method.
-Each matrix is of shape \verb{(features x groups)}, and names are one of \code{nonzeros}, \code{sum}, \code{mean}, \code{var}.
+Each matrix is of shape \verb{(features x groups)}, and names are one of \code{nonzeros}, \code{sum}, \code{mean}, \code{variance}.
 }
 }
 \description{

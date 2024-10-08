@@ -15,6 +15,7 @@
 \alias{rowVars}
 \alias{rowMaxs}
 \alias{colMaxs}
+\alias{rowQuantiles}
 \alias{colQuantiles}
 \alias{log1p,IterableMatrix-method}
 \alias{log1p_slow}
@@ -74,7 +75,31 @@ rowMaxs(x, rows = NULL, cols = NULL, na.rm = FALSE, ..., useNames = TRUE)
 
 colMaxs(x, rows = NULL, cols = NULL, na.rm = FALSE, ..., useNames = TRUE)
 
-colQuantiles(x, probs = 0.99, ...)
+rowQuantiles(
+  x,
+  rows = NULL,
+  cols = NULL,
+  probs = seq(from = 0, to = 1, by = 0.25),
+  na.rm = FALSE,
+  type = 7L,
+  digits = 7L,
+  ...,
+  useNames = TRUE,
+  drop = TRUE
+)
+
+colQuantiles(
+  x,
+  rows = NULL,
+  cols = NULL,
+  probs = seq(from = 0, to = 1, by = 0.25),
+  na.rm = FALSE,
+  type = 7L,
+  digits = 7L,
+  ...,
+  useNames = TRUE,
+  drop = TRUE
+)
 
 \S4method{log1p}{IterableMatrix}(x)
 
@@ -112,6 +137,8 @@ expm1_slow(x)
 \item{y}{matrix}
 
 \item{probs}{(Numeric) Quantile value(s) to be computed, between 0 and 1.}
+
+\item{type}{(Integer) between 4 and 9 selecting which quantile algorithm to use, detailed in \code{matrixStats::rowQuantiles()}}
 }
 \value{
 \itemize{
@@ -154,7 +181,11 @@ expm1_slow(x)
 \item \code{colMaxs()}: vector of column maxes
 }
 
-Numeric vector of quantile values for each column.
+If length(probs) == 1,  numeric with number of entries equal to the number of rows in the matrix.
+Else, return a Matrix of quantile values, with rows representing each quantile, and each column representing a row in the input matrix.
+
+If length(probs) == 1,  numeric with number of entries equal to the number of columns in the matrix.
+Else, return a Matrix of quantile values, with rows representing each quantile, and each column representing a column in the input matrix.
 }
 \description{
 Generic methods and built-in functions for IterableMatrix objects
@@ -186,6 +217,8 @@ Generic methods and built-in functions for IterableMatrix objects
 \item \code{rowMaxs()}: Calculate rowMaxs (replacement for \code{matrixStats::rowMaxs()})
 
 \item \code{colMaxs()}: Calculate colMax (replacement for \code{matrixStats::colMax()})
+
+\item \code{rowQuantiles()}: Calculate colQuantiles (replacement for \code{matrixStats::colQuantiles})
 
 \item \code{colQuantiles()}: Calculate colQuantiles (replacement for \code{matrixStats::colQuantiles})
 

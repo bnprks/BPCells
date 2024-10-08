@@ -11,8 +11,8 @@
 namespace BPCells {
 
 
-// Find the nth order statistic given the rank, and the number of values of each sign.
-// Used for quantile calculation where we do not look at zero values within a vector.
+// Find the `n`th order statistic given the rank, and the number of values of each sign in a sorted vector.
+// Used for quantile calculation where we do not include zero values within the sorted vector.
 // Args:
 // - rank: the rank of the order statistic to find
 // - sorted_nonzero_values: Sorted non-zero values in the vector.
@@ -28,7 +28,7 @@ T order_statistic(const std::vector<T>& sorted_nonzero_values,
                   uint32_t num_pos);
 
 
-// Find the `quantile`th value for each column in an IterableMatrix.
+// Find the `quantile`th value(s) for each column in an IterableMatrix.
 // Please refer to the `Statistics.quantile` function in `julialang` for more information on how quantiles are calculated.
 // Args:
 // - mat: matrix to compute quantiles from
@@ -36,11 +36,11 @@ T order_statistic(const std::vector<T>& sorted_nonzero_values,
 // - alpha: parameter for the quantile calculation
 // - beta: parameter for the quantile calculation
 // Returns:
-// - A vector of quantile values, one for each column.
+// - A matrix of quantiles values, with each row corresponding to a quantile and each column corresponding to a column in the matrix.
 template <typename T>
-std::vector<T> matrix_quantile_per_col(std::unique_ptr<MatrixLoader<T>>&& mat, 
-                                       double quantile,
-                                       double alpha,
-                                       double beta,
-                                       std::atomic<bool> *user_interrupt);
+Eigen::ArrayXXd matrix_quantile_per_col(std::unique_ptr<MatrixLoader<T>>&& mat, 
+                                        std::vector<double> quantile,
+                                        double alpha,
+                                        double beta,
+                                        std::atomic<bool> *user_interrupt);
 } // namespace BPCells

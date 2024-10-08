@@ -77,11 +77,7 @@ marker_features <- function(mat, groups, method="wilcoxon") {
 #' @param cell_groups (Character/factor) Vector of group/cluster assignments for each cell. Length must `ncol(mat)`.
 #' @param method (Character vector) Method(s) to aggregate counts. If one method is provided, the output will be a matrix. If multiple methods are provided, the output will be a named list of matrices.
 #'
-#' Current options are:
-#'  - `nonzeros`
-#'  - `sum`
-#'  - `mean`
-#'  - `variance`
+#' Current options are: `nonzeros`, `sum`, `mean`, `variance`.
 #' @param clip_values (integer) If set, clip matrix values to the `<clip_values>`th quantile of each cell, between 0 and 1 inclusive.
 #' @param threads (integer) Number of threads to use.
 #' @return
@@ -106,8 +102,6 @@ pseudobulk_matrix <- function(mat, cell_groups, method = "sum", clip_values = 1,
   assert_true(all(clip_values >= 0 & clip_values <= 1))
   assert_is(threads, "integer")
   # if multiple methods are provided, only need to pass in the top method as it will also calculate the less complex stats
-  top_method <- intersect(methods, method)[1]
-  top_method_number <- match(top_method, rev(methods)) - 1
   if (clip_values != 1) {
     if (mat@transpose) {
       quantile_values <- rowQuantiles(mat, probs = clip_values, type = 7L)
@@ -119,7 +113,7 @@ pseudobulk_matrix <- function(mat, cell_groups, method = "sum", clip_values = 1,
   }
   iter <- iterate_matrix(parallel_split(mat, threads, threads*4))
   cell_groups <- as.factor(cell_groups)
-  res <- pseudobulk_matrix_cpp(iter, cell_groups = as.integer(cell_groups) - 1, method = top_method_number, transpose = mat@transpose)
+  res <- pseudobulk_matrix_cpp(iter, cell_groups = as.integer(cell_groups) - 1, method = method, transpose = mat@transpose)
   # if res is a single matrix, return with colnames and rownames
   if (length(method) == 1) {
     colnames(res[[method]]) <- levels(cell_groups)
@@ -139,17 +133,19 @@ pseudobulk_matrix <- function(mat, cell_groups, method = "sum", clip_values = 1,
 }
 
 
-#' Find the nth quantile value of each column in a matrix.
+#' Find the nth quantile value(s) of each row in a matrix. Only supports transposed matrices.
 #' @param x IterableMatrix object or a matrix-like object.
 #' @param probs (Numeric) Quantile value(s) to be computed, between 0 and 1.
-#' @return Numeric vector of quantile values for each column.
+#' @param type (Integer) between 4 and 9 selecting which quantile algorithm to use, detailed in `matrixStats::rowQuantiles()`
+#' @return If length(probs) == 1,  numeric with number of entries equal to the number of rows in the matrix. 
+#' Else, return a Matrix of quantile values, with rows representing each quantile, and each column representing a row in the input matrix.
 #' @describeIn IterableMatrix-methods Calculate colQuantiles (replacement for `matrixStats::colQuantiles`)
 #' @export
 rowQuantiles <- function(x, rows = NULL, cols = NULL,
                          probs = seq(from = 0, to = 1, by = 0.25),
                          na.rm = FALSE, type = 7L, digits = 7L, ...,
                          useNames = TRUE, drop = TRUE) {
-  UseMethod("roowQuantiles")
+  UseMethod("rowQuantiles")
 }
 #' @export
 rowQuantiles.default <- function(x, rows = NULL, cols = NULL,
@@ -182,6 +178,7 @@ rowQuantiles.IterableMatrix <- function(x, rows = NULL, cols = NULL,
   assert_true(length(type) == 1)
   assert_true(type <= 9 || type >= 4)
   type <- as.integer(type)
+  # Convert type to alpha and beta values
   alpha_beta <- switch(as.character(type),
     `4` = c(0, 1),
     `5` = c(0.5, 0.5),
@@ -192,21 +189,21 @@ rowQuantiles.IterableMatrix <- function(x, rows = NULL, cols = NULL,
   )
   alpha <- alpha_beta[1]
   beta <- alpha_beta[2]
-  if (x@transpose) {
-    rlang::abort("rowQuantiles(IterableMatrix) does not support row-major matrices.\nPlease call transpose_storage_order() first.")
-  }
   iter <- iterate_matrix(convert_matrix_type(x, "double"))
   res <- matrix_quantile_per_col_cpp(iter, probs, alpha = alpha, beta = beta)
-  names(res) <- colnames(x)
+  colnames(res) <- rownames(x)
+  if (length(probs) == 1) return(res[1,])
+  # `quantile()` from base R returns rownames as percentages, so we follow that convention
+  rownames(res) <- paste0(100 * probs, "%")
   return(res)
 }
 
 
-#' Find the nth quantile value of each column in a matrix.
-#' @param x IterableMatrix object or a matrix-like object.
-#' @param probs (Numeric) Quantile value(s) to be computed, between 0 and 1.
-#' @return Numeric vector of quantile values for each column.
+#' Find the nth quantile value(s) of each column in a matrix. Only supports non-transposed matrices.
+#' @return If length(probs) == 1,  numeric with number of entries equal to the number of columns in the matrix. 
+#' Else, return a Matrix of quantile values, with rows representing each quantile, and each column representing a column in the input matrix.
 #' @describeIn IterableMatrix-methods Calculate colQuantiles (replacement for `matrixStats::colQuantiles`)
+#' @inheritParams rowQuantiles
 #' @export
 colQuantiles <- function(x, rows = NULL, cols = NULL,
                          probs = seq(from = 0, to = 1, by = 0.25),
@@ -236,12 +233,16 @@ colQuantiles.IterableMatrix <- function(x, rows = NULL, cols = NULL,
     rlang::abort("colQuantiles(IterableMatrix) doesn't support extra arguments rows, cols, na.rm, digits, useNames, or drop.")
   }
   assert_is(x, "IterableMatrix")
+  if (x@transpose) {
+    rlang::abort("colQuantiles(IterableMatrix) does not support row-major matrices.\nPlease call transpose_storage_order() first.")
+  }
   assert_is(probs, "numeric")
   assert_true(all(probs >= 0 & probs <= 1))
   assert_is(type, c("integer", "numeric"))
   assert_true(length(type) == 1)
   assert_true(type <= 9 || type >= 4)
   type <- as.integer(type)
+  # Convert type to alpha and beta values
   alpha_beta <- switch(as.character(type),
     `4` = c(0, 1),
     `5` = c(0.5, 0.5),
@@ -252,12 +253,12 @@ colQuantiles.IterableMatrix <- function(x, rows = NULL, cols = NULL,
   )
   alpha <- alpha_beta[1]
   beta <- alpha_beta[2]
-  if (x@transpose) {
-    rlang::abort("colQuantiles(IterableMatrix) does not support row-major matrices.\nPlease call transpose_storage_order() first.")
-  }
   iter <- iterate_matrix(convert_matrix_type(x, "double"))
   res <- matrix_quantile_per_col_cpp(iter, probs, alpha = alpha, beta = beta)
-  names(res) <- colnames(x)
+  colnames(res) <- colnames(x)
+  if (length(probs) == 1) return(res[1,])
+  # `quantile()` from base R returns rownames as percentages, so we follow that convention
+  rownames(res) <- paste0(100 * probs, "%")
   return(res)
 }
 rlang::on_load({

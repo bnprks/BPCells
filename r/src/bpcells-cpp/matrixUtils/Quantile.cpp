@@ -11,8 +11,8 @@
 namespace BPCells {
 
 
-// Find the nth order statistic given the rank, and the number of values of each sign.
-// Used for quantile calculation where we do not look at zero values within a vector.
+// Find the `n`th order statistic given the rank, and the number of values of each sign in a sorted vector.
+// Used for quantile calculation where we do not include zero values within the sorted vector.
 // Args:
 // - rank: the rank of the order statistic to find
 // - sorted_nonzero_values: Sorted non-zero values in the vector.
@@ -31,7 +31,7 @@ T order_statistic(const std::vector<T>& sorted_nonzero_values, uint32_t rank, ui
     }
 }
 
-// Find the `quantile`th value for each column in an IterableMatrix.
+// Find the `quantile`th value(s) for each column in an IterableMatrix.
 // Please refer to the `Statistics.quantile` function in `julialang` for more information on how quantiles are calculated.
 // Args:
 // - mat: matrix to compute quantiles from
@@ -39,72 +39,69 @@ T order_statistic(const std::vector<T>& sorted_nonzero_values, uint32_t rank, ui
 // - alpha: parameter for the quantile calculation
 // - beta: parameter for the quantile calculation
 // Returns:
-// - A vector of quantile values, one for each column.
+// - A matrix of quantiles values, with each row corresponding to a quantile and each column corresponding to a column in the matrix.
 template <typename T>
-std::vector<T> matrix_quantile_per_col(std::unique_ptr<MatrixLoader<T>>&& mat, 
-                                       double quantile,
-                                       double alpha,
-                                       double beta,
-                                       std::atomic<bool> *user_interrupt) {
+Eigen::ArrayXXd matrix_quantile_per_col(std::unique_ptr<MatrixLoader<T>>&& mat, 
+                                        std::vector<double> quantile,
+                                        double alpha,
+                                        double beta,
+                                        std::atomic<bool> *user_interrupt) {
     MatrixIterator<T> it(std::move(mat));
-    // keep track of the current number of values in a column
-    uint32_t curr_num;
-    std::vector<T> res, curr;
-    // clamp quantile to [0,1]
-    quantile = std::min(1.0, std::max(0.0, quantile));
-    
-    // clamp alpha and beta to [0,1]
+    Eigen::ArrayXXd res(quantile.size(), it.cols());
+    std::vector<T> curr;
+    // clamp quantile, alpha, beta to [0,1]
+    for (auto& q: quantile) q = std::min(1.0, std::max(0.0, q));
     alpha = std::min(1.0, std::max(0.0, alpha));
     beta = std::min(1.0, std::max(0.0, beta));
-    // stats used for quantile calculation
-    double m = alpha + quantile * (1.0-alpha-beta);
-    double aleph = (quantile * it.rows() +m);
-    // index represents one higher than the true index
-    uint32_t index = static_cast<uint32_t>(std::floor(std::max(std::min(it.rows()-1.0, aleph), 1.0)));
-    double gamma = std::max(std::min(aleph - index, 1.0), 0.0);
+    // stats used for quantile index calculation
+    // store the index and gamma for each quantile
+    std::unordered_map<double, uint32_t> indexes;
+    std::unordered_map<double, double> gammas;
+    for (double& q: quantile) {
+        double m = alpha + q * (1.0-alpha-beta);
+        double aleph = (q * it.rows() + m);
+        // index represents one higher than the true index
+        indexes[q] = static_cast<uint32_t>(std::floor(std::max(std::min(it.rows()-1.0, aleph), 1.0)));
+        gammas[q] = std::max(std::min(aleph - indexes[q], 1.0), 0.0);
+    }
 
-    // do not want to consider zero values in sorting/quantile, so we keep track of the number of negative values
+    // do not want to consider zero values in sorting, so we keep track of the number of negative values
     uint32_t num_neg = 0;
     std::vector<T> buffer;
-    double col_num;
     while (it.nextCol()) {
         num_neg = 0;
         if (user_interrupt != NULL && *user_interrupt) return res;
         curr.clear();
-        curr_num = 0;
         while (it.nextValue()) {
             if (it.val() < 0) num_neg++;
             curr.push_back(it.val());
-            curr_num++;
         }
-        uint32_t num_zeros = it.rows() - curr_num;
+        uint32_t num_zeros = it.rows() - curr.size();
         buffer.resize(curr.size());
         BPCells::lsdRadixSortArrays(curr.size(), curr, buffer);
-        if (index >= it.rows()) {
-            col_num = curr[curr.size() - 1];
-        } else {
-            col_num = 
-                order_statistic(curr, index - 1, num_neg, num_zeros, it.rows() - num_neg - num_zeros)* (1-gamma) +
-                order_statistic(curr, index, num_neg, num_zeros, it.rows() - num_neg - num_zeros) * gamma;
+        for (uint32_t q_idx = 0; q_idx < quantile.size(); q_idx++) {
+            double q = quantile[q_idx];
+            double quantile_num = order_statistic(curr, indexes[q] - 1, num_neg, num_zeros, it.rows() - num_neg - num_zeros)* (1-gammas[q]) +
+                order_statistic(curr, indexes[q], num_neg, num_zeros, it.rows() - num_neg - num_zeros) * gammas[q];
+            res(q_idx, it.currentCol()) = quantile_num;
         }
-        res.push_back(col_num);
     }
     return res;
 };
 
-template std::vector<float> matrix_quantile_per_col<float>(std::unique_ptr<MatrixLoader<float>>&& mat,
-                                                           double quantile,
+template Eigen::ArrayXXd matrix_quantile_per_col<float>(std::unique_ptr<MatrixLoader<float>>&& mat,
+                                                        std::vector<double> quantile,
+                                                        double alpha,
+                                                        double beta,
+                                                        std::atomic<bool> *user_interrupt);
+template Eigen::ArrayXXd matrix_quantile_per_col<double>(std::unique_ptr<MatrixLoader<double>>&& mat, 
+                                                         std::vector<double> quantile,
+                                                         double alpha,
+                                                         double beta,
+                                                         std::atomic<bool> *user_interrupt);
+template Eigen::ArrayXXd matrix_quantile_per_col<uint32_t>(std::unique_ptr<MatrixLoader<uint32_t>>&& mat, 
+                                                           std::vector<double> quantile, 
                                                            double alpha,
                                                            double beta,
                                                            std::atomic<bool> *user_interrupt);
-template std::vector<double> matrix_quantile_per_col<double>(std::unique_ptr<MatrixLoader<double>>&& mat, 
-                                                             double quantile,
-                                                             double alpha,
-                                                             double beta,
-                                                             std::atomic<bool> *user_interrupt);
-template std::vector<uint32_t> matrix_quantile_per_col<uint32_t>(std::unique_ptr<MatrixLoader<uint32_t>>&& mat, 
-                                                                 double quantile, 
-                                                                 double alpha,
-                                                                 double beta,
-                                                                 std::atomic<bool> *user_interrupt);
 } // namespace BPCells
