@@ -14,7 +14,7 @@ namespace BPCells {
 // Args:
 // - mat: Matrix to compute variance from.
 // - cell_groups: Mapping of columns to groups.
-// - method: method to use for calculating pseudobulk stats.
+// - method: method to use for calculating pseudobulk stats, constructed using bitflags from PseudobulkStatsMethod.
 // - transpose: Whether the matrix is transposed. If false, groups columns and calculates stats per-row. If true, groups rows and calculates stats per-column.
 // Returns:
 // - PseudobulkStats struct containing each of the requested pseudobulk aggregations, in the shape of (num_features, num_groups).
