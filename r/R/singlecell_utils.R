@@ -84,9 +84,9 @@ marker_features <- function(mat, groups, method="wilcoxon") {
 #'  - If `method` is length `1`, returns a matrix of shape `(features x groups)`.
 #'  - If `method` is greater than length `1`, returns A list of matrices with each matrix representing a pseudobulk matrix with a different aggregation method.
 #' Each matrix is of shape `(features x groups)`, and names are one of `nonzeros`, `sum`, `mean`, `variance`.
-#' @details The stats are ordered by complexity: nonzero, sum, mean, then variance. All
-#' less complex stats are calculated in the process of calculating a more complicated stat.
-#' That means it will not take additional time to calculate `mean` if `var` is also requested.
+#' @details Some simpler stats are calculated in the process of calculating more complex
+#' statistics. So when calculating `variance`, `nonzeros` and `mean` can be included with no
+#' extra calculation time, and when calculating `mean`, adding `nonzeros` will take no extra time.
 #' @inheritParams marker_features
 #' @export
 pseudobulk_matrix <- function(mat, cell_groups, method = "sum", clip_values = 1, threads = 1L) {
