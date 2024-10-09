@@ -29,7 +29,7 @@ T order_statistic(const std::vector<T>& sorted_nonzero_values,
 
 
 // Find the `quantile`th value(s) for each column in an IterableMatrix.
-// Please refer to the `Statistics.quantile` function in `julialang` for more information on how quantiles are calculated.
+// Please refer to the `Statistics.quantile` function in `julialang` for more information on how quantiles are calculated. https://docs.julialang.org/en/v1/stdlib/Statistics/#Statistics.quantile
 // Args:
 // - mat: matrix to compute quantiles from
 // - quantile: quantile to compute from each column, between [0,1]

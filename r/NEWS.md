@@ -19,11 +19,9 @@ Contributions welcome :)
   Thanks to @ycli1995 for pull request #110
 - Add `trackplot_genome_annotation()` for plotting peaks, with options for directional arrows, colors, labels, and peak widths. (pull request #113)
 - Add MACS2/3 input creation and peak calling through `call_macs_peaks()` (pull request #118)
-- Add `colQuantiles()` which returns the quantiles of each column of a matrix. Currently only supports non-transposed matrices.
+- Add `rowQuantiles()` and `colQuantiles()` functions, which return the quantiles of each row/column of a matrix. Currently `rowQuantiles()` only works on row-major matrices and `colQuantiles()` only works on col-major matrices.
   If `matrixStats` or `MatrixGenerics` packages are installed, `BPCells::colQuantiles()` will fall back to their implementations for non-BPCells objects. (pull request #128)
-- Add `rowQuantiles()` which returns the quantiles of each row of a matrix. Currently only supports transposed matrices.
-  If `matrixStats` or `MatrixGenerics` packages are installed, `BPCells::rowQuantiles()` will fall back to their implementations for non-BPCells objects. (pull request #128)
-- Add `pseudobulk_matrix()` which allows for creation of a pseudobulk matrix aggregated by `sum`, `nonzeros`, `mean`, `var`. (pull request #128)
+- Add `pseudobulk_matrix()` which allows pseudobulk aggregation by `sum` or `mean`, clipping outlier values during aggregation, and calculation of per-pseudobulk `variance` and `nonzero` statistics for each gene (pull request #128)
 
 ## Improvements
 - `trackplot_loop()` now accepts discrete color scales

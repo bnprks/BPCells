@@ -74,7 +74,7 @@ marker_features <- function(mat, groups, method="wilcoxon") {
 #'
 #' Given a `(features x cells)` matrix, group cells by `cell_groups` and aggregate counts by `method` for each
 #' feature.
-#' @param cell_groups (Character/factor) Vector of group/cluster assignments for each cell. Length must `ncol(mat)`.
+#' @param cell_groups (Character/factor) Vector of group/cluster assignments for each cell. Length must be `ncol(mat)`.
 #' @param method (Character vector) Method(s) to aggregate counts. If one method is provided, the output will be a matrix. If multiple methods are provided, the output will be a named list of matrices.
 #'
 #' Current options are: `nonzeros`, `sum`, `mean`, `variance`.
@@ -82,7 +82,7 @@ marker_features <- function(mat, groups, method="wilcoxon") {
 #' @param threads (integer) Number of threads to use.
 #' @return
 #'  - If `method` is length `1`, returns a matrix of shape `(features x groups)`.
-#'  - If `method` is greater than length `1`, returns A list of matrices with each matrix representing a pseudobulk matrix with a different aggregation method.
+#'  - If `method` is greater than length `1`, returns a list of matrices with each matrix representing a pseudobulk matrix with a different aggregation method.
 #' Each matrix is of shape `(features x groups)`, and names are one of `nonzeros`, `sum`, `mean`, `variance`.
 #' @details Some simpler stats are calculated in the process of calculating more complex
 #' statistics. So when calculating `variance`, `nonzeros` and `mean` can be included with no
@@ -112,7 +112,6 @@ pseudobulk_matrix <- function(mat, cell_groups, method = "sum", clip_values = 1,
     mat <- min_by_col(mat, quantile_values)
   }
   iter <- iterate_matrix(parallel_split(mat, threads, threads*4))
-  cell_groups <- as.factor(cell_groups)
   res <- pseudobulk_matrix_cpp(iter, cell_groups = as.integer(cell_groups) - 1, method = method, transpose = mat@transpose)
   # if res is a single matrix, return with colnames and rownames
   if (length(method) == 1) {
@@ -264,5 +263,6 @@ colQuantiles.IterableMatrix <- function(x, rows = NULL, cols = NULL,
 rlang::on_load({
   if (requireNamespace("MatrixGenerics", quietly = TRUE)) {
     setMethod("colQuantiles", "IterableMatrix", colQuantiles.IterableMatrix)
+    setMethod("rowQuantiles", "IterableMatrix", rowQuantiles.IterableMatrix)
   }
 })
