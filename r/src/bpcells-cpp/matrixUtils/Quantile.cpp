@@ -80,7 +80,6 @@ Eigen::ArrayXXd matrix_quantile_per_col(std::unique_ptr<MatrixLoader<T>>&& mat,
         buffer.resize(curr.size());
         BPCells::lsdRadixSortArrays(curr.size(), curr, buffer);
         for (uint32_t q_idx = 0; q_idx < quantile.size(); q_idx++) {
-            double q = quantile[q_idx];
             double quantile_num = order_statistic(curr, indexes[q_idx] - 1, num_neg, num_zeros, it.rows() - num_neg - num_zeros)* (1-gammas[q_idx]) +
                 order_statistic(curr, indexes[q_idx], num_neg, num_zeros, it.rows() - num_neg - num_zeros) * gammas[q_idx];
             res(q_idx, it.currentCol()) = quantile_num;

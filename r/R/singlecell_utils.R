@@ -127,8 +127,8 @@ pseudobulk_matrix <- function(mat, cell_groups, method = "sum", threads = 1L) {
 #' @param x IterableMatrix object or a matrix-like object.
 #' @param probs (Numeric) Quantile value(s) to be computed, between 0 and 1.
 #' @param type (Integer) between 4 and 9 selecting which quantile algorithm to use, detailed in `matrixStats::rowQuantiles()`
-#' @return If length(probs) == 1,  numeric with number of entries equal to the number of rows in the matrix. 
-#' Else, return a Matrix of quantile values, with rows representing each quantile, and each column representing a row in the input matrix.
+#' @return If length(probs) == 1, return a numeric with number of entries equal to the number of rows in the matrix.
+#' Else, return a Matrix of quantile values, with cols representing each quantile, and each row representing a row in the input matrix.
 #' @describeIn IterableMatrix-methods Calculate colQuantiles (replacement for `matrixStats::colQuantiles`)
 #' @export
 rowQuantiles <- function(x, rows = NULL, cols = NULL,
@@ -190,7 +190,7 @@ rowQuantiles.IterableMatrix <- function(x, rows = NULL, cols = NULL,
 
 
 #' Find the nth quantile value(s) of each column in a matrix. Only supports non-transposed matrices.
-#' @return If length(probs) == 1,  numeric with number of entries equal to the number of columns in the matrix. 
+#' @return If length(probs) == 1, return a numeric with number of entries equal to the number of columns in the matrix. 
 #' Else, return a Matrix of quantile values, with rows representing each quantile, and each column representing a column in the input matrix.
 #' @describeIn IterableMatrix-methods Calculate colQuantiles (replacement for `matrixStats::colQuantiles`)
 #' @inheritParams rowQuantiles
