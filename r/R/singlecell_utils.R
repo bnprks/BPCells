@@ -78,7 +78,6 @@ marker_features <- function(mat, groups, method="wilcoxon") {
 #' @param method (Character vector) Method(s) to aggregate counts. If one method is provided, the output will be a matrix. If multiple methods are provided, the output will be a named list of matrices.
 #'
 #' Current options are: `nonzeros`, `sum`, `mean`, `variance`.
-#' @param clip_values (integer) If set, clip matrix values to the `<clip_values>`th quantile of each cell, between 0 and 1 inclusive.
 #' @param threads (integer) Number of threads to use.
 #' @return
 #'  - If `method` is length `1`, returns a matrix of shape `(features x groups)`.
@@ -89,28 +88,20 @@ marker_features <- function(mat, groups, method="wilcoxon") {
 #' extra calculation time, and when calculating `mean`, adding `nonzeros` will take no extra time.
 #' @inheritParams marker_features
 #' @export
-pseudobulk_matrix <- function(mat, cell_groups, method = "sum", clip_values = 1, threads = 1L) {
+pseudobulk_matrix <- function(mat, cell_groups, method = "sum", threads = 1L) {
   assert_is(mat, "IterableMatrix")
   assert_is(cell_groups, c("factor", "character", "numeric"))
+  assert_true(length(cell_groups) == ncol(mat))
   cell_groups <- as.factor(cell_groups)
   assert_is(method, "character")
   methods <- c("variance", "mean", "sum", "nonzeros")
   for (m in method) {
-    match.arg(m, choices = methods)
+    if (!(m %in% methods)) {
+      rlang::abort(sprintf("method must be one of: %s", paste(methods, collapse = ", ")))
+    }
   }
-  assert_is(clip_values, "numeric")
-  assert_true(all(clip_values >= 0 & clip_values <= 1))
   assert_is(threads, "integer")
   # if multiple methods are provided, only need to pass in the top method as it will also calculate the less complex stats
-  if (clip_values != 1) {
-    if (mat@transpose) {
-      quantile_values <- rowQuantiles(mat, probs = clip_values, type = 7L)
-    } else {
-      quantile_values <- colQuantiles(mat, probs = clip_values, type = 7L)
-    }
-    # if all values are 0, skip
-    mat <- min_by_col(mat, quantile_values)
-  }
   iter <- iterate_matrix(parallel_split(mat, threads, threads*4))
   res <- pseudobulk_matrix_cpp(iter, cell_groups = as.integer(cell_groups) - 1, method = method, transpose = mat@transpose)
   # if res is a single matrix, return with colnames and rownames
@@ -152,9 +143,9 @@ rowQuantiles.default <- function(x, rows = NULL, cols = NULL,
                                  na.rm = FALSE, type = 7L, digits = 7L, ...,
                                  useNames = TRUE, drop = TRUE) {
   if (requireNamespace("MatrixGenerics", quietly = TRUE)) {
-    MatrixGenerics::rowQuantiles(x, probs = probs, na.rm = na.rm, type = type, ...)
+    MatrixGenerics::rowQuantiles(x, probs = probs, na.rm = na.rm, type = type, digits = digits, ..., useNames = useNames, drop = drop)
   } else if (requireNamespace("matrixStats", quietly = TRUE)) {
-    matrixStats::rowQuantiles(x, probs = probs, na.rm = na.rm, type = type, ...)
+    matrixStats::rowQuantiles(x, probs = probs, na.rm = na.rm, type = type, digits = digits, ..., useNames = useNames, drop = drop)
   } else {
     rlang::abort("Cannot run rowQuantiles on a non-BPCells object unless MatrixGenerics or matrixStats is installed.")
   }
@@ -164,11 +155,11 @@ rowQuantiles.IterableMatrix <- function(x, rows = NULL, cols = NULL,
                                         probs = seq(from = 0, to = 1, by = 0.25),
                                         na.rm = FALSE, type = 7L, digits = 7L, ...,
                                         useNames = TRUE, drop = TRUE) {
-  if (!is.null(rows) || !is.null(cols) || isTRUE(na.rm) || (digits != 7L) || isFALSE(useNames) || isFALSE(drop)) {
-    rlang::abort("rowQuantiles(IterableMatrix) doesn't support extra arguments rows, cols, na.rm, digits, useNames, or drop.")
+  if (!is.null(rows) || !is.null(cols) || isTRUE(na.rm) || isFALSE(useNames) || isFALSE(drop)) {
+    rlang::abort("rowQuantiles(IterableMatrix) doesn't support extra arguments rows, cols, na.rm, useNames, or drop.")
   }
   if (!x@transpose) {
-    rlang::abort("rowQuantiles(IterableMatrix) only supports transposed matrices. Please call transposed_storage_order() first, then run colQuantiles.")
+    rlang::abort("rowQuantiles(IterableMatrix) only supports row-major matrices. Please call transpose_storage_order() first, then run rowQuantiles.")
   }
   assert_is(x, "IterableMatrix")
   assert_is(probs, "numeric")
@@ -189,11 +180,11 @@ rowQuantiles.IterableMatrix <- function(x, rows = NULL, cols = NULL,
   alpha <- alpha_beta[1]
   beta <- alpha_beta[2]
   iter <- iterate_matrix(convert_matrix_type(x, "double"))
-  res <- matrix_quantile_per_col_cpp(iter, probs, alpha = alpha, beta = beta)
-  colnames(res) <- rownames(x)
-  if (length(probs) == 1) return(res[1,])
+  res <- t(matrix_quantile_per_col_cpp(iter, probs, alpha = alpha, beta = beta))
+  rownames(res) <- rownames(x)
+  if (length(probs) == 1) return(res[,1])
   # `quantile()` from base R returns rownames as percentages, so we follow that convention
-  rownames(res) <- paste0(100 * probs, "%")
+  colnames(res) <- paste0(format(100 * probs, trim = TRUE, digits = digits), "%")
   return(res)
 }
 
@@ -216,9 +207,9 @@ colQuantiles.default <- function(x, rows = NULL, cols = NULL,
                                  na.rm = FALSE, type = 7L, digits = 7L, ...,
                                  useNames = TRUE, drop = TRUE) {
   if (requireNamespace("MatrixGenerics", quietly = TRUE)) {
-    MatrixGenerics::colQuantiles(x, probs = probs, na.rm = na.rm, type = type, ...)
+    MatrixGenerics::colQuantiles(x, rows = rows, cols = cols, probs = probs, na.rm = na.rm, type = type, digits = digits..., useNames = useNames, drop = drop)
   } else if (requireNamespace("matrixStats", quietly = TRUE)) {
-    matrixStats::colQuantiles(x, probs = probs, na.rm = na.rm, type = type, ...)
+    matrixStats::colQuantiles(x, rows = rows, cols = cols, probs = probs, na.rm = na.rm, type = type, digits = digits..., useNames = useNames, drop = drop)
   } else {
     rlang::abort("Cannot run colQuantiles on a non-BPCells object unless MatrixGenerics or matrixStats is installed.")
   }
@@ -228,8 +219,8 @@ colQuantiles.IterableMatrix <- function(x, rows = NULL, cols = NULL,
                                         probs = seq(from = 0, to = 1, by = 0.25), 
                                         na.rm = FALSE, type = 7L, digits = 7L, ...,
                                         useNames = TRUE, drop = TRUE) {
-  if (!is.null(rows) || !is.null(cols) || isTRUE(na.rm) || (digits != 7L) || isFALSE(useNames) || isFALSE(drop)) {
-    rlang::abort("colQuantiles(IterableMatrix) doesn't support extra arguments rows, cols, na.rm, digits, useNames, or drop.")
+  if (!is.null(rows) || !is.null(cols) || isTRUE(na.rm) || isFALSE(useNames) || isFALSE(drop)) {
+    rlang::abort("colQuantiles(IterableMatrix) doesn't support extra arguments rows, cols, na.rm, useNames, or drop.")
   }
   assert_is(x, "IterableMatrix")
   if (x@transpose) {
@@ -257,7 +248,7 @@ colQuantiles.IterableMatrix <- function(x, rows = NULL, cols = NULL,
   colnames(res) <- colnames(x)
   if (length(probs) == 1) return(res[1,])
   # `quantile()` from base R returns rownames as percentages, so we follow that convention
-  rownames(res) <- paste0(100 * probs, "%")
+  rownames(res) <- paste0(format(100 * probs, trim = TRUE, digits = digits), "%")
   return(res)
 }
 rlang::on_load({

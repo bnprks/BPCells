@@ -55,14 +55,14 @@ Eigen::ArrayXXd matrix_quantile_per_col(std::unique_ptr<MatrixLoader<T>>&& mat,
     beta = std::min(1.0, std::max(0.0, beta));
     // stats used for quantile index calculation
     // store the index and gamma for each quantile
-    std::unordered_map<double, uint32_t> indexes;
-    std::unordered_map<double, double> gammas;
-    for (double& q: quantile) {
-        double m = alpha + q * (1.0-alpha-beta);
-        double aleph = (q * it.rows() + m);
+    std::vector<uint32_t> indexes;
+    std::vector<double> gammas;
+    for (uint32_t q_idx = 0; q_idx < quantile.size(); q_idx++) {
+        double m = alpha + quantile[q_idx] * (1.0-alpha-beta);
+        double aleph = (quantile[q_idx] * it.rows() + m);
         // index represents one higher than the true index
-        indexes[q] = static_cast<uint32_t>(std::floor(std::max(std::min(it.rows()-1.0, aleph), 1.0)));
-        gammas[q] = std::max(std::min(aleph - indexes[q], 1.0), 0.0);
+        indexes.push_back(static_cast<uint32_t>(std::floor(std::max(std::min(it.rows()-1.0, aleph), 1.0))));
+        gammas.push_back(std::max(std::min(aleph - indexes[q_idx], 1.0), 0.0));
     }
 
     // do not want to consider zero values in sorting, so we keep track of the number of negative values
@@ -81,8 +81,8 @@ Eigen::ArrayXXd matrix_quantile_per_col(std::unique_ptr<MatrixLoader<T>>&& mat,
         BPCells::lsdRadixSortArrays(curr.size(), curr, buffer);
         for (uint32_t q_idx = 0; q_idx < quantile.size(); q_idx++) {
             double q = quantile[q_idx];
-            double quantile_num = order_statistic(curr, indexes[q] - 1, num_neg, num_zeros, it.rows() - num_neg - num_zeros)* (1-gammas[q]) +
-                order_statistic(curr, indexes[q], num_neg, num_zeros, it.rows() - num_neg - num_zeros) * gammas[q];
+            double quantile_num = order_statistic(curr, indexes[q_idx] - 1, num_neg, num_zeros, it.rows() - num_neg - num_zeros)* (1-gammas[q_idx]) +
+                order_statistic(curr, indexes[q_idx], num_neg, num_zeros, it.rows() - num_neg - num_zeros) * gammas[q_idx];
             res(q_idx, it.currentCol()) = quantile_num;
         }
     }

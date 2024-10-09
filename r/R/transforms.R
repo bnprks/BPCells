@@ -254,7 +254,7 @@ min_by_col <- function(mat, vals) {
   }
   assert_is(mat, "IterableMatrix")
   assert_is(vals, "numeric")
-  # assert_greater_than_zero(vals)
+  assert_greater_than_zero(vals)
   assert_len(vals, ncol(mat))
 
   wrapMatrix("TransformMinByCol", convert_matrix_type(mat, "double"), col_params=matrix(vals, nrow=1))

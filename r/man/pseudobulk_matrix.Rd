@@ -4,37 +4,23 @@
 \alias{pseudobulk_matrix}
 \title{Aggregate counts matrices by cell group or feature.}
 \usage{
-pseudobulk_matrix(
-  mat,
-  cell_groups,
-  method = "sum",
-  clip_values = 1,
-  threads = 1L
-)
+pseudobulk_matrix(mat, cell_groups, method = "sum", threads = 1L)
 }
 \arguments{
 \item{mat}{IterableMatrix object of dimensions features x cells}
 
-\item{cell_groups}{(Character/factor) Vector of group/cluster assignments for each cell. Length must \code{ncol(mat)}.}
+\item{cell_groups}{(Character/factor) Vector of group/cluster assignments for each cell. Length must be \code{ncol(mat)}.}
 
 \item{method}{(Character vector) Method(s) to aggregate counts. If one method is provided, the output will be a matrix. If multiple methods are provided, the output will be a named list of matrices.
 
-Current options are:
-\itemize{
-\item \code{nonzeros}
-\item \code{sum}
-\item \code{mean}
-\item \code{variance}
-}}
-
-\item{clip_values}{(integer) If set, clip matrix values to the \verb{<clip_values>}th quantile of each cell, between 0 and 1 inclusive.}
+Current options are: \code{nonzeros}, \code{sum}, \code{mean}, \code{variance}.}
 
 \item{threads}{(integer) Number of threads to use.}
 }
 \value{
 \itemize{
 \item If \code{method} is length \code{1}, returns a matrix of shape \verb{(features x groups)}.
-\item If \code{method} is greater than length \code{1}, returns A list of matrices with each matrix representing a pseudobulk matrix with a different aggregation method.
+\item If \code{method} is greater than length \code{1}, returns a list of matrices with each matrix representing a pseudobulk matrix with a different aggregation method.
 Each matrix is of shape \verb{(features x groups)}, and names are one of \code{nonzeros}, \code{sum}, \code{mean}, \code{variance}.
 }
 }
@@ -43,7 +29,7 @@ Given a \verb{(features x cells)} matrix, group cells by \code{cell_groups} and 
 feature.
 }
 \details{
-The stats are ordered by complexity: nonzero, sum, mean, then variance. All
-less complex stats are calculated in the process of calculating a more complicated stat.
-That means it will not take additional time to calculate \code{mean} if \code{var} is also requested.
+Some simpler stats are calculated in the process of calculating more complex
+statistics. So when calculating \code{variance}, \code{nonzeros} and \code{mean} can be included with no
+extra calculation time, and when calculating \code{mean}, adding \code{nonzeros} will take no extra time.
 }

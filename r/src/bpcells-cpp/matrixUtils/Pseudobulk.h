@@ -11,19 +11,30 @@
 namespace BPCells {
 
 // Enum to choose which statistic to compute for pseudobulk matrix creation, with bitwise operators.
-enum class PseudobulkStatsMethod { 
+enum class PseudobulkStatsMethod: int { 
     NonZeros = 1 << 0,
     Sum = 1 << 1,
     Mean = 1 << 2,
     Variance = 1 << 3
 };
 
-inline PseudobulkStatsMethod operator|(PseudobulkStatsMethod a, PseudobulkStatsMethod b) {
-    return static_cast<PseudobulkStatsMethod>(static_cast<int>(a) | static_cast<int>(b));
+inline int operator|(PseudobulkStatsMethod a, PseudobulkStatsMethod b) {
+    return static_cast<int>(static_cast<int>(a) | static_cast<int>(b));
 }
-
-inline PseudobulkStatsMethod operator&(PseudobulkStatsMethod a, PseudobulkStatsMethod b) {
-    return static_cast<PseudobulkStatsMethod>(static_cast<int>(a) & static_cast<int>(b));
+inline int operator|(PseudobulkStatsMethod a, int b) {
+    return static_cast<int>(static_cast<int>(a) | static_cast<int>(b));
+}
+inline int operator|(int a, PseudobulkStatsMethod b) {
+    return static_cast<int>(static_cast<int>(a) | static_cast<int>(b));
+}
+inline int operator&(PseudobulkStatsMethod a, PseudobulkStatsMethod b) {
+    return static_cast<int>(a) & static_cast<int>(b);
+}
+inline int operator&(int a, PseudobulkStatsMethod b) {
+    return static_cast<int>(a) & static_cast<int>(b);
+}
+inline int operator&(PseudobulkStatsMethod a, int b) {
+    return static_cast<int>(a) & static_cast<int>(b);
 }
 
 struct PseudobulkStats {
@@ -45,7 +56,7 @@ struct PseudobulkStats {
 template <typename T>
 PseudobulkStats pseudobulk_matrix(std::unique_ptr<MatrixLoader<T>> &&mat,
                                   const std::vector<uint32_t>& cell_groups,
-                                  PseudobulkStatsMethod method,
+                                  int method,
                                   bool transpose,
                                   std::atomic<bool> *user_interrupt);
 } // namespace BPCells
