@@ -550,7 +550,7 @@ call_macs_peaks <- function(fragments, path,
   macs_call <- sprintf(macs_call_template,
                        macs_executable, effective_genome_size, levels(cell_groups),
                        path_bed_input, path_macs_output, additional_params)
-  
+
   if (step %in% c("prep-inputs", "run-macs", "all")) {
     shell_paths <- paste0(path, "/input/", levels(cell_groups), ".sh")
     for (cluster_idx in seq_along(levels(cell_groups))) { 

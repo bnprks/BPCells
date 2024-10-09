@@ -46,7 +46,7 @@ void writeInsertionBed(
                 it.coord() + 1
             );
             if (bytes_written <= 0) {
-                throw std::runtime_error("writeInserionBed: Failed to write data");
+                throw std::runtime_error("writeInsertionBed: Failed to write data");
             }
             if (user_interrupt != nullptr && count++ % 65536 == 0 && *user_interrupt) return;
         }

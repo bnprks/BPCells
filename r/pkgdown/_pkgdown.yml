@@ -123,6 +123,7 @@ reference:
   - apply_by_row
   - regress_out
   - IterableMatrix-methods
+  - pseudobulk_matrix
 
 - title: "Reference Annotations"
 - contents:
