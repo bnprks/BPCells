@@ -22,6 +22,7 @@ As we are currently also looking to develop a iterative latent semantic indexing
     * `fit(pipeline, X, y = NULL, ...)`: Fits each component in the pipeline sequentially to X.  y is optional, and is only required if the last component is an estimator.
     * `transform(pipeline, X)`: Transforms X by applying each transformer in a sequence.  Returns a transformed matrix.
     * `predict(pipeline, X)`: Transforms X by applying each transformer in a sequence, and then applies the final estimator.  Returns a one dimensional vector of labels.
+    * `show(pipeline)`: Prints out the steps in the pipeline, and the parameters of each step.  Print outa s a function call for recreating the pipeline.
 * Operators
     * `c(c1, c2)`: Concatenates two pipelines together, where the output of `c1` is the input of `c2`.
 
@@ -62,7 +63,7 @@ As we are currently also looking to develop a iterative latent semantic indexing
 ## Feature selector transformer
 `FeatureSelector`
 * Inherits from Pipeline
-* Selects a subset of features from a matrix
+* Selects a subset of features from a matrix, using scanpy default approach with binning.    Use their implementation of highly variable genes.
 * Fields
     * `features`: A vector of indices of features to select
 * Methods
