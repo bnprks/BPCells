@@ -72,12 +72,13 @@ As we are currently also looking to develop a iterative latent semantic indexing
 
 
 # Workflow
-1. Create an abstract base class `Pipeline` that represents a sequence of steps to be applied to data.
-2. Create a class `TfidfTransformer` that inherits from `Pipeline` and transforms a matrix of counts into a matrix of TF-IDF values.
-3. Create a class `ZScoreScaler` that inherits from `Pipeline` and standardizes each column of a matrix to have a mean of 0 and a standard deviation of 1.  Ensure that tests exemplify the ability to pipeline this with the `TfidfTransformer`.
-4. Create a class `SVD` that inherits from `Pipeline` and performs singular value decomposition on a matrix, and returns the first `n` projected components.
-5. Create a class `FeatureSelector` that inherits from `Pipeline` and selects a subset of features from a matrix.
-6. Create a pipeline wrapper around all aforementioned classes to perform LSI, and compare results against ArchR in a vignette.
+1. Create an implementation of tfidf without usage of the pipeline interface to ensure that the algorithm works.
+2. Create an implementation of variable feature selection without usage of the pipeline interface.
+3. Create an abstract base class `Pipeline` that represents a sequence of steps to be applied to data, with feature selection and tfidf interfacecs.
+4. Create a class `SVD` that inherits from `Pipeline` and performs z score normalization and  singular value decomposition on a matrix, and returns the first `n` projected components.
+5. Develop a wrapper that creates an LSI implementation using tfidf, PCA, variable feature selection.
+6. Developer a wrapper that does Iterative LSI, continuing adding additional objects to pipeline until convergence.
+7. Compare results against ArchR in a vignette.
 
 # Considerations
 * Each transform/model may need to take in additional metadata parameters, such as the number of features, or the number of samples. We should either consider finding a way to change these after object construction, or to pass them in as arguments to the `fit()` method.
