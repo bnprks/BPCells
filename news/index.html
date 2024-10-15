@@ -59,16 +59,30 @@
 <li>Add <code><a href="../reference/IterableMatrix-methods.html">rowMaxs()</a></code> and <code><a href="../reference/IterableMatrix-methods.html">colMaxs()</a></code> functions, which return the maximum value in each row or column of a matrix. If <code>matrixStats</code> or <code>MatrixGenerics</code> packages are installed, <code><a href="../reference/IterableMatrix-methods.html">BPCells::rowMaxs()</a></code> will fall back to their implementations for non-BPCells objects. Thanks to <a href="https://github.com/immanuelazn" class="external-link">@immanuelazn</a> for their first contribution as a new lab hire!</li>
 <li>Add <code><a href="../reference/regress_out.html">regress_out()</a></code> to allow removing unwanted sources of variation via least squares linear regression models. Thanks to <a href="https://github.com/ycli1995" class="external-link">@ycli1995</a> for pull request <a href="https://github.com/bnprks/BPCells/issues/110" class="external-link">#110</a></li>
 <li>Add <code><a href="../reference/trackplot_genome_annotation.html">trackplot_genome_annotation()</a></code> for plotting peaks, with options for directional arrows, colors, labels, and peak widths. (pull request <a href="https://github.com/bnprks/BPCells/issues/113" class="external-link">#113</a>)</li>
+<li>Add MACS2/3 input creation and peak calling through <code><a href="../reference/call_macs_peaks.html">call_macs_peaks()</a></code> (pull request <a href="https://github.com/bnprks/BPCells/issues/118" class="external-link">#118</a>)</li>
 </ul></div>
 <div class="section level3">
 <h3 id="improvements-0-2-1">Improvements<a class="anchor" aria-label="anchor" href="#improvements-0-2-1"></a></h3>
 <ul><li>
 <code><a href="../reference/trackplot_loop.html">trackplot_loop()</a></code> now accepts discrete color scales</li>
+<li>
+<code><a href="../reference/trackplot_combine.html">trackplot_combine()</a></code> now has smarter layout logic for margins, as well as detecting when plots are being combined that cover different genomic regions. (pull request <a href="https://github.com/bnprks/BPCells/issues/116" class="external-link">#116</a>)</li>
+<li>
+<code><a href="../reference/select_cells.html">select_cells()</a></code> and <code><a href="../reference/select_chromosomes.html">select_chromosomes()</a></code> now also allow using a logical mask for selection. (pull request <a href="https://github.com/bnprks/BPCells/issues/117" class="external-link">#117</a>)</li>
+<li>BPCells installation can now also be configured by setting the <code>LDFLAGS</code> or <code>CFLAGS</code> as environment variables in addition to setting them in <code>~/.R/Makevars</code> (pull request <a href="https://github.com/bnprks/BPCells/issues/124" class="external-link">#124</a>)</li>
 </ul></div>
 <div class="section level3">
 <h3 id="bug-fixes-0-2-1">Bug-fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-0-2-1"></a></h3>
-<ul><li>Fixed error message when a matrix is too large to be converted to dgCMatrix (Thanks to <a href="https://github.com/RookieA1" class="external-link">@RookieA1</a> for reporting issue <a href="https://github.com/bnprks/BPCells/issues/95" class="external-link">#95</a>)</li>
-<li>Fixed forgetting dimnames when subsetting after certain sets of operations (Thanks to <a href="https://github.com/Yunuuuu" class="external-link">@Yunuuuu</a> for reporting issues <a href="https://github.com/bnprks/BPCells/issues/97" class="external-link">#97</a> and <a href="https://github.com/bnprks/BPCells/issues/100" class="external-link">#100</a>)</li>
+<ul><li>Fixed error message when a matrix is too large to be converted to dgCMatrix. (Thanks to <a href="https://github.com/RookieA1" class="external-link">@RookieA1</a> for reporting issue <a href="https://github.com/bnprks/BPCells/issues/95" class="external-link">#95</a>)</li>
+<li>Fixed forgetting dimnames when subsetting after certain sets of operations. (Thanks to <a href="https://github.com/Yunuuuu" class="external-link">@Yunuuuu</a> for reporting issues <a href="https://github.com/bnprks/BPCells/issues/97" class="external-link">#97</a> and <a href="https://github.com/bnprks/BPCells/issues/100" class="external-link">#100</a>)</li>
+<li>Fixed plotting crashes when running <code><a href="../reference/trackplot_coverage.html">trackplot_coverage()</a></code> with fragments from a single cluster. (Thanks to <a href="https://github.com/sjessa" class="external-link">@sjessa</a> for directly reporting this bug and coming up with a fix)</li>
+<li>Fixed issues with <code><a href="../reference/trackplot_coverage.html">trackplot_coverage()</a></code> when called with ranges less than 500 bp in length (Thanks to <a href="https://github.com/bettybliu" class="external-link">@bettybliu</a> for directly reporting this bug.)</li>
+<li>Fix Rcpp warning created when handling compressed matrices with only one non-zero entry (pull request <a href="https://github.com/bnprks/BPCells/issues/123" class="external-link">#123</a>)</li>
+</ul></div>
+<div class="section level3">
+<h3 id="deprecations-0-2-1">Deprecations<a class="anchor" aria-label="anchor" href="#deprecations-0-2-1"></a></h3>
+<ul><li>
+<code><a href="../reference/trackplot_coverage.html">trackplot_coverage()</a></code> <code>legend_label</code> argument is now ignored, as the color legend is no longer shown by default for coverage plots.</li>
 </ul></div>
 </div>
     <div class="section level2">
@@ -161,7 +175,7 @@
 <li>Fixed bug writing fragment files with &gt;512 chromosomes.</li>
 <li>Fixed bug when reading fragment files with &gt;4 billion fragments.</li>
 <li>Fixed file permissions errors when using read-only hdf5 files (Issue <a href="https://github.com/bnprks/BPCells/issues/26" class="external-link">#26</a> reported thanks to <a href="https://github.com/ttumkaya" class="external-link">@ttumkaya</a>)</li>
-<li>Renaming <code><a href="https://rdrr.io/r/base/colnames.html" class="external-link">rownames()</a></code> or <code><a href="https://rdrr.io/r/base/colnames.html" class="external-link">colnames()</a></code> is now propagated when saving matrices (Issue <a href="https://github.com/bnprks/BPCells/issues/29" class="external-link">#29</a> reported thanks to <a href="https://github.com/realzehuali" class="external-link">@realzehuali</a>, with an additional fix after report thanks to <a href="https://github.com/Dario-Rocha" class="external-link">@Dario-Rocha</a>)</li>
+<li>Renaming <code><a href="https://rdrr.io/pkg/BiocGenerics/man/row_colnames.html" class="external-link">rownames()</a></code> or <code><a href="https://rdrr.io/pkg/BiocGenerics/man/row_colnames.html" class="external-link">colnames()</a></code> is now propagated when saving matrices (Issue <a href="https://github.com/bnprks/BPCells/issues/29" class="external-link">#29</a> reported thanks to <a href="https://github.com/realzehuali" class="external-link">@realzehuali</a>, with an additional fix after report thanks to <a href="https://github.com/Dario-Rocha" class="external-link">@Dario-Rocha</a>)</li>
 <li>Fixed 64-bit integer overflow (!) that could cause incorrect p-value calculations in <code><a href="../reference/marker_features.html">marker_features()</a></code> for features with more than 2.6 million zeros.</li>
 <li>Improved robustness of the Windows installation process for setups that do not need the -lsz linker flag to compile hdf5</li>
 <li>Fixed possible memory safety bug where wrapped R objects (such as dgCMatrix) could be potentially garbage collected while C++ was still trying to access the data in rare circumstances.</li>

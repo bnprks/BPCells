@@ -60,7 +60,7 @@ across a region for each cell type or group.</p>
 <span>  bins <span class="op">=</span> <span class="fl">500</span>,</span>
 <span>  clip_quantile <span class="op">=</span> <span class="fl">0.999</span>,</span>
 <span>  colors <span class="op">=</span> <span class="fu"><a href="palettes.html">discrete_palette</a></span><span class="op">(</span><span class="st">"stallion"</span><span class="op">)</span>,</span>
-<span>  legend_label <span class="op">=</span> <span class="st">"group"</span>,</span>
+<span>  legend_label <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  zero_based_coords <span class="op">=</span> <span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/methods/is.html" class="external-link">is</a></span><span class="op">(</span><span class="va">region</span>, <span class="st">"GRanges"</span><span class="op">)</span>,</span>
 <span>  return_data <span class="op">=</span> <span class="cn">FALSE</span></span>
 <span><span class="op">)</span></span></code></pre></div>
@@ -105,7 +105,7 @@ just the most extreme outliers across the region. NULL to disable clipping</p></
 
 
 <dt id="arg-legend-label">legend_label<a class="anchor" aria-label="anchor" href="#arg-legend-label"></a></dt>
-<dd><p>Custom label to put on the legend</p></dd>
+<dd><p><a href="https://lifecycle.r-lib.org/articles/stages.html#deprecated" class="external-link"><img src="figures/lifecycle-deprecated.svg" alt="[Deprecated]"></a> Custom label to put on the legend (no longer used as color legend is not shown anymore)</p></dd>
 
 
 <dt id="arg-zero-based-coords">zero_based_coords<a class="anchor" aria-label="anchor" href="#arg-zero-based-coords"></a></dt>
