@@ -93,20 +93,20 @@ template <class T> class OrderRows : public MatrixLoaderWrapper<T> {
     // prominently in a profile I ran (patterns from a Scale+Shift matrix with a subset assignment.
     // The input to Scale got row-reordered in the process)
     Eigen::MatrixXd
-    denseMultiplyRight(const Eigen::Map<Eigen::MatrixXd> B, std::atomic<bool> *user_interrupt) {
+    denseMultiplyRight(const Eigen::Map<Eigen::MatrixXd> B, std::atomic<bool> *user_interrupt) override {
         return this->loader->denseMultiplyRight(B, user_interrupt);
     }
     Eigen::MatrixXd
-    denseMultiplyLeft(const Eigen::Map<Eigen::MatrixXd> B, std::atomic<bool> *user_interrupt) {
+    denseMultiplyLeft(const Eigen::Map<Eigen::MatrixXd> B, std::atomic<bool> *user_interrupt) override {
         return this->loader->denseMultiplyLeft(B, user_interrupt);
     }
     // Calculate matrix-vector product A*v where A=this and B is a dense matrix.
     Eigen::VectorXd
-    vecMultiplyRight(const Eigen::Map<Eigen::VectorXd> v, std::atomic<bool> *user_interrupt) {
+    vecMultiplyRight(const Eigen::Map<Eigen::VectorXd> v, std::atomic<bool> *user_interrupt) override {
         return this->loader->vecMultiplyRight(v, user_interrupt);
     }
     Eigen::VectorXd
-    vecMultiplyLeft(const Eigen::Map<Eigen::VectorXd> v, std::atomic<bool> *user_interrupt) {
+    vecMultiplyLeft(const Eigen::Map<Eigen::VectorXd> v, std::atomic<bool> *user_interrupt) override {
         return this->loader->vecMultiplyLeft(v, user_interrupt);
     }
 };

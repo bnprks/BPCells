@@ -256,7 +256,7 @@ void read_bp128_end(IntegerVector input_data, IntegerVector input_idx, NumericVe
 
     size_t i = 0;
     while (true) {
-        uint64_t loaded = reader.load(output + i, std::min(chunk_size, capacity-i));
+        uint64_t loaded = reader.load(output + i, std::min<uint64_t>(chunk_size, capacity-i));
         if (loaded == 0) break;
         simd::add(output + i, start_data + i, loaded);
         if (i == capacity) throw std::runtime_error("read_unbuffered(): Ran out of capacity in write destination");
