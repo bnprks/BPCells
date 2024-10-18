@@ -62,7 +62,7 @@ uint32_t tile_overlaps(
         auto end_overlap = And(Gt(end, t_start), Le(end, t_end));
 
         if constexpr (MODE == 1) {
-            end_overlap = AndNot(end_overlap, start_overlap);
+            end_overlap = AndNot(start_overlap, end_overlap);
         }
 
         auto end_idx = Add(t_output_idx, libdivide_u32(Sub(end, t_start_p1), tile_width));
