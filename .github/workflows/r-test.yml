@@ -1,0 +1,35 @@
+name: Build and test R package
+
+on: [pull_request]
+
+jobs:
+  build:
+    name: ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+         # Include macos-13 to get an intel mac
+         os: [ubuntu-latest, windows-latest, macos-latest, macos-13]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install binary dependencies on ubuntu
+        if: ${{ matrix.os == 'ubuntu-latest' }}
+        run: sudo apt-get install -y libhdf5-dev
+      - name: Install binary dependencies on mac
+        if: ${{ matrix.os == 'macos-latest' || matrix.os == 'macos-13' }}
+        run: brew install hdf5
+      - name: Enable R parallel compilation
+        run: bash -c 'mkdir -p ~/.R && echo -e "MAKEFLAGS=--jobs=3" > ~/.R/Makevars${{ matrix.os == 'windows-latest' && '.win' || '' }}'
+      - uses: r-lib/actions/setup-r@v2
+        with:
+          Ncpus: '3'
+          use-public-rspm: true
+      - uses: r-lib/actions/setup-r-dependencies@v2
+        with:
+          cache-version: 1
+          extra-packages: |
+            any::testthat
+            any::decor
+          working-directory: 'r'
+      - name: Run testthat
+        run: Rscript -e 'testthat::test_local("r")'
