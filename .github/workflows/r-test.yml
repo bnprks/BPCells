@@ -35,8 +35,6 @@ jobs:
         with:
           Ncpus: '3'
           use-public-rspm: true
-      - name: Debug R makevars
-        run: Rscript -e 'print(tools::makevars_user()); print(readLines(tools::makevars_user()))'
       - uses: r-lib/actions/setup-r-dependencies@v2
         with:
           cache-version: 1
