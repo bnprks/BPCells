@@ -84,6 +84,16 @@ std::string simd_version() {
 }
 
 // [[Rcpp::export]]
+std::vector<std::string> available_simd_versions() {
+    return simd::supported_targets();
+}
+
+// [[Rcpp::export]]
+void set_simd_version(std::string version) {
+    simd::set_target(version);
+}
+
+// [[Rcpp::export]]
 std::string simd_version_bp128() {
     return simd::bp128::current_target();
 }

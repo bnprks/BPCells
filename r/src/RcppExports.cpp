@@ -107,6 +107,26 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// available_simd_versions
+std::vector<std::string> available_simd_versions();
+RcppExport SEXP _BPCells_available_simd_versions() {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    rcpp_result_gen = Rcpp::wrap(available_simd_versions());
+    return rcpp_result_gen;
+END_RCPP
+}
+// set_simd_version
+void set_simd_version(std::string version);
+RcppExport SEXP _BPCells_set_simd_version(SEXP versionSEXP) {
+BEGIN_RCPP
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< std::string >::type version(versionSEXP);
+    set_simd_version(version);
+    return R_NilValue;
+END_RCPP
+}
 // simd_version_bp128
 std::string simd_version_bp128();
 RcppExport SEXP _BPCells_simd_version_bp128() {
@@ -2496,6 +2516,8 @@ static const R_CallMethodDef CallEntries[] = {
     {"_BPCells_open_bp128_d1", (DL_FUNC) &_BPCells_open_bp128_d1, 5},
     {"_BPCells_open_bp128_for", (DL_FUNC) &_BPCells_open_bp128_for, 4},
     {"_BPCells_simd_version", (DL_FUNC) &_BPCells_simd_version, 0},
+    {"_BPCells_available_simd_versions", (DL_FUNC) &_BPCells_available_simd_versions, 0},
+    {"_BPCells_set_simd_version", (DL_FUNC) &_BPCells_set_simd_version, 1},
     {"_BPCells_simd_version_bp128", (DL_FUNC) &_BPCells_simd_version_bp128, 0},
     {"_BPCells_write_bp128", (DL_FUNC) &_BPCells_write_bp128, 4},
     {"_BPCells_write_bp128_for", (DL_FUNC) &_BPCells_write_bp128_for, 4},
