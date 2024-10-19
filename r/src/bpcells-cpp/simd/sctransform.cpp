@@ -37,8 +37,8 @@ template <int It, class V> inline V ReciprocalSqrtNewtonIter(const V a, const V 
     V newton = hn::Mul(
         approx, hn::MulAdd(hn::Mul(minus_half, approx), hn::Mul(a, approx), one_point_five)
     );
-    if constexpr (it > 1) {
-        newton = ReciprocalSqrt<It-1>(a, newton);
+    if constexpr (It > 1) {
+        newton = ReciprocalSqrtNewtonIter<It-1>(a, newton);
     }
     return newton;
 }
