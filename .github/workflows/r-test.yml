@@ -19,17 +19,19 @@ jobs:
         if: ${{ matrix.os == 'macos-latest' || matrix.os == 'macos-13' }}
         run: brew install hdf5
       - name: Enable R parallel compilation
-        run: bash -c 'mkdir -p ~/.R && echo -e "MAKEFLAGS=--jobs=3" > ~/.R/Makevars${{ matrix.os == 'windows-latest' && '.win' || '' }}'
+        run: bash -c 'echo -e "MAKEFLAGS=--jobs=3" > "$GITHUB_WORKSPACE/Makevars.user" && echo "R_MAKEVARS_USER=$GITHUB_WORKSPACE/Makevars.user" >> "$GITHUB_ENV"'
       # This is to fix assembler errors like 'file too big' or 'too many sections' on Windows
       # See: https://github.com/bnprks/BPCells/actions/runs/11412970445/job/31759842649?pr=141
       # Solution from: https://digitalkarabela.com/mingw-w64-how-to-fix-file-too-big-too-many-sections/ and https://github.com/apache/arrow/issues/24442
       - name: Handle Windows big object files
         if: ${{ matrix.os == 'windows-latest' }}
-        run: bash -c 'echo "CXXFLAGS = -Wa,-mbig-obj" >> ~/.R/Makevars.win'
+        run: bash -c 'echo "CXXFLAGS += -Wa,-mbig-obj" >> "$GITHUB_WORKSPACE/Makevars.user"'
       - uses: r-lib/actions/setup-r@v2
         with:
           Ncpus: '3'
           use-public-rspm: true
+      - name: Debug R makevars
+        run: Rscript -e 'print(tools::makevars_user()); print(readLines(tools::makevars_user()))'
       - uses: r-lib/actions/setup-r-dependencies@v2
         with:
           cache-version: 1
