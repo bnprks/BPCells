@@ -190,6 +190,7 @@ test_that("svds registers generic with RSpectra", {
 })
 
 test_that("rowMaxs and colMaxs works comprehensive", {
+  skip_if_not_installed("matrixStats")
   withr::local_seed(195123)
   m1_neg <- matrix(runif(12, min = -10, max = -1), nrow = 3, ncol = 4)
   m2_dense <- generate_dense_matrix(4, 64)
