@@ -8,8 +8,13 @@
 
 #pragma once
 
+#include <vector>
+#include <string>
+
 namespace BPCells::simd {
 
 const char *current_target();
+std::vector<std::string> supported_targets();
+void set_target(std::string target);
 
 }
