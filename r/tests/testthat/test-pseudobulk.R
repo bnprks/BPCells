@@ -96,6 +96,7 @@ test_that("Pseudobulk aggregation works with multiple return types", {
 })
 
 test_that("Matrix col quantiles works", {
+  skip_if_not_installed("matrixStats")
   m0 <- generate_sparse_matrix(20, 10)
   m1 <- m0 |> as("IterableMatrix")
   m0 <- as.matrix(m0)
@@ -118,6 +119,7 @@ test_that("Matrix col quantiles works", {
 })
 
 test_that("Matrix row quantiles works with transposed matrices", {
+  skip_if_not_installed("matrixStats")
   m0 <- generate_sparse_matrix(20, 10)
   m1 <- m0 |> as("IterableMatrix") |> t()
   m0 <- as.matrix(m0) |> t()
