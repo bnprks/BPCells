@@ -253,7 +253,7 @@ colQuantiles.IterableMatrix <- function(x, rows = NULL, cols = NULL,
 }
 rlang::on_load({
   if (requireNamespace("MatrixGenerics", quietly = TRUE)) {
-    setMethod("colQuantiles", "IterableMatrix", colQuantiles.IterableMatrix)
-    setMethod("rowQuantiles", "IterableMatrix", rowQuantiles.IterableMatrix)
+    setMethod(MatrixGenerics::colQuantiles, "IterableMatrix", colQuantiles.IterableMatrix)
+    setMethod(MatrixGenerics::rowQuantiles, "IterableMatrix", rowQuantiles.IterableMatrix)
   }
 })

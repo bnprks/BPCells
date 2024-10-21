@@ -21,7 +21,7 @@ Contributions welcome :)
 - Add MACS2/3 input creation and peak calling through `call_macs_peaks()` (pull request #118)
 - Add `rowQuantiles()` and `colQuantiles()` functions, which return the quantiles of each row/column of a matrix. Currently `rowQuantiles()` only works on row-major matrices and `colQuantiles()` only works on col-major matrices.
   If `matrixStats` or `MatrixGenerics` packages are installed, `BPCells::colQuantiles()` will fall back to their implementations for non-BPCells objects. (pull request #128)
-- Add `pseudobulk_matrix()` which allows pseudobulk aggregation by `sum` or `mean`, clipping outlier values during aggregation, and calculation of per-pseudobulk `variance` and `nonzero` statistics for each gene (pull request #128)
+- Add `pseudobulk_matrix()` which allows pseudobulk aggregation by `sum` or `mean` and calculation of per-pseudobulk `variance` and `nonzero` statistics for each gene (pull request #128)
 
 ## Improvements
 - `trackplot_loop()` now accepts discrete color scales
