@@ -127,7 +127,7 @@ pseudobulk_matrix <- function(mat, cell_groups, method = "sum", threads = 1L) {
 #' @param x IterableMatrix object or a matrix-like object.
 #' @param probs (Numeric) Quantile value(s) to be computed, between 0 and 1.
 #' @param type (Integer) between 4 and 9 selecting which quantile algorithm to use, detailed in `matrixStats::rowQuantiles()`
-#' @return If length(probs) == 1, return a numeric with number of entries equal to the number of rows in the matrix.
+#' @return If `length(probs) == 1`, return a numeric with number of entries equal to the number of rows in the matrix.
 #' Else, return a Matrix of quantile values, with cols representing each quantile, and each row representing a row in the input matrix.
 #' @describeIn IterableMatrix-methods Calculate colQuantiles (replacement for `matrixStats::colQuantiles`)
 #' @export
@@ -143,9 +143,9 @@ rowQuantiles.default <- function(x, rows = NULL, cols = NULL,
                                  na.rm = FALSE, type = 7L, digits = 7L, ...,
                                  useNames = TRUE, drop = TRUE) {
   if (requireNamespace("MatrixGenerics", quietly = TRUE)) {
-    MatrixGenerics::rowQuantiles(x, probs = probs, na.rm = na.rm, type = type, digits = digits, ..., useNames = useNames, drop = drop)
+    MatrixGenerics::rowQuantiles(x, rows = rows, cols = cols, probs = probs, na.rm = na.rm, type = type, digits = digits, ..., useNames = useNames, drop = drop)
   } else if (requireNamespace("matrixStats", quietly = TRUE)) {
-    matrixStats::rowQuantiles(x, probs = probs, na.rm = na.rm, type = type, digits = digits, ..., useNames = useNames, drop = drop)
+    matrixStats::rowQuantiles(x, rows = rows, cols = cols, probs = probs, na.rm = na.rm, type = type, digits = digits, ..., useNames = useNames, drop = drop)
   } else {
     rlang::abort("Cannot run rowQuantiles on a non-BPCells object unless MatrixGenerics or matrixStats is installed.")
   }
@@ -180,7 +180,7 @@ rowQuantiles.IterableMatrix <- function(x, rows = NULL, cols = NULL,
   alpha <- alpha_beta[1]
   beta <- alpha_beta[2]
   iter <- iterate_matrix(convert_matrix_type(x, "double"))
-  res <- t(matrix_quantile_per_col_cpp(iter, probs, alpha = alpha, beta = beta))
+  res <- matrix_quantile_per_col_cpp(iter, probs, alpha = alpha, beta = beta)
   rownames(res) <- rownames(x)
   if (length(probs) == 1) return(res[,1])
   # `quantile()` from base R returns rownames as percentages, so we follow that convention
@@ -190,8 +190,8 @@ rowQuantiles.IterableMatrix <- function(x, rows = NULL, cols = NULL,
 
 
 #' Find the nth quantile value(s) of each column in a matrix. Only supports non-transposed matrices.
-#' @return If length(probs) == 1, return a numeric with number of entries equal to the number of columns in the matrix. 
-#' Else, return a Matrix of quantile values, with rows representing each quantile, and each column representing a column in the input matrix.
+#' @return If `length(probs) == 1`, return a numeric with number of entries equal to the number of columns in the matrix. 
+#' Else, return a Matrix of quantile values, with cols representing each quantile, and each row representing a col in the input matrix.
 #' @describeIn IterableMatrix-methods Calculate colQuantiles (replacement for `matrixStats::colQuantiles`)
 #' @inheritParams rowQuantiles
 #' @export
@@ -245,10 +245,10 @@ colQuantiles.IterableMatrix <- function(x, rows = NULL, cols = NULL,
   beta <- alpha_beta[2]
   iter <- iterate_matrix(convert_matrix_type(x, "double"))
   res <- matrix_quantile_per_col_cpp(iter, probs, alpha = alpha, beta = beta)
-  colnames(res) <- colnames(x)
-  if (length(probs) == 1) return(res[1,])
+  rownames(res) <- colnames(x)
+  if (length(probs) == 1) return(res[,1])
   # `quantile()` from base R returns rownames as percentages, so we follow that convention
-  rownames(res) <- paste0(format(100 * probs, trim = TRUE, digits = digits), "%")
+  colnames(res) <- paste0(format(100 * probs, trim = TRUE, digits = digits), "%")
   return(res)
 }
 rlang::on_load({

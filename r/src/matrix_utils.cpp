@@ -676,7 +676,7 @@ List pseudobulk_matrix_cpp(SEXP mat,
                            std::vector<uint32_t> cell_groups,
                            std::vector<std::string> method,
                            bool transpose) {
-    int methodFlags = 0;
+    PseudobulkStatsMethod methodFlags = static_cast<PseudobulkStatsMethod>(0);
     for (std::string &m : method) {
         if (m == "nonzeros") {
             methodFlags = methodFlags | PseudobulkStatsMethod::NonZeros;
@@ -693,7 +693,7 @@ List pseudobulk_matrix_cpp(SEXP mat,
         &pseudobulk_matrix<double>,
         take_unique_xptr<MatrixLoader<double>>(mat),
         std::cref(cell_groups),
-        (int)methodFlags,
+        (PseudobulkStatsMethod)methodFlags,
         transpose
     );
     return List::create(

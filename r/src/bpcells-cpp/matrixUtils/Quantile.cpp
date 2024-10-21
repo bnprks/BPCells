@@ -47,7 +47,8 @@ Eigen::ArrayXXd matrix_quantile_per_col(std::unique_ptr<MatrixLoader<T>>&& mat,
                                         double beta,
                                         std::atomic<bool> *user_interrupt) {
     MatrixIterator<T> it(std::move(mat));
-    Eigen::ArrayXXd res(quantile.size(), it.cols());
+    // Eigen::ArrayXXd res(quantile.size(), it.cols());
+    Eigen::ArrayXXd res(it.cols(), quantile.size());
     std::vector<T> curr;
     // clamp quantile, alpha, beta to [0,1]
     for (auto& q: quantile) q = std::min(1.0, std::max(0.0, q));
@@ -82,7 +83,7 @@ Eigen::ArrayXXd matrix_quantile_per_col(std::unique_ptr<MatrixLoader<T>>&& mat,
         for (uint32_t q_idx = 0; q_idx < quantile.size(); q_idx++) {
             double quantile_num = order_statistic(curr, indexes[q_idx] - 1, num_neg, num_zeros, it.rows() - num_neg - num_zeros)* (1-gammas[q_idx]) +
                 order_statistic(curr, indexes[q_idx], num_neg, num_zeros, it.rows() - num_neg - num_zeros) * gammas[q_idx];
-            res(q_idx, it.currentCol()) = quantile_num;
+            res(it.currentCol(), q_idx) = quantile_num;
         }
     }
     return res;
