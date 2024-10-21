@@ -207,9 +207,9 @@ colQuantiles.default <- function(x, rows = NULL, cols = NULL,
                                  na.rm = FALSE, type = 7L, digits = 7L, ...,
                                  useNames = TRUE, drop = TRUE) {
   if (requireNamespace("MatrixGenerics", quietly = TRUE)) {
-    MatrixGenerics::colQuantiles(x, rows = rows, cols = cols, probs = probs, na.rm = na.rm, type = type, digits = digits..., useNames = useNames, drop = drop)
+    MatrixGenerics::colQuantiles(x, rows = rows, cols = cols, probs = probs, na.rm = na.rm, type = type, digits = digits, ..., useNames = useNames, drop = drop)
   } else if (requireNamespace("matrixStats", quietly = TRUE)) {
-    matrixStats::colQuantiles(x, rows = rows, cols = cols, probs = probs, na.rm = na.rm, type = type, digits = digits..., useNames = useNames, drop = drop)
+    matrixStats::colQuantiles(x, rows = rows, cols = cols, probs = probs, na.rm = na.rm, type = type, digits = digits, ..., useNames = useNames, drop = drop)
   } else {
     rlang::abort("Cannot run colQuantiles on a non-BPCells object unless MatrixGenerics or matrixStats is installed.")
   }

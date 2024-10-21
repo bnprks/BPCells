@@ -181,11 +181,11 @@ expm1_slow(x)
 \item \code{colMaxs()}: vector of column maxes
 }
 
-If length(probs) == 1, return a numeric with number of entries equal to the number of rows in the matrix.
+If \code{length(probs) == 1}, return a numeric with number of entries equal to the number of rows in the matrix.
 Else, return a Matrix of quantile values, with cols representing each quantile, and each row representing a row in the input matrix.
 
-If length(probs) == 1, return a numeric with number of entries equal to the number of columns in the matrix.
-Else, return a Matrix of quantile values, with rows representing each quantile, and each column representing a column in the input matrix.
+If \code{length(probs) == 1}, return a numeric with number of entries equal to the number of columns in the matrix.
+Else, return a Matrix of quantile values, with cols representing each quantile, and each row representing a col in the input matrix.
 }
 \description{
 Generic methods and built-in functions for IterableMatrix objects
