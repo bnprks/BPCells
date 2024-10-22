@@ -749,6 +749,14 @@ matrix_max_per_col_cpp <- function(matrix) {
     .Call(`_BPCells_matrix_max_per_col_cpp`, matrix)
 }
 
+pseudobulk_matrix_cpp <- function(mat, cell_groups, method, transpose) {
+    .Call(`_BPCells_pseudobulk_matrix_cpp`, mat, cell_groups, method, transpose)
+}
+
+matrix_quantile_per_col_cpp <- function(mat, quantile, alpha, beta) {
+    .Call(`_BPCells_matrix_quantile_per_col_cpp`, mat, quantile, alpha, beta)
+}
+
 matrix_identical_uint32_t_cpp <- function(mat1, mat2) {
     .Call(`_BPCells_matrix_identical_uint32_t_cpp`, mat1, mat2)
 }

@@ -19,7 +19,7 @@ write_insertion_bed(
 \item{path}{(character vector) Path to save bed files. If \code{cell_groups} is provided, this must be a character vector with one name for each level in \code{cell_groups}
 Else, this must be a character vector of length 1.}
 
-\item{cell_groups}{(character vector or factor) Cluster assignments for each cell. If is null, all cells are treated as one group.}
+\item{cell_groups}{(character vector or factor) Cluster assignments for each cell.}
 
 \item{insertion_mode}{(string) Which fragment ends to use for coverage calculation. One of "both", "start_only", or "end_only"}
 
