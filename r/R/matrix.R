@@ -2141,6 +2141,9 @@ setMethod("short_description", "AnnDataMatrixH5", function(x) {
 #' 
 #' @inheritParams open_matrix_hdf5
 #' @return AnnDataMatrixH5 object, with cells as the columns.
+#' @details Dimnames are inferred from `obs/_index` or `var/_index` based on length matching.
+#'   This helps to infer dimnames for `obsp`,` varm`, etc. If the number of `len(obs) == len(var)`,
+#'   dimname inference will be disabled.
 #' @export
 open_matrix_anndata_hdf5 <- function(path, group = "X", buffer_size = 16384L) {
   assert_is_file(path)

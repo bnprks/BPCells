@@ -250,8 +250,12 @@ test_that("AnnData read backwards compatibility", {
          as("dgCMatrix")
   rownames(ans) <- as.character(0:4)
   colnames(ans) <- as.character(0:2)
+  obsm_ans <- ans[1:2,]
+  rownames(obsm_ans) <- NULL
+  varm_ans <- t(ans[,1:2])
+  rownames(varm_ans) <- NULL 
 
-  test_files <- c("mini_mat.h5ad", "mini_mat.anndata-v0.6.22.h5ad", "mini_mat.anndata-v0.7.h5ad", "mini_mat.anndata-v0.7.8.h5ad")
+  test_files <- c("mini_mat.anndata-v0.6.22.h5ad", "mini_mat.anndata-v0.7.h5ad", "mini_mat.anndata-v0.10.9.h5ad")
   for (f in test_files) {
     file.copy(file.path("../data", f), file.path(dir, f))
     open_matrix_anndata_hdf5(file.path(dir, f)) %>%
@@ -260,14 +264,26 @@ test_that("AnnData read backwards compatibility", {
     open_matrix_anndata_hdf5(file.path(dir, f), group="layers/transpose") %>%
       as("dgCMatrix") %>%
       expect_identical(ans)
+    open_matrix_anndata_hdf5(file.path(dir, f), group="layers/dense") %>%
+      as("dgCMatrix") %>%
+      Matrix::drop0() %>%
+      expect_identical(ans)
+    
+    open_matrix_anndata_hdf5(file.path(dir, f), group="obsm/obs_mat") %>%
+      as("dgCMatrix") %>%
+      expect_identical(obsm_ans)
+    open_matrix_anndata_hdf5(file.path(dir, f), group="varm/var_mat") %>%
+      as("dgCMatrix") %>%
+      Matrix::drop0() %>%
+      expect_identical(varm_ans)
   }
 })
 
 test_that("AnnData subset hasn't regressed", {
   dir <- withr::local_tempdir()
   # Make a copy since apparently reading the test hdf5 file causes modifications that git detects
-  file.copy("../data/mini_mat.h5ad", file.path(dir, "mini_mat.h5ad"))
-  x <- open_matrix_anndata_hdf5(file.path(dir, "mini_mat.h5ad")) %>%
+  file.copy("../data/mini_mat.anndata-v0.10.9.h5ad", file.path(dir, "mini_mat.anndata-v0.10.9.h5ad"))
+  x <- open_matrix_anndata_hdf5(file.path(dir, "mini_mat.anndata-v0.10.9.h5ad")) %>%
     .[1:nrow(.),1:ncol(.)]
 
   s <- matrix_stats(x, row_stats="mean", col_stats="mean")
@@ -317,10 +333,10 @@ test_that("AnnData types round-trip", {
 test_that("AnnData and 10x row/col rename works", {
   dir <- withr::local_tempdir()
   # Make a copy since apparently reading the test hdf5 file causes modifications that git detects
-  file.copy("../data/mini_mat.h5ad", file.path(dir, "mini_mat.h5ad"))
+  file.copy("../data/mini_mat.anndata-v0.10.9.h5ad", file.path(dir, "mini_mat.anndata-v0.10.9.h5ad"))
 
   # Test change row+col names on hdf5
-  x <- open_matrix_anndata_hdf5(file.path(dir, "mini_mat.h5ad"))
+  x <- open_matrix_anndata_hdf5(file.path(dir, "mini_mat.anndata-v0.10.9.h5ad"))
   
   orig_colnames <- colnames(x)
   orig_rownames <- rownames(x)
@@ -338,7 +354,7 @@ test_that("AnnData and 10x row/col rename works", {
   expect_identical(rownames(x2_t), colnames(x))
 
   # Test change row+col names on 10x
-  x_10x <- open_matrix_anndata_hdf5(file.path(dir, "mini_mat.h5ad")) %>%
+  x_10x <- open_matrix_anndata_hdf5(file.path(dir, "mini_mat.anndata-v0.10.9.h5ad")) %>%
     convert_matrix_type("uint32_t") %>%
     write_matrix_10x_hdf5(file.path(dir, "mini_mat.h5"))
   rownames(x_10x) <- paste0("2row", rownames(x_10x))
@@ -358,9 +374,9 @@ test_that("AnnData and 10x row/col rename works", {
 test_that("AnnData write to dir matrix works (#57 regression test)", {
   dir <- withr::local_tempdir()
   # Make a copy since apparently reading the test hdf5 file causes modifications that git detects
-  file.copy("../data/mini_mat.h5ad", file.path(dir, "mini_mat.h5ad"))
-  x <- open_matrix_anndata_hdf5(file.path(dir, "mini_mat.h5ad"))
-  xt <- open_matrix_anndata_hdf5(file.path(dir, "mini_mat.h5ad"), group="layers/transpose")
+  file.copy("../data/mini_mat.anndata-v0.10.9.h5ad", file.path(dir, "mini_mat.anndata-v0.10.9.h5ad"))
+  x <- open_matrix_anndata_hdf5(file.path(dir, "mini_mat.anndata-v0.10.9.h5ad"))
+  xt <- open_matrix_anndata_hdf5(file.path(dir, "mini_mat.anndata-v0.10.9.h5ad"), group="layers/transpose")
   y <- write_matrix_dir(x, file.path(dir, "mini_mat"))
   yt <- write_matrix_dir(xt, file.path(dir, "mini_mat_t"))
   

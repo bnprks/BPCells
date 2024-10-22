@@ -39,3 +39,8 @@ format. This is because the AnnData convention stores cells as rows, whereas the
 convention stores cells as columns. If this behavior is undesired, call \code{t()}
 manually on the matrix inputs and outputs of these functions.
 }
+\details{
+Dimnames are inferred from \verb{obs/_index} or \verb{var/_index} based on length matching.
+This helps to infer dimnames for \code{obsp},\code{ varm}, etc. If the number of \code{len(obs) == len(var)},
+dimname inference will be disabled.
+}
