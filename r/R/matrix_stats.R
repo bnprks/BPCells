@@ -1,3 +1,11 @@
+# Copyright 2024 BPCells contributors
+# 
+# Licensed under the Apache License, Version 2.0 <LICENSE-APACHE or
+# https://www.apache.org/licenses/LICENSE-2.0> or the MIT license
+# <LICENSE-MIT or https://opensource.org/licenses/MIT>, at your
+# option. This file may not be copied, modified, or distributed
+# except according to those terms.
+
 #' Find the nth quantile value(s) of each row in a matrix. Only supports transposed matrices.
 #' @param x IterableMatrix object or a matrix-like object.
 #' @param probs (Numeric) Quantile value(s) to be computed, between 0 and 1.
@@ -5,6 +13,18 @@
 #' @return  - `rowQuantiles():` If `length(probs) == 1`, return a numeric with number of entries equal to the number of rows in the matrix.
 #' Else, return a Matrix of quantile values, with cols representing each quantile, and each row representing a row in the input matrix.
 #' @describeIn IterableMatrix-methods Calculate rowQuantiles (replacement for `matrixStats::rowQuantiles`)
+#' @usage rowQuantiles(
+#'   x,
+#'   rows = NULL,
+#'   cols = NULL,
+#'   probs = seq(from = 0, to = 1, by = 0.25),
+#'   na.rm = FALSE,
+#'   type = 7L,
+#'   digits = 7L,
+#'   ...,
+#'   useNames = TRUE,
+#'   drop = TRUE
+#' )
 #' @export
 rowQuantiles <- function(x, rows = NULL, cols = NULL,
                          probs = seq(from = 0, to = 1, by = 0.25),
@@ -69,6 +89,18 @@ rowQuantiles.IterableMatrix <- function(x, rows = NULL, cols = NULL,
 #' Else, return a Matrix of quantile values, with cols representing each quantile, and each row representing a col in the input matrix.
 #' @describeIn IterableMatrix-methods Calculate colQuantiles (replacement for `matrixStats::colQuantiles`)
 #' @inheritParams rowQuantiles
+#' @usage colQuantiles(
+#'   x,
+#'   rows = NULL,
+#'   cols = NULL,
+#'   probs = seq(from = 0, to = 1, by = 0.25),
+#'   na.rm = FALSE,
+#'   type = 7L,
+#'   digits = 7L,
+#'   ...,
+#'   useNames = TRUE,
+#'   drop = TRUE
+#' )
 #' @export
 colQuantiles <- function(x, rows = NULL, cols = NULL,
                          probs = seq(from = 0, to = 1, by = 0.25),
@@ -126,6 +158,7 @@ colQuantiles.IterableMatrix <- function(x, rows = NULL, cols = NULL,
   colnames(res) <- paste0(format(100 * probs, trim = TRUE, digits = digits), "%")
   return(res)
 }
+
 rlang::on_load({
   if (requireNamespace("MatrixGenerics", quietly = TRUE)) {
     setMethod(MatrixGenerics::colQuantiles, "IterableMatrix", colQuantiles.IterableMatrix)
