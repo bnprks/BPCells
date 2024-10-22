@@ -21,7 +21,7 @@ test_that("Wilcoxon rank sum works (small)", {
     x <- x - med_xy
     y <- y - med_xy
 
-    res_r <- wilcox.test(x, y, exact=FALSE, correct=T)
+    res_r <- wilcox.test(x, y, exact=FALSE, correct=TRUE)
 
     vals <- c(x,y)
     X <- matrix(c(vals - median(vals), vals), ncol=2)
