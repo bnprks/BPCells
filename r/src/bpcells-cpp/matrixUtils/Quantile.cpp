@@ -47,7 +47,6 @@ Eigen::ArrayXXd matrix_quantile_per_col(std::unique_ptr<MatrixLoader<T>>&& mat,
                                         double beta,
                                         std::atomic<bool> *user_interrupt) {
     MatrixIterator<T> it(std::move(mat));
-    // Eigen::ArrayXXd res(quantile.size(), it.cols());
     Eigen::ArrayXXd res(it.cols(), quantile.size());
     std::vector<T> curr;
     // clamp quantile, alpha, beta to [0,1]

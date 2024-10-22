@@ -36,7 +36,7 @@ T order_statistic(const std::vector<T>& sorted_nonzero_values,
 // - alpha: parameter for the quantile calculation
 // - beta: parameter for the quantile calculation
 // Returns:
-// - A matrix of quantiles values, with each row corresponding to a quantile and each column corresponding to a column in the matrix.
+// - A matrix of quantiles values, with each column corresponding to a quantile and each row corresponding to a column in the input matrix.
 template <typename T>
 Eigen::ArrayXXd matrix_quantile_per_col(std::unique_ptr<MatrixLoader<T>>&& mat, 
                                         std::vector<double> quantile,
