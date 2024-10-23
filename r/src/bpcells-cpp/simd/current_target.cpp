@@ -33,11 +33,12 @@ namespace BPCells::simd {
 
 HWY_EXPORT(current_target);
 
+// Return a string with the name of the current SIMD instruction set being used by highway
 const char* current_target() {
     return HWY_DYNAMIC_DISPATCH(current_target)();
 }
 
-
+// Return a list of all highway SIMD instruction sets supported on this CPU
 std::vector<std::string> supported_targets() {
     std::vector<std::string> res;
     for (int64_t target : hwy::SupportedAndGeneratedTargets()) {
@@ -46,6 +47,8 @@ std::vector<std::string> supported_targets() {
     return res;
 }
 
+// Set the active SIMD instruction set highway should use. 
+// This is useful for testing/debugging to force use of an older SIMD instruction set
 void set_target(std::string target) {
     for (int64_t t : hwy::SupportedAndGeneratedTargets()) {
         if (target == hwy::TargetName(t)) {

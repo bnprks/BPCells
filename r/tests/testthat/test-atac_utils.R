@@ -154,7 +154,6 @@ test_that("write_insertion_bedgraph works", {
 })
 
 test_that("write_insertion_bed works", {
-  skip_on_os("windows") # TODO: threads >1 causes parallel::mclapply issues on windows
   dir <- withr::local_tempdir()
   chr1 <- tibble::tibble(
     chr = "chr1",
