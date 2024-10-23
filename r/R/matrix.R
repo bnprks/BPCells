@@ -2133,7 +2133,7 @@ setMethod("short_description", "AnnDataMatrixH5", function(x) {
 
 #' Read/write AnnData matrix
 #'
-#' Read or write a sparse matrix from an anndata hdf5 file. These functions will
+#' Read or write a matrix from an anndata hdf5 file. These functions will
 #' automatically transpose matrices when converting to/from the AnnData
 #' format. This is because the AnnData convention stores cells as rows, whereas the R
 #' convention stores cells as columns. If this behavior is undesired, call `t()`
@@ -2144,6 +2144,11 @@ setMethod("short_description", "AnnDataMatrixH5", function(x) {
 #' @details Dimnames are inferred from `obs/_index` or `var/_index` based on length matching.
 #'   This helps to infer dimnames for `obsp`,` varm`, etc. If the number of `len(obs) == len(var)`,
 #'   dimname inference will be disabled.
+#'
+#'   *Efficiency considerations*: Reading from a dense AnnData matrix will generally be slower
+#'   than sparse for single cell datasets, so it is recommended to re-write any dense AnnData
+#'   inputs to a sparse format early in processing. Note that `write_matrix_hdf5()` will only
+#'   write in the sparse format.
 #' @export
 open_matrix_anndata_hdf5 <- function(path, group = "X", buffer_size = 16384L) {
   assert_is_file(path)

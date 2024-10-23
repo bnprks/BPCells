@@ -33,7 +33,7 @@ in memory before calling writes to disk.}
 AnnDataMatrixH5 object, with cells as the columns.
 }
 \description{
-Read or write a sparse matrix from an anndata hdf5 file. These functions will
+Read or write a matrix from an anndata hdf5 file. These functions will
 automatically transpose matrices when converting to/from the AnnData
 format. This is because the AnnData convention stores cells as rows, whereas the R
 convention stores cells as columns. If this behavior is undesired, call \code{t()}
@@ -43,4 +43,9 @@ manually on the matrix inputs and outputs of these functions.
 Dimnames are inferred from \verb{obs/_index} or \verb{var/_index} based on length matching.
 This helps to infer dimnames for \code{obsp},\code{ varm}, etc. If the number of \code{len(obs) == len(var)},
 dimname inference will be disabled.
+
+\emph{Efficiency considerations}: Reading from a dense AnnData matrix will generally be slower
+than sparse for single cell datasets, so it is recommended to re-write any dense AnnData
+inputs to a sparse format early in processing. Note that \code{write_matrix_hdf5()} will only
+write in the sparse format.
 }
