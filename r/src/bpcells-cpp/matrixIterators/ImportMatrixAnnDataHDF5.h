@@ -7,9 +7,7 @@
 // except according to those terms.
 
 #pragma once
-#include "../arrayIO/array_interfaces.h"
 #include "../arrayIO/hdf5.h"
-#include "../arrayIO/vector.h"
 #include "StoredMatrix.h"
 #include "StoredMatrixWriter.h"
 

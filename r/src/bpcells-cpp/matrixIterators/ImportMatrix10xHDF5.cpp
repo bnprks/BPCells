@@ -7,6 +7,8 @@
 // except according to those terms.
 
 #include "ImportMatrix10xHDF5.h"
+#include "../arrayIO/array_interfaces.h"
+#include "../arrayIO/vector.h"
 
 namespace BPCells {
 
