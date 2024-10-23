@@ -34,6 +34,14 @@ inline void vec_assign_helper(
     ((vecs.second[to] = vecs.first[from]), ...);
 }
 
+// Template helper to size-match multiple vectors
+template <typename... Ts>
+inline void vec_resize_helper(
+    std::pair<std::vector<Ts> &, std::vector<Ts> &> ...vecs
+) {
+    ((vecs.second.resize(vecs.first.size())), ...);
+}
+
 // Helper template logic for converting to a uint32_t or uint64_t radix
 template <typename T>
 struct RadixType
@@ -184,12 +192,12 @@ struct RadixTransform<double, uint64_t>
 };
 
 // Do a stable radix sort on a "struct-of-arrays" oriented dataset using a uint32_t-typed key
-// Must provide a buffers of equal size to the original dataset
+// Buffers will be resized to match the main vectors
 
 // Example usage on fragments: sorting by end coordinate while making the corresponding
 // swaps in a cell_id array.
 // vector<uint32_t> ends, cell_id, end_buf, cell_buf;
-// lsdRadixSortArrays<uint32_t>(ends.size(), {ends, end_buf}, {cell_id, cell_buf});
+// lsdRadixSortArrays<uint32_t>(ends.size(), ends, cell_id, end_buf, cell_buf);
 template <typename T, typename... Vals>
 void lsdRadixSortArrays(
     uint32_t size,
@@ -199,6 +207,8 @@ void lsdRadixSortArrays(
     std::vector<Vals> &...vals_scratch
 ) 
 {
+    vec_resize_helper<T, Vals...>({key, key_scratch}, {vals, vals_scratch}...);
+
     static_assert(sizeof(T) == 4 || sizeof(T) == 8);
     using Radix = typename RadixType<T>::type;
     const uint32_t radix_bytes = sizeof(T);
