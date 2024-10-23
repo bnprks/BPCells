@@ -10,7 +10,8 @@
 #define RCPP_NO_SUGAR
 #include <Rcpp.h>
 
-#include "bpcells-cpp/matrixIterators/ImportMatrixHDF5.h"
+#include "bpcells-cpp/matrixIterators/ImportMatrix10xHDF5.h"
+#include "bpcells-cpp/matrixIterators/ImportMatrixAnnDataHDF5.h"
 #include "bpcells-cpp/matrixIterators/MatrixIterator.h"
 #include "bpcells-cpp/matrixIterators/MatrixMarketImport.h"
 #include "bpcells-cpp/matrixIterators/StoredMatrix.h"
