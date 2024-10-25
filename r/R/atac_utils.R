@@ -417,7 +417,7 @@ write_insertion_bedgraph <- function(fragments, path, cell_groups = rlang::rep_a
 #' @keywords internal
 write_insertion_bed <- function(fragments, path,
                                 cell_groups = rlang::rep_along(cellNames(fragments), "all"),
-                                insertion_mode = c("start_only", "both", "end_only"),
+                                insertion_mode = c("both", "start_only",  "end_only"),
                                 verbose = FALSE,
                                 threads = 1) {
   assert_is(fragments, "IterableFragments")
