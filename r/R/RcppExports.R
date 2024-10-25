@@ -33,6 +33,14 @@ simd_version <- function() {
     .Call(`_BPCells_simd_version`)
 }
 
+available_simd_versions <- function() {
+    .Call(`_BPCells_available_simd_versions`)
+}
+
+set_simd_version <- function(version) {
+    invisible(.Call(`_BPCells_set_simd_version`, version))
+}
+
 simd_version_bp128 <- function() {
     .Call(`_BPCells_simd_version_bp128`)
 }
