@@ -13,7 +13,7 @@ jobs:
       with:
         fetch-depth: 0 # to ensure other branches are available for build
     - name: Install system dependencies
-      run: sudo apt-get install -y libhdf5-dev git-restore-mtime
+      run: sudo apt-get install -y libhdf5-dev
     - name: Set r compilation options
       run: bash -c 'echo -e "MAKEFLAGS=--jobs=3\nCXXFLAGS += -O1 -UNDEBUG" > "$GITHUB_WORKSPACE/Makevars.user" && echo "R_MAKEVARS_USER=$GITHUB_WORKSPACE/Makevars.user" >> "$GITHUB_ENV"'
     - name: Setup R
