@@ -606,9 +606,16 @@ call_peaks_macs <- function(fragments, path,
   }
 }
 
+#' Call peaks using MACS2/3
+#'
+#' @description
+#' `r lifecycle::badge("deprecated")` 
+#'
+#' This function has been renamed to `call_peaks_macs()`
 #' @export
+#' @keywords internal
 call_macs_peaks <- function(...) {
-  rlang::warn("`call_macs_peaks()` is deprecated. Please use `call_peaks_macs()` instead.")
+  lifecycle::deprecate_warn("0.2.0", "call_macs_peaks()", "call_peaks_macs()")
   return(call_peaks_macs(...))
 }
 
