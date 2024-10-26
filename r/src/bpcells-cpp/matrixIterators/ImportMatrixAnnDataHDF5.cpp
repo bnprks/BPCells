@@ -13,6 +13,15 @@
 
 namespace BPCells {
 
+namespace {
+class AnnDataDimInfo {
+public:
+    std::vector<uint32_t> dims;
+    bool row_major;
+    bool is_sparse;
+};
+}
+
 // Helper class for reading AnnData dense matrix values in transposed order.
 // Given a 2D dataset matrix, outputs values row-by-row
 template <class T> class H5AnnDataDenseValReader : public BulkNumReader<T> {
@@ -183,40 +192,35 @@ size_t readAnnDataDimnameLength(HighFive::Group &root, std::string axis) {
 // Args:
 //  file: File with read access
 //  group: string path of matrix to read within file
-//  dims: (out) dimensions of matrix
-//  row_major: (out) storage order of matrix
-//  is_sparse: (out) whether storage format is sparse
 // Name matching is done based on dimension length. If obs and var have same length, name
 // mis-assignments may occur.
-void readAnnDataDims(
+AnnDataDimInfo readAnnDataDims(
     HighFive::File &file,
-    std::string group,
-    std::vector<uint32_t> &dims,
-    bool &row_major,
-    bool &is_sparse
+    std::string group
 ) {
+    AnnDataDimInfo ret;
 
     auto node_type = file.getObjectType(group);
     if (node_type == HighFive::ObjectType::Dataset) {
         HighFive::DataSet d = file.getDataSet(group);
         std::vector<size_t> dataset_dims = d.getDimensions();
 
-        dims.resize(dataset_dims.size());
-        for (size_t i = 0; i < dims.size(); i++)
-            dims[i] = dataset_dims[i];
-        row_major = true;
-        is_sparse = false;
+        ret.dims.resize(dataset_dims.size());
+        for (size_t i = 0; i < ret.dims.size(); i++)
+            ret.dims[i] = dataset_dims[i];
+        ret.row_major = true;
+        ret.is_sparse = false;
     } else {
         HighFive::Group g = file.getGroup(group);
         std::string encoding;
         if (g.hasAttribute("h5sparse_format")) {
             // Support for legacy format
             g.getAttribute("h5sparse_format").read(encoding);
-            g.getAttribute("h5sparse_shape").read(dims);
+            g.getAttribute("h5sparse_shape").read(ret.dims);
             encoding += "_matrix";
         } else if (g.hasAttribute("encoding-type")) {
             g.getAttribute("encoding-type").read(encoding);
-            g.getAttribute("shape").read(dims);
+            g.getAttribute("shape").read(ret.dims);
         } else {
             throw std::runtime_error(
                 "readAnnDataDims(): Could not detect matrix encoding-type on group: " + group
@@ -224,21 +228,22 @@ void readAnnDataDims(
         }
 
         if (encoding == "csr_matrix") {
-            row_major = true;
+            ret.row_major = true;
         } else if (encoding == "csc_matrix") {
-            row_major = false;
+            ret.row_major = false;
         } else {
             throw std::runtime_error("readAnnDataDims(): Unsupported matrix encoding: " + encoding);
         }
-        is_sparse = true;
+        ret.is_sparse = true;
     }
 
-    if (dims.size() != 2) {
+    if (ret.dims.size() != 2) {
         throw std::runtime_error(
             "Error in opening AnnData matrix: \"" + group + "\" has " +
-            std::to_string(dims.size()) + " dimensions rather than the required two."
+            std::to_string(ret.dims.size()) + " dimensions rather than the required two."
         );
     }
+    return ret;
 }
 
 // Read AnnData sparse matrix, with an implicit transpose to CSC format for
@@ -261,9 +266,7 @@ std::unique_ptr<MatrixLoader<T>> openAnnDataMatrix(
     std::unique_ptr<StringReader> &&col_names,
     uint32_t read_size
 ) {
-    std::vector<uint32_t> dims;
-    bool row_major;
-    bool is_sparse;
+    AnnDataDimInfo info;
     HighFive::SilenceHDF5 s;
 
     if (group == "") group = "/";
@@ -271,36 +274,36 @@ std::unique_ptr<MatrixLoader<T>> openAnnDataMatrix(
     // Read dims and dimnames
     {
         HighFive::File h5file = openH5ForReading(file);
-        readAnnDataDims(h5file, group, dims, row_major, is_sparse);
+        info = readAnnDataDims(h5file, group);
         HighFive::Group root = h5file.getGroup("/");
         size_t obs_len = readAnnDataDimnameLength(root, "obs");
         size_t var_len = readAnnDataDimnameLength(root, "var");
 
-        if (row_major) std::swap(row_names, col_names);
+        if (info.row_major) std::swap(row_names, col_names);
 
         // When searching for names, match based on length to obs and var dimensions if required
         if (row_names.get() == nullptr && obs_len != var_len) {
-            if (obs_len == dims[0]) row_names = readAnnDataDimname(root, "obs");
-            else if (var_len == dims[0]) row_names = readAnnDataDimname(root, "var");
+            if (obs_len == info.dims[0]) row_names = readAnnDataDimname(root, "obs");
+            else if (var_len == info.dims[0]) row_names = readAnnDataDimname(root, "var");
             else row_names = std::make_unique<VecStringReader>(std::vector<std::string>());
         }
 
         if (col_names.get() == nullptr && obs_len != var_len) {
-            if (obs_len == dims[1]) col_names = readAnnDataDimname(root, "obs");
-            else if (var_len == dims[1]) col_names = readAnnDataDimname(root, "var");
+            if (obs_len == info.dims[1]) col_names = readAnnDataDimname(root, "obs");
+            else if (var_len == info.dims[1]) col_names = readAnnDataDimname(root, "var");
             else col_names = std::make_unique<VecStringReader>(std::vector<std::string>());
         }
 
-        if (row_major) std::swap(row_names, col_names);
+        if (info.row_major) std::swap(row_names, col_names);
     }
 
-    if (is_sparse) {
+    if (info.is_sparse) {
         H5ReaderBuilder rb(file, group, 1024, 1024);
         return std::make_unique<StoredMatrix<T>>(
             rb.openUIntReader("indices"),
             rb.open<T>("data"),
             rb.openULongReader("indptr"),
-            row_major ? dims[1] : dims[0],
+            info.row_major ? info.dims[1] : info.dims[0],
             std::move(row_names),
             std::move(col_names)
         );
@@ -308,15 +311,15 @@ std::unique_ptr<MatrixLoader<T>> openAnnDataMatrix(
         HighFive::File h5file = openH5ForReading(file);
         auto res = std::make_unique<StoredMatrix<T>>(
             NumReader<uint32_t>(
-                std::make_unique<H5AnnDataDenseRowReader>(dims[0], dims[1]), 1024, 1024
+                std::make_unique<H5AnnDataDenseRowReader>(info.dims[0], info.dims[1]), 1024, 1024
             ),
             NumReader<T>(
                 std::make_unique<H5AnnDataDenseValReader<T>>(h5file.getDataSet(group)), 1024, 1024
             ),
             NumReader<uint64_t>(
-                std::make_unique<H5AnnDataDenseColPtrReader>(dims[0], dims[1]), 1024, 1024
+                std::make_unique<H5AnnDataDenseColPtrReader>(info.dims[0], info.dims[1]), 1024, 1024
             ),
-            row_major ? dims[1] : dims[0],
+            info.row_major ? info.dims[1] : info.dims[0],
             std::move(row_names),
             std::move(col_names)
         );
@@ -570,12 +573,7 @@ std::string getAnnDataMatrixType(std::string file, std::string group) {
 bool isRowOrientedAnnDataMatrix(std::string file, std::string group) {
     HighFive::SilenceHDF5 s;
     HighFive::File h5file = openH5ForReading(file);
-
-    std::vector<uint32_t> dims;
-    bool row_major, is_sparse;
-    readAnnDataDims(h5file, group, dims, row_major, is_sparse);
-
-    return row_major;
+    return readAnnDataDims(h5file, group).row_major;
 }
 
 template <typename T>
