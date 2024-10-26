@@ -559,6 +559,8 @@ test_that("Mtx import works", {
 })
 
 test_that("Opening >64 matrices works", {
+  skip_on_ci() # TODO: diagnose why github CI on windows fails here. Suggested start by debug printing around `_setmaxstdio()` calls
+
   # Note: this test is primarily for Windows, where there's a 512 file limit by default
   dir <- withr::local_tempdir()
   

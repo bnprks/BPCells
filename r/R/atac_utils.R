@@ -424,6 +424,11 @@ write_insertion_bed <- function(fragments, path,
   assert_is(cell_groups, c("character", "factor"))
   assert_is_character(path)
   assert_is_wholenumber(threads)
+  if (threads > 1L && .Platform$OS.type == "windows") {
+    # TODO: Move the multithreading to happen in C++ so we can support windows
+    threads <- 1L
+    rlang::warn("Multi-threading is not supported yet on windows in this function")
+  }
   assert_is(verbose, "logical")
   insertion_mode <- match.arg(insertion_mode)
   path_names <- names(path)
@@ -523,6 +528,11 @@ call_peaks_macs <- function(fragments, path,
   assert_is_numeric(effective_genome_size)
   assert_is_character(path)
   assert_is_wholenumber(threads)
+  if (threads > 1L && .Platform$OS.type == "windows") {
+    # TODO: Move the multithreading to happen in C++ so we can support windows
+    threads <- 1L
+    rlang::warn("Multi-threading is not supported yet on windows in this function")
+  }
   insertion_mode <- match.arg(insertion_mode)
   step <- match.arg(step)
   cell_groups <- as.factor(cell_groups)
