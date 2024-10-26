@@ -17,12 +17,12 @@ namespace BPCells {
 // Reader interfaces for 10x and AnnData matrices
 // Open 10x matrix should not assume uint32_t
 template <typename T>
-StoredMatrix<T> open10xFeatureMatrix(
+std::unique_ptr<MatrixLoader<T>> open10xFeatureMatrix(
     std::string file, std::string group, uint32_t buffer_size, uint32_t read_size = 1024
 );
 
 template <typename T>
-StoredMatrix<T> open10xFeatureMatrix(
+std::unique_ptr<MatrixLoader<T>> open10xFeatureMatrix(
     std::string file,
     std::string group,
     uint32_t buffer_size,

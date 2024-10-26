@@ -102,6 +102,20 @@ target_include_directories(
 )
 
 add_library(
+    matrixIterators
+    ${SRC}/simd/dense-multiply.cpp
+)
+target_link_libraries(
+    matrixIterators
+    arrayIO
+)
+target_include_directories(
+    matrixIterators 
+    PUBLIC 
+    ${SRC_INCLUDE}
+)
+
+add_library(
     fragmentIterators
     ${SRC}/fragmentIterators/BedFragments.cpp
     ${SRC}/fragmentIterators/CellSelect.cpp
@@ -178,19 +192,22 @@ gtest_discover_tests(test-fragmentUtils)
 add_executable(
     test-matrixIO
     tests/test-matrixIO.cpp
-    ${SRC}/matrixIterators/ImportMatrixHDF5.cpp
-    ${SRC}/simd/dense-multiply.cpp
 )
-target_link_libraries(test-matrixIO arrayIO Eigen3::Eigen gtest_main gmock)
+target_link_libraries(test-matrixIO matrixIterators Eigen3::Eigen gtest_main gmock)
 gtest_discover_tests(test-matrixIO)
+
+add_executable(
+    test-matrixIterators
+    tests/test-matrixIterators.cpp
+)
+target_link_libraries(test-matrixIterators matrixIterators Eigen3::Eigen gtest_main gmock)
+gtest_discover_tests(test-matrixIterators)
 
 add_executable(
     test-matrixTranspose
     tests/test-matrixTranspose.cpp
-    ${SRC}/matrixIterators/ImportMatrixHDF5.cpp
-    ${SRC}/simd/dense-multiply.cpp
 )
-target_link_libraries(test-matrixTranspose arrayIO Eigen3::Eigen gtest_main)
+target_link_libraries(test-matrixTranspose matrixIterators Eigen3::Eigen gtest_main)
 gtest_discover_tests(test-matrixTranspose)
 
 # Build matrix math test for all available SIMD backends

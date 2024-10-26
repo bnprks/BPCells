@@ -16,12 +16,12 @@ namespace BPCells {
 // Read AnnData sparse matrix, with an implicit transpose to CSC format for
 // any data stored in CSR format
 template <typename T>
-StoredMatrix<T> openAnnDataMatrix(
+std::unique_ptr<MatrixLoader<T>> openAnnDataMatrix(
     std::string file, std::string group, uint32_t buffer_size, uint32_t read_size = 1024
 );
 
 template <typename T>
-StoredMatrix<T> openAnnDataMatrix(
+std::unique_ptr<MatrixLoader<T>> openAnnDataMatrix(
     std::string file,
     std::string group,
     uint32_t buffer_size,

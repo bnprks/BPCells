@@ -9,6 +9,7 @@
 #include "ImportMatrixAnnDataHDF5.h"
 #include "../arrayIO/array_interfaces.h"
 #include "../arrayIO/vector.h"
+#include "FilterZeros.h"
 
 namespace BPCells {
 
@@ -252,7 +253,7 @@ void readAnnDataDims(
 //     inspect sub-objects in a way that might break embedded AnnData e.g. with MuData.
 //     If `len(obs)` == `len(var)` we just don't infer names for safety.
 template <typename T>
-StoredMatrix<T> openAnnDataMatrix(
+std::unique_ptr<MatrixLoader<T>> openAnnDataMatrix(
     std::string file,
     std::string group,
     uint32_t buffer_size,
@@ -295,7 +296,7 @@ StoredMatrix<T> openAnnDataMatrix(
 
     if (is_sparse) {
         H5ReaderBuilder rb(file, group, 1024, 1024);
-        return StoredMatrix<T>(
+        return std::make_unique<StoredMatrix<T>>(
             rb.openUIntReader("indices"),
             rb.open<T>("data"),
             rb.openULongReader("indptr"),
@@ -305,21 +306,26 @@ StoredMatrix<T> openAnnDataMatrix(
         );
     } else {
         HighFive::File h5file = openH5ForReading(file);
-        return StoredMatrix<T>(
-            NumReader<uint32_t>(std::make_unique<H5AnnDataDenseRowReader>(dims[0], dims[1]), 1024, 1024),
+        auto res = std::make_unique<StoredMatrix<T>>(
+            NumReader<uint32_t>(
+                std::make_unique<H5AnnDataDenseRowReader>(dims[0], dims[1]), 1024, 1024
+            ),
             NumReader<T>(
                 std::make_unique<H5AnnDataDenseValReader<T>>(h5file.getDataSet(group)), 1024, 1024
             ),
-            NumReader<uint64_t>(std::make_unique<H5AnnDataDenseColPtrReader>(dims[0], dims[1]), 1024, 1024),
+            NumReader<uint64_t>(
+                std::make_unique<H5AnnDataDenseColPtrReader>(dims[0], dims[1]), 1024, 1024
+            ),
             row_major ? dims[1] : dims[0],
             std::move(row_names),
             std::move(col_names)
         );
+        return std::make_unique<FilterZeros<T>>(std::move(res));
     }
 }
 
 template <typename T>
-StoredMatrix<T>
+std::unique_ptr<MatrixLoader<T>>
 openAnnDataMatrix(std::string file, std::string group, uint32_t buffer_size, uint32_t read_size) {
     return openAnnDataMatrix<T>(
         file,
@@ -440,7 +446,7 @@ void createAnnDataObsVarIfMissing(
 }
 
 // Explicit template instantiations
-template StoredMatrix<uint32_t> openAnnDataMatrix<uint32_t>(
+template std::unique_ptr<MatrixLoader<uint32_t>> openAnnDataMatrix<uint32_t>(
     std::string file,
     std::string group,
     uint32_t buffer_size,
@@ -448,7 +454,7 @@ template StoredMatrix<uint32_t> openAnnDataMatrix<uint32_t>(
     std::unique_ptr<StringReader> &&col_names,
     uint32_t read_size
 );
-template StoredMatrix<uint64_t> openAnnDataMatrix<uint64_t>(
+template std::unique_ptr<MatrixLoader<uint64_t>> openAnnDataMatrix<uint64_t>(
     std::string file,
     std::string group,
     uint32_t buffer_size,
@@ -456,7 +462,7 @@ template StoredMatrix<uint64_t> openAnnDataMatrix<uint64_t>(
     std::unique_ptr<StringReader> &&col_names,
     uint32_t read_size
 );
-template StoredMatrix<float> openAnnDataMatrix<float>(
+template std::unique_ptr<MatrixLoader<float>> openAnnDataMatrix<float>(
     std::string file,
     std::string group,
     uint32_t buffer_size,
@@ -464,7 +470,7 @@ template StoredMatrix<float> openAnnDataMatrix<float>(
     std::unique_ptr<StringReader> &&col_names,
     uint32_t read_size
 );
-template StoredMatrix<double> openAnnDataMatrix<double>(
+template std::unique_ptr<MatrixLoader<double>> openAnnDataMatrix<double>(
     std::string file,
     std::string group,
     uint32_t buffer_size,
@@ -473,16 +479,16 @@ template StoredMatrix<double> openAnnDataMatrix<double>(
     uint32_t read_size
 );
 
-template StoredMatrix<uint32_t> openAnnDataMatrix<uint32_t>(
+template std::unique_ptr<MatrixLoader<uint32_t>> openAnnDataMatrix<uint32_t>(
     std::string file, std::string group, uint32_t buffer_size, uint32_t read_size
 );
-template StoredMatrix<uint64_t> openAnnDataMatrix<uint64_t>(
+template std::unique_ptr<MatrixLoader<uint64_t>> openAnnDataMatrix<uint64_t>(
     std::string file, std::string group, uint32_t buffer_size, uint32_t read_size
 );
-template StoredMatrix<float> openAnnDataMatrix<float>(
+template std::unique_ptr<MatrixLoader<float>> openAnnDataMatrix<float>(
     std::string file, std::string group, uint32_t buffer_size, uint32_t read_size
 );
-template StoredMatrix<double> openAnnDataMatrix<double>(
+template std::unique_ptr<MatrixLoader<double>> openAnnDataMatrix<double>(
     std::string file, std::string group, uint32_t buffer_size, uint32_t read_size
 );
 

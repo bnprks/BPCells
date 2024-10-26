@@ -30,7 +30,7 @@
 using namespace Rcpp;
 using namespace BPCells;
 
-template <class T> List dims_matrix(StoredMatrix<T> &&mat, bool transpose) {
+template <class T> List dims_matrix(MatrixLoader<T> &&mat, bool transpose) {
     IntegerVector dims(2);
 
     uint32_t row_name_count = mat.rows() == 0 || mat.rowNames(0) == NULL ? 0 : mat.rows();
@@ -68,6 +68,11 @@ template <class T> List dims_matrix(StoredMatrix<T> &&mat, bool transpose) {
             Named("transpose") = transpose
         );
     }
+}
+
+template <class T> List dims_matrix(std::unique_ptr<MatrixLoader<T>> &&mat, bool transpose) {
+    // This is only safe because we know the main `dims_matrix` function doesn't store any references to the object
+    return dims_matrix(std::move(*mat), transpose);
 }
 
 List dims_matrix_reader_builder(ReaderBuilder &rb) {
@@ -670,7 +675,7 @@ SEXP iterate_matrix_10x_hdf5_cpp(
 ) {
     std::string type = get10xMatrixType(file, group);
     if (type == "uint32_t") {
-        return make_unique_xptr<StoredMatrix<uint32_t>>(open10xFeatureMatrix<uint32_t>(
+        return unique_xptr<MatrixLoader<uint32_t>>(open10xFeatureMatrix<uint32_t>(
             file,
             group,
             buffer_size,
@@ -678,7 +683,7 @@ SEXP iterate_matrix_10x_hdf5_cpp(
             std::make_unique<RcppStringReader>(col_names)
         ));
     } else if (type == "uint64_t") {
-        return make_unique_xptr<StoredMatrix<uint64_t>>(open10xFeatureMatrix<uint64_t>(
+        return unique_xptr<MatrixLoader<uint64_t>>(open10xFeatureMatrix<uint64_t>(
             file,
             group,
             buffer_size,
@@ -686,7 +691,7 @@ SEXP iterate_matrix_10x_hdf5_cpp(
             std::make_unique<RcppStringReader>(col_names)
         ));
     } else if (type == "float") {
-        return make_unique_xptr<StoredMatrix<float>>(open10xFeatureMatrix<float>(
+        return unique_xptr<MatrixLoader<float>>(open10xFeatureMatrix<float>(
             file,
             group,
             buffer_size,
@@ -694,7 +699,7 @@ SEXP iterate_matrix_10x_hdf5_cpp(
             std::make_unique<RcppStringReader>(col_names)
         ));
     } else if (type == "double") {
-        return make_unique_xptr<StoredMatrix<double>>(open10xFeatureMatrix<double>(
+        return unique_xptr<MatrixLoader<double>>(open10xFeatureMatrix<double>(
             file,
             group,
             buffer_size,
@@ -849,7 +854,7 @@ SEXP iterate_matrix_anndata_hdf5_cpp(
         throw std::runtime_error(ss.str());
     }
     if (type == "uint32_t") {
-        return make_unique_xptr<StoredMatrix<uint32_t>>(openAnnDataMatrix<uint32_t>(
+        return unique_xptr<MatrixLoader<uint32_t>>(openAnnDataMatrix<uint32_t>(
             file,
             group,
             buffer_size,
@@ -857,7 +862,7 @@ SEXP iterate_matrix_anndata_hdf5_cpp(
             std::make_unique<RcppStringReader>(col_names)
         ));
     } else if (type == "float") {
-        return make_unique_xptr<StoredMatrix<float>>(openAnnDataMatrix<float>(
+        return unique_xptr<MatrixLoader<float>>(openAnnDataMatrix<float>(
             file,
             group,
             buffer_size,
@@ -865,7 +870,7 @@ SEXP iterate_matrix_anndata_hdf5_cpp(
             std::make_unique<RcppStringReader>(col_names)
         ));
     } else if (type == "double") {
-        return make_unique_xptr<StoredMatrix<double>>(openAnnDataMatrix<double>(
+        return unique_xptr<MatrixLoader<double>>(openAnnDataMatrix<double>(
             file,
             group,
             buffer_size,

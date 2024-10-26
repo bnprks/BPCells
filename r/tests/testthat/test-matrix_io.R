@@ -266,7 +266,6 @@ test_that("AnnData read backwards compatibility", {
       expect_identical(ans)
     open_matrix_anndata_hdf5(file.path(dir, f), group="layers/dense") %>%
       as("dgCMatrix") %>%
-      Matrix::drop0() %>%
       expect_identical(ans)
     
     open_matrix_anndata_hdf5(file.path(dir, f), group="obsm/obs_mat") %>%
@@ -274,7 +273,6 @@ test_that("AnnData read backwards compatibility", {
       expect_identical(obsm_ans)
     open_matrix_anndata_hdf5(file.path(dir, f), group="varm/var_mat") %>%
       as("dgCMatrix") %>%
-      Matrix::drop0() %>%
       expect_identical(varm_ans)
   }
 })

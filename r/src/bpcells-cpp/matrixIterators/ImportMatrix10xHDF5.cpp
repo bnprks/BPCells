@@ -14,7 +14,7 @@ namespace BPCells {
 
 // Reader interfaces for 10x and AnnData matrices
 template <typename T>
-StoredMatrix<T> open10xFeatureMatrix(
+std::unique_ptr<MatrixLoader<T>> open10xFeatureMatrix(
     std::string file,
     std::string group,
     uint32_t buffer_size,
@@ -32,7 +32,7 @@ StoredMatrix<T> open10xFeatureMatrix(
         if (col_names.get() == nullptr) {
             col_names = rb.openStringReader("barcodes");
         }
-        return StoredMatrix(
+        return std::make_unique<StoredMatrix<T>>(
             rb.openULongReader("indices").convert<uint32_t>(),
             rb.open<T>("data"),
             rb.openULongReader("indptr"),
@@ -50,7 +50,7 @@ StoredMatrix<T> open10xFeatureMatrix(
     if (col_names.get() == nullptr) {
         col_names = rb.openStringReader("barcodes");
     }
-    return StoredMatrix(
+    return std::make_unique<StoredMatrix<T>>(
         rb.openULongReader("indices").convert<uint32_t>(),
         rb.open<T>("data"),
         rb.openULongReader("indptr"),
@@ -61,7 +61,7 @@ StoredMatrix<T> open10xFeatureMatrix(
 }
 
 template <typename T>
-StoredMatrix<T> open10xFeatureMatrix(
+std::unique_ptr<MatrixLoader<T>> open10xFeatureMatrix(
     std::string file, std::string group, uint32_t buffer_size, uint32_t read_size
 ) {
     return open10xFeatureMatrix<T>(
@@ -111,7 +111,7 @@ StoredMatrixWriter<T> create10xFeatureMatrix(
 }
 
 // Explicit template instantiations for 10x matrix
-template StoredMatrix<uint32_t> open10xFeatureMatrix<uint32_t>(
+template std::unique_ptr<MatrixLoader<uint32_t>> open10xFeatureMatrix<uint32_t>(
     std::string file,
     std::string group,
     uint32_t buffer_size,
@@ -119,7 +119,7 @@ template StoredMatrix<uint32_t> open10xFeatureMatrix<uint32_t>(
     std::unique_ptr<StringReader> &&col_names,
     uint32_t read_size
 );
-template StoredMatrix<uint64_t> open10xFeatureMatrix<uint64_t>(
+template std::unique_ptr<MatrixLoader<uint64_t>> open10xFeatureMatrix<uint64_t>(
     std::string file,
     std::string group,
     uint32_t buffer_size,
@@ -127,7 +127,7 @@ template StoredMatrix<uint64_t> open10xFeatureMatrix<uint64_t>(
     std::unique_ptr<StringReader> &&col_names,
     uint32_t read_size
 );
-template StoredMatrix<float> open10xFeatureMatrix<float>(
+template std::unique_ptr<MatrixLoader<float>> open10xFeatureMatrix<float>(
     std::string file,
     std::string group,
     uint32_t buffer_size,
@@ -135,7 +135,7 @@ template StoredMatrix<float> open10xFeatureMatrix<float>(
     std::unique_ptr<StringReader> &&col_names,
     uint32_t read_size
 );
-template StoredMatrix<double> open10xFeatureMatrix<double>(
+template std::unique_ptr<MatrixLoader<double>> open10xFeatureMatrix<double>(
     std::string file,
     std::string group,
     uint32_t buffer_size,
@@ -144,16 +144,16 @@ template StoredMatrix<double> open10xFeatureMatrix<double>(
     uint32_t read_size
 );
 
-template StoredMatrix<uint32_t> open10xFeatureMatrix<uint32_t>(
+template std::unique_ptr<MatrixLoader<uint32_t>> open10xFeatureMatrix<uint32_t>(
     std::string file, std::string group, uint32_t buffer_size, uint32_t read_size
 );
-template StoredMatrix<uint64_t> open10xFeatureMatrix<uint64_t>(
+template std::unique_ptr<MatrixLoader<uint64_t>> open10xFeatureMatrix<uint64_t>(
     std::string file, std::string group, uint32_t buffer_size, uint32_t read_size
 );
-template StoredMatrix<float> open10xFeatureMatrix<float>(
+template std::unique_ptr<MatrixLoader<float>> open10xFeatureMatrix<float>(
     std::string file, std::string group, uint32_t buffer_size, uint32_t read_size
 );
-template StoredMatrix<double> open10xFeatureMatrix<double>(
+template std::unique_ptr<MatrixLoader<double>> open10xFeatureMatrix<double>(
     std::string file, std::string group, uint32_t buffer_size, uint32_t read_size
 );
 
