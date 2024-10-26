@@ -18,7 +18,7 @@ Contributions welcome :)
 - Add `regress_out()` to allow removing unwanted sources of variation via least squares linear regression models.
   Thanks to @ycli1995 for pull request #110
 - Add `trackplot_genome_annotation()` for plotting peaks, with options for directional arrows, colors, labels, and peak widths. (pull request #113)
-- Add MACS2/3 input creation and peak calling through `call_macs_peaks()` (pull request #118)
+- Add MACS2/3 input creation and peak calling through `call_peaks_macs()`(pull request #118). Note, renamed from `call_macs_peaks()` in pull request #143
 - Add `rowQuantiles()` and `colQuantiles()` functions, which return the quantiles of each row/column of a matrix. Currently `rowQuantiles()` only works on row-major matrices and `colQuantiles()` only works on col-major matrices.
   If `matrixStats` or `MatrixGenerics` packages are installed, `BPCells::colQuantiles()` will fall back to their implementations for non-BPCells objects. (pull request #128)
 - Add `pseudobulk_matrix()` which allows pseudobulk aggregation by `sum` or `mean` and calculation of per-pseudobulk `variance` and `nonzero` statistics for each gene (pull request #128)
@@ -36,6 +36,7 @@ Contributions welcome :)
 - Fixed plotting crashes when running `trackplot_coverage()` with fragments from a single cluster. (Thanks to @sjessa for directly reporting this bug and coming up with a fix)
 - Fixed issues with `trackplot_coverage()` when called with ranges less than 500 bp in length (Thanks to @bettybliu for directly reporting this bug.)
 - Fix Rcpp warning created when handling compressed matrices with only one non-zero entry (pull request #123)
+- Fixed discrepancy between default ArchR and BPCells peak calling insertion method, where BPCells defaulted to only using the start of each fragment as opposed to ArchR's method of using both start and end sites of fragments (pull request #143)
 - Fix error in `tile_matrix()` with fragment mode (pull request #141)
 - Fix precision bug in `sctransform_pearson()` on ARM architecture (pull request #141) 
 

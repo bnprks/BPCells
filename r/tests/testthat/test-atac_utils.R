@@ -271,7 +271,7 @@ test_that("macs_e2e_works", {
   frags <- convert_to_fragments(dplyr::bind_rows(chr1, chr2))
   cell_groups <- dplyr::if_else(cellNames(frags) %in% c("A", "E", "I", "O", "U"), "v o w e l", "consonant;")
   # call each step seperately and hold in memory
-  macs_prep <- call_macs_peaks(
+  macs_prep <- call_peaks_macs(
     fragments = frags,
     cell_groups = cell_groups,
     effective_genome_size = 2.9e9,
@@ -289,7 +289,7 @@ test_that("macs_e2e_works", {
   }
   
   # call macs using the prepared inputs
-  macs_call <- call_macs_peaks(
+  macs_call <- call_peaks_macs(
     fragments = frags,
     cell_groups = cell_groups,
     effective_genome_size = 2.9e9,
@@ -307,7 +307,7 @@ test_that("macs_e2e_works", {
     expect_true(file.exists(file.path(dir, "output", cluster, paste0(cluster, "_summits.bed"))))
   }
   # Read in the outputs
-  macs_read <- call_macs_peaks(
+  macs_read <- call_peaks_macs(
     fragments = frags,
     cell_groups = cell_groups,
     effective_genome_size = 2.9e9,
@@ -320,7 +320,7 @@ test_that("macs_e2e_works", {
   )
   # Check length to see if the same number of clusters are returned
   expect_equal(length(unique(macs_read$group)), length(unique(cell_groups)))
-  macs_read_full_pipeline <- call_macs_peaks(
+  macs_read_full_pipeline <- call_peaks_macs(
     fragments = frags,
     cell_groups = cell_groups,
     effective_genome_size = 2.9e9,

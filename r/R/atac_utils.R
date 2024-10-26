@@ -417,7 +417,7 @@ write_insertion_bedgraph <- function(fragments, path, cell_groups = rlang::rep_a
 #' @keywords internal
 write_insertion_bed <- function(fragments, path,
                                 cell_groups = rlang::rep_along(cellNames(fragments), "all"),
-                                insertion_mode = c("start_only", "both", "end_only"),
+                                insertion_mode = c("both", "start_only",  "end_only"),
                                 verbose = FALSE,
                                 threads = 1) {
   assert_is(fragments, "IterableFragments")
@@ -510,14 +510,14 @@ write_insertion_bed <- function(fragments, path,
 #'
 #' **Running MACS manually**:
 #'
-#' To run MACS manually, you will first run `call_macs_peaks()` with `step="prep-inputs`. Then, manually run all of the
-#' shell scripts generated at `<path>/input/<group>.sh`. Finally, run `call_macs_peaks()` again with the same original arguments, but
+#' To run MACS manually, you will first run `call_peaks_macs()` with `step="prep-inputs`. Then, manually run all of the
+#' shell scripts generated at `<path>/input/<group>.sh`. Finally, run `call_peaks_macs()` again with the same original arguments, but
 #' setting `step="read-outputs"`.
 #' @inheritParams call_peaks_tile
 #' @export
-call_macs_peaks <- function(fragments, path,
+call_peaks_macs <- function(fragments, path,
                             cell_groups = rlang::rep_along(cellNames(fragments), "all"), effective_genome_size = 2.9e9,
-                            insertion_mode = c("start_only", "both", "end_only"),
+                            insertion_mode = c("both", "start_only", "end_only"),
                             step = c("all", "prep-inputs", "run-macs", "read-outputs"),
                             macs_executable = NULL,
                             additional_params = "--call-summits --keep-dup all --shift -75 --extsize 150 --nomodel --nolambda",
@@ -616,11 +616,25 @@ call_macs_peaks <- function(fragments, path,
   }
 }
 
+#' Call peaks using MACS2/3
+#'
+#' @description
+#' `r lifecycle::badge("deprecated")` 
+#'
+#' This function has been renamed to `call_peaks_macs()`
+#' @export
+#' @keywords internal
+call_macs_peaks <- function(...) {
+  lifecycle::deprecate_warn("0.2.0", "call_macs_peaks()", "call_peaks_macs()")
+  return(call_peaks_macs(...))
+}
+
+
 #' Test if MACS executable is valid.
 #' If macs_executable is NULL, this function will try to auto-detect MACS from PATH, with preference for MACS3 over MACS2.
 #' If macs_executable is provided, this function will check if MACS can be called.
 #' @return MACS executable path.
-#' @inheritParams call_macs_peaks
+#' @inheritParams call_peaks_macs
 #' @keywords internal
 macs_path_is_valid <- function(macs_executable) {
   if (is.null(macs_executable)) {
