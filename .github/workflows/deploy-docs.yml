@@ -39,8 +39,8 @@ jobs:
         Rscript .github/workflows/deploy-reference.R
     - name: Configure Git
       run: |
-        git config --global user.name "GitHub Action"
-        git config --global user.email "action@github.com"
+        git config user.name 'github-actions[bot]'
+        git config user.email 'github-actions[bot]@users.noreply.github.com'
     - name: Create new branch
       run: |
         git checkout -b update-docs-$(git rev-parse --short=6 ${{ github.sha }})
