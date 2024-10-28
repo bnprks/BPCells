@@ -20,11 +20,10 @@ build_selective_vignette_changes <- function() {
     }
 }
 
-
+pkgdown::build_home('r')
 pkgdown::build_reference('r')
 build_selective_vignette_changes()
 pkgdown::build_news('r')
 pkgdown:::build_sitemap('r')
 pkgdown::build_redirects('r')
 pkgdown::build_search('r')
-pkgdown::build_home('r')
