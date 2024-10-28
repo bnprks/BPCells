@@ -22,16 +22,10 @@ jobs:
         cache-version: 1
         working-directory: 'r'
         extra-packages: |
-            any::pkgdown
-            any::devtools
-            any::uwot
-            any::irlba
-            any::RcppHNSW
-            any::igraph
-            any::BiocManager
             bioc::BSgenome.Hsapiens.UCSC.hg38
             github::GreenleafLab/motifmatchr
             github::GreenleafLab/chromVARmotifs
+        needs: website
     - name: Install BPCells
       run: |
         Rscript -e 'install.packages("r", repos=NULL, type="source")'
@@ -40,7 +34,7 @@ jobs:
         git worktree add r/docs docs-html
     - name: Build documentation
       run: |
-        Rscript .github/workflows/deploy-reference.R TRUE
+        Rscript -e 'pkgdown::build_site_github_pages("r")'
     - name: Configure Git
       run: |
         git config --global user.name "GitHub Action"

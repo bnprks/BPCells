@@ -24,16 +24,10 @@ jobs:
         cache-version: 1
         working-directory: 'r'
         extra-packages: |
-            any::pkgdown
-            any::devtools
-            any::uwot
-            any::irlba
-            any::RcppHNSW
-            any::igraph
-            any::BiocManager
             bioc::BSgenome.Hsapiens.UCSC.hg38
             github::GreenleafLab/motifmatchr
             github::GreenleafLab/chromVARmotifs
+        needs: website
     - name: Install BPCells
       run: |
         Rscript -e 'install.packages("r", repos=NULL, type="source")'
