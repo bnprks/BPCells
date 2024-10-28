@@ -43,6 +43,7 @@ jobs:
       run: |
         git checkout -b update-docs-rebuild-$(git rev-parse --short=6 ${{ github.sha }})
         git add .
+        if git diff --cached --quiet; then echo "No changes to commit. Exiting."; exit 0; fi
         git commit -m "Rebuild documentation for commit $(git rev-parse --short=6 ${{ github.sha }})"
       working-directory: r/docs
     - name: Push changes to new branch
