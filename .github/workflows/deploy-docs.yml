@@ -36,7 +36,7 @@ jobs:
         git worktree add r/docs docs-html
     - name: Build documentation
       run: |
-        Rscript .github/workflows/deploy-reference.R FALSE
+        Rscript .github/workflows/deploy-reference.R
     - name: Configure Git
       run: |
         git config --global user.name "GitHub Action"

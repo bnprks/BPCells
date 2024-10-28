@@ -1,3 +1,12 @@
+# Copyright 2024 BPCells contributors
+# 
+# Licensed under the Apache License, Version 2.0 <LICENSE-APACHE or
+# https://www.apache.org/licenses/LICENSE-2.0> or the MIT license
+# <LICENSE-MIT or https://opensource.org/licenses/MIT>, at your
+# option. This file may not be copied, modified, or distributed
+# except according to those terms.
+
+# This script is used to automatically update docs-html branch when updating main branch
 build_selective_vignette_changes <- function() {
     vignettes_folder <- "r/vignettes/"
     # Get all changes in the last commit
@@ -9,17 +18,12 @@ build_selective_vignette_changes <- function() {
       pkgdown::build_article(gsub("\\.Rmd$", "", gsub("r/vignettes/", "", vgn)), 'r')
     }
 }
-args = commandArgs(TRUE)
-# First argument is whether to rebuild the entire site.
-rebuild <- as.logical(args[1])
-if (rebuild) {
-  pkgdown::build_site_github_pages('r')
-} else {
-  pkgdown::build_reference('r')
-  build_selective_vignette_changes()
-  pkgdown::build_news('r')
-  pkgdown::build_sitemap('r')
-  pkgdown::build_redirects('r')
-  pkgdown::build_search('r')
-  pkgdown::build_home('r')
-}
+
+
+pkgdown::build_reference('r')
+build_selective_vignette_changes()
+pkgdown::build_news('r')
+pkgdown:::build_sitemap('r')
+pkgdown::build_redirects('r')
+pkgdown::build_search('r')
+pkgdown::build_home('r')
