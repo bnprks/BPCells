@@ -49,6 +49,6 @@ jobs:
       run: git push origin update-docs-rebuild-$(git rev-parse --short=6 ${{ github.sha }})
     - name: Create Pull Request # use message with last commit
       run: |
-        gh pr create --title "Rebuild docs for commit: $(git log -n 1 --pretty=%B)" --body "$(git log -n 1 main)" --base docs-html --head update-docs-rebuild-$(git rev-parse --short=6 ${{ github.sha }})
+        gh pr create --title "Rebuild docs for commit: $(git log -n 1 --pretty=%s)" --body "$(git log -n 1 main)" --base docs-html --head update-docs-rebuild-$(git rev-parse --short=6 ${{ github.sha }})
       env:
         GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
