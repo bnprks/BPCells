@@ -20,6 +20,7 @@
 <url><loc>https://bnprks.github.io/BPCells/reference/apply_by_row.html</loc></url>
 <url><loc>https://bnprks.github.io/BPCells/reference/binarize.html</loc></url>
 <url><loc>https://bnprks.github.io/BPCells/reference/call_macs_peaks.html</loc></url>
+<url><loc>https://bnprks.github.io/BPCells/reference/call_peaks_macs.html</loc></url>
 <url><loc>https://bnprks.github.io/BPCells/reference/call_peaks_tile.html</loc></url>
 <url><loc>https://bnprks.github.io/BPCells/reference/checksum.html</loc></url>
 <url><loc>https://bnprks.github.io/BPCells/reference/cluster.html</loc></url>
@@ -77,6 +78,7 @@
 <url><loc>https://bnprks.github.io/BPCells/reference/plot_tss_profile.html</loc></url>
 <url><loc>https://bnprks.github.io/BPCells/reference/plot_tss_scatter.html</loc></url>
 <url><loc>https://bnprks.github.io/BPCells/reference/prefix_cell_names.html</loc></url>
+<url><loc>https://bnprks.github.io/BPCells/reference/pseudobulk_matrix.html</loc></url>
 <url><loc>https://bnprks.github.io/BPCells/reference/qc_scATAC.html</loc></url>
 <url><loc>https://bnprks.github.io/BPCells/reference/range_distance_to_nearest.html</loc></url>
 <url><loc>https://bnprks.github.io/BPCells/reference/rank_transform.html</loc></url>

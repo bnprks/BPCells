@@ -59,7 +59,9 @@
 <li>Add <code><a href="../reference/IterableMatrix-methods.html">rowMaxs()</a></code> and <code><a href="../reference/IterableMatrix-methods.html">colMaxs()</a></code> functions, which return the maximum value in each row or column of a matrix. If <code>matrixStats</code> or <code>MatrixGenerics</code> packages are installed, <code><a href="../reference/IterableMatrix-methods.html">BPCells::rowMaxs()</a></code> will fall back to their implementations for non-BPCells objects. Thanks to <a href="https://github.com/immanuelazn" class="external-link">@immanuelazn</a> for their first contribution as a new lab hire!</li>
 <li>Add <code><a href="../reference/regress_out.html">regress_out()</a></code> to allow removing unwanted sources of variation via least squares linear regression models. Thanks to <a href="https://github.com/ycli1995" class="external-link">@ycli1995</a> for pull request <a href="https://github.com/bnprks/BPCells/issues/110" class="external-link">#110</a></li>
 <li>Add <code><a href="../reference/trackplot_genome_annotation.html">trackplot_genome_annotation()</a></code> for plotting peaks, with options for directional arrows, colors, labels, and peak widths. (pull request <a href="https://github.com/bnprks/BPCells/issues/113" class="external-link">#113</a>)</li>
-<li>Add MACS2/3 input creation and peak calling through <code><a href="../reference/call_macs_peaks.html">call_macs_peaks()</a></code> (pull request <a href="https://github.com/bnprks/BPCells/issues/118" class="external-link">#118</a>)</li>
+<li>Add MACS2/3 input creation and peak calling through <code><a href="../reference/call_peaks_macs.html">call_peaks_macs()</a></code>(pull request <a href="https://github.com/bnprks/BPCells/issues/118" class="external-link">#118</a>). Note, renamed from <code>call_macs_peaks()</code> in pull request <a href="https://github.com/bnprks/BPCells/issues/143" class="external-link">#143</a></li>
+<li>Add <code><a href="../reference/IterableMatrix-methods.html">rowQuantiles()</a></code> and <code><a href="../reference/IterableMatrix-methods.html">colQuantiles()</a></code> functions, which return the quantiles of each row/column of a matrix. Currently <code><a href="../reference/IterableMatrix-methods.html">rowQuantiles()</a></code> only works on row-major matrices and <code><a href="../reference/IterableMatrix-methods.html">colQuantiles()</a></code> only works on col-major matrices. If <code>matrixStats</code> or <code>MatrixGenerics</code> packages are installed, <code><a href="../reference/IterableMatrix-methods.html">BPCells::colQuantiles()</a></code> will fall back to their implementations for non-BPCells objects. (pull request <a href="https://github.com/bnprks/BPCells/issues/128" class="external-link">#128</a>)</li>
+<li>Add <code><a href="../reference/pseudobulk_matrix.html">pseudobulk_matrix()</a></code> which allows pseudobulk aggregation by <code>sum</code> or <code>mean</code> and calculation of per-pseudobulk <code>variance</code> and <code>nonzero</code> statistics for each gene (pull request <a href="https://github.com/bnprks/BPCells/issues/128" class="external-link">#128</a>)</li>
 </ul></div>
 <div class="section level3">
 <h3 id="improvements-0-2-1">Improvements<a class="anchor" aria-label="anchor" href="#improvements-0-2-1"></a></h3>
@@ -78,12 +80,14 @@
 <li>Fixed plotting crashes when running <code><a href="../reference/trackplot_coverage.html">trackplot_coverage()</a></code> with fragments from a single cluster. (Thanks to <a href="https://github.com/sjessa" class="external-link">@sjessa</a> for directly reporting this bug and coming up with a fix)</li>
 <li>Fixed issues with <code><a href="../reference/trackplot_coverage.html">trackplot_coverage()</a></code> when called with ranges less than 500 bp in length (Thanks to <a href="https://github.com/bettybliu" class="external-link">@bettybliu</a> for directly reporting this bug.)</li>
 <li>Fix Rcpp warning created when handling compressed matrices with only one non-zero entry (pull request <a href="https://github.com/bnprks/BPCells/issues/123" class="external-link">#123</a>)</li>
+<li>Fixed discrepancy between default ArchR and BPCells peak calling insertion method, where BPCells defaulted to only using the start of each fragment as opposed to ArchR’s method of using both start and end sites of fragments (pull request <a href="https://github.com/bnprks/BPCells/issues/143" class="external-link">#143</a>)</li>
+<li>Fix error in <code><a href="../reference/tile_matrix.html">tile_matrix()</a></code> with fragment mode (pull request <a href="https://github.com/bnprks/BPCells/issues/141" class="external-link">#141</a>)</li>
+<li>Fix precision bug in <code><a href="../reference/sctransform_pearson.html">sctransform_pearson()</a></code> on ARM architecture (pull request <a href="https://github.com/bnprks/BPCells/issues/141" class="external-link">#141</a>)</li>
 </ul></div>
 <div class="section level3">
 <h3 id="deprecations-0-2-1">Deprecations<a class="anchor" aria-label="anchor" href="#deprecations-0-2-1"></a></h3>
 <ul><li>
-<code><a href="../reference/trackplot_coverage.html">trackplot_coverage()</a></code> <code>legend_label</code> argument is now ignored, as the color legend is no longer shown by default for coverage plots.</li>
-</ul></div>
+<code><a href="../reference/trackplot_coverage.html">trackplot_coverage()</a></code> <code>legend_label</code> argument is now ignored, as the color legend is no longer shown by default for coverage plots.</li></ul></div>
 </div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.2.0" id="bpcells-020-6142024">BPCells 0.2.0 (6/14/2024)<a class="anchor" aria-label="anchor" href="#bpcells-020-6142024"></a></h2>
@@ -92,9 +96,7 @@
 <p>Thanks to <a href="https://github.com/brgew" class="external-link">@brgew</a>, <a href="https://github.com/ycli1995" class="external-link">@ycli1995</a>, and <a href="https://github.com/Yunuuuu" class="external-link">@Yunuuuu</a> for pull requests that contributed to this release, as well as all users who submitted github issues to help identify and fix bugs.</p>
 <div class="section level3">
 <h3 id="breaking-changes-0-2-0">Breaking changes<a class="anchor" aria-label="anchor" href="#breaking-changes-0-2-0"></a></h3>
-<ul><li>Installation location has changed, to make room for a future python package release. New installs will have to use <code>remotes::install_github("bnprks/BPCells/r")</code> (note the additional <code>/r</code>)
-<ul><li>r-universe mirrors will have to add <code>"subdir": "r"</code> to their <code>packages.json</code> config.</li>
-</ul></li>
+<ul><li>Installation location has changed, to make room for a future python package release. New installs will have to use <code>remotes::install_github("bnprks/BPCells/r")</code> (note the additional <code>/r</code>)<ul><li>r-universe mirrors will have to add <code>"subdir": "r"</code> to their <code>packages.json</code> config.</li></ul></li>
 <li>New slots have been added to 10x matrix objects, so any saved RDS files may need to have their 10x matrix inputs re-opened and replaced by calling <code><a href="../reference/all_matrix_inputs.html">all_matrix_inputs()</a></code>. Outside of loading old RDS files no changes should be needed.</li>
 <li>
 <code><a href="../reference/trackplot_gene.html">trackplot_gene()</a></code> now returns a plot with a facet label to match the new trackplot system. This label can be removed by by calling <code>trackplot_gene(...) + ggplot2::facet_null()</code> to be equivalent to the old function’s output.</li>
@@ -110,8 +112,7 @@
 <div class="section level3">
 <h3 id="features-0-2-0">Features<a class="anchor" aria-label="anchor" href="#features-0-2-0"></a></h3>
 <ul><li>New <code><a href="../reference/svds.html">svds()</a></code> function, based on the excellent Spectra C++ library (used in RSpectra) by Yixuan Qiu. This should ensure lower memory usage compared to <code>irlba</code>, while achieving similar speed + accuracy.</li>
-<li>Limited parallelization is now supported. This is easiest to use via the <code>threads</code> argument to <code><a href="../reference/matrix_stats.html">matrix_stats()</a></code> and <code><a href="../reference/svds.html">svds()</a></code>.
-<ul><li>All normalizations are supported, but a few operations like <code><a href="../reference/marker_features.html">marker_features()</a></code> and writing a matrix to disk remain single-threaded.</li>
+<li>Limited parallelization is now supported. This is easiest to use via the <code>threads</code> argument to <code><a href="../reference/matrix_stats.html">matrix_stats()</a></code> and <code><a href="../reference/svds.html">svds()</a></code>.<ul><li>All normalizations are supported, but a few operations like <code><a href="../reference/marker_features.html">marker_features()</a></code> and writing a matrix to disk remain single-threaded.</li>
 <li>Running <code><a href="../reference/svds.html">svds()</a></code> with many threads on gene-major matrices can result in high memory usage for now. This problem is not present for cell-major matrices.</li>
 </ul></li>
 <li>Reading text-based MatrixMarket inputs (e.g. from 10x or Parse) is now supported via <code><a href="../reference/import_matrix_market.html">import_matrix_market()</a></code> and the convenience function <code><a href="../reference/import_matrix_market.html">import_matrix_market_10x()</a></code>. Our implementation uses disk-backed sorting to allow importing large files with low memory usage.</li>
@@ -142,8 +143,7 @@
 <code><a href="https://rdrr.io/r/base/matrix.html" class="external-link">as.matrix()</a></code> will produce integer matrices when appropriate (Thanks to <a href="https://github.com/Yunuuuu" class="external-link">@Yunuuuu</a> in pull <a href="https://github.com/bnprks/BPCells/issues/77" class="external-link">#77</a>)</li>
 <li>10x HDF5 matrices can now read and write non-integer types when requested (Thanks to <a href="https://github.com/ycli1995" class="external-link">@ycli1995</a> in pull <a href="https://github.com/bnprks/BPCells/issues/75" class="external-link">#75</a>)</li>
 <li>Old-style 10x files from cellranger v2 can now read multi-genome files, which are returned as a list (Thanks to <a href="https://github.com/ycli1995" class="external-link">@ycli1995</a> in pull <a href="https://github.com/bnprks/BPCells/issues/75" class="external-link">#75</a>)</li>
-<li>Trackplots have received several improvements
-<ul><li>Trackplots now use faceting to provide per-plot labels, leading to an easier-to-use <code><a href="../reference/trackplot_combine.html">trackplot_combine()</a></code>
+<li>Trackplots have received several improvements<ul><li>Trackplots now use faceting to provide per-plot labels, leading to an easier-to-use <code><a href="../reference/trackplot_combine.html">trackplot_combine()</a></code>
 </li>
 <li>
 <code><a href="../reference/trackplot_gene.html">trackplot_gene()</a></code> now draws arrows for the direction of transcription</li>
@@ -159,8 +159,7 @@
 <li>Add <code><a href="../reference/IterableMatrix-methods.html">rowVars()</a></code> and <code><a href="../reference/IterableMatrix-methods.html">colVars()</a></code> functions, as convenience wrappers around <code><a href="../reference/matrix_stats.html">matrix_stats()</a></code>. If <code>matrixStats</code> or <code>MatrixGenerics</code> packages are installed, <code><a href="../reference/IterableMatrix-methods.html">BPCells::rowVars()</a></code> will fall back to their implementations for non-BPCells objects. Unfortunately, <code><a href="https://rdrr.io/pkg/matrixStats/man/rowVars.html" class="external-link">matrixStats::rowVars()</a></code> is not generic, so either <code><a href="../reference/IterableMatrix-methods.html">BPCells::rowVars()</a></code> or <code><a href="../reference/IterableMatrix-methods.html">BPCells::colVars()</a></code>
 </li>
 <li>Optimize mean and variance calculations for matrices added to a per-row or per-column constant.</li>
-<li>Migrate SIMD code to use <a href="https://github.com/google/highway" class="external-link"><code>highway</code></a>.
-<ul><li>Adds run-time detection of CPU features to eliminate architecture-specific compilation</li>
+<li>Migrate SIMD code to use <a href="https://github.com/google/highway" class="external-link"><code>highway</code></a>.<ul><li>Adds run-time detection of CPU features to eliminate architecture-specific compilation</li>
 <li>For now, the <code>Pow</code> SIMD implementation is removed, but <code>Square</code> gets a new SIMD implementation</li>
 <li>Empirically, most operations using SIMD math instructions are about 2x faster. This includes <code><a href="https://rdrr.io/r/base/Log.html" class="external-link">log1p()</a></code>, and <code><a href="../reference/sctransform_pearson.html">sctransform_pearson()</a></code>
 </li>
@@ -175,7 +174,7 @@
 <li>Fixed bug writing fragment files with &gt;512 chromosomes.</li>
 <li>Fixed bug when reading fragment files with &gt;4 billion fragments.</li>
 <li>Fixed file permissions errors when using read-only hdf5 files (Issue <a href="https://github.com/bnprks/BPCells/issues/26" class="external-link">#26</a> reported thanks to <a href="https://github.com/ttumkaya" class="external-link">@ttumkaya</a>)</li>
-<li>Renaming <code><a href="https://rdrr.io/pkg/BiocGenerics/man/row_colnames.html" class="external-link">rownames()</a></code> or <code><a href="https://rdrr.io/pkg/BiocGenerics/man/row_colnames.html" class="external-link">colnames()</a></code> is now propagated when saving matrices (Issue <a href="https://github.com/bnprks/BPCells/issues/29" class="external-link">#29</a> reported thanks to <a href="https://github.com/realzehuali" class="external-link">@realzehuali</a>, with an additional fix after report thanks to <a href="https://github.com/Dario-Rocha" class="external-link">@Dario-Rocha</a>)</li>
+<li>Renaming <code><a href="https://rdrr.io/r/base/colnames.html" class="external-link">rownames()</a></code> or <code><a href="https://rdrr.io/r/base/colnames.html" class="external-link">colnames()</a></code> is now propagated when saving matrices (Issue <a href="https://github.com/bnprks/BPCells/issues/29" class="external-link">#29</a> reported thanks to <a href="https://github.com/realzehuali" class="external-link">@realzehuali</a>, with an additional fix after report thanks to <a href="https://github.com/Dario-Rocha" class="external-link">@Dario-Rocha</a>)</li>
 <li>Fixed 64-bit integer overflow (!) that could cause incorrect p-value calculations in <code><a href="../reference/marker_features.html">marker_features()</a></code> for features with more than 2.6 million zeros.</li>
 <li>Improved robustness of the Windows installation process for setups that do not need the -lsz linker flag to compile hdf5</li>
 <li>Fixed possible memory safety bug where wrapped R objects (such as dgCMatrix) could be potentially garbage collected while C++ was still trying to access the data in rare circumstances.</li>
@@ -197,8 +196,7 @@
 <h2 class="pkg-version" data-toc-text="0.1.0" id="bpcells-010-472023">BPCells 0.1.0 (4/7/2023)<a class="anchor" aria-label="anchor" href="#bpcells-010-472023"></a></h2>
 <div class="section level3">
 <h3 id="features-0-1-0">Features<a class="anchor" aria-label="anchor" href="#features-0-1-0"></a></h3>
-<ul><li>ATAC-seq Analysis
-<ul><li>Reading/writing 10x fragment files on disk</li>
+<ul><li>ATAC-seq Analysis<ul><li>Reading/writing 10x fragment files on disk</li>
 <li>Reading/writing compressed fragments on disk (in folder or hdf5 group)</li>
 <li>Interconversion of fragments objects with GRanges / data.frame</li>
 <li>Merging of multiple source fragment files transparently at run time</li>
@@ -208,8 +206,7 @@
 <li>Filtering fragments by chromosmes, cells, lengths, or genomic region</li>
 <li>Fast peak calling approximation via overlapping tiles</li>
 </ul></li>
-<li>Single cell matrices
-<ul><li>Conversion to/from R sparse matrices</li>
+<li>Single cell matrices<ul><li>Conversion to/from R sparse matrices</li>
 <li>Read-write access to 10x hdf5 feature matrices, and read-only access to AnnData files</li>
 <li>Reading/writing of compressed matrices on disk (in folder or hdf5 group)</li>
 <li>Support for integer or single/double-precision floating point matrices on disk</li>
@@ -221,16 +218,14 @@
 <li>SCTransform pearson residual calculation</li>
 <li>Multiplication of sparse matrices</li>
 </ul></li>
-<li>Single cell plotting utilities
-<ul><li>Read count knee cutoffs</li>
+<li>Single cell plotting utilities<ul><li>Read count knee cutoffs</li>
 <li>UMAP embeddings</li>
 <li>Dot plots</li>
 <li>Transcription factor footprinting / TSS profile plotting</li>
 <li>Fragments vs. TSS Enrichment ATAC-seq QC plot</li>
 <li>Pseudobulk genome track plots, with gene annotation plots</li>
 </ul></li>
-<li>Additional utility functions
-<ul><li>Matching gene symbols/IDs to canonical symbols</li>
+<li>Additional utility functions<ul><li>Matching gene symbols/IDs to canonical symbols</li>
 <li>Download transcript annotations from Gencode or GTF files</li>
 <li>Download + parse UCSC chromosome sizes</li>
 <li>Parse peak files BED format; Download ENCODE blacklist region</li>
@@ -248,7 +243,7 @@
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.0.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.1.</p>
 </div>
 
     </footer></div>
