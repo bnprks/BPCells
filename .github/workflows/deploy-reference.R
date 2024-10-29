@@ -14,10 +14,10 @@ build_selective_vignette_changes <- function() {
     # split to only get files in r/vignettes and only get the Rmd files
     changed_vignettes <- changed_files[grepl(vignettes_folder, changed_files)]
     changed_vignettes <- changed_vignettes[grepl("\\.Rmd$", changed_vignettes)]
+    pkgdown::build_articles_index('r')
     for (vgn in changed_vignettes) {
       pkgdown::build_article(gsub("\\.Rmd$", "", gsub("r/vignettes/", "", vgn)), 'r')
     }
-    pkgdown::build_articles_index('r')
 }
 
 pkgdown::build_home('r')
