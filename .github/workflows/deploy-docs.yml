@@ -23,10 +23,6 @@ jobs:
       with: 
         cache-version: 1
         working-directory: 'r'
-        extra-packages: |
-            bioc::BSgenome.Hsapiens.UCSC.hg38
-            github::GreenleafLab/motifmatchr
-            github::GreenleafLab/chromVARmotifs
         needs: website
     - name: Install BPCells
       run: |
