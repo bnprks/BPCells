@@ -1,0 +1,32 @@
+---
+title: "Test extra doc"
+output: 
+  html_document:
+    toc: true
+    toc_depth: 2
+    toc_float: true
+    theme: simplex
+---
+
+## Normalizations and PCA
+- Avoid dense matrices whenever possible. Put normalizations
+  that preserve sparsity (0 values stay 0) before normalizations
+  that break sparsity (e.g. adding values to each row/column).
+  A typical RNA-seq matrix has <5% non-zero entries, so your
+  code will operate on 20x more entries with a dense matrix.
+
+- For most operations, we recommend using lazy evaluation to avoid
+  creating intermediate matrices. The one common exception to this
+  rule is when running PCA. Because PCA requires looping through the
+  matrix several hundred times, it is often faster to write the matrix to 
+  disk once just before PCA rather than recalculating the entries on each
+  PCA iteration.
+    - For storage efficiency, keep any sparsity-breaking normalizations
+      delayed, but store all the sparse normalizations in a temporary
+      location with `write_matrix_dir()` then apply the sparsity-breaking
+      normalizations
+
+- Adding values to the rows/columns of a matrix has very little overhead for
+  PCA because it translates into a pre or post processing step before each
+  mat-vec multiply iteration. As a sparsity-breaking operation, adding a vector
+  to the matrix causes most other operations to become more expensive, however.

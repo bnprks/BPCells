@@ -10,7 +10,7 @@ output:
 Note: these performance benchmarks are preliminary while our manuscript is in
 preparation, though every effort has been made to present a fair comparison with
 other tools. Fortunately, it is straightforward to install and test BPCells on
-your own dataset to replicate our claims.
+your own dataset to replicate our claims. testing.
 
 ## RNA-seq normalization + PCA
 Because BPCells can perform all operations streaming from disk, it is able to
