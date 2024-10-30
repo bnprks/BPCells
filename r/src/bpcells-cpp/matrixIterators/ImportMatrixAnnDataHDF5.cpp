@@ -40,10 +40,10 @@ template <class T> class H5AnnDataDenseValReader : public BulkNumReader<T> {
         , cols_(d_.getDimensions()[1]) {}
 
     // Return total number of integers in the reader
-    virtual uint64_t size() const { return rows_ * cols_; }
+    uint64_t size() const override { return rows_ * cols_; }
 
     // Change the next load to start at index pos
-    virtual void seek(uint64_t pos) {
+    void seek(uint64_t pos) override {
         cur_row_ = pos / cols_;
         cur_col_ = pos % cols_;
     }
@@ -52,7 +52,7 @@ template <class T> class H5AnnDataDenseValReader : public BulkNumReader<T> {
     // Will always load >0 if count is >0
     // Note: It is the caller's responsibility to ensure there is no data overflow, i.e.
     // that a load does not try to read past size() total elements
-    virtual uint64_t load(T *out, uint64_t count) {
+    uint64_t load(T *out, uint64_t count) override {
         if (cur_row_ >= rows_) return 0;
         count = std::min(count, cols_ - cur_col_);
         d_.select({cur_row_, cur_col_}, {1, count}).read_raw(out, type_);
@@ -76,10 +76,10 @@ class H5AnnDataDenseRowReader : public BulkNumReader<uint32_t> {
   public:
     H5AnnDataDenseRowReader(uint64_t rows, uint64_t cols) : rows_(rows), cols_(cols) {}
     // Return total number of integers in the reader
-    virtual uint64_t size() const { return rows_ * cols_; }
+    uint64_t size() const override { return rows_ * cols_; }
 
     // Change the next load to start at index pos
-    virtual void seek(uint64_t pos) {
+    void seek(uint64_t pos) override {
         cur_row_ = pos / cols_;
         cur_col_ = pos % cols_;
     }
@@ -88,7 +88,7 @@ class H5AnnDataDenseRowReader : public BulkNumReader<uint32_t> {
     // Will always load >0 if count is >0
     // Note: It is the caller's responsibility to ensure there is no data overflow, i.e.
     // that a load does not try to read past size() total elements
-    virtual uint64_t load(uint32_t *out, uint64_t count) {
+    uint64_t load(uint32_t *out, uint64_t count) override {
         if (cur_row_ >= rows_) return 0;
         count = std::min(count, cols_ - cur_col_);
         for (uint64_t i = 0; i < count; i++) {
@@ -114,16 +114,16 @@ class H5AnnDataDenseColPtrReader : public BulkNumReader<uint64_t> {
   public:
     H5AnnDataDenseColPtrReader(uint64_t rows, uint64_t cols) : rows_(rows), cols_(cols) {}
     // Return total number of integers in the reader
-    virtual uint64_t size() const { return rows_ + 1; }
+    uint64_t size() const override { return rows_ + 1; }
 
     // Change the next load to start at index pos
-    virtual void seek(uint64_t pos) { cur_row_ = pos; }
+    void seek(uint64_t pos) override { cur_row_ = pos; }
 
     // Copy up to `count` integers into `out`, returning the actual number copied.
     // Will always load >0 if count is >0
     // Note: It is the caller's responsibility to ensure there is no data overflow, i.e.
     // that a load does not try to read past size() total elements
-    virtual uint64_t load(uint64_t *out, uint64_t count) {
+    uint64_t load(uint64_t *out, uint64_t count) override {
         if (cur_row_ > rows_) return 0;
         count = std::min(count, rows_ + 1 - cur_row_);
         for (uint64_t i = 0; i < count; i++) {
@@ -183,7 +183,7 @@ size_t readAnnDataDimnameLength(HighFive::Group &root, std::string axis) {
     if (dims.size() != 1)
         throw std::runtime_error(
             std::string("readAnnDataDimname(): expected ") + axis +
-            " index to be 1-dimensional aray."
+            " index to be 1-dimensional array."
         );
     return dims[0];
 }

@@ -24,7 +24,7 @@ class FilterZeros : public MatrixLoaderWrapper<T> {
     FilterZeros(std::unique_ptr<MatrixLoader<T>> &&loader) : MatrixLoaderWrapper<T>(std::move(loader)) {}
 
     // Return false if there are no more entries to load
-    virtual bool load() {
+    bool load() override {
         capacity_ = 0;
         
         while (capacity_ == 0) {
@@ -44,7 +44,7 @@ class FilterZeros : public MatrixLoaderWrapper<T> {
     }
 
     // Number of loaded entries available
-    virtual uint32_t capacity() const {return capacity_;}
+    uint32_t capacity() const override {return capacity_;}
 };
 
 } // end namespace BPCells

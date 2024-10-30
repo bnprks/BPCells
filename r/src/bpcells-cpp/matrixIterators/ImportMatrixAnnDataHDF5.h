@@ -20,6 +20,17 @@ std::unique_ptr<MatrixLoader<T>> openAnnDataMatrix(
     std::string file, std::string group, uint32_t buffer_size, uint32_t read_size = 1024
 );
 
+// Read AnnData sparse matrix, with an implicit transpose to CSC format for
+// any data stored in CSR format.
+// Row/col names are handled as follows:
+//   - If row_names or col_names are provided, they are assumed to already have taken into
+//     account the internal transpose that will hapen for row-major matrices. i.e. for
+//     a row-major X matrix, row_names should be same length as `var/_index`
+//   - If row_names or col_names are not provided, they are optimistically inferred by
+//     length matching dimensions with the `obs` and `var` index names. This is a compromise
+//     to better infer `obsm`, `varm`, `obsp` and `varp` matrix names without having to
+//     inspect sub-objects in a way that might break embedded AnnData e.g. with MuData.
+//     If `len(obs)` == `len(var)` we just don't infer names for safety.
 template <typename T>
 std::unique_ptr<MatrixLoader<T>> openAnnDataMatrix(
     std::string file,
