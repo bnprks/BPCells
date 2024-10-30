@@ -124,7 +124,7 @@
         <dd>Calculate GeneActivityScores</dd>
       </dl><dl><dt>
 
-          <code><a href="call_macs_peaks.html">call_macs_peaks()</a></code>
+          <code><a href="call_peaks_macs.html">call_peaks_macs()</a></code>
 
         </dt>
         <dd>Call peaks using MACS2/3</dd>
@@ -396,10 +396,16 @@
         <dd>Regress out unwanted variation</dd>
       </dl><dl><dt>
 
-          <code><a href="IterableMatrix-methods.html">matrix_type()</a></code> <code><a href="IterableMatrix-methods.html">storage_order()</a></code> <code><a href="IterableMatrix-methods.html">show(<i>&lt;IterableMatrix&gt;</i>)</a></code> <code><a href="IterableMatrix-methods.html">t(<i>&lt;IterableMatrix&gt;</i>)</a></code> <code><a href="IterableMatrix-methods.html">`%*%`(<i>&lt;IterableMatrix&gt;</i>,<i>&lt;matrix&gt;</i>)</a></code> <code><a href="IterableMatrix-methods.html">rowSums(<i>&lt;IterableMatrix&gt;</i>)</a></code> <code><a href="IterableMatrix-methods.html">colSums(<i>&lt;IterableMatrix&gt;</i>)</a></code> <code><a href="IterableMatrix-methods.html">rowMeans(<i>&lt;IterableMatrix&gt;</i>)</a></code> <code><a href="IterableMatrix-methods.html">colMeans(<i>&lt;IterableMatrix&gt;</i>)</a></code> <code><a href="IterableMatrix-methods.html">colVars()</a></code> <code><a href="IterableMatrix-methods.html">rowVars()</a></code> <code><a href="IterableMatrix-methods.html">rowMaxs()</a></code> <code><a href="IterableMatrix-methods.html">colMaxs()</a></code> <code><a href="IterableMatrix-methods.html">log1p(<i>&lt;IterableMatrix&gt;</i>)</a></code> <code><a href="IterableMatrix-methods.html">log1p_slow()</a></code> <code><a href="IterableMatrix-methods.html">expm1(<i>&lt;IterableMatrix&gt;</i>)</a></code> <code><a href="IterableMatrix-methods.html">expm1_slow()</a></code> <code><a href="IterableMatrix-methods.html">`^`(<i>&lt;IterableMatrix&gt;</i>,<i>&lt;numeric&gt;</i>)</a></code> <code><a href="IterableMatrix-methods.html">`&lt;`(<i>&lt;numeric&gt;</i>,<i>&lt;IterableMatrix&gt;</i>)</a></code> <code><a href="IterableMatrix-methods.html">`&gt;`(<i>&lt;IterableMatrix&gt;</i>,<i>&lt;numeric&gt;</i>)</a></code> <code><a href="IterableMatrix-methods.html">`&lt;=`(<i>&lt;numeric&gt;</i>,<i>&lt;IterableMatrix&gt;</i>)</a></code> <code><a href="IterableMatrix-methods.html">`&gt;=`(<i>&lt;IterableMatrix&gt;</i>,<i>&lt;numeric&gt;</i>)</a></code> <code><a href="IterableMatrix-methods.html">round(<i>&lt;IterableMatrix&gt;</i>)</a></code> <code><a href="IterableMatrix-methods.html">`*`(<i>&lt;IterableMatrix&gt;</i>,<i>&lt;numeric&gt;</i>)</a></code> <code><a href="IterableMatrix-methods.html">`+`(<i>&lt;IterableMatrix&gt;</i>,<i>&lt;numeric&gt;</i>)</a></code> <code><a href="IterableMatrix-methods.html">`/`(<i>&lt;IterableMatrix&gt;</i>,<i>&lt;numeric&gt;</i>)</a></code> <code><a href="IterableMatrix-methods.html">`-`(<i>&lt;IterableMatrix&gt;</i>,<i>&lt;numeric&gt;</i>)</a></code>
+          <code><a href="IterableMatrix-methods.html">matrix_type()</a></code> <code><a href="IterableMatrix-methods.html">storage_order()</a></code> <code><a href="IterableMatrix-methods.html">show(<i>&lt;IterableMatrix&gt;</i>)</a></code> <code><a href="IterableMatrix-methods.html">t(<i>&lt;IterableMatrix&gt;</i>)</a></code> <code><a href="IterableMatrix-methods.html">`%*%`(<i>&lt;IterableMatrix&gt;</i>,<i>&lt;matrix&gt;</i>)</a></code> <code><a href="IterableMatrix-methods.html">rowSums(<i>&lt;IterableMatrix&gt;</i>)</a></code> <code><a href="IterableMatrix-methods.html">colSums(<i>&lt;IterableMatrix&gt;</i>)</a></code> <code><a href="IterableMatrix-methods.html">rowMeans(<i>&lt;IterableMatrix&gt;</i>)</a></code> <code><a href="IterableMatrix-methods.html">colMeans(<i>&lt;IterableMatrix&gt;</i>)</a></code> <code><a href="IterableMatrix-methods.html">colVars()</a></code> <code><a href="IterableMatrix-methods.html">rowVars()</a></code> <code><a href="IterableMatrix-methods.html">rowMaxs()</a></code> <code><a href="IterableMatrix-methods.html">colMaxs()</a></code> <code><a href="IterableMatrix-methods.html">rowQuantiles()</a></code> <code><a href="IterableMatrix-methods.html">colQuantiles()</a></code> <code><a href="IterableMatrix-methods.html">log1p(<i>&lt;IterableMatrix&gt;</i>)</a></code> <code><a href="IterableMatrix-methods.html">log1p_slow()</a></code> <code><a href="IterableMatrix-methods.html">expm1(<i>&lt;IterableMatrix&gt;</i>)</a></code> <code><a href="IterableMatrix-methods.html">expm1_slow()</a></code> <code><a href="IterableMatrix-methods.html">`^`(<i>&lt;IterableMatrix&gt;</i>,<i>&lt;numeric&gt;</i>)</a></code> <code><a href="IterableMatrix-methods.html">`&lt;`(<i>&lt;numeric&gt;</i>,<i>&lt;IterableMatrix&gt;</i>)</a></code> <code><a href="IterableMatrix-methods.html">`&gt;`(<i>&lt;IterableMatrix&gt;</i>,<i>&lt;numeric&gt;</i>)</a></code> <code><a href="IterableMatrix-methods.html">`&lt;=`(<i>&lt;numeric&gt;</i>,<i>&lt;IterableMatrix&gt;</i>)</a></code> <code><a href="IterableMatrix-methods.html">`&gt;=`(<i>&lt;IterableMatrix&gt;</i>,<i>&lt;numeric&gt;</i>)</a></code> <code><a href="IterableMatrix-methods.html">round(<i>&lt;IterableMatrix&gt;</i>)</a></code> <code><a href="IterableMatrix-methods.html">`*`(<i>&lt;IterableMatrix&gt;</i>,<i>&lt;numeric&gt;</i>)</a></code> <code><a href="IterableMatrix-methods.html">`+`(<i>&lt;IterableMatrix&gt;</i>,<i>&lt;numeric&gt;</i>)</a></code> <code><a href="IterableMatrix-methods.html">`/`(<i>&lt;IterableMatrix&gt;</i>,<i>&lt;numeric&gt;</i>)</a></code> <code><a href="IterableMatrix-methods.html">`-`(<i>&lt;IterableMatrix&gt;</i>,<i>&lt;numeric&gt;</i>)</a></code>
 
         </dt>
         <dd>IterableMatrix methods</dd>
+      </dl><dl><dt>
+
+          <code><a href="pseudobulk_matrix.html">pseudobulk_matrix()</a></code>
+
+        </dt>
+        <dd>Aggregate counts matrices by cell group or feature.</dd>
       </dl></div><div class="section level2">
       <h2 id="reference-annotations">Reference Annotations<a class="anchor" aria-label="anchor" href="#reference-annotations"></a></h2>
 
@@ -633,7 +639,7 @@
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.0.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.1.</p>
 </div>
 
     </footer></div>
