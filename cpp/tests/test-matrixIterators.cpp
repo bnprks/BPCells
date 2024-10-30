@@ -69,24 +69,6 @@ bool matrices_are_identical(SparseMatrix<double> a, SparseMatrix<double> b) {
     return true;
 }
 
-bool expect_matrices_are_identical(SparseMatrix<double> a, SparseMatrix<double> b) {
-    EXPECT_EQ(a.rows(), b.rows());
-    EXPECT_EQ(a.cols(), b.cols());
-    EXPECT_TRUE(a.isCompressed());
-    EXPECT_TRUE(b.isCompressed());
-    EXPECT_EQ(a.nonZeros(), b.nonZeros());
-    for (size_t i = 0; i < a.nonZeros(); i++) {
-        EXPECT_EQ(a.innerIndexPtr()[i], b.innerIndexPtr()[i]);
-        EXPECT_EQ(a.valuePtr()[i], b.valuePtr()[i]);
-    }
-    EXPECT_EQ(a.outerSize(), b.outerSize());
-    for (size_t i = 0; i < a.outerSize(); i++) {
-        EXPECT_EQ(a.outerIndexPtr()[i], b.outerIndexPtr()[i]);
-    } 
-    return true;
-}
-
-
 TEST(MatrixIterators, FilterZeros) {
     // A matrix without any explicit zeros should not be transformed
     SparseMatrix<double> m1 = generate_mat(100, 50, 125123);
@@ -108,6 +90,5 @@ TEST(MatrixIterators, FilterZeros) {
     CSparseMatrixWriter<double> res_m2;
     res_m2.write(m2_filt);
     EXPECT_FALSE(matrices_are_identical(m2, res_m2.getMat()));
-    expect_matrices_are_identical(m2_pruned, res_m2.getMat());
     EXPECT_TRUE(matrices_are_identical(m2_pruned, res_m2.getMat()));
 }
