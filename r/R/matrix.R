@@ -365,7 +365,7 @@ setMethod("short_description", "MatrixMultiply", function(x) {
 })
 
 setMethod("%*%", signature(x = "IterableMatrix", y = "IterableMatrix"), function(x, y) {
-  if (x@transpose != y@transpose) stop("Cannot multiply matrices with different interal transpose states.\nPlease use transpose_storage_order().")
+  if (x@transpose != y@transpose) stop("Cannot multiply matrices with different internal transpose states.\nPlease use transpose_storage_order().")
   if (x@transpose) {
     return(t(t(y) %*% t(x)))
   }
@@ -483,7 +483,7 @@ mask_matrix <- function(mat, mask, invert=FALSE) {
       mask <- as(mask, "IterableMatrix")
   }
   
-  if (mat@transpose != mask@transpose) stop("Cannot mask matrices with different interal transpose states.\nPlease use transpose_storage_order().")
+  if (mat@transpose != mask@transpose) stop("Cannot mask matrices with different internal transpose states.\nPlease use transpose_storage_order().")
   mask <- convert_matrix_type(mask, "uint32_t")
 
   wrapMatrix("MatrixMask",
@@ -716,7 +716,6 @@ rlang::on_load({
     setMethod(MatrixGenerics::colMaxs, "IterableMatrix", colMaxs.IterableMatrix)
   }
 })
-
 
 # Index subsetting
 setClass("MatrixSubset",
@@ -1107,7 +1106,7 @@ setMethod("short_description", "RowBindMatrices", function(x) {
 })
 
 setMethod("rbind2", signature(x = "IterableMatrix", y = "IterableMatrix"), function(x, y, ...) {
-  if (x@transpose != y@transpose) stop("Cannot merge matrices with different interal transpose states.\nPlease use transpose_storage_order().")
+  if (x@transpose != y@transpose) stop("Cannot merge matrices with different internal transpose states.\nPlease use transpose_storage_order().")
   if (matrix_type(x) != matrix_type(y)) stop("Cannot merge matrices with different data type.\nPlease use convert_matrix_type().")
   if (x@transpose) {
     return(t(cbind2(t(x), t(y))))
@@ -1199,7 +1198,7 @@ setMethod("short_description", "ColBindMatrices", function(x) {
 })
 
 setMethod("cbind2", signature(x = "IterableMatrix", y = "IterableMatrix"), function(x, y, ...) {
-  if (x@transpose != y@transpose) stop("Cannot merge matrices with different interal transpose states.\nPlease use transpose_storage_order().")
+  if (x@transpose != y@transpose) stop("Cannot merge matrices with different internal transpose states.\nPlease use transpose_storage_order().")
   if (matrix_type(x) != matrix_type(y)) stop("Cannot merge matrices with different data type.\nPlease use convert_matrix_type().")
   if (x@transpose) {
     return(t(rbind2(t(x), t(y))))

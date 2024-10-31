@@ -10,7 +10,6 @@
 #define RCPP_NO_SUGAR
 #include <Rcpp.h>
 #include <RcppEigen.h>
-
 #include "bpcells-cpp/matrixIterators/CSparseMatrix.h"
 #include "bpcells-cpp/matrixIterators/ColwiseRank.h"
 #include "bpcells-cpp/matrixIterators/ConcatenateMatrix.h"
@@ -24,12 +23,15 @@
 #include "bpcells-cpp/matrixIterators/SVD.h"
 #include "bpcells-cpp/matrixIterators/TSparseMatrixWriter.h"
 #include "bpcells-cpp/matrixUtils/WilcoxonRankSum.h"
+#include "bpcells-cpp/matrixUtils/Pseudobulk.h"
+#include "bpcells-cpp/matrixUtils/Quantile.h"
+#include "bpcells-cpp/matrixIterators/MatrixAccumulators.h"
 #include "R_array_io.h"
 #include "R_interrupts.h"
 #include "R_xptr_wrapper.h"
-
 #include <md5/md5.h>
 #include <cstdio>
+#include <string>
 
 using namespace BPCells;
 using namespace Rcpp;
@@ -666,6 +668,51 @@ NumericVector matrix_max_per_col_cpp(SEXP matrix) {
         }
     }
     return Rcpp::wrap(result);
+}
+
+
+// [[Rcpp::export]]
+List pseudobulk_matrix_cpp(SEXP mat,
+                           std::vector<uint32_t> cell_groups,
+                           std::vector<std::string> method,
+                           bool transpose) {
+    PseudobulkStatsMethod methodFlags = static_cast<PseudobulkStatsMethod>(0);
+    for (std::string &m : method) {
+        if (m == "nonzeros") {
+            methodFlags = methodFlags | PseudobulkStatsMethod::NonZeros;
+        } else if (m == "sum") {
+            methodFlags = methodFlags | PseudobulkStatsMethod::Sum;
+        } else if (m == "mean") {
+            methodFlags = methodFlags | PseudobulkStatsMethod::NonZeros | PseudobulkStatsMethod::Mean;
+        } else if (m == "variance") {
+            methodFlags = methodFlags | PseudobulkStatsMethod::NonZeros | PseudobulkStatsMethod::Mean | PseudobulkStatsMethod::Variance;
+        }
+    }
+    
+    PseudobulkStats res = run_with_R_interrupt_check(
+        &pseudobulk_matrix<double>,
+        take_unique_xptr<MatrixLoader<double>>(mat),
+        std::cref(cell_groups),
+        (PseudobulkStatsMethod)methodFlags,
+        transpose
+    );
+    return List::create(
+        Named("nonzeros") = res.non_zeros,
+        Named("sum") = res.sum,
+        Named("mean") = res.mean,
+        Named("variance") = res.var
+    );
+}
+
+// [[Rcpp::export]]
+Eigen::ArrayXXd matrix_quantile_per_col_cpp(SEXP mat, std::vector<double> quantile, double alpha, double beta) {
+    return run_with_R_interrupt_check(
+        &matrix_quantile_per_col<double>,
+        take_unique_xptr<MatrixLoader<double>>(mat),
+        quantile,
+        alpha,
+        beta
+    );
 }
 
 

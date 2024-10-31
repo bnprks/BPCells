@@ -6,16 +6,25 @@
 \alias{cluster_graph_seurat}
 \title{Cluster an adjacency matrix}
 \usage{
-cluster_graph_leiden(snn, resolution = 0.001, seed = 12531, ...)
+cluster_graph_leiden(
+  snn,
+  resolution = 1,
+  objective_function = c("modularity", "CPM"),
+  seed = 12531,
+  ...
+)
 
 cluster_graph_louvain(snn, resolution = 1, seed = 12531)
 
 cluster_graph_seurat(snn, resolution = 0.8, ...)
 }
 \arguments{
-\item{snn}{Symmetric adjacency matrix (dgCMatrix) output from e.g. knn_to_snn_graph. Only the lower triangle is used}
+\item{snn}{Symmetric adjacency matrix (dgCMatrix) output from e.g. \code{knn_to_snn_graph()} or \code{knn_to_geodesic_graph()}. Only the lower triangle is used}
 
 \item{resolution}{Resolution parameter. Higher values result in more clusters}
+
+\item{objective_function}{Graph statistic to optimize during clustering. Modularity is the default as it keeps resolution independent of dataset size (see details below).
+For the meaning of each option, see \code{igraph::cluster_leiden()}.}
 
 \item{seed}{Random seed for clustering initialization}
 
@@ -28,7 +37,10 @@ Factor vector containing the cluster assignment for each cell.
 Cluster an adjacency matrix
 }
 \details{
-\strong{cluster_graph_leiden}: Leiden graph clustering algorithm \code{igraph::cluster_leiden()}
+\strong{cluster_graph_leiden}: Leiden clustering algorithm \code{igraph::cluster_leiden()}.
+Note that when using \code{objective_function = "CPM"} the number of clusters empirically scales with \code{cells * resolution},
+so 1e-3 is a good resolution for 10k cells, but 1M cells is better with a 1e-5 resolution. A resolution of 1 is a
+good default when \code{objective_function = "modularity"} per the default.
 
 \strong{cluster_graph_louvain}: Louvain graph clustering algorithm \code{igraph::cluster_louvain()}
 
