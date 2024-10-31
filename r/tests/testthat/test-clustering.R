@@ -61,7 +61,16 @@ test_that("igraph clustering doesn't crash", {
     knn <- test_data$knn
     graph <- knn_to_geodesic_graph(knn)
 
-    expect_no_condition(cluster_graph_leiden(graph))
-    expect_no_condition(cluster_graph_leiden(graph, objective_function="CPM"))
+    # The `resolution_parameter` param in igraph `cluster_leiden()` is deprecated,
+    # causing `expect_no_condition()` to fail. This workaround avoids test failures from 
+    # the deprecation warning, but is confirmed to fail if a call to `warning()` or `stop()` is
+    # inserted into `cluster_graph_leiden()`
+    suppressWarnings({
+        expect_no_warning(cluster_graph_leiden(graph))
+        expect_no_warning(cluster_graph_leiden(graph, objective_function="CPM"))
+        expect_no_error(cluster_graph_leiden(graph))
+        expect_no_error(cluster_graph_leiden(graph, objective_function="CPM"))
+    })
+
     expect_no_condition(cluster_graph_louvain(graph))
 })
