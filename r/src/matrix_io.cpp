@@ -30,7 +30,7 @@
 using namespace Rcpp;
 using namespace BPCells;
 
-template <class T> List dims_matrix(MatrixLoader<T> &&mat, bool transpose) {
+template <class T> List dims_matrix(MatrixLoader<T> &mat, bool transpose) {
     IntegerVector dims(2);
 
     uint32_t row_name_count = mat.rows() == 0 || mat.rowNames(0) == NULL ? 0 : mat.rows();
@@ -70,9 +70,12 @@ template <class T> List dims_matrix(MatrixLoader<T> &&mat, bool transpose) {
     }
 }
 
-template <class T> List dims_matrix(std::unique_ptr<MatrixLoader<T>> &&mat, bool transpose) {
-    // This is only safe because we know the main `dims_matrix` function doesn't store any references to the object
-    return dims_matrix(std::move(*mat), transpose);
+// This is a convenience overload to allow calling `dims_matrix` with rvalues. 
+// It looks weird, but I think it is safe. Long-term, a const l-value reference
+// is preferable.
+// For some additional info, see: https://www.fluentcpp.com/2018/02/06/understanding-lvalues-rvalues-and-their-references/
+template <class T> List dims_matrix(MatrixLoader<T> &&mat, bool transpose) {
+    return dims_matrix(mat, transpose);
 }
 
 List dims_matrix_reader_builder(ReaderBuilder &rb) {
@@ -651,13 +654,13 @@ List dims_matrix_10x_hdf5_cpp(std::string file, std::string group, uint32_t buff
     std::string type = get10xMatrixType(file, group);
     List l;
     if (type == "uint32_t") {
-        l = dims_matrix(open10xFeatureMatrix<uint32_t>(file, group, buffer_size), false);
+        l = dims_matrix(*open10xFeatureMatrix<uint32_t>(file, group, buffer_size), false);
     } else if (type == "uint64_t") {
-        l = dims_matrix(open10xFeatureMatrix<uint64_t>(file, group, buffer_size), false);
+        l = dims_matrix(*open10xFeatureMatrix<uint64_t>(file, group, buffer_size), false);
     } else if (type == "float") {
-        l = dims_matrix(open10xFeatureMatrix<float>(file, group, buffer_size), false);
+        l = dims_matrix(*open10xFeatureMatrix<float>(file, group, buffer_size), false);
     } else if (type == "double") {
-        l = dims_matrix(open10xFeatureMatrix<double>(file, group, buffer_size), false);
+        l = dims_matrix(*open10xFeatureMatrix<double>(file, group, buffer_size), false);
     } else {
         throw std::runtime_error("dims_matrix_10x_hdf5_cpp: Unrecognized matrix type " + type);
     }
@@ -825,11 +828,11 @@ List dims_matrix_anndata_hdf5_cpp(std::string file, std::string group, uint32_t 
     std::string type = getAnnDataMatrixType(file, group);
     List l;
     if (type == "uint32_t") {
-        l = dims_matrix(openAnnDataMatrix<uint32_t>(file, group, buffer_size), transpose);
+        l = dims_matrix(*openAnnDataMatrix<uint32_t>(file, group, buffer_size), transpose);
     } else if (type == "float") {
-        l = dims_matrix(openAnnDataMatrix<float>(file, group, buffer_size), transpose);
+        l = dims_matrix(*openAnnDataMatrix<float>(file, group, buffer_size), transpose);
     } else if (type == "double") {
-        l = dims_matrix(openAnnDataMatrix<double>(file, group, buffer_size), transpose);
+        l = dims_matrix(*openAnnDataMatrix<double>(file, group, buffer_size), transpose);
     } else {
         throw std::runtime_error("dims_matrix_anndata_hdf5_cpp: Unrecognized matrix type " + type);
     }
