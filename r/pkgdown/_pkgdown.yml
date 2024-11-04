@@ -122,6 +122,8 @@ reference:
   - checksum
   - apply_by_row
   - regress_out
+  - lsi
+  - highly_variable_features
   - IterableMatrix-methods
 
 - title: "Reference Annotations"

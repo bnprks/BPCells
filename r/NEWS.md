@@ -19,6 +19,8 @@ Contributions welcome :)
   Thanks to @ycli1995 for pull request #110
 - Add `trackplot_genome_annotation()` for plotting peaks, with options for directional arrows, colors, labels, and peak widths. (pull request #113)
 - Add MACS2/3 input creation and peak calling through `call_macs_peaks()` (pull request #118)
+- Add `lsi()` function to perform latent semantic indexing on a matrix (pull request #156).
+- Add `highly_variable_features()` function to identify highly variable features in a matrix (pull request #156). 
 
 ## Improvements
 - `trackplot_loop()` now accepts discrete color scales

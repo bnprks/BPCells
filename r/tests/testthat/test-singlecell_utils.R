@@ -6,6 +6,15 @@
 # option. This file may not be copied, modified, or distributed
 # except according to those terms.
 
+generate_sparse_matrix <- function(nrow, ncol, fraction_nonzero = 0.5, max_val = 10) {
+  m <- matrix(rbinom(nrow * ncol, 1, fraction_nonzero) * sample.int(max_val, nrow * ncol, replace = TRUE), nrow = nrow)
+  rownames(m) <- paste0("feat", seq_len(nrow(m)))
+  colnames(m) <- paste0("cell", seq_len(ncol(m)))
+  as(m, "dgCMatrix")
+}
+generate_dense_matrix <- function(nrow, ncol) {
+  m <- matrix(runif(nrow * ncol), nrow = nrow)
+}
 test_that("Wilcoxon rank sum works (small)", {
     x <- c(0.80, 0.83, 1.89, 1.04, 1.45, 1.38, 1.91, 1.64, 0.73, 1.46)
     y <- c(1.15, 0.88, 0.90, 0.74, 1.21)
@@ -114,4 +123,28 @@ test_that("C++ UMAP graph calculation works", {
     knn <- test_data$knn
     res <- knn_to_geodesic_graph(knn)
     expect_equal(as.matrix(res + t(res)), as.matrix(test_data$graph), tolerance=1e-6)
+})
+
+test_that("Highly variable feature selection works", {
+    mat <- generate_sparse_matrix(500, 26, fraction_nonzero = 0.1) %>% as("IterableMatrix")
+    # Test only that outputs are reasonable.  There is a full comparison in `tests/real_data/` that compares implementation to Seurat
+    res <- highly_variable_features(mat, num_feats = 10, n_bins = 5, threads = 1)
+    res_t <- highly_variable_features(t(mat), num_feats = 10, n_bins = 5, threads = 1)
+    expect_equal(nrow(res), 10)
+    expect_equal(ncol(res), 26)
+    expect_equal(nrow(res_t), 10)
+    expect_equal(ncol(res_t), 500)
+})
+
+test_that("LSI works", {
+    mat <- matrix(runif(240), nrow=10) %>% as("dgCMatrix") %>% as("IterableMatrix")
+    rownames(mat) <- paste0("feat", seq_len(nrow(mat)))
+    colnames(mat) <- paste0("cell", seq_len(ncol(mat)))
+    # Test only that outputs are reasonable.  There is a full comparison in `tests/real_data/` that compares implementation to ArchR
+    lsi_res <- lsi(mat, n_dimensions = 5)
+    lsi_res_t <- lsi(t(mat), n_dimensions = 5)
+    expect_equal(nrow(lsi_res), 5)
+    expect_equal(ncol(lsi_res), ncol(mat))
+    expect_equal(nrow(lsi_res_t), 5)
+    expect_equal(ncol(lsi_res_t), nrow(mat))
 })
