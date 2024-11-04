@@ -25,16 +25,21 @@ HWY_BEFORE_NAMESPACE();
 
 namespace BPCells::simd::bp128::HWY_NAMESPACE {
 
-uint32_t maxbits_diff(const uint32_t *HWY_RESTRICT ref, const uint32_t *HWY_RESTRICT in) {
-    using namespace hwy::HWY_NAMESPACE;
-    using D = Full128<uint32_t>;
-    D d;
-    return maxbits(in, [&ref, d](auto v) {
-        v = Sub(v, LoadU(d, ref));
+
+BP128_MAXBITS_DECL(
+    maxbits_diff,
+    // Setup Code 
+    // (none)
+    ,
+    // Transform Code (InReg is the input data)
+    {
+        InReg = Sub(InReg, LoadU(d, ref));
         ref += 4;
-        return v;
-    });
-}
+    },
+    // Arguments
+    const uint32_t *HWY_RESTRICT ref,
+    const uint32_t *HWY_RESTRICT in
+)
 
 } // namespace BPCells::simd::bp128::HWY_NAMESPACE
 

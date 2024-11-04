@@ -1,5 +1,5 @@
 // Copyright 2023 BPCells contributors
-// 
+//
 // Licensed under the Apache License, Version 2.0 <LICENSE-APACHE or
 // https://www.apache.org/licenses/LICENSE-2.0> or the MIT license
 // <LICENSE-MIT or https://opensource.org/licenses/MIT>, at your
@@ -25,27 +25,27 @@ HWY_BEFORE_NAMESPACE();
 
 namespace BPCells::simd::bp128::HWY_NAMESPACE {
 
-void unpack_d1(
-    uint32_t initvalue,
-    const uint32_t *HWY_RESTRICT in,
-    uint32_t *HWY_RESTRICT out,
-    const uint32_t bit
-) {
-    using namespace hwy::HWY_NAMESPACE;
-    using D = Full128<uint32_t>;
-    using Vec = Vec<D>;
-    D d;
+BP128_UNPACK_DECL(
+    unpack_d1,
+    // Setup Code
     Vec prevOffset = Set(d, initvalue);
-    unpack(in, out, bit, [d, &prevOffset](auto v) {
+    ,
+    // Transform Code (OutReg is the data)
+    {
         // Do a prefix sum:
         // Input: [a,b,c,d]; [?,?,?,h]; Output [a+h, a+b+h, a+b+c+h, a+b+c+d+h]
-        const auto tmp1 = Add(ShiftLeftLanes<2>(d, v), v);
+        const auto tmp1 = Add(ShiftLeftLanes<2>(d, OutReg), OutReg);
         const auto tmp2 = Add(ShiftLeftLanes<1>(d, tmp1), tmp1);
-        const auto res = Add(tmp2, BroadcastLane<3>(prevOffset));
-        prevOffset = res;
-        return res;
-    });
-}
+        OutReg = Add(tmp2, BroadcastLane<3>(prevOffset));
+        prevOffset = OutReg;
+    },
+    // Call args in parens
+    (initvalue, in, out),
+    // Arguments
+    uint32_t initvalue,
+    const uint32_t *HWY_RESTRICT in,
+    uint32_t *HWY_RESTRICT out
+)
 
 } // namespace BPCells::simd::bp128::HWY_NAMESPACE
 

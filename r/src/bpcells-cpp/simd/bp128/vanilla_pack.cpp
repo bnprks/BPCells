@@ -25,9 +25,20 @@ HWY_BEFORE_NAMESPACE();
 
 namespace BPCells::simd::bp128::HWY_NAMESPACE {
 
-void pack_bp128(const uint32_t *HWY_RESTRICT in, uint32_t *HWY_RESTRICT out, const uint32_t bit) {
-    pack_mask(in, out, bit, [](auto v) { return v; });
-}
+BP128_PACK_DECL(
+    pack_bp128,
+    // Setup Code
+    // (none)
+    ,
+    // Transform Code (InReg is the input data)
+    // (none)
+    ,
+    // Call args in parens
+    (in, out),
+    // Arguments
+    const uint32_t *HWY_RESTRICT in,
+    uint32_t *HWY_RESTRICT out
+)
 
 } // namespace BPCells::simd::bp128::HWY_NAMESPACE
 
