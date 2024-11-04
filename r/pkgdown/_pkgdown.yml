@@ -136,6 +136,8 @@ reference:
   - select_features_by_variance
   - select_features_by_dispersion
   - select_features_by_mean
+  - lsi
+  - highly_variable_features
   - IterableMatrix-methods
   - pseudobulk_matrix
 
