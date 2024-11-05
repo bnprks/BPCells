@@ -67,6 +67,24 @@ void square_downcast(double *inout, size_t n) {
     transform1_downcast(inout, n, [](auto d, const auto v) HWY_ATTR { return Mul(v, v); });
 }
 
+// Get the sum of a vector
+uint32_t sum(const double *HWY_RESTRICT val_data, size_t n) {
+    using namespace hwy::HWY_NAMESPACE;
+    ScalableTag<double> t;
+    size_t i = 0;
+    const size_t N = Lanes(t);
+    auto m = Zero(t);
+    // critical loop
+    for (; i + N <= n; i += N) {
+        m = Add(m, LoadU(t, val_data + i));
+    }
+    double ret = GetLane(SumOfLanes(t, m));
+    for (; i < n; i++) {
+        ret += val_data[i];
+    }
+    return ret;
+}
+
 // Return the max value of `in`
 uint32_t max(const uint32_t *in, size_t n) {
     using namespace hwy::HWY_NAMESPACE;
@@ -155,6 +173,9 @@ HWY_EXPORT(add_const);
 HWY_EXPORT(sub);
 
 uint32_t max(const uint32_t *in, size_t n) { return HWY_DYNAMIC_DISPATCH(max)(in, n); }
+
+HWY_EXPORT(sum);
+double sum(const double *HWY_RESTRICT val_data, size_t n) { return HWY_DYNAMIC_DISPATCH(sum)(val_data, n); }
 
 // Write inout[i] = inout[i] + a[i]
 void add(uint32_t *inout, const uint32_t *a, size_t n) {
