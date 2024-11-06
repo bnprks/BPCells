@@ -86,11 +86,13 @@
 <div class="section level2">
 <h2 id="installation">Installation<a class="anchor" aria-label="anchor" href="#installation"></a>
 </h2>
-<p>BPCells is easiest to install directly from github:</p>
+<p>We recommend installing BPCells directly from github:</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">remotes</span><span class="fu">::</span><span class="fu"><a href="https://remotes.r-lib.org/reference/install_github.html" class="external-link">install_github</a></span><span class="op">(</span><span class="st">"bnprks/BPCells/r"</span><span class="op">)</span></span></code></pre></div>
 <p>Before installing, you must have the HDF5 library installed and accessible on your system. HDF5 can be installed from your choice of package manager.</p>
 <p>You will also need a C/C++ compiler either gcc &gt;=8.0 (&gt;=9.1 recommended), or clang &gt;= 7.0 (&gt;= 9.0 recommended). This corresponds to versions from late-2018 and newer. Older versions may work in some cases so long as they have basic C++17 support, but they are not officially supported.</p>
+<p>For Mac and Windows users having trouble installing from github, check our <a href="https://bnprks.r-universe.dev/BPCells" class="external-link">R-universe</a> page for instructions to install pre-built binary packages. These binary packages automatically track the latest github main branch.</p>
+<p>For github-based installs, here are some more detailed instructions for obtaining the necessary installation dependencies on each operating system:</p>
 <div class="section level3">
 <h3 id="linux">Linux<a class="anchor" aria-label="anchor" href="#linux"></a>
 </h3>
