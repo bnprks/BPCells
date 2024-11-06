@@ -21,7 +21,7 @@ Additionally, BPCells exposes its optimized data processing infrastructure for u
 - [News](https://bnprks.github.io/BPCells/news/index.html)
 
 ## Installation
-BPCells is easiest to install directly from github:
+We recommend installing BPCells directly from github:
 
 ```R
 remotes::install_github("bnprks/BPCells/r")
@@ -32,6 +32,11 @@ HDF5 can be installed from your choice of package manager.
 You will also need a C/C++ compiler either gcc >=8.0 (>=9.1 recommended), or clang >= 7.0 (>= 9.0 recommended).
 This corresponds to versions from late-2018 and newer. Older versions may work in some cases so long as they
 have basic C++17 support, but they are not officially supported.
+
+For Mac and Windows users having trouble installing from github, check our [R-universe](https://bnprks.r-universe.dev/BPCells)
+page for instructions to install pre-built binary packages. These binary packages automatically track the latest github main branch.
+
+For github-based installs, here are some more detailed instructions for obtaining the necessary installation dependencies on each operating system:
 
 ### Linux
 Obtaining the HDF5 dependency is usually pretty straightforward on Linux
