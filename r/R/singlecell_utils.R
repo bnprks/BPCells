@@ -72,6 +72,8 @@ marker_features <- function(mat, groups, method="wilcoxon") {
 
 
 #' Perform latent semantic indexing (LSI) on a matrix.
+#' 
+#' Given a `(features x cells)` matrix, perform LSI to perform tf-idf, z-score normalization, and PCA to create a latent space representation of the matrix of shape `(n_dimensions, ncol(mat))`.
 #' @param mat (IterableMatrix) dimensions features x cells
 #' @param z_score_norm (logical) If TRUE, z-score normalize the matrix before PCA.
 #' @param n_dimensions (integer) Number of dimensions to keep during PCA.
@@ -79,9 +81,9 @@ marker_features <- function(mat, groups, method="wilcoxon") {
 #' @param threads (integer) Number of threads to use.
 #' @param save_lsi (logical) If TRUE, save the SVD attributes for the matrix, as well as the idf normalization vector.
 #' @return 
-#' - If save_lsi is FALSE, return a dgCMatrix of shape (n_dimensions, ncol(mat)).
+#' - If save_lsi is FALSE, return a dgCMatrix of shape `(n_dimensions, ncol(mat))`.
 #' - If save_lsi is TRUE, return a list with the following elements:
-#'  - **pca_res**: dgCMatrix of shape (n_dimensions, ncol(mat))
+#'  - **pca_res**: dgCMatrix of shape `(n_dimensions, ncol(mat))``
 #' - **svd_attr**: List of SVD attributes
 #' - **idf**: Inverse document frequency vector
 #' @details Compute LSI through first doing a log(tf-idf) transform, z-score normalization, then PCA.  Tf-idf implementation is from Stuart & Butler et al. 2019.
@@ -140,7 +142,12 @@ lsi <- function(
 #' @param n_bins (integer) Number of bins for binning mean gene expression.  Normalizing dispersion is done with respect to each bin, 
 #' and if the number of features
 #' within a bin is less than 2, the dispersion is set to 1.
-#' @returns IterableMatrix subset of the most variable features.
+#' @param save_feat_selection (logical) If TRUE, save the dispersions, means, and the features selected.
+#' @returns 
+#' - If `save_feat_selection` is False, return an IterableMatrix subset of the most variable features of shape `(num_variable_features, ncol(mat))`.
+#' - If `save_feat_selection` is True, return a list with the following elements:
+#' - **mat**: IterableMatrix subset of the most variable features of shape `(num_variable_features, ncol(mat))`.
+#' - **feature_selection**: Dataframe with the following columns:
 #' @inheritParams lsi
 #' @details The formula for calculating the most variable features is from the Seurat package (Satjia et al. 2015).
 #' 
@@ -149,7 +156,11 @@ lsi <- function(
 #'  2. Log normalize dispersion and mean
 #'  3. Bin the features by their means, and normalize dispersion within each bin
 #' @export
-highly_variable_features <- function(mat, num_feats, n_bins, threads = 1L) {
+highly_variable_features <- function(
+  mat, num_feats, n_bins = 20,
+  save_feat_selection = FALSE,
+  threads = 1L
+) {
   assert_is(mat, "IterableMatrix")
   assert_greater_than_zero(num_feats)
   assert_is_wholenumber(num_feats)
@@ -161,22 +172,27 @@ highly_variable_features <- function(mat, num_feats, n_bins, threads = 1L) {
     log_progress(sprintf("Number of features (%s) is less than num_feats (%s), returning all features", nrow(mat), num_feats))
     return(mat)
   }
+  # Calculate row information for dispersion
   mat_stats <- matrix_stats(mat, row_stats = c("variance"), threads = threads)
   feature_means <- mat_stats$row_stats["mean", ]
   feature_vars <- mat_stats$row_stats["variance", ]
+  # Give a small value to features with 0 mean, helps with 0 division
   feature_means[feature_means == 0] <- 1e-12
+  # Calculate dispersion, and log normalize
   feature_dispersion <- feature_vars / feature_means
   feature_dispersion[feature_dispersion == 0] <- NA
   feature_dispersion <- log(feature_dispersion)
   feature_means <- log1p(feature_means)
   features_df <- data.frame(
     name = names(feature_means),
-    vars = feature_vars, 
-    means = feature_means,
+    var = feature_vars, 
+    mean = feature_means,
     dispersion = feature_dispersion
   ) 
+
+  # Bin by mean, and normalize dispersion with each bin
   features_df <- features_df %>% 
-    dplyr::mutate(bin = cut(means, n_bins, labels=FALSE)) %>% 
+    dplyr::mutate(bin = cut(mean, n_bins, labels=FALSE)) %>% 
     dplyr::group_by(bin) %>% 
     dplyr::mutate( 
       bin_mean = mean(dispersion, na.rm = TRUE), 
@@ -187,9 +203,15 @@ highly_variable_features <- function(mat, num_feats, n_bins, threads = 1L) {
       feature_dispersion_norm = (dispersion - bin_mean) / bin_sd
     ) %>%
     dplyr::ungroup() %>%
-    dplyr::select(name, feature_dispersion_norm) %>%
+    dplyr::select(c(-bin_sd_is_na, -var, -bin_sd, -bin_mean)) %>%
     dplyr::arrange(desc(feature_dispersion_norm)) %>% 
     dplyr::slice(1:min(num_feats, nrow(.)))
+  if (save_feat_selection) {
+    return(list(
+      mat = mat[features_df$name,],
+      feature_selection = features_df
+    ))
+  }
   return(mat[features_df$name,])
 }
 

@@ -28,15 +28,15 @@ lsi(
 }
 \value{
 \itemize{
-\item If save_lsi is FALSE, return a dgCMatrix of shape (n_dimensions, ncol(mat)).
+\item If save_lsi is FALSE, return a dgCMatrix of shape \verb{(n_dimensions, ncol(mat))}.
 \item If save_lsi is TRUE, return a list with the following elements:
-\item \strong{pca_res}: dgCMatrix of shape (n_dimensions, ncol(mat))
+\item \strong{pca_res}: dgCMatrix of shape `(n_dimensions, ncol(mat))``
 \item \strong{svd_attr}: List of SVD attributes
 \item \strong{idf}: Inverse document frequency vector
 }
 }
 \description{
-Perform latent semantic indexing (LSI) on a matrix.
+Given a \verb{(features x cells)} matrix, perform LSI to perform tf-idf, z-score normalization, and PCA to create a latent space representation of the matrix of shape \verb{(n_dimensions, ncol(mat))}.
 }
 \details{
 Compute LSI through first doing a log(tf-idf) transform, z-score normalization, then PCA.  Tf-idf implementation is from Stuart & Butler et al. 2019.
