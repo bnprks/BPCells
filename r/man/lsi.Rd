@@ -6,27 +6,34 @@
 \usage{
 lsi(
   mat,
+  z_score_norm = TRUE,
   n_dimensions = 50L,
   scale_factor = 10000,
-  save_in_memory = FALSE,
+  save_lsi = FALSE,
   threads = 1L
 )
 }
 \arguments{
 \item{mat}{(IterableMatrix) dimensions features x cells}
 
+\item{z_score_norm}{(logical) If TRUE, z-score normalize the matrix before PCA.}
+
 \item{n_dimensions}{(integer) Number of dimensions to keep during PCA.}
 
 \item{scale_factor}{(integer) Scale factor for the tf-idf log transform.}
 
-\item{save_in_memory}{(logical) If TRUE, save the log(tf-idf) matrix in memory.
-If FALSE, save to a temporary location in disk.  Saving in memory will result in faster downstream operations,
-but will require in higher memory usage.  Comparison of memory usage and speed is in the details section.}
+\item{save_lsi}{(logical) If TRUE, save the SVD attributes for the matrix, as well as the idf normalization vector.}
 
 \item{threads}{(integer) Number of threads to use.}
 }
 \value{
-dgCMatrix of shape (n_dimensions, ncol(mat)).
+\itemize{
+\item If save_lsi is FALSE, return a dgCMatrix of shape (n_dimensions, ncol(mat)).
+\item If save_lsi is TRUE, return a list with the following elements:
+\item \strong{pca_res}: dgCMatrix of shape (n_dimensions, ncol(mat))
+\item \strong{svd_attr}: List of SVD attributes
+\item \strong{idf}: Inverse document frequency vector
+}
 }
 \description{
 Perform latent semantic indexing (LSI) on a matrix.
@@ -34,13 +41,8 @@ Perform latent semantic indexing (LSI) on a matrix.
 \details{
 Compute LSI through first doing a log(tf-idf) transform, z-score normalization, then PCA.  Tf-idf implementation is from Stuart & Butler et al. 2019.
 
-** Saving in memory vs disk: **
-Following the log(tf-idf) transform, the matrix is stored into a temporary location, as the next step will break the sparsity pattern of the matrix.
-This is done to prevent re-calculation of queued operations during PCA optimization.
-
 Running on a 2600 cell dataset with 50000 peaks and 4 threads, as an example:
 \itemize{
-\item Saving in memory: 233 MB memory usage, 22.7 seconds runtime
-\item Saving in disk: 17.1 MB memory usage, 25.1 seconds runtime
+\item 17.1 MB memory usage, 25.1 seconds runtime
 }
 }
