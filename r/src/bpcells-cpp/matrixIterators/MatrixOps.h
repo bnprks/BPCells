@@ -10,10 +10,14 @@
 
 #include <atomic>
 #include <stdexcept>
-
+#define RCPP_NO_RTTI
+#define RCPP_NO_SUGAR
+#include <Rcpp.h>
+#include <RcppEigen.h>
 #include "MatrixIterator.h"
 #include "MatrixStats.h"
 #include "simd/dense-multiply.h"
+
 
 namespace BPCells {
 // Calculate matrix-matrix product A*B where A (this) is sparse and B is a dense matrix.
@@ -154,6 +158,35 @@ template <typename T> std::vector<T> MatrixLoader<T>::colSums(std::atomic<bool> 
     }
     return sums;
 }
+
+
+// Calculate row/column sums of the matrix
+template <typename T> std::vector<T> MatrixLoader<T>::colSumsSIMD(std::atomic<bool> *user_interrupt) {
+    if constrexpr (std::is_same_v<T, double>) {
+        // print to rcpp that we're using SIMD
+        Rcpp::Rcout << "Using SIMD for sum operation" << std::endl;
+    }
+    std::vector<T> sums(cols());
+    restart();
+    while (nextCol()) {
+        const uint32_t col = currentCol();
+        if (user_interrupt != NULL && *user_interrupt) return sums;
+        while (load()) {
+            const T *val_data = valData();
+            const uint32_t count = capacity();
+            if constexpr (std::is_same_v<T, double>) {
+                sums[col] += simd::sum(val_data, count);
+            } else {
+                for (uint32_t i = 0; i < count; i++) {
+                sums[col] += val_data[i];
+            }
+            }
+            
+        }
+    }
+    return sums;
+}
+    
 template <typename T> std::vector<T> MatrixLoader<T>::rowSums(std::atomic<bool> *user_interrupt) {
     std::vector<T> sums(rows());
     restart();

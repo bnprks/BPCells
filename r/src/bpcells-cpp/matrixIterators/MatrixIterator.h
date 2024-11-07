@@ -101,6 +101,7 @@ template <typename T> class MatrixLoader {
 
     // Calculate row/column sums of the matrix
     virtual std::vector<T> colSums(std::atomic<bool> *user_interrupt = NULL);
+    virtual std::vector<T> colSumsSIMD(std::atomic<bool> *user_interrupt = NULL);
     virtual std::vector<T> rowSums(std::atomic<bool> *user_interrupt = NULL);
 
     // Calculate stats on the rows or columns of a matrix in a single pass.
