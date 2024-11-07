@@ -8,6 +8,11 @@
 
 devtools::load_all("/mnt/c/Users/Immanuel/PycharmProjects/BPCells/r")
 
+
+# Compare the feature selection output of BPCells to that of Scanpy.
+# Scanpy technically utilizes the Seurat (Satija et al. 2015) method for feature selection, so we should expect similar results of either pkg. 
+# This function calls a python script that runs Scanpy feature selection on a test dataset, and writes both input/output to `dir`.
+# It then reads in the input/output from the python script, calls the BPCells feature selection function, and compares the output to the Scanpy output.
 compare_feat_selection_to_scanpy <- function(dir = NULL) {
     # Set up temp dir
     if (is.null(dir)) {
@@ -29,8 +34,10 @@ compare_feat_selection_to_scanpy <- function(dir = NULL) {
         dplyr::select(-highly_variable) %>% # convert rownames to a column
         tibble::rownames_to_column("name") %>%
         dplyr::as_tibble()
-    # unlog the input_mat
+
+    # Scanpy undoes a log1p transformation on the input matrix, so we do the same here
     input_mat_bpcells <- expm1(input_mat_scanpy)
+    
     output_bpcells <- highly_variable_features(
         input_mat_bpcells %>% as("dgCMatrix") %>% as("IterableMatrix"),
         num_feats = 50,
