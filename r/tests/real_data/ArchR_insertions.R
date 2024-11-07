@@ -1,5 +1,14 @@
-devtools::load_all("/mnt/c/users/Immanuel/PycharmProjects/ArchR/")
-devtools::load_all("/mnt/c/users/Immanuel/PycharmProjects/BPCells/r/")
+# Copyright 2024 BPCells contributors
+# 
+# Licensed under the Apache License, Version 2.0 <LICENSE-APACHE or
+# https://www.apache.org/licenses/LICENSE-2.0> or the MIT license
+# <LICENSE-MIT or https://opensource.org/licenses/MIT>, at your
+# option. This file may not be copied, modified, or distributed
+# except according to those terms.
+
+source("test_helpers.R")
+devtools::load_all(config[["path_bpcells"]])
+devtools::load_all(config[["path_archr"]])
 
 fix_granges_syntax_for_archr <- function(gr) {
     mcols(gr)$RG <- gsub("PBSmall#", "", mcols(gr)$RG)
