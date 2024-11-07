@@ -237,25 +237,28 @@ pseudobulk_matrix <- function(mat, cell_groups, method = "sum", threads = 1L) {
 
 #' Perform latent semantic indexing (LSI) on a matrix.
 #' @param mat (IterableMatrix) dimensions features x cells
+#' @param z_score_norm (logical) If TRUE, z-score normalize the matrix before PCA.
 #' @param n_dimensions (integer) Number of dimensions to keep during PCA.
 #' @param scale_factor (integer) Scale factor for the tf-idf log transform.
-#' @param save_in_memory (logical) If TRUE, save the log(tf-idf) matrix in memory.  
-#' If FALSE, save to a temporary location in disk.  Saving in memory will result in faster downstream operations,
-#' but will require in higher memory usage.  Comparison of memory usage and speed is in the details section.
 #' @param threads (integer) Number of threads to use.
-#' @return dgCMatrix of shape (n_dimensions, ncol(mat)).
+#' @param save_lsi (logical) If TRUE, save the SVD attributes for the matrix, as well as the idf normalization vector.
+#' @return 
+#' - If save_lsi is FALSE, return a dgCMatrix of shape (n_dimensions, ncol(mat)).
+#' - If save_lsi is TRUE, return a list with the following elements:
+#'  - **pca_res**: dgCMatrix of shape (n_dimensions, ncol(mat))
+#' - **svd_attr**: List of SVD attributes
+#' - **idf**: Inverse document frequency vector
 #' @details Compute LSI through first doing a log(tf-idf) transform, z-score normalization, then PCA.  Tf-idf implementation is from Stuart & Butler et al. 2019.
 #' 
-#' ** Saving in memory vs disk: **
-#' Following the log(tf-idf) transform, the matrix is stored into a temporary location, as the next step will break the sparsity pattern of the matrix.
-#' This is done to prevent re-calculation of queued operations during PCA optimization.
-#' 
 #' Running on a 2600 cell dataset with 50000 peaks and 4 threads, as an example:
-#' - Saving in memory: 233 MB memory usage, 22.7 seconds runtime
-#' - Saving in disk: 17.1 MB memory usage, 25.1 seconds runtime
-#' 
+#' - 17.1 MB memory usage, 25.1 seconds runtime
 #' @export
-lsi <- function(mat, n_dimensions = 50L, scale_factor = 1e4, save_in_memory = FALSE, threads = 1L) {
+lsi <- function(
+  mat,
+  z_score_norm = TRUE, n_dimensions = 50L, scale_factor = 1e4,
+  save_lsi = FALSE,
+  threads = 1L
+) {
   assert_is(mat, "IterableMatrix")
   assert_is_wholenumber(n_dimensions)
   assert_len(n_dimensions, 1)
@@ -264,27 +267,34 @@ lsi <- function(mat, n_dimensions = 50L, scale_factor = 1e4, save_in_memory = FA
   assert_is_wholenumber(threads)
 
   # log(tf-idf) transform
+  mat_stats <- matrix_stats(mat, row_stats = c("mean"), col_stats = c("mean"))
+  
   npeaks <- colSums(mat) # Finding that sums are non-multithreaded and there's no interface to pass it in, but there is implementation in `ConcatenateMatrix.h`
   tf <- mat %>% multiply_cols(1 / npeaks)
   idf_ <- ncol(mat) / rowSums(mat)
   mat_tfidf <- tf %>% multiply_rows(idf_)
   mat_log_tfidf <- log1p(scale_factor * mat_tfidf)
   # Save to prevent re-calculation of queued operations
-  if (save_in_memory) {
-    mat_log_tfidf <- write_matrix_memory(mat_log_tfidf, compress = FALSE)
-  } else {
-    mat_log_tfidf <- write_matrix_dir(mat_log_tfidf, tempfile("mat_log_tfidf"), compress = FALSE)
-  } 
+  mat_log_tfidf <- write_matrix_dir(mat_log_tfidf, tempfile("mat_log_tfidf"), compress = FALSE)
   # Z-score normalization
-  cell_peak_stats <- matrix_stats(mat_log_tfidf, col_stats="variance", threads = threads)$col_stats
-  cell_means <- cell_peak_stats["mean",]
-  cell_vars <- cell_peak_stats["variance",]
-  mat_lsi_norm <- mat_log_tfidf %>%
-    add_cols(-cell_means) %>%
-    multiply_cols(1 / cell_vars)
+  if (z_score_norm) {
+    cell_peak_stats <- matrix_stats(mat_log_tfidf, col_stats = "variance", threads = threads)$col_stats
+    cell_means <- cell_peak_stats["mean",]
+    cell_vars <- cell_peak_stats["variance",]
+    mat_log_tfidf <- mat_log_tfidf %>%
+      add_cols(-cell_means) %>%
+      multiply_cols(1 / cell_vars)
+  }
   # Run pca
-  svd_attr_ <- svds(mat_lsi_norm, k = n_dimensions, threads = threads)
-  pca_res <- t(svd_attr_$u) %*% mat_lsi_norm
+  svd_attr_ <- svds(mat_log_tfidf, k = n_dimensions, threads = threads)
+  pca_res <- t(svd_attr_$u) %*% mat_log_tfidf
+  if(save_lsi) {
+    return(list(
+      pca_res = pca_res,
+      svd_attr = svd_attr_,
+      idf = idf_
+    ))
+  }
   return(pca_res)
 }
 
@@ -315,28 +325,87 @@ highly_variable_features <- function(mat, num_feats, n_bins, threads = 1L) {
     log_progress(sprintf("Number of features (%s) is less than num_feats (%s), returning all features", nrow(mat), num_feats))
     return(mat)
   }
-  
-  feature_means <- matrix_stats(mat, row_stats = c("mean"))$row_stats["mean", ]
-  feature_vars <- matrix_stats(mat, row_stats = c("variance"))$row_stats["variance", ]
+  mat_stats <- matrix_stats(mat, row_stats = c("variance"), threads = threads)
+  feature_means <- mat_stats$row_stats["mean", ]
+  feature_vars <- mat_stats$row_stats["variance", ]
   feature_means[feature_means == 0] <- 1e-12
   feature_dispersion <- feature_vars / feature_means
   feature_dispersion[feature_dispersion == 0] <- NA
   feature_dispersion <- log(feature_dispersion)
   feature_means <- log1p(feature_means)
-  mean_bins <- cut(feature_means, n_bins, labels = FALSE)
-  
-  bin_mean <- tapply(feature_dispersion, mean_bins, function(x) mean(x, na.rm = TRUE))
-  bin_sd <- tapply(feature_dispersion, mean_bins, function(x) sd(x, na.rm = TRUE))
-  # Set feats that are in bins with only one feat to have a norm dispersion of 1
-  one_gene_bin <- is.na(bin_sd)
-  bin_sd[one_gene_bin] <- bin_mean[one_gene_bin]
-  bin_mean[one_gene_bin] <- 0
-  # map mean_bins indices to bin_stats
-  # Do a character search as bins without features mess up numeric indexing
-  feature_dispersion_norm <- (feature_dispersion - bin_mean[as.character(mean_bins)]) / bin_sd[as.character(mean_bins)]
-  names(feature_dispersion_norm) <- names(feature_dispersion)
-  feature_dispersion_norm <- sort(feature_dispersion_norm) # sorting automatically removes NA values
-  if (length(feature_dispersion_norm) < num_feats) log_progress(sprintf("Number of features (%s) is less than num_feats (%s), returning all non-zero features", length(feature_dispersion_norm), num_feats))
-  variable_features_ <- feature_dispersion_norm[max(1, (length(feature_dispersion_norm) - num_feats + 1)):length(feature_dispersion_norm)]
-  return(mat[names(variable_features_), ])
+  features_df <- data.frame(
+    name = names(feature_means),
+    vars = feature_vars, 
+    means = feature_means,
+    dispersion = feature_dispersion
+  ) 
+  features_df <- features_df %>% 
+    dplyr::mutate(bin = cut(means, n_bins, labels=FALSE)) %>% 
+    dplyr::group_by(bin) %>% 
+    dplyr::mutate( 
+      bin_mean = mean(dispersion, na.rm = TRUE), 
+      bin_sd = sd(dispersion, na.rm = TRUE),
+      bin_sd_is_na = is.na(bin_sd), 
+      bin_sd = ifelse(bin_sd_is_na, bin_mean, bin_sd), # Set feats that are in bins with only one feat to have a norm dispersion of 1
+      bin_mean = ifelse(bin_sd_is_na, 0, bin_mean),
+      feature_dispersion_norm = (dispersion - bin_mean) / bin_sd
+    ) %>%
+    dplyr::ungroup() %>%
+    dplyr::select(name, feature_dispersion_norm) %>%
+    dplyr::arrange(desc(feature_dispersion_norm)) %>% 
+    dplyr::slice(1:min(num_feats, nrow(.)))
+  return(mat[features_df$name,])
+}
+
+                   
+#' Aggregate counts matrices by cell group or feature.
+#'
+#' Given a `(features x cells)` matrix, group cells by `cell_groups` and aggregate counts by `method` for each
+#' feature.
+#' @param cell_groups (Character/factor) Vector of group/cluster assignments for each cell. Length must be `ncol(mat)`.
+#' @param method (Character vector) Method(s) to aggregate counts. If one method is provided, the output will be a matrix. If multiple methods are provided, the output will be a named list of matrices.
+#'
+#' Current options are: `nonzeros`, `sum`, `mean`, `variance`.
+#' @param threads (integer) Number of threads to use.
+#' @return
+#'  - If `method` is length `1`, returns a matrix of shape `(features x groups)`.
+#'  - If `method` is greater than length `1`, returns a list of matrices with each matrix representing a pseudobulk matrix with a different aggregation method.
+#' Each matrix is of shape `(features x groups)`, and names are one of `nonzeros`, `sum`, `mean`, `variance`.
+#' @details Some simpler stats are calculated in the process of calculating more complex
+#' statistics. So when calculating `variance`, `nonzeros` and `mean` can be included with no
+#' extra calculation time, and when calculating `mean`, adding `nonzeros` will take no extra time.
+#' @inheritParams marker_features
+#' @export
+pseudobulk_matrix <- function(mat, cell_groups, method = "sum", threads = 1L) {
+  assert_is(mat, "IterableMatrix")
+  assert_is(cell_groups, c("factor", "character", "numeric"))
+  assert_true(length(cell_groups) == ncol(mat))
+  cell_groups <- as.factor(cell_groups)
+  assert_is(method, "character")
+  methods <- c("variance", "mean", "sum", "nonzeros")
+  for (m in method) {
+    if (!(m %in% methods)) {
+      rlang::abort(sprintf("method must be one of: %s", paste(methods, collapse = ", ")))
+    }
+  }
+  assert_is(threads, "integer")
+  # if multiple methods are provided, only need to pass in the top method as it will also calculate the less complex stats
+  iter <- iterate_matrix(parallel_split(mat, threads, threads*4))
+  res <- pseudobulk_matrix_cpp(iter, cell_groups = as.integer(cell_groups) - 1, method = method, transpose = mat@transpose)
+  # if res is a single matrix, return with colnames and rownames
+  if (length(method) == 1) {
+    colnames(res[[method]]) <- levels(cell_groups)
+    rownames(res[[method]]) <- rownames(mat)
+    return(res[[method]])
+  }
+  # give colnames and rownames for each matrix in res, which is a named list
+  for (res_slot in names(res)) {
+    if ((length(res[[res_slot]]) == 0) || !(res_slot %in% method)) {
+      res[[res_slot]] <- NULL
+    } else {
+      colnames(res[[res_slot]]) <- levels(cell_groups)
+      rownames(res[[res_slot]]) <- rownames(mat)
+    }
+  }
+  return(res)
 }
