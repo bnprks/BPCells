@@ -4,7 +4,13 @@
 \alias{highly_variable_features}
 \title{Get the most variable features within a matrix}
 \usage{
-highly_variable_features(mat, num_feats, n_bins, threads = 1L)
+highly_variable_features(
+  mat,
+  num_feats,
+  n_bins = 20,
+  save_feat_selection = FALSE,
+  threads = 1L
+)
 }
 \arguments{
 \item{mat}{(IterableMatrix) dimensions features x cells}
@@ -16,10 +22,17 @@ ll features will be returned.}
 and if the number of features
 within a bin is less than 2, the dispersion is set to 1.}
 
+\item{save_feat_selection}{(logical) If TRUE, save the dispersions, means, and the features selected.}
+
 \item{threads}{(integer) Number of threads to use.}
 }
 \value{
-IterableMatrix subset of the most variable features.
+\itemize{
+\item If \code{save_feat_selection} is False, return an IterableMatrix subset of the most variable features of shape \verb{(num_variable_features, ncol(mat))}.
+\item If \code{save_feat_selection} is True, return a list with the following elements:
+\item \strong{mat}: IterableMatrix subset of the most variable features of shape \verb{(num_variable_features, ncol(mat))}.
+\item \strong{feature_selection}: Dataframe with the following columns:
+}
 }
 \description{
 Get the most variable features within a matrix
