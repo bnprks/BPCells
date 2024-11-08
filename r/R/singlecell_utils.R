@@ -239,17 +239,17 @@ pseudobulk_matrix <- function(mat, cell_groups, method = "sum", threads = 1L) {
 #' 
 #' Given a `(features x cells)` matrix, perform LSI to perform tf-idf, z-score normalization, and PCA to create a latent space representation of the matrix of shape `(n_dimensions, ncol(mat))`.
 #' @param mat (IterableMatrix) dimensions features x cells
-#' @param z_score_norm (logical) If TRUE, z-score normalize the matrix before PCA.
+#' @param z_score_norm (logical) If `TRUE`, z-score normalize the matrix before PCA.
 #' @param n_dimensions (integer) Number of dimensions to keep during PCA.
 #' @param scale_factor (integer) Scale factor for the tf-idf log transform.
+#' #' @param save_lsi (logical) If `TRUE`, save the SVD attributes for the matrix, as well as the idf normalization vector.
 #' @param threads (integer) Number of threads to use.
-#' @param save_lsi (logical) If TRUE, save the SVD attributes for the matrix, as well as the idf normalization vector.
 #' @return 
-#' - If save_lsi is FALSE, return a dgCMatrix of shape `(n_dimensions, ncol(mat))`.
-#' - If save_lsi is TRUE, return a list with the following elements:
-#'  - **pca_res**: dgCMatrix of shape `(n_dimensions, ncol(mat))``
-#' - **svd_attr**: List of SVD attributes
-#' - **idf**: Inverse document frequency vector
+#' - If `save_lsi` is `FALSE`, return a dgCMatrix of shape `(n_dimensions, ncol(mat))`.
+#' - If `save_lsi` is `TRUE`, return a list with the following elements:
+#'    - `pca_res`: dgCMatrix of shape `(n_dimensions, ncol(mat))`
+#'    - `svd_attr`: List of SVD attributes
+#'    - `idf`: Inverse document frequency vector
 #' @details Compute LSI through first doing a log(tf-idf) transform, z-score normalization, then PCA.  Tf-idf implementation is from Stuart & Butler et al. 2019.
 #' 
 #' Running on a 2600 cell dataset with 50000 peaks and 4 threads, as an example:
@@ -300,18 +300,18 @@ lsi <- function(
   return(pca_res)
 }
 
-#' Get the most variable features within a matrix
+#' Get the most variable features within a matrix.
 #' @param num_feats (integer) Number of features to return.  If the number is higher than the number of features in the matrix, 
-#' ll features will be returned.
+#' all features will be returned.
 #' @param n_bins (integer) Number of bins for binning mean gene expression.  Normalizing dispersion is done with respect to each bin, 
 #' and if the number of features
 #' within a bin is less than 2, the dispersion is set to 1.
-#' @param save_feat_selection (logical) If TRUE, save the dispersions, means, and the features selected.
+#' @param save_feat_selection (logical) If `TRUE`, save the dispersions, means, and the features selected.
 #' @returns 
-#' - If `save_feat_selection` is False, return an IterableMatrix subset of the most variable features of shape `(num_variable_features, ncol(mat))`.
-#' - If `save_feat_selection` is True, return a list with the following elements:
-#' - **mat**: IterableMatrix subset of the most variable features of shape `(num_variable_features, ncol(mat))`.
-#' - **feature_selection**: Dataframe with the following columns:
+#' - If `save_feat_selection` is `FALSE`, return an IterableMatrix subset of the most variable features of shape `(num_variable_features, ncol(mat))`.
+#' - If `save_feat_selection` is `TRUE`, return a list with the following elements:
+#'    - `mat`: IterableMatrix subset of the most variable features of shape `(num_variable_features, ncol(mat))`.
+#'    - `feature_selection`: Dataframe with columns `name`, `mean`, `dispersion`, `bin`, `feature_dispersion_norm`.
 #' @inheritParams lsi
 #' @details The formula for calculating the most variable features is from the Seurat package (Satjia et al. 2015).
 #' 
