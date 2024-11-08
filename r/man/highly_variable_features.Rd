@@ -2,7 +2,7 @@
 % Please edit documentation in R/singlecell_utils.R
 \name{highly_variable_features}
 \alias{highly_variable_features}
-\title{Get the most variable features within a matrix}
+\title{Get the most variable features within a matrix.}
 \usage{
 highly_variable_features(
   mat,
@@ -16,26 +16,28 @@ highly_variable_features(
 \item{mat}{(IterableMatrix) dimensions features x cells}
 
 \item{num_feats}{(integer) Number of features to return.  If the number is higher than the number of features in the matrix,
-ll features will be returned.}
+all features will be returned.}
 
 \item{n_bins}{(integer) Number of bins for binning mean gene expression.  Normalizing dispersion is done with respect to each bin,
 and if the number of features
 within a bin is less than 2, the dispersion is set to 1.}
 
-\item{save_feat_selection}{(logical) If TRUE, save the dispersions, means, and the features selected.}
+\item{save_feat_selection}{(logical) If \code{TRUE}, save the dispersions, means, and the features selected.}
 
 \item{threads}{(integer) Number of threads to use.}
 }
 \value{
 \itemize{
-\item If \code{save_feat_selection} is False, return an IterableMatrix subset of the most variable features of shape \verb{(num_variable_features, ncol(mat))}.
-\item If \code{save_feat_selection} is True, return a list with the following elements:
-\item \strong{mat}: IterableMatrix subset of the most variable features of shape \verb{(num_variable_features, ncol(mat))}.
-\item \strong{feature_selection}: Dataframe with the following columns:
+\item If \code{save_feat_selection} is \code{FALSE}, return an IterableMatrix subset of the most variable features of shape \verb{(num_variable_features, ncol(mat))}.
+\item If \code{save_feat_selection} is \code{TRUE}, return a list with the following elements:
+\itemize{
+\item \code{mat}: IterableMatrix subset of the most variable features of shape \verb{(num_variable_features, ncol(mat))}.
+\item \code{feature_selection}: Dataframe with columns \code{name}, \code{mean}, \code{dispersion}, \code{bin}, \code{feature_dispersion_norm}.
+}
 }
 }
 \description{
-Get the most variable features within a matrix
+Get the most variable features within a matrix.
 }
 \details{
 The formula for calculating the most variable features is from the Seurat package (Satjia et al. 2015).

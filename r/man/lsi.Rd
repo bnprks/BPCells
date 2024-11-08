@@ -16,23 +16,24 @@ lsi(
 \arguments{
 \item{mat}{(IterableMatrix) dimensions features x cells}
 
-\item{z_score_norm}{(logical) If TRUE, z-score normalize the matrix before PCA.}
+\item{z_score_norm}{(logical) If \code{TRUE}, z-score normalize the matrix before PCA.}
 
 \item{n_dimensions}{(integer) Number of dimensions to keep during PCA.}
 
-\item{scale_factor}{(integer) Scale factor for the tf-idf log transform.}
-
-\item{save_lsi}{(logical) If TRUE, save the SVD attributes for the matrix, as well as the idf normalization vector.}
+\item{scale_factor}{(integer) Scale factor for the tf-idf log transform.
+#' @param save_lsi (logical) If \code{TRUE}, save the SVD attributes for the matrix, as well as the idf normalization vector.}
 
 \item{threads}{(integer) Number of threads to use.}
 }
 \value{
 \itemize{
-\item If save_lsi is FALSE, return a dgCMatrix of shape \verb{(n_dimensions, ncol(mat))}.
-\item If save_lsi is TRUE, return a list with the following elements:
-\item \strong{pca_res}: dgCMatrix of shape `(n_dimensions, ncol(mat))``
-\item \strong{svd_attr}: List of SVD attributes
-\item \strong{idf}: Inverse document frequency vector
+\item If \code{save_lsi} is \code{FALSE}, return a dgCMatrix of shape \verb{(n_dimensions, ncol(mat))}.
+\item If \code{save_lsi} is \code{TRUE}, return a list with the following elements:
+\itemize{
+\item \code{pca_res}: dgCMatrix of shape \verb{(n_dimensions, ncol(mat))}
+\item \code{svd_attr}: List of SVD attributes
+\item \code{idf}: Inverse document frequency vector
+}
 }
 }
 \description{
