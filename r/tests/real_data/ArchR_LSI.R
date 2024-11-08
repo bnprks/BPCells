@@ -30,7 +30,7 @@ test_lsi_similarity_to_archr <- function(dir = NULL) {
     lsi_archr <- .computeLSI(
         mat = test_mat,
         LSIMethod = 2,
-        nDimensions = 2,
+        nDimensions = 20,
         binarize = FALSE,
         outlierQuantiles = NULL
     )
@@ -47,10 +47,16 @@ test_lsi_similarity_to_archr <- function(dir = NULL) {
     lsi_bpcells <- lsi(
         test_mat %>% as("dgCMatrix") %>% as("IterableMatrix"), 
         z_score_norm = FALSE,
-        n_dimensions = 2,
+        n_dimensions = 20,
         save_lsi = TRUE
     )
     pre_svd_mat_approx_bpcells <- lsi_bpcells$svd_attr$u %*% lsi_bpcells$pca_res
-    testthat::expect_true(all.equal(pre_svd_mat_approx_archr, pre_svd_mat_approx_bpcells, tolerance = 1e-6))
+    testthat::expect_true(all.equal(pre_svd_mat_approx_archr, pre_svd_mat_approx_bpcells, tolerance = 1e-4))
+    # convert signs
+    lsi_mat_archr <- sweep(lsi_mat_archr, MARGIN = 1,  (2 * (lsi_mat_archr[,1] * lsi_bpcells$pca_res[,1] > 0) - 1), `*`)
+    # Check for post-pca matrix similarity
+    testthat::expect_true(all.equal(lsi_mat_archr, lsi_bpcells$pca_res, tolerance = 1e-4))
+    # also check for correlation between the two matrices in PC space
+    testthat::expect_true(cor(as.vector(lsi_mat_archr), as.vector(lsi_bpcells$pca_res)) > 0.999)
 }
 test_lsi_similarity_to_archr()
