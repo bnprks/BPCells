@@ -32,13 +32,12 @@ remotes::install_github("bnprks/BPCells/r")
 Before installing, you must have the HDF5 library installed and accessible on your system.
 HDF5 can be installed from your choice of package manager. 
 
-<details>
-<summary>Click here for operating system specific installation information</summary>
 
 For Mac and Windows users having trouble installing from github, check our [R-universe](https://bnprks.r-universe.dev/BPCells)
 page for instructions to install pre-built binary packages. These binary packages automatically track the latest github main branch.
 
-For github-based installs, here are some more detailed instructions for obtaining the necessary installation dependencies on each operating system:
+<details>
+<summary>Click here for operating system specific installation information for github-based installs</summary>
 
 ### Linux
 Obtaining the HDF5 dependency is usually pretty straightforward on Linux
