@@ -12,8 +12,8 @@ on:
         required: true
         type: choice
         option:
-          - TestPyPI
-          - PyPI (prod)
+          - Test PyPI
+          - PyPI
 
 jobs:
   build-wheels:
@@ -158,7 +158,7 @@ jobs:
 
   publish-to-testpypi:
     name: Publish Python package to TestPyPI
-    if: ${{ inputs.use_test }}
+    if: ${{ inputs.use_test == 'Test PyPI' }}
     needs:
     - build-wheels
     - build-sdist
@@ -186,7 +186,7 @@ jobs:
 
   publish-to-pypi:
     name: Publish Python package to PyPI
-    if: ${{ ! inputs.use_test }}
+    if: ${{ inputs.use_test == 'PyPI' }}
     needs:
     - build-wheels
     - build-sdist
