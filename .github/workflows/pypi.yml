@@ -8,9 +8,12 @@ on:
         default: ''
     inputs:
       use_test:
-        description: If true, deploy to test PyPI
+        description: Deploy target
         required: true
-        type: boolean
+        type: choice
+        option:
+          - TestPyPI
+          - PyPI (prod)
 
 jobs:
   build-wheels:
