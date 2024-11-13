@@ -6,7 +6,6 @@ on:
       tag:
         description: Git tag to publish (default to current commit)
         default: ''
-    inputs:
       use_test:
         description: Deploy target
         required: true
