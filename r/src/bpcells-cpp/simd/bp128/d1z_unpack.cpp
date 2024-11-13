@@ -1,5 +1,5 @@
 // Copyright 2023 BPCells contributors
-// 
+//
 // Licensed under the Apache License, Version 2.0 <LICENSE-APACHE or
 // https://www.apache.org/licenses/LICENSE-2.0> or the MIT license
 // <LICENSE-MIT or https://opensource.org/licenses/MIT>, at your
@@ -25,38 +25,37 @@ HWY_BEFORE_NAMESPACE();
 
 namespace BPCells::simd::bp128::HWY_NAMESPACE {
 
-void unpack_d1z(
-    uint32_t initvalue,
-    const uint32_t *HWY_RESTRICT in,
-    uint32_t *HWY_RESTRICT out,
-    const uint32_t bit
-) {
-    using namespace hwy::HWY_NAMESPACE;
-    using D = Full128<uint32_t>;
-    using Vec = Vec<D>;
-    D d;
-    Rebind<int32_t, D> d_signed;
-
+// Need to do this to prevent the comma from counting as a macro argument separator
+#define D_SIGNED_DECL Rebind<int32_t, D> d_signed
+BP128_UNPACK_DECL(
+    unpack_d1z,
+    // Setup Code
+    D_SIGNED_DECL;
     Vec prevOffset = Set(d, initvalue);
-    Vec one = Set(d, 1);
-    unpack(in, out, bit, [d, d_signed, &prevOffset, one](auto v) {
+    ,
+    // Transform Code (OutReg is the data)
+    {
         // Zigzag decode: (i >> 1) ^ -(i & 1)
-        v = Xor(
-            ShiftRight<1>(v), BitCast(d, Neg(BitCast(d_signed, And(v, one))))
-        );
+        // See https://lemire.me/blog/2022/11/25/making-all-your-integers-positive-with-zigzag-encoding/
+        OutReg =
+            Xor(ShiftRight<1>(OutReg), BitCast(d, Neg(BitCast(d_signed, And(OutReg, Set(d, 1))))));
 
         // OutReg = bitwise_xor(shift_r(OutReg, 1), sub(zero, bitwise_and(OutReg, one)));
         // Delta decode: Input: [a,b,c,d]; [?,?,?,h]; Output [a+h, a+b+h, a+b+c+h, a+b+c+d+h]
-        const auto tmp1 = Add(ShiftLeftLanes<2>(d, v), v);
+        const auto tmp1 = Add(ShiftLeftLanes<2>(d, OutReg), OutReg);
         const auto tmp2 = Add(ShiftLeftLanes<1>(d, tmp1), tmp1);
-        const auto res = Add(tmp2, BroadcastLane<3>(prevOffset));
+        OutReg = Add(tmp2, BroadcastLane<3>(prevOffset));
 
         // Update offset for next iteration
-        prevOffset = res;
-
-        return res;
-    });
-}
+        prevOffset = OutReg;
+    },
+    // Call args in parens
+    (initvalue, in, out),
+    // Arguments
+    uint32_t initvalue,
+    const uint32_t *HWY_RESTRICT in,
+    uint32_t *HWY_RESTRICT out
+)
 
 } // namespace BPCells::simd::bp128::HWY_NAMESPACE
 

@@ -1,5 +1,5 @@
 // Copyright 2023 BPCells contributors
-// 
+//
 // Licensed under the Apache License, Version 2.0 <LICENSE-APACHE or
 // https://www.apache.org/licenses/LICENSE-2.0> or the MIT license
 // <LICENSE-MIT or https://opensource.org/licenses/MIT>, at your
@@ -25,33 +25,31 @@ HWY_BEFORE_NAMESPACE();
 
 namespace BPCells::simd::bp128::HWY_NAMESPACE {
 
-
-void pack_d1z(
+// Need to do this to prevent the comma from counting as a macro argument separator
+#define D_SIGNED_DECL Rebind<int32_t, D> d_signed
+BP128_PACK_DECL(
+    pack_d1z,
+    // Setup Code
+    D_SIGNED_DECL;
+    Vec prevOffset = Set(d, initvalue);
+    ,
+    // Transform Code (InReg is the input data)
+    {
+        // Delta encode: InReg=[a,b,c,d]; prevOffset=[?,?,?,h]; Output [a-h, b-a, c-b, d-c]
+        const auto tmp = Sub(InReg, CombineShiftRightLanes<3>(d, InReg, prevOffset));
+        // Update offset for next iteration
+        prevOffset = InReg;
+        // Zigzag encode: (i >> 31) ^ (i << 1)    (arithmetic shift right here)
+        // See https://lemire.me/blog/2022/11/25/making-all-your-integers-positive-with-zigzag-encoding/
+        InReg = Xor(BitCast(d, ShiftRight<31>(BitCast(d_signed, tmp))), ShiftLeft<1>(tmp));
+    },
+    // Call args in parens
+    (initvalue, in, out),
+    // Arguments
     uint32_t initvalue,
     const uint32_t *HWY_RESTRICT in,
-    uint32_t *HWY_RESTRICT out,
-    const uint32_t bit
-) {
-    using namespace hwy::HWY_NAMESPACE;
-    using D = Full128<uint32_t>;
-    using Vec = Vec<D>;
-    D d;
-    Rebind<int32_t, D> d_signed;
-
-    Vec prevOffset = Set(d, initvalue);
-    pack_mask(in, out, bit, [d, d_signed, &prevOffset](auto v) {
-        // Delta encode: Input: [a,b,c,d]; [?,?,?,h]; Output [a-h, b-a, c-b, d-c]
-        const auto res = Sub(v, CombineShiftRightLanes<3>(d, v, prevOffset));
-
-        // Update offset for next iteration
-        prevOffset = v;
-
-        // Zigzag encode: (i >> 31) ^ (i << 1)    (arithmetic shift right here)
-        return Xor(
-            BitCast(d, ShiftRight<31>(BitCast(d_signed, res))), ShiftLeft<1>(res)
-        );
-    });
-}
+    uint32_t *HWY_RESTRICT out
+)
 
 } // namespace BPCells::simd::bp128::HWY_NAMESPACE
 

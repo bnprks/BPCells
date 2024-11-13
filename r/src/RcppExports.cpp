@@ -107,6 +107,26 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// available_simd_versions
+std::vector<std::string> available_simd_versions();
+RcppExport SEXP _BPCells_available_simd_versions() {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    rcpp_result_gen = Rcpp::wrap(available_simd_versions());
+    return rcpp_result_gen;
+END_RCPP
+}
+// set_simd_version
+void set_simd_version(std::string version);
+RcppExport SEXP _BPCells_set_simd_version(SEXP versionSEXP) {
+BEGIN_RCPP
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< std::string >::type version(versionSEXP);
+    set_simd_version(version);
+    return R_NilValue;
+END_RCPP
+}
 // simd_version_bp128
 std::string simd_version_bp128();
 RcppExport SEXP _BPCells_simd_version_bp128() {
@@ -614,6 +634,18 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< std::vector<double> >::type cell_weights(cell_weightsSEXP);
     rcpp_result_gen = Rcpp::wrap(footprint_matrix_cpp(fragments, chr, center, strand, flank_width, chr_levels, cell_groups, cell_weights));
     return rcpp_result_gen;
+END_RCPP
+}
+// write_insertion_bed_cpp
+void write_insertion_bed_cpp(SEXP fragments, std::string output_path, std::string mode_string);
+RcppExport SEXP _BPCells_write_insertion_bed_cpp(SEXP fragmentsSEXP, SEXP output_pathSEXP, SEXP mode_stringSEXP) {
+BEGIN_RCPP
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type fragments(fragmentsSEXP);
+    Rcpp::traits::input_parameter< std::string >::type output_path(output_pathSEXP);
+    Rcpp::traits::input_parameter< std::string >::type mode_string(mode_stringSEXP);
+    write_insertion_bed_cpp(fragments, output_path, mode_string);
+    return R_NilValue;
 END_RCPP
 }
 // write_insertion_bedgraph_cpp
@@ -2462,6 +2494,34 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// pseudobulk_matrix_cpp
+List pseudobulk_matrix_cpp(SEXP mat, std::vector<uint32_t> cell_groups, std::vector<std::string> method, bool transpose);
+RcppExport SEXP _BPCells_pseudobulk_matrix_cpp(SEXP matSEXP, SEXP cell_groupsSEXP, SEXP methodSEXP, SEXP transposeSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type mat(matSEXP);
+    Rcpp::traits::input_parameter< std::vector<uint32_t> >::type cell_groups(cell_groupsSEXP);
+    Rcpp::traits::input_parameter< std::vector<std::string> >::type method(methodSEXP);
+    Rcpp::traits::input_parameter< bool >::type transpose(transposeSEXP);
+    rcpp_result_gen = Rcpp::wrap(pseudobulk_matrix_cpp(mat, cell_groups, method, transpose));
+    return rcpp_result_gen;
+END_RCPP
+}
+// matrix_quantile_per_col_cpp
+Eigen::ArrayXXd matrix_quantile_per_col_cpp(SEXP mat, std::vector<double> quantile, double alpha, double beta);
+RcppExport SEXP _BPCells_matrix_quantile_per_col_cpp(SEXP matSEXP, SEXP quantileSEXP, SEXP alphaSEXP, SEXP betaSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type mat(matSEXP);
+    Rcpp::traits::input_parameter< std::vector<double> >::type quantile(quantileSEXP);
+    Rcpp::traits::input_parameter< double >::type alpha(alphaSEXP);
+    Rcpp::traits::input_parameter< double >::type beta(betaSEXP);
+    rcpp_result_gen = Rcpp::wrap(matrix_quantile_per_col_cpp(mat, quantile, alpha, beta));
+    return rcpp_result_gen;
+END_RCPP
+}
 // matrix_identical_uint32_t_cpp
 bool matrix_identical_uint32_t_cpp(SEXP mat1, SEXP mat2);
 RcppExport SEXP _BPCells_matrix_identical_uint32_t_cpp(SEXP mat1SEXP, SEXP mat2SEXP) {
@@ -2484,6 +2544,8 @@ static const R_CallMethodDef CallEntries[] = {
     {"_BPCells_open_bp128_d1", (DL_FUNC) &_BPCells_open_bp128_d1, 5},
     {"_BPCells_open_bp128_for", (DL_FUNC) &_BPCells_open_bp128_for, 4},
     {"_BPCells_simd_version", (DL_FUNC) &_BPCells_simd_version, 0},
+    {"_BPCells_available_simd_versions", (DL_FUNC) &_BPCells_available_simd_versions, 0},
+    {"_BPCells_set_simd_version", (DL_FUNC) &_BPCells_set_simd_version, 1},
     {"_BPCells_simd_version_bp128", (DL_FUNC) &_BPCells_simd_version_bp128, 0},
     {"_BPCells_write_bp128", (DL_FUNC) &_BPCells_write_bp128, 4},
     {"_BPCells_write_bp128_for", (DL_FUNC) &_BPCells_write_bp128_for, 4},
@@ -2522,6 +2584,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_BPCells_nucleosome_counts_cpp", (DL_FUNC) &_BPCells_nucleosome_counts_cpp, 2},
     {"_BPCells_fragment_lengths_cpp", (DL_FUNC) &_BPCells_fragment_lengths_cpp, 1},
     {"_BPCells_footprint_matrix_cpp", (DL_FUNC) &_BPCells_footprint_matrix_cpp, 8},
+    {"_BPCells_write_insertion_bed_cpp", (DL_FUNC) &_BPCells_write_insertion_bed_cpp, 3},
     {"_BPCells_write_insertion_bedgraph_cpp", (DL_FUNC) &_BPCells_write_insertion_bedgraph_cpp, 4},
     {"_BPCells_iterate_peak_matrix_cpp", (DL_FUNC) &_BPCells_iterate_peak_matrix_cpp, 6},
     {"_BPCells_iterate_tile_matrix_cpp", (DL_FUNC) &_BPCells_iterate_tile_matrix_cpp, 7},
@@ -2662,6 +2725,8 @@ static const R_CallMethodDef CallEntries[] = {
     {"_BPCells_apply_matrix_double_cpp", (DL_FUNC) &_BPCells_apply_matrix_double_cpp, 3},
     {"_BPCells_matrix_max_per_row_cpp", (DL_FUNC) &_BPCells_matrix_max_per_row_cpp, 1},
     {"_BPCells_matrix_max_per_col_cpp", (DL_FUNC) &_BPCells_matrix_max_per_col_cpp, 1},
+    {"_BPCells_pseudobulk_matrix_cpp", (DL_FUNC) &_BPCells_pseudobulk_matrix_cpp, 4},
+    {"_BPCells_matrix_quantile_per_col_cpp", (DL_FUNC) &_BPCells_matrix_quantile_per_col_cpp, 4},
     {"_BPCells_matrix_identical_uint32_t_cpp", (DL_FUNC) &_BPCells_matrix_identical_uint32_t_cpp, 2},
     {NULL, NULL, 0}
 };

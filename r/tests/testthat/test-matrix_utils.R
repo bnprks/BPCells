@@ -219,6 +219,61 @@ test_that("Subset rbind/cbind dimnames are preserved (#100 regression)", {
   expect_identical(m1[1:5,1:5], as(write_matrix_memory(m2), "dgCMatrix"))
 })
 
+test_that("Subset dimnames are preserved randomized testing", {
+  apply_random_op <- function(mats, orig_mat) {
+      x <- runif(1)
+      use_rows <- runif(1) < .5
+      axis_len <- if(use_rows) nrow(mats[[1]]) else ncol(mats[[1]])
+      orig_names <- if(use_rows) rownames(orig_mat) else colnames(orig_mat)
+      cur_names <- if(use_rows) rownames(mats[[1]]) else colnames(mats[[1]])
+
+      if (x < .25) {
+          # Subset only
+          selection <- which(rbinom(axis_len, 1, .9) == 1) 
+      } else if (x < .5) {
+          # Shuffle only
+          selection <- sample(axis_len)
+      } else if (x < .75) {
+          # Subset + shuffle
+          selection <- which(rbinom(axis_len, 1, .9) == 1)
+          if (length(selection) > 1) selection <- sample(selection)
+      } else if (x < .8) {
+          # Do an "unshuffle" op
+          selection <- order(match(cur_names, orig_names))
+      } else {
+          # Other op (multiply by 1.001)
+          return(lapply(mats, function(m) m*1.001))
+      }
+
+      # We did a selection rather than an op
+      if (use_rows) {
+          return(lapply(mats, function(m) m[selection,]))
+      } else {
+          return(lapply(mats, function(m) m[,selection]))
+      }
+  }
+
+  # Use a time-based seed so we can get a little extra random coverage
+  # If this test ever becomes flaky, it's a sign to look for a bug.
+  # Initial testing on a known-buggy library version has false negatives 20% 
+  # of the time with 3 iterations in outer loop and 10 in inner loop.
+  withr::local_seed(as.double(Sys.time())) 
+
+  for (i in seq_len(3)) {
+      m <- generate_sparse_matrix(100, 100)
+      rownames(m) <- paste0("row", seq_len(nrow(m)))
+      colnames(m) <- paste0("col", seq_len(ncol(m)))
+
+      mats <- list(m, as(m, "IterableMatrix"))
+      for (j in seq_len(10)) {
+          mats <- apply_random_op(mats, m)
+          # Check that dimnames are still good
+          expect_identical(dimnames(mats[[1]]), dimnames(mats[[2]]))
+          expect_identical(dimnames(mats[[1]]), dimnames(write_matrix_memory(mats[[2]], compress=FALSE)))
+      }
+  }
+})
+
 test_that("rbind and cbind check types (#68 regression)", {
   m <- generate_dense_matrix(10, 5) %>% as("dgCMatrix") %>% as("IterableMatrix")
 

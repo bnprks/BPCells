@@ -7,20 +7,20 @@
 write_insertion_bedgraph(
   fragments,
   path,
-  cell_groups = NULL,
+  cell_groups = rlang::rep_along(cellNames(fragments), "all"),
   insertion_mode = c("both", "start_only", "end_only")
 )
 }
 \arguments{
 \item{fragments}{IterableFragments object}
 
-\item{path}{Path(s) to save bedgraph to, optionally ending in ".gz" to add gzip compression. If \code{cell_groups} is provided,
+\item{path}{(character vector) Path(s) to save bedgraph to, optionally ending in ".gz" to add gzip compression. If \code{cell_groups} is provided,
 \code{path} must be a named character vector, with one name for each level in \code{cell_groups}}
 
 \item{cell_groups}{Character or factor assigning a group to each cell, in order of
 \code{cellNames(fragments)}}
 
-\item{insertion_mode}{Which fragment ends to use for insertion counts calculation. One of "both", "start_only", or "end_only"}
+\item{insertion_mode}{(string) Which fragment ends to use for coverage calculation. One of "both", "start_only", or "end_only"}
 }
 \description{
 Write insertion counts data for one or more pseudobulks to bedgraph format. This reports the total

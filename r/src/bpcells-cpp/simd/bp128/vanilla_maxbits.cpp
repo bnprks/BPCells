@@ -25,9 +25,18 @@ HWY_BEFORE_NAMESPACE();
 
 namespace BPCells::simd::bp128::HWY_NAMESPACE {
 
-uint32_t maxbits_bp128(const uint32_t *HWY_RESTRICT in) {
-    return maxbits(in, [](auto v) { return v; });
-}
+
+BP128_MAXBITS_DECL(
+    maxbits_bp128,
+    // Setup Code
+    // (none)
+    ,
+    // Transform Code (InReg is the input data)
+    // (none)
+    ,
+    // Arguments
+    const uint32_t *HWY_RESTRICT in
+)
 
 } // namespace BPCells::simd::bp128::HWY_NAMESPACE
 

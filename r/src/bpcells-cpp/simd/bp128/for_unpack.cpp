@@ -25,17 +25,22 @@ HWY_BEFORE_NAMESPACE();
 
 namespace BPCells::simd::bp128::HWY_NAMESPACE {
 
-void unpack_FOR(
-    uint32_t offset, const uint32_t *HWY_RESTRICT in, uint32_t *HWY_RESTRICT out, const uint32_t bit
-) {
-    using namespace hwy::HWY_NAMESPACE;
-    using D = Full128<uint32_t>;
-    using Vec = Vec<D>;
-    D d;
+BP128_UNPACK_DECL(
+    unpack_FOR,
+    // Setup Code
     Vec offset_v = Set(d, offset);
-
-    unpack(in, out, bit, [offset_v](auto v) { return Add(v, offset_v); });
-}
+    ,
+    // Transform Code (OutReg is the data)
+    {
+        OutReg = Add(OutReg, offset_v);
+    },
+    // Call args in parens
+    (offset, in, out),
+    // Arguments
+    uint32_t offset,
+    const uint32_t *HWY_RESTRICT in,
+    uint32_t *HWY_RESTRICT out
+)
 
 } // namespace BPCells::simd::bp128::HWY_NAMESPACE
 

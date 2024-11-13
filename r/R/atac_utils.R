@@ -379,23 +379,26 @@ call_peaks_tile <- function(fragments, chromosome_sizes, cell_groups = rep.int("
 #' number insertions at each basepair for each group listed in `cell_groups`.
 #'
 #' @param fragments IterableFragments object
-#' @param path Path(s) to save bedgraph to, optionally ending in ".gz" to add gzip compression. If `cell_groups` is provided,
+#' @param path (character vector) Path(s) to save bedgraph to, optionally ending in ".gz" to add gzip compression. If `cell_groups` is provided,
 #'   `path` must be a named character vector, with one name for each level in `cell_groups`
-#' @param insertion_mode Which fragment ends to use for insertion counts calculation. One of "both", "start_only", or "end_only"
+#' @param insertion_mode (string) Which fragment ends to use for coverage calculation. One of "both", "start_only", or "end_only"
 #' @inheritParams footprint
 #' @export
-write_insertion_bedgraph <- function(fragments, path, cell_groups = NULL, insertion_mode=c("both", "start_only", "end_only")) {
+write_insertion_bedgraph <- function(fragments, path, cell_groups = rlang::rep_along(cellNames(fragments), "all"), insertion_mode=c("both", "start_only", "end_only")) {
   assert_is(fragments, "IterableFragments")
   assert_is_character(path)
+  assert_is(cell_groups, c("character", "factor"))
   insertion_mode <- match.arg(insertion_mode)
+  path_names <- names(path)
+  path <- suppressWarnings(normalizePath(path))
+  names(path) <- path_names
+  cell_groups <- as.factor(cell_groups)
+  assert_len(path, length(levels(cell_groups)))
   
-  if (is.null(cell_groups)) {
-    cell_groups <- rep.int(0L, length(cellNames(fragments)))
-    assert_len(path, 1)
+  if (length(levels(cell_groups)) == 1) {
+    names(path) <- "all"
   } else {
-    assert_is(cell_groups, c("character", "factor"))
     assert_len(cell_groups, length(cellNames(fragments)))
-    cell_groups <- as.factor(cell_groups)
     assert_has_names(path, levels(cell_groups))
     path <- path[levels(cell_groups)]
     cell_groups <- as.integer(cell_groups) - 1L
@@ -403,6 +406,257 @@ write_insertion_bedgraph <- function(fragments, path, cell_groups = NULL, insert
   write_insertion_bedgraph_cpp(iterate_fragments(fragments), cell_groups, path, insertion_mode)
 }
 
+#' Create bed files from fragments split by cell group.
+#' @param path (character vector) Path to save bed files. If `cell_groups` is provided, this must be a character vector with one name for each level in `cell_groups` 
+#' Else, this must be a character vector of length 1.
+#' @param cell_groups (character vector or factor) Cluster assignments for each cell.
+#' @param threads (int) Number of threads to use.
+#' @param verbose (bool) Whether to provide verbose progress output to console.
+#' @return `NULL`
+#' @inheritParams write_insertion_bedgraph
+#' @keywords internal
+write_insertion_bed <- function(fragments, path,
+                                cell_groups = rlang::rep_along(cellNames(fragments), "all"),
+                                insertion_mode = c("both", "start_only",  "end_only"),
+                                verbose = FALSE,
+                                threads = 1) {
+  assert_is(fragments, "IterableFragments")
+  assert_is(cell_groups, c("character", "factor"))
+  assert_is_character(path)
+  assert_is_wholenumber(threads)
+  if (threads > 1L && .Platform$OS.type == "windows") {
+    # TODO: Move the multithreading to happen in C++ so we can support windows
+    threads <- 1L
+    rlang::warn("Multi-threading is not supported yet on windows in this function")
+  }
+  assert_is(verbose, "logical")
+  insertion_mode <- match.arg(insertion_mode)
+  path_names <- names(path)
+  path <- suppressWarnings(normalizePath(path))
+  names(path) <- path_names
+  cell_groups <- as.factor(cell_groups)
+  assert_len(path, length(levels(cell_groups)))
+
+  # Prep inputs
+  if (length(levels(cell_groups)) == 1) {
+    names(path) <- levels(cell_groups)
+  } else {
+    assert_len(cell_groups, length(cellNames(fragments)))
+    assert_has_names(path, levels(cell_groups))
+  }
+  cell_groups_int <- as.integer(cell_groups)
+  cluster_name_mapping <- levels(cell_groups)
+  # Parallelize writing bed inputs into MACS
+  parallel::mclapply(seq_along(cluster_name_mapping), function(i) {
+    if (verbose) log_progress(paste0("Writing bed file for cluster: ", cluster_name_mapping[[i]]))
+    fragments_by_cluster <- select_cells(fragments, cell_groups_int == i)
+    write_insertion_bed_cpp(
+      iterate_fragments(fragments_by_cluster),
+      path[cluster_name_mapping[[i]]],
+      insertion_mode
+    )
+    if (verbose) log_progress(paste0("Bed file for cluster: ", cluster_name_mapping[[i]],
+                                     " written to: ", path[cluster_name_mapping[[i]]]))
+  }, mc.cores = threads, mc.preschedule = FALSE)
+  if (verbose) {
+    message(paste0(format(Sys.time(), "%Y-%m-%d %H:%M:%S"), " Finished writing bed files"))
+  }
+}
+
+
+#' Call peaks using MACS2/3
+#' 
+#' Export pseudobulk bed files as input for MACS, then run MACS and read the output peaks as a tibble.
+#' Each step can can be run independently, allowing for quickly re-loading the results of an already completed call,
+#' or running MACS externally (e.g. via cluster job submisison) for increased parallelization. See details for more information.
+#'
+#' @param path (string) Parent directory to store MACS inputs and outputs.
+#' Inputs are stored in `<path>/input/` and outputs in `<path>/output/<group>/`. See "File format" in details
+#' @param effective_genome_size (numeric) Effective genome size for MACS. Default is `2.9e9` following MACS default for GRCh38. See [deeptools](https://deeptools.readthedocs.io/en/develop/content/feature/effectiveGenomeSize.html)
+#'    for values for other common genomes.
+#' @param insertion_mode (string) Which fragment ends to use for coverage calculation. One of `both`, `start_only`, or `end_only`.
+#' @param step (string) Which step to run. One of  `all`, `prep-inputs`, `run-macs`, `read-outputs`.  If `prep-inputs`, create the input bed files for macs,
+#' and provides a shell script per cell group with the command to run macs.  If `run-macs`, also run bash scripts to execute macs.
+#' If `read-outputs`, read the outputs into tibbles.
+#' @param macs_executable (string) Path to either MACS2/3 executable. Default (`NULL`) will autodetect from PATH.
+#' @param additional_params (string) Additional parameters to pass to MACS2/3. 
+#' @param verbose (bool) Whether to provide verbose output from MACS. Only used if step is `run-macs` or `all`.
+#' @param threads (int) Number of threads to use.
+#' @return
+#'  - If step is `prep-inputs`, return script paths for each cell group given as a character vector.
+#'  - If step is `run-macs`, return `NULL`.
+#'  - If step is `read-outputs` or `all`, returns a tibble with all the peaks from each cell group concatenated.
+#' Columnns are `chr`, `start`, `end`, `group`, `name`, `score`, `strand`, `fold_enrichment`, `log10_pvalue`, `log10_qvalue`, `summit_offset`
+#' @details 
+#' **File format**:
+#'  - Inputs are written such that a bed file used as input into MACS, 
+#' as well as a shell file containing a call to MACS are written for each cell group.
+#'  - Bed files containing `chr`, `start`, and `end` coordinates of insertions are written at `<path>/input/<group>.bed.gz`.
+#'  - Shell commands to run MACS manually are written at `<path>/input/<group>.sh`.
+#'
+#' Outputs are written to an output directory with a subdirectory for each cell group.
+#' Each cell group's output directory contains a file for narrowPeaks, peaks, and summits.
+#'  - NarrowPeaks are written at `<path>/output/<group>/<group>_peaks.narrowPeak`.
+#'  - Peaks are written at `<path>/output/<group>/<group>_peaks.xls`.
+#'  - Summits are written at `<path>/output/<group>/<group>_summits.bed`.
+#'
+#' Only the narrowPeaks file is read into a tibble and returned.
+#' For more information on outputs from MACS, visit the [MACS docs](https://macs3-project.github.io/MACS/docs/callpeak.html)
+#'
+#' **Performance**:
+#' 
+#' Running on a 2600 cell dataset and taking both start and end insertions into account, written input bedfiles and MACS outputs 
+#' used 364 MB and 158 MB of space respectively.  With 4 threads, running this function end to end took 74 seconds, with 61 of those seconds spent on running MACS.
+#'
+#' **Running MACS manually**:
+#'
+#' To run MACS manually, you will first run `call_peaks_macs()` with `step="prep-inputs`. Then, manually run all of the
+#' shell scripts generated at `<path>/input/<group>.sh`. Finally, run `call_peaks_macs()` again with the same original arguments, but
+#' setting `step="read-outputs"`.
+#' @inheritParams call_peaks_tile
+#' @export
+call_peaks_macs <- function(fragments, path,
+                            cell_groups = rlang::rep_along(cellNames(fragments), "all"), effective_genome_size = 2.9e9,
+                            insertion_mode = c("both", "start_only", "end_only"),
+                            step = c("all", "prep-inputs", "run-macs", "read-outputs"),
+                            macs_executable = NULL,
+                            additional_params = "--call-summits --keep-dup all --shift -75 --extsize 150 --nomodel --nolambda",
+                            verbose = FALSE,
+                            threads = 1) {
+  assert_is(fragments, c("IterableFragments", "NULL"))
+  assert_is(cell_groups, c("character", "factor"))
+  assert_is_numeric(effective_genome_size)
+  assert_is_character(path)
+  assert_is_wholenumber(threads)
+  if (threads > 1L && .Platform$OS.type == "windows") {
+    # TODO: Move the multithreading to happen in C++ so we can support windows
+    threads <- 1L
+    rlang::warn("Multi-threading is not supported yet on windows in this function")
+  }
+  insertion_mode <- match.arg(insertion_mode)
+  step <- match.arg(step)
+  cell_groups <- as.factor(cell_groups)
+  levels(cell_groups) <- normalize_unique_file_names(levels(cell_groups))
+  # Create paths
+  dir.create(file.path(path, "input"), showWarnings = FALSE, recursive = TRUE)
+  path <- normalizePath(path)
+  path_bed_input <- paste0(path, "/input/", levels(cell_groups), ".bed.gz")
+  names(path_bed_input) <- levels(cell_groups)
+  path_macs_output <- paste0(path, "/output/", levels(cell_groups))
+  # Check if MACS can be run
+  if (!(step %in% c("read-outputs"))) {
+    macs_executable <- macs_path_is_valid(macs_executable)
+  }
+  # Write bed files as input into MACS
+  if (step %in% c("prep-inputs", "all")) {
+    write_insertion_bed(fragments, path_bed_input, cell_groups, insertion_mode, threads, verbose = verbose)
+  }
+
+  # prep macs call
+  macs_call_template <- c('"%s" callpeak -g %s --name "%s" --treatment "%s"',
+                          '--outdir "%s" --format BED',
+                          '%s')
+  macs_call_template <- paste(macs_call_template, collapse = " ")
+  macs_call <- sprintf(macs_call_template,
+                       macs_executable, effective_genome_size, levels(cell_groups),
+                       path_bed_input, path_macs_output, additional_params)
+
+  if (step %in% c("prep-inputs", "run-macs", "all")) {
+    shell_paths <- paste0(path, "/input/", levels(cell_groups), ".sh")
+    for (cluster_idx in seq_along(levels(cell_groups))) { 
+      writeLines(macs_call[cluster_idx], con = shell_paths[cluster_idx])
+    }
+  }
+  if (step == "prep-inputs") return(shell_paths)
+  # Run macs
+  if (step %in% c("run-macs", "all")) {
+    # Run macs through the shell files created in the previous step
+    dir.create(file.path(path, "output"), showWarnings = FALSE, recursive = TRUE)
+    file_names <- list.files(file.path(path, "input"), pattern = "\\.sh$", full.names = FALSE)
+    if (length(file_names) != length(levels(cell_groups))) {
+      warning("Number of shell files does not match number of clusters")
+    }
+    parallel::mclapply(file_names, function(shell_file) {
+      cluster <- gsub(".sh$", "", shell_file)
+      if (verbose) log_progress(paste0("Running MACS for cluster: ", cluster))
+      dir.create(file.path(path, "output", cluster), showWarnings = FALSE, recursive = TRUE)
+      log_file <- paste0(path, "/output/", cluster, "/log.txt")
+      macs_message <- system2("bash", sprintf("'%s'", file.path(path, "input", shell_file)),stdout = log_file, stderr = log_file, env = c("OMP_NUM_THREADS=1"))
+      # Try detecting if macs failed before writing that cluster is finished
+      if (macs_message != 0) {
+        stop(paste0(format(Sys.time(), "%Y-%m-%d %H:%M:%S"), " Error running MACS for cluster: ", cluster, "\n",
+                    "MACS log file written to: ", log_file))
+      } else if (verbose) {
+        log_progress(paste0(" Finished running MACS for cluster: ", cluster))
+        log_progress(paste0(" MACS log file written to: ", log_file))
+      }
+    }, mc.cores = threads, mc.preschedule = FALSE)
+  }
+  # Read outputs
+  if (step %in%  c("read-outputs", "all")) {
+    peaks <- list()
+    output_dirs <- list.dirs(file.path(path, "output"), full.names = FALSE, recursive = FALSE)
+    for (cluster in output_dirs) {
+      peak_path <- paste0(path, "/output/", cluster, "/", cluster, "_peaks.narrowPeak")
+      peaks[[cluster]] <- readr::read_tsv(peak_path,
+                                          col_names=c("chr", "start", "end", "name", 
+                                                      "score", "strand", "fold_enrichment", 
+                                                      "log10_pvalue", "log10_qvalue", "summit_offset"),
+                                          show_col_types = FALSE)
+      peaks[[cluster]]$group <- cluster
+      # set cluster column as the fourth column
+      peaks[[cluster]] <- peaks[[cluster]][, c(1:3, 11, 4:10)]
+    }
+    # We want to treat users files as the ground truth, so we give a warning if this gives different information than what we 
+    # expect given cell_groups
+    if (length(peaks) != length(levels(cell_groups))) warning("Number of output files does not match number of clusters")
+    #  combine all peaks together into a single dataframe
+    peaks <- dplyr::bind_rows(peaks)
+    return(peaks)
+  }
+}
+
+#' Call peaks using MACS2/3
+#'
+#' @description
+#' `r lifecycle::badge("deprecated")` 
+#'
+#' This function has been renamed to `call_peaks_macs()`
+#' @export
+#' @keywords internal
+call_macs_peaks <- function(...) {
+  lifecycle::deprecate_warn("0.2.0", "call_macs_peaks()", "call_peaks_macs()")
+  return(call_peaks_macs(...))
+}
+
+
+#' Test if MACS executable is valid.
+#' If macs_executable is NULL, this function will try to auto-detect MACS from PATH, with preference for MACS3 over MACS2.
+#' If macs_executable is provided, this function will check if MACS can be called.
+#' @return MACS executable path.
+#' @inheritParams call_peaks_macs
+#' @keywords internal
+macs_path_is_valid <- function(macs_executable) {
+  if (is.null(macs_executable)) {
+    # Check if can call version on macs and that macs is indeed being called
+    if ((suppressWarnings((system2("macs3", args = "--version", stdout = FALSE, stderr = FALSE) == 0)) &&
+        (grepl("macs", system2("macs3", args = "--version", stdout = TRUE))))) {
+      macs_executable <- "macs3"
+    } else if ((suppressWarnings((system2("macs2", args = "--version", stdout = FALSE, stderr = FALSE) == 0)) && 
+               (grepl("macs", system2("macs2", args = "--version", stdout = TRUE))))) {
+      macs_executable <- "macs2"
+    } else {
+      stop(paste0(format(Sys.time(), "%Y-%m-%d %H:%M:%S"), 
+                  paste0(" MACS not found. Please install MACS3 or MACS2")))
+    }
+  # Only run if macs executable is provided and the executable is indeed macs
+  } else if (!(suppressWarnings((system2(macs_executable, args = "--version", stdout = FALSE, stderr = FALSE) == 0)) &&
+              (grepl("macs", system2(macs_executable, args = "--version", stdout = TRUE))))) {
+    stop(paste0(format(Sys.time(), "%Y-%m-%d %H:%M:%S"), 
+                sprintf(" MACS not found for MACS executable: %s \nPlease install MACS3 or MACS2", macs_executable)))
+  }
+  return(macs_executable)
+}
 range_overlaps <- function(a, b) {
   a <- normalize_ranges(a)
   b <- normalize_ranges(b)

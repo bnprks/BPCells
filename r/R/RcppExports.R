@@ -33,6 +33,14 @@ simd_version <- function() {
     .Call(`_BPCells_simd_version`)
 }
 
+available_simd_versions <- function() {
+    .Call(`_BPCells_available_simd_versions`)
+}
+
+set_simd_version <- function(version) {
+    invisible(.Call(`_BPCells_set_simd_version`, version))
+}
+
 simd_version_bp128 <- function() {
     .Call(`_BPCells_simd_version_bp128`)
 }
@@ -183,6 +191,10 @@ fragment_lengths_cpp <- function(fragments) {
 
 footprint_matrix_cpp <- function(fragments, chr, center, strand, flank_width, chr_levels, cell_groups, cell_weights) {
     .Call(`_BPCells_footprint_matrix_cpp`, fragments, chr, center, strand, flank_width, chr_levels, cell_groups, cell_weights)
+}
+
+write_insertion_bed_cpp <- function(fragments, output_path, mode_string) {
+    invisible(.Call(`_BPCells_write_insertion_bed_cpp`, fragments, output_path, mode_string))
 }
 
 write_insertion_bedgraph_cpp <- function(fragments, cell_groups, output_paths, mode_string) {
@@ -743,6 +755,14 @@ matrix_max_per_row_cpp <- function(matrix) {
 
 matrix_max_per_col_cpp <- function(matrix) {
     .Call(`_BPCells_matrix_max_per_col_cpp`, matrix)
+}
+
+pseudobulk_matrix_cpp <- function(mat, cell_groups, method, transpose) {
+    .Call(`_BPCells_pseudobulk_matrix_cpp`, mat, cell_groups, method, transpose)
+}
+
+matrix_quantile_per_col_cpp <- function(mat, quantile, alpha, beta) {
+    .Call(`_BPCells_matrix_quantile_per_col_cpp`, mat, quantile, alpha, beta)
 }
 
 matrix_identical_uint32_t_cpp <- function(mat1, mat2) {

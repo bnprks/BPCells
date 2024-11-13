@@ -127,6 +127,11 @@ SEXP build_snn_graph_cpp(IntegerMatrix neighbor_indices, int min_neighbors) {
 SEXP build_umap_graph_cpp(const NumericMatrix dists, const IntegerMatrix idx, size_t threads = 0, bool umap_learn_sigma_sum = false) {
     size_t n_neighbors = dists.cols();
     size_t n_cells = dists.rows();
+
+    if (dists.rows() != idx.rows() || dists.cols() != idx.cols()) {
+        throw std::invalid_argument("build_umap_graph_cpp: dists and idx must have same dimensions.");
+    }
+
     const double target_sum = std::log2(n_neighbors);
     const int sigma_iter = 64; // Iterations to for binary search on sigma
 

@@ -1,7 +1,7 @@
 # CXX_STD = CXX17
 
-PKG_CXXFLAGS = %HDF5_CFLAGS% %HWY_CFLAGS% -Ivendor -std=c++17 -DRCPP_EIGEN -DEIGEN_PERMANENTLY_DISABLE_STUPID_WARNINGS -Wno-ignored-attributes -Wno-unknown-pragmas # -Wall -Wextra -Wpedantic
-PKG_LIBS = -lz %HDF5_LIBS% %CXX_FS_FLAG% %HWY_LIBS%
+PKG_CXXFLAGS = %HDF5_CFLAGS% %HWY_CFLAGS% %ENV_CFLAGS% -Ivendor -std=c++17 -DRCPP_EIGEN -DEIGEN_PERMANENTLY_DISABLE_STUPID_WARNINGS -Wno-ignored-attributes -Wno-unknown-pragmas # -Wall -Wextra -Wpedantic
+PKG_LIBS = -lz %HDF5_LIBS% %CXX_FS_FLAG% %HWY_LIBS% %ENV_LDFLAGS%
 
 # PKG_CXXFLAGS = -Wno-deprecated-declarations -Wno-unused-but-set-variable -fsanitize=undefined %HDF5_CFLAGS% %HWY_CFLAGS% -std=c++17 -DRCPP_EIGEN -DEIGEN_PERMANENTLY_DISABLE_STUPID_WARNINGS -Wno-ignored-attributes -Wno-unknown-pragmas # -Wall -Wextra -Wpedantic
 # PKG_LIBS = -fsanitize=undefined -lz %HDF5_LIBS% %CXX_FS_FLAG% %HWY_LIBS%
@@ -32,7 +32,7 @@ bpcells-cpp/fragmentIterators/RegionSelect.o \
 bpcells-cpp/fragmentIterators/Rename.o \
 bpcells-cpp/fragmentIterators/ShiftCoords.o \
 bpcells-cpp/fragmentIterators/StoredFragments.o \
-bpcells-cpp/fragmentUtils/BedgraphWriter.o \
+bpcells-cpp/fragmentUtils/BedWriter.o \
 bpcells-cpp/fragmentUtils/FootprintMatrix.o \
 bpcells-cpp/fragmentUtils/InsertionIterator.o \
 bpcells-cpp/matrixIterators/ImportMatrixHDF5.o \
@@ -52,7 +52,10 @@ bpcells-cpp/matrixTransforms/SCTransform.o \
 bpcells-cpp/matrixTransforms/Scale.o \
 bpcells-cpp/matrixTransforms/Shift.o \
 bpcells-cpp/matrixUtils/WilcoxonRankSum.o \
+bpcells-cpp/matrixUtils/Pseudobulk.o \
+bpcells-cpp/matrixUtils/Quantile.o \
 bpcells-cpp/simd/bp128/current_target.o \
+bpcells-cpp/simd/bp128/bp128-Nx128.o \
 bpcells-cpp/simd/bp128/d1_maxbits.o \
 bpcells-cpp/simd/bp128/d1_pack.o \
 bpcells-cpp/simd/bp128/d1_unpack.o \

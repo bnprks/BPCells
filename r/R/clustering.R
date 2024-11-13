@@ -129,22 +129,29 @@ knn_to_geodesic_graph <- function(knn, return_type=c("matrix", "list"), threads=
 
 #' Cluster an adjacency matrix
 #' @rdname cluster
-#' @details **cluster_graph_leiden**: Leiden graph clustering algorithm `igraph::cluster_leiden()`
-#' @param snn Symmetric adjacency matrix (dgCMatrix) output from e.g. knn_to_snn_graph. Only the lower triangle is used
+#' @details **cluster_graph_leiden**: Leiden clustering algorithm `igraph::cluster_leiden()`. 
+#'    Note that when using `objective_function = "CPM"` the number of clusters empirically scales with `cells * resolution`,
+#'    so 1e-3 is a good resolution for 10k cells, but 1M cells is better with a 1e-5 resolution. A resolution of 1 is a 
+#'    good default when `objective_function = "modularity"` per the default.
+#' @param snn Symmetric adjacency matrix (dgCMatrix) output from e.g. `knn_to_snn_graph()` or `knn_to_geodesic_graph()`. Only the lower triangle is used
 #' @param resolution Resolution parameter. Higher values result in more clusters
+#' @param objective_function Graph statistic to optimize during clustering. Modularity is the default as it keeps resolution independent of dataset size (see details below). 
+#'    For the meaning of each option, see `igraph::cluster_leiden()`.
 #' @param seed Random seed for clustering initialization
 #' @param ... Additional arguments to underlying clustering function
 #' @return Factor vector containing the cluster assignment for each cell.
 #' @export
-cluster_graph_leiden <- function(snn, resolution = 1e-3, seed = 12531, ...) {
+cluster_graph_leiden <- function(snn, resolution = 1, objective_function = c("modularity", "CPM"), seed = 12531, ...) {
   assert_has_package("igraph")
   # Set seed without permanently changing seed state
   prev_seed <- get_seed()
   on.exit(restore_seed(prev_seed), add = TRUE)
   set.seed(seed)
 
+  objective_function <- match.arg(objective_function)
+
   igraph::graph_from_adjacency_matrix(snn, weighted = TRUE, diag = FALSE, mode = "lower") %>%
-    igraph::cluster_leiden(resolution_parameter = resolution, ...) %>%
+    igraph::cluster_leiden(resolution_parameter = resolution, objective_function=objective_function, ...) %>%
     igraph::membership() %>%
     as.factor()
 }

@@ -25,7 +25,7 @@
 #include "bpcells-cpp/fragmentIterators/RegionSelect.h"
 #include "bpcells-cpp/fragmentIterators/Rename.h"
 #include "bpcells-cpp/fragmentIterators/ShiftCoords.h"
-#include "bpcells-cpp/fragmentUtils/BedgraphWriter.h"
+#include "bpcells-cpp/fragmentUtils/BedWriter.h"
 #include "bpcells-cpp/fragmentUtils/FootprintMatrix.h"
 
 #include "bpcells-cpp/matrixIterators/PeakMatrix.h"
@@ -252,6 +252,32 @@ Eigen::MatrixXd footprint_matrix_cpp(
         std::make_unique<RcppStringReader>(chr_levels),
         std::cref(cell_groups),
         std::cref(cell_weights)
+    );
+}
+
+// [[Rcpp::export]]
+void write_insertion_bed_cpp(
+    SEXP fragments,
+    std::string output_path,
+    std::string mode_string
+) {
+    BedgraphInsertionMode mode;
+    if (mode_string == "both") {
+        mode = BedgraphInsertionMode::Both;
+    } else if (mode_string == "start_only") {
+        mode = BedgraphInsertionMode::StartOnly;
+    } else if (mode_string == "end_only") {
+        mode = BedgraphInsertionMode::EndOnly;
+    } else {
+        throw std::runtime_error("write_insertion_bed_cpp: invalid mode found: " + mode_string);
+    }
+    auto frags = take_unique_xptr<FragmentLoader>(fragments);
+
+    run_with_R_interrupt_check(
+        &writeInsertionBed,
+        std::ref(*frags),
+        std::cref(output_path),
+        mode
     );
 }
 
