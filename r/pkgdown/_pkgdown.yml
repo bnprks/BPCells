@@ -173,3 +173,28 @@ reference:
   - discrete_palette
   - collect_features
   - rotate_x_labels
+
+
+- title: "Matrix Projections and Predictions"
+
+- subtitle: "Pipeline S4 Classes"
+- desc: Base class for pipeline objects
+- contents:
+  - PipelineBase
+  - PipelineStep
+  - Pipeline
+  - Transformer
+  - Estimator
+
+
+- subtitle: "Pipeline Methods"
+- contents:
+  - fit(PipelineBase,IterableMatrix)
+  - predict(PipelineBase,IterableMatrix)
+  - transform(PipelineBase,IterableMatrix)
+  - c(PipelineBase)
+
+
+- subtitle: "Transformers"
+- contents:
+  - LSITransformer
