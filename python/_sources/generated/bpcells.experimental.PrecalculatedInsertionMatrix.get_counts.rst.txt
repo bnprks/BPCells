@@ -1,0 +1,6 @@
+bpcells.experimental.PrecalculatedInsertionMatrix.get\_counts
+=============================================================
+
+.. currentmodule:: bpcells.experimental
+
+.. automethod:: PrecalculatedInsertionMatrix.get_counts

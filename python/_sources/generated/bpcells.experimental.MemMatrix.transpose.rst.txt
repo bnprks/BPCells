@@ -1,0 +1,6 @@
+bpcells.experimental.MemMatrix.transpose
+========================================
+
+.. currentmodule:: bpcells.experimental
+
+.. automethod:: MemMatrix.transpose

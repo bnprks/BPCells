@@ -44,6 +44,7 @@
   </ul>
 </li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">News</a></li>
+<li class="nav-item"><a class="nav-link" href="../python/index.html"><span class="fa fa-arrow-up-right-from-square"></span> Python Docs</a></li>
       </ul>
 <ul class="navbar-nav">
 <li class="nav-item"><form class="form-inline" role="search">
@@ -121,7 +122,7 @@ versions 3.3.6-3.4.0)</li>
 <li>BSgenome.Hsapiens.UCSC.hg38 (TF motif scanning)</li>
 </ul>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu">BiocManager</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/BiocManager/man/install.html" class="external-link">install</a></span><span class="op">(</span><span class="st">"BSgenome.Hsapiens.UCSC.hg38"</span><span class="op">)</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="fu">BiocManager</span><span class="fu">::</span><span class="fu"><a href="https://bioconductor.github.io/BiocManager/reference/install.html" class="external-link">install</a></span><span class="op">(</span><span class="st">"BSgenome.Hsapiens.UCSC.hg38"</span><span class="op">)</span></span></code></pre></div>
 <p>Github:</p>
 <ul>
 <li>
@@ -132,7 +133,7 @@ motif scanning)</li>
 (TF motif database)</li>
 </ul>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu">remotes</span><span class="fu">::</span><span class="fu"><a href="https://remotes.r-lib.org/reference/install_github.html" class="external-link">install_github</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"GreenleafLab/motifmatchr"</span>, <span class="st">"GreenleafLab/chromVARmotifs"</span><span class="op">)</span>, repos<span class="op">=</span><span class="fu">BiocManager</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/BiocManager/man/repositories.html" class="external-link">repositories</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="fu">remotes</span><span class="fu">::</span><span class="fu"><a href="https://remotes.r-lib.org/reference/install_github.html" class="external-link">install_github</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"GreenleafLab/motifmatchr"</span>, <span class="st">"GreenleafLab/chromVARmotifs"</span><span class="op">)</span>, repos<span class="op">=</span><span class="fu">BiocManager</span><span class="fu">::</span><span class="fu"><a href="https://bioconductor.github.io/BiocManager/reference/repositories.html" class="external-link">repositories</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
 </details><details><summary><strong>Install BPCells</strong>
 </summary><div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">remotes</span><span class="fu">::</span><span class="fu"><a href="https://remotes.r-lib.org/reference/install_github.html" class="external-link">install_github</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"bnprks/BPCells/r"</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
@@ -487,11 +488,11 @@ parallelization support.</p>
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">12341512</span><span class="op">)</span></span>
 <span><span class="va">umap</span> <span class="op">&lt;-</span> <span class="fu">uwot</span><span class="fu">::</span><span class="fu"><a href="https://jlmelville.github.io/uwot/reference/umap.html" class="external-link">umap</a></span><span class="op">(</span><span class="va">pca</span><span class="op">)</span></span>
 <span><span class="va">umap</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">4</span>,<span class="op">]</span></span></code></pre></div>
-<pre><code><span><span class="co">##           [,1]        [,2]</span></span>
-<span><span class="co">## [1,] 10.508778   2.5891320</span></span>
-<span><span class="co">## [2,] -2.535900 -10.6843586</span></span>
-<span><span class="co">## [3,] 10.467827   2.7659176</span></span>
-<span><span class="co">## [4,]  8.237981   0.4946254</span></span></code></pre>
+<pre><code><span><span class="co">##            [,1]        [,2]</span></span>
+<span><span class="co">## [1,]  9.9284977   2.8806480</span></span>
+<span><span class="co">## [2,] -0.7640393 -11.7900724</span></span>
+<span><span class="co">## [3,]  9.8782410   3.1049877</span></span>
+<span><span class="co">## [4,]  7.7622828   0.5004428</span></span></code></pre>
 </div>
 <div class="section level3">
 <h3 id="clustering">Clustering<a class="anchor" aria-label="anchor" href="#clustering"></a>
@@ -669,10 +670,10 @@ our data and run PCA as usual</p>
 <span><span class="va">umap_atac</span> <span class="op">&lt;-</span> <span class="fu">uwot</span><span class="fu">::</span><span class="fu"><a href="https://jlmelville.github.io/uwot/reference/umap.html" class="external-link">umap</a></span><span class="op">(</span><span class="va">pca_atac</span><span class="op">)</span></span>
 <span><span class="va">umap_atac</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">4</span>,<span class="op">]</span></span></code></pre></div>
 <pre><code><span><span class="co">##           [,1]      [,2]</span></span>
-<span><span class="co">## [1,]  5.688197  4.907162</span></span>
-<span><span class="co">## [2,] -7.024763 -1.397809</span></span>
-<span><span class="co">## [3,]  9.102351  9.084071</span></span>
-<span><span class="co">## [4,]  3.094332  2.552042</span></span></code></pre>
+<span><span class="co">## [1,]  6.380669  4.681697</span></span>
+<span><span class="co">## [2,] -6.929080 -1.873173</span></span>
+<span><span class="co">## [3,]  6.416005  9.665938</span></span>
+<span><span class="co">## [4,]  7.895295  1.542123</span></span></code></pre>
 <p>Then we cluster, just like for the RNA</p>
 <div class="sourceCode" id="cb54"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">clusts_atac</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/knn.html">knn_hnsw</a></span><span class="op">(</span><span class="va">pca_atac</span>, ef<span class="op">=</span><span class="fl">500</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> <span class="co"># Find approximate nearest neighbors</span></span>

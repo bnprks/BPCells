@@ -1,0 +1,6 @@
+bpcells.experimental.MemMatrix.T
+================================
+
+.. currentmodule:: bpcells.experimental
+
+.. autoproperty:: MemMatrix.T

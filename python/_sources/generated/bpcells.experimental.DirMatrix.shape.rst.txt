@@ -1,0 +1,6 @@
+bpcells.experimental.DirMatrix.shape
+====================================
+
+.. currentmodule:: bpcells.experimental
+
+.. autoattribute:: DirMatrix.shape

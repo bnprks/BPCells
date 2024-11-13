@@ -1,0 +1,6 @@
+bpcells.experimental.DirMatrix.T
+================================
+
+.. currentmodule:: bpcells.experimental
+
+.. autoproperty:: DirMatrix.T

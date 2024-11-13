@@ -46,6 +46,7 @@
   </ul>
 </li>
 <li class="nav-item"><a class="nav-link" href="news/index.html">News</a></li>
+<li class="nav-item"><a class="nav-link" href="python/index.html"><span class="fa fa-arrow-up-right-from-square"></span> Python Docs</a></li>
       </ul>
 <ul class="navbar-nav">
 <li class="nav-item"><form class="form-inline" role="search">
@@ -62,6 +63,7 @@
   <main id="main" class="col-md-9"><div class="section level1">
 <div class="page-header"><h1 id="bpcells">BPCells<a class="anchor" aria-label="anchor" href="#bpcells"></a>
 </h1></div>
+<p><em>This site is for the R package. Python site <a href="python/index.html">here</a> (experimental)</em></p>
 <p>BPCells is a package for high performance single cell analysis on RNA-seq and ATAC-seq datasets. It can analyze a 1.3M cell dataset with 2GB of RAM in around 10 minutes (<a href="articles/web-only/benchmarks.html">benchmarks</a>). This makes analysis of million-cell datasets practical on a laptop.</p>
 <p>BPCells provides:</p>
 <ul>
@@ -84,19 +86,30 @@
 </ul>
 </div>
 <div class="section level2">
-<h2 id="installation">Installation<a class="anchor" aria-label="anchor" href="#installation"></a>
+<h2 id="r-installation">R Installation<a class="anchor" aria-label="anchor" href="#r-installation"></a>
 </h2>
 <p>We recommend installing BPCells directly from github:</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">remotes</span><span class="fu">::</span><span class="fu"><a href="https://remotes.r-lib.org/reference/install_github.html" class="external-link">install_github</a></span><span class="op">(</span><span class="st">"bnprks/BPCells/r"</span><span class="op">)</span></span></code></pre></div>
 <p>Before installing, you must have the HDF5 library installed and accessible on your system. HDF5 can be installed from your choice of package manager.</p>
-<p>You will also need a C/C++ compiler either gcc &gt;=8.0 (&gt;=9.1 recommended), or clang &gt;= 7.0 (&gt;= 9.0 recommended). This corresponds to versions from late-2018 and newer. Older versions may work in some cases so long as they have basic C++17 support, but they are not officially supported.</p>
 <p>For Mac and Windows users having trouble installing from github, check our <a href="https://bnprks.r-universe.dev/BPCells" class="external-link">R-universe</a> page for instructions to install pre-built binary packages. These binary packages automatically track the latest github main branch.</p>
-<p>For github-based installs, here are some more detailed instructions for obtaining the necessary installation dependencies on each operating system:</p>
-<div class="section level3">
+<details><summary>
+Click here for operating system specific installation information for github-based installs
+</summary><div class="section level3">
 <h3 id="linux">Linux<a class="anchor" aria-label="anchor" href="#linux"></a>
 </h3>
-<p>Obtaining the HDF5 dependency is usually pretty straightforward on Linux - apt: <code>sudo apt-get install libhdf5-dev</code> - yum: <code>sudo yum install hdf5-devel</code> - conda: <code>conda install -c anaconda hdf5</code> - Note: Linux users should prefer their distro’s package manager (e.g. <code>apt</code> or <code>yum</code>) when possible, as it appears to give a slightly more reliable installation experience.</p>
+<p>Obtaining the HDF5 dependency is usually pretty straightforward on Linux</p>
+<ul>
+<li>apt: <code>sudo apt-get install libhdf5-dev</code>
+</li>
+<li>yum: <code>sudo yum install hdf5-devel</code>
+</li>
+<li>conda: <code>conda install -c anaconda hdf5</code>
+<ul>
+<li>Note: Linux users should prefer their distro’s package manager (e.g. <code>apt</code> or <code>yum</code>) when possible, as it appears to give a slightly more reliable installation experience.</li>
+</ul>
+</li>
+</ul>
 </div>
 <div class="section level3">
 <h3 id="windows">Windows<a class="anchor" aria-label="anchor" href="#windows"></a>
@@ -110,7 +123,8 @@
 <p><strong>Mac-specific troubleshooting</strong>:</p>
 <ul>
 <li>
-<strong>Macs with ARM CPUs</strong>: a common error is to have an ARM-based HDF5 install but an x86-based R install. This will cause errors when BPCells tries to access HDF5 during installation.<ul>
+<strong>Macs with ARM CPUs</strong>: a common error is to have an ARM-based HDF5 install but an x86-based R install. This will cause errors when BPCells tries to access HDF5 during installation.
+<ul>
 <li>Check your R installation by running <code><a href="https://rdrr.io/r/utils/sessionInfo.html" class="external-link">sessionInfo()</a></code>, and seeing if it lists ARM or x86 under “Platform”.</li>
 <li>The easiest option is to use ARM R because homebrew will default to an ARM hdf5 installation</li>
 <li>It is <a href="https://codetinkering.com/switch-homebrew-arm-x86/" class="external-link">possible</a> (though tricky) to install an x86 copy of homebrew in order to access an x86 version of hdf5</li>
@@ -121,10 +135,17 @@
 </ul>
 </div>
 <div class="section level3">
+<h3 id="supported-compilers">Supported compilers<a class="anchor" aria-label="anchor" href="#supported-compilers"></a>
+</h3>
+<p>In most cases, you will already have an appropriate compiler. BPCells recommends gcc &gt;=9.1, or clang &gt;= 9.0. This corresponds to versions from late-2018 and newer. Older versions may work in some cases so long as they have basic C++17 support, but they are not officially supported.</p>
+</div>
+<div class="section level3">
 <h3 id="general-installation-troubleshooting">General Installation troubleshooting<a class="anchor" aria-label="anchor" href="#general-installation-troubleshooting"></a>
 </h3>
 <p>BPCells tries to print informative error messages during compilation to help diagnose the problem. For a more verbose set of information, run <code>Sys.setenv(BPCELLS_DEBUG_INSTALL="true")</code> prior to <code>remotes::install_github("bnprks/BPCells/r")</code>. If you still can’t solve the issue with that additional information, feel free to file a Github issue, being sure to use a <a href="https://docs.github.com/en/get-started/writing-on-github/working-with-advanced-formatting/organizing-information-with-collapsed-sections" class="external-link">collapsible section</a> for the verbose installation log.</p>
+
 </div>
+</details>
 </div>
 <div class="section level2">
 <h2 id="contributing">Contributing<a class="anchor" aria-label="anchor" href="#contributing"></a>
@@ -177,7 +198,7 @@
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.1.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.0.</p>
 </div>
 
     </footer>

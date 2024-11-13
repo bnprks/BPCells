@@ -1,0 +1,6 @@
+bpcells.experimental.PrecalculatedInsertionMatrix.shape
+=======================================================
+
+.. currentmodule:: bpcells.experimental
+
+.. autoproperty:: PrecalculatedInsertionMatrix.shape
