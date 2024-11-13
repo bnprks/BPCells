@@ -91,6 +91,7 @@ jobs:
         env:
           CIBW_ENVIRONMENT_LINUX: >-
             CXX="ccache g++"
+            BPCELLS_NUM_BUILD_JOBS=4
           CIBW_BEFORE_ALL_LINUX: >-
             LIB_CACHE=/host/$LIB_CACHE bash {package}/scripts/install_ccache_linux.sh &&
             ${{ steps.cache-libs.outputs.cache-hit != 'true' && 'python {package}/scripts/install_deps.py /host/$GITHUB_WORKSPACE/lib-cache &&' || '' }}
@@ -103,6 +104,7 @@ jobs:
             CPATH="$GITHUB_WORKSPACE/lib-cache/include"
             LIBRARY_PATH="$GITHUB_WORKSPACE/lib-cache/lib:$GITHUB_WORKSPACE/lib-cache/lib64"
             ${{ matrix.os == 'macos-13' && 'MACOSX_DEPLOYMENT_TARGET="10.15"' || '' }}
+            BPCELLS_NUM_BUILD_JOBS=4
           CIBW_BEFORE_ALL_MACOS: >-
             brew install ccache &&
             python {package}/scripts/install_deps.py $GITHUB_WORKSPACE/lib-cache
@@ -112,6 +114,7 @@ jobs:
             LIBRARY_PATH="$GITHUB_WORKSPACE\\lib-cache\\lib"
             CPATH="$GITHUB_WORKSPACE\\lib-cache\\include"
             BPCELLS_PYTEST_DATA_CACHE="$GITHUB_WORKSPACE\\bpcells-pytest-data-cache"
+            BPCELLS_NUM_BUILD_JOBS=4
           # As of 8/26/2024, a delvewheel dependency version bump (pefile) broke delvewheel, so pin these 
           CIBW_BEFORE_ALL_WINDOWS: >-
             pip install delvewheel &&
