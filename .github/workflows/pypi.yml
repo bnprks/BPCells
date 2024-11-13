@@ -10,7 +10,7 @@ on:
         description: Deploy target
         required: true
         type: choice
-        option:
+        options:
           - Test PyPI
           - PyPI
 
