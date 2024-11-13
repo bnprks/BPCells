@@ -142,6 +142,7 @@ jobs:
     - uses: actions/checkout@v4
       with:
         fetch-tags: true
+        ref: ${{ inputs.tag }}
     - name: Set up Python
       uses: actions/setup-python@v5
       with:
