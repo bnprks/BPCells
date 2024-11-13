@@ -21,7 +21,8 @@ import pytest
 #   with open(my_file, "r") as f:
 #      ... 
 
-slow_data_test = pytest.mark.skipif("BPCELLS_PYTEST_DATA_CACHE" not in os.environ, reason="Data-dependent tests require BPCELLS_PYTEST_DATA_CACHE to be defined")
+# Allow skipping if the data cache folder isn't set, but don't allow skips in a CI environment
+slow_data_test = pytest.mark.skipif("BPCELLS_PYTEST_DATA_CACHE" not in os.environ and "CI" not in os.environ, reason="Data-dependent tests require BPCELLS_PYTEST_DATA_CACHE to be defined")
 
 def fetch_cached_file(url):
     # For usage example, see: https://docs.pytest.org/en/6.2.x/fixture.html#factories-as-fixtures

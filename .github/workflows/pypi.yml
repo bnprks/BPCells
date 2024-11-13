@@ -1,6 +1,18 @@
 name: Publish to PyPI
 
-on: workflow_dispatch
+on: 
+  workflow_dispatch:
+    inputs: 
+      tag:
+        description: Git tag to publish (default to current commit)
+        default: ''
+      use_test:
+        description: Deploy target
+        required: true
+        type: choice
+        options:
+          - Test PyPI
+          - PyPI
 
 jobs:
   build-wheels:
@@ -9,48 +21,193 @@ jobs:
     strategy:
       matrix:
         # macos-13 is an intel runner, macos-14 is apple silicon
-        # os: [ubuntu-latest, windows-latest, macos-13, macos-14]
-        os: [ubuntu-latest]
+        os: [ubuntu-latest, windows-latest, macos-13, macos-14]
 
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-tags: true
+          ref: ${{ inputs.tag }}
+            
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+      - run: pip install platformdirs
+
+      # Step credit: https://github.com/Cryptex-github/ril-py/blob/main/.github/workflows/py-binding.yml
+      - name: Display cibuildwheel cache dir
+        id: cibuildwheel-cache
+        run: |
+          from platformdirs import user_cache_path
+          import os
+
+          with open(os.getenv('GITHUB_OUTPUT'), 'w') as f:
+            f.write(f"dir={str(user_cache_path(appname='cibuildwheel', appauthor='pypa'))}")
+        shell: python
+
+      - name: Cache cibuildwheel 
+        id: cache-cibuildwheel
+        uses: actions/cache@v4
+        with:
+          path: ${{ steps.cibuildwheel-cache.outputs.dir }}
+          key: cibuildwheel-cache-${{ matrix.os }}
+        
+      - name: Cache test files 
+        id: cache-test-files
+        uses: actions/cache@v4
+        with:
+          path: ${{ github.workspace }}/bpcells-pytest-data-cache
+          key: test-files-cache-${{ matrix.os }}
+
+      - name: Cache dependency libs
+        id: cache-libs
+        uses: actions/cache@v4
+        with:
+          path: ${{ github.workspace }}/lib-cache
+          key: lib-cache-v2-${{ matrix.os }}
+      
+      #https://learn.microsoft.com/en-us/vcpkg/consume/binary-caching-github-actions-cache
+      - name: Export GitHub Actions cache environment variables
+        if: steps.cache-libs.outputs.cache-hit != 'true' && runner.os == 'Windows'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            core.exportVariable('ACTIONS_CACHE_URL', process.env.ACTIONS_CACHE_URL || '');
+            core.exportVariable('ACTIONS_RUNTIME_TOKEN', process.env.ACTIONS_RUNTIME_TOKEN || '');
+
+      - name: Install dependency libs (Windows)
+        if: steps.cache-libs.outputs.cache-hit != 'true' && runner.os == 'Windows'
+        run: |
+          vcpkg install hdf5 eigen3 highway[contrib] zlib
+          vcpkg export --raw hdf5 eigen3 highway zlib --output-dir=${{ github.workspace }} --output=vcpkg-export
+          XCOPY /I /E ${{ github.workspace }}\vcpkg-export\installed\x64-windows ${{ github.workspace }}\lib-cache
+        env: 
+          VCPKG_BINARY_SOURCES: "clear;x-gha,readwrite"
 
       - name: Build wheels
         uses: pypa/cibuildwheel@v2.19.1
         with:
           package-dir: python
-        # env:
-        #   CIBW_SOME_OPTION: value
-        #    ...
-        # with:
-        #   package-dir: .
-        #   output-dir: wheelhouse
-        #   config-file: "{package}/pyproject.toml"
+        env:
+          CIBW_ENVIRONMENT_LINUX: >-
+            CXX="ccache g++"
+            BPCELLS_NUM_BUILD_JOBS=4
+          CIBW_BEFORE_ALL_LINUX: >-
+            LIB_CACHE=/host/$LIB_CACHE bash {package}/scripts/install_ccache_linux.sh &&
+            ${{ steps.cache-libs.outputs.cache-hit != 'true' && 'python {package}/scripts/install_deps.py /host/$GITHUB_WORKSPACE/lib-cache &&' || '' }}
+            cp -r /host/$GITHUB_WORKSPACE/lib-cache/* /usr/local
+
+          # We need to set MACOSX_DEPLOYMENT_TARGET="10.15" on macos-13 because otherwise
+          # it tries to target a MacOS verision before std::filesystem is available (10.9 currently)
+          CIBW_ENVIRONMENT_MACOS: >-
+            CXX="ccache g++"
+            CPATH="$GITHUB_WORKSPACE/lib-cache/include"
+            LIBRARY_PATH="$GITHUB_WORKSPACE/lib-cache/lib:$GITHUB_WORKSPACE/lib-cache/lib64"
+            ${{ matrix.os == 'macos-13' && 'MACOSX_DEPLOYMENT_TARGET="10.15"' || '' }}
+            BPCELLS_NUM_BUILD_JOBS=4
+          CIBW_BEFORE_ALL_MACOS: >-
+            brew install ccache &&
+            python {package}/scripts/install_deps.py $GITHUB_WORKSPACE/lib-cache
+          
+          # VCPKG_BINARY_SOURCES from: https://learn.microsoft.com/en-us/vcpkg/consume/binary-caching-github-actions-cache
+          CIBW_ENVIRONMENT_WINDOWS: >- 
+            LIBRARY_PATH="$GITHUB_WORKSPACE\\lib-cache\\lib"
+            CPATH="$GITHUB_WORKSPACE\\lib-cache\\include"
+            BPCELLS_PYTEST_DATA_CACHE="$GITHUB_WORKSPACE\\bpcells-pytest-data-cache"
+            BPCELLS_NUM_BUILD_JOBS=4
+          # As of 8/26/2024, a delvewheel dependency version bump (pefile) broke delvewheel, so pin these 
+          CIBW_BEFORE_ALL_WINDOWS: >-
+            pip install delvewheel &&
+            echo $GITHUB_WORKSPACE &&
+            echo %GITHUB_WORKSPACE% &&
+            ls %GITHUB_WORKSPACE%/lib-cache/bin
+          # See https://github.com/adang1345/delvewheel/issues/54 for explanation of `--add-path C:/Windows/System32`
+          CIBW_REPAIR_WHEEL_COMMAND_WINDOWS: >-
+            delvewheel repair --add-path %GITHUB_WORKSPACE%/lib-cache/bin --add-path C:/Windows/System32 --wheel-dir {dest_dir} {wheel} 
+
+          CIBW_TEST_REQUIRES: pytest h5py anndata
+          CIBW_TEST_COMMAND: BPCELLS_PYTEST_DATA_CACHE="$GITHUB_WORKSPACE/bpcells-pytest-data-cache" pytest {package}/tests
+          # Data cache folder is already set
+          CIBW_TEST_COMMAND_WINDOWS: pytest {package}/tests
 
       - uses: actions/upload-artifact@v4
         with:
           name: cibw-wheels-${{ matrix.os }}-${{ strategy.job-index }}
           path: ./wheelhouse/*.whl
-  
-  publish-to-pypi:
-    name: >-
-      Publish Python 🐍 distribution 📦 to PyPI
-    # if: startsWith(github.ref, 'refs/tags/')  # only publish to PyPI on tag pushes
+
+  build-sdist:
+    name: Build sdist
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-tags: true
+        ref: ${{ inputs.tag }}
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: "3.x"
+    - name: Install pypa/build
+      run: >-
+        python3 -m
+        pip install
+        build
+        --user
+    - name: Build a source tarball
+      run: python3 -m build --sdist python
+      
+    - name: Store the distribution packages
+      uses: actions/upload-artifact@v4
+      with:
+        name: sdist
+        path: python/dist/
+
+  publish-to-testpypi:
+    name: Publish Python package to TestPyPI
+    if: ${{ inputs.use_test == 'Test PyPI' }}
     needs:
     - build-wheels
+    - build-sdist
     runs-on: ubuntu-latest
+
     environment:
       name: pypi
       url: https://test.pypi.org/p/bpcells
+
     permissions:
       id-token: write  # IMPORTANT: mandatory for trusted publishing
 
     steps:
     - name: Download all the dists
-      uses: actions/download-artifact@v4.1.7
+      uses: actions/download-artifact@v4
       with:
-        name: python-package-distributions
-        path: wheelhouse/
+        path: dist/
+        merge-multiple: true
+    - name: Publish distribution 📦 to TestPyPI
+      uses: pypa/gh-action-pypi-publish@release/v1
+      with:
+        repository-url: https://test.pypi.org/legacy/
+
+  publish-to-pypi:
+    name: Publish Python package to PyPI
+    if: ${{ inputs.use_test == 'PyPI' }}
+    needs:
+    - build-wheels
+    - build-sdist
+    runs-on: ubuntu-latest
+
+    environment:
+      name: pypi
+      url: https://pypi.org/p/bpcells
+
+    permissions:
+      id-token: write  # IMPORTANT: mandatory for trusted publishing
+
+    steps:
+    - name: Download all the dists
+      uses: actions/download-artifact@v4
+      with:
+        path: dist/
+        merge-multiple: true
     - name: Publish distribution 📦 to PyPI
       uses: pypa/gh-action-pypi-publish@release/v1
-

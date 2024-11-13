@@ -388,6 +388,9 @@ void precalculate_pseudobulk_coverage(
         std::ref(*full_mat)
     );
 
+    // Windows requires us to close open files before we can delete the temporary paths.
+    full_mat.reset();
+
     for (const auto &x : chunk_output_paths) {
         std_fs::remove_all(std_fs::path(x));
     }
