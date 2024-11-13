@@ -114,10 +114,13 @@ jobs:
             BPCELLS_PYTEST_DATA_CACHE="$GITHUB_WORKSPACE\\bpcells-pytest-data-cache"
           # As of 8/26/2024, a delvewheel dependency version bump (pefile) broke delvewheel, so pin these 
           CIBW_BEFORE_ALL_WINDOWS: >-
-            pip install delvewheel
+            pip install delvewheel &&
+            echo $GITHUB_WORKSPACE &&
+            echo %GITHUB_WORKSPACE% &&
+            ls %GITHUB_WORKSPACE%/lib-cache/bin
           # See https://github.com/adang1345/delvewheel/issues/54 for explanation of `--add-path C:/Windows/System32`
           CIBW_REPAIR_WHEEL_COMMAND_WINDOWS: >-
-            delvewheel repair --add-path $GITHUB_WORKSPACE/lib-cache/bin --add-path C:/Windows/System32 --wheel-dir {dest_dir} {wheel} 
+            delvewheel repair --add-path %GITHUB_WORKSPACE%/lib-cache/bin --add-path C:/Windows/System32 --wheel-dir {dest_dir} {wheel} 
 
           CIBW_TEST_REQUIRES: pytest h5py anndata
           CIBW_TEST_COMMAND: BPCELLS_PYTEST_DATA_CACHE="$GITHUB_WORKSPACE/bpcells-pytest-data-cache" pytest {package}/tests
