@@ -10,6 +10,7 @@
 #' Pipeline Base Class
 #' @slot fitted (logical) Whether the pipeline has been fitted
 #' @name PipelineBase
+#' @noRd
 #' @export
 setClass("PipelineBase",
   contains = "VIRTUAL",
@@ -21,44 +22,47 @@ setClass("PipelineBase",
   )
 )
 
-#' Fit the pipeline object to data
+#' Fit a pipeline object to data
 #' @param object (PipelineBase) The pipeline object to fit.
 #' @param x (IterableMatrix) Input data to be fitted on.
-#' @param y Optional output data to be fitted on.  Required if the final step is an Estimator, else ignored.
+#' @param y Optional output data to be fitted on.  Required if the final step is a supervised Estimator, else ignored.
 #' @return The fitted pipeline object.
+#' @details The `fit()` method is used to fit a pipeline object to data and a potential label output.  Within single estimators, the `fit()` method only
+#' takes the input data to be fitted on. Within pipelines, the `fit()` method sequentially fits the transformers on each non-terminal step of the pipeline. More specifically,
+#' The input data is transformed by each transformer, and used to fit the next transformer in the pipeline.  If the final step is an estimator, the input IterableMatrix
+#' and label (if supervised) are used to fit the estimator.
+#'
+#' The fitted pipeline object is returned, allowing for projection of new data.
 #' @name fit(PipelineBase,IterableMatrix)
 #' @export
 setGeneric("fit", function(object, x, y = NULL, ...) standardGeneric("fit"))
-
 #' @export
 setMethod("fit", signature(object = "PipelineBase", x = "IterableMatrix"), function(object, x, y = NULL, ...) {
   stop("fit() method not implemented for PipelineBase")
 })
 
-#' Transform the input data using a fitted pipeline
-#' @param object (PipelineBase) The fitted pipeline object
+#' Project input data using a fitted pipeline
+#' @param object (PipelineBase) A fitted pipeline object
 #' @param x (IterableMatrix) Input data to be transformed
-#' @return Data transformed by the pipeline
-#' @name transform(PipelineBase,IterableMatrix)
+#' @return Data projected by the pipeline
+#' @name project(PipelineBase,IterableMatrix)
 #' @export
-setGeneric("transform", function(object, x, ...) standardGeneric("transform"))
-
+setGeneric("project", function(object, x, ...) standardGeneric("project"))
 #' @export
-setMethod("transform", signature(object = "PipelineBase", x = "IterableMatrix"), function(object, x, ...) {
-  stop("transform() method not implemented for PipelineBase")
+setMethod("project", signature(object = "PipelineBase", x = "IterableMatrix"), function(object, x, ...) {
+  stop("project() method not implemented for PipelineBase")
 })
 
-#' Predict the output data using a fitted pipeline
-#' @param object (PipelineBase) The fitted pipeline object
-#' @param x (IterableMatrix) Input data to be predicted
-#' @return Predicted output data
-#' @name predict(PipelineBase,IterableMatrix)
+#' Estimate predictions on the output data using a fitted pipeline
+#' @param object (PipelineBase) The fitted pipeline object. Either the final step is an Estimator, or the pipeline is a single Estimator.
+#' @param x (IterableMatrix) Input data to be estimated on
+#' @return Predicted output labels
+#' @name estimate(PipelineBase,IterableMatrix)
 #' @export
-setGeneric("predict", function(object, x, ...) standardGeneric("predict"))
-
+setGeneric("estimate", function(object, x, ...) standardGeneric("estimate"))
 #' @export
-setMethod("predict", signature(object = "PipelineBase", x = "IterableMatrix"), function(object, x, ...) {
-  stop("predict() method not implemented for PipelineBase")
+setMethod("estimate", signature(object = "PipelineBase", x = "IterableMatrix"), function(object, x, ...) {
+  stop("estimate() method not implemented for PipelineBase")
 })
 
 #' Combine pipeline objects, to create a new pipeline object.
@@ -69,7 +73,6 @@ setMethod("predict", signature(object = "PipelineBase", x = "IterableMatrix"), f
 setMethod("c", signature(x = "PipelineBase"), function(x, ...) {
   stop("c() method not implemented for PipelineBase")
 })
-
 setMethod("show", signature(object = "PipelineBase"), function(object) {
   stop("show() method not implemented for PipelineBase")
 })
@@ -88,11 +91,24 @@ setClass(
   )
 )
 
-#' Return a new Pipeline object
+#' Return a new Pipeline object.
 #' @param steps A list of ordered steps to be executed in the pipeline.
 #' @return A new Pipeline object.
+#' @details Creating a pipeline object can be done by passing a list of pipeline steps to the constructor.  
+#' Creation only expects that all steps make logical sense.  i.e., the final step can be either an Estimator or a Transformer, 
+#' but each intermediate step cannot be an Estimator.
 #' @export
 Pipeline <- function(steps = list()) {
+  # Check if all steps are transformers, with the final step being either an estimator or a transformer
+  for (i in seq_along(steps)) {
+    step <- steps[[i]]
+    # allow to fit with estimators as well
+    if (i < length(steps)) {
+      assert_is(step, "Transformer")
+    } else {
+      assert_is(step, "PipelineStep")
+    }
+  }
   return(new("Pipeline", steps = steps))
 }
 
@@ -124,7 +140,7 @@ setMethod("fit", signature(object = "Pipeline", x = "IterableMatrix"), function(
     # allow to fit with estimators as well
     if (i < length(steps) || is.null(y)) {
       step <- fit(step, x, ...)
-      x <- transform(step, x)
+      x <- project(step, x)
       if (is(x, "dgCMatrix")) x <- as(x, "IterableMatrix")
     } else {
       step <- fit(step, x, y, ...)
@@ -137,17 +153,17 @@ setMethod("fit", signature(object = "Pipeline", x = "IterableMatrix"), function(
 })
 
 
-#' Transform the input data using a fitted pipeline
+#' Project input data using a fitted pipeline
 #' @param object (Pipeline) The fitted pipeline object
-#' @param x (IterableMatrix) Input data to be transformed
-#' @return Data transformed by the pipeline
+#' @param x (IterableMatrix) Input data to be used by the pipeline to project new data.
+#' @return Data projected by the pipeline
 #' @noRd
 #' @export
-setMethod("transform", signature(object = "Pipeline", x = "IterableMatrix"), function(object, x, ...) {
-  if (!object@fitted) stop("Pipeline must be fitted before transforming")
+setMethod("project", signature(object = "Pipeline", x = "IterableMatrix"), function(object, x, ...) {
+  if (!object@fitted) stop("Pipeline must be fitted before projecting")
   steps <- object@steps
   for (step in steps) {
-    if (is(step, "Transformer")) x <- transform(step, x)
+    if (is(step, "Transformer")) x <- project(step, x)
     # Some actions convert matrices to a different type, so we need to convert back to IterableMatrix
     # for following steps
     if (is(x, "dgCMatrix")) x <- as(x, "IterableMatrix")
@@ -156,27 +172,26 @@ setMethod("transform", signature(object = "Pipeline", x = "IterableMatrix"), fun
 })
 
 
-#' Predict the output data using a fitted pipeline
-#' @param object (Pipeline) The fitted pipeline object
-#' @param x (IterableMatrix) Input data to be predicted
-#' @return Predicted output data
-#' @noRd
-#' @export
-setMethod("predict", signature(object = "Pipeline", x = "IterableMatrix"), function(object, x, ...) {
-  if (!object@fitted) stop("Pipeline must be fitted before predicting")
-  steps <- object@steps
-  for (i in seq_along(steps)) {
-    step <- steps[[i]]
-    if (i < n_steps) {
-      x <- transform(step, x)
-    } else if (is(step, "Estimator")) {
-        y_pred <- predict(step, x)
-        return(y_pred)
-    } else {
-      stop("The final step must be an estimator with a predict method")
-    }
-  }
-})
+# #' Estimate predictions on the output data using a fitted pipeline
+# #' @param object (Pipeline) The fitted pipeline object
+# #' @param x (IterableMatrix) Input data to be estimated on
+# #' @noRd
+# #' @export
+# setMethod("estimate", signature(object = "Pipeline", x = "IterableMatrix"), function(object, x, ...) {
+#   if (!object@fitted) stop("Pipeline must be fitted before estimating")
+#   steps <- object@steps
+#   for (i in seq_along(steps)) {
+#     step <- steps[[i]]
+#     if (i < n_steps) {
+#       x <- project(step, x)
+#     } else if (is(step, "Estimator")) {
+#         y_pred <- estimate(step, x)
+#         return(y_pred)
+#     } else {
+#       stop("The final step must be an estimator with a estimate method")
+#     }
+#   }
+# })
 
 setMethod("short_description", "Pipeline", function(x) {
   character(0)
@@ -212,7 +227,7 @@ setMethod("c", signature(x = "Pipeline"), function(x, ...) {
   steps <- x@steps
   for (pipe in pipelines) {
     assert_is(pipe, "PipelineBase")
-    # If the step is a pipeline, combine the steps.  Else, add the single step.
+    # If the step is a pipeline step, add the single step.  Else, the step is a full pipeline and we want to move all the steps over.
     steps <- ifelse(is(pipe, "PipelineStep"), c(steps, pipe), c(steps, pipe@steps))
   }
 
@@ -229,7 +244,7 @@ setMethod("c", signature(x = "Pipeline"), function(x, ...) {
   return(new_pipeline)
 })
 
-#' S4 Class Representing a single transformer or predictor
+#' PipelineBase representing a single step within a pipeline
 #' @slot step_name (character) Name of the step
 #' @slot fitted (logical) Whether the pipeline has been fitted
 #' @name PipelineStep
@@ -240,7 +255,7 @@ setClass("PipelineStep",
     step_name = "character"
   ),
   prototype = list(
-    step_name = ""
+    step_name = character(0)
   )
 )
 
@@ -262,6 +277,8 @@ setMethod("c", signature(x = "PipelineStep"), function(x, ...) {
   for (step in steps) {
     if (!step@fitted) fitted <- FALSE
   }
+  new_pipeline@fitted <- fitted
+  return(new_pipeline)
 })
 
 
@@ -271,17 +288,17 @@ setMethod("show", signature(object = "PipelineStep"), function(object) {
 })
 
 
-#' S4 Class representing an operation that transforms data, and holds fitted parameters
+#' PipelineStep representing an operation that transforms data, and holds fitted parameters
 #' @slot step_name (character) Name of the step
 #' @slot fitted (logical) Whether the pipeline has been fitted
-#' @details Transformers represent single operations (derived from the PipelineStep class) that transform data.
+#' @details Transformers represent single operations (derived from the PipelineStep class) that project data from an IterableMatrix to another IterableMatrix/dgCMatrix.
 #' They can be fit to data within an IterableMatrix object, which will be used to hold the fitted parameters.
-#' Using the transform method on a fitted transformer will apply the transformation to the data and return
-#' the transformed data as an IterableMatrix object.
-#' 
+#' Using the `project()`` method on a fitted transformer will apply the transformation to the data and return
+#' the projected data as an IterableMatrix object, or a dgCMatrix.
+#'
 #' These objects can be combined into a Pipeline object using the `c()` function, with other transformers, or estimators.
 #' Transformers can also be combined with full pipelines, to create a new pipeline object.
-#' Derived classes should implement the `fit()`, `transform()`, and `short_description()` methods.
+#' Derived classes should implement the `fit()`, `project()`, and `short_description()` methods.
 #' @name Transformer
 #' @export
 setClass("Transformer",
@@ -289,87 +306,17 @@ setClass("Transformer",
 )
 
 
-#' Perform latent semantic indexing (LSI) on a matrix.
-#' @name LSITransformer
-#' @export
-setClass("LSITransformer",
-  contains = "Transformer",
-  slots = list(
-    idf_ = "numeric",
-    svd_attr_ = "list",
-    z_score_norm = "logical",
-    n_dimensions = "integer",
-    scale_factor = "integer",
-    threads = "integer"
-  ),
-  prototype = list(
-    idf_ = numeric(0),
-    svd_attr_ = list(),
-    z_score_norm = FALSE,
-    n_dimensions = 20L,
-    scale_factor = 1e4L,
-    threads = 1L
-  )
-)
-
-#' Create a new LSITransformer object
-#' @export
-LSITransformer <- function(z_score_norm, n_dimensions, scale_factor, threads) {
-  return(new(
-    "LSITransformer", z_score_norm = z_score_norm, n_dimensions = n_dimensions, 
-    scale_factor = scale_factor, threads = threads, step_name = "LSITransformer"))
-}
-
-setMethod("fit", signature(object = "LSITransformer", x = "IterableMatrix"), function(object, x, ...) {
-  ret <- lsi(
-    x, z_score_norm = object@z_score_norm, n_dimensions = object@n_dimensions, 
-    scale_factor = object@scale_factor, threads = object@threads,
-    save_lsi = TRUE
-  )
-  object@idf_ <- ret$idf
-  object@svd_attr_ <- ret$svd_attr
-  object@fitted <- TRUE
-  return(object)
-})
-
-setMethod("transform", signature(object = "LSITransformer", x = "IterableMatrix"), function(object, x, ...) {
-  # rudimentary implementation -- Works but is duplicate code.  
-  assert_true(object@fitted)
-  # Wait until LSI PR has been reviewed
-  npeaks <- colSums(x) # Finding that sums are non-multithreaded and there's no interface to pass it in, but there is implementation in `ConcatenateMatrix.h`
-  tf <- x %>% multiply_cols(1 / npeaks)
-  mat_tfidf <- tf %>% multiply_rows(object@idf_)
-  mat_log_tfidf <- log1p(object@scale_factor * mat_tfidf)
-  mat_log_tfidf <- write_matrix_dir(mat_log_tfidf, tempfile("mat_log_tfidf"), compress = FALSE)
-  if (object@z_score_norm) {
-    cell_peak_stats <- matrix_stats(mat_log_tfidf, col_stats = "variance", threads = object@threads)$col_stats
-    cell_means <- cell_peak_stats["mean",]
-    cell_vars <- cell_peak_stats["variance",]
-    mat_log_tfidf <- mat_log_tfidf %>%
-      add_cols(-cell_means) %>%
-      multiply_cols(1 / cell_vars)
-  }
-  pca_res <- t(object@svd_attr_$u) %*% mat_log_tfidf
-  return(pca_res)
-})
-
-setMethod("short_description", "LSITransformer", function(x) {
-  return(sprintf("LSITransformer(z_score_norm=%s, n_dimensions=%d, scale_factor=%d, threads=%d)",
-    x@z_score_norm, x@n_dimensions, x@scale_factor, x@threads))
-})
-
-setClass("VarFeatSelectorTransformer",
-  contains = "Transformer",
-  slots = list(
-    num_feats = "integer",
-    n_bins = "integer"
-  )
-)
-
-
-#' S4 Class representing an operation that predicts data, and holds fitted parameters.
+#' PipelineStep representing an operation that estimates data, and holds fitted parameters.
 #' @slot step_name (character) Name of the step
 #' @slot fitted (logical) Whether the pipeline has been fitted
+#' @details Estimators represent single operations (derived from the PipelineStep class) that make predictions based on data given by an
+#' IterableMatrix.  Additionally, supervised estimators will require a target numeric, or character array to be provided during a `fit()` call.
+#' Unsupervised estimators, on the other hand, do not require a target array.  Following a `fit()` call, the estimator will hold the fitted parameters
+#' such that data can be labeled using the `estimate()` method.
+#'
+#' Estimators can be combined into a Pipeline object using the `c()` function, with other transformers.  Estimators are required to be the terminal step
+#' within a pipeline.  Estimators can also be combined with full pipelines, to create a new pipeline object.
+#' Derived classes should implement the `fit()`, `estimate()`, and `short_description()` methods.
 #' @name Estimator
 #' @export
 setClass("Estimator",

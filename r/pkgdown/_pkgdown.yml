@@ -180,7 +180,6 @@ reference:
 - subtitle: "Pipeline S4 Classes"
 - desc: Base class for pipeline objects
 - contents:
-  - PipelineBase
   - PipelineStep
   - Pipeline
   - Transformer
@@ -190,11 +189,6 @@ reference:
 - subtitle: "Pipeline Methods"
 - contents:
   - fit(PipelineBase,IterableMatrix)
-  - predict(PipelineBase,IterableMatrix)
-  - transform(PipelineBase,IterableMatrix)
+  - estimate(PipelineBase,IterableMatrix)
+  - project(PipelineBase,IterableMatrix)
   - c(PipelineBase)
-
-
-- subtitle: "Transformers"
-- contents:
-  - LSITransformer
