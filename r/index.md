@@ -17,6 +17,7 @@ Additionally, BPCells exposes its optimized data processing infrastructure for u
 
 ## Learn more
 
+- [Draft manuscript](articles/web-only/manuscript-draft.html)
 - [Benchmarks](articles/web-only/benchmarks.html)
 - [Multiomic analysis example](articles/pbmc3k.html)
 - [How BPCells works](articles/web-only/how-it-works.html)

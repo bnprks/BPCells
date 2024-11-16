@@ -15,6 +15,7 @@ Additionally, BPCells exposes its optimized data processing infrastructure for u
 
 ## [Learn more at our website](https://bnprks.github.io/BPCells/)
 
+- [Draft manuscript](https://bnprks.github.io/BPCells/articles/web-only/manuscript-draft.html)
 - [Python docs](https://bnprks.github.io/BPCells/python/index.html)
 - [Benchmarks](https://bnprks.github.io/BPCells/articles/web-only/benchmarks.html)
 - [Multiomic analysis example](https://bnprks.github.io/BPCells/articles/pbmc3k.html)
