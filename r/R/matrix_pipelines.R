@@ -227,11 +227,11 @@ setMethod("short_description", "Pipeline", function(x) {
 #' @export
 setMethod("show", signature(object = "Pipeline"), function(object) {
   fitted <- ifelse(object@fitted, "Fitted", "Unfitted")
-  cat(fitted, " Pipeline with steps:\n")
+  cat(fitted, "Pipeline with steps:\n")
   cat("Pipeline(\n")
   for (i in seq_along(object@steps)) {
     step <- object@steps[[i]]
-    cat("\t", short_description(step))
+    cat("  ", short_description(step))
     if (i < length(object@steps)) {
       cat(",")
     }
@@ -252,9 +252,16 @@ setMethod("c", signature(x = "Pipeline"), function(x, ...) {
   for (pipe in pipelines) {
     assert_is(pipe, "PipelineBase")
     # If the step is a pipeline step, add the single step.  Else, the step is a full pipeline and we want to move all the steps over.
-    steps <- ifelse(is(pipe, "PipelineStep"), c(steps, pipe), c(steps, pipe@steps))
+    if (is(pipe, "PipelineStep")) {
+      steps <- c(steps, pipe)
+    } else {
+      steps <- c(steps, pipe@steps)
+    }
   }
+<<<<<<< Updated upstream
   
+=======
+>>>>>>> Stashed changes
   # If all the steps are fitted, the pipeline overall is fitted.
   # We trust the user to have fitted the pipelines with the same data
   new_pipeline <- Pipeline(steps = steps)
@@ -295,7 +302,11 @@ setMethod("c", signature(x = "PipelineStep"), function(x, ...) {
   steps <- list(x)
   for (pipe in pipelines) {
     assert_is(pipe, "PipelineBase")
-    steps <- ifelse(is(pipe, "PipelineStep"), c(steps, pipe), c(steps, pipe@steps))
+    if(is(pipe, "PipelineStep")) {
+      steps <- c(steps, pipe)
+    } else {
+      steps <- c(steps, pipe@steps)
+    }
   }
   new_pipeline <- Pipeline(steps = steps)
   check_pipeline_validity(new_pipeline)
