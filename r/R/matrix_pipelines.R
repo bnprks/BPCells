@@ -126,6 +126,23 @@ Pipeline <- function(steps = list()) {
   return(new("Pipeline", steps = steps))
 }
 
+
+#' Check if all steps are transformers, with the final step being either an estimator or a transformer
+#' @param object (Pipeline) The pipeline object to check
+#' @keywords internal
+check_pipeline_validity <- function(object) {
+  steps <- object@steps
+  for (i in seq_along(steps)) {
+    step <- steps[[i]]
+    # allow to fit with estimators as well
+    if (i < length(steps)) {
+      assert_is(step, "Transformer")
+    } else {
+      assert_is(step, c("PipelineStep"))
+    }
+  }
+}
+
 #' Fit the pipeline object to data
 #' @param object (Pipeline) The pipeline object to fit.
 #' @param x (IterableMatrix) Input data to be fitted on.
@@ -134,20 +151,8 @@ Pipeline <- function(steps = list()) {
 #' @noRd
 #' @export
 setMethod("fit", signature(object = "Pipeline", x = "IterableMatrix"), function(object, x, y = NULL, ...) {
+  check_pipeline_validity(object)
   steps <- object@steps
-  # Check if all steps are transformers, with the final step being either an estimator or a transformer
-  for (i in seq_along(steps)) {
-    step <- steps[[i]]
-    # allow to fit with estimators as well
-    if (i < length(steps)) {
-      assert_is(step, "PipelineStep")
-    } else {
-      assert_is(step, c("PipelineStep"))
-      if (!is.null(y)) {
-        assert_is(step, "Estimator")
-      }
-    }
-  }
   # Fit every step in the pipeline
   for (i in seq_along(steps)) {
     step <- steps[[i]]
@@ -175,37 +180,42 @@ setMethod("fit", signature(object = "Pipeline", x = "IterableMatrix"), function(
 #' @export
 setMethod("project", signature(object = "Pipeline", x = "IterableMatrix"), function(object, x, ...) {
   if (!object@fitted) stop("Pipeline must be fitted before projecting")
+  check_pipeline_validity(object)
+  # check if final step is an estimator
+  if (is(object@steps[[length(object@steps)]], "Estimator")) stop("The final step must be a transformer instead of an estimator.  Please use the `estimate()` method instead.")
   steps <- object@steps
   for (step in steps) {
-    if (is(step, "Transformer")) x <- project(step, x)
-    # Some actions convert matrices to a different type, so we need to convert back to IterableMatrix
-    # for following steps
+    x <- project(step, x)
+    # Some actions convert matrices to a different type, 
+    # so we need to convert back to IterableMatrix for following steps
     if (is(x, "dgCMatrix")) x <- as(x, "IterableMatrix")
   }
   return(x)
 })
 
 
-# #' Estimate predictions on the output data using a fitted pipeline
-# #' @param object (Pipeline) The fitted pipeline object
-# #' @param x (IterableMatrix) Input data to be estimated on
-# #' @noRd
-# #' @export
-# setMethod("estimate", signature(object = "Pipeline", x = "IterableMatrix"), function(object, x, ...) {
-#   if (!object@fitted) stop("Pipeline must be fitted before estimating")
-#   steps <- object@steps
-#   for (i in seq_along(steps)) {
-#     step <- steps[[i]]
-#     if (i < n_steps) {
-#       x <- project(step, x)
-#     } else if (is(step, "Estimator")) {
-#         y_pred <- estimate(step, x)
-#         return(y_pred)
-#     } else {
-#       stop("The final step must be an estimator with a estimate method")
-#     }
-#   }
-# })
+#' Estimate predictions on the output data using a fitted pipeline
+#' @param object (Pipeline) The fitted pipeline object
+#' @param x (IterableMatrix) Input data to be estimated on
+#' @noRd
+#' @export
+setMethod("estimate", signature(object = "Pipeline", x = "IterableMatrix"), function(object, x, ...) {
+  if (!object@fitted) stop("Pipeline must be fitted before estimating")
+  check_pipeline_validity(object)
+  if (!is(object@steps[[length(object@steps)]], "Estimator")) stop("The final step must be an estimator with a estimate method. Please use the `project()` method instead.")
+  steps <- object@steps
+  for (i in seq_along(steps)) {
+    step <- steps[[i]]
+    if (i < n_steps) {
+      x <- project(step, x)
+    } else if (is(step, "Estimator")) {
+        y_pred <- estimate(step, x)
+        return(y_pred)
+    } else {
+      stop("The final step must be an estimator with a estimate method")
+    }
+  }
+})
 
 setMethod("short_description", "Pipeline", function(x) {
   character(0)
@@ -244,10 +254,11 @@ setMethod("c", signature(x = "Pipeline"), function(x, ...) {
     # If the step is a pipeline step, add the single step.  Else, the step is a full pipeline and we want to move all the steps over.
     steps <- ifelse(is(pipe, "PipelineStep"), c(steps, pipe), c(steps, pipe@steps))
   }
-
+  
   # If all the steps are fitted, the pipeline overall is fitted.
   # We trust the user to have fitted the pipelines with the same data
   new_pipeline <- Pipeline(steps = steps)
+  check_pipeline_validity(new_pipeline)
   fitted <- TRUE
   for (step in steps) {
     if (!step@fitted) {
@@ -287,6 +298,7 @@ setMethod("c", signature(x = "PipelineStep"), function(x, ...) {
     steps <- ifelse(is(pipe, "PipelineStep"), c(steps, pipe), c(steps, pipe@steps))
   }
   new_pipeline <- Pipeline(steps = steps)
+  check_pipeline_validity(new_pipeline)
   fitted <- TRUE
   for (step in steps) {
     if (!step@fitted) fitted <- FALSE
