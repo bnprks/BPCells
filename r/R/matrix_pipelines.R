@@ -41,10 +41,12 @@ setMethod("fit", signature(object = "PipelineBase", x = "IterableMatrix"), funct
   stop("fit() method not implemented for PipelineBase")
 })
 
-#' Project input data using a fitted pipeline
+#' Project input data using a fitted pipeline or pipeline step.
 #' @param object (PipelineBase) A fitted pipeline object
 #' @param x (IterableMatrix) Input data to be transformed
-#' @return Data projected by the pipeline
+#' @return (IterableMatrix) of data transformed by a fitted pipeline or pipeline step.
+#' @details Projecting data using a pipeline or pipeline step requires the pipeline to be fitted to data first.  Therefore,
+#' the `fit()` method must be executed prior to projecting any data.
 #' @name project(PipelineBase,IterableMatrix)
 #' @export
 setGeneric("project", function(object, x, ...) standardGeneric("project"))
@@ -56,7 +58,9 @@ setMethod("project", signature(object = "PipelineBase", x = "IterableMatrix"), f
 #' Estimate predictions on the output data using a fitted pipeline
 #' @param object (PipelineBase) The fitted pipeline object. Either the final step is an Estimator, or the pipeline is a single Estimator.
 #' @param x (IterableMatrix) Input data to be estimated on
-#' @return Predicted output labels
+#' @return Predicted output labels as an array.
+#' @details Estimation of input data using a pipeline or pipeline step requires the pipeline to be fitted to data first.  Therefore,
+#' the `fit()` method must be executed prior to projecting any data.
 #' @name estimate(PipelineBase,IterableMatrix)
 #' @export
 setGeneric("estimate", function(object, x, ...) standardGeneric("estimate"))
@@ -73,6 +77,12 @@ setMethod("estimate", signature(object = "PipelineBase", x = "IterableMatrix"), 
 setMethod("c", signature(x = "PipelineBase"), function(x, ...) {
   stop("c() method not implemented for PipelineBase")
 })
+
+#' Print how to recreate the pipeline object.
+#' @details Utilizes the `short_description()` method to print the steps of the pipeline object.
+#' If the object is a pipeline, it will print the steps of the pipeline, demonstrating how to recreate the pipeline with a function call.
+#' If the object is a pipeline step, it will print the step name.
+#' @param object (PipelineBase) The pipeline object to describe.
 setMethod("show", signature(object = "PipelineBase"), function(object) {
   stop("show() method not implemented for PipelineBase")
 })
@@ -92,11 +102,15 @@ setClass(
 )
 
 #' Return a new Pipeline object.
-#' @param steps A list of ordered steps to be executed in the pipeline.
+#' @param steps A list of ordered steps of operations to be converted into a pipeline object.
 #' @return A new Pipeline object.
-#' @details Creating a pipeline object can be done by passing a list of pipeline steps to the constructor.  
+#' @details Pipeline objects represent multiple pipeline steps that are to be executed on input data sequentially. 
+#' Creating a pipeline object can be done by passing a list of pipeline steps to the constructor.  
 #' Creation only expects that all steps make logical sense.  i.e., the final step can be either an Estimator or a Transformer, 
 #' but each intermediate step cannot be an Estimator.
+#' 
+#' If the steps are all previously fitted, then the overall pipeline is considered fit, and can be used to project/estimate on input data.
+#' Otherwise, the pipeline must be fitted before projecting/estimating on input data.
 #' @export
 Pipeline <- function(steps = list()) {
   # Check if all steps are transformers, with the final step being either an estimator or a transformer
@@ -216,10 +230,10 @@ setMethod("show", signature(object = "Pipeline"), function(object) {
   cat(")\n")
 })
 
-#' Add steps to a pipeline, where the first argument is the pipeline object and the rest are the steps to add.
-#' Requires for every additional step to be a pipeline object
-#' @param x (Pipeline) The PipelineBase object to add steps to
-#' @param ... (PipelineBase) The steps to add to the pipeline
+#' Add steps to a pipeline, where the first argument is the pipeline object and the rest are either pipeline steps, or full pipelines to add in order.
+#' Requires for every additional step to be a pipeline object.
+#' @param x (Pipeline) The PipelineBase object to add steps to.
+#' @param ... (PipelineBase) The steps to add to the pipeline.
 #' @noRd
 #' @export
 setMethod("c", signature(x = "Pipeline"), function(x, ...) {
