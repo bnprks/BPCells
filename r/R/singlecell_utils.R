@@ -269,8 +269,6 @@ lsi <- function(
   assert_is_wholenumber(threads)
 
   # log(tf-idf) transform
-  mat_stats <- matrix_stats(mat, row_stats = c("mean"), col_stats = c("mean"))
-  
   npeaks <- colSums(mat) # Finding that sums are non-multithreaded and there's no interface to pass it in, but there is implementation in `ConcatenateMatrix.h`
   tf <- mat %>% multiply_cols(1 / npeaks)
   idf_ <- ncol(mat) / rowSums(mat)
