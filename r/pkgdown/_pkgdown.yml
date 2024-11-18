@@ -192,3 +192,8 @@ reference:
   - estimate(PipelineBase,IterableMatrix)
   - project(PipelineBase,IterableMatrix)
   - c(PipelineBase)
+
+- subtitle: "Transformers"
+- contents:
+  - LSITransformer
+  - VarFeatSelectorTransformer
