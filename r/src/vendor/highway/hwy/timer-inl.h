@@ -16,6 +16,8 @@
 // High-resolution and high-precision timer
 
 // Per-target include guard
+// NOTE: this file could/should be a normal header, but user code may reference
+// hn::timer, and defining that here requires highway.h.
 #if defined(HIGHWAY_HWY_TIMER_INL_H_) == defined(HWY_TARGET_TOGGLE)
 #ifdef HIGHWAY_HWY_TIMER_INL_H_
 #undef HIGHWAY_HWY_TIMER_INL_H_
@@ -24,7 +26,6 @@
 #endif
 
 #include "hwy/highway.h"
-#include "hwy/timer.h"
 
 #if defined(_WIN32) || defined(_WIN64)
 #ifndef NOMINMAX
@@ -50,6 +51,7 @@
 #include <intrin.h>
 #endif
 
+#include <stdint.h>
 #include <time.h>  // clock_gettime
 
 HWY_BEFORE_NAMESPACE();
@@ -139,8 +141,8 @@ inline Ticks Start() {
       // "memory" avoids reordering. rdx = TSC >> 32.
       // "cc" = flags modified by SHL.
       : "rdx", "memory", "cc");
-#elif HWY_ARCH_RVV
-  asm volatile("rdtime %0" : "=r"(t));
+#elif HWY_ARCH_RISCV
+  asm volatile("fence; rdtime %0" : "=r"(t));
 #elif defined(_WIN32) || defined(_WIN64)
   LARGE_INTEGER counter;
   (void)QueryPerformanceCounter(&counter);

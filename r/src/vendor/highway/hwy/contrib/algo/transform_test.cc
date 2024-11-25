@@ -18,6 +18,7 @@
 #include <vector>
 
 #include "hwy/aligned_allocator.h"
+#include "hwy/base.h"
 
 // clang-format off
 #undef HWY_TARGET_INCLUDE
@@ -39,6 +40,7 @@
 HWY_BEFORE_NAMESPACE();
 namespace hwy {
 namespace HWY_NAMESPACE {
+namespace {
 
 constexpr double kAlpha = 1.5;  // arbitrary scalar
 
@@ -49,22 +51,23 @@ T Random(RandomState& rng) {
   const int32_t bits = static_cast<int32_t>(Random32(&rng)) & 1023;
   const double val = (bits - 512) / 64.0;
   // Clamp negative to zero for unsigned types.
-  return static_cast<T>(
-      HWY_MAX(static_cast<double>(hwy::LowestValue<T>()), val));
+  return ConvertScalarTo<T>(
+      HWY_MAX(ConvertScalarTo<double>(hwy::LowestValue<T>()), val));
 }
 
 // SCAL, AXPY names are from BLAS.
 template <typename T>
 HWY_NOINLINE void SimpleSCAL(const T* x, T* out, size_t count) {
   for (size_t i = 0; i < count; ++i) {
-    out[i] = static_cast<T>(kAlpha * x[i]);
+    out[i] = ConvertScalarTo<T>(ConvertScalarTo<T>(kAlpha) * x[i]);
   }
 }
 
 template <typename T>
 HWY_NOINLINE void SimpleAXPY(const T* x, const T* y, T* out, size_t count) {
   for (size_t i = 0; i < count; ++i) {
-    out[i] = static_cast<T>(kAlpha * x[i] + y[i]);
+    out[i] = ConvertScalarTo<T>(
+        ConvertScalarTo<T>(ConvertScalarTo<T>(kAlpha) * x[i]) + y[i]);
   }
 }
 
@@ -72,7 +75,7 @@ template <typename T>
 HWY_NOINLINE void SimpleFMA4(const T* x, const T* y, const T* z, T* out,
                              size_t count) {
   for (size_t i = 0; i < count; ++i) {
-    out[i] = static_cast<T>(x[i] * y[i] + z[i]);
+    out[i] = ConvertScalarTo<T>(x[i] * y[i] + z[i]);
   }
 }
 
@@ -92,7 +95,7 @@ struct SCAL {
   template <class D, class V>
   Vec<D> operator()(D d, V v) const {
     using T = TFromD<D>;
-    return Mul(Set(d, static_cast<T>(kAlpha)), v);
+    return Mul(Set(d, ConvertScalarTo<T>(kAlpha)), v);
   }
 };
 
@@ -100,7 +103,7 @@ struct AXPY {
   template <class D, class V>
   Vec<D> operator()(D d, V v, V v1) const {
     using T = TFromD<D>;
-    return MulAdd(Set(d, static_cast<T>(kAlpha)), v, v1);
+    return MulAdd(Set(d, ConvertScalarTo<T>(kAlpha)), v, v1);
   }
 };
 
@@ -133,6 +136,24 @@ struct ForeachCountAndMisalign {
   }
 };
 
+// Fills an array with random values, placing a given sentinel value both before
+// (when misalignment space is available) and after. Requires an allocation of
+// at least count + misalign + 1 elements.
+template <typename T>
+T* FillRandom(AlignedFreeUniquePtr<T[]>& pa, size_t count, size_t misalign,
+              T sentinel, RandomState& rng) {
+  for (size_t i = 0; i < misalign; ++i) {
+    pa[i] = sentinel;
+  }
+
+  T* a = pa.get() + misalign;
+  for (size_t i = 0; i < count; ++i) {
+    a[i] = Random<T>(rng);
+  }
+  a[count] = sentinel;
+  return a;
+}
+
 // Output-only, no loads
 struct TestGenerate {
   template <class D>
@@ -146,7 +167,7 @@ struct TestGenerate {
     T* actual = pa.get() + misalign_a;
 
     for (size_t i = 0; i < count; ++i) {
-      expected[i] = static_cast<T>(2 * i);
+      expected[i] = ConvertScalarTo<T>(2 * i);
     }
 
     // TODO(janwas): can we update the apply_to in HWY_PUSH_ATTRIBUTES so that
@@ -157,14 +178,50 @@ struct TestGenerate {
 #else
     const Gen2 gen2;
 #endif
-    actual[count] = T{0};  // sentinel
+    actual[count] = ConvertScalarTo<T>(0);  // sentinel
     Generate(d, actual, count, gen2);
-    HWY_ASSERT_EQ(T{0}, actual[count]);  // did not write past end
+    HWY_ASSERT_EQ(ConvertScalarTo<T>(0), actual[count]);  // no write past end
 
     const auto info = hwy::detail::MakeTypeInfo<T>();
     const char* target_name = hwy::TargetName(HWY_TARGET);
     hwy::detail::AssertArrayEqual(info, expected.get(), actual, count,
                                   target_name, __FILE__, __LINE__);
+  }
+};
+
+// Input-only, no stores
+struct TestForeach {
+  template <class D>
+  void operator()(D d, size_t count, size_t misalign_a, size_t misalign_b,
+                  RandomState& /*rng*/) {
+    if (misalign_b != 0) return;
+    using T = TFromD<D>;
+    AlignedFreeUniquePtr<T[]> pa = AllocateAligned<T>(misalign_a + count + 1);
+    HWY_ASSERT(pa);
+
+    T* actual = pa.get() + misalign_a;
+    T max = hwy::LowestValue<T>();
+    for (size_t i = 0; i < count; ++i) {
+      actual[i] = hwy::ConvertScalarTo<T>(i <= count / 2 ? 2 * i : i);
+      max = HWY_MAX(max, actual[i]);
+    }
+
+    // Place sentinel values in the misalignment area and at the input's end.
+    for (size_t i = 0; i < misalign_a; ++i) {
+      pa[i] = ConvertScalarTo<T>(2 * count);
+    }
+    actual[count] = ConvertScalarTo<T>(2 * count);
+
+    const Vec<D> vmin = Set(d, hwy::LowestValue<T>());
+    // TODO(janwas): can we update the apply_to in HWY_PUSH_ATTRIBUTES so that
+    // the attribute also applies to lambdas? If so, remove HWY_ATTR.
+    Vec<D> vmax = vmin;
+    const auto func = [&vmax](const D, const Vec<D> v)
+                          HWY_ATTR { vmax = Max(vmax, v); };
+    Foreach(d, actual, count, vmin, func);
+
+    const char* target_name = hwy::TargetName(HWY_TARGET);
+    AssertEqual(max, ReduceMax(d, vmax), target_name, __FILE__, __LINE__);
   }
 };
 
@@ -177,22 +234,19 @@ struct TestTransform {
     using T = TFromD<D>;
     // Prevents error if size to allocate is zero.
     AlignedFreeUniquePtr<T[]> pa =
-        AllocateAligned<T>(HWY_MAX(1, misalign_a + count));
+        AllocateAligned<T>(HWY_MAX(1, misalign_a + count + 1));
     AlignedFreeUniquePtr<T[]> expected = AllocateAligned<T>(HWY_MAX(1, count));
     HWY_ASSERT(pa && expected);
 
-    T* a = pa.get() + misalign_a;
-    for (size_t i = 0; i < count; ++i) {
-      a[i] = Random<T>(rng);
-    }
-
+    const T sentinel = ConvertScalarTo<T>(-42);
+    T* a = FillRandom(pa, count, misalign_a, sentinel, rng);
     SimpleSCAL(a, expected.get(), count);
 
     // TODO(janwas): can we update the apply_to in HWY_PUSH_ATTRIBUTES so that
     // the attribute also applies to lambdas? If so, remove HWY_ATTR.
 #if HWY_GENERIC_LAMBDA
     const auto scal = [](const auto d, const auto v) HWY_ATTR {
-      return Mul(Set(d, static_cast<T>(kAlpha)), v);
+      return Mul(Set(d, ConvertScalarTo<T>(kAlpha)), v);
     };
 #else
     const SCAL scal;
@@ -203,6 +257,12 @@ struct TestTransform {
     const char* target_name = hwy::TargetName(HWY_TARGET);
     hwy::detail::AssertArrayEqual(info, expected.get(), a, count, target_name,
                                   __FILE__, __LINE__);
+
+    // Ensure no out-of-bound writes.
+    for (size_t i = 0; i < misalign_a; ++i) {
+      HWY_ASSERT_EQ(sentinel, pa[i]);
+    }
+    HWY_ASSERT_EQ(sentinel, a[count]);
   }
 };
 
@@ -214,15 +274,16 @@ struct TestTransform1 {
     using T = TFromD<D>;
     // Prevents error if size to allocate is zero.
     AlignedFreeUniquePtr<T[]> pa =
-        AllocateAligned<T>(HWY_MAX(1, misalign_a + count));
+        AllocateAligned<T>(HWY_MAX(1, misalign_a + count + 1));
     AlignedFreeUniquePtr<T[]> pb =
         AllocateAligned<T>(HWY_MAX(1, misalign_b + count));
     AlignedFreeUniquePtr<T[]> expected = AllocateAligned<T>(HWY_MAX(1, count));
     HWY_ASSERT(pa && pb && expected);
-    T* a = pa.get() + misalign_a;
+
+    const T sentinel = ConvertScalarTo<T>(-42);
+    T* a = FillRandom(pa, count, misalign_a, sentinel, rng);
     T* b = pb.get() + misalign_b;
     for (size_t i = 0; i < count; ++i) {
-      a[i] = Random<T>(rng);
       b[i] = Random<T>(rng);
     }
 
@@ -230,17 +291,20 @@ struct TestTransform1 {
 
 #if HWY_GENERIC_LAMBDA
     const auto axpy = [](const auto d, const auto v, const auto v1) HWY_ATTR {
-      return MulAdd(Set(d, static_cast<T>(kAlpha)), v, v1);
+      return MulAdd(Set(d, ConvertScalarTo<T>(kAlpha)), v, v1);
     };
 #else
     const AXPY axpy;
 #endif
     Transform1(d, a, count, b, axpy);
 
-    const auto info = hwy::detail::MakeTypeInfo<T>();
-    const char* target_name = hwy::TargetName(HWY_TARGET);
-    hwy::detail::AssertArrayEqual(info, expected.get(), a, count, target_name,
-                                  __FILE__, __LINE__);
+    AssertArraySimilar(expected.get(), a, count, hwy::TargetName(HWY_TARGET),
+                       __FILE__, __LINE__);
+    // Ensure no out-of-bound writes.
+    for (size_t i = 0; i < misalign_a; ++i) {
+      HWY_ASSERT_EQ(sentinel, pa[i]);
+    }
+    HWY_ASSERT_EQ(sentinel, a[count]);
   }
 };
 
@@ -252,18 +316,19 @@ struct TestTransform2 {
     using T = TFromD<D>;
     // Prevents error if size to allocate is zero.
     AlignedFreeUniquePtr<T[]> pa =
-        AllocateAligned<T>(HWY_MAX(1, misalign_a + count));
+        AllocateAligned<T>(HWY_MAX(1, misalign_a + count + 1));
     AlignedFreeUniquePtr<T[]> pb =
         AllocateAligned<T>(HWY_MAX(1, misalign_b + count));
     AlignedFreeUniquePtr<T[]> pc =
         AllocateAligned<T>(HWY_MAX(1, misalign_a + count));
     AlignedFreeUniquePtr<T[]> expected = AllocateAligned<T>(HWY_MAX(1, count));
     HWY_ASSERT(pa && pb && pc && expected);
-    T* a = pa.get() + misalign_a;
+
+    const T sentinel = ConvertScalarTo<T>(-42);
+    T* a = FillRandom(pa, count, misalign_a, sentinel, rng);
     T* b = pb.get() + misalign_b;
     T* c = pc.get() + misalign_a;
     for (size_t i = 0; i < count; ++i) {
-      a[i] = Random<T>(rng);
       b[i] = Random<T>(rng);
       c[i] = Random<T>(rng);
     }
@@ -278,10 +343,13 @@ struct TestTransform2 {
 #endif
     Transform2(d, a, count, b, c, fma4);
 
-    const auto info = hwy::detail::MakeTypeInfo<T>();
-    const char* target_name = hwy::TargetName(HWY_TARGET);
-    hwy::detail::AssertArrayEqual(info, expected.get(), a, count, target_name,
-                                  __FILE__, __LINE__);
+    AssertArraySimilar(expected.get(), a, count, hwy::TargetName(HWY_TARGET),
+                       __FILE__, __LINE__);
+    // Ensure no out-of-bound writes.
+    for (size_t i = 0; i < misalign_a; ++i) {
+      HWY_ASSERT_EQ(sentinel, pa[i]);
+    }
+    HWY_ASSERT_EQ(sentinel, a[count]);
   }
 };
 
@@ -306,15 +374,13 @@ struct TestReplace {
     if (misalign_b != 0) return;
     if (count == 0) return;
     using T = TFromD<D>;
-    AlignedFreeUniquePtr<T[]> pa = AllocateAligned<T>(misalign_a + count);
+    AlignedFreeUniquePtr<T[]> pa = AllocateAligned<T>(misalign_a + count + 1);
     AlignedFreeUniquePtr<T[]> pb = AllocateAligned<T>(count);
     AlignedFreeUniquePtr<T[]> expected = AllocateAligned<T>(count);
     HWY_ASSERT(pa && pb && expected);
 
-    T* a = pa.get() + misalign_a;
-    for (size_t i = 0; i < count; ++i) {
-      a[i] = Random<T>(rng);
-    }
+    const T sentinel = ConvertScalarTo<T>(-42);
+    T* a = FillRandom(pa, count, misalign_a, sentinel, rng);
 
     std::vector<size_t> positions(AdjustedReps(count));
     for (size_t& pos : positions) {
@@ -333,9 +399,19 @@ struct TestReplace {
 
       Replace(d, a, count, new_t, old_t);
       HWY_ASSERT_ARRAY_EQ(expected.get(), a, count);
+      // Ensure no out-of-bound writes.
+      for (size_t i = 0; i < misalign_a; ++i) {
+        HWY_ASSERT_EQ(sentinel, pa[i]);
+      }
+      HWY_ASSERT_EQ(sentinel, a[count]);
 
       ReplaceIf(d, pb.get(), count, new_t, IfEq<T>(old_t));
       HWY_ASSERT_ARRAY_EQ(expected.get(), pb.get(), count);
+      // Ensure no out-of-bound writes.
+      for (size_t i = 0; i < misalign_a; ++i) {
+        HWY_ASSERT_EQ(sentinel, pa[i]);
+      }
+      HWY_ASSERT_EQ(sentinel, a[count]);
     }
   }
 };
@@ -343,6 +419,10 @@ struct TestReplace {
 void TestAllGenerate() {
   // The test BitCast-s the indices, which does not work for floats.
   ForIntegerTypes(ForPartialVectors<ForeachCountAndMisalign<TestGenerate>>());
+}
+
+void TestAllForeach() {
+  ForAllTypes(ForPartialVectors<ForeachCountAndMisalign<TestForeach>>());
 }
 
 void TestAllTransform() {
@@ -361,20 +441,24 @@ void TestAllReplace() {
   ForFloatTypes(ForPartialVectors<ForeachCountAndMisalign<TestReplace>>());
 }
 
+}  // namespace
 // NOLINTNEXTLINE(google-readability-namespace-comments)
 }  // namespace HWY_NAMESPACE
 }  // namespace hwy
 HWY_AFTER_NAMESPACE();
 
 #if HWY_ONCE
-
 namespace hwy {
+namespace {
 HWY_BEFORE_TEST(TransformTest);
 HWY_EXPORT_AND_TEST_P(TransformTest, TestAllGenerate);
+HWY_EXPORT_AND_TEST_P(TransformTest, TestAllForeach);
 HWY_EXPORT_AND_TEST_P(TransformTest, TestAllTransform);
 HWY_EXPORT_AND_TEST_P(TransformTest, TestAllTransform1);
 HWY_EXPORT_AND_TEST_P(TransformTest, TestAllTransform2);
 HWY_EXPORT_AND_TEST_P(TransformTest, TestAllReplace);
+HWY_AFTER_TEST();
+}  // namespace
 }  // namespace hwy
-
-#endif
+HWY_TEST_MAIN();
+#endif  // HWY_ONCE
