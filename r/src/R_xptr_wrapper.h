@@ -33,6 +33,12 @@ SEXP make_unique_xptr(Args&&... args) {
   return Rcpp::wrap(Rcpp::XPtr<std::unique_ptr<T>>(new std::unique_ptr<T>(new T(std::forward<Args>(args)...))));
 }
 
+// Construct the XPtr wrapper if we already have a unique_ptr object
+template<class T>
+SEXP unique_xptr(std::unique_ptr<T> &&ptr) {
+  return Rcpp::wrap(Rcpp::XPtr<std::unique_ptr<T>>(new std::unique_ptr<T>(std::move(ptr))));
+}
+
 // Take ownership of the unique_ptr from the XPtr
 template<class T>
 std::unique_ptr<T> take_unique_xptr(SEXP &sexp) {
