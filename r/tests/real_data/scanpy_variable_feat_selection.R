@@ -6,8 +6,17 @@
 # option. This file may not be copied, modified, or distributed
 # except according to those terms.
 
-source("test_helpers.R")
-devtools::load_all(config[["path_bpcells"]])
+library("BPCells")
+
+# Set up temp dir in case it's not already set
+create_temp_dir <- function(dir = NULL) {
+  if (is.null(dir)) {
+    dir <- file.path(tempdir(), "lsi_test")
+    if (dir.exists(dir)) unlink(dir, recursive = TRUE)
+    dir.create(dir)
+  }
+  return(dir)
+}
 
 # Compare the feature selection output of BPCells to that of Scanpy.
 # Scanpy technically utilizes the Seurat (Satija et al. 2015) method for feature selection, so we should expect similar results of either pkg. 
