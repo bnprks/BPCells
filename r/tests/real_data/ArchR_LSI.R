@@ -6,9 +6,18 @@
 # option. This file may not be copied, modified, or distributed
 # except according to those terms.
 
-source("test_helpers.R")
-devtools::load_all(config[["path_bpcells"]])
-devtools::load_all(config[["path_archr"]])
+library("BPCells")
+library("ArchR")
+
+# Set up temp dir in case it's not already set
+create_temp_dir <- function(dir = NULL) {
+  if (is.null(dir)) {
+    dir <- file.path(tempdir(), "lsi_test")
+    if (dir.exists(dir)) unlink(dir, recursive = TRUE)
+    dir.create(dir)
+  }
+  return(dir)
+}
 
 #' Perform a dimensionality reduction with tf-idf and SVD (LSI) on a matrix on ArchR and BPCells.
 #' As LSI uses an iterative approach on ArchR, we compare by using a single-iteration private function on ArchR.
