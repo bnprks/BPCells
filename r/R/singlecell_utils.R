@@ -75,8 +75,8 @@ marker_features <- function(mat, groups, method="wilcoxon") {
 #' 
 #' Given a `(features x cells)` matrix, perform LSI to perform tf-idf, z-score normalization, and PCA to create a latent space representation of the matrix of shape `(n_dimensions, ncol(mat))`.
 #' @param mat (IterableMatrix) dimensions features x cells
-#' @param z_score_norm (logical) If `TRUE`, z-score normalize the matrix before PCA.
 #' @param n_dimensions (integer) Number of dimensions to keep during PCA.
+#' @param z_score_norm (logical) If `TRUE`, z-score normalize the matrix before PCA.
 #' @param scale_factor (integer) Scale factor for the tf-idf log transform.
 #' #' @param save_lsi (logical) If `TRUE`, save the SVD attributes for the matrix, as well as the idf normalization vector.
 #' @param threads (integer) Number of threads to use.
@@ -93,7 +93,7 @@ marker_features <- function(mat, groups, method="wilcoxon") {
 #' @export
 lsi <- function(
   mat,
-  z_score_norm = TRUE, n_dimensions = 50L, scale_factor = 1e4,
+  n_dimensions = 50L, z_score_norm = TRUE,  scale_factor = 1e4,
   save_lsi = FALSE,
   threads = 1L
 ) {
@@ -105,13 +105,17 @@ lsi <- function(
   assert_is_wholenumber(threads)
 
   # log(tf-idf) transform
-  npeaks <- colSums(mat) # Finding that sums are non-multithreaded and there's no interface to pass it in, but there is implementation in `ConcatenateMatrix.h`
+  mat_stats <- matrix_stats(mat, row_stats = c("mean"), col_stats = c("mean"))
+  npeaks <- mat_stats$col_stats["mean",] * nrow(mat) 
   tf <- mat %>% multiply_cols(1 / npeaks)
-  idf_ <- ncol(mat) / rowSums(mat)
+  idf_ <- ncol(mat) / (mat_stats$row_stats["mean",] * nrow(mat))
   mat_tfidf <- tf %>% multiply_rows(idf_)
   mat_log_tfidf <- log1p(scale_factor * mat_tfidf)
   # Save to prevent re-calculation of queued operations
-  mat_log_tfidf <- write_matrix_dir(mat_log_tfidf, tempfile("mat_log_tfidf"), compress = FALSE)
+  mat_log_tfidf <- write_matrix_dir(
+    convert_matrix_type(mat_log_tfidf, type = "float"), 
+    tempfile("mat_log_tfidf"), compress = TRUE
+  )
   # Z-score normalization
   if (z_score_norm) {
     cell_peak_stats <- matrix_stats(mat_log_tfidf, col_stats = "variance", threads = threads)$col_stats
@@ -174,12 +178,11 @@ highly_variable_features <- function(
   mat_stats <- matrix_stats(mat, row_stats = c("variance"), threads = threads)
   feature_means <- mat_stats$row_stats["mean", ]
   feature_vars <- mat_stats$row_stats["variance", ]
-  # Give a small value to features with 0 mean, helps with 0 division
-  feature_means[feature_means == 0] <- 1e-12
   # Calculate dispersion, and log normalize
   feature_dispersion <- feature_vars / feature_means
   feature_dispersion[feature_dispersion == 0] <- NA
   feature_dispersion <- log(feature_dispersion)
+  feature_dispersion[feature_means == 0] <- 0
   feature_means <- log1p(feature_means)
   features_df <- data.frame(
     name = names(feature_means),
@@ -193,24 +196,22 @@ highly_variable_features <- function(
     dplyr::mutate(bin = cut(mean, n_bins, labels=FALSE)) %>% 
     dplyr::group_by(bin) %>% 
     dplyr::mutate( 
-      bin_mean = mean(dispersion, na.rm = TRUE), 
-      bin_sd = sd(dispersion, na.rm = TRUE),
-      bin_sd_is_na = is.na(bin_sd), 
-      bin_sd = ifelse(bin_sd_is_na, bin_mean, bin_sd), # Set feats that are in bins with only one feat to have a norm dispersion of 1
-      bin_mean = ifelse(bin_sd_is_na, 0, bin_mean),
-      feature_dispersion_norm = (dispersion - bin_mean) / bin_sd
-    ) %>%
+      feature_dispersion_norm = (dispersion - mean(dispersion)) / sd(dispersion),  
+      feature_dispersion_norm = dplyr::if_else(n() == 1, 1, feature_dispersion_norm) # Set feats that are in bins with only one feat to have a norm dispersion of 1  
+    ) %>%  
     dplyr::ungroup() %>%
     dplyr::select(c(-bin_sd_is_na, -var, -bin_sd, -bin_mean)) %>%
-    dplyr::arrange(desc(feature_dispersion_norm)) %>% 
-    dplyr::slice(1:min(num_feats, nrow(.)))
+    dplyr::slice_max(order_by = feature_dispersion_norm, n = num_feats)
   if (save_feat_selection) {
+    # get rownames that are in features_df$name
+    feats_of_interest <- which(rownames(mat) %in% features_df$name)
     return(list(
-      mat = mat[features_df$name,],
+      mat = mat[feats_of_interest,],
       feature_selection = features_df
     ))
   }
-  return(mat[features_df$name,])
+  return(mat[feats_of_interest,])
+  #return(mat[features_df$name,])
 }
 
                    
