@@ -270,6 +270,7 @@ lsi <- function(
 
   # log(tf-idf) transform
   mat_stats <- matrix_stats(mat, row_stats = c("mean"), col_stats = c("mean"))
+  
   npeaks <- mat_stats$col_stats["mean",] * nrow(mat) 
   tf <- mat %>% multiply_cols(1 / npeaks)
   idf_ <- ncol(mat) / (mat_stats$row_stats["mean",] * nrow(mat))
@@ -360,22 +361,20 @@ highly_variable_features <- function(
     dplyr::mutate(bin = cut(mean, n_bins, labels=FALSE)) %>% 
     dplyr::group_by(bin) %>% 
     dplyr::mutate( 
-      feature_dispersion_norm = (dispersion - mean(dispersion)) / sd(dispersion),  
-      feature_dispersion_norm = dplyr::if_else(n() == 1, 1, feature_dispersion_norm) # Set feats that are in bins with only one feat to have a norm dispersion of 1  
+      feature_dispersion_norm = (dispersion - mean(dispersion)) / sd(dispersion),
+      feature_dispersion_norm = if (dplyr::n() == 1) {1} else {feature_dispersion_norm} # Set feats that are in bins with only one feat to have a norm dispersion of 1  
     ) %>%  
     dplyr::ungroup() %>%
-    dplyr::select(c(-bin_sd_is_na, -var, -bin_sd, -bin_mean)) %>%
-    dplyr::slice_max(order_by = feature_dispersion_norm, n = num_feats)
+    dplyr::slice_max(order_by = feature_dispersion_norm, n = num_feats, with_ties = FALSE)
+  feats_of_interest <- which(rownames(mat) %in% features_df$name) # get rownames to get original sorted order
   if (save_feat_selection) {
     # get rownames that are in features_df$name
-    feats_of_interest <- which(rownames(mat) %in% features_df$name)
     return(list(
       mat = mat[feats_of_interest,],
       feature_selection = features_df
     ))
   }
   return(mat[feats_of_interest,])
-  #return(mat[features_df$name,])
 }
 
                    
