@@ -78,7 +78,7 @@ marker_features <- function(mat, groups, method="wilcoxon") {
 #' @param n_dimensions (integer) Number of dimensions to keep during PCA.
 #' @param z_score_norm (logical) If `TRUE`, z-score normalize the matrix before PCA.
 #' @param scale_factor (integer) Scale factor for the tf-idf log transform.
-#' #' @param save_lsi (logical) If `TRUE`, save the SVD attributes for the matrix, as well as the idf normalization vector.
+#' @param save_lsi (logical) If `TRUE`, save the SVD attributes for the matrix, as well as the idf normalization vector.
 #' @param threads (integer) Number of threads to use.
 #' @return 
 #' - If `save_lsi` is `FALSE`, return a dgCMatrix of shape `(n_dimensions, ncol(mat))`.
@@ -106,10 +106,9 @@ lsi <- function(
 
   # log(tf-idf) transform
   mat_stats <- matrix_stats(mat, row_stats = c("mean"), col_stats = c("mean"))
-  
   npeaks <- mat_stats$col_stats["mean",] * nrow(mat) 
   tf <- mat %>% multiply_cols(1 / npeaks)
-  idf_ <- ncol(mat) / (mat_stats$row_stats["mean",] * nrow(mat))
+  idf_ <- 1 / mat_stats$row_stats["mean",]
   mat_tfidf <- tf %>% multiply_rows(idf_)
   mat_log_tfidf <- log1p(scale_factor * mat_tfidf)
   # Save to prevent re-calculation of queued operations
