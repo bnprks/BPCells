@@ -240,7 +240,8 @@ pseudobulk_matrix <- function(mat, cell_groups, method = "sum", threads = 1L) {
 #' Given a `(features x cells)` matrix, perform LSI to perform tf-idf, z-score normalization, and PCA to create a latent space representation of the matrix of shape `(n_dimensions, ncol(mat))`.
 #' @param mat (IterableMatrix) dimensions features x cells
 #' @param n_dimensions (integer) Number of dimensions to keep during PCA.
-#' @param z_score_norm (logical) If `TRUE`, z-score normalize the matrix before PCA.
+#' @param corr_cutoff (numeric) Numeric filter for the correlation of a PC to the sequencing depth.  If the PC has a correlation that is great or equal to
+#' the corr_cutoff, it will be excluded from the final PCA matrix.
 #' @param scale_factor (integer) Scale factor for the tf-idf log transform.
 #' @param save_lsi (logical) If `TRUE`, save the SVD attributes for the matrix, as well as the idf normalization vector.
 #' @param threads (integer) Number of threads to use.
@@ -248,6 +249,7 @@ pseudobulk_matrix <- function(mat, cell_groups, method = "sum", threads = 1L) {
 #' - If `save_lsi` is `FALSE`, return a dgCMatrix of shape `(n_dimensions, ncol(mat))`.
 #' - If `save_lsi` is `TRUE`, return a list with the following elements:
 #'    - `pca_res`: dgCMatrix of shape `(n_dimensions, ncol(mat))`
+#'    - `unused_pcs`: Integer vector of PCs that were filtered out due to high correlation with sequencing depth
 #'    - `svd_attr`: List of SVD attributes
 #'    - `idf`: Inverse document frequency vector
 #' @details Compute LSI through first doing a log(tf-idf) transform, z-score normalization, then PCA.  Tf-idf implementation is from Stuart & Butler et al. 2019.
@@ -257,7 +259,7 @@ pseudobulk_matrix <- function(mat, cell_groups, method = "sum", threads = 1L) {
 #' @export
 lsi <- function(
   mat,
-  n_dimensions = 50L, z_score_norm = TRUE,  scale_factor = 1e4,
+  n_dimensions = 50L, corr_cutoff = 1, scale_factor = 1e4,
   save_lsi = FALSE,
   threads = 1L
 ) {
@@ -266,12 +268,13 @@ lsi <- function(
   assert_len(n_dimensions, 1)
   assert_greater_than_zero(n_dimensions)
   assert_true(n_dimensions < min(ncol(mat), nrow(mat)))
+  assert_true((corr_cutoff >= 0) && (corr_cutoff <= 1))
   assert_is_wholenumber(threads)
 
   # log(tf-idf) transform
   mat_stats <- matrix_stats(mat, row_stats = c("mean"), col_stats = c("mean"))
-  npeaks <- mat_stats$col_stats["mean",] * nrow(mat) 
-  tf <- mat %>% multiply_cols(1 / npeaks)
+  read_depth <- mat_stats$col_stats["mean",] * nrow(mat) 
+  tf <- mat %>% multiply_cols(1 / read_depth)
   idf_ <- 1 / mat_stats$row_stats["mean",]
   mat_tfidf <- tf %>% multiply_rows(idf_)
   mat_log_tfidf <- log1p(scale_factor * mat_tfidf)
@@ -280,22 +283,24 @@ lsi <- function(
     convert_matrix_type(mat_log_tfidf, type = "float"), 
     tempfile("mat_log_tfidf"), compress = TRUE
   )
-  # Z-score normalization
-  if (z_score_norm) {
-    cell_peak_stats <- matrix_stats(mat_log_tfidf, col_stats = "variance", threads = threads)$col_stats
-    cell_means <- cell_peak_stats["mean",]
-    cell_vars <- cell_peak_stats["variance",]
-    mat_log_tfidf <- mat_log_tfidf %>%
-      add_cols(-cell_means) %>%
-      multiply_cols(1 / cell_vars)
-  }
   # Run pca
   svd_attr_ <- svds(mat_log_tfidf, k = n_dimensions, threads = threads)
   pca_res <- t(svd_attr_$u) %*% mat_log_tfidf
+  
+  # Filter out PCs that are highly correlated with sequencing depth
+  pca_corrs <- abs(cor(read_depth, t(pca_res)))
+  pca_feats_to_keep <- which(pca_corrs < corr_cutoff)
+  if (length(pca_feats_to_keep) != n_dimensions) {
+    # not sure if this is the route we want to take.  Should we just leave the PCs in,
+    # and not use them in downstream analysis?
+    pca_res <- t(svd_attr_$u[, pca_feats_to_keep]) %*% mat_log_tfidf
+  }
+
   if(save_lsi) {
     return(list(
       pca_res = pca_res,
       svd_attr = svd_attr_,
+      unused_pcs <- which(pca_corrs >= corr_cutoff),
       idf = idf_
     ))
   }
