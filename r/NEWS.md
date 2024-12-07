@@ -22,6 +22,8 @@ Contributions welcome :)
 - Add `rowQuantiles()` and `colQuantiles()` functions, which return the quantiles of each row/column of a matrix. Currently `rowQuantiles()` only works on row-major matrices and `colQuantiles()` only works on col-major matrices.
   If `matrixStats` or `MatrixGenerics` packages are installed, `BPCells::colQuantiles()` will fall back to their implementations for non-BPCells objects. (pull request #128)
 - Add `pseudobulk_matrix()` which allows pseudobulk aggregation by `sum` or `mean` and calculation of per-pseudobulk `variance` and `nonzero` statistics for each gene (pull request #128)
+- Add `lsi()` function to perform latent semantic indexing on a matrix (pull request #156).
+- Add `highly_variable_features()` function to identify highly variable features in a matrix (pull request #156).
 
 ## Improvements
 - `trackplot_loop()` now accepts discrete color scales
