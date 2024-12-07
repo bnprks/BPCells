@@ -55,7 +55,6 @@ test_lsi_similarity_to_archr <- function(dir = NULL) {
     # Do not use z-score normalization, as this isn't done with ArchR
     lsi_bpcells <- lsi(
         test_mat %>% as("dgCMatrix") %>% as("IterableMatrix"), 
-        z_score_norm = FALSE,
         n_dimensions = 20,
         save_lsi = TRUE
     )
