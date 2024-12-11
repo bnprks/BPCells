@@ -2187,6 +2187,29 @@ write_matrix_anndata_hdf5 <- function(mat, path, group = "X", buffer_size = 1638
   open_matrix_anndata_hdf5(path, group, buffer_size)
 }
 
+#' @rdname open_matrix_anndata_hdf5
+#' @inheritParams write_matrix_anndata_hdf5
+#' 
+#' @param dataset The dataset within the hdf5 file to write the matrix to. Used for `write_matrix_anndata_hdf5_dense`
+#' 
+#' @export
+write_matrix_anndata_hdf5_dense <- function(mat, path, dataset = "X", buffer_size = 16384L, chunk_size = 1024L, gzip_level = 0L) {
+  assert_is(mat, "IterableMatrix")
+  assert_is(path, "character")
+  mat <- t(mat)
+  write_matrix_anndata_hdf5_dense_cpp(
+    iterate_matrix(mat),
+    path,
+    dataset,
+    matrix_type(mat),
+    mat@transpose,
+    buffer_size,
+    chunk_size,
+    gzip_level
+  )
+  open_matrix_anndata_hdf5(path, dataset, buffer_size)
+}
+
 #' Import MatrixMarket files
 #'
 #' Read a sparse matrix from a MatrixMarket file. This is a text-based format used by 
