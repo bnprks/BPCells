@@ -164,7 +164,7 @@ lsi <- function(
 #'  3. Bin the features by their means, and normalize dispersion within each bin
 #' @export
 highly_variable_features <- function(
-  mat, num_feats, n_bins = 20,
+  mat, num_feats = 25000, n_bins = 20,
   save_feat_selection = FALSE,
   threads = 1L
 ) {
@@ -217,6 +217,144 @@ highly_variable_features <- function(
   return(mat[feats_of_interest,])
 }
 
+#' Get the most variable features within a matrix, across clusters
+#' @param clusters (factor) Vector of cluster assignments for each cell. Length must be `ncol(mat)`.
+#' @param num_feats (integer) Number of features to return.  If the number is higher than the number of features in the matrix, 
+#' all features will be returned.
+#' @param log_normalize (logical) If `TRUE`, log normalize the matrix pseudobulked matrix prior to variance calculation
+#' @param scale_factor (numeric) Scale factor for log normalization.  Unused if `log_normalize` is `FALSE`.
+#' @param return_subsetted_matrix (logical) If `TRUE`, return the subsetted matrix of the most variable features.
+#' @returns
+#' - If `return_subsetted_matrix` is `FALSE`, return a dataframe with the following columns, sorted descending by variance:
+#'   - `names`: Feature name
+#'   - `score`: Variance of the feature
+#'   - `highly_variable`: Logical vector of whether the feature is highly variable
+#' - Else, return the original matrix subsetted to the most variable features of shape `(num_variable_features, ncol(mat))`.
+#' @inheritParams highly_variable_features
+#' @details 
+#' Calculate using the following process:
+#'  1. Pseudobulk cells by cluster
+#'  2. Normalize by term frequency for each pseudobulk
+#'  3. Do an optional log normalization of the pseudobulk matrix
+#'  4. Find `num_feats` features with the highest variance across clusters
+highly_variable_features_by_cluster_variance <- function(
+  mat, clusters, num_feats = 25000, 
+  log_normalize = TRUE, scale_factor = 1e4, return_subsetted_matrix = FALSE,
+  threads = 1L, verbose = TRUE
+) {
+  assert_is(mat, "IterableMatrix")
+  assert_greater_than_zero(num_feats)
+  assert_is_wholenumber(num_feats)
+  assert_len(num_feats, 1)
+  assert_true(num_feats <= nrow(mat))
+  assert_is(clusters, c("factor", "character", "numeric"))
+  assert_true(length(clusters) == ncol(mat))
+  assert_true(is.logical(log_normalize))
+  if(log_normalize) assert_greater_than_zero(scale_factor)
+  assert_true(is.logical(return_subsetted_matrix))
+  assert_true(is.logical(verbose))
+
+  # Pseudobulk the matrix by cluster
+  group_mat <- pseudobulk_matrix(mat, clusters, method = "sum", threads = threads)
+  group_mat_normalized <- t(t(group_mat) / colSums(group_mat))
+  
+  if (log_normalize) group_mat_normalized <- log1p(group_mat_normalized * scale_factor)
+  features_df <- tibble::tibble(
+    names = rownames(mat),
+    score = rowVars(group_mat_normalized)
+  ) %>% # Give the first num_feats features a highly_variable of TRUE
+    dplyr::arrange(desc(score)) %>% 
+    dplyr::mutate(highly_variable = dplyr::row_number() <= num_feats)
+  if (return_subsetted_matrix) {
+    # Do not alter feature order from original
+    filtered_df <- features_df %>% dplyr::filter(highly_variable)
+    feats_of_interest <- which(rownames(mat) %in% filtered_df$name)
+    return(mat[feats_of_interest,])
+  }
+  return(features_df)
+}
+
+#' Get the top features from a matrix, based on the sum of each feature.
+#' @param num_feats Number of features to return.  If the number is higher than the number of features in the matrix,
+#' all features will be returned.
+#' @inheritParams highly_variable_features
+#' @return Integer vector of indices of the top features in mat.
+#' @export
+top_features <- function(mat, num_feats, threads = 1L) {
+  assert_is(mat, "IterableMatrix")
+  assert_is_wholenumber(num_feats)
+  assert_greater_than_zero(num_feats)
+  assert_is_wholenumber(threads)
+  assert_greater_than_zero(threads)
+  assert_true(num_feats <= nrow(mat))
+
+  # get the sum of each feature, binarized
+  feature_sums <- matrix_stats(mat, row_stats = "nonzero", threads = threads)$row_stats["nonzero",]
+
+  # get the top features
+  top_features <- order(feature_sums, decreasing = TRUE)[1:num_feats]
+  return(top_features)
+}
+
+#' Run iterative LSI on a matrix.
+#' 
+#' This function will compute an iterative LSI dimensionality reduction on an ArchRProject.
+#' @param mat The name of the data matrix to retrieve from the ArrowFiles associated with the `ArchRProject`. Valid options are
+#' "TileMatrix" or "PeakMatrix".
+#' @param n_iterations The number of LSI iterations to perform.
+#' @param first_feature_selection_method First iteration selection method for features to use for LSI. Either "Top" for the top accessible/average or "Var" for the top variable features. 
+#' "Top" should be used for all scATAC-seq data (binary) while "Var" should be used for all scRNA/other-seq data types (non-binary).
+#' @param first_feature_selection_args Arguments to pass to the first feature selection method. If using "Top", refer to `top_features()`. If using "Var", refer to `highly_variable_features()`.
+#' @param var_feature_selection_args Arguments to pass to the variable feature selection method. Refer to `highly_variable_features()`.
+#' @param lsi_args Arguments to pass to the LSI function. Refer to `lsi()`.
+#' @param cluster_method Method to use for clustering. Current options are "leiden", "louvain", and "seurat".
+#' @param clustering_args Arguments to pass to the clustering function. Refer to `cluster_graph_leiden()`, `cluster_graph_louvain()`, or `cluster_graph_seurat()`.
+#' @return A simple list of LSI results and features with the following format:
+#' - `pca_res`: dgCMatrix of shape `(n_dimensions, ncol(mat))`
+#' 
+#' @seealso `lsi()`, `top_features()`, `highly_variable_features()`
+#' @inheritParams lsi
+iterative_lsi <- function(
+    mat, 
+    n_iterations = 2,
+    first_feature_selection_method = c("Top", "Var"),
+    first_feature_selection_args = list(),
+    var_feature_selection_args = list(),
+    lsi_args = list(),
+    cluster_method = c("leiden", "louvain", "seurat"),
+    clustering_args = list(),
+    saveIterations, threads = 1L
+) 
+  assert_is(mat, "IterableMatrix")
+  assert_true(n_iterations > 0)
+  assert_is_wholenumber(n_iterations)
+  assert_is(firstSelection, "character")
+  assert_is(threads, "integer")
+
+  cluster_func <- get(sprintf("cluster_graph_%s", cluster_method))
+  lsi_args <- c(lsi_args, mat = mat, threads = threads)
+  clustering_args <- c(clustering_args, data = mat, threads = threads)
+  var_feature_selection_args <- c(var_feature_selection_args, mat = mat, threads = threads)
+  for (i in seq_len(iterations)) {
+    # For the first iteration, we need to select the features used by LSI to create the first dim reduction
+    if ((i == 1)) {
+      
+      features <- ifelse(
+        tolower(firstSelection) == "top", 
+        do.call(top_features, first_feature_selection_args),
+        do.call(highly_variable_features, first_feature_selection_args)
+      )
+    }
+    # Perform LSI
+    pca_res <- do.call(lsi, lsi_args)
+    if (n_iterations == 1) {
+      return(pca_res)
+    }
+    # Every feature selection, if done iteratively, will be based on variable feature selection based off of clustering.
+    # Cluster LSI
+    # Placeholder here for now, just to check if everything works
+    clusts <- mat %>% knn_hnsw(threads = threads) %>% do.call(cluster_func, clustering_args)
+  }
                    
 #' Aggregate counts matrices by cell group or feature.
 #'
