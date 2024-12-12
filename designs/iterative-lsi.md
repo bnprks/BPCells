@@ -28,21 +28,7 @@ Is self explanatory, and currently used in the first iteration of ArchR.  Uses a
 #'   - `score`: Total accessibility of each feature
 #'   - `highly_variable`: Logical vector of whether the feature is highly variable
 #' @export
-variable_features_by_top_accessibility <- function(mat, num_feats, threads = 1L) {
-  assert_is(mat, "IterableMatrix")
-  assert_is_wholenumber(num_feats)
-  assert_greater_than_zero(num_feats)
-  assert_is_wholenumber(threads)
-  assert_greater_than_zero(threads)
-  assert_true(num_feats <= nrow(mat))
-
-  # get the sum of each feature, binarized
-  feature_sums <- matrix_stats(mat, row_stats = "nonzero", threads = threads)$row_stats["nonzero",]
-
-  # get the top features
-  top_features <- order(feature_sums, decreasing = TRUE)[1:num_feats]
-  return(top_features)
-}
+variable_features_by_top_accessibility <- function(mat, num_feats, threads = 1L)
 ```
 
 
