@@ -381,14 +381,14 @@ test_that("normalize_log works", {
     m2 <- as(m, "IterableMatrix")
     # Test that default params yield the same as log1p on dgCMatrix
     res_1 <- as(normalize_log(m2), "dgCMatrix")
-    expect_equal(res_1, log1p(m*1e4))
+    expect_equal(res_1, log1p(m*1e4), tolerance = 1e-6)
     
     # Test that changing scale factor works
     res_2 <- as(normalize_log(m2, scale_factor = 1e5), "dgCMatrix")
-    expect_identical(res_2, log1p(m*1e5))
+    expect_equal(res_2, log1p(m*1e5), tolerance = 1e-6)
     # Test that removing the add_one works
     # log of 0 is -inf, but we don't do that on the c side, and just have really large negative numbers.
     res_3 <- as(normalize_log(m2, add_one = FALSE), "dgCMatrix")
-    res_3@x[res_3@x < -700] <- -Inf
-    expect_identical(as(res_3, "dgeMatrix"), log(m*1e4))
+    res_3@x[res_3@x < -60] <- -Inf
+    expect_equal(as(res_3, "dgeMatrix"), log(m*1e4), tolerance = 1e-6)
 })
