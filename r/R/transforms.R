@@ -923,3 +923,57 @@ regress_out <- function(mat, latent_data, prediction_axis = c("row", "col")) {
     vars_to_regress = vars_to_regress
   )
 }
+
+#################
+# Normalizations
+#################
+
+#' Normalize a matrix using log normalization
+#' @param mat (IterableMatrix) Matrix to normalize
+#' @param scale_factor (numeric) Scale factor to multiply matrix by for log normalization
+#' @param add_one (logical) Add one to the matrix before log normalization
+#' @returns log normalized matrix.
+#' @export
+normalize_log <- function(mat, scale_factor = 1e4, add_one = TRUE) {
+  assert_is(mat, "IterableMatrix")
+  assert_is_numeric(scale_factor)
+  assert_true(is.logical(add_one))
+  assert_greater_than_zero(scale_factor)
+  mat <- mat * scale_factor
+  if (!add_one) mat <- mat - 1 
+  return(log1p(mat))
+}
+
+
+#' Normalize a `(features x cells)`` matrix using term frequency-inverse document frequency
+#' @param mat (IterableMatrix) to normalize
+#' @param feature_means (numeric) Means of the features to normalize by.  If no names are provided, then 
+#' each numeric value is assumed to correspond to the feature mean for the corresponding row of the matrix.
+#' Else, map each feature name to its mean value.
+#' @returns tf-idf normalized matrix.
+#' @export
+normalize_tfidf <- function(mat, feature_means = NULL, threads = 1L) {
+  assert_is(mat, "IterableMatrix")
+  assert_is_wholenumber(threads)
+  # If feature means are passed in, only need to calculate term frequency
+  if (is.null(feature_means)) {
+    mat_stats <- matrix_stats(mat, row_stats = c("mean"), col_stats = c("mean"))
+    feature_means <- mat_stats$row_stats["mean", ]
+    read_depth <- mat_stats$col_stats["mean", ] * nrow(mat)
+  } else {
+    assert_is_numeric(feature_means)
+    if (!is.null(names(feature_means)) && !is.null(rownames(mat))) {
+      # Make sure every name in feature means exists in rownames(mat)
+      # In the case there is a length mismatch but the feature names all exist in feature_means
+      # will not error out
+      assert_true(all(rownames(mat) %in% names(feature_means)))
+      feature_means <- feature_means[rownames(mat)]
+    } else {
+      assert_len(feature_means, nrow(mat))
+    }
+    read_depth <- matrix_stats(mat, col_stats = c("mean"), threads = threads)$col_stats["mean",] * nrow(mat)
+  }
+  tf <- mat %>% multiply_cols(1 / read_depth)
+  idf <- 1 / feature_means
+  return(tf %>% multiply_rows(idf))
+}

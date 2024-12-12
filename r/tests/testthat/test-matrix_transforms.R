@@ -346,3 +346,49 @@ test_that("linear regression works", {
     expect_equal(as(m1, "matrix"), ans)
     expect_equal(as(m1t, "matrix"), ans)
 })
+
+test_that("tf-idf normalization works", {
+    m <- generate_sparse_matrix(5, 5)
+    rownames(m) <- paste0("row", seq_len(nrow(m)))
+    rev_rownames <- rev(rownames(m))
+    # Create tf-idf normalization for dgCMatrix
+    res_dgc <- diag(1/rowMeans(m)) %*% (m %*% diag(1/colSums(m))) %>% as("dgCMatrix")
+    
+    rownames(res_dgc) <- rownames(m)
+    m2 <- as(m, "IterableMatrix")
+    # Check that we can pass in row means as a (named) vector
+    row_means <- matrix_stats(m2, row_stats = c("mean"))$row_stats["mean",]
+    # Test that row means ordering does not matter as long as names exist
+    row_means_shuffled <- row_means[sample(1:length(row_means))]
+    # Test that row means can have an extra element as long as all rownames are in the vector
+    row_means_plus_one <- c(row_means, row6 = 1)
+    
+
+    res <- normalize_tfidf(m2)
+    expect_equal(res %>% as("dgCMatrix"), res_dgc)
+    res_with_row_means <- normalize_tfidf(m2, feature_means = row_means)
+    expect_identical(res, res_with_row_means)
+
+    res_with_shuffled_row_means <- normalize_tfidf(m2, feature_means = row_means_shuffled)
+    expect_identical(res_with_row_means, res_with_shuffled_row_means, res)
+
+    res_with_row_means_with_extra_element <- normalize_tfidf(m2, feature_means = row_means_plus_one)
+    expect_identical(res, res_with_row_means_with_extra_element)
+})
+
+test_that("normalize_log works", {
+    m <- generate_sparse_matrix(5, 5)
+    m2 <- as(m, "IterableMatrix")
+    # Test that default params yield the same as log1p on dgCMatrix
+    res_1 <- as(normalize_log(m2), "dgCMatrix")
+    expect_equal(res_1, log1p(m*1e4))
+    
+    # Test that changing scale factor works
+    res_2 <- as(normalize_log(m2, scale_factor = 1e5), "dgCMatrix")
+    expect_identical(res_2, log1p(m*1e5))
+    # Test that removing the add_one works
+    # log of 0 is -inf, but we don't do that on the c side, and just have really large negative numbers.
+    res_3 <- as(normalize_log(m2, add_one = FALSE), "dgCMatrix")
+    res_3@x[res_3@x < -700] <- -Inf
+    expect_identical(as(res_3, "dgeMatrix"), log(m*1e4))
+})
