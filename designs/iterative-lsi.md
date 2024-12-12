@@ -34,7 +34,7 @@ normalize_log <- function(mat, scale_factor = 1e4)
 ```R
 #' Normalize a matrix using term frequency-inverse document frequency
 #' @param mat (IterableMatrix) Matrix to normalize
-#' @param idf (numeric) Inverse document frequencies.  If `NULL`, calculate the inverse document frequencies.
+#' @param feature_means (numeric) Means of the features to normalize by
 #' @returns tf-idf normalized matrix.
 #' @export
 normalize_tfidf <- function(mat, feature_means = NULL)
@@ -62,7 +62,7 @@ mat[feats_of_interest,]
 Is self explanatory, and currently used in the first iteration of ArchR.  Uses acessibility scores via sum of non-zeros for each feature.
 
 ```R
-#' Get the top features from a matrix, based on the sum of each feature.
+#' Get the top features from a matrix, based on the mean of each feature.
 #' @param num_feats Number of features to deem as highly accessible.  If the number is higher than the number of features in the matrix,
 #' all features will be returned.
 #' @inheritParams highly_variable_features
@@ -81,7 +81,7 @@ select_features_by_mean <- function(mat, num_feats, threads = 1L)
 #' Get the most variable features within a matrix.
 #' @param num_feats (integer) Number of features to return.  If the number is higher than the number of features in the matrix, 
 #' all features will be returned.
-#' @param normalize (function) Normalize matrix pseudobulked matrix using a given function.
+#' @param normalize (function) Normalize matrix using a given function.
 #' @returns
 #' Return a dataframe with the following columns, sorted descending by variance:
 #'   - `names`: Feature name
