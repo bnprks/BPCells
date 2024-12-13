@@ -163,7 +163,11 @@ lsi <- function(
 #'  2. Log normalize dispersion and mean
 #'  3. Bin the features by their means, and normalize dispersion within each bin
 #' @export
+<<<<<<< Updated upstream
 highly_variable_features <- function(
+=======
+highly_variable_features_by_bin_variance <- function(
+>>>>>>> Stashed changes
   mat, num_feats = 25000, n_bins = 20,
   save_feat_selection = FALSE,
   threads = 1L
@@ -324,7 +328,11 @@ iterative_lsi <- function(
     cluster_method = c("leiden", "louvain", "seurat"),
     clustering_args = list(),
     saveIterations, threads = 1L
+<<<<<<< Updated upstream
 ) 
+=======
+) {
+>>>>>>> Stashed changes
   assert_is(mat, "IterableMatrix")
   assert_true(n_iterations > 0)
   assert_is_wholenumber(n_iterations)
@@ -355,7 +363,11 @@ iterative_lsi <- function(
     # Placeholder here for now, just to check if everything works
     clusts <- mat %>% knn_hnsw(threads = threads) %>% do.call(cluster_func, clustering_args)
   }
+<<<<<<< Updated upstream
                    
+=======
+}                
+>>>>>>> Stashed changes
 #' Aggregate counts matrices by cell group or feature.
 #'
 #' Given a `(features x cells)` matrix, group cells by `cell_groups` and aggregate counts by `method` for each
