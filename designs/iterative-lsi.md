@@ -118,7 +118,7 @@ select_features_by_variance <- function(
 #'  1. Do an optional log normalization of the pseudobulk matrix
 #'  2. Find the dispersion (variance/mean) of each feature
 #'  3. Find `num_feats` features with the highest variance across clusters
-select_features_by_variance <- function(
+select_features_by_dispersion <- function(
   mat, num_feats = 25000, 
   normalize = normalize_log, return_subsetted_matrix = FALSE,
   threads = 1L, verbose = TRUE
