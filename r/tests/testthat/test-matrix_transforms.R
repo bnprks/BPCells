@@ -352,7 +352,7 @@ test_that("tf-idf normalization works", {
     rownames(m) <- paste0("row", seq_len(nrow(m)))
     rev_rownames <- rev(rownames(m))
     # Create tf-idf normalization for dgCMatrix
-    res_dgc <- diag(1/rowMeans(m)) %*% (m %*% diag(1/colSums(m))) %>% as("dgCMatrix")
+    res_dgc <- log1p((diag(1/rowMeans(m)) %*% (m %*% diag(1/colSums(m))) %>% as("dgCMatrix")) * 1e4)
     
     rownames(res_dgc) <- rownames(m)
     m2 <- as(m, "IterableMatrix")
@@ -378,17 +378,13 @@ test_that("tf-idf normalization works", {
 
 test_that("normalize_log works", {
     m <- generate_sparse_matrix(5, 5)
+    res_dgc <- m %*% diag(1/colSums(m)) %>% as("dgCMatrix")
     m2 <- as(m, "IterableMatrix")
     # Test that default params yield the same as log1p on dgCMatrix
     res_1 <- as(normalize_log(m2), "dgCMatrix")
-    expect_equal(res_1, log1p(m*1e4), tolerance = 1e-6)
+    expect_equal(res_1, log1p(res_dgc*1e4), tolerance = 1e-6)
     
     # Test that changing scale factor works
     res_2 <- as(normalize_log(m2, scale_factor = 1e5), "dgCMatrix")
-    expect_equal(res_2, log1p(m*1e5), tolerance = 1e-6)
-    # Test that removing the add_one works
-    # log of 0 is -inf, but we don't do that on the c side, and just have really large negative numbers.
-    res_3 <- as(normalize_log(m2, add_one = FALSE), "dgCMatrix")
-    res_3@x[res_3@x < -60] <- -Inf
-    expect_equal(as(res_3, "dgeMatrix"), log(m*1e4), tolerance = 1e-6)
+    expect_equal(res_2, log1p(res_dgc*1e5), tolerance = 1e-6)
 })

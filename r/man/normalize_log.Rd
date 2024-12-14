@@ -2,20 +2,22 @@
 % Please edit documentation in R/transforms.R
 \name{normalize_log}
 \alias{normalize_log}
-\title{Normalize a matrix using log normalization}
+\title{Normalize a \verb{(features x cells)} matrix using log normalization.}
 \usage{
-normalize_log(mat, scale_factor = 10000, add_one = TRUE)
+normalize_log(mat, scale_factor = 10000, add_one = TRUE, threads = 1L)
 }
 \arguments{
-\item{mat}{(IterableMatrix) Matrix to normalize}
+\item{mat}{(IterableMatrix) Matrix to normalize.}
 
-\item{scale_factor}{(numeric) Scale factor to multiply matrix by for log normalization}
+\item{scale_factor}{(numeric) Scale factor to multiply matrix by for log normalization.}
 
-\item{add_one}{(logical) Add one to the matrix before log normalization}
+\item{threads}{(integer) Number of threads to use.s}
 }
 \value{
-log normalized matrix.
+log normalized matrix.  For each element \eqn{x_{ij}} in matrix \eqn{X} with \eqn{i} features and \eqn{j} cells,
+the log normalization of that element, \eqn{\tilde{x}_{ij}} is calculated as:
+\eqn{\tilde{x}_{ij} = \log(\frac{x_{ij} \cdot \text{scaleFactor}}{\text{colSum}_j} + 1)}
 }
 \description{
-Normalize a matrix using log normalization
+Normalize a \verb{(features x cells)} matrix using log normalization.
 }

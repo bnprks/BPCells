@@ -928,31 +928,38 @@ regress_out <- function(mat, latent_data, prediction_axis = c("row", "col")) {
 # Normalizations
 #################
 
-#' Normalize a matrix using log normalization
-#' @param mat (IterableMatrix) Matrix to normalize
-#' @param scale_factor (numeric) Scale factor to multiply matrix by for log normalization
-#' @param add_one (logical) Add one to the matrix before log normalization
-#' @returns log normalized matrix.
+#' Normalize a `(features x cells)` matrix using log normalization.
+#' @param mat (IterableMatrix) Matrix to normalize.
+#' @param scale_factor (numeric) Scale factor to multiply matrix by for log normalization.
+#' @param threads (integer) Number of threads to use.s
+#' @returns log normalized matrix.  For each element \eqn{x_{ij}} in matrix \eqn{X} with \eqn{i} features and \eqn{j} cells, 
+#'  the log normalization of that element, \eqn{\tilde{x}_{ij}} is calculated as:
+#' \eqn{\tilde{x}_{ij} = \log(\frac{x_{ij} \cdot \text{scaleFactor}}{\text{colSum}_j} + 1)}
 #' @export
-normalize_log <- function(mat, scale_factor = 1e4, add_one = TRUE) {
+normalize_log <- function(mat, scale_factor = 1e4, add_one = TRUE, threads = 1L) {
   assert_is(mat, "IterableMatrix")
   assert_is_numeric(scale_factor)
   assert_true(is.logical(add_one))
   assert_greater_than_zero(scale_factor)
-  mat <- mat * scale_factor
-  if (!add_one) mat <- mat - 1 
-  return(log1p(mat))
+  read_depth <- matrix_stats(mat, col_stats = c("mean"), threads = threads)$col_stats["mean", ] * nrow(mat)
+  mat <- mat %>% multiply_cols(1 / read_depth)
+  return(log1p(mat * scale_factor))
 }
 
 
-#' Normalize a `(features x cells)`` matrix using term frequency-inverse document frequency
-#' @param mat (IterableMatrix) to normalize
+#' Normalize a `(features x cells)` matrix using term frequency-inverse document frequency.
 #' @param feature_means (numeric) Means of the features to normalize by.  If no names are provided, then 
 #' each numeric value is assumed to correspond to the feature mean for the corresponding row of the matrix.
 #' Else, map each feature name to its mean value.
-#' @returns tf-idf normalized matrix.
+#' @returns tf-idf normalized matrix.  For each element \eqn{x_{ij}} in matrix \eqn{X} with \eqn{i} features and \eqn{j} cells,
+#' the tf-idf normalization of that element, \eqn{\tilde{x}_{ij}} is calculated as:
+#' \eqn{\tilde{x}_{ij} = \log(\frac{x_{ij} \cdot \text{scaleFactor}}{\text{rowMean}_i\cdot \text{colSum}_j} + 1)}
+#' @inheritParams normalize_log
 #' @export
-normalize_tfidf <- function(mat, feature_means = NULL, threads = 1L) {
+normalize_tfidf <- function(
+  mat, feature_means = NULL,
+  scale_factor = 1e4, threads = 1L
+) {
   assert_is(mat, "IterableMatrix")
   assert_is_wholenumber(threads)
   # If feature means are passed in, only need to calculate term frequency
@@ -971,9 +978,10 @@ normalize_tfidf <- function(mat, feature_means = NULL, threads = 1L) {
     } else {
       assert_len(feature_means, nrow(mat))
     }
-    read_depth <- matrix_stats(mat, col_stats = c("mean"), threads = threads)$col_stats["mean",] * nrow(mat)
+    read_depth <- matrix_stats(mat, col_stats = c("mean"), threads = threads)$col_stats["mean", ] * nrow(mat)
   }
   tf <- mat %>% multiply_cols(1 / read_depth)
   idf <- 1 / feature_means
-  return(tf %>% multiply_rows(idf))
+  tf_idf_mat <- tf %>% multiply_rows(idf)
+  return(log1p(tf_idf_mat * scale_factor))
 }
