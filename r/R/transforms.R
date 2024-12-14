@@ -936,10 +936,9 @@ regress_out <- function(mat, latent_data, prediction_axis = c("row", "col")) {
 #'  the log normalization of that element, \eqn{\tilde{x}_{ij}} is calculated as:
 #' \eqn{\tilde{x}_{ij} = \log(\frac{x_{ij} \cdot \text{scaleFactor}}{\text{colSum}_j} + 1)}
 #' @export
-normalize_log <- function(mat, scale_factor = 1e4, add_one = TRUE, threads = 1L) {
+normalize_log <- function(mat, scale_factor = 1e4, threads = 1L) {
   assert_is(mat, "IterableMatrix")
   assert_is_numeric(scale_factor)
-  assert_true(is.logical(add_one))
   assert_greater_than_zero(scale_factor)
   read_depth <- matrix_stats(mat, col_stats = c("mean"), threads = threads)$col_stats["mean", ] * nrow(mat)
   mat <- mat %>% multiply_cols(1 / read_depth)

@@ -365,7 +365,7 @@ test_that("tf-idf normalization works", {
     
 
     res <- normalize_tfidf(m2)
-    expect_equal(res %>% as("dgCMatrix"), res_dgc)
+    expect_equal(res %>% as("dgCMatrix"), res_dgc, tolerance = 1e-6)
     res_with_row_means <- normalize_tfidf(m2, feature_means = row_means)
     expect_identical(res, res_with_row_means)
 

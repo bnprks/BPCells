@@ -4,7 +4,7 @@
 \alias{normalize_log}
 \title{Normalize a \verb{(features x cells)} matrix using log normalization.}
 \usage{
-normalize_log(mat, scale_factor = 10000, add_one = TRUE, threads = 1L)
+normalize_log(mat, scale_factor = 10000, threads = 1L)
 }
 \arguments{
 \item{mat}{(IterableMatrix) Matrix to normalize.}
