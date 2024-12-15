@@ -23,6 +23,7 @@ Contributions welcome :)
   If `matrixStats` or `MatrixGenerics` packages are installed, `BPCells::colQuantiles()` will fall back to their implementations for non-BPCells objects. (pull request #128)
 - Add `pseudobulk_matrix()` which allows pseudobulk aggregation by `sum` or `mean` and calculation of per-pseudobulk `variance` and `nonzero` statistics for each gene (pull request #128)
 - Add functions `normalize_tfidf()` and `normalize_log()`, which allow for easy normalization of iterable matrices using TF-IDF or log1p(pull request #168)
+- Add feature selection functions `select_features_by_{variance,dispersion,mean}()`, with parameterization for normalization steps, and number of variable features (pull request #169)
 
 ## Improvements
 - `trackplot_loop()` now accepts discrete color scales
