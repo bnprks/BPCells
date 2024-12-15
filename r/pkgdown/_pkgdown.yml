@@ -133,6 +133,9 @@ reference:
   - regress_out
   - normalize_log
   - normalize_tfidf
+  - select_features_by_variance
+  - select_features_by_dispersion
+  - select_features_by_mean
   - IterableMatrix-methods
   - pseudobulk_matrix
 

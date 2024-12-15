@@ -6,6 +6,118 @@
 # option. This file may not be copied, modified, or distributed
 # except according to those terms.
 
+
+#################
+# Feature selection
+#################
+
+#' Get the most variable features within a matrix.
+#' @param mat (IterableMatrix) dimensions features x cells
+#' @param num_feats (integer) Number of features to return.  If the number is higher than the number of features in the matrix, 
+#' all features will be returned.
+#' @param normalize (function) Normalize matrix using a given function. If `NULL`, no normalization is performed.
+#' @param threads (integer) Number of threads to use.
+#' @returns
+#' Return a dataframe with the following columns, sorted descending by variance:
+#' - `names`: Feature name.
+#' - `score`: Variance of the feature.
+#' - `highly_variable`: Logical vector of whether the feature is highly variable.
+#' @details 
+#' Calculate using the following process:
+#'  1. Perform an optional term frequency + log normalization, for each feature.
+#'  2. Find `num_feats` features with the highest variance across clusters.
+#' @export
+select_features_by_variance <- function(
+  mat, num_feats = 25000, 
+  normalize = normalize_log,
+  threads = 1L
+) {
+  assert_is(mat, "IterableMatrix")
+  assert_greater_than_zero(num_feats)
+  assert_is_wholenumber(num_feats)
+  assert_len(num_feats, 1)
+  assert_is(num_feats, "numeric")
+  num_feats <- min(max(num_feats, 0), nrow(mat))
+
+  if (!is.null(normalize)) mat <- normalize(mat, threads = threads)
+  features_df <- tibble::tibble(
+    names = rownames(mat),
+    score = matrix_stats(mat, row_stats = "variance", threads = threads)$row_stats["variance",]
+  ) %>% 
+    dplyr::arrange(desc(score)) %>% 
+    dplyr::mutate(highly_variable = dplyr::row_number() <= num_feats)
+  return(features_df)
+}
+
+
+#' Get the features with the highest dispersion within a matrix.
+#' @returns
+#' Return a dataframe with the following columns, sorted descending by dispersion:
+#'   - `names`: Feature name.
+#'   - `score`: Variance of the feature.
+#'   - `highly_variable`: Logical vector of whether the feature is highly variable.
+#' @inheritParams select_features_by_variance
+#' @details 
+#' Calculate using the following process:
+#'  1. Perform an optional term frequency + log normalization, for each feature.
+#'  2. Find the dispersion (variance/mean) of each feature.
+#'  3. Find `num_feats` features with the highest dispersion.
+select_features_by_dispersion <- function(
+  mat, num_feats = 25000, 
+  normalize = normalize_log,
+  threads = 1L
+) {
+  assert_is(mat, "IterableMatrix")
+  assert_greater_than_zero(num_feats)
+  assert_is_wholenumber(num_feats)
+  assert_len(num_feats, 1)
+  assert_is(num_feats, "numeric")
+  num_feats <- min(max(num_feats, 0), nrow(mat))
+
+  if (!is.null(normalize)) mat <- normalize(mat, threads = threads)
+  mat_stats <- matrix_stats(mat, row_stats = "variance", threads = threads)
+  features_df <- tibble::tibble(
+    names = rownames(mat),
+    score = mat_stats$row_stats["variance", ] / mat_stats$row_stats["mean", ]
+  ) %>% 
+    dplyr::arrange(desc(score)) %>% 
+    dplyr::mutate(highly_variable = dplyr::row_number() <= num_feats)
+  return(features_df)
+}
+
+
+#' Get the top features from a matrix, based on the mean accessibility of each feature.
+#' @param num_feats Number of features to deem as highly accessible.  If the number is higher than the number of features in the matrix,
+#' all features will be returned.
+#' @inheritParams select_features_by_variance
+#' @returns
+#' Return a dataframe with the following columns, sorted descending by mean accessibility:
+#'   - `names`: Feature name.
+#'   - `score`: Binarize sum of each feature.
+#'   - `highly_variable`: Logical vector of whether the feature is highly accessible by mean accessibility.
+#' @details 
+#' Calculate using the following process:
+#' 1. Get the sum of each binarized feature.
+#' 2. Find `num_feats` features with the highest accessibility.
+#' @export
+select_features_by_mean <- function(mat, num_feats = 25000, threads = 1L) {
+  assert_is(mat, "IterableMatrix")
+  assert_is_wholenumber(num_feats)
+  assert_greater_than_zero(num_feats)
+  assert_is(num_feats, "numeric")
+  num_feats <- min(max(num_feats, 0), nrow(mat))
+  # get the sum of each feature, binarized
+  # get the top features
+  features_df <- tibble::tibble(
+    names = rownames(mat),
+    score = matrix_stats(mat, row_stats = "nonzero", threads = threads)$row_stats["nonzero", ]
+  ) %>%
+    dplyr::arrange(desc(score)) %>%
+    dplyr::mutate(highly_variable = dplyr::row_number() <= num_feats)
+  return(features_df)
+}
+
+
 #' Test for marker features
 #'
 #' Given a features x cells matrix, perform one-vs-all differential
@@ -69,6 +181,7 @@ marker_features <- function(mat, groups, method="wilcoxon") {
         background_mean = as.numeric(background_means)
     )
 }
+
 
 #' Aggregate counts matrices by cell group or feature.
 #'
