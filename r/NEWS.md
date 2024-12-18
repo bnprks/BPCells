@@ -22,6 +22,7 @@ Contributions welcome :)
 - Add `rowQuantiles()` and `colQuantiles()` functions, which return the quantiles of each row/column of a matrix. Currently `rowQuantiles()` only works on row-major matrices and `colQuantiles()` only works on col-major matrices.
   If `matrixStats` or `MatrixGenerics` packages are installed, `BPCells::colQuantiles()` will fall back to their implementations for non-BPCells objects. (pull request #128)
 - Add `pseudobulk_matrix()` which allows pseudobulk aggregation by `sum` or `mean` and calculation of per-pseudobulk `variance` and `nonzero` statistics for each gene (pull request #128)
+- Add functions `normalize_tfidf()` and `normalize_log()`, which allow for easy normalization of iterable matrices using TF-IDF or log1p(pull request #168)
 
 ## Improvements
 - `trackplot_loop()` now accepts discrete color scales
