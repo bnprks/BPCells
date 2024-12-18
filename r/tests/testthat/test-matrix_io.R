@@ -341,6 +341,31 @@ test_that("AnnData write dense matrix works", {
   expect_identical(as.matrix(mat_1), mat_1_res)
   expect_identical(as.matrix(mat_2), mat_2_res)
 
+  # Test empty columns
+  mat_3 <- generate_sparse_matrix(10, 15)
+  mat_3[, 4] <- 0
+  mat_3_res <- write_matrix_anndata_hdf5_dense(as(mat_3, "IterableMatrix"), file.path(dir, "mat_3.h5ad")) %>%
+    as.matrix()
+  expect_identical(as.matrix(mat_3), mat_3_res)
+
+  # Test empty columns
+  mat_3 <- generate_sparse_matrix(10, 15)
+  mat_3[, 4:6] <- 0
+  mat_3_res <- write_matrix_anndata_hdf5_dense(as(mat_3, "IterableMatrix"), file.path(dir, "mat_4.h5ad")) %>%
+    as.matrix()
+  expect_identical(as.matrix(mat_3), mat_3_res)
+  
+  m <- matrix(0, nrow = 3, ncol = 4)
+  m[2,2] <- 1
+  m[3,4] <- 1
+  rownames(m) <- paste0("row", seq_len(nrow(m)))
+  colnames(m) <- paste0("col", seq_len(ncol(m)))
+
+  mat <- m |> as("dgCMatrix") |> as("IterableMatrix")
+  ans <- write_matrix_anndata_hdf5_dense(mat, file.path(dir, "zeros.h5"))
+
+  expect_identical(as.matrix(mat), as.matrix(ans))
+
   # Create a dense IterableMatrix
   mat_3 <- as(mat_1, "IterableMatrix") %>%
     multiply_cols(1 / Matrix::colSums(mat_1)) %>%
@@ -351,10 +376,10 @@ test_that("AnnData write dense matrix works", {
   mat_3 <- (mat_3 - gene_means) / gene_vars
   rownames(mat_3) <- paste0("mat3_row", seq_len(nrow(mat_3)))
   colnames(mat_3) <- paste0("mat3_col", seq_len(ncol(mat_3)))
-  mat_3_res <- write_matrix_anndata_hdf5_dense(mat_3, file.path(dir, "mat3.h5ad")) %>%
+  mat_3_res <- write_matrix_anndata_hdf5_dense(mat_3, file.path(dir, "mat2.h5ad")) %>%
     as.matrix()
   expect_identical(as.matrix(mat_3), mat_3_res)
-  mat_3_res <- write_matrix_anndata_hdf5_dense(t(mat_3), file.path(dir, "mat2.h5ad")) %>%
+  mat_3_res <- write_matrix_anndata_hdf5_dense(t(mat_3), file.path(dir, "mat3.h5ad")) %>%
     as.matrix()
   expect_identical(as.matrix(t(mat_3)), mat_3_res)
 })

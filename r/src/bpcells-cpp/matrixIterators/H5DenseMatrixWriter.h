@@ -107,9 +107,9 @@ template <typename T> class H5DenseMatrixWriter : public MatrixWriter<T> {
                 } else {
                     dataset.select({0, (uint64_t)mat.currentCol()}, {val_buf.size(), 1}).write_raw(val_buf.data(), datatype);
                 }
-                col += 1;
-                val_buf = zero_buf;
             }
+            col += 1;
+            val_buf = zero_buf;
         }
         dataset.createAttribute("encoding-type", std::string("array"));
         dataset.createAttribute("encoding-version", std::string("0.2.0"));
