@@ -356,15 +356,18 @@ test_that("AnnData write dense matrix works", {
   expect_identical(as.matrix(mat_3), mat_3_res)
   
   m <- matrix(0, nrow = 3, ncol = 4)
-  m[2,2] <- 1
-  m[3,4] <- 1
+  m[2, 2] <- 1
+  m[3, 4] <- 1
   rownames(m) <- paste0("row", seq_len(nrow(m)))
   colnames(m) <- paste0("col", seq_len(ncol(m)))
-
   mat <- m |> as("dgCMatrix") |> as("IterableMatrix")
   ans <- write_matrix_anndata_hdf5_dense(mat, file.path(dir, "zeros.h5"))
-
   expect_identical(as.matrix(mat), as.matrix(ans))
+
+  # Test buffer_size
+  m <- generate_sparse_matrix(10, 15)
+  ans <- write_matrix_anndata_hdf5_dense(as(m, "IterableMatrix"), file.path(dir, "test_buffer_size.h5"), buffer_size = 4L)
+  expect_identical(as.matrix(m), as.matrix(ans))
 
   # Create a dense IterableMatrix
   mat_3 <- as(mat_1, "IterableMatrix") %>%
