@@ -3,6 +3,7 @@
 \name{open_matrix_anndata_hdf5}
 \alias{open_matrix_anndata_hdf5}
 \alias{write_matrix_anndata_hdf5}
+\alias{write_matrix_anndata_hdf5_dense}
 \title{Read/write AnnData matrix}
 \usage{
 open_matrix_anndata_hdf5(path, group = "X", buffer_size = 16384L)
@@ -11,6 +12,15 @@ write_matrix_anndata_hdf5(
   mat,
   path,
   group = "X",
+  buffer_size = 16384L,
+  chunk_size = 1024L,
+  gzip_level = 0L
+)
+
+write_matrix_anndata_hdf5_dense(
+  mat,
+  path,
+  dataset = "X",
   buffer_size = 16384L,
   chunk_size = 1024L,
   gzip_level = 0L
@@ -28,6 +38,8 @@ in memory before calling writes to disk.}
 \item{chunk_size}{For performance tuning only. The chunk size used for the HDF5 array storage.}
 
 \item{gzip_level}{Gzip compression level. Default is 0 (no compression)}
+
+\item{dataset}{The dataset within the hdf5 file to write the matrix to. Used for \code{write_matrix_anndata_hdf5_dense}}
 }
 \value{
 AnnDataMatrixH5 object, with cells as the columns.

@@ -35,6 +35,7 @@ bpcells-cpp/fragmentIterators/StoredFragments.o \
 bpcells-cpp/fragmentUtils/BedWriter.o \
 bpcells-cpp/fragmentUtils/FootprintMatrix.o \
 bpcells-cpp/fragmentUtils/InsertionIterator.o \
+bpcells-cpp/matrixIterators/H5DenseMatrixWriter.o \
 bpcells-cpp/matrixIterators/ImportMatrix10xHDF5.o \
 bpcells-cpp/matrixIterators/ImportMatrixAnnDataHDF5.o \
 bpcells-cpp/matrixIterators/PeakMatrix.o \
