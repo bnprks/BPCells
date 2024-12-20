@@ -1378,6 +1378,10 @@ parallel_split <- function(mat, threads, chunks=threads) {
   assert_is_wholenumber(chunks)
   assert_true(chunks >= threads)
 
+  if (threads <= 1L) {
+    return(mat)
+  }
+
   if (mat@transpose) {
     return(t(parallel_split(t(mat), threads, chunks)))
   }
