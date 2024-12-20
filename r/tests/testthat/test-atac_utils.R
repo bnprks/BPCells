@@ -334,3 +334,39 @@ test_that("macs_e2e_works", {
   # Make sure the outputs are the same
   expect_equal(macs_read, macs_read_full_pipeline)
 })
+
+test_that("macs errors print when running in parallel", {
+  dir <- withr::local_tempdir()
+
+  # Make a dummy macs script that will register as valid but won't actually run
+  bad_macs_path <- file.path(dir, "bad_macs.sh")
+  writeLines(c(
+    "#!/bin/bash",
+    "if [[ $1 == '--version' ]]; then",
+    "    echo 'Bad macs demo'",
+    "else",
+    "    exit 1",
+    "fi"
+  ), bad_macs_path)
+  Sys.chmod(bad_macs_path, "0700")
+
+  frags <- tibble::tibble(chr="chr1", start=1:10, end=start+5, cell_id=rep(c("a","b"), 5)) %>% convert_to_fragments() 
+  call_peaks_macs(
+    frags, 
+    path=file.path(dir, "macs-test"), 
+    cell_groups=c(a="a_group", b="b_group"), 
+    step="prep-inputs",
+    macs_executable=bad_macs_path, 
+    threads=2
+  )
+  expect_error({
+    call_peaks_macs(
+      frags,
+      path=file.path(dir, "macs-test"), 
+      cell_groups=c(a="a_group", b="b_group"), 
+      step="run-macs",
+      macs_executable=bad_macs_path, 
+      threads=2
+    )
+  }, "MACS calls encountered .* failures")
+})
