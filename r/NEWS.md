@@ -41,6 +41,7 @@ Contributions welcome :)
 - Fixed discrepancy between default ArchR and BPCells peak calling insertion method, where BPCells defaulted to only using the start of each fragment as opposed to ArchR's method of using both start and end sites of fragments (pull request #143)
 - Fix error in `tile_matrix()` with fragment mode (pull request #141)
 - Fix precision bug in `sctransform_pearson()` on ARM architecture (pull request #141) 
+- Fix error message printing when MACS crashes during `call_peaks_macs()` (pull request #175) 
 
 ## Deprecations
 - `trackplot_coverage()` `legend_label` argument is now ignored, as the color legend is no longer shown by default for coverage plots.
