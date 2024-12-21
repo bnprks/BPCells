@@ -41,6 +41,7 @@ Contributions welcome :)
 - Fixed discrepancy between default ArchR and BPCells peak calling insertion method, where BPCells defaulted to only using the start of each fragment as opposed to ArchR's method of using both start and end sites of fragments (pull request #143)
 - Fix error in `tile_matrix()` with fragment mode (pull request #141)
 - Fix precision bug in `sctransform_pearson()` on ARM architecture (pull request #141) 
+- Fix type-confusion error when `pseudobulk_matrix()` gets an integer matrix (pull request #174)
 
 ## Deprecations
 - `trackplot_coverage()` `legend_label` argument is now ignored, as the color legend is no longer shown by default for coverage plots.

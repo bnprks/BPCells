@@ -88,7 +88,7 @@ marker_features <- function(mat, groups, method="wilcoxon") {
 #' extra calculation time, and when calculating `mean`, adding `nonzeros` will take no extra time.
 #' @inheritParams marker_features
 #' @export
-pseudobulk_matrix <- function(mat, cell_groups, method = "sum", threads = 1L) {
+pseudobulk_matrix <- function(mat, cell_groups, method = "sum", threads = 0L) {
   assert_is(mat, "IterableMatrix")
   assert_is(cell_groups, c("factor", "character", "numeric"))
   assert_true(length(cell_groups) == ncol(mat))
@@ -101,9 +101,13 @@ pseudobulk_matrix <- function(mat, cell_groups, method = "sum", threads = 1L) {
     }
   }
   assert_is(threads, "integer")
-  # if multiple methods are provided, only need to pass in the top method as it will also calculate the less complex stats
-  iter <- iterate_matrix(parallel_split(mat, threads, threads*4))
-  res <- pseudobulk_matrix_cpp(iter, cell_groups = as.integer(cell_groups) - 1, method = method, transpose = mat@transpose)
+
+  it <- mat %>%
+    convert_matrix_type("double") %>%
+    parallel_split(threads, threads*4) %>%
+    iterate_matrix()
+  
+  res <- pseudobulk_matrix_cpp(it, cell_groups = as.integer(cell_groups) - 1, method = method, transpose = mat@transpose)
   # if res is a single matrix, return with colnames and rownames
   if (length(method) == 1) {
     colnames(res[[method]]) <- levels(cell_groups)
@@ -112,7 +116,8 @@ pseudobulk_matrix <- function(mat, cell_groups, method = "sum", threads = 1L) {
   }
   # give colnames and rownames for each matrix in res, which is a named list
   for (res_slot in names(res)) {
-    if ((length(res[[res_slot]]) == 0) || !(res_slot %in% method)) {
+    # Filter out methods that weren't requested
+    if (!(res_slot %in% method)) {
       res[[res_slot]] <- NULL
     } else {
       colnames(res[[res_slot]]) <- levels(cell_groups)
