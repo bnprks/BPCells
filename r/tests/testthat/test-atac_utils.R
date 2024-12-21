@@ -336,30 +336,21 @@ test_that("macs_e2e_works", {
 })
 
 test_that("macs errors print when running in parallel", {
+  # The dummy macs script only works on a unix setup, and windows currently doesn't support
+  # multi-threading anyhow
+  skip_on_os("windows")
   dir <- withr::local_tempdir()
 
   # Make a dummy macs script that will register as valid but won't actually run
   bad_macs_path <- file.path(dir, "bad_macs.sh")
-  if (.Platform$OS.type != "windows") {
-    threads <- 2
-    writeLines(c(
-      "#!/bin/bash",
-      "if [[ $1 == '--version' ]]; then",
-      "    echo 'Bad macs demo'",
-      "else",
-      "    exit 1",
-      "fi"
-    ), bad_macs_path)
-  } else {
-    threads <- 1
-    writeLines(c(
-      "@echo off",
-      'if "%1"=="--version"',
-      '    echo Bad macs demo',
-      '    exit 0',
-      ') else (exit 1)'
-    ))
-  }
+  writeLines(c(
+    "#!/bin/bash",
+    "if [[ $1 == '--version' ]]; then",
+    "    echo 'Bad macs demo'",
+    "else",
+    "    exit 1",
+    "fi"
+  ), bad_macs_path)
   Sys.chmod(bad_macs_path, "0700")
 
   frags <- tibble::tibble(chr="chr1", start=1:10, end=start+5, cell_id=rep(c("a","b"), 5)) %>% convert_to_fragments() 
@@ -369,7 +360,7 @@ test_that("macs errors print when running in parallel", {
     cell_groups=c(a="a_group", b="b_group"), 
     step="prep-inputs",
     macs_executable=bad_macs_path, 
-    threads=threads
+    threads=2
   )
   expect_error({
     call_peaks_macs(
@@ -378,7 +369,7 @@ test_that("macs errors print when running in parallel", {
       cell_groups=c(a="a_group", b="b_group"), 
       step="run-macs",
       macs_executable=bad_macs_path, 
-      threads=threads
+      threads=2
     )
   }, "MACS calls encountered .* failures")
 })
