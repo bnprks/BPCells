@@ -1378,6 +1378,10 @@ parallel_split <- function(mat, threads, chunks=threads) {
   assert_is_wholenumber(chunks)
   assert_true(chunks >= threads)
 
+  if (threads <= 1L) {
+    return(mat)
+  }
+
   if (mat@transpose) {
     return(t(parallel_split(t(mat), threads, chunks)))
   }
@@ -2783,14 +2787,10 @@ matrix_stats <- function(matrix,
   row_stats_number <- match(row_stats, stat_options) - 1
   col_stats_number <- match(col_stats, stat_options) - 1
 
-  matrix <- convert_matrix_type(matrix, "double")
-  if (threads == 0L) {
-    it <- iterate_matrix(matrix)
-  } else {
-    it <- iterate_matrix(
-      parallel_split(matrix, threads, threads*4)
-    )
-  }
+  it <- matrix %>%
+    convert_matrix_type("double") %>%
+    parallel_split(threads, threads*4) %>%
+    iterate_matrix()
   res <- matrix_stats_cpp(it, row_stats_number, col_stats_number)
   rownames(res$row_stats) <- stat_options[seq_len(row_stats_number) + 1]
   rownames(res$col_stats) <- stat_options[seq_len(col_stats_number) + 1]
@@ -2847,14 +2847,10 @@ svds.IterableMatrix <- function(A, k, nu = k, nv = k, opts = list(), threads=0, 
   )
   solver_params[names(opts)] <- opts
 
-  A <- convert_matrix_type(A, "double")
-  if (threads == 0L) {
-    it <- iterate_matrix(A)
-  } else {
-    it <- iterate_matrix(
-      parallel_split(A, threads, threads*4)
-    )
-  }
+  it <- A %>%
+    convert_matrix_type("double") %>%
+    parallel_split(threads, threads*4) %>%
+    iterate_matrix()
   
   svds_cpp(
     it, 
