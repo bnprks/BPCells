@@ -1,12 +1,21 @@
 # BPCells 1.0 Roadmap
 - ~~Parallelization~~ (basic support complete. See below)
-- Native python library (re-using C++ backend)
+- Native python library (re-using C++ backend; basic support started)
 - Peak-gene correlations
-- MACS peak calling
+- ~~MACS peak calling~~ (basic support complete. See below)
 
 Contributions welcome :)
 
-# BPCells 0.2.1 (main branch - in progress)
+# BPCells 0.3.0 (12/21/2024)
+
+The BPCells 0.3.0 release covers 6 months of changes and 45 commits from 5 contributors. Notable improvements
+this release include support for peak calling with MACS and the addition of pseudobulk matrix and stats calculations.
+We also released an initial prototype of a BPCells Python library (more details [here](https://bnprks.github.io/BPCells/python/index.html)).
+Full details of changes below.
+
+Thanks to @ycli1995, @Yunuuuu, and @douglasgscofield for pull requests that contributed to this release, as well as to users who
+sumitted github issues to help identify and fix bugs. We also added @immanuelazn to the team as a new hire! He is responsible for many
+of the new features this release and will continue to help with maintenance and new development moving forwards. 
 
 ## Features
 - `apply_by_col()` and `apply_by_row()` allow providing custom R functions to compute per row/col summaries.
