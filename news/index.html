@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">BPCells</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -46,15 +46,18 @@
 <h2 class="pkg-version" data-toc-text="1.0" id="bpcells-10-roadmap">BPCells 1.0 Roadmap<a class="anchor" aria-label="anchor" href="#bpcells-10-roadmap"></a></h2>
 <ul><li>
 <del>Parallelization</del> (basic support complete. See below)</li>
-<li>Native python library (re-using C++ backend)</li>
+<li>Native python library (re-using C++ backend; basic support started)</li>
 <li>Peak-gene correlations</li>
-<li>MACS peak calling</li>
+<li>
+<del>MACS peak calling</del> (basic support complete. See below)</li>
 </ul><p>Contributions welcome :)</p>
 </div>
     <div class="section level2">
-<h2 class="pkg-version" data-toc-text="0.2.1" id="bpcells-021-main-branch---in-progress">BPCells 0.2.1 (main branch - in progress)<a class="anchor" aria-label="anchor" href="#bpcells-021-main-branch---in-progress"></a></h2>
+<h2 class="pkg-version" data-toc-text="0.3.0" id="bpcells-030-12212024">BPCells 0.3.0 (12/21/2024)<a class="anchor" aria-label="anchor" href="#bpcells-030-12212024"></a></h2>
+<p>The BPCells 0.3.0 release covers 6 months of changes and 45 commits from 5 contributors. Notable improvements this release include support for peak calling with MACS and the addition of pseudobulk matrix and stats calculations. We also released an initial prototype of a BPCells Python library (more details <a href="https://bnprks.github.io/BPCells/python/index.html">here</a>). Full details of changes below.</p>
+<p>Thanks to <a href="https://github.com/ycli1995" class="external-link">@ycli1995</a>, <a href="https://github.com/Yunuuuu" class="external-link">@Yunuuuu</a>, and <a href="https://github.com/douglasgscofield" class="external-link">@douglasgscofield</a> for pull requests that contributed to this release, as well as to users who sumitted github issues to help identify and fix bugs. We also added <a href="https://github.com/immanuelazn" class="external-link">@immanuelazn</a> to the team as a new hire! He is responsible for many of the new features this release and will continue to help with maintenance and new development moving forwards.</p>
 <div class="section level3">
-<h3 id="features-0-2-1">Features<a class="anchor" aria-label="anchor" href="#features-0-2-1"></a></h3>
+<h3 id="features-0-3-0">Features<a class="anchor" aria-label="anchor" href="#features-0-3-0"></a></h3>
 <ul><li>
 <code><a href="../reference/apply_by_row.html">apply_by_col()</a></code> and <code><a href="../reference/apply_by_row.html">apply_by_row()</a></code> allow providing custom R functions to compute per row/col summaries. In initial tests calculating row/col means using R functions is ~2x slower than the C++-based implementation but memory usage remains low.</li>
 <li>Add <code><a href="../reference/IterableMatrix-methods.html">rowMaxs()</a></code> and <code><a href="../reference/IterableMatrix-methods.html">colMaxs()</a></code> functions, which return the maximum value in each row or column of a matrix. If <code>matrixStats</code> or <code>MatrixGenerics</code> packages are installed, <code><a href="../reference/IterableMatrix-methods.html">BPCells::rowMaxs()</a></code> will fall back to their implementations for non-BPCells objects. Thanks to <a href="https://github.com/immanuelazn" class="external-link">@immanuelazn</a> for their first contribution as a new lab hire!</li>
@@ -65,7 +68,7 @@
 <li>Add <code><a href="../reference/pseudobulk_matrix.html">pseudobulk_matrix()</a></code> which allows pseudobulk aggregation by <code>sum</code> or <code>mean</code> and calculation of per-pseudobulk <code>variance</code> and <code>nonzero</code> statistics for each gene (pull request <a href="https://github.com/bnprks/BPCells/issues/128" class="external-link">#128</a>)</li>
 </ul></div>
 <div class="section level3">
-<h3 id="improvements-0-2-1">Improvements<a class="anchor" aria-label="anchor" href="#improvements-0-2-1"></a></h3>
+<h3 id="improvements-0-3-0">Improvements<a class="anchor" aria-label="anchor" href="#improvements-0-3-0"></a></h3>
 <ul><li>
 <code><a href="../reference/trackplot_loop.html">trackplot_loop()</a></code> now accepts discrete color scales</li>
 <li>
@@ -79,7 +82,7 @@
 <code><a href="../reference/cluster.html">cluster_graph_leiden()</a></code> now has better defaults that produce reasonable cluster counts regardless of dataset size. (pull request <a href="https://github.com/bnprks/BPCells/issues/147" class="external-link">#147</a>)</li>
 </ul></div>
 <div class="section level3">
-<h3 id="bug-fixes-0-2-1">Bug-fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-0-2-1"></a></h3>
+<h3 id="bug-fixes-0-3-0">Bug-fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-0-3-0"></a></h3>
 <ul><li>Fixed error message when a matrix is too large to be converted to dgCMatrix. (Thanks to <a href="https://github.com/RookieA1" class="external-link">@RookieA1</a> for reporting issue <a href="https://github.com/bnprks/BPCells/issues/95" class="external-link">#95</a>)</li>
 <li>Fixed forgetting dimnames when subsetting after certain sets of operations. (Thanks to <a href="https://github.com/Yunuuuu" class="external-link">@Yunuuuu</a> for reporting issues <a href="https://github.com/bnprks/BPCells/issues/97" class="external-link">#97</a> and <a href="https://github.com/bnprks/BPCells/issues/100" class="external-link">#100</a>)</li>
 <li>Fixed plotting crashes when running <code><a href="../reference/trackplot_coverage.html">trackplot_coverage()</a></code> with fragments from a single cluster. (Thanks to <a href="https://github.com/sjessa" class="external-link">@sjessa</a> for directly reporting this bug and coming up with a fix)</li>
@@ -91,7 +94,7 @@
 <li>Fix type-confusion error when <code><a href="../reference/pseudobulk_matrix.html">pseudobulk_matrix()</a></code> gets an integer matrix (pull request <a href="https://github.com/bnprks/BPCells/issues/174" class="external-link">#174</a>)</li>
 </ul></div>
 <div class="section level3">
-<h3 id="deprecations-0-2-1">Deprecations<a class="anchor" aria-label="anchor" href="#deprecations-0-2-1"></a></h3>
+<h3 id="deprecations-0-3-0">Deprecations<a class="anchor" aria-label="anchor" href="#deprecations-0-3-0"></a></h3>
 <ul><li>
 <code><a href="../reference/trackplot_coverage.html">trackplot_coverage()</a></code> <code>legend_label</code> argument is now ignored, as the color legend is no longer shown by default for coverage plots.</li>
 </ul></div>
