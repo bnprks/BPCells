@@ -94,8 +94,9 @@
 <code class="sourceCode R"><span><span class="fu">remotes</span><span class="fu">::</span><span class="fu"><a href="https://remotes.r-lib.org/reference/install_github.html" class="external-link">install_github</a></span><span class="op">(</span><span class="st">"bnprks/BPCells/r"</span><span class="op">)</span></span></code></pre></div>
 <p>Before installing, you must have the HDF5 library installed and accessible on your system. HDF5 can be installed from your choice of package manager.</p>
 <p>For Mac and Windows users having trouble installing from github, check our <a href="https://bnprks.r-universe.dev/BPCells" class="external-link">R-universe</a> page for instructions to install pre-built binary packages. These binary packages automatically track the latest github main branch.</p>
-<details><p><summary>Click here for operating system specific installation information for github-based installs</summary></p>
-<div class="section level3">
+<details><summary>
+Click here for operating system specific installation information for github-based installs
+</summary><div class="section level3">
 <h3 id="linux">Linux<a class="anchor" aria-label="anchor" href="#linux"></a>
 </h3>
 <p>Obtaining the HDF5 dependency is usually pretty straightforward on Linux</p>
@@ -104,7 +105,10 @@
 </li>
 <li>yum: <code>sudo yum install hdf5-devel</code>
 </li>
-<li>conda: <code>conda install -c anaconda hdf5</code><ul><li>Note: Linux users should prefer their distro’s package manager (e.g. <code>apt</code> or <code>yum</code>) when possible, as it appears to give a slightly more reliable installation experience.</li></ul>
+<li>conda: <code>conda install -c anaconda hdf5</code>
+<ul>
+<li>Note: Linux users should prefer their distro’s package manager (e.g. <code>apt</code> or <code>yum</code>) when possible, as it appears to give a slightly more reliable installation experience.</li>
+</ul>
 </li>
 </ul>
 </div>
@@ -120,7 +124,8 @@
 <p><strong>Mac-specific troubleshooting</strong>:</p>
 <ul>
 <li>
-<strong>Macs with ARM CPUs</strong>: a common error is to have an ARM-based HDF5 install but an x86-based R install. This will cause errors when BPCells tries to access HDF5 during installation.<ul>
+<strong>Macs with ARM CPUs</strong>: a common error is to have an ARM-based HDF5 install but an x86-based R install. This will cause errors when BPCells tries to access HDF5 during installation.
+<ul>
 <li>Check your R installation by running <code><a href="https://rdrr.io/r/utils/sessionInfo.html" class="external-link">sessionInfo()</a></code>, and seeing if it lists ARM or x86 under “Platform”.</li>
 <li>The easiest option is to use ARM R because homebrew will default to an ARM hdf5 installation</li>
 <li>It is <a href="https://codetinkering.com/switch-homebrew-arm-x86/" class="external-link">possible</a> (though tricky) to install an x86 copy of homebrew in order to access an x86 version of hdf5</li>
@@ -139,7 +144,9 @@
 <h3 id="general-installation-troubleshooting">General Installation troubleshooting<a class="anchor" aria-label="anchor" href="#general-installation-troubleshooting"></a>
 </h3>
 <p>BPCells tries to print informative error messages during compilation to help diagnose the problem. For a more verbose set of information, run <code>Sys.setenv(BPCELLS_DEBUG_INSTALL="true")</code> prior to <code>remotes::install_github("bnprks/BPCells/r")</code>. If you still can’t solve the issue with that additional information, feel free to file a Github issue, being sure to use a <a href="https://docs.github.com/en/get-started/writing-on-github/working-with-advanced-formatting/organizing-information-with-collapsed-sections" class="external-link">collapsible section</a> for the verbose installation log.</p>
-</div></details>
+
+</div>
+</details>
 </div>
 <div class="section level2">
 <h2 id="contributing">Contributing<a class="anchor" aria-label="anchor" href="#contributing"></a>
