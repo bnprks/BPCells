@@ -21,7 +21,6 @@ template <typename T> class H5DenseMatrixWriter : public MatrixWriter<T> {
     uint32_t gzip_level;
 
     HighFive::DataType datatype = HighFive::create_datatype<T>();
-    uint64_t max_capacity;
     bool row_major;
 
     HighFive::DataSet createH5Matrix(uint64_t nrow,  uint64_t ncol) {
@@ -52,7 +51,6 @@ template <typename T> class H5DenseMatrixWriter : public MatrixWriter<T> {
         HighFive::File h5file,
         std::string dataset,
         bool row_major,
-        uint64_t max_capacity = 16384,
         uint64_t chunk_size = 1024,
         uint32_t gzip_level = 0
     )
@@ -60,7 +58,6 @@ template <typename T> class H5DenseMatrixWriter : public MatrixWriter<T> {
         , dataset_path(dataset)
         , chunk_size(chunk_size)
         , gzip_level(gzip_level)
-        , max_capacity(max_capacity) 
         , row_major(row_major) {}
 
     void write(MatrixLoader<T> &mat_in, std::atomic<bool> *user_interrupt = NULL) override {
@@ -85,7 +82,7 @@ template <typename T> class H5DenseMatrixWriter : public MatrixWriter<T> {
                 loaded = true;
                 uint32_t i = 0;
                 while (i < mat.capacity()) {
-                    uint32_t capacity = std::min((uint32_t)max_capacity, mat.capacity() - i);
+                    uint32_t capacity = std::min((uint32_t)val_buf.size(), mat.capacity() - i);
                     for (uint32_t ii = 0; ii < capacity; ii++) {
                         val_buf[*(mat.rowData() + i + ii)] = *(mat.valData() + i + ii);
                     }
@@ -113,7 +110,6 @@ template <typename T> H5DenseMatrixWriter<T> createAnnDataDenseMatrix(
     std::string file,
     std::string dataset,
     bool row_major,
-    uint32_t buffer_size,
     uint32_t chunk_size,
     uint32_t gzip_level
 );

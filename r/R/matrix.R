@@ -2203,7 +2203,6 @@ write_matrix_anndata_hdf5_dense <- function(mat, path, dataset = "X", buffer_siz
     dataset,
     matrix_type(mat),
     mat@transpose,
-    buffer_size,
     chunk_size,
     gzip_level
   )

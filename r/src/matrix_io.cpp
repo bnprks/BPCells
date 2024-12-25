@@ -939,7 +939,6 @@ void write_matrix_anndata_hdf5_dense_base(
     std::string file,
     std::string dataset,
     bool row_major,
-    uint32_t buffer_size,
     uint32_t chunk_size,
     uint32_t gzip_level
 ) {
@@ -947,7 +946,7 @@ void write_matrix_anndata_hdf5_dense_base(
     loader->restart();
 
     H5DenseMatrixWriter<T> w = 
-        createAnnDataDenseMatrix<T>(file, dataset, row_major, buffer_size, chunk_size, gzip_level);
+        createAnnDataDenseMatrix<T>(file, dataset, row_major, chunk_size, gzip_level);
     run_with_R_interrupt_check(&H5DenseMatrixWriter<T>::write, &w, std::ref(*loader));
     createAnnDataObsVarIfMissing(*loader, file, row_major, gzip_level);
 }
@@ -959,21 +958,20 @@ void write_matrix_anndata_hdf5_dense_cpp(
     std::string dataset,
     std::string type,
     bool row_major,
-    uint32_t buffer_size,
     uint32_t chunk_size,
     uint32_t gzip_level
 ) {
     if (type == "uint32_t") {
         write_matrix_anndata_hdf5_dense_base<uint32_t>(
-            matrix, file, dataset, row_major, buffer_size, chunk_size, gzip_level
+            matrix, file, dataset, row_major, chunk_size, gzip_level
         );
     } else if (type == "float") {
         write_matrix_anndata_hdf5_dense_base<float>(
-            matrix, file, dataset, row_major, buffer_size, chunk_size, gzip_level
+            matrix, file, dataset, row_major, chunk_size, gzip_level
         );
     } else if (type == "double") {
         write_matrix_anndata_hdf5_dense_base<double>(
-            matrix, file, dataset, row_major, buffer_size, chunk_size, gzip_level
+            matrix, file, dataset, row_major, chunk_size, gzip_level
         );
     } else {
         throw std::runtime_error("write_matrix_anndata_hdf5_dense_cpp: unsupported type " + type);

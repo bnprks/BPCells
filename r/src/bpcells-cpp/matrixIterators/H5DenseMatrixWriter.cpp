@@ -15,7 +15,6 @@ H5DenseMatrixWriter<T> createAnnDataDenseMatrix(
     std::string file,
     std::string dataset,
     bool row_major,
-    uint32_t buffer_size,
     uint32_t chunk_size,
     uint32_t gzip_level
 ) {
@@ -28,7 +27,7 @@ H5DenseMatrixWriter<T> createAnnDataDenseMatrix(
     }
     HighFive::File h5file(file, HighFive::File::OpenOrCreate);
     
-    return H5DenseMatrixWriter<T>(h5file, dataset, row_major, buffer_size, chunk_size, gzip_level);
+    return H5DenseMatrixWriter<T>(h5file, dataset, row_major, chunk_size, gzip_level);
 }
 
 // Explicit template instantiations
@@ -36,7 +35,6 @@ template H5DenseMatrixWriter<uint32_t> createAnnDataDenseMatrix<uint32_t>(
     std::string file,
     std::string dataset,
     bool row_major,
-    uint32_t buffer_size,
     uint32_t chunk_size,
     uint32_t gzip_level
 );
@@ -44,7 +42,6 @@ template H5DenseMatrixWriter<uint64_t> createAnnDataDenseMatrix<uint64_t>(
     std::string file,
     std::string dataset,
     bool row_major,
-    uint32_t buffer_size,
     uint32_t chunk_size,
     uint32_t gzip_level
 );
@@ -52,7 +49,6 @@ template H5DenseMatrixWriter<float> createAnnDataDenseMatrix<float>(
     std::string file,
     std::string dataset,
     bool row_major,
-    uint32_t buffer_size,
     uint32_t chunk_size,
     uint32_t gzip_level
 );
@@ -60,7 +56,6 @@ template H5DenseMatrixWriter<double> createAnnDataDenseMatrix<double>(
     std::string file,
     std::string dataset,
     bool row_major,
-    uint32_t buffer_size,
     uint32_t chunk_size,
     uint32_t gzip_level
 );
