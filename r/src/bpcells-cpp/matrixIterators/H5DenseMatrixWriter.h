@@ -62,43 +62,33 @@ template <typename T> class H5DenseMatrixWriter : public MatrixWriter<T> {
 
     void write(MatrixLoader<T> &mat_in, std::atomic<bool> *user_interrupt = NULL) override {
 
-        // Ensure that we write matrices sorted by row
-        OrderRows<T> mat((std::unique_ptr<MatrixLoader<T>>(&mat_in)));
-        // Don't delete our original matrix
-        mat.preserve_input_loader();
+        HighFive::DataSet h5dataset = createH5Matrix(mat_in.rows(), mat_in.cols());
 
-        HighFive::DataSet h5dataset = createH5Matrix(mat.rows(), mat.cols());
-
-        uint32_t col = 0;
         bool loaded = false; // Any non-zero values has been loaded.
-        std::vector<T> zero_buf(mat_in.rows());
-        std::vector<T> val_buf = zero_buf;  // buffer for each column
-        while (mat.nextCol()) {
+        std::vector<T> val_buf(mat_in.rows());  // buffer for each column
+        while (mat_in.nextCol()) {
             if (user_interrupt != NULL && *user_interrupt) return;
-            if (mat.currentCol() < col)
-                throw std::runtime_error("H5DenseMatrixWriter encountered out-of-order columns");
-
-            while (mat.load()) {
+            while (mat_in.load()) {
                 loaded = true;
-                uint32_t i = 0;
-                while (i < mat.capacity()) {
-                    uint32_t capacity = std::min((uint32_t)val_buf.size(), mat.capacity() - i);
-                    for (uint32_t ii = 0; ii < capacity; ii++) {
-                        val_buf[*(mat.rowData() + i + ii)] = *(mat.valData() + i + ii);
-                    }
-                    i += capacity;
+                uint32_t *row_data = mat_in.rowData();
+                T *val_data = mat_in.valData();
+                uint32_t capacity = mat_in.capacity();
+                for (uint32_t i = 0; i < capacity; i++) {
+                    val_buf[row_data[i]] = val_data[i];
                 }
                 if (user_interrupt != NULL && *user_interrupt) return;
             }
-            if (col == mat.currentCol() && loaded) {
+            if (loaded) {
                 if (row_major) {
-                    h5dataset.select({(uint64_t)mat.currentCol(), 0}, {1, val_buf.size()}).write_raw(val_buf.data(), datatype);
+                    h5dataset.select({(uint64_t)mat_in.currentCol(), 0}, {1, val_buf.size()}).write_raw(val_buf.data(), datatype);
                 } else {
-                    h5dataset.select({0, (uint64_t)mat.currentCol()}, {val_buf.size(), 1}).write_raw(val_buf.data(), datatype);
+                    h5dataset.select({0, (uint64_t)mat_in.currentCol()}, {val_buf.size(), 1}).write_raw(val_buf.data(), datatype);
                 }
             }
-            col += 1;
-            val_buf = zero_buf;
+            for (auto &x : val_buf) {
+                x = 0;
+            }
+            loaded = false;
         }
         h5dataset.createAttribute("encoding-type", std::string("array"));
         h5dataset.createAttribute("encoding-version", std::string("0.2.0"));
