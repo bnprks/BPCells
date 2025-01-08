@@ -945,9 +945,8 @@ void write_matrix_anndata_hdf5_dense_base(
     auto loader = take_unique_xptr<MatrixLoader<T>>(matrix);
     loader->restart();
 
-    H5DenseMatrixWriter<T> w = 
-        createAnnDataDenseMatrix<T>(file, dataset, row_major, chunk_size, gzip_level);
-    run_with_R_interrupt_check(&H5DenseMatrixWriter<T>::write, &w, std::ref(*loader));
+    auto w = createAnnDataDenseMatrix<T>(file, dataset, row_major, chunk_size, gzip_level);
+    run_with_R_interrupt_check(&MatrixWriter<T>::write, w.get(), std::ref(*loader));
     createAnnDataObsVarIfMissing(*loader, file, row_major, gzip_level);
 }
 
