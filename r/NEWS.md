@@ -6,7 +6,11 @@
 
 Contributions welcome :)
 
-# BPCells 0.2.1 (main branch - in progress)
+# BPCells 0.3.1 
+
+- Add `write_matrix_anndata_hdf5_dense()` which allows writing matrices in AnnData's dense format, most commonly used for `obsm` or `varm` matrices. (Thanks to @ycli1995 for pull request #166)
+
+# BPCells 0.3.0
 
 ## Features
 - `apply_by_col()` and `apply_by_row()` allow providing custom R functions to compute per row/col summaries.
