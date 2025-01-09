@@ -36,7 +36,7 @@ test_lsi_similarity_to_archr <- function(dir = NULL) {
     # Calculate LSI on ArchR
     # running LSI without binarizing, as we don't do this in the BPCells implementation
     # we also don't filter quantile outliers.
-    lsi_archr <- .computeLSI(
+    lsi_archr <- ArchR:::.computeLSI(
         mat = test_mat,
         LSIMethod = 2,
         nDimensions = 20,
@@ -53,18 +53,17 @@ test_lsi_similarity_to_archr <- function(dir = NULL) {
     pre_svd_mat_approx_archr <- lsi_archr$svd$u %*% lsi_mat_archr
     # Calculate LSI on BPCells
     # Do not use z-score normalization, as this isn't done with ArchR
-    lsi_bpcells <- lsi(
-        test_mat %>% as("dgCMatrix") %>% as("IterableMatrix"), 
-        n_dimensions = 20,
-        save_lsi = TRUE
+    lsi_bpcells <- LSI(
+        test_mat %>% as("dgCMatrix") %>% as("IterableMatrix"),
+        n_dimensions = 20
     )
-    pre_svd_mat_approx_bpcells <- lsi_bpcells$svd_attr$u %*% lsi_bpcells$pca_res
+    pre_svd_mat_approx_bpcells <- lsi_bpcells$fitted_params$svd_params$u %*% lsi_bpcells$cell_embeddings
     testthat::expect_true(all.equal(pre_svd_mat_approx_archr, pre_svd_mat_approx_bpcells, tolerance = 1e-4))
     # convert signs
-    lsi_mat_archr <- sweep(lsi_mat_archr, MARGIN = 1,  (2 * (lsi_mat_archr[,1] * lsi_bpcells$pca_res[,1] > 0) - 1), `*`)
+    lsi_mat_archr <- sweep(lsi_mat_archr, MARGIN = 1,  (2 * (lsi_mat_archr[,1] * lsi_bpcells$cell_embeddings[,1] > 0) - 1), `*`)
     # Check for post-pca matrix similarity
-    testthat::expect_true(all.equal(lsi_mat_archr, lsi_bpcells$pca_res, tolerance = 1e-4))
+    testthat::expect_true(all.equal(lsi_mat_archr, lsi_bpcells$cell_embeddings, tolerance = 1e-4))
     # also check for correlation between the two matrices in PC space
-    testthat::expect_true(cor(as.vector(lsi_mat_archr), as.vector(lsi_bpcells$pca_res)) > 0.999)
+    testthat::expect_true(cor(as.vector(lsi_mat_archr), as.vector(lsi_bpcells$cell_embeddings)) > 0.999)
 }
 test_lsi_similarity_to_archr()
