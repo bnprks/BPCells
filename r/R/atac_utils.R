@@ -631,7 +631,7 @@ call_peaks_macs <- function(fragments, path,
 #' @export
 #' @keywords internal
 call_macs_peaks <- function(...) {
-  lifecycle::deprecate_warn("0.2.0", "call_macs_peaks()", "call_peaks_macs()")
+  lifecycle::deprecate_warn("0.3.0", "call_macs_peaks()", "call_peaks_macs()")
   return(call_peaks_macs(...))
 }
 

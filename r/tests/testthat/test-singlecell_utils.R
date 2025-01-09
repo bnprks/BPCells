@@ -97,7 +97,8 @@ test_that("Pseudobulk aggregation works", {
   m0 <- as.matrix(m0)
   m0_t <- t(m0)
   m1_t <- t(m1)
-  for (matrices in list(list(m0_t, m1_t), list(m0, m1))) {
+  m1_int <- convert_matrix_type(m1, "uint32_t")
+  for (matrices in list(list(m0_t, m1_t), list(m0, m1), list(m0, m1_int))) {
     # Check across two equal groups, one group, and groups of equal length
     m <- matrices[[1]]
     m_bpcells <- matrices[[2]]
