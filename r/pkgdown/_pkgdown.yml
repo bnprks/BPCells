@@ -135,9 +135,9 @@ reference:
   - normalize_tfidf
   - select_features_by_variance
   - select_features_by_dispersion
+  - select_features_by_binned_dispersion
   - select_features_by_mean
-  - lsi
-  - highly_variable_features
+  - LSI
   - IterableMatrix-methods
   - pseudobulk_matrix
 
@@ -155,6 +155,11 @@ reference:
   - cluster_graph_leiden
   - knn_to_graph
   - cluster_membership_matrix
+
+- title: "Dimensionality Reductions"
+- contents: 
+  - DimReduction
+  - project
 
 
 - title: "Plots"

@@ -7,7 +7,7 @@
 select_features_by_dispersion(
   mat,
   num_feats = 25000,
-  normalize = normalize_log,
+  normalize = NULL,
   threads = 1L
 )
 }
