@@ -576,7 +576,7 @@ call_peaks_macs <- function(fragments, path,
     if (length(file_names) != length(levels(cell_groups))) {
       warning("Number of shell files does not match number of clusters")
     }
-    parallel::mclapply(file_names, function(shell_file) {
+    macs_success <- parallel::mclapply(file_names, function(shell_file) {
       cluster <- gsub(".sh$", "", shell_file)
       if (verbose) log_progress(paste0("Running MACS for cluster: ", cluster))
       dir.create(file.path(path, "output", cluster), showWarnings = FALSE, recursive = TRUE)
@@ -584,13 +584,19 @@ call_peaks_macs <- function(fragments, path,
       macs_message <- system2("bash", sprintf("'%s'", file.path(path, "input", shell_file)),stdout = log_file, stderr = log_file, env = c("OMP_NUM_THREADS=1"))
       # Try detecting if macs failed before writing that cluster is finished
       if (macs_message != 0) {
-        stop(paste0(format(Sys.time(), "%Y-%m-%d %H:%M:%S"), " Error running MACS for cluster: ", cluster, "\n",
+        log_progress(paste0(" Error running MACS for cluster: ", cluster, "\n",
                     "MACS log file written to: ", log_file))
+        return(FALSE)
       } else if (verbose) {
         log_progress(paste0(" Finished running MACS for cluster: ", cluster))
         log_progress(paste0(" MACS log file written to: ", log_file))
       }
+      return(TRUE)
     }, mc.cores = threads, mc.preschedule = FALSE)
+    failures <- sum(!unlist(macs_success))
+    if (failures > 0) {
+      rlang::abort(c(sprintf("MACS calls encountered %d failures", failures), "See error logs listed above"))
+    }
   }
   # Read outputs
   if (step %in%  c("read-outputs", "all")) {
