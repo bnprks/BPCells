@@ -2150,22 +2150,32 @@ setMethod("short_description", "AnnDataMatrixH5", function(x) {
 
 #' Read/write AnnData matrix
 #'
+#' @description
 #' Read or write a matrix from an anndata hdf5 file. These functions will
 #' automatically transpose matrices when converting to/from the AnnData
 #' format. This is because the AnnData convention stores cells as rows, whereas the R
 #' convention stores cells as columns. If this behavior is undesired, call `t()`
 #' manually on the matrix inputs and outputs of these functions. 
-#' 
+#'
+#' Most users writing to AnnData files should default to `write_matrix_anndata_hdf5()` rather
+#' than the dense variant (see details for more information).
+#'
 #' @inheritParams open_matrix_hdf5
 #' @return AnnDataMatrixH5 object, with cells as the columns.
-#' @details Dimnames are inferred from `obs/_index` or `var/_index` based on length matching.
+#' @details 
+#'   **Efficiency considerations**: Reading from a dense AnnData matrix will generally be slower
+#'   than sparse for single cell datasets, so it is recommended to re-write any dense AnnData
+#'   inputs to a sparse format early in processing.
+#'
+#'   `write_matrix_anndata_hdf5()` should be used by default, as it always writes in the more efficient sparse format.
+#'   `write_matrix_anndata_hdf5_dense()` writes in the AnnData dense format, and can be used for smaller matrices 
+#'   when efficiency and file size are less of a concern than increased portability (e.g. writing to `obsm` or `varm` matrices).
+#'   See the [AnnData docs](https://anndata.readthedocs.io/en/latest/fileformat-prose.html#dense-arrays) for format details.
+#'
+#'   **Dimension names:** Dimnames are inferred from `obs/_index` or `var/_index` based on length matching.
 #'   This helps to infer dimnames for `obsp`,` varm`, etc. If the number of `len(obs) == len(var)`,
 #'   dimname inference will be disabled.
 #'
-#'   *Efficiency considerations*: Reading from a dense AnnData matrix will generally be slower
-#'   than sparse for single cell datasets, so it is recommended to re-write any dense AnnData
-#'   inputs to a sparse format early in processing. Note that `write_matrix_hdf5()` will only
-#'   write in the sparse format.
 #' @export
 open_matrix_anndata_hdf5 <- function(path, group = "X", buffer_size = 16384L) {
   assert_is_file(path)
@@ -2203,6 +2213,28 @@ write_matrix_anndata_hdf5 <- function(mat, path, group = "X", buffer_size = 1638
     gzip_level
   )
   open_matrix_anndata_hdf5(path, group, buffer_size)
+}
+
+#' @rdname open_matrix_anndata_hdf5
+#' @inheritParams write_matrix_anndata_hdf5
+#' 
+#' @param dataset The dataset within the hdf5 file to write the matrix to. Used for `write_matrix_anndata_hdf5_dense`
+#' 
+#' @export
+write_matrix_anndata_hdf5_dense <- function(mat, path, dataset = "X", buffer_size = 16384L, chunk_size = 1024L, gzip_level = 0L) {
+  assert_is(mat, "IterableMatrix")
+  assert_is(path, "character")
+  mat <- t(mat)
+  write_matrix_anndata_hdf5_dense_cpp(
+    iterate_matrix(mat),
+    path,
+    dataset,
+    matrix_type(mat),
+    mat@transpose,
+    chunk_size,
+    gzip_level
+  )
+  open_matrix_anndata_hdf5(path, dataset, buffer_size)
 }
 
 #' Import MatrixMarket files

@@ -1578,6 +1578,22 @@ BEGIN_RCPP
     return R_NilValue;
 END_RCPP
 }
+// write_matrix_anndata_hdf5_dense_cpp
+void write_matrix_anndata_hdf5_dense_cpp(SEXP matrix, std::string file, std::string dataset, std::string type, bool row_major, uint32_t chunk_size, uint32_t gzip_level);
+RcppExport SEXP _BPCells_write_matrix_anndata_hdf5_dense_cpp(SEXP matrixSEXP, SEXP fileSEXP, SEXP datasetSEXP, SEXP typeSEXP, SEXP row_majorSEXP, SEXP chunk_sizeSEXP, SEXP gzip_levelSEXP) {
+BEGIN_RCPP
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type matrix(matrixSEXP);
+    Rcpp::traits::input_parameter< std::string >::type file(fileSEXP);
+    Rcpp::traits::input_parameter< std::string >::type dataset(datasetSEXP);
+    Rcpp::traits::input_parameter< std::string >::type type(typeSEXP);
+    Rcpp::traits::input_parameter< bool >::type row_major(row_majorSEXP);
+    Rcpp::traits::input_parameter< uint32_t >::type chunk_size(chunk_sizeSEXP);
+    Rcpp::traits::input_parameter< uint32_t >::type gzip_level(gzip_levelSEXP);
+    write_matrix_anndata_hdf5_dense_cpp(matrix, file, dataset, type, row_major, chunk_size, gzip_level);
+    return R_NilValue;
+END_RCPP
+}
 // read_hdf5_string_cpp
 std::vector<std::string> read_hdf5_string_cpp(std::string path, std::string group, uint32_t buffer_size);
 RcppExport SEXP _BPCells_read_hdf5_string_cpp(SEXP pathSEXP, SEXP groupSEXP, SEXP buffer_sizeSEXP) {
@@ -2650,6 +2666,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_BPCells_dims_matrix_anndata_hdf5_cpp", (DL_FUNC) &_BPCells_dims_matrix_anndata_hdf5_cpp, 3},
     {"_BPCells_iterate_matrix_anndata_hdf5_cpp", (DL_FUNC) &_BPCells_iterate_matrix_anndata_hdf5_cpp, 6},
     {"_BPCells_write_matrix_anndata_hdf5_cpp", (DL_FUNC) &_BPCells_write_matrix_anndata_hdf5_cpp, 8},
+    {"_BPCells_write_matrix_anndata_hdf5_dense_cpp", (DL_FUNC) &_BPCells_write_matrix_anndata_hdf5_dense_cpp, 7},
     {"_BPCells_read_hdf5_string_cpp", (DL_FUNC) &_BPCells_read_hdf5_string_cpp, 3},
     {"_BPCells_hdf5_group_exists_cpp", (DL_FUNC) &_BPCells_hdf5_group_exists_cpp, 2},
     {"_BPCells_hdf5_group_objnames_cpp", (DL_FUNC) &_BPCells_hdf5_group_objnames_cpp, 2},
