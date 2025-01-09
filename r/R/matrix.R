@@ -1261,8 +1261,8 @@ setMethod("[", "RowBindMatrices", function(x, i, j, ...) {
   if (!rlang::is_missing(i$subset)) {
     rows <- vapply(x@matrix_list, nrow, integer(1))
     local_i_offset <- cumsum(c(0, rows))
-    # Find the range of indices in j$subset that correspond to each matrix in x@matrix_list
-    local_i_range <- findInterval(cumsum(c(0, rows)), i$subset)
+    # Find the range of indices in i$subset that correspond to each matrix in x@matrix_list
+    local_i_range <- findInterval(local_i_offset, i$subset)
   }
 
   new_mats <- list()
@@ -1332,7 +1332,7 @@ setMethod("[", "ColBindMatrices", function(x, i, j, ...) {
     cols <- vapply(x@matrix_list, ncol, integer(1))
     local_j_offset <- cumsum(c(0, cols))
     # Find the range of indices in j$subset that correspond to each matrix in x@matrix_list
-    local_j_range <- findInterval(cumsum(c(0, cols)), j$subset)
+    local_j_range <- findInterval(local_j_offset, j$subset)
   }
 
   new_mats <- list()
