@@ -18,6 +18,7 @@
 #include "bpcells-cpp/matrixIterators/StoredMatrixTransposeWriter.h"
 #include "bpcells-cpp/matrixIterators/StoredMatrixWriter.h"
 #include "bpcells-cpp/matrixIterators/StoredMatrixSparseColumn.h"
+#include "bpcells-cpp/matrixIterators/H5DenseMatrixWriter.h"
 
 #include "bpcells-cpp/arrayIO/binaryfile.h"
 #include "bpcells-cpp/arrayIO/hdf5.h"
@@ -929,6 +930,50 @@ void write_matrix_anndata_hdf5_cpp(
         );
     } else {
         throw std::runtime_error("write_matrix_anndata_hdf5_cpp: unsupported type " + type);
+    }
+}
+
+template <typename T>
+void write_matrix_anndata_hdf5_dense_base(
+    SEXP matrix,
+    std::string file,
+    std::string dataset,
+    bool row_major,
+    uint32_t chunk_size,
+    uint32_t gzip_level
+) {
+    auto loader = take_unique_xptr<MatrixLoader<T>>(matrix);
+    loader->restart();
+
+    auto w = createAnnDataDenseMatrix<T>(file, dataset, row_major, chunk_size, gzip_level);
+    run_with_R_interrupt_check(&MatrixWriter<T>::write, w.get(), std::ref(*loader));
+    createAnnDataObsVarIfMissing(*loader, file, row_major, gzip_level);
+}
+
+// [[Rcpp::export]]
+void write_matrix_anndata_hdf5_dense_cpp(
+    SEXP matrix,
+    std::string file,
+    std::string dataset,
+    std::string type,
+    bool row_major,
+    uint32_t chunk_size,
+    uint32_t gzip_level
+) {
+    if (type == "uint32_t") {
+        write_matrix_anndata_hdf5_dense_base<uint32_t>(
+            matrix, file, dataset, row_major, chunk_size, gzip_level
+        );
+    } else if (type == "float") {
+        write_matrix_anndata_hdf5_dense_base<float>(
+            matrix, file, dataset, row_major, chunk_size, gzip_level
+        );
+    } else if (type == "double") {
+        write_matrix_anndata_hdf5_dense_base<double>(
+            matrix, file, dataset, row_major, chunk_size, gzip_level
+        );
+    } else {
+        throw std::runtime_error("write_matrix_anndata_hdf5_dense_cpp: unsupported type " + type);
     }
 }
 

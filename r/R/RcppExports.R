@@ -457,6 +457,10 @@ write_matrix_anndata_hdf5_cpp <- function(matrix, file, group, type, row_major, 
     invisible(.Call(`_BPCells_write_matrix_anndata_hdf5_cpp`, matrix, file, group, type, row_major, buffer_size, chunk_size, gzip_level))
 }
 
+write_matrix_anndata_hdf5_dense_cpp <- function(matrix, file, dataset, type, row_major, chunk_size, gzip_level) {
+    invisible(.Call(`_BPCells_write_matrix_anndata_hdf5_dense_cpp`, matrix, file, dataset, type, row_major, chunk_size, gzip_level))
+}
+
 read_hdf5_string_cpp <- function(path, group, buffer_size) {
     .Call(`_BPCells_read_hdf5_string_cpp`, path, group, buffer_size)
 }

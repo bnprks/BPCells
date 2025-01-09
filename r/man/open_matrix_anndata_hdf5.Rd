@@ -3,6 +3,7 @@
 \name{open_matrix_anndata_hdf5}
 \alias{open_matrix_anndata_hdf5}
 \alias{write_matrix_anndata_hdf5}
+\alias{write_matrix_anndata_hdf5_dense}
 \title{Read/write AnnData matrix}
 \usage{
 open_matrix_anndata_hdf5(path, group = "X", buffer_size = 16384L)
@@ -11,6 +12,15 @@ write_matrix_anndata_hdf5(
   mat,
   path,
   group = "X",
+  buffer_size = 16384L,
+  chunk_size = 1024L,
+  gzip_level = 0L
+)
+
+write_matrix_anndata_hdf5_dense(
+  mat,
+  path,
+  dataset = "X",
   buffer_size = 16384L,
   chunk_size = 1024L,
   gzip_level = 0L
@@ -28,6 +38,8 @@ in memory before calling writes to disk.}
 \item{chunk_size}{For performance tuning only. The chunk size used for the HDF5 array storage.}
 
 \item{gzip_level}{Gzip compression level. Default is 0 (no compression)}
+
+\item{dataset}{The dataset within the hdf5 file to write the matrix to. Used for \code{write_matrix_anndata_hdf5_dense}}
 }
 \value{
 AnnDataMatrixH5 object, with cells as the columns.
@@ -38,14 +50,21 @@ automatically transpose matrices when converting to/from the AnnData
 format. This is because the AnnData convention stores cells as rows, whereas the R
 convention stores cells as columns. If this behavior is undesired, call \code{t()}
 manually on the matrix inputs and outputs of these functions.
+
+Most users writing to AnnData files should default to \code{write_matrix_anndata_hdf5()} rather
+than the dense variant (see details for more information).
 }
 \details{
-Dimnames are inferred from \verb{obs/_index} or \verb{var/_index} based on length matching.
+\strong{Efficiency considerations}: Reading from a dense AnnData matrix will generally be slower
+than sparse for single cell datasets, so it is recommended to re-write any dense AnnData
+inputs to a sparse format early in processing.
+
+\code{write_matrix_anndata_hdf5()} should be used by default, as it always writes in the more efficient sparse format.
+\code{write_matrix_anndata_hdf5_dense()} writes in the AnnData dense format, and can be used for smaller matrices
+when efficiency and file size are less of a concern than increased portability (e.g. writing to \code{obsm} or \code{varm} matrices).
+See the \href{https://anndata.readthedocs.io/en/latest/fileformat-prose.html#dense-arrays}{AnnData docs} for format details.
+
+\strong{Dimension names:} Dimnames are inferred from \verb{obs/_index} or \verb{var/_index} based on length matching.
 This helps to infer dimnames for \code{obsp},\code{ varm}, etc. If the number of \code{len(obs) == len(var)},
 dimname inference will be disabled.
-
-\emph{Efficiency considerations}: Reading from a dense AnnData matrix will generally be slower
-than sparse for single cell datasets, so it is recommended to re-write any dense AnnData
-inputs to a sparse format early in processing. Note that \code{write_matrix_hdf5()} will only
-write in the sparse format.
 }
