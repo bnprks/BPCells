@@ -8,6 +8,9 @@ Contributions welcome :)
 
 # BPCells 0.3.1 (in-progress main branch)
 
+## Features
+- Add `write_matrix_anndata_hdf5_dense()` which allows writing matrices in AnnData's dense format, most commonly used for `obsm` or `varm` matrices. (Thanks to @ycli1995 for pull request #166)
+
 ## Bug-fixes
 - Fix error message printing when MACS crashes during `call_peaks_macs()` (pull request #175) 
 
