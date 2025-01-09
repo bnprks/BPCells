@@ -6,6 +6,11 @@
 
 Contributions welcome :)
 
+# BPCells 0.3.1 (in-progress main branch)
+
+## Bug-fixes
+- Fix error message printing when MACS crashes during `call_peaks_macs()` (pull request #175) 
+
 # BPCells 0.3.0 (12/21/2024)
 
 The BPCells 0.3.0 release covers 6 months of changes and 45 commits from 5 contributors. Notable improvements
