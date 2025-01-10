@@ -360,6 +360,113 @@ project.LSI <- function(x, mat, threads = 1L, ...) {
 }
 
 
+#' Run iterative LSI on a matrix.
+#' 
+#' Given a `(features x cells)` matrix, Compute an iterative LSI dimensionality reduction, using the method described in [ArchR](https://doi.org/10.1038/s41588-021-00790-6) (Granja et al; 2019).
+#' @param mat (IterableMatrix) 
+#' @param n_iterations (int) The number of LSI iterations to perform.
+#' @param first_feature_selection_method (function) Method to use for selecting features for the first iteration. Current builtin options are `select_features_by_variance`, `select_features_by_dispersion`, `select_features_by_mean`, `select_features_by_binned_dispersion`
+#' @param feature_selection_method (function) Method to use for selecting features for each iteration after the first. Current builtin options are `select_features_by_variance`, `select_features_by_dispersion`, `select_features_by_mean`, `select_features_by_binned_dispersion`
+#' @param cluster_method (function) Method to use for clustering. Current builtin options are `cluster_graph_{leiden, louvain, seurat}()`
+#' @return An object of class `c("LSI", "DimReduction")` with the following attributes:
+#' - `cell_embeddings`: The projected data
+#' - `fitted_params`: A tibble of the parameters used for iterative LSI, with rows as iterations. Columns include the following:
+#' - `first_feature_selection_method`: The method used for selecting features for the first iteration
+#' - `lsi_method`: The method used for LSI
+#' - `cluster_method`: The method used for clustering
+#' - `feature_means`: The means of the features used for normalization
+#' - `iterations`: The number of iterations
+#' - `iter_info`: A tibble with the following columns:
+#'    - `iteration`: The iteration number
+#'    - `feature_names`: The names of the features used for the iteration
+#'    - `lsi_results`: The results of LSI for the iteration
+#'    - `clusters`: The clusters for the iteration.  This is blank for the first iteration
+#' @details
+#' The iterative LSI method is as follows:
+#' - First iteration:
+#'    - Select features based on the `first_feature_selection_method` argument
+#'    - Perform LSI on the selected features
+#'    - If `n_iterations` is 1, return the PCA results
+#'    - Else, cluster the LSI results using `cluster_method`
+#' - For each subsequent iteration:
+#'    - Pseudobulk the clusters and select the top features based on the variance of the pseudobulked clusters
+#'    - Perform LSI on the selected features
+#'    - If this is the final iteration, return the PCA results
+#'    - Else, cluster the LSI results using `cluster_method`
+#' @seealso `LSI()`, `top_features()`, `highly_variable_features()`
+#' @inheritParams LSI
+#' @export
+IterativeLSI <- function(
+  mat, 
+  n_iterations = 2,
+  first_feature_selection_method = select_features_by_binned_dispersion,
+  feature_selection_method = select_features_by_dispersion,
+  lsi_method = LSI,
+  cluster_method = cluster_graph_leiden,
+  verbose = FALSE, threads = 1L
+) {
+  assert_is(mat, "IterableMatrix")
+  assert_true(n_iterations > 0)
+  assert_is_wholenumber(n_iterations)
+  assert_is_wholenumber(threads)
+  
+  fitted_params = list(
+    first_feature_selection_method = first_feature_selection_method,
+    lsi_method = lsi_method,
+    cluster_method = cluster_method,
+    feature_means = matrix_stats(mat, row_stats = "mean", threads = threads)$row_stats["mean",],
+    iterations = n_iterations,
+    iter_info = tibble::tibble(
+      iteration = integer(),
+      feature_names = list(),
+      lsi_results = list(),
+      clusters = list()
+    )
+  )
+  if (verbose) log_progress("Starting Iterative LSI")
+  for (i in seq_len(n_iterations)) {
+    if (verbose) log_progress(sprintf("Starting Iterative LSI iteration %s of %s", i, n_iterations))
+    # add a blank row to the iter_info tibble
+    fitted_params$iter_info <- tibble::add_row(fitted_params$iter_info, iteration = i)
+    # run variable feature selection
+    if (verbose) log_progress("Selecting features")
+    if (i == 1) {
+      variable_features <- first_feature_selection_method(mat, threads = threads)
+    } else {
+      variable_features <- feature_selection_method(pseudobulk_res, threads = threads)
+    }
+    fitted_params$iter_info$feature_names[[i]] <- variable_features %>% dplyr::filter(highly_variable) %>% dplyr::pull(names)
+    
+    if (is.character(fitted_params$iter_info$feature_names[[i]])) {
+      mat_indices <- which(rownames(mat) %in% fitted_params$iter_info$feature_names[[i]])
+    } else {
+      mat_indices <- fitted_params$iter_info$feature_names[[i]]
+    }
+    # run LSI
+    if (verbose) log_progress("Running LSI")
+    lsi_res_obj <- lsi_method(mat[mat_indices,], threads = threads)
+    fitted_params$iter_info$lsi_results[[i]] <- lsi_res_obj$fitted_params
+    # only cluster + pseudobulk if this isn't the last iteration
+    if (i == n_iterations) break
+    # cluster the LSI results
+    if (verbose) log_progress("Clustering LSI results")
+    clustering_res <- t(lsi_res_obj$cell_embeddings) %>% knn_hnsw(ef = 500, threads = threads) %>% knn_to_snn_graph() %>% cluster_method()
+    fitted_params$iter_info$clusters[[i]] <- clustering_res
+    # pseudobulk and pass onto next iteration
+    if (verbose) log_progress("Pseudobulking matrix")
+    pseudobulk_res <- pseudobulk_matrix(mat, clustering_res, threads = as.integer(threads)) %>% as("dgCMatrix") %>% as("IterableMatrix")
+    rownames(pseudobulk_res) <- rownames(mat)
+  }
+  if (verbose) log_progress("Finished running LSI")
+  res <- DimReduction(
+    x = lsi_res_obj$cell_embeddings,
+    fitted_params = fitted_params,
+    feature_names = rownames(mat)
+  )
+  class(res) <- c("IterativeLSI", class(res))
+  return(res)
+}
+
 #' Test for marker features
 #'
 #' Given a features x cells matrix, perform one-vs-all differential
