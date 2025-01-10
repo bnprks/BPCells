@@ -192,11 +192,11 @@ test_that("Feature selection by bin variance works", {
     # Test only that outputs are reasonable.  There is a full comparison in `tests/real_data/` that compares implementation to Seurat
     res_table <- select_features_by_bin_variance(mat, num_feats = 10, n_bins = 5, threads = 1)
     res_table_t <- select_features_by_bin_variance(t(mat), num_feats = 10, n_bins = 5, threads = 1)
-    browser()
     res_feats <- res_table %>% dplyr::filter(highly_variable) %>% dplyr::pull(names) 
     res <- mat[res_feats,]
     res_feats_t <- res_table_t %>% dplyr::filter(highly_variable) %>% dplyr::pull(names)
     res_t <- t(mat[,res_feats_t])
+    
     expect_equal(nrow(res), 10)
     expect_equal(ncol(res), 26)
     expect_equal(nrow(res_t), 10)
@@ -221,3 +221,4 @@ test_that("LSI works", {
     expect_equal(ncol(lsi_res_t), nrow(mat))
     expect_equal(lsi_res, lsi_res_proj)
 })
+
