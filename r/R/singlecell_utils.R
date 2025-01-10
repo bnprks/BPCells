@@ -64,7 +64,7 @@ select_features_by_variance <- function(
 #'  3. Find `num_feats` features with the highest dispersion.
 select_features_by_dispersion <- function(
   mat, num_feats = 25000, 
-  normalize = normalize_log,
+  normalize = NULL,
   threads = 1L
 ) {
   assert_is(mat, "IterableMatrix")

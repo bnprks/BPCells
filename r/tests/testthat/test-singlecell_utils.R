@@ -23,7 +23,7 @@ test_that("select_features works general case", {
     res_more_feats_than_rows <- do.call(fn, list(m1, num_feats = 10000)) # more features than rows
     res_feats_equal_rows <- do.call(fn, list(m1, num_feats = 100)) 
     expect_identical(res_more_feats_than_rows, res_feats_equal_rows)
-    if (fn != "select_features_by_mean") {
+    if (fn == "select_features_by_variance") {
       # Check that normalization actually does something
       res_no_norm <- do.call(fn, list(m1, num_feats = 10, normalize = NULL))
       expect_true(!all((res %>% dplyr::arrange(names))$score == (res_no_norm %>% dplyr::arrange(names))$score))
