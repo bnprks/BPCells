@@ -29,7 +29,7 @@
 #include "hwy/detect_targets.h"
 #include "hwy/highway_export.h"
 
-#if !HWY_ARCH_RVV && !defined(HWY_NO_LIBCXX)
+#if !defined(HWY_NO_LIBCXX)
 #include <atomic>
 #endif
 
@@ -112,6 +112,8 @@ static inline HWY_MAYBE_UNUSED const char* TargetName(int64_t target) {
       return "SVE2";
     case HWY_SVE:
       return "SVE";
+    case HWY_NEON_BF16:
+      return "NEON_BF16";
     case HWY_NEON:
       return "NEON";
     case HWY_NEON_WITHOUT_AES:
@@ -127,6 +129,13 @@ static inline HWY_MAYBE_UNUSED const char* TargetName(int64_t target) {
       return "PPC10";
 #endif
 
+#if HWY_ARCH_S390X
+    case HWY_Z14:
+      return "Z14";
+    case HWY_Z15:
+      return "Z15";
+#endif
+
 #if HWY_ARCH_WASM
     case HWY_WASM:
       return "WASM";
@@ -134,7 +143,7 @@ static inline HWY_MAYBE_UNUSED const char* TargetName(int64_t target) {
       return "WASM_EMU256";
 #endif
 
-#if HWY_ARCH_RVV
+#if HWY_ARCH_RISCV
     case HWY_RVV:
       return "RVV";
 #endif
@@ -213,24 +222,24 @@ static inline HWY_MAYBE_UNUSED const char* TargetName(int64_t target) {
 // See HWY_ARCH_X86 above for details.
 #define HWY_MAX_DYNAMIC_TARGETS 15
 #define HWY_HIGHEST_TARGET_BIT HWY_HIGHEST_TARGET_BIT_ARM
-#define HWY_CHOOSE_TARGET_LIST(func_name)                       \
-  nullptr,                                   /* reserved */     \
-      nullptr,                               /* reserved */     \
-      nullptr,                               /* reserved */     \
-      nullptr,                               /* reserved */     \
-      nullptr,                               /* reserved */     \
-      nullptr,                               /* reserved */     \
-      nullptr,                               /* reserved */     \
-      nullptr,                               /* reserved */     \
-      nullptr,                               /* reserved */     \
-      HWY_CHOOSE_SVE2_128(func_name),        /* SVE2 128-bit */ \
-      HWY_CHOOSE_SVE_256(func_name),         /* SVE 256-bit */  \
-      HWY_CHOOSE_SVE2(func_name),            /* SVE2 */         \
-      HWY_CHOOSE_SVE(func_name),             /* SVE */          \
-      HWY_CHOOSE_NEON(func_name),            /* NEON */         \
+#define HWY_CHOOSE_TARGET_LIST(func_name)                              \
+  nullptr,                                   /* reserved */            \
+      nullptr,                               /* reserved */            \
+      nullptr,                               /* reserved */            \
+      HWY_CHOOSE_SVE2_128(func_name),        /* SVE2 128-bit */        \
+      HWY_CHOOSE_SVE_256(func_name),         /* SVE 256-bit */         \
+      nullptr,                               /* reserved */            \
+      nullptr,                               /* reserved */            \
+      nullptr,                               /* reserved */            \
+      HWY_CHOOSE_SVE2(func_name),            /* SVE2 */                \
+      HWY_CHOOSE_SVE(func_name),             /* SVE */                 \
+      nullptr,                               /* reserved */            \
+      HWY_CHOOSE_NEON_BF16(func_name),       /* NEON + f16/dot/bf16 */ \
+      nullptr,                               /* reserved */            \
+      HWY_CHOOSE_NEON(func_name),            /* NEON */                \
       HWY_CHOOSE_NEON_WITHOUT_AES(func_name) /* NEON without AES */
 
-#elif HWY_ARCH_RVV
+#elif HWY_ARCH_RISCV
 // See HWY_ARCH_X86 above for details.
 #define HWY_MAX_DYNAMIC_TARGETS 9
 #define HWY_HIGHEST_TARGET_BIT HWY_HIGHEST_TARGET_BIT_RVV
@@ -245,20 +254,20 @@ static inline HWY_MAYBE_UNUSED const char* TargetName(int64_t target) {
       HWY_CHOOSE_RVV(func_name), /* RVV */      \
       nullptr                    /* reserved */
 
-#elif HWY_ARCH_PPC
+#elif HWY_ARCH_PPC || HWY_ARCH_S390X
 // See HWY_ARCH_X86 above for details.
 #define HWY_MAX_DYNAMIC_TARGETS 9
 #define HWY_HIGHEST_TARGET_BIT HWY_HIGHEST_TARGET_BIT_PPC
-#define HWY_CHOOSE_TARGET_LIST(func_name)                          \
-  nullptr,                         /* reserved */                  \
-      nullptr,                     /* reserved */                  \
-      nullptr,                     /* reserved */                  \
-      nullptr,                     /* reserved */                  \
-      HWY_CHOOSE_PPC10(func_name), /* PPC10 */                     \
-      HWY_CHOOSE_PPC9(func_name),  /* PPC9 */                      \
-      HWY_CHOOSE_PPC8(func_name),  /* PPC8 */                      \
-      nullptr,                     /* reserved (VSX or AltiVec) */ \
-      nullptr                      /* reserved (VSX or AltiVec) */
+#define HWY_CHOOSE_TARGET_LIST(func_name)         \
+  nullptr,                         /* reserved */ \
+      nullptr,                     /* reserved */ \
+      nullptr,                     /* reserved */ \
+      nullptr,                     /* reserved */ \
+      HWY_CHOOSE_PPC10(func_name), /* PPC10 */    \
+      HWY_CHOOSE_PPC9(func_name),  /* PPC9 */     \
+      HWY_CHOOSE_PPC8(func_name),  /* PPC8 */     \
+      HWY_CHOOSE_Z15(func_name),   /* Z15 */      \
+      HWY_CHOOSE_Z14(func_name)    /* Z14 */
 
 #elif HWY_ARCH_WASM
 // See HWY_ARCH_X86 above for details.
@@ -316,8 +325,7 @@ struct ChosenTarget {
   }
 
  private:
-  // TODO(janwas): remove RVV once <atomic> is available
-#if HWY_ARCH_RVV || defined(HWY_NO_LIBCXX)
+#if defined(HWY_NO_LIBCXX)
   int64_t LoadMask() const { return mask_; }
   void StoreMask(int64_t mask) { mask_ = mask; }
 
@@ -327,7 +335,7 @@ struct ChosenTarget {
   void StoreMask(int64_t mask) { mask_.store(mask); }
 
   std::atomic<int64_t> mask_{1};  // Initialized to 1 so GetIndex() returns 0.
-#endif  // HWY_ARCH_RVV
+#endif  // HWY_ARCH_RISCV
 };
 
 // For internal use (e.g. by FunctionCache and DisableTargets).
