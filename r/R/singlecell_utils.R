@@ -100,7 +100,7 @@ pseudobulk_matrix <- function(mat, cell_groups, method = "sum", threads = 0L) {
       rlang::abort(sprintf("method must be one of: %s", paste(methods, collapse = ", ")))
     }
   }
-  assert_is(threads, "integer")
+  assert_is_wholenumber(threads)
 
   it <- mat %>%
     convert_matrix_type("double") %>%
