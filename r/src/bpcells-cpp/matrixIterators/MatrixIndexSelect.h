@@ -58,6 +58,27 @@ subset_eigen_cols(const Eigen::Matrix<double, Rows, Cols> m, const std::vector<u
     return ret;
 }
 
+// Array variants
+template <int Rows, int Cols>
+Eigen::Array<double, Rows, Cols>
+subset_eigen_rows(const Eigen::Array<double, Rows, Cols> m, const std::vector<uint32_t> &indices) {
+    Eigen::Array<double, Rows, Cols> ret(indices.size(), m.cols());
+    for (size_t i = 0; i < indices.size(); i++) {
+        ret.row(i) = m.row(indices[i]);
+    }
+    return ret;
+}
+
+template <int Rows, int Cols>
+Eigen::Array<double, Rows, Cols>
+subset_eigen_cols(const Eigen::Array<double, Rows, Cols> m, const std::vector<uint32_t> &indices) {
+    Eigen::Array<double, Rows, Cols> ret(m.rows(), indices.size());
+    for (size_t i = 0; i < indices.size(); i++) {
+        ret.col(i) = m.col(indices[i]);
+    }
+    return ret;
+}
+
 } // namespace
 
 // Select specific columns from a dataset
@@ -179,6 +200,37 @@ template <class T> class MatrixColSelect : public MatrixLoaderWrapper<T> {
             return subset_eigen_rows(r1, col_indices);
         } else {
             return MatrixLoaderWrapper<T>::vecMultiplyLeft(v, user_interrupt);
+        }
+    }
+
+    StatsResult computeMatrixStats(Stats row_stats, Stats col_stats, std::atomic<bool> *user_interrupt = NULL) override {
+        if (is_reorder) {
+            StatsResult res = this->loader->computeMatrixStats(row_stats, col_stats, user_interrupt);
+            if (col_stats != Stats::None) res.col_stats = subset_eigen_cols(res.col_stats, col_indices);
+            return res;
+        } else {
+            return MatrixLoaderWrapper<T>::computeMatrixStats(row_stats, col_stats, user_interrupt);
+        }
+    } 
+
+    std::vector<T> colSums(std::atomic<bool> *user_interrupt = NULL) override {
+        if (is_reorder) {
+            auto res = this->loader->colSums(user_interrupt);
+            std::vector<T> reordered(res.size());
+            for (size_t i = 0; i < res.size(); i++) {
+                reordered[i] = res[col_indices[i]];
+            }
+            return reordered;
+        } else {
+            return MatrixLoaderWrapper<T>::colSums(user_interrupt);
+        }
+    }
+
+    std::vector<T> rowSums(std::atomic<bool> *user_interrupt = NULL) override {
+        if (is_reorder) {
+            return this->loader->rowSums(user_interrupt);
+        } else {
+            return MatrixLoaderWrapper<T>::rowSums(user_interrupt);
         }
     }
 };
@@ -356,6 +408,37 @@ template <class T> class MatrixRowSelect : public MatrixLoaderWrapper<T> {
             return this->loader->vecMultiplyLeft(v2_map, user_interrupt);
         } else {
             return MatrixLoaderWrapper<T>::vecMultiplyLeft(v, user_interrupt);
+        }
+    }
+
+    StatsResult computeMatrixStats(Stats row_stats, Stats col_stats, std::atomic<bool> *user_interrupt = NULL) override {
+        if (is_reorder) {
+            StatsResult res = this->loader->computeMatrixStats(row_stats, col_stats, user_interrupt);
+            if (row_stats != Stats::None) res.row_stats = subset_eigen_cols(res.row_stats, row_indices);
+            return res;
+        } else {
+            return MatrixLoaderWrapper<T>::computeMatrixStats(row_stats, col_stats, user_interrupt);
+        }
+    }
+
+    std::vector<T> colSums(std::atomic<bool> *user_interrupt = NULL) override {
+        if (is_reorder) {
+            return this->loader->colSums(user_interrupt);
+        } else {
+            return MatrixLoaderWrapper<T>::colSums(user_interrupt);
+        }
+    }
+
+    std::vector<T> rowSums(std::atomic<bool> *user_interrupt = NULL) override {
+        if (is_reorder) {
+            auto res = this->loader->rowSums(user_interrupt);
+            std::vector<T> reordered(res.size());
+            for (size_t i = 0; i < res.size(); i++) {
+                reordered[i] = res[row_indices[i]];
+            }
+            return reordered;
+        } else {
+            return MatrixLoaderWrapper<T>::rowSums(user_interrupt);
         }
     }
 };

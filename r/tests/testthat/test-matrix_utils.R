@@ -616,6 +616,7 @@ test_that("rbind Math works", {
   row_permute <- sample.int(nrow(m1))
   col_permute <- sample.int(ncol(m1))
   test_dense_multiply_ops(m1[row_permute, col_permute], i1[row_permute, col_permute])
+  test_rowsum_colsum_rowmean_colmean_rowvar_colvar(m1[row_permute, col_permute], i1[row_permute, col_permute])
 
   i1 <- set_threads(i1, 3)
   test_dense_multiply_ops(m1, i1)
@@ -637,6 +638,7 @@ test_that("cbind Math works", {
   row_permute <- sample.int(nrow(m1))
   col_permute <- sample.int(ncol(m1))
   test_dense_multiply_ops(m1[row_permute, col_permute], i1[row_permute, col_permute])
+  test_rowsum_colsum_rowmean_colmean_rowvar_colvar(m1[row_permute, col_permute], i1[row_permute, col_permute])
 
   i1 <- set_threads(i1, 3)
   test_dense_multiply_ops(m1, i1)
