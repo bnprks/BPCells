@@ -456,10 +456,14 @@ pseudobulk_matrix <- function(mat, cell_groups, method = "sum", threads = 1L) {
       rlang::abort(sprintf("method must be one of: %s", paste(methods, collapse = ", ")))
     }
   }
-  assert_is(threads, "integer")
-  # if multiple methods are provided, only need to pass in the top method as it will also calculate the less complex stats
-  iter <- iterate_matrix(parallel_split(mat, threads, threads*4))
-  res <- pseudobulk_matrix_cpp(iter, cell_groups = as.integer(cell_groups) - 1, method = method, transpose = mat@transpose)
+  assert_is_wholenumber(threads)
+
+  it <- mat %>%
+    convert_matrix_type("double") %>%
+    parallel_split(threads, threads*4) %>%
+    iterate_matrix()
+  
+  res <- pseudobulk_matrix_cpp(it, cell_groups = as.integer(cell_groups) - 1, method = method, transpose = mat@transpose)
   # if res is a single matrix, return with colnames and rownames
   if (length(method) == 1) {
     colnames(res[[method]]) <- levels(cell_groups)
