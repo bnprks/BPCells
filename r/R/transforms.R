@@ -928,13 +928,19 @@ regress_out <- function(mat, latent_data, prediction_axis = c("row", "col")) {
 # Normalizations
 #################
 
-#' Normalize a `(features x cells)` matrix using log normalization.
-#' @param mat (IterableMatrix) Matrix to normalize.
+#' Normalization recipes
+#' 
+#' Apply standard normalizations to a `(features x cells)` counts matrix.
+#' 
+#' @rdname normalize
+#' @param mat (IterableMatrix) Counts matrix to normalize. `(features x cells)`
 #' @param scale_factor (numeric) Scale factor to multiply matrix by for log normalization.
-#' @param threads (integer) Number of threads to use.s
-#' @returns log normalized matrix.  For each element \eqn{x_{ij}} in matrix \eqn{X} with \eqn{i} features and \eqn{j} cells, 
-#'  the log normalization of that element, \eqn{\tilde{x}_{ij}} is calculated as:
-#' \eqn{\tilde{x}_{ij} = \log(\frac{x_{ij} \cdot \text{scaleFactor}}{\text{colSum}_j} + 1)}
+#' @param threads (integer) Number of threads to use.
+#' @returns For each element \eqn{x_{ij}} in matrix \eqn{X} with \eqn{i} features and \eqn{j} cells, 
+#'  transform to a normalized value \eqn{\tilde{x}_{ij}} calculated as:
+#'  
+#'   - `normalize_log`: \eqn{\tilde{x}_{ij} = \log(\frac{x_{ij} \cdot \text{scaleFactor}}{\text{colSum}_j} + 1)}
+#' @details - `normalize_log`: Corresponds to `Seurat::NormalizeLog`
 #' @export
 normalize_log <- function(mat, scale_factor = 1e4, threads = 1L) {
   assert_is(mat, "IterableMatrix")
@@ -946,14 +952,12 @@ normalize_log <- function(mat, scale_factor = 1e4, threads = 1L) {
 }
 
 
-#' Normalize a `(features x cells)` matrix using term frequency-inverse document frequency.
-#' @param feature_means (numeric) Means of the features to normalize by.  If no names are provided, then 
+#' @rdname normalize
+#' @param feature_means (numeric, optional) Pre-calculated means of the features to normalize by. If no names are provided, then 
 #' each numeric value is assumed to correspond to the feature mean for the corresponding row of the matrix.
 #' Else, map each feature name to its mean value.
-#' @returns tf-idf normalized matrix.  For each element \eqn{x_{ij}} in matrix \eqn{X} with \eqn{i} features and \eqn{j} cells,
-#' the tf-idf normalization of that element, \eqn{\tilde{x}_{ij}} is calculated as:
-#' \eqn{\tilde{x}_{ij} = \log(\frac{x_{ij} \cdot \text{scaleFactor}}{\text{rowMean}_i\cdot \text{colSum}_j} + 1)}
-#' @inheritParams normalize_log
+#' @returns - `normalize_tfidf`: \eqn{\tilde{x}_{ij} = \log(\frac{x_{ij} \cdot \text{scaleFactor}}{\text{rowMean}_i\cdot \text{colSum}_j} + 1)}
+#' @details - `normalize_tfidf`: This follows the formula from Stuart, Butler et al. 2019, used by default in `ArchR::addIterativeLSI()` and `Signac::RunTFIDF()`
 #' @export
 normalize_tfidf <- function(
   mat, feature_means = NULL,
