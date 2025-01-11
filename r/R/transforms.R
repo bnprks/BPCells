@@ -928,7 +928,7 @@ regress_out <- function(mat, latent_data, prediction_axis = c("row", "col")) {
 # Normalizations
 #################
 
-#' Normalization recipes
+#' Normalization helper functions
 #' 
 #' Apply standard normalizations to a `(features x cells)` counts matrix.
 #' 

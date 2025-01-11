@@ -3,7 +3,7 @@
 \name{normalize_log}
 \alias{normalize_log}
 \alias{normalize_tfidf}
-\title{Normalization recipes}
+\title{Normalization helper functions}
 \usage{
 normalize_log(mat, scale_factor = 10000, threads = 1L)
 
