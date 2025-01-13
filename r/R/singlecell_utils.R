@@ -265,8 +265,16 @@ project.DimReduction <- function(x, mat, ...) {
 #' @export
 LSI <- function(
   mat, n_dimensions = 50L, corr_cutoff = 1, normalize = normalize_tfidf,
-  threads = 1L
+  threads = 1L, verbose = FALSE
 ) {
+  if (rlang::is_missing(mat)) {
+    return(
+      purrr::partial(
+        LSI, n_dimensions = n_dimensions, corr_cutoff = corr_cutoff, 
+        normalize = normalize, threads = threads, verbose = verbose
+      )
+    )
+  }
   assert_is(mat, "IterableMatrix")
   assert_is_wholenumber(n_dimensions)
   assert_len(n_dimensions, 1)
@@ -274,8 +282,10 @@ LSI <- function(
   assert_true(n_dimensions < min(ncol(mat), nrow(mat)))
   assert_true((corr_cutoff >= 0) && (corr_cutoff <= 1))
   assert_is_wholenumber(threads)
-
+  
+  if (verbose) log_progress("Starting LSI")
   # Normalization
+  if (verbose) log_progress("Normalizing matrix")
   mat_stats <- matrix_stats(mat, row_stats = c("mean"), col_stats = c("mean"), threads = threads)
   read_depth <- mat_stats$col_stats["mean", ] * nrow(mat)
   if (!is.null(normalize)) mat <- normalize(mat, threads = threads)
@@ -286,6 +296,7 @@ LSI <- function(
     tempfile("mat"), compress = TRUE
   )
   # Run pca
+  if (verbose) log_progress("Calculating SVD")
   svd_attr <- svds(mat, k = n_dimensions, threads = threads)
   pca_res <- t(svd_attr$u) %*% mat
   
@@ -293,7 +304,7 @@ LSI <- function(
   pca_corrs <- abs(cor(read_depth, t(pca_res)))
   pca_feats_to_keep <- which(pca_corrs < corr_cutoff)
   if (length(pca_feats_to_keep) != n_dimensions) {
-    log_progress(sprintf("Dropping PCs %s due to high correlation with sequencing depth", paste(setdiff(1:n_dimensions, pca_feats_to_keep), collapse = ", ")))
+    if (verbose) log_progress(sprintf("Dropping PCs %s due to high correlation with sequencing depth", paste(setdiff(1:n_dimensions, pca_feats_to_keep), collapse = ", ")))
     pca_res <- pca_res[pca_feats_to_keep, ]
   }
   fitted_params <- list(
