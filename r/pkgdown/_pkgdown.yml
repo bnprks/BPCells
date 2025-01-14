@@ -59,6 +59,7 @@ articles:
   - "web-only/programming-efficiency"
   - "web-only/programming-philosophy"
   - "web-only/developer-notes"
+  - "web-only/manuscript-draft"
 
 # cosmo, flatly, united, sandstone all look reasonable
 # pulse, lumen, zephyr
@@ -131,23 +132,17 @@ reference:
   - checksum
   - apply_by_row
   - regress_out
-  - normalize_log
-  - normalize_tfidf
   - select_features_by_variance
   - select_features_by_dispersion
   - select_features_by_mean
   - IterableMatrix-methods
   - pseudobulk_matrix
 
-- title: "Reference Annotations"
+- title: "Single-cell analysis helpers"
+- subtitle: "Dimensionality reduction"
 - contents:
-  - human_gene_mapping
-  - match_gene_symbol
-  - read_gtf
-  - read_bed
-  - read_ucsc_chrom_sizes
-
-- title: "Clustering"
+  - normalize_log
+- subtitle: "Clustering"
 - contents:
   - knn_hnsw
   - cluster_graph_leiden
@@ -185,3 +180,11 @@ reference:
   - discrete_palette
   - collect_features
   - rotate_x_labels
+
+- title: "Reference Annotations"
+- contents:
+  - human_gene_mapping
+  - match_gene_symbol
+  - read_gtf
+  - read_bed
+  - read_ucsc_chrom_sizes
