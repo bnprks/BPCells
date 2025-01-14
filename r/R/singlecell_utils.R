@@ -6,6 +6,122 @@
 # option. This file may not be copied, modified, or distributed
 # except according to those terms.
 
+
+#################
+# Feature selection
+#################
+
+#' Feature selection functions
+#' 
+#' Apply a feature selection method to a `(features x cells)` matrix.
+#' @rdname feature_selection
+#' @param mat (IterableMatrix) dimensions features x cells
+#' @param num_feats (integer) Number of features to return.  If the number is higher than the number of features in the matrix, 
+#' all features will be returned.
+#' @param normalize (function) Normalize matrix using a given function. If `NULL`, no normalization is performed.
+#' @param threads (integer) Number of threads to use.
+#' @returns
+#' Return a dataframe with the following columns, sorted descending by score:
+#' - `names`: Feature name.
+#' - `score`: Scoring of the feature, depending on the method used.  
+#' - `highly_variable`: Logical vector of whether the feature is highly variable.
+#'
+#' Each different feature selection method will have a different scoring method:
+#' - `select_features_by_variance`: Score representing variance of each feature.
+#' @details 
+#' `select_features_by_variance` Calculates the variance of each feature using the following process:
+#'  1. Perform an optional term frequency + log normalization, for each feature.
+#'  2. Find `num_feats` features with the highest variance.
+#' @export
+select_features_by_variance <- function(
+  mat, num_feats = 25000, 
+  normalize = normalize_log,
+  threads = 1L
+) {
+  if (rlang::is_missing(mat)) {
+    return(purrr::partial(select_features_by_variance, num_feats = num_feats, normalize = normalize, threads = threads))
+  }
+  assert_is(mat, "IterableMatrix")
+  assert_greater_than_zero(num_feats)
+  assert_is_wholenumber(num_feats)
+  assert_len(num_feats, 1)
+  assert_is(num_feats, "numeric")
+  num_feats <- min(max(num_feats, 0), nrow(mat))
+  if (!is.null(normalize)) mat <- normalize(mat, threads = threads)
+  features_df <- tibble::tibble(
+    names = rownames(mat),
+    score = matrix_stats(mat, row_stats = "variance", threads = threads)$row_stats["variance",]
+  ) %>% 
+    dplyr::arrange(desc(score)) %>% 
+    dplyr::mutate(highly_variable = dplyr::row_number() <= num_feats)
+  return(features_df)
+}
+
+
+#' @rdname feature_selection
+#' @returns
+#'  - `select_features_by_dispersion`: Score representing the dispersion of each feature.
+#' @details 
+#' `select_features_by_dispersion` calculates the dispersion of each feature using the following process:
+#'  1. Perform an optional term frequency + log normalization, for each feature.
+#'  2. Find the dispersion (variance/mean) of each feature.
+#'  3. Find `num_feats` features with the highest dispersion.
+select_features_by_dispersion <- function(
+  mat, num_feats = 25000, 
+  normalize = NULL,
+  threads = 1L
+) {
+  if (rlang::is_missing(mat)) {
+    return(partial_explicit(select_features_by_dispersion, num_feats = num_feats, normalize = normalize, threads = threads))
+  }
+  assert_is(mat, "IterableMatrix")
+  assert_greater_than_zero(num_feats)
+  assert_is_wholenumber(num_feats)
+  assert_len(num_feats, 1)
+  assert_is(num_feats, "numeric")
+  num_feats <- min(max(num_feats, 0), nrow(mat))
+
+  if (!is.null(normalize)) mat <- normalize(mat, threads = threads)
+  mat_stats <- matrix_stats(mat, row_stats = "variance", threads = threads)
+  features_df <- tibble::tibble(
+    names = rownames(mat),
+    score = mat_stats$row_stats["variance", ] / mat_stats$row_stats["mean", ]
+  ) %>% 
+    dplyr::arrange(desc(score)) %>% 
+    dplyr::mutate(highly_variable = dplyr::row_number() <= num_feats)
+  return(features_df)
+}
+
+
+#' @rdname feature_selection
+#' @returns
+#' - `select_features_by_mean`: Score representing the mean accessibility of each feature.
+#' @details 
+#' `select_features_by_mean` calculates the mean accessibility of each feature using the following process:
+#' 1. Get the sum of each binarized feature.
+#' 2. Find `num_feats` features with the highest accessibility.
+#' @export
+select_features_by_mean <- function(mat, num_feats = 25000, threads = 1L) {
+  if (rlang::is_missing(mat)) {
+    return(partial_explicit(select_features_by_mean, num_feats = num_feats, threads = threads))
+  }
+  assert_is(mat, "IterableMatrix")
+  assert_is_wholenumber(num_feats)
+  assert_greater_than_zero(num_feats)
+  assert_is(num_feats, "numeric")
+  num_feats <- min(max(num_feats, 0), nrow(mat))
+  # get the sum of each feature, binarized
+  # get the top features
+  features_df <- tibble::tibble(
+    names = rownames(mat),
+    score = matrix_stats(mat, row_stats = "nonzero", threads = threads)$row_stats["nonzero", ]
+  ) %>%
+    dplyr::arrange(desc(score)) %>%
+    dplyr::mutate(highly_variable = dplyr::row_number() <= num_feats)
+  return(features_df)
+}
+
+
 #' Test for marker features
 #'
 #' Given a features x cells matrix, perform one-vs-all differential
