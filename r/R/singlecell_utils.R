@@ -11,34 +11,42 @@
 # Feature selection
 #################
 
-#' Get the most variable features within a matrix.
+#' Feature selection functions
+#' 
+#' Apply a feature selection method to a `(features x cells)` matrix.
+#' @rdname feature_selection
 #' @param mat (IterableMatrix) dimensions features x cells
 #' @param num_feats (integer) Number of features to return.  If the number is higher than the number of features in the matrix, 
 #' all features will be returned.
 #' @param normalize (function) Normalize matrix using a given function. If `NULL`, no normalization is performed.
 #' @param threads (integer) Number of threads to use.
 #' @returns
-#' Return a dataframe with the following columns, sorted descending by variance:
+#' Return a dataframe with the following columns, sorted descending by score:
 #' - `names`: Feature name.
-#' - `score`: Variance of the feature.
+#' - `score`: Scoring of the feature, depending on the method used.  
 #' - `highly_variable`: Logical vector of whether the feature is highly variable.
+#'
+#' Each different feature selection method will have a different scoring method:
+#' - `select_features_by_variance`: Score representing variance of each feature.
 #' @details 
-#' Calculate using the following process:
+#' `select_features_by_variance` Calculates the variance of each feature using the following process:
 #'  1. Perform an optional term frequency + log normalization, for each feature.
-#'  2. Find `num_feats` features with the highest variance across clusters.
+#'  2. Find `num_feats` features with the highest variance.
 #' @export
 select_features_by_variance <- function(
   mat, num_feats = 25000, 
   normalize = normalize_log,
   threads = 1L
 ) {
+  if (rlang::is_missing(mat)) {
+    return(purrr::partial(select_features_by_variance, num_feats = num_feats, normalize = normalize, threads = threads))
+  }
   assert_is(mat, "IterableMatrix")
   assert_greater_than_zero(num_feats)
   assert_is_wholenumber(num_feats)
   assert_len(num_feats, 1)
   assert_is(num_feats, "numeric")
   num_feats <- min(max(num_feats, 0), nrow(mat))
-
   if (!is.null(normalize)) mat <- normalize(mat, threads = threads)
   features_df <- tibble::tibble(
     names = rownames(mat),
@@ -50,15 +58,11 @@ select_features_by_variance <- function(
 }
 
 
-#' Get the features with the highest dispersion within a matrix.
+#' @rdname feature_selection
 #' @returns
-#' Return a dataframe with the following columns, sorted descending by dispersion:
-#'   - `names`: Feature name.
-#'   - `score`: Variance of the feature.
-#'   - `highly_variable`: Logical vector of whether the feature is highly variable.
-#' @inheritParams select_features_by_variance
+#'  - `select_features_by_dispersion`: Score representing the dispersion of each feature.
 #' @details 
-#' Calculate using the following process:
+#' `select_features_by_dispersion` calculates the dispersion of each feature using the following process:
 #'  1. Perform an optional term frequency + log normalization, for each feature.
 #'  2. Find the dispersion (variance/mean) of each feature.
 #'  3. Find `num_feats` features with the highest dispersion.
@@ -67,6 +71,9 @@ select_features_by_dispersion <- function(
   normalize = NULL,
   threads = 1L
 ) {
+  if (rlang::is_missing(mat)) {
+    return(partial_explicit(select_features_by_dispersion, num_feats = num_feats, normalize = normalize, threads = threads))
+  }
   assert_is(mat, "IterableMatrix")
   assert_greater_than_zero(num_feats)
   assert_is_wholenumber(num_feats)
@@ -86,21 +93,18 @@ select_features_by_dispersion <- function(
 }
 
 
-#' Get the top features from a matrix, based on the mean accessibility of each feature.
-#' @param num_feats Number of features to deem as highly accessible.  If the number is higher than the number of features in the matrix,
-#' all features will be returned.
-#' @inheritParams select_features_by_variance
+#' @rdname feature_selection
 #' @returns
-#' Return a dataframe with the following columns, sorted descending by mean accessibility:
-#'   - `names`: Feature name.
-#'   - `score`: Binarize sum of each feature.
-#'   - `highly_variable`: Logical vector of whether the feature is highly accessible by mean accessibility.
+#' - `select_features_by_mean`: Score representing the mean accessibility of each feature.
 #' @details 
-#' Calculate using the following process:
+#' `select_features_by_mean` calculates the mean accessibility of each feature using the following process:
 #' 1. Get the sum of each binarized feature.
 #' 2. Find `num_feats` features with the highest accessibility.
 #' @export
 select_features_by_mean <- function(mat, num_feats = 25000, threads = 1L) {
+  if (rlang::is_missing(mat)) {
+    return(partial_explicit(select_features_by_mean, num_feats = num_feats, threads = threads))
+  }
   assert_is(mat, "IterableMatrix")
   assert_is_wholenumber(num_feats)
   assert_greater_than_zero(num_feats)
@@ -181,7 +185,6 @@ marker_features <- function(mat, groups, method="wilcoxon") {
         background_mean = as.numeric(background_means)
     )
 }
-
 
 #' Aggregate counts matrices by cell group or feature.
 #'

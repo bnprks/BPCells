@@ -132,9 +132,6 @@ reference:
   - checksum
   - apply_by_row
   - regress_out
-  - select_features_by_variance
-  - select_features_by_dispersion
-  - select_features_by_mean
   - IterableMatrix-methods
   - pseudobulk_matrix
 
@@ -142,6 +139,7 @@ reference:
 - subtitle: "Dimensionality reduction"
 - contents:
   - normalize_log
+  - select_features_by_variance
 - subtitle: "Clustering"
 - contents:
   - knn_hnsw
