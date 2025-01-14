@@ -57,3 +57,19 @@ log_progress <- function(msg, add_timestamp = TRUE){
     message(msg)
   }
 }
+
+# Helper function to create partial explicit functions
+# This builds upon purrr::partial by allowing for nested partial calls, where each partial call
+# only does partial application of the arguments that were explicitly provided.
+partial_explicit <- function(fn, ...) {
+  args <- rlang::enquos(...)
+  evaluated_args <- purrr::map(args, rlang::eval_tidy)
+  # Fetch the default arguments from the function definition
+  default_args <- formals(fn)
+  # Keep only explicitly provided arguments that were evaluated
+  # where the values are different from the default arguments
+  explicitly_passed_args <- evaluated_args[names(evaluated_args) %in% names(default_args) & 
+                                            !purrr::map2_lgl(evaluated_args, default_args[names(evaluated_args)], identical)]
+  # Return a partially applied version of the function using evaluated arguments
+  return(purrr::partial(fn, !!!explicitly_passed_args))
+}
