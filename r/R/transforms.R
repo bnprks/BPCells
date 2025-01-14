@@ -943,11 +943,11 @@ regress_out <- function(mat, latent_data, prediction_axis = c("row", "col")) {
 #' @details - `normalize_log`: Corresponds to `Seurat::NormalizeLog`
 #' @export
 normalize_log <- function(mat, scale_factor = 1e4, threads = 1L) {
+  # browser()
   if (rlang::is_missing(mat)) {
     return(
-      purrr::partial(
-        normalize_log, 
-        scale_factor = scale_factor, threads = threads
+      partial_explicit(
+        normalize_log, scale_factor = scale_factor, threads = threads
       )
     )
   }
@@ -973,10 +973,9 @@ normalize_tfidf <- function(
 ) {
   if (rlang::is_missing(mat)) {
     return(
-      purrr::partial(
-        normalize_tfidf, 
-        feature_means = feature_means, scale_factor = scale_factor, 
-        threads = threads
+      partial_explicit(
+        normalize_tfidf, feature_means = feature_means, 
+        scale_factor = scale_factor, threads = threads
       )
     )
   }
