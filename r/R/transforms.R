@@ -943,6 +943,14 @@ regress_out <- function(mat, latent_data, prediction_axis = c("row", "col")) {
 #' @details - `normalize_log`: Corresponds to `Seurat::NormalizeLog`
 #' @export
 normalize_log <- function(mat, scale_factor = 1e4, threads = 1L) {
+  if (rlang::is_missing(mat)) {
+    return(
+      purrr::partial(
+        normalize_log, 
+        scale_factor = scale_factor, threads = threads
+      )
+    )
+  }
   assert_is(mat, "IterableMatrix")
   assert_is_numeric(scale_factor)
   assert_greater_than_zero(scale_factor)
@@ -963,6 +971,15 @@ normalize_tfidf <- function(
   mat, feature_means = NULL,
   scale_factor = 1e4, threads = 1L
 ) {
+  if (rlang::is_missing(mat)) {
+    return(
+      purrr::partial(
+        normalize_tfidf, 
+        feature_means = feature_means, scale_factor = scale_factor, 
+        threads = threads
+      )
+    )
+  }
   assert_is(mat, "IterableMatrix")
   assert_is_wholenumber(threads)
   # If feature means are passed in, only need to calculate term frequency
