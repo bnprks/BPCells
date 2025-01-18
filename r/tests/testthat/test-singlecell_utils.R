@@ -13,6 +13,10 @@ generate_sparse_matrix <- function(nrow, ncol, fraction_nonzero = 0.5, max_val =
   as(m, "dgCMatrix")
 }
 
+generate_dense_matrix <- function(nrow, ncol) {
+  m <- matrix(runif(nrow * ncol), nrow = nrow)
+}
+
 test_that("select_features works general case", {
   m1 <- generate_sparse_matrix(100, 50) %>% as("IterableMatrix")
   for (fn in c("select_features_by_variance", "select_features_by_dispersion", "select_features_by_mean")) {
@@ -36,6 +40,7 @@ test_that("select_features works general case", {
     }
   }
 })
+
 
 test_that("Wilcoxon rank sum works (small)", {
     x <- c(0.80, 0.83, 1.89, 1.04, 1.45, 1.38, 1.91, 1.64, 0.73, 1.46)
@@ -185,5 +190,45 @@ test_that("Pseudobulk aggregation works with multiple return types", {
       }
     }
   }
+})
+
+
+
+test_that("Feature selection by bin variance works", {
+    mat <- generate_sparse_matrix(500, 26, fraction_nonzero = 0.1) %>% as("IterableMatrix")
+    # Test only that outputs are reasonable.  There is a full comparison in `tests/real_data/` that compares implementation to Seurat
+    res_table <- select_features_by_binned_dispersion(mat, num_feats = 10, n_bins = 5, threads = 1)
+    res_table_t <- select_features_by_binned_dispersion(t(mat), num_feats = 10, n_bins = 5, threads = 1)
+    res_feats <- res_table %>% dplyr::filter(highly_variable) %>% dplyr::pull(names) 
+    res <- mat[res_feats,]
+    res_feats_t <- res_table_t %>% dplyr::filter(highly_variable) %>% dplyr::pull(names)
+    res_t <- t(mat[,res_feats_t])
+    
+    expect_equal(nrow(res), 10)
+    expect_equal(ncol(res), 26)
+    expect_equal(nrow(res_t), 10)
+    expect_equal(ncol(res_t), 500)
+})
+
+test_that("LSI works", {
+    mat <- matrix(runif(240), nrow=10) %>% as("dgCMatrix") %>% as("IterableMatrix")
+    rownames(mat) <- paste0("feat", seq_len(nrow(mat)))
+    colnames(mat) <- paste0("cell", seq_len(ncol(mat)))
+    # Test only that outputs are reasonable.  There is a full comparison in `tests/real_data/` that compares implementation to ArchR
+    lsi_res_obj <- LSI(mat, n_dimensions = 5)
+    lsi_res_t_obj <- LSI(t(mat), n_dimensions = 5)
+    # Also check partial args
+    lsi_res_obj_partial <- LSI(n_dimensions = 5)(mat)
+    lsi_res <- lsi_res_obj$cell_embeddings
+    lsi_res_t <- lsi_res_t_obj$cell_embeddings
+    # Check that projection results in the same output if used on the same input matrix
+    lsi_res_proj <- project(lsi_res_obj, mat)
+
+    expect_equal(nrow(lsi_res), 5)
+    expect_equal(ncol(lsi_res), ncol(mat))
+    expect_equal(nrow(lsi_res_t), 5)
+    expect_equal(ncol(lsi_res_t), nrow(mat))
+    expect_equal(lsi_res_obj, lsi_res_obj_partial)
+    expect_equal(lsi_res, lsi_res_proj)
 })
 
