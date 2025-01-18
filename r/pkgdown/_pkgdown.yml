@@ -132,7 +132,6 @@ reference:
   - checksum
   - apply_by_row
   - regress_out
-  - select_features_by_binned_dispersion
   - LSI
   - IterableMatrix-methods
   - pseudobulk_matrix
