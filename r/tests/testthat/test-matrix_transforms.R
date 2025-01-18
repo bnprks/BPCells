@@ -367,6 +367,8 @@ test_that("tf-idf normalization works", {
     res <- normalize_tfidf(m2)
     expect_equal(res %>% as("dgCMatrix"), res_dgc, tolerance = 1e-6)
     res_with_row_means <- normalize_tfidf(m2, feature_means = row_means)
+    res_with_row_means_partial <- normalize_tfidf(feature_means = row_means)(m2)
+    expect_equal(res_with_row_means, res_with_row_means_partial)
     expect_identical(res, res_with_row_means)
 
     res_with_shuffled_row_means <- normalize_tfidf(m2, feature_means = row_means_shuffled)
@@ -386,5 +388,6 @@ test_that("normalize_log works", {
     
     # Test that changing scale factor works
     res_2 <- as(normalize_log(m2, scale_factor = 1e5), "dgCMatrix")
+    res_2_partial <- as(normalize_log(scale_factor = 1e5)(m2), "dgCMatrix")
     expect_equal(res_2, log1p(res_dgc*1e5), tolerance = 1e-6)
 })
