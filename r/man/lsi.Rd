@@ -9,7 +9,8 @@ LSI(
   n_dimensions = 50L,
   corr_cutoff = 1,
   normalize = normalize_tfidf,
-  threads = 1L
+  threads = 1L,
+  verbose = FALSE
 )
 }
 \arguments{

@@ -121,22 +121,14 @@ select_features_by_mean <- function(mat, num_feats = 25000, threads = 1L) {
   return(features_df)
 }
 
-
-#' Get the most variable features within a matrix.
-#' @param num_feats (integer) Number of features to return.  If the number is higher than the number of features in the matrix, 
-#' all features will be returned.
+#' @rdname feature_selection
 #' @param n_bins (integer) Number of bins for binning mean gene expression.  Normalizing dispersion is done with respect to each bin, 
 #' and if the number of features
 #' within a bin is less than 2, the dispersion is set to 1.
-#' @inheritParams select_features_by_variance
 #' @returns
-#' Return a dataframe with the following columns, sorted descending by bin-normalized dispersion:
-#'   - `names`: Feature name.
-#'   - `score`: Bin-normalized dispersion of the feature.
-#'   - `highly_variable`: Logical vector of whether the feature is highly variable.
-#' @details The formula for calculating the most variable features is from the Seurat package (Satjia et al. 2015).
-#' 
-#' Calculate using the following process:
+#'  - `select_features_by_binned_dispersion`: Score representing the bin normalized dispersion of each feature.
+#' @details 
+#' `select_features_by_binned_dispersion` calculates the bin normalized dispersion of each feature using the following process, given by the Seurat package (Satjia et al. 2015):
 #'  1. Calculate the dispersion of each feature (variance / mean)
 #'  2. Log normalize dispersion and mean
 #'  3. Bin the features by their means, and normalize dispersion within each bin
@@ -531,6 +523,8 @@ marker_features <- function(mat, groups, method="wilcoxon") {
     )
 }
 
+
+                   
 #' Aggregate counts matrices by cell group or feature.
 #'
 #' Given a `(features x cells)` matrix, group cells by `cell_groups` and aggregate counts by `method` for each
@@ -561,7 +555,7 @@ pseudobulk_matrix <- function(mat, cell_groups, method = "sum", threads = 0L) {
       rlang::abort(sprintf("method must be one of: %s", paste(methods, collapse = ", ")))
     }
   }
-  assert_is(threads, "integer")
+  assert_is_wholenumber(threads)
 
   it <- mat %>%
     convert_matrix_type("double") %>%
