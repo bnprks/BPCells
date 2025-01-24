@@ -19,24 +19,24 @@ generate_dense_matrix <- function(nrow, ncol) {
 
 test_that("select_features works general case", {
   m1 <- generate_sparse_matrix(100, 50) %>% as("IterableMatrix")
-  for (fn in c("select_features_by_variance", "select_features_by_dispersion", "select_features_by_mean")) {
-    res <- do.call(fn, list(m1, num_feats = 10))
+  for (fn in c("select_features_variance", "select_features_dispersion", "select_features_mean")) {
+    res <- do.call(fn, list(m1, num_feats = 5))
     expect_equal(nrow(res), nrow(m1)) # Check that dataframe has correct features we're expecting
-    expect_equal(sum(res$highly_variable), 10) # Only 10 features marked as highly variable
+    expect_equal(sum(res$highly_variable), 5) # Only 10 features marked as highly variable
     expect_setequal(res$names, rownames(m1))
     res_more_feats_than_rows <- do.call(fn, list(m1, num_feats = 10000)) # more features than rows
     res_feats_equal_rows <- do.call(fn, list(m1, num_feats = 100))
     res_feats_partial <- get(fn)(num_feats = 100)(m1)
     expect_identical(res_feats_equal_rows, res_feats_partial)
     expect_identical(res_more_feats_than_rows, res_feats_equal_rows)
-    if (fn == "select_features_by_variance") {
+    if (fn == "select_features_variance") {
       # Check that normalization actually does something
       res_no_norm <- do.call(fn, list(m1, num_feats = 10, normalize = NULL))
       # Check that we can do partial functions on normalization too
-      res_norm_partial <- do.call(fn, list(m1, num_feats = 10, normalize = purrr::partial(normalize_log(scale = 1e3, threads = 1L))))
-      res_norm_implicit_partial <- select_features_by_variance(normalize = normalize_log(scale_factor = 1e3), num_feats = 10)(m1)
+      res_norm_partial <- do.call(fn, list(m1, num_feats = 10, normalize = normalize_log(scale = 1e3, threads = 1L)))
+      res_norm_implicit_partial <- select_features_variance(normalize = normalize_log(scale_factor = 1e3), num_feats = 10)(m1)
       expect_identical(res_norm_partial, res_norm_implicit_partial)
-      expect_true(!all((res %>% dplyr::arrange(names))$score == (res_no_norm %>% dplyr::arrange(names))$score))
+      expect_true(!all((res_no_norm %>% dplyr::arrange(names))$score == (res_norm_partial %>% dplyr::arrange(names))$score))
     }
   }
 })

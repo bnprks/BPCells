@@ -58,18 +58,67 @@ log_progress <- function(msg, add_timestamp = TRUE){
   }
 }
 
-# Helper function to create partial explicit functions
-# This builds upon purrr::partial by allowing for nested partial calls, where each partial call
-# only does partial application of the arguments that were explicitly provided.
-partial_explicit <- function(fn, ...) {
-  args <- rlang::enquos(...)
-  evaluated_args <- purrr::map(args, rlang::eval_tidy)
-  # Fetch the default arguments from the function definition
-  default_args <- formals(fn)
-  # Keep only explicitly provided arguments that were evaluated
-  # where the values are different from the default arguments
-  explicitly_passed_args <- evaluated_args[names(evaluated_args) %in% names(default_args) & 
-                                            !purrr::map2_lgl(evaluated_args, default_args[names(evaluated_args)], identical)]
-  # Return a partially applied version of the function using evaluated arguments
-  return(purrr::partial(fn, !!!explicitly_passed_args))
+#' Helper to create partial functions
+#'
+#' Automatically creates a partial application of the caller
+#' function including all non-missing arguments. 
+#'
+#' @param missing_args (named list[bool]) Any named index with a TRUE value
+#'   will be treated as missing. Designed to be used in the caller with the
+#'   `base::missing()` function to detect unspecified arguments with default values,
+#'   or to manually specifiy other arguments that should not be specialized
+#' @return A `bpcells_partial` object (a function with some extra attributes)
+#' @keywords internal
+create_partial <- function(missing_args=list()) {
+  env <- rlang::caller_env()
+  fn_sym <- rlang::caller_call()[[1]]
+  fn <- rlang::caller_fn()
+
+  args <- list()
+  for (n in names(formals(fn))) {
+    if (n %in% names(missing_args) && missing_args[[n]]) next
+    if (rlang::is_missing(env[[n]])) next
+    args[[n]] <- env[[n]]
+  }
+
+  ret <- do.call(partial_apply, c(fn, args))
+  attr(ret, "body")[[1]] <- fn_sym
+  return(ret)
+}
+
+
+#' Create partial function calls
+#' 
+#' Specify some but not all arguments to a function.
+#'
+#' @param f A function
+#' @param ... Named arguments to `f`
+#' @param .overwrite (bool) If `f` is already an output from
+#'   `partial_apply()`, whether parameter re-definitions should
+#'   be ignored or overwrite the existing definitions
+#' @return A `bpcells_partial` object (a function with some extra attributes)
+#' @keywords internal
+partial_apply <- function(f, ..., .overwrite=FALSE) {
+  args <- rlang::list2(...)
+
+  if (is(f, "bpcells_partial")) {
+    prev_args <- attr(f, "args")
+    for (a in names(prev_args)) {
+      if (!(.overwrite && a %in% names(args))) {
+        args[[a]] <- prev_args[[a]]
+      } 
+    }
+    f <- attr(f, "fn")
+    function_name <- attr(f, "body")[[1]]
+  } else {
+    function_name <- rlang::sym(rlang::caller_arg(f))
+  }
+  partial_fn <- do.call(purrr::partial, c(f, args))
+  attr(partial_fn, "body")[[1]] <- function_name
+  structure(
+    partial_fn,
+    class = c("bpcells_partial", "purrr_function_partial", "function"),
+    args = args,
+    fn = f
+  )
 }
