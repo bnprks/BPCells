@@ -68,6 +68,7 @@ log_progress <- function(msg, add_timestamp = TRUE){
 #'   `base::missing()` function to detect unspecified arguments with default values,
 #'   or to manually specifiy other arguments that should not be specialized
 #' @return A `bpcells_partial` object (a function with some extra attributes)
+#' @keywords internal
 create_partial <- function(missing_args=list()) {
   env <- rlang::caller_env()
   fn_sym <- rlang::caller_call()[[1]]
@@ -92,10 +93,11 @@ create_partial <- function(missing_args=list()) {
 #'
 #' @param f A function
 #' @param ... Named arguments to `f`
-#' @param .overwrite (bool) If `f` is already an ouptut from
+#' @param .overwrite (bool) If `f` is already an output from
 #'   `partial_apply()`, whether parameter re-definitions should
 #'   be ignored or overwrite the existing definitions
 #' @return A `bpcells_partial` object (a function with some extra attributes)
+#' @keywords internal
 partial_apply <- function(f, ..., .overwrite=FALSE) {
   args <- rlang::list2(...)
 

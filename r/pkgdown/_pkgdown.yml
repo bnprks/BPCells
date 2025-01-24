@@ -139,7 +139,7 @@ reference:
 - subtitle: "Dimensionality reduction"
 - contents:
   - normalize_log
-  - select_features_by_variance
+  - select_features_variance
 - subtitle: "Clustering"
 - contents:
   - knn_hnsw
