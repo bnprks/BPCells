@@ -38,16 +38,22 @@ select_features_by_variance <- function(
   normalize = normalize_log,
   threads = 1L
 ) {
-  if (rlang::is_missing(mat)) {
-    return(purrr::partial(select_features_by_variance, num_feats = num_feats, normalize = normalize, threads = threads))
-  }
-  assert_is(mat, "IterableMatrix")
   assert_greater_than_zero(num_feats)
   assert_is_wholenumber(num_feats)
   assert_len(num_feats, 1)
   assert_is(num_feats, "numeric")
+  if (rlang::is_missing(mat)) {
+    return(create_partial(
+      missing_args = list(
+        num_feats = missing(num_feats),
+        normalize = missing(normalize), 
+        threads = missing(threads)
+      )
+    ))
+  }
+  assert_is(mat, "IterableMatrix")
   num_feats <- min(max(num_feats, 0), nrow(mat))
-  if (!is.null(normalize)) mat <- normalize(mat, threads = threads)
+  if (!is.null(normalize)) mat <- partial_apply(normalize, threads = threads)(mat)
   features_df <- tibble::tibble(
     names = rownames(mat),
     score = matrix_stats(mat, row_stats = "variance", threads = threads)$row_stats["variance",]
@@ -71,17 +77,22 @@ select_features_by_dispersion <- function(
   normalize = NULL,
   threads = 1L
 ) {
-  if (rlang::is_missing(mat)) {
-    return(partial_explicit(select_features_by_dispersion, num_feats = num_feats, normalize = normalize, threads = threads))
-  }
-  assert_is(mat, "IterableMatrix")
   assert_greater_than_zero(num_feats)
   assert_is_wholenumber(num_feats)
   assert_len(num_feats, 1)
   assert_is(num_feats, "numeric")
+  if (rlang::is_missing(mat)) {
+    return(create_partial(
+      missing_args = list(
+        num_feats = missing(num_feats),
+        normalize = missing(normalize), 
+        threads = missing(threads)
+      )
+    ))
+  }
   num_feats <- min(max(num_feats, 0), nrow(mat))
-
-  if (!is.null(normalize)) mat <- normalize(mat, threads = threads)
+  assert_is(mat, "IterableMatrix")
+  if (!is.null(normalize)) mat <- partial_apply(normalize, threads = threads)(mat)
   mat_stats <- matrix_stats(mat, row_stats = "variance", threads = threads)
   features_df <- tibble::tibble(
     names = rownames(mat),
@@ -101,17 +112,25 @@ select_features_by_dispersion <- function(
 #' 1. Get the sum of each binarized feature.
 #' 2. Find `num_feats` features with the highest accessibility.
 #' @export
-select_features_by_mean <- function(mat, num_feats = 25000, threads = 1L) {
-  if (rlang::is_missing(mat)) {
-    return(partial_explicit(select_features_by_mean, num_feats = num_feats, threads = threads))
-  }
-  assert_is(mat, "IterableMatrix")
+select_features_by_mean <- function(mat, num_feats = 25000, normalize = NULL, threads = 1L) {
   assert_is_wholenumber(num_feats)
   assert_greater_than_zero(num_feats)
   assert_is(num_feats, "numeric")
+  if (rlang::is_missing(mat)) {
+    return(create_partial(
+      missing_args = list(
+        num_feats = missing(num_feats),
+        normalize = missing(normalize), 
+        threads = missing(threads)
+      )
+    ))
+  }
+  assert_is(mat, "IterableMatrix")
   num_feats <- min(max(num_feats, 0), nrow(mat))
+  if (!is.null(normalize)) mat <- partial_apply(normalize, threads = threads)(mat)
   # get the sum of each feature, binarized
   # get the top features
+  
   features_df <- tibble::tibble(
     names = rownames(mat),
     score = matrix_stats(mat, row_stats = "nonzero", threads = threads)$row_stats["nonzero", ]

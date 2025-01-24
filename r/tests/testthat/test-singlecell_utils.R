@@ -29,7 +29,7 @@ test_that("select_features works general case", {
       # Check that normalization actually does something
       res_no_norm <- do.call(fn, list(m1, num_feats = 10, normalize = NULL))
       # Check that we can do partial functions on normalization too
-      res_norm_partial <- do.call(fn, list(m1, num_feats = 10, normalize = purrr::partial(normalize_log(scale = 1e3, threads = 1L))))
+      res_norm_partial <- do.call(fn, list(m1, num_feats = 10, normalize = normalize_log(scale = 1e3, threads = 1L)))
       res_norm_implicit_partial <- select_features_by_variance(normalize = normalize_log(scale_factor = 1e3), num_feats = 10)(m1)
       expect_identical(res_norm_partial, res_norm_implicit_partial)
       expect_true(!all((res %>% dplyr::arrange(names))$score == (res_no_norm %>% dplyr::arrange(names))$score))
