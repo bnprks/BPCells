@@ -943,17 +943,19 @@ regress_out <- function(mat, latent_data, prediction_axis = c("row", "col")) {
 #' @details - `normalize_log`: Corresponds to `Seurat::NormalizeLog`
 #' @export
 normalize_log <- function(mat, scale_factor = 1e4, threads = 1L) {
-  # browser()
-  if (rlang::is_missing(mat)) {
-    return(
-      partial_explicit(
-        normalize_log, scale_factor = scale_factor, threads = threads
-      )
-    )
-  }
-  assert_is(mat, "IterableMatrix")
   assert_is_numeric(scale_factor)
   assert_greater_than_zero(scale_factor)
+  if (rlang::is_missing(mat)) {
+    return(
+      create_partial(
+        missing_args = list(
+          scale_factor = missing(scale_factor), 
+          threads = missing(threads)
+        )
+      )
+    ) 
+  }
+  assert_is(mat, "IterableMatrix")
   read_depth <- matrix_stats(mat, col_stats = c("mean"), threads = threads)$col_stats["mean", ] * nrow(mat)
   mat <- mat %>% multiply_cols(1 / read_depth)
   return(log1p(mat * scale_factor))
@@ -971,16 +973,19 @@ normalize_tfidf <- function(
   mat, feature_means = NULL,
   scale_factor = 1e4, threads = 1L
 ) {
+  assert_is_wholenumber(threads)
   if (rlang::is_missing(mat)) {
     return(
-      partial_explicit(
-        normalize_tfidf, feature_means = feature_means, 
-        scale_factor = scale_factor, threads = threads
+      create_partial(
+        missing_args = list(
+          feature_means = missing(feature_means), 
+          scale_factor = missing(scale_factor), 
+          threads = missing(threads)
+      )
       )
     )
   }
   assert_is(mat, "IterableMatrix")
-  assert_is_wholenumber(threads)
   # If feature means are passed in, only need to calculate term frequency
   if (is.null(feature_means)) {
     mat_stats <- matrix_stats(mat, row_stats = c("mean"), col_stats = c("mean"))
