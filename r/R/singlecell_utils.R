@@ -150,14 +150,14 @@ select_features_mean <- function(mat, num_feats = 0.05, normalize = NULL, thread
 #' and if the number of features
 #' within a bin is less than 2, the dispersion is set to 1.
 #' @returns
-#'  - `select_features_by_binned_dispersion`: Score representing the bin normalized dispersion of each feature.
+#'  - `select_features_binned_dispersion`: Score representing the bin normalized dispersion of each feature.
 #' @details 
-#' `select_features_by_binned_dispersion` calculates the bin normalized dispersion of each feature using the following process, given by the Seurat package (Satjia et al. 2015):
+#' `select_features_binned_dispersion` calculates the bin normalized dispersion of each feature using the following process, given by the Seurat package (Satjia et al. 2015):
 #'  1. Calculate the dispersion of each feature (variance / mean)
 #'  2. Log normalize dispersion and mean
 #'  3. Bin the features by their means, and normalize dispersion within each bin
 #' @export
-select_features_by_binned_dispersion <- function(
+select_features_binned_dispersion <- function(
   mat, num_feats = 25000, n_bins = 20,
   threads = 1L
 ) {
@@ -289,9 +289,14 @@ LSI <- function(
 ) {
   if (rlang::is_missing(mat)) {
     return(
-      purrr::partial(
-        LSI, n_dimensions = n_dimensions, corr_cutoff = corr_cutoff, 
-        normalize = normalize, threads = threads, verbose = verbose
+      create_partial(
+        missing_args = list(
+          n_dimensions = missing(n_dimensions),
+          corr_cutoff = missing(corr_cutoff), 
+          normalize = missing(normalize), 
+          threads = missing(threads),
+          verbose = missing(verbose)
+        )
       )
     )
   }
@@ -308,7 +313,7 @@ LSI <- function(
   if (verbose) log_progress("Normalizing matrix")
   mat_stats <- matrix_stats(mat, row_stats = c("mean"), col_stats = c("mean"), threads = threads)
   read_depth <- mat_stats$col_stats["mean", ] * nrow(mat)
-  if (!is.null(normalize)) mat <- normalize(mat, threads = threads)
+  if (!is.null(normalize)) mat <- partial_apply(normalize, threads = threads)(mat)
   
   # Save to prevent re-calculation of queued operations
   mat <- write_matrix_dir(

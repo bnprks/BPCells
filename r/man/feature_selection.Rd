@@ -4,6 +4,7 @@
 \alias{select_features_variance}
 \alias{select_features_dispersion}
 \alias{select_features_mean}
+\alias{select_features_binned_dispersion}
 \title{Feature selection functions}
 \usage{
 select_features_variance(mat, num_feats = 0.05, normalize = NULL, threads = 1L)
@@ -17,7 +18,7 @@ select_features_dispersion(
 
 select_features_mean(mat, num_feats = 0.05, normalize = NULL, threads = 1L)
 
-select_features_by_binned_dispersion(
+select_features_binned_dispersion(
   mat,
   num_feats = 25000,
   n_bins = 20,
@@ -62,7 +63,7 @@ Each different feature selection method will have a different scoring method:
 }
 
 \itemize{
-\item \code{select_features_by_binned_dispersion}: Score representing the bin normalized dispersion of each feature.
+\item \code{select_features_binned_dispersion}: Score representing the bin normalized dispersion of each feature.
 }
 }
 \description{
@@ -88,7 +89,7 @@ Apply a feature selection method to a \verb{(features x cells)} matrix.
 \item Find \code{num_feats} features with the highest accessibility.
 }
 
-\code{select_features_by_binned_dispersion} calculates the bin normalized dispersion of each feature using the following process, given by the Seurat package (Satjia et al. 2015):
+\code{select_features_binned_dispersion} calculates the bin normalized dispersion of each feature using the following process, given by the Seurat package (Satjia et al. 2015):
 \enumerate{
 \item Calculate the dispersion of each feature (variance / mean)
 \item Log normalize dispersion and mean
