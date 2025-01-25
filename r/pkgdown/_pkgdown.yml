@@ -132,6 +132,7 @@ reference:
   - checksum
   - apply_by_row
   - regress_out
+  - LSI
   - IterableMatrix-methods
   - pseudobulk_matrix
 
@@ -146,6 +147,11 @@ reference:
   - cluster_graph_leiden
   - knn_to_graph
   - cluster_membership_matrix
+
+- title: "Dimensionality Reductions"
+- contents: 
+  - DimReduction
+  - project
 
 
 - title: "Plots"

@@ -4,6 +4,7 @@
 \alias{select_features_variance}
 \alias{select_features_dispersion}
 \alias{select_features_mean}
+\alias{select_features_binned_dispersion}
 \title{Feature selection functions}
 \usage{
 select_features_variance(mat, num_feats = 0.05, normalize = NULL, threads = 1L)
@@ -16,6 +17,13 @@ select_features_dispersion(
 )
 
 select_features_mean(mat, num_feats = 0.05, normalize = NULL, threads = 1L)
+
+select_features_binned_dispersion(
+  mat,
+  num_feats = 25000,
+  n_bins = 20,
+  threads = 1L
+)
 }
 \arguments{
 \item{mat}{(IterableMatrix) dimensions features x cells}
@@ -28,6 +36,10 @@ all features will be returned.}
 \item{normalize}{(function) Normalize matrix using a given function. If \code{NULL}, no normalization is performed.}
 
 \item{threads}{(integer) Number of threads to use.}
+
+\item{n_bins}{(integer) Number of bins for binning mean gene expression.  Normalizing dispersion is done with respect to each bin,
+and if the number of features
+within a bin is less than 2, the dispersion is set to 1.}
 }
 \value{
 Return a dataframe with the following columns, sorted descending by score:
@@ -48,6 +60,10 @@ Each different feature selection method will have a different scoring method:
 
 \itemize{
 \item \code{select_features_by_mean}: Score representing the mean accessibility of each feature.
+}
+
+\itemize{
+\item \code{select_features_binned_dispersion}: Score representing the bin normalized dispersion of each feature.
 }
 }
 \description{
@@ -71,5 +87,12 @@ Apply a feature selection method to a \verb{(features x cells)} matrix.
 \enumerate{
 \item Get the sum of each binarized feature.
 \item Find \code{num_feats} features with the highest accessibility.
+}
+
+\code{select_features_binned_dispersion} calculates the bin normalized dispersion of each feature using the following process, given by the Seurat package (Satjia et al. 2015):
+\enumerate{
+\item Calculate the dispersion of each feature (variance / mean)
+\item Log normalize dispersion and mean
+\item Bin the features by their means, and normalize dispersion within each bin
 }
 }

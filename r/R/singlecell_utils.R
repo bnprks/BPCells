@@ -145,6 +145,241 @@ select_features_mean <- function(mat, num_feats = 0.05, normalize = NULL, thread
   return(features_df)
 }
 
+#' @rdname feature_selection
+#' @param n_bins (integer) Number of bins for binning mean gene expression.  Normalizing dispersion is done with respect to each bin, 
+#' and if the number of features
+#' within a bin is less than 2, the dispersion is set to 1.
+#' @returns
+#'  - `select_features_binned_dispersion`: Score representing the bin normalized dispersion of each feature.
+#' @details 
+#' `select_features_binned_dispersion` calculates the bin normalized dispersion of each feature using the following process, given by the Seurat package (Satjia et al. 2015):
+#'  1. Calculate the dispersion of each feature (variance / mean)
+#'  2. Log normalize dispersion and mean
+#'  3. Bin the features by their means, and normalize dispersion within each bin
+#' @export
+select_features_binned_dispersion <- function(
+  mat, num_feats = 25000, n_bins = 20,
+  threads = 1L
+) {
+  assert_is(mat, "IterableMatrix")
+  assert_greater_than_zero(num_feats)
+  assert_is_wholenumber(num_feats)
+  assert_len(num_feats, 1)
+  assert_is_wholenumber(n_bins)
+  assert_len(n_bins, 1)
+  assert_greater_than_zero(n_bins)
+  if (nrow(mat) <= num_feats) {
+    log_progress(sprintf("Number of features (%s) is less than num_feats (%s), returning all features", nrow(mat), num_feats))
+    features_df <- tibble::tibble(
+      names = rownames(mat),
+      score = rep(0, nrow(mat)),
+      highly_variable = rep(TRUE, nrow(mat))
+    )
+    return(mat)
+  }
+  # Calculate row information for dispersion
+  mat_stats <- matrix_stats(mat, row_stats = c("variance"), threads = threads)
+  feature_means <- mat_stats$row_stats["mean", ]
+  feature_vars <- mat_stats$row_stats["variance", ]
+  # Calculate dispersion, and log normalize
+  feature_dispersion <- feature_vars / feature_means
+  feature_dispersion[feature_dispersion == 0] <- NA
+  feature_dispersion <- log1p(feature_dispersion)
+  feature_dispersion[feature_means == 0] <- 0
+  feature_means <- log1p(feature_means)
+  features_df <- tibble::tibble(
+    names = names(feature_means),
+    var = feature_vars, 
+    mean = feature_means,
+    dispersion = feature_dispersion
+  )
+  # Bin by mean, and normalize dispersion with each bin
+  features_df <- features_df %>% 
+    dplyr::mutate(bin = cut(mean, n_bins, labels=FALSE)) %>% 
+    dplyr::group_by(bin) %>% 
+    dplyr::mutate( 
+      score = (dispersion - mean(dispersion)) / sd(dispersion),
+      score = if (dplyr::n() == 1) {1} else {score} # Set feats that are in bins with only one feat to have a norm dispersion of 1  
+    ) %>% 
+    dplyr::ungroup() %>%
+    dplyr::arrange(desc(score)) %>%
+    dplyr::mutate(highly_variable = dplyr::row_number() <= num_feats) %>% 
+    dplyr::select(c("names", "score", "highly_variable"))
+  return(features_df)
+}
+
+
+#################
+# DimReduction Class Definition
+#################
+
+#' Barebones definition of a DimReduction class.
+#' 
+#' Represents a latent space output of a matrix after a transformation function, with any required information to reproject other inputs using this object.
+#' Child classes should implement a `project` method to allow for the projection of other matrices using
+#' the fitted transformation object.
+#' @field cell_embeddings (IterableMatrix, dgCMatrix, matrix) The projected data
+#' @field fitted_params (list) A list of parameters used for the transformation of a matrix.
+#' @export
+DimReduction <- function(x, fitted_params = list(), ...) {
+  assert_is(x, c("IterableMatrix", "dgCMatrix", "matrix"))
+  assert_is(fitted_params, "list")
+  structure(
+    list(
+      cell_embeddings = x,
+      fitted_params = fitted_params,
+      ...
+    ),
+    class = "DimReduction"
+  )
+}
+
+#' Perform a dimensionality reduction on a matrix using a pre-fit DimReduction object.
+#' @param x DimReduction object.
+#' @param mat IterableMatrix object.
+#' @return IterableMatrix object of the projected data.
+#' @details DimReduction subclasses should use this to project new data with the same features, to project into the same latent space.
+#' All required information to run a projection should be held in x$fitted_params, including pertinent parameters when construction the DimReduction subclass object.
+#' If there are no rownames, assume that the matrix is in the same order as the original matrix, assuming that they have the same number of features.
+#' If there are rownames, reorder the matrix to match the order of the original matrix
+#' @export
+project <- function(x, mat, ...) {
+  UseMethod("project")
+}
+#' @export 
+project.default <- function(x, mat, ...) {
+  rlang::abort("project method not implemented for BPCells objects.")
+}
+#' @export
+project.DimReduction <- function(x, mat, ...) {
+  rlang::abort("project method not implemented for base DimReduction object.")
+}
+
+#################
+# LSI Implementation
+#################
+
+
+#' Perform latent semantic indexing (LSI) on a matrix.
+#' 
+#' Given a `(features x cells)` matrix, perform LSI to perform tf-idf, z-score normalization, and PCA to create a latent space representation of the matrix of shape `(n_dimensions, ncol(mat))`.
+#' @param mat (IterableMatrix) dimensions features x cells.
+#' @param n_dimensions (integer) Number of dimensions to keep during PCA.
+#' @param corr_cutoff (numeric) Numeric filter for the correlation of a PC to the sequencing depth.  If the PC has a correlation that is great or equal to
+#' the corr_cutoff, it will be excluded from the final PCA matrix.
+#' @param normalize (function) Normalize matrix using a given function. If `NULL`, no normalization is performed.
+#' @param threads (integer) Number of threads to use.
+#' @returns An object of class `c("LSI", "DimReduction")` with the following attributes:
+#' - `cell_embeddings`: The projected data
+#' - `fitted_params`: A tibble of the parameters used for iterative LSI, with rows as iterations. Columns include the following:
+#'   - `normalization_method`: The normalization method used
+#'   - `feature_means`: The means of the features used for normalization
+#'   - `pcs_to_keep`: The PCs that were kept after filtering by correlation to sequencing depth
+#'   - `svd_params`: The matrix calculated for SVD
+#' - `feature_names`: The names of the features in the matrix
+#' @details Compute LSI through first doing a log(tf-idf) transform, z-score normalization, then PCA.  Tf-idf implementation is from Stuart & Butler et al. 2019.
+#' 
+#' Running on a 2600 cell dataset with 50000 peaks and 4 threads, as an example:
+#' - 17.1 MB memory usage, 25.1 seconds runtime
+#' @seealso `project()` `DimReduction()` `normalize_tfidf()`
+#' @export
+LSI <- function(
+  mat, n_dimensions = 50L, corr_cutoff = 1, normalize = normalize_tfidf,
+  threads = 1L, verbose = FALSE
+) {
+  if (rlang::is_missing(mat)) {
+    return(
+      create_partial(
+        missing_args = list(
+          n_dimensions = missing(n_dimensions),
+          corr_cutoff = missing(corr_cutoff), 
+          normalize = missing(normalize), 
+          threads = missing(threads),
+          verbose = missing(verbose)
+        )
+      )
+    )
+  }
+  assert_is(mat, "IterableMatrix")
+  assert_is_wholenumber(n_dimensions)
+  assert_len(n_dimensions, 1)
+  assert_greater_than_zero(n_dimensions)
+  assert_true(n_dimensions < min(ncol(mat), nrow(mat)))
+  assert_true((corr_cutoff >= 0) && (corr_cutoff <= 1))
+  assert_is_wholenumber(threads)
+  
+  if (verbose) log_progress("Starting LSI")
+  # Normalization
+  if (verbose) log_progress("Normalizing matrix")
+  mat_stats <- matrix_stats(mat, row_stats = c("mean"), col_stats = c("mean"), threads = threads)
+  read_depth <- mat_stats$col_stats["mean", ] * nrow(mat)
+  if (!is.null(normalize)) mat <- partial_apply(normalize, threads = threads)(mat)
+  
+  # Save to prevent re-calculation of queued operations
+  mat <- write_matrix_dir(
+    convert_matrix_type(mat, type = "float"),
+    tempfile("mat"), compress = TRUE
+  )
+  # Run pca
+  if (verbose) log_progress("Calculating SVD")
+  svd_attr <- svds(mat, k = n_dimensions, threads = threads)
+  pca_res <- t(svd_attr$u) %*% mat
+  
+  # Filter out PCs that are highly correlated with sequencing depth
+  pca_corrs <- abs(cor(read_depth, t(pca_res)))
+  pca_feats_to_keep <- which(pca_corrs < corr_cutoff)
+  if (length(pca_feats_to_keep) != n_dimensions) {
+    if (verbose) log_progress(sprintf("Dropping PCs %s due to high correlation with sequencing depth", paste(setdiff(1:n_dimensions, pca_feats_to_keep), collapse = ", ")))
+    pca_res <- pca_res[pca_feats_to_keep, ]
+  }
+  fitted_params <- list(
+    normalization_method = normalize,
+    feature_means = mat_stats$row_stats["mean", ],
+    pcs_to_keep = pca_feats_to_keep,
+    svd_params = svd_attr
+  )
+  res <- DimReduction(
+    x = pca_res,
+    fitted_params = fitted_params,
+    feature_names = rownames(mat)
+  )
+  class(res) <- c("LSI", class(res))
+  return(res)
+}
+
+
+#' @export
+project.LSI <- function(x, mat, threads = 1L, ...) {
+  assert_is(mat, "IterableMatrix")
+  assert_is(x, "LSI")
+
+  fitted_params <- x$fitted_params
+  # Do a check to make sure that the number of rows in the matrix is the same as the number of rows in SVD$u
+  assert_true(nrow(mat) == nrow(fitted_params$svd_params$u))
+  if (!is.null(rownames(mat)) && !is.null(x$feature_names)) {
+    assert_true(all(x$feature_names %in% rownames(mat)))
+    mat <- mat[x$feature_names, ]
+  }
+
+  if (!is.null(fitted_params$normalization_method))  {
+    mat <- fitted_params$normalization_method(
+      mat,
+      feature_means = fitted_params$feature_means,
+      threads = threads
+    )
+    mat <- write_matrix_dir(
+      convert_matrix_type(mat, type = "float"),
+      tempfile("mat"), compress = TRUE
+    )
+  }
+  pca_attr <- fitted_params$svd_params
+  res <- t(pca_attr$u) %*% mat
+  if (length(fitted_params$pcs_to_keep) != nrow(res)) {
+    res <- res[fitted_params$pcs_to_keep, ]
+  }
+  return(res)
+}
+
 
 #' Test for marker features
 #'
@@ -210,6 +445,8 @@ marker_features <- function(mat, groups, method="wilcoxon") {
     )
 }
 
+
+                   
 #' Aggregate counts matrices by cell group or feature.
 #'
 #' Given a `(features x cells)` matrix, group cells by `cell_groups` and aggregate counts by `method` for each
@@ -228,7 +465,7 @@ marker_features <- function(mat, groups, method="wilcoxon") {
 #' extra calculation time, and when calculating `mean`, adding `nonzeros` will take no extra time.
 #' @inheritParams marker_features
 #' @export
-pseudobulk_matrix <- function(mat, cell_groups, method = "sum", threads = 0L) {
+pseudobulk_matrix <- function(mat, cell_groups, method = "sum", threads = 1L) {
   assert_is(mat, "IterableMatrix")
   assert_is(cell_groups, c("factor", "character", "numeric"))
   assert_true(length(cell_groups) == ncol(mat))
@@ -240,7 +477,7 @@ pseudobulk_matrix <- function(mat, cell_groups, method = "sum", threads = 0L) {
       rlang::abort(sprintf("method must be one of: %s", paste(methods, collapse = ", ")))
     }
   }
-  assert_is(threads, "integer")
+  assert_is_wholenumber(threads)
 
   it <- mat %>%
     convert_matrix_type("double") %>%
