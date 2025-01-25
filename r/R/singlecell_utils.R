@@ -20,7 +20,8 @@
 #' the number of rows, rounded down.  Otherwise, treat as an absolute number.
 #' If the number is higher than the number of features in the matrix, 
 #' all features will be returned.
-#' @param normalize (function) Normalize matrix using a given function. If `NULL`, no normalization is performed.
+#' @param normalize (function) Normalize matrix using a given function. Normalization occurs prior on the input mat prior to feature 
+#' selection. If `NULL`, no normalization is performed. @seealso `normalize_tfidf()` `normalize_log()`
 #' @param threads (integer) Number of threads to use.
 #' @returns
 #' Return a dataframe with the following columns, sorted descending by score:
