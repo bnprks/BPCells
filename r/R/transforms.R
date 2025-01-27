@@ -940,7 +940,10 @@ regress_out <- function(mat, latent_data, prediction_axis = c("row", "col")) {
 #'  transform to a normalized value \eqn{\tilde{x}_{ij}} calculated as:
 #'  
 #'   - `normalize_log`: \eqn{\tilde{x}_{ij} = \log(\frac{x_{ij} \cdot \text{scaleFactor}}{\text{colSum}_j} + 1)}
-#' @details - `normalize_log`: Corresponds to `Seurat::NormalizeLog`
+#' @details 
+#' If the `mat` argument is missing, returns a "partial" function: a copy of the original function but with most arguments pre-defined. 
+#' This can be used to customize `normalize` parameters in other single cell functions in BPCells (e.g. `select_features_mean()`)
+#' - `normalize_log`: Corresponds to `Seurat::NormalizeLog`
 #' @export
 normalize_log <- function(mat, scale_factor = 1e4, threads = 1L) {
   assert_is_numeric(scale_factor)

@@ -35,6 +35,8 @@ transform to a normalized value \eqn{\tilde{x}_{ij}} calculated as:
 Apply standard normalizations to a \verb{(features x cells)} counts matrix.
 }
 \details{
+If the \code{mat} argument is missing, returns a "partial" function: a copy of the original function but with most arguments pre-defined.
+This can be used to customize \code{normalize} parameters in other single cell functions in BPCells (e.g. \code{select_features_mean()})
 \itemize{
 \item \code{normalize_log}: Corresponds to \code{Seurat::NormalizeLog}
 }
