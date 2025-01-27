@@ -40,10 +40,9 @@ of the new features this release and will continue to help with maintenance and 
 - Add `rowQuantiles()` and `colQuantiles()` functions, which return the quantiles of each row/column of a matrix. Currently `rowQuantiles()` only works on row-major matrices and `colQuantiles()` only works on col-major matrices.
   If `matrixStats` or `MatrixGenerics` packages are installed, `BPCells::colQuantiles()` will fall back to their implementations for non-BPCells objects. (pull request #128)
 - Add `pseudobulk_matrix()` which allows pseudobulk aggregation by `sum` or `mean` and calculation of per-pseudobulk `variance` and `nonzero` statistics for each gene (pull request #128)
-- Add functions `normalize_tfidf()` and `normalize_log()`, which allow for easy normalization of iterable matrices using TF-IDF or log1p(pull request #168)
-- Add feature selection functions `select_features_by_{variance,dispersion,mean}()`, with parameterization for normalization steps, and number of variable features (pull request #169)
-- Add `lsi()` function to perform latent semantic indexing on a matrix (pull request #181).
-- Add `highly_variable_features()` function to identify highly variable features in a matrix (pull request #181). 
+- Add functions `normalize_tfidf()` and `normalize_log()`, which allow for easy normalization of iterable matrices using TF-IDF or log1p(pull request #189)
+- Add feature selection functions `select_features_by_{variance,dispersion,mean,binned_dispersion}()`, with parameterization for normalization steps, and number of variable features (pull request #189)
+- Add `LSI()` and `IterativeLSI()` dimensionality functions to perform latent semantic indexing on a matrix (pull request #189).
 
 ## Improvements
 - `trackplot_loop()` now accepts discrete color scales
