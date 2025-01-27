@@ -7,22 +7,36 @@
 \alias{select_features_binned_dispersion}
 \title{Feature selection functions}
 \usage{
-select_features_variance(mat, num_feats = 0.05, normalize = NULL, threads = 1L)
+select_features_variance(
+  mat,
+  num_feats = 0.05,
+  normalize = NULL,
+  threads = 1L,
+  verbose = FALSE
+)
 
 select_features_dispersion(
   mat,
   num_feats = 0.05,
   normalize = NULL,
-  threads = 1L
+  threads = 1L,
+  verbose = FALSE
 )
 
-select_features_mean(mat, num_feats = 0.05, normalize = NULL, threads = 1L)
+select_features_mean(
+  mat,
+  num_feats = 0.05,
+  normalize = NULL,
+  threads = 1L,
+  verbose = FALSE
+)
 
 select_features_binned_dispersion(
   mat,
   num_feats = 25000,
   n_bins = 20,
-  threads = 1L
+  threads = 1L,
+  verbose = FALSE
 )
 }
 \arguments{
@@ -39,8 +53,7 @@ selection. If \code{NULL}, no normalization is performed. @seealso \code{normali
 \item{threads}{(integer) Number of threads to use.}
 
 \item{n_bins}{(integer) Number of bins for binning mean gene expression.  Normalizing dispersion is done with respect to each bin,
-and if the number of features
-within a bin is less than 2, the dispersion is set to 1.}
+and if the number of features within a bin is less than 2, the dispersion is set to 1.}
 }
 \value{
 Return a dataframe with the following columns:
@@ -66,7 +79,7 @@ each feature \eqn{x_i} as follows:
 }
 
 \itemize{
-\item \code{select_features_binned_dispersion}: Score representing the bin normalized dispersion of each feature.
+\item \code{select_features_binned_dispersion}: Process described in \code{details}.
 }
 }
 \description{
