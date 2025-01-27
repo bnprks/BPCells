@@ -37,7 +37,8 @@
 select_features_variance <- function(
   mat, num_feats = 0.05, 
   normalize = NULL,
-  threads = 1L
+  threads = 1L,
+  verbose = FALSE
 ) {
   assert_greater_than_zero(num_feats)
   assert_len(num_feats, 1)
@@ -52,8 +53,12 @@ select_features_variance <- function(
     ))
   }
   assert_is(mat, "IterableMatrix")
-  num_feats <- min(max(num_feats, 0), nrow(mat))
   if (num_feats < 1 && num_feats > 0) num_feats <- floor(nrow(mat) * num_feats)
+  if (min(max(num_feats, 0), nrow(mat)) != num_feats) {
+    if (verbose) log_progress(sprintf("Number of features asked for (%s) is greater than the number of features in the matrix (%s).", num_feats, nrow(mat)))
+    num_feats <- min(max(num_feats, 0), nrow(mat))
+  }
+  num_feats <- min(max(num_feats, 0), nrow(mat))
   if (!is.null(normalize)) mat <- partial_apply(normalize, threads = threads)(mat)
   features_df <- tibble::tibble(
     names = rownames(mat),
@@ -71,7 +76,8 @@ select_features_variance <- function(
 select_features_dispersion <- function(
   mat, num_feats = 0.05, 
   normalize = NULL,
-  threads = 1L
+  threads = 1L,
+  verbose = FALSE
 ) {
   assert_greater_than_zero(num_feats)
   assert_len(num_feats, 1)
@@ -85,8 +91,11 @@ select_features_dispersion <- function(
       )
     ))
   }
-  num_feats <- min(max(num_feats, 0), nrow(mat))
   if (num_feats < 1 && num_feats > 0) num_feats <- floor(nrow(mat) * num_feats)
+  if (min(max(num_feats, 0), nrow(mat)) != num_feats) {
+    if (verbose) log_progress(sprintf("Number of features asked for (%s) is greater than the number of features in the matrix (%s).", num_feats, nrow(mat)))
+    num_feats <- min(max(num_feats, 0), nrow(mat))
+  }
   assert_is(mat, "IterableMatrix")
   if (!is.null(normalize)) mat <- partial_apply(normalize, threads = threads)(mat)
   mat_stats <- matrix_stats(mat, row_stats = "variance", threads = threads)
@@ -103,7 +112,7 @@ select_features_dispersion <- function(
 #' @returns
 #' - `select_features_by_mean`: \eqn{\mathrm{Score}(x_i) = \bar{x}_i}
 #' @export
-select_features_mean <- function(mat, num_feats = 0.05, normalize = NULL, threads = 1L) {
+select_features_mean <- function(mat, num_feats = 0.05, normalize = NULL, threads = 1L, verbose = FALSE) {
   assert_greater_than_zero(num_feats)
   assert_is(num_feats, "numeric")
   if (rlang::is_missing(mat)) {
@@ -116,12 +125,13 @@ select_features_mean <- function(mat, num_feats = 0.05, normalize = NULL, thread
     ))
   }
   assert_is(mat, "IterableMatrix")
-  num_feats <- min(max(num_feats, 0), nrow(mat))
   if (num_feats < 1 && num_feats > 0) num_feats <- floor(nrow(mat) * num_feats)
+  if (min(max(num_feats, 0), nrow(mat)) != num_feats) {
+    if (verbose) log_progress(sprintf("Number of features asked for (%s) is greater than the number of features in the matrix (%s).", num_feats, nrow(mat)))
+    num_feats <- min(max(num_feats, 0), nrow(mat))
+  }
   if (!is.null(normalize)) mat <- partial_apply(normalize, threads = threads)(mat)
   # get the sum of each feature, binarized
-  # get the top features
-  
   features_df <- tibble::tibble(
     names = rownames(mat),
     score = matrix_stats(mat, row_stats = "nonzero", threads = threads)$row_stats["nonzero", ]
@@ -132,10 +142,9 @@ select_features_mean <- function(mat, num_feats = 0.05, normalize = NULL, thread
 
 #' @rdname feature_selection
 #' @param n_bins (integer) Number of bins for binning mean gene expression.  Normalizing dispersion is done with respect to each bin, 
-#' and if the number of features
-#' within a bin is less than 2, the dispersion is set to 1.
+#' and if the number of features within a bin is less than 2, the dispersion is set to 1.
 #' @returns
-#'  - `select_features_binned_dispersion`: Score representing the bin normalized dispersion of each feature.
+#'  - `select_features_binned_dispersion`: Process described in `details`.
 #' @details 
 #' `select_features_binned_dispersion` calculates the bin normalized dispersion of each feature using the following process, given by the Seurat package (Satjia et al. 2015):
 #'  1. Calculate the dispersion of each feature (variance / mean)
@@ -144,7 +153,7 @@ select_features_mean <- function(mat, num_feats = 0.05, normalize = NULL, thread
 #' @export
 select_features_binned_dispersion <- function(
   mat, num_feats = 25000, n_bins = 20,
-  threads = 1L
+  threads = 1L, verbose = FALSE
 ) {
   assert_is(mat, "IterableMatrix")
   assert_greater_than_zero(num_feats)
@@ -152,14 +161,10 @@ select_features_binned_dispersion <- function(
   assert_is_wholenumber(n_bins)
   assert_len(n_bins, 1)
   assert_greater_than_zero(n_bins)
-  if (nrow(mat) <= num_feats) {
-    log_progress(sprintf("Number of features (%s) is less than num_feats (%s), returning all features", nrow(mat), num_feats))
-    features_df <- tibble::tibble(
-      names = rownames(mat),
-      score = rep(0, nrow(mat)),
-      highly_variable = rep(TRUE, nrow(mat))
-    )
-    return(features_df)
+  if (num_feats < 1 && num_feats > 0) num_feats <- floor(nrow(mat) * num_feats)
+  if (min(max(num_feats, 0), nrow(mat)) != num_feats) {
+    if (verbose) log_progress(sprintf("Number of features asked for (%s) is greater than the number of features in the matrix (%s).", num_feats, nrow(mat)))
+    num_feats <- min(max(num_feats, 0), nrow(mat))
   }
   # Calculate row information for dispersion
   mat_stats <- matrix_stats(mat, row_stats = c("variance"), threads = threads)

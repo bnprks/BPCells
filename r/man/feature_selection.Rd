@@ -33,7 +33,8 @@ the number of rows, rounded down.  Otherwise, treat as an absolute number.
 If the number is higher than the number of features in the matrix,
 all features will be returned.}
 
-\item{normalize}{(function) Normalize matrix using a given function. If \code{NULL}, no normalization is performed.}
+\item{normalize}{(function) Normalize matrix using a given function. Normalization occurs on the input mat prior to feature
+selection. If \code{NULL}, no normalization is performed. @seealso \code{normalize_tfidf()} \code{normalize_log()}}
 
 \item{threads}{(integer) Number of threads to use.}
 
@@ -42,24 +43,26 @@ and if the number of features
 within a bin is less than 2, the dispersion is set to 1.}
 }
 \value{
-Return a dataframe with the following columns, sorted descending by score:
+Return a dataframe with the following columns:
 \itemize{
 \item \code{names}: Feature name.
 \item \code{score}: Scoring of the feature, depending on the method used.
 \item \code{highly_variable}: Logical vector of whether the feature is highly variable.
 }
 
-Each different feature selection method will have a different scoring method:
+Each different feature selection method will have a different scoring method.
+For each element \eqn{x_{ij}} in matrix \eqn{X} with \eqn{i} features and \eqn{j} cells, determine the score of
+each feature \eqn{x_i} as follows:
 \itemize{
-\item \code{select_features_by_variance}: Score representing variance of each feature.
+\item \code{select_features_by_variance}: \eqn{\mathrm{Score}(x_i) = \frac{1}{n - 1} \sum_{j=1}^{n} \bigl(x_{ij} - \bar{x}_i\bigr)^2}
 }
 
 \itemize{
-\item \code{select_features_by_dispersion}: Score representing the dispersion of each feature.
+\item \code{select_features_by_dispersion}: \eqn{\mathrm{Score}(x_i) = \frac{\frac{1}{n - 1} \sum_{j=1}^{n} \bigl(x_{ij} - \bar{x}_i\bigr)^2}{\bar{x}_i}}
 }
 
 \itemize{
-\item \code{select_features_by_mean}: Score representing the mean accessibility of each feature.
+\item \code{select_features_by_mean}: \eqn{\mathrm{Score}(x_i) = \bar{x}_i}
 }
 
 \itemize{
@@ -70,25 +73,6 @@ Each different feature selection method will have a different scoring method:
 Apply a feature selection method to a \verb{(features x cells)} matrix.
 }
 \details{
-\code{select_features_by_variance} Calculates the variance of each feature using the following process:
-\enumerate{
-\item Perform an optional term frequency + log normalization, for each feature.
-\item Find \code{num_feats} features with the highest variance.
-}
-
-\code{select_features_by_dispersion} calculates the dispersion of each feature using the following process:
-\enumerate{
-\item Perform an optional term frequency + log normalization, for each feature.
-\item Find the dispersion (variance/mean) of each feature.
-\item Find \code{num_feats} features with the highest dispersion.
-}
-
-\code{select_features_by_mean} calculates the mean accessibility of each feature using the following process:
-\enumerate{
-\item Get the sum of each binarized feature.
-\item Find \code{num_feats} features with the highest accessibility.
-}
-
 \code{select_features_binned_dispersion} calculates the bin normalized dispersion of each feature using the following process, given by the Seurat package (Satjia et al. 2015):
 \enumerate{
 \item Calculate the dispersion of each feature (variance / mean)
