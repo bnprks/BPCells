@@ -132,7 +132,6 @@ reference:
   - checksum
   - apply_by_row
   - regress_out
-  - LSI
   - IterableMatrix-methods
   - pseudobulk_matrix
 
@@ -152,6 +151,8 @@ reference:
 - contents: 
   - DimReduction
   - project
+  - LSI
+  - IterativeLSI
 
 
 - title: "Plots"

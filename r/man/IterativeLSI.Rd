@@ -7,8 +7,8 @@
 IterativeLSI(
   mat,
   n_iterations = 2,
-  first_feature_selection_method = select_features_by_binned_dispersion,
-  feature_selection_method = select_features_by_dispersion,
+  first_feature_selection_method = select_features_binned_dispersion,
+  feature_selection_method = select_features_dispersion,
   lsi_method = LSI,
   cluster_method = cluster_graph_leiden,
   verbose = FALSE,
@@ -20,16 +20,18 @@ IterativeLSI(
 
 \item{n_iterations}{(int) The number of LSI iterations to perform.}
 
-\item{first_feature_selection_method}{(function) Method to use for selecting features for the first iteration. Current builtin options are \code{select_features_by_variance}, \code{select_features_by_dispersion}, \code{select_features_by_mean}, \code{select_features_by_binned_dispersion}}
+\item{first_feature_selection_method}{(function) Method to use for selecting features for the first iteration. Current builtin options are \code{select_features_by_variance}, \code{select_features_by_dispersion}, \code{select_features_by_mean}, \code{select_features_binned_dispersion}}
 
-\item{feature_selection_method}{(function) Method to use for selecting features for each iteration after the first. Current builtin options are \code{select_features_by_variance}, \code{select_features_by_dispersion}, \code{select_features_by_mean}, \code{select_features_by_binned_dispersion}}
+\item{feature_selection_method}{(function) Method to use for selecting features for each iteration after the first. Current builtin options are \code{select_features_by_variance}, \code{select_features_by_dispersion}, \code{select_features_by_mean}, \code{select_features_binned_dispersion}}
+
+\item{lsi_method}{(function) Method to use for LSI.  Only \code{LSI} is allowed.  The user can pass in partial parameters to \code{LSI} to customize the LSI method, such as by passing \code{LSI(n_dimensions = 30, corr_cutoff = 0.5)}.}
 
 \item{cluster_method}{(function) Method to use for clustering. Current builtin options are \verb{cluster_graph_\{leiden, louvain, seurat\}()}}
 
 \item{threads}{(integer) Number of threads to use.}
 }
 \value{
-An object of class \code{c("LSI", "DimReduction")} with the following attributes:
+An object of class \code{c("IterativeLSI", "DimReduction")} with the following attributes:
 \itemize{
 \item \code{cell_embeddings}: The projected data
 \item \code{fitted_params}: A tibble of the parameters used for iterative LSI, with rows as iterations. Columns include the following:
@@ -42,7 +44,7 @@ An object of class \code{c("LSI", "DimReduction")} with the following attributes
 \itemize{
 \item \code{iteration}: The iteration number
 \item \code{feature_names}: The names of the features used for the iteration
-\item \code{lsi_results}: The results of LSI for the iteration
+\item \code{lsi_results}: The results of LSI for the iteration.  This follows the same structure as the \code{fitted_params} attribute of the \code{LSI} object, but information such as the \code{v} and \code{d} matrices are removed.
 \item \code{clusters}: The clusters for the iteration.  This is blank for the first iteration
 }
 }
@@ -70,5 +72,5 @@ The iterative LSI method is as follows:
 }
 }
 \seealso{
-\code{LSI()}, \code{top_features()}, \code{highly_variable_features()}
+\code{LSI()}, \code{feature_selection}, \code{DimReduction()}
 }

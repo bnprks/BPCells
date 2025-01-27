@@ -8,7 +8,7 @@ LSI(
   mat,
   n_dimensions = 50L,
   corr_cutoff = 1,
-  normalize = normalize_tfidf,
+  scale_factor = 10000,
   threads = 1L,
   verbose = FALSE
 )
@@ -21,7 +21,7 @@ LSI(
 \item{corr_cutoff}{(numeric) Numeric filter for the correlation of a PC to the sequencing depth.  If the PC has a correlation that is great or equal to
 the corr_cutoff, it will be excluded from the final PCA matrix.}
 
-\item{normalize}{(function) Normalize matrix using a given function. If \code{NULL}, no normalization is performed.}
+\item{scale_factor}{(numeric) Scale factor to use for tf-idf normalization.}
 
 \item{threads}{(integer) Number of threads to use.}
 }
@@ -31,7 +31,7 @@ An object of class \code{c("LSI", "DimReduction")} with the following attributes
 \item \code{cell_embeddings}: The projected data
 \item \code{fitted_params}: A tibble of the parameters used for iterative LSI, with rows as iterations. Columns include the following:
 \itemize{
-\item \code{normalization_method}: The normalization method used
+\item \code{scale_factor}: The scale factor used for tf-idf normalization
 \item \code{feature_means}: The means of the features used for normalization
 \item \code{pcs_to_keep}: The PCs that were kept after filtering by correlation to sequencing depth
 \item \code{svd_params}: The matrix calculated for SVD

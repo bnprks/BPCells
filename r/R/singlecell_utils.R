@@ -20,21 +20,19 @@
 #' the number of rows, rounded down.  Otherwise, treat as an absolute number.
 #' If the number is higher than the number of features in the matrix, 
 #' all features will be returned.
-#' @param normalize (function) Normalize matrix using a given function. Normalization occurs prior on the input mat prior to feature 
+#' @param normalize (function) Normalize matrix using a given function. Normalization occurs on the input mat prior to feature 
 #' selection. If `NULL`, no normalization is performed. @seealso `normalize_tfidf()` `normalize_log()`
 #' @param threads (integer) Number of threads to use.
 #' @returns
-#' Return a dataframe with the following columns, sorted descending by score:
+#' Return a dataframe with the following columns:
 #' - `names`: Feature name.
 #' - `score`: Scoring of the feature, depending on the method used.  
 #' - `highly_variable`: Logical vector of whether the feature is highly variable.
 #'
-#' Each different feature selection method will have a different scoring method:
-#' - `select_features_by_variance`: Score representing variance of each feature.
-#' @details 
-#' `select_features_by_variance` Calculates the variance of each feature using the following process:
-#'  1. Perform an optional term frequency + log normalization, for each feature.
-#'  2. Find `num_feats` features with the highest variance.
+#' Each different feature selection method will have a different scoring method.
+#' For each element \eqn{x_{ij}} in matrix \eqn{X} with \eqn{i} features and \eqn{j} cells, determine the score of
+#' each feature \eqn{x_i} as follows:
+#' - `select_features_by_variance`: \eqn{\mathrm{Score}(x_i) = \frac{1}{n - 1} \sum_{j=1}^{n} \bigl(x_{ij} - \bar{x}_i\bigr)^2}
 #' @export
 select_features_variance <- function(
   mat, num_feats = 0.05, 
@@ -42,7 +40,6 @@ select_features_variance <- function(
   threads = 1L
 ) {
   assert_greater_than_zero(num_feats)
-  assert_is_wholenumber(num_feats)
   assert_len(num_feats, 1)
   assert_is(num_feats, "numeric")
   if (rlang::is_missing(mat)) {
@@ -62,27 +59,21 @@ select_features_variance <- function(
     names = rownames(mat),
     score = matrix_stats(mat, row_stats = "variance", threads = threads)$row_stats["variance",]
   ) %>% 
-    dplyr::arrange(desc(score)) %>% 
-    dplyr::mutate(highly_variable = dplyr::row_number() <= num_feats)
+    dplyr::mutate(highly_variable = dplyr::row_number(dplyr::desc(score)) <= num_feats)
   return(features_df)
 }
 
 
 #' @rdname feature_selection
 #' @returns
-#'  - `select_features_by_dispersion`: Score representing the dispersion of each feature.
-#' @details 
-#' `select_features_by_dispersion` calculates the dispersion of each feature using the following process:
-#'  1. Perform an optional term frequency + log normalization, for each feature.
-#'  2. Find the dispersion (variance/mean) of each feature.
-#'  3. Find `num_feats` features with the highest dispersion.
+#'  - `select_features_by_dispersion`: \eqn{\mathrm{Score}(x_i) = \frac{\frac{1}{n - 1} \sum_{j=1}^{n} \bigl(x_{ij} - \bar{x}_i\bigr)^2}{\bar{x}_i}}
+#' @export
 select_features_dispersion <- function(
   mat, num_feats = 0.05, 
   normalize = NULL,
   threads = 1L
 ) {
   assert_greater_than_zero(num_feats)
-  assert_is_wholenumber(num_feats)
   assert_len(num_feats, 1)
   assert_is(num_feats, "numeric")
   if (rlang::is_missing(mat)) {
@@ -103,22 +94,16 @@ select_features_dispersion <- function(
     names = rownames(mat),
     score = mat_stats$row_stats["variance", ] / mat_stats$row_stats["mean", ]
   ) %>% 
-    dplyr::arrange(desc(score)) %>% 
-    dplyr::mutate(highly_variable = dplyr::row_number() <= num_feats)
+    dplyr::mutate(highly_variable = dplyr::row_number(dplyr::desc(score)) <= num_feats)
   return(features_df)
 }
 
 
 #' @rdname feature_selection
 #' @returns
-#' - `select_features_by_mean`: Score representing the mean accessibility of each feature.
-#' @details 
-#' `select_features_by_mean` calculates the mean accessibility of each feature using the following process:
-#' 1. Get the sum of each binarized feature.
-#' 2. Find `num_feats` features with the highest accessibility.
+#' - `select_features_by_mean`: \eqn{\mathrm{Score}(x_i) = \bar{x}_i}
 #' @export
 select_features_mean <- function(mat, num_feats = 0.05, normalize = NULL, threads = 1L) {
-  assert_is_wholenumber(num_feats)
   assert_greater_than_zero(num_feats)
   assert_is(num_feats, "numeric")
   if (rlang::is_missing(mat)) {
@@ -141,8 +126,7 @@ select_features_mean <- function(mat, num_feats = 0.05, normalize = NULL, thread
     names = rownames(mat),
     score = matrix_stats(mat, row_stats = "nonzero", threads = threads)$row_stats["nonzero", ]
   ) %>%
-    dplyr::arrange(desc(score)) %>%
-    dplyr::mutate(highly_variable = dplyr::row_number() <= num_feats)
+    dplyr::mutate(highly_variable = dplyr::row_number(dplyr::desc(score)) <= num_feats)
   return(features_df)
 }
 
@@ -164,7 +148,6 @@ select_features_binned_dispersion <- function(
 ) {
   assert_is(mat, "IterableMatrix")
   assert_greater_than_zero(num_feats)
-  assert_is_wholenumber(num_feats)
   assert_len(num_feats, 1)
   assert_is_wholenumber(n_bins)
   assert_len(n_bins, 1)
@@ -176,7 +159,7 @@ select_features_binned_dispersion <- function(
       score = rep(0, nrow(mat)),
       highly_variable = rep(TRUE, nrow(mat))
     )
-    return(mat)
+    return(features_df)
   }
   # Calculate row information for dispersion
   mat_stats <- matrix_stats(mat, row_stats = c("variance"), threads = threads)
@@ -185,7 +168,7 @@ select_features_binned_dispersion <- function(
   # Calculate dispersion, and log normalize
   feature_dispersion <- feature_vars / feature_means
   feature_dispersion[feature_dispersion == 0] <- NA
-  feature_dispersion <- log1p(feature_dispersion)
+  feature_dispersion <- log(feature_dispersion)
   feature_dispersion[feature_means == 0] <- 0
   feature_means <- log1p(feature_means)
   features_df <- tibble::tibble(
@@ -203,8 +186,7 @@ select_features_binned_dispersion <- function(
       score = if (dplyr::n() == 1) {1} else {score} # Set feats that are in bins with only one feat to have a norm dispersion of 1  
     ) %>% 
     dplyr::ungroup() %>%
-    dplyr::arrange(desc(score)) %>%
-    dplyr::mutate(highly_variable = dplyr::row_number() <= num_feats) %>% 
+    dplyr::mutate(highly_variable = dplyr::row_number(dplyr::desc(score)) <= num_feats) %>% 
     dplyr::select(c("names", "score", "highly_variable"))
   return(features_df)
 }
@@ -268,12 +250,12 @@ project.DimReduction <- function(x, mat, ...) {
 #' @param n_dimensions (integer) Number of dimensions to keep during PCA.
 #' @param corr_cutoff (numeric) Numeric filter for the correlation of a PC to the sequencing depth.  If the PC has a correlation that is great or equal to
 #' the corr_cutoff, it will be excluded from the final PCA matrix.
-#' @param normalize (function) Normalize matrix using a given function. If `NULL`, no normalization is performed.
+#' @param scale_factor (numeric) Scale factor to use for tf-idf normalization.
 #' @param threads (integer) Number of threads to use.
 #' @returns An object of class `c("LSI", "DimReduction")` with the following attributes:
 #' - `cell_embeddings`: The projected data
 #' - `fitted_params`: A tibble of the parameters used for iterative LSI, with rows as iterations. Columns include the following:
-#'   - `normalization_method`: The normalization method used
+#'   - `scale_factor`: The scale factor used for tf-idf normalization
 #'   - `feature_means`: The means of the features used for normalization
 #'   - `pcs_to_keep`: The PCs that were kept after filtering by correlation to sequencing depth
 #'   - `svd_params`: The matrix calculated for SVD
@@ -282,10 +264,10 @@ project.DimReduction <- function(x, mat, ...) {
 #' 
 #' Running on a 2600 cell dataset with 50000 peaks and 4 threads, as an example:
 #' - 17.1 MB memory usage, 25.1 seconds runtime
-#' @seealso `project()` `DimReduction()` `normalize_tfidf()`
+#' @seealso `project()` `DimReduction()` `normalize_tfidf()` 
 #' @export
 LSI <- function(
-  mat, n_dimensions = 50L, corr_cutoff = 1, normalize = normalize_tfidf,
+  mat, n_dimensions = 50L, corr_cutoff = 1, scale_factor = 1e4,
   threads = 1L, verbose = FALSE
 ) {
   if (rlang::is_missing(mat)) {
@@ -294,7 +276,6 @@ LSI <- function(
         missing_args = list(
           n_dimensions = missing(n_dimensions),
           corr_cutoff = missing(corr_cutoff), 
-          normalize = missing(normalize), 
           threads = missing(threads),
           verbose = missing(verbose)
         )
@@ -314,8 +295,12 @@ LSI <- function(
   if (verbose) log_progress("Normalizing matrix")
   mat_stats <- matrix_stats(mat, row_stats = c("mean"), col_stats = c("mean"), threads = threads)
   read_depth <- mat_stats$col_stats["mean", ] * nrow(mat)
-  if (!is.null(normalize)) mat <- partial_apply(normalize, threads = threads)(mat)
-  
+  mat <- partial_apply(
+    normalize_tfidf,
+    feature_means = mat_stats$row_stats["mean", ],
+    scale_factor = scale_factor,
+    threads = threads
+  )(mat)
   # Save to prevent re-calculation of queued operations
   mat <- write_matrix_dir(
     convert_matrix_type(mat, type = "float"),
@@ -334,7 +319,7 @@ LSI <- function(
     pca_res <- pca_res[pca_feats_to_keep, ]
   }
   fitted_params <- list(
-    normalization_method = normalize,
+    scale_factor = scale_factor,
     feature_means = mat_stats$row_stats["mean", ],
     pcs_to_keep = pca_feats_to_keep,
     svd_params = svd_attr
@@ -348,7 +333,6 @@ LSI <- function(
   return(res)
 }
 
-
 #' @export
 project.LSI <- function(x, mat, threads = 1L, ...) {
   assert_is(mat, "IterableMatrix")
@@ -361,18 +345,15 @@ project.LSI <- function(x, mat, threads = 1L, ...) {
     assert_true(all(x$feature_names %in% rownames(mat)))
     mat <- mat[x$feature_names, ]
   }
-
-  if (!is.null(fitted_params$normalization_method))  {
-    mat <- fitted_params$normalization_method(
-      mat,
-      feature_means = fitted_params$feature_means,
-      threads = threads
-    )
-    mat <- write_matrix_dir(
-      convert_matrix_type(mat, type = "float"),
-      tempfile("mat"), compress = TRUE
-    )
-  }
+  mat <- partial_apply(
+    normalize_tfidf,
+    feature_means = fitted_params$feature_means,
+    threads = threads
+  )(mat)
+  mat <- write_matrix_dir(
+    convert_matrix_type(mat, type = "float"),
+    tempfile("mat"), compress = TRUE
+  )
   pca_attr <- fitted_params$svd_params
   res <- t(pca_attr$u) %*% mat
   if (length(fitted_params$pcs_to_keep) != nrow(res)) {
@@ -387,10 +368,11 @@ project.LSI <- function(x, mat, threads = 1L, ...) {
 #' Given a `(features x cells)` matrix, Compute an iterative LSI dimensionality reduction, using the method described in [ArchR](https://doi.org/10.1038/s41588-021-00790-6) (Granja et al; 2019).
 #' @param mat (IterableMatrix) 
 #' @param n_iterations (int) The number of LSI iterations to perform.
-#' @param first_feature_selection_method (function) Method to use for selecting features for the first iteration. Current builtin options are `select_features_by_variance`, `select_features_by_dispersion`, `select_features_by_mean`, `select_features_by_binned_dispersion`
-#' @param feature_selection_method (function) Method to use for selecting features for each iteration after the first. Current builtin options are `select_features_by_variance`, `select_features_by_dispersion`, `select_features_by_mean`, `select_features_by_binned_dispersion`
+#' @param first_feature_selection_method (function) Method to use for selecting features for the first iteration. Current builtin options are `select_features_by_variance`, `select_features_by_dispersion`, `select_features_by_mean`, `select_features_binned_dispersion`
+#' @param feature_selection_method (function) Method to use for selecting features for each iteration after the first. Current builtin options are `select_features_by_variance`, `select_features_by_dispersion`, `select_features_by_mean`, `select_features_binned_dispersion`
 #' @param cluster_method (function) Method to use for clustering. Current builtin options are `cluster_graph_{leiden, louvain, seurat}()`
-#' @return An object of class `c("LSI", "DimReduction")` with the following attributes:
+#' @param lsi_method (function) Method to use for LSI.  Only `LSI` is allowed.  The user can pass in partial parameters to `LSI` to customize the LSI method, such as by passing `LSI(n_dimensions = 30, corr_cutoff = 0.5)`.
+#' @return An object of class `c("IterativeLSI", "DimReduction")` with the following attributes:
 #' - `cell_embeddings`: The projected data
 #' - `fitted_params`: A tibble of the parameters used for iterative LSI, with rows as iterations. Columns include the following:
 #' - `first_feature_selection_method`: The method used for selecting features for the first iteration
@@ -401,7 +383,7 @@ project.LSI <- function(x, mat, threads = 1L, ...) {
 #' - `iter_info`: A tibble with the following columns:
 #'    - `iteration`: The iteration number
 #'    - `feature_names`: The names of the features used for the iteration
-#'    - `lsi_results`: The results of LSI for the iteration
+#'    - `lsi_results`: The results of LSI for the iteration.  This follows the same structure as the `fitted_params` attribute of the `LSI` object, but information such as the `v` and `d` matrices are removed.
 #'    - `clusters`: The clusters for the iteration.  This is blank for the first iteration
 #' @details
 #' The iterative LSI method is as follows:
@@ -415,15 +397,15 @@ project.LSI <- function(x, mat, threads = 1L, ...) {
 #'    - Perform LSI on the selected features
 #'    - If this is the final iteration, return the PCA results
 #'    - Else, cluster the LSI results using `cluster_method`
-#' @seealso `LSI()`, `top_features()`, `highly_variable_features()`
+#' @seealso `LSI()`, `feature_selection`, `DimReduction()`
 #' @inheritParams LSI
 #' @export
 IterativeLSI <- function(
   mat, 
   n_iterations = 2,
-  first_feature_selection_method = select_features_by_binned_dispersion,
-  feature_selection_method = select_features_by_dispersion,
-  lsi_method = LSI,
+  first_feature_selection_method = select_features_binned_dispersion,
+  feature_selection_method = select_features_dispersion,
+  lsi_method = LSI, # Make only allowed to be LSI
   cluster_method = cluster_graph_leiden,
   verbose = FALSE, threads = 1L
 ) {
@@ -468,8 +450,11 @@ IterativeLSI <- function(
     if (verbose) log_progress("Running LSI")
     lsi_res_obj <- lsi_method(mat[mat_indices,], threads = threads)
     fitted_params$iter_info$lsi_results[[i]] <- lsi_res_obj$fitted_params
+    # remove the feature means from the lsi results as they are already calculated
+    # save minimum info for lsi results if not onn terminal iteration
+    fitted_params$iter_info$lsi_results[[i]]$feature_means <- NULL
     # only cluster + pseudobulk if this isn't the last iteration
-    if (i == n_iterations) break
+    if (i == n_iterations) break 
     # cluster the LSI results
     if (verbose) log_progress("Clustering LSI results")
     clustering_res <- t(lsi_res_obj$cell_embeddings) %>% knn_hnsw(ef = 500, threads = threads) %>% knn_to_snn_graph() %>% cluster_method()
@@ -477,6 +462,10 @@ IterativeLSI <- function(
     # pseudobulk and pass onto next iteration
     if (verbose) log_progress("Pseudobulking matrix")
     pseudobulk_res <- pseudobulk_matrix(mat, clustering_res, threads = as.integer(threads)) %>% as("dgCMatrix") %>% as("IterableMatrix")
+    # Only take the SVD information required to project the matrix
+    fitted_params$iter_info$lsi_results[[i]]$svd_params <- list(
+      u = lsi_res_obj$fitted_params$svd_params$u
+    )
     rownames(pseudobulk_res) <- rownames(mat)
   }
   if (verbose) log_progress("Finished running LSI")
@@ -486,6 +475,48 @@ IterativeLSI <- function(
     feature_names = rownames(mat)
   )
   class(res) <- c("IterativeLSI", class(res))
+  return(res)
+}
+#' @export
+project.IterativeLSI <- function(x, mat, threads = 1L, ...) {
+  assert_is(mat, "IterableMatrix")
+  assert_is(x, "IterativeLSI")
+  fitted_params <- x$fitted_params
+  # Get the final row of fitted params
+  last_iter_info <- fitted_params$iter_info[nrow(fitted_params$iter_info),]
+
+  # Do a check to make sure that the fitted features all exist in input matrix
+  if (!is.null(rownames(mat)) && !is.null(x$feature_names)) {
+    assert_true(all(x$feature_names %in% rownames(mat)))
+  }
+  # Subset to variable features
+  if (is.character(last_iter_info$feature_names[[1]])) {
+    mat_indices <- which(rownames(mat) %in% last_iter_info$feature_names[[1]])
+  } else {
+    mat_indices <- last_iter_info$feature_names[[1]]
+  }
+  mat <- mat[mat_indices,]
+  # Run LSI
+  # since we don't hold the LSI object, we copy the internal logic from `project.LSI()`
+  lsi_attr <- attr(x$fitted_params$lsi_method, "args")
+  
+  func <- partial_apply(
+    normalize_tfidf,
+    feature_means = fitted_params$feature_means,
+    scale_factor = lsi_attr$scale_factor,
+    threads = threads
+  )
+  mat <- func(mat)
+  mat <- write_matrix_dir(
+    convert_matrix_type(mat, type = "float"),
+    tempfile("mat"), compress = TRUE
+  )
+  
+  pca_attr <- last_iter_info$lsi_results[[1]]$svd_params
+  res <- t(pca_attr$u) %*% mat
+  if (length(last_iter_info$lsi_results[[1]]$pcs_to_keep) != nrow(res)) {
+    res <- res[last_iter_info$lsi_results[[1]]$pcs_to_keep,]
+  }
   return(res)
 }
 
@@ -610,110 +641,4 @@ pseudobulk_matrix <- function(mat, cell_groups, method = "sum", threads = 0L) {
     }
   }
   return(res)
-}
-
-#' Perform latent semantic indexing (LSI) on a matrix.
-#' @param mat (IterableMatrix) dimensions features x cells
-#' @param n_dimensions (integer) Number of dimensions to keep during PCA.
-#' @param scale_factor (integer) Scale factor for the tf-idf log transform.
-#' @param save_in_memory (logical) If TRUE, save the log(tf-idf) matrix in memory.  
-#' If FALSE, save to a temporary location in disk.  Saving in memory will result in faster downstream operations,
-#' but will require in higher memory usage.  Comparison of memory usage and speed is in the details section.
-#' @param threads (integer) Number of threads to use.
-#' @return dgCMatrix of shape (n_dimensions, ncol(mat)).
-#' @details Compute LSI through first doing a log(tf-idf) transform, z-score normalization, then PCA.  Tf-idf implementation is from Stuart & Butler et al. 2019.
-#' 
-#' ** Saving in memory vs disk: **
-#' Following the log(tf-idf) transform, the matrix is stored into a temporary location, as the next step will break the sparsity pattern of the matrix.
-#' This is done to prevent re-calculation of queued operations during PCA optimization.
-#' 
-#' Running on a 2600 cell dataset with 50000 peaks and 4 threads, as an example:
-#' - Saving in memory: 233 MB memory usage, 22.7 seconds runtime
-#' - Saving in disk: 17.1 MB memory usage, 25.1 seconds runtime
-#' 
-#' @export
-lsi <- function(mat, n_dimensions = 50L, scale_factor = 1e4, save_in_memory = FALSE, threads = 1L) {
-  assert_is(mat, "IterableMatrix")
-  assert_is_wholenumber(n_dimensions)
-  assert_len(n_dimensions, 1)
-  assert_greater_than_zero(n_dimensions)
-  assert_true(n_dimensions < min(ncol(mat), nrow(mat)))
-  assert_is_wholenumber(threads)
-
-  # log(tf-idf) transform
-  npeaks <- colSums(mat) # Finding that sums are non-multithreaded and there's no interface to pass it in, but there is implementation in `ConcatenateMatrix.h`
-  tf <- mat %>% multiply_cols(1 / npeaks)
-  idf_ <- ncol(mat) / rowSums(mat)
-  mat_tfidf <- tf %>% multiply_rows(idf_)
-  mat_log_tfidf <- log1p(scale_factor * mat_tfidf)
-  # Save to prevent re-calculation of queued operations
-  if (save_in_memory) {
-    mat_log_tfidf <- write_matrix_memory(mat_log_tfidf, compress = FALSE)
-  } else {
-    mat_log_tfidf <- write_matrix_dir(mat_log_tfidf, tempfile("mat_log_tfidf"), compress = FALSE)
-  } 
-  # Z-score normalization
-  cell_peak_stats <- matrix_stats(mat_log_tfidf, col_stats="variance", threads = threads)$col_stats
-  cell_means <- cell_peak_stats["mean",]
-  cell_vars <- cell_peak_stats["variance",]
-  mat_lsi_norm <- mat_log_tfidf %>%
-    add_cols(-cell_means) %>%
-    multiply_cols(1 / cell_vars)
-  # Run pca
-  svd_attr_ <- svds(mat_lsi_norm, k = n_dimensions, threads = threads)
-  pca_res <- t(svd_attr_$u) %*% mat_lsi_norm
-  return(pca_res)
-}
-
-#' Get the most variable features within a matrix
-#' @param num_feats (integer) Number of features to return.  If the number is higher than the number of features in the matrix, 
-#' ll features will be returned.
-#' @param n_bins (integer) Number of bins for binning mean gene expression.  Normalizing dispersion is done with respect to each bin, 
-#' and if the number of features
-#' within a bin is less than 2, the dispersion is set to 1.
-#' @returns IterableMatrix subset of the most variable features.
-#' @inheritParams lsi
-#' @details The formula for calculating the most variable features is from the Seurat package (Satjia et al. 2015).
-#' 
-#' Calculate using the following process:
-#'  1. Calculate the dispersion of each feature (variance / mean)
-#'  2. Log normalize dispersion and mean
-#'  3. Bin the features by their means, and normalize dispersion within each bin
-#' @export
-highly_variable_features <- function(mat, num_feats, n_bins, threads = 1L) {
-  assert_is(mat, "IterableMatrix")
-  assert_greater_than_zero(num_feats)
-  assert_is_wholenumber(num_feats)
-  assert_len(num_feats, 1)
-  assert_is_wholenumber(n_bins)
-  assert_len(n_bins, 1)
-  assert_greater_than_zero(n_bins)
-  if (nrow(mat) <= num_feats) {
-    log_progress(sprintf("Number of features (%s) is less than num_feats (%s), returning all features", nrow(mat), num_feats))
-    return(mat)
-  }
-  
-  feature_means <- matrix_stats(mat, row_stats = c("mean"))$row_stats["mean", ]
-  feature_vars <- matrix_stats(mat, row_stats = c("variance"))$row_stats["variance", ]
-  feature_means[feature_means == 0] <- 1e-12
-  feature_dispersion <- feature_vars / feature_means
-  feature_dispersion[feature_dispersion == 0] <- NA
-  feature_dispersion <- log(feature_dispersion)
-  feature_means <- log1p(feature_means)
-  mean_bins <- cut(feature_means, n_bins, labels = FALSE)
-  
-  bin_mean <- tapply(feature_dispersion, mean_bins, function(x) mean(x, na.rm = TRUE))
-  bin_sd <- tapply(feature_dispersion, mean_bins, function(x) sd(x, na.rm = TRUE))
-  # Set feats that are in bins with only one feat to have a norm dispersion of 1
-  one_gene_bin <- is.na(bin_sd)
-  bin_sd[one_gene_bin] <- bin_mean[one_gene_bin]
-  bin_mean[one_gene_bin] <- 0
-  # map mean_bins indices to bin_stats
-  # Do a character search as bins without features mess up numeric indexing
-  feature_dispersion_norm <- (feature_dispersion - bin_mean[as.character(mean_bins)]) / bin_sd[as.character(mean_bins)]
-  names(feature_dispersion_norm) <- names(feature_dispersion)
-  feature_dispersion_norm <- sort(feature_dispersion_norm) # sorting automatically removes NA values
-  if (length(feature_dispersion_norm) < num_feats) log_progress(sprintf("Number of features (%s) is less than num_feats (%s), returning all non-zero features", length(feature_dispersion_norm), num_feats))
-  variable_features_ <- feature_dispersion_norm[max(1, (length(feature_dispersion_norm) - num_feats + 1)):length(feature_dispersion_norm)]
-  return(mat[names(variable_features_), ])
 }
