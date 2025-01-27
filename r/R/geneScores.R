@@ -203,7 +203,7 @@ gene_score_weights_archr <- function(genes, chromosome_sizes, blacklist = NULL, 
   assert_is_wholenumber(tile_width)
   assert_is(addArchRBug, "logical")
 
-  tiles <- gene_score_tiles_archr(genes, chromosome_sizes = chromosome_sizes, addArchRBug = addArchRBug)
+  tiles <- gene_score_tiles_archr(genes, chromosome_sizes = chromosome_sizes, tile_width = tile_width, addArchRBug = addArchRBug)
   # Correct distance to match the GenomicRanges convention
   tiles$distance <- tiles$distance - sign(tiles$distance)
   # Filter out blacklist if requested

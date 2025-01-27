@@ -12,7 +12,8 @@ Contributions welcome :)
 - Add `write_matrix_anndata_hdf5_dense()` which allows writing matrices in AnnData's dense format, most commonly used for `obsm` or `varm` matrices. (Thanks to @ycli1995 for pull request #166)
 
 ## Bug-fixes
-- Fix error message printing when MACS crashes during `call_peaks_macs()` (pull request #175) 
+- Fix error message printing when MACS crashes during `call_peaks_macs()` (pull request #175)
+- Fix `gene_score_archr()` and `gene_score_weights_archr()` not passing `tile_width` to `gene_score_tiles_archr()`. (pull request #192)
 
 # BPCells 0.3.0 (12/21/2024)
 
