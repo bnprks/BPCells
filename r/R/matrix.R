@@ -2751,7 +2751,7 @@ setAs("IterableMatrix", "dgCMatrix", function(from) {
   }
 })
 
-# Add conversion to base R dense matrices
+# Add conversion to and from base R dense matrices
 setAs("IterableMatrix", "matrix", function(from) {
   rlang::inform(c(
       "Warning: Converting to a dense matrix may use excessive memory"
@@ -2764,6 +2764,8 @@ setAs("IterableMatrix", "matrix", function(from) {
   }
   mat
 })
+
+setAs("matrix", "IterableMatrix", function(from) mat <- as(as(from, "dgCMatrix"), "IterableMatrix"))
 
 matrix_to_integer <- function(matrix) { # a numeric matrix
     if (is.integer(matrix)) return(matrix) # styler: off
@@ -2803,7 +2805,7 @@ matrix_stats <- function(matrix,
                          col_stats = c("none", "nonzero", "mean", "variance"),
                          threads = 0L
                          ) {
-  assert_is(matrix, "IterableMatrix")
+  if (!is(matrix, "IterableMatrix")) tryCatch(matrix <- as(matrix, "IterableMatrix"), error = function(e) stop("Input matrix must be an IterableMatrix object"))
   assert_is_wholenumber(threads)
 
   stat_options <- c("none", "nonzero", "mean", "variance")

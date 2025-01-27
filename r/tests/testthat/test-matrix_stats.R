@@ -37,9 +37,14 @@ test_that("MatrixStats basic test", {
   i1 <- as(m1, "IterableMatrix")
   i2 <- t(i1)
 
-
+  
+  stats_m1 <- matrix_stats(as.matrix(m1), "variance", "variance")
+  stats_m1_dgc <- matrix_stats(m1, "variance", "variance")
   stats1 <- matrix_stats(i1, "variance", "variance")
   stats2 <- matrix_stats(i2, "variance", "variance")
+
+  expect_identical(stats_m1_dgc, stats_m1)
+  expect_identical(stats_m1_dgc, stats1)
 
   expect_identical(c("nonzero", "mean", "variance"), rownames(stats1$row_stats))
   expect_identical(c("nonzero", "mean", "variance"), rownames(stats1$col_stats))
