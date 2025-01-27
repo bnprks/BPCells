@@ -43,7 +43,8 @@ Imports:
     scattermore,
     ggrepel,
     RColorBrewer,
-    hexbin
+    hexbin,
+    RcppHNSW
 Suggests:
     IRanges,
     GenomicRanges,
