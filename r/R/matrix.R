@@ -2703,6 +2703,7 @@ convert_matrix_type <- function(matrix, type = c("uint32_t", "double", "float"))
 #' 
 #' # Convert to BPCells from R
 #' as(dgc_mat, "IterableMatrix")
+#' as(base_r_mat, "IterableMatrix")
 #' @name matrix_R_conversion
 NULL
 
@@ -2765,7 +2766,7 @@ setAs("IterableMatrix", "dgCMatrix", function(from) {
   }
 })
 
-# Add conversion to base R dense matrices
+# Add conversion to and from base R dense matrices
 setAs("IterableMatrix", "matrix", function(from) {
   rlang::inform(c(
       "Warning: Converting to a dense matrix may use excessive memory"
@@ -2778,6 +2779,8 @@ setAs("IterableMatrix", "matrix", function(from) {
   }
   mat
 })
+
+setAs("matrix", "IterableMatrix", function(from) mat <- as(as(from, "dgCMatrix"), "IterableMatrix"))
 
 matrix_to_integer <- function(matrix) { # a numeric matrix
     if (is.integer(matrix)) return(matrix) # styler: off
@@ -2817,7 +2820,13 @@ matrix_stats <- function(matrix,
                          col_stats = c("none", "nonzero", "mean", "variance"),
                          threads = 0L
                          ) {
-  assert_is(matrix, "IterableMatrix")
+  if (!is(matrix, "IterableMatrix")) {
+    if (canCoerce(matrix, "IterableMatrix")) {
+      matrix <- as(matrix, "IterableMatrix")
+    } else {
+      rlang::abort("Input matrix cannot be converted to an IterableMatrix object")
+    }
+  }
   assert_is_wholenumber(threads)
 
   stat_options <- c("none", "nonzero", "mean", "variance")
