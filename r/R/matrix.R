@@ -2689,6 +2689,7 @@ convert_matrix_type <- function(matrix, type = c("uint32_t", "double", "float"))
 #' 
 #' # Convert to BPCells from R
 #' as(dgc_mat, "IterableMatrix")
+#' as(base_r_mat, "IterableMatrix")
 #' @name matrix_R_conversion
 NULL
 
@@ -2805,7 +2806,13 @@ matrix_stats <- function(matrix,
                          col_stats = c("none", "nonzero", "mean", "variance"),
                          threads = 0L
                          ) {
-  if (!is(matrix, "IterableMatrix")) tryCatch(matrix <- as(matrix, "IterableMatrix"), error = function(e) stop("Input matrix must be an IterableMatrix object"))
+  if (!is(matrix, "IterableMatrix")) {
+    if (canCoerce(matrix, "IterableMatrix")) {
+      matrix <- as(matrix, "IterableMatrix")
+    } else {
+      rlang::abort("Input matrix cannot be converted to an IterableMatrix object")
+    }
+  }
   assert_is_wholenumber(threads)
 
   stat_options <- c("none", "nonzero", "mean", "variance")

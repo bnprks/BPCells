@@ -43,6 +43,8 @@ test_that("MatrixStats basic test", {
   stats1 <- matrix_stats(i1, "variance", "variance")
   stats2 <- matrix_stats(i2, "variance", "variance")
 
+  expect_error(matrix_stats(list("a"), "variance"), "cannot be converted to an IterableMatrix object")
+
   expect_identical(stats_m1_dgc, stats_m1)
   expect_identical(stats_m1_dgc, stats1)
 
