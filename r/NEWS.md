@@ -13,7 +13,7 @@ Contributions welcome :)
 
 ## Bug-fixes
 - Fix error message printing when MACS crashes during `call_peaks_macs()` (pull request #175)
-- Fix matrix transpose breaking when `BiocGenerics` has been imported previously. (pull request #191)
+- Fix matrix transpose error when BPCells is loaded via `devtools::load_all()` and `BiocGenerics` has been imported previously. (pull request #191)
 
 # BPCells 0.3.0 (12/21/2024)
 
