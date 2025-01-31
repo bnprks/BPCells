@@ -12,6 +12,7 @@ Contributions welcome :)
 - Add `write_matrix_anndata_hdf5_dense()` which allows writing matrices in AnnData's dense format, most commonly used for `obsm` or `varm` matrices. (Thanks to @ycli1995 for pull request #166)
 
 ## Improvements
+- Speed up taking large subsets of large concatenated matrices, e.g. selecting 9M cells from a 10M cell matrix composed of ~100 concatenated pieces. (pull request #179)
 - `matrix_stats()` now also works with types `matrix` and `dgCMatrix`. (pull request #190)
 
 ## Bug-fixes
