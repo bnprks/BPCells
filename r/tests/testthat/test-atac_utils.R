@@ -373,3 +373,52 @@ test_that("macs errors print when running in parallel", {
     )
   }, "MACS calls encountered .* failures")
 })
+
+
+test_that("Regression test for gene_score_archr() Issues 185 + 188", {
+  # Test setup:
+  #  - Two genes on different chromosomes
+  #  - All fragments overlap gene body
+  fragments <- tibble::tibble(
+    chr = c("chr1", "chr1", "chr2", "chr2"),
+    start = 10,
+    end = start + 20,
+    cell_id = c("cell1", "cell2", "cell1", "cell3")
+  )
+  genes <- tibble::tibble(
+    chr = c("chr1", "chr1", "chr2"),
+    start = c(0, 10000, 15),
+    end = start + 500,
+    strand = "+",
+    gene_id = c("gene1", "gene2", "gene3")
+  )
+  chromosome_sizes <- tibble::tibble(
+    chr = c("chr1", "chr2"),
+    start = 0,
+    end = c(20000, 500)
+  )
+
+  bp_frags <- convert_to_fragments(fragments)
+
+  # Check that tile_width is getting handled properly in `gene_score_weights_archr`
+  expected_tiles <- as.integer(sum((chromosome_sizes$end + 99) %/% 100))
+  expect_identical(ncol(gene_score_weights_archr(genes, chromosome_sizes, tile_width=100)), expected_tiles)
+
+  ans <- matrix(c(
+    5000, 10000, 0,
+    0, 0, 0,
+    5000, 0, 10000
+  ), nrow=3, byrow=TRUE, dimnames=list(genes$gene_id, unique(fragments$cell_id))) %>%
+    as("dgCMatrix")
+  
+  bp_ans <- gene_score_archr(bp_frags, genes, chromosome_sizes)
+  expect_identical(as(bp_ans, "dgCMatrix"), ans)
+
+  # Try with out-of-order chromosome_sizes
+  bp_ans <- gene_score_archr(bp_frags, genes, chromosome_sizes[c(2,1),])
+  expect_identical(as(bp_ans, "dgCMatrix"), ans)
+
+  # Check that tile_width changing doesn't cause crashes in `gene_score_archr`
+  bp_ans <- gene_score_archr(bp_frags, genes, chromosome_sizes, tile_width=1000)
+  expect_identical(as(bp_ans, "dgCMatrix"), ans)
+})
