@@ -377,8 +377,11 @@ test_that("macs errors print when running in parallel", {
 
 test_that("Regression test for gene_score_archr() Issues 185 + 188", {
   # Test setup:
-  #  - Two genes on different chromosomes
-  #  - All fragments overlap gene body
+  #  - Cell1 overlaps gene1 and gene3
+  #  - cell2 overlaps just gene1
+  #  - cell3 overlaps just gene3
+  #  - All fragments overlap gene body and gene lengths are the same, so 
+  #    we don't need to worry about distance parameters affecting things
   fragments <- tibble::tibble(
     chr = c("chr1", "chr1", "chr2", "chr2"),
     start = 10,
