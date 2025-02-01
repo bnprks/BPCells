@@ -417,13 +417,18 @@ write_insertion_bedgraph <- function(fragments, path, cell_groups = rlang::rep_a
 #' @keywords internal
 write_insertion_bed <- function(fragments, path,
                                 cell_groups = rlang::rep_along(cellNames(fragments), "all"),
-                                insertion_mode = c("start_only", "both", "end_only"),
+                                insertion_mode = c("both", "start_only",  "end_only"),
                                 verbose = FALSE,
                                 threads = 1) {
   assert_is(fragments, "IterableFragments")
   assert_is(cell_groups, c("character", "factor"))
   assert_is_character(path)
   assert_is_wholenumber(threads)
+  if (threads > 1L && .Platform$OS.type == "windows") {
+    # TODO: Move the multithreading to happen in C++ so we can support windows
+    threads <- 1L
+    rlang::warn("Multi-threading is not supported yet on windows in this function")
+  }
   assert_is(verbose, "logical")
   insertion_mode <- match.arg(insertion_mode)
   path_names <- names(path)
@@ -505,14 +510,14 @@ write_insertion_bed <- function(fragments, path,
 #'
 #' **Running MACS manually**:
 #'
-#' To run MACS manually, you will first run `call_macs_peaks()` with `step="prep-inputs`. Then, manually run all of the
-#' shell scripts generated at `<path>/input/<group>.sh`. Finally, run `call_macs_peaks()` again with the same original arguments, but
+#' To run MACS manually, you will first run `call_peaks_macs()` with `step="prep-inputs`. Then, manually run all of the
+#' shell scripts generated at `<path>/input/<group>.sh`. Finally, run `call_peaks_macs()` again with the same original arguments, but
 #' setting `step="read-outputs"`.
 #' @inheritParams call_peaks_tile
 #' @export
-call_macs_peaks <- function(fragments, path,
+call_peaks_macs <- function(fragments, path,
                             cell_groups = rlang::rep_along(cellNames(fragments), "all"), effective_genome_size = 2.9e9,
-                            insertion_mode = c("start_only", "both", "end_only"),
+                            insertion_mode = c("both", "start_only", "end_only"),
                             step = c("all", "prep-inputs", "run-macs", "read-outputs"),
                             macs_executable = NULL,
                             additional_params = "--call-summits --keep-dup all --shift -75 --extsize 150 --nomodel --nolambda",
@@ -523,6 +528,11 @@ call_macs_peaks <- function(fragments, path,
   assert_is_numeric(effective_genome_size)
   assert_is_character(path)
   assert_is_wholenumber(threads)
+  if (threads > 1L && .Platform$OS.type == "windows") {
+    # TODO: Move the multithreading to happen in C++ so we can support windows
+    threads <- 1L
+    rlang::warn("Multi-threading is not supported yet on windows in this function")
+  }
   insertion_mode <- match.arg(insertion_mode)
   step <- match.arg(step)
   cell_groups <- as.factor(cell_groups)
@@ -550,7 +560,7 @@ call_macs_peaks <- function(fragments, path,
   macs_call <- sprintf(macs_call_template,
                        macs_executable, effective_genome_size, levels(cell_groups),
                        path_bed_input, path_macs_output, additional_params)
-  
+
   if (step %in% c("prep-inputs", "run-macs", "all")) {
     shell_paths <- paste0(path, "/input/", levels(cell_groups), ".sh")
     for (cluster_idx in seq_along(levels(cell_groups))) { 
@@ -566,7 +576,7 @@ call_macs_peaks <- function(fragments, path,
     if (length(file_names) != length(levels(cell_groups))) {
       warning("Number of shell files does not match number of clusters")
     }
-    parallel::mclapply(file_names, function(shell_file) {
+    macs_success <- parallel::mclapply(file_names, function(shell_file) {
       cluster <- gsub(".sh$", "", shell_file)
       if (verbose) log_progress(paste0("Running MACS for cluster: ", cluster))
       dir.create(file.path(path, "output", cluster), showWarnings = FALSE, recursive = TRUE)
@@ -574,13 +584,19 @@ call_macs_peaks <- function(fragments, path,
       macs_message <- system2("bash", sprintf("'%s'", file.path(path, "input", shell_file)),stdout = log_file, stderr = log_file, env = c("OMP_NUM_THREADS=1"))
       # Try detecting if macs failed before writing that cluster is finished
       if (macs_message != 0) {
-        stop(paste0(format(Sys.time(), "%Y-%m-%d %H:%M:%S"), " Error running MACS for cluster: ", cluster, "\n",
+        log_progress(paste0(" Error running MACS for cluster: ", cluster, "\n",
                     "MACS log file written to: ", log_file))
+        return(FALSE)
       } else if (verbose) {
         log_progress(paste0(" Finished running MACS for cluster: ", cluster))
         log_progress(paste0(" MACS log file written to: ", log_file))
       }
+      return(TRUE)
     }, mc.cores = threads, mc.preschedule = FALSE)
+    failures <- sum(!unlist(macs_success))
+    if (failures > 0) {
+      rlang::abort(c(sprintf("MACS calls encountered %d failures", failures), "See error logs listed above"))
+    }
   }
   # Read outputs
   if (step %in%  c("read-outputs", "all")) {
@@ -606,11 +622,25 @@ call_macs_peaks <- function(fragments, path,
   }
 }
 
+#' Call peaks using MACS2/3
+#'
+#' @description
+#' `r lifecycle::badge("deprecated")` 
+#'
+#' This function has been renamed to `call_peaks_macs()`
+#' @export
+#' @keywords internal
+call_macs_peaks <- function(...) {
+  lifecycle::deprecate_warn("0.3.0", "call_macs_peaks()", "call_peaks_macs()")
+  return(call_peaks_macs(...))
+}
+
+
 #' Test if MACS executable is valid.
 #' If macs_executable is NULL, this function will try to auto-detect MACS from PATH, with preference for MACS3 over MACS2.
 #' If macs_executable is provided, this function will check if MACS can be called.
 #' @return MACS executable path.
-#' @inheritParams call_macs_peaks
+#' @inheritParams call_peaks_macs
 #' @keywords internal
 macs_path_is_valid <- function(macs_executable) {
   if (is.null(macs_executable)) {

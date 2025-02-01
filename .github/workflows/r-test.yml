@@ -1,0 +1,52 @@
+name: Build and test R package
+
+on: 
+  pull_request:
+    branches:
+    - "main"
+
+jobs:
+  build:
+    name: ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+         # Include macos-13 to get an intel mac
+         os: [ubuntu-latest, windows-latest, macos-latest, macos-13]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install binary dependencies on ubuntu
+        if: ${{ matrix.os == 'ubuntu-latest' }}
+        run: sudo apt-get update && sudo apt-get install -y libhdf5-dev
+      - name: Install binary dependencies on mac
+        if: ${{ matrix.os == 'macos-latest' || matrix.os == 'macos-13' }}
+        run: brew install hdf5
+      # R compilation options:
+      # - Use 3 cores for compilation to speed it up
+      # - Use lightly optimized build so Windows mingw doesn't segfault from unaligned loads of vector args with non-inlined functions
+      #   see: https://github.com/google/highway/issues/332
+      # - Keep NDEBUG undefined so that we only do a (fast) single-architecture build for bitpacking kernels rather than all architectures
+      - name: Set R compilation options
+        run: bash -c 'echo -e "MAKEFLAGS=--jobs=3\nCXXFLAGS += -O1 -UNDEBUG" > "$GITHUB_WORKSPACE/Makevars.user" && echo "R_MAKEVARS_USER=$GITHUB_WORKSPACE/Makevars.user" >> "$GITHUB_ENV"'
+      # This is to fix assembler errors like 'file too big' or 'too many sections' on Windows
+      # See: https://github.com/bnprks/BPCells/actions/runs/11412970445/job/31759842649?pr=141
+      # Solution from: https://digitalkarabela.com/mingw-w64-how-to-fix-file-too-big-too-many-sections/ and https://github.com/apache/arrow/issues/24442
+      - name: Handle Windows big object files
+        if: ${{ matrix.os == 'windows-latest' }}
+        run: bash -c 'echo "CXXFLAGS += -Wa,-mbig-obj" >> "$GITHUB_WORKSPACE/Makevars.user"'
+      - uses: r-lib/actions/setup-r@v2
+        with:
+          Ncpus: '3'
+          use-public-rspm: true
+      - uses: r-lib/actions/setup-r-dependencies@v2
+        with:
+          cache-version: 1
+          extra-packages: |
+            any::testthat
+            any::decor
+          working-directory: 'r'
+      # Do a normal install rather than a pkgbuild-mediated install so we can control compilation flags via Makevars file
+      - name: Install BPCells
+        run: Rscript -e 'install.packages("r", repos=NULL, type="source")'
+      - name: Run testthat
+        run: Rscript -e 'testthat::test_dir("r/tests/testthat", package="BPCells", load_package="installed")'

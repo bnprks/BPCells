@@ -428,7 +428,7 @@ trackplot_coverage <- function(fragments, region, groups,
   assert_is(colors, "character")
   assert_true(length(colors) >= length(unique(groups)))
   if (!is.null(legend_label)) {
-    lifecycle::deprecate_warn("0.2.0", "trackplot_coverage(legend_label)", details="Argument value is no longer used since color legend is not shown.")
+    lifecycle::deprecate_warn("0.3.0", "trackplot_coverage(legend_label)", details="Argument value is no longer used since color legend is not shown.")
   }
 
   groups <- as.factor(groups)
@@ -1033,7 +1033,7 @@ trackplot_bulk <- function(fragments, region, groups,
                            legend_label = "group",
                            zero_based_coords = !is(region, "GRanges"),
                            return_data = FALSE, return_plot_list = FALSE, apply_styling = TRUE) {
-  lifecycle::deprecate_warn("0.2.0", "trackplot_bulk()", "trackplot_combine()")
+  lifecycle::deprecate_warn("0.2.0", "trackplot_bulk()", "trackplot_coverage()")
 
   assert_is(fragments, "IterableFragments")
   assert_not_null(cellNames(fragments))

@@ -365,7 +365,7 @@ setMethod("short_description", "MatrixMultiply", function(x) {
 })
 
 setMethod("%*%", signature(x = "IterableMatrix", y = "IterableMatrix"), function(x, y) {
-  if (x@transpose != y@transpose) stop("Cannot multiply matrices with different interal transpose states.\nPlease use transpose_storage_order().")
+  if (x@transpose != y@transpose) stop("Cannot multiply matrices with different internal transpose states.\nPlease use transpose_storage_order().")
   if (x@transpose) {
     return(t(t(y) %*% t(x)))
   }
@@ -483,7 +483,7 @@ mask_matrix <- function(mat, mask, invert=FALSE) {
       mask <- as(mask, "IterableMatrix")
   }
   
-  if (mat@transpose != mask@transpose) stop("Cannot mask matrices with different interal transpose states.\nPlease use transpose_storage_order().")
+  if (mat@transpose != mask@transpose) stop("Cannot mask matrices with different internal transpose states.\nPlease use transpose_storage_order().")
   mask <- convert_matrix_type(mask, "uint32_t")
 
   wrapMatrix("MatrixMask",
@@ -716,7 +716,6 @@ rlang::on_load({
     setMethod(MatrixGenerics::colMaxs, "IterableMatrix", colMaxs.IterableMatrix)
   }
 })
-
 
 # Index subsetting
 setClass("MatrixSubset",
@@ -1107,7 +1106,7 @@ setMethod("short_description", "RowBindMatrices", function(x) {
 })
 
 setMethod("rbind2", signature(x = "IterableMatrix", y = "IterableMatrix"), function(x, y, ...) {
-  if (x@transpose != y@transpose) stop("Cannot merge matrices with different interal transpose states.\nPlease use transpose_storage_order().")
+  if (x@transpose != y@transpose) stop("Cannot merge matrices with different internal transpose states.\nPlease use transpose_storage_order().")
   if (matrix_type(x) != matrix_type(y)) stop("Cannot merge matrices with different data type.\nPlease use convert_matrix_type().")
   if (x@transpose) {
     return(t(cbind2(t(x), t(y))))
@@ -1199,7 +1198,7 @@ setMethod("short_description", "ColBindMatrices", function(x) {
 })
 
 setMethod("cbind2", signature(x = "IterableMatrix", y = "IterableMatrix"), function(x, y, ...) {
-  if (x@transpose != y@transpose) stop("Cannot merge matrices with different interal transpose states.\nPlease use transpose_storage_order().")
+  if (x@transpose != y@transpose) stop("Cannot merge matrices with different internal transpose states.\nPlease use transpose_storage_order().")
   if (matrix_type(x) != matrix_type(y)) stop("Cannot merge matrices with different data type.\nPlease use convert_matrix_type().")
   if (x@transpose) {
     return(t(rbind2(t(x), t(y))))
@@ -1258,14 +1257,23 @@ setMethod("[", "RowBindMatrices", function(x, i, j, ...) {
 
   x <- selection_fix_dims(x, rlang::maybe_missing(i$subset), rlang::maybe_missing(j$subset))
 
-  last_row <- 0L
-  new_mats <- list()
-  for (mat in x@matrix_list) {
-    row_start <- last_row + 1L
-    row_end <- last_row + nrow(mat)
+  # Calculate helper variables to extract and transform the relevant parts of i$subset for each sub-matrix
+  if (!rlang::is_missing(i$subset)) {
+    rows <- vapply(x@matrix_list, nrow, integer(1))
+    local_i_offset <- cumsum(c(0, rows))
+    # Find the range of indices in i$subset that correspond to each matrix in x@matrix_list
+    local_i_range <- findInterval(local_i_offset, i$subset)
+  }
 
+  new_mats <- list()
+  for (k in seq_along(x@matrix_list)) {
+    mat <- x@matrix_list[[k]]
     if (!rlang::is_missing(i$subset)) {
-      local_i <- i$subset[i$subset >= row_start & i$subset <= row_end] - last_row
+      if (local_i_range[k] == local_i_range[k+1]) {
+        local_i <- integer(0)
+      } else {
+        local_i <- i$subset[(local_i_range[k]+1):(local_i_range[k+1])] - local_i_offset[k]
+      }
       mat <- mat[local_i,]
     }
     if (!rlang::is_missing(j$subset)) {
@@ -1275,8 +1283,6 @@ setMethod("[", "RowBindMatrices", function(x, i, j, ...) {
     if (nrow(mat) > 0) {
       new_mats <- c(new_mats, mat)
     }
-
-    last_row <- row_end
   }
   if (length(new_mats) > 1) {
     x@matrix_list <- new_mats
@@ -1321,14 +1327,23 @@ setMethod("[", "ColBindMatrices", function(x, i, j, ...) {
 
   x <- selection_fix_dims(x, rlang::maybe_missing(i$subset), rlang::maybe_missing(j$subset))
 
-  last_col <- 0L
-  new_mats <- list()
-  for (mat in x@matrix_list) {
-    col_start <- last_col + 1L
-    col_end <- last_col + ncol(mat)
+  # Calculate helper variables to extract and transform the relevant parts of j$subset for each sub-matrix
+  if (!rlang::is_missing(j$subset)) {
+    cols <- vapply(x@matrix_list, ncol, integer(1))
+    local_j_offset <- cumsum(c(0, cols))
+    # Find the range of indices in j$subset that correspond to each matrix in x@matrix_list
+    local_j_range <- findInterval(local_j_offset, j$subset)
+  }
 
+  new_mats <- list()
+  for (k in seq_along(x@matrix_list)) {
+    mat <- x@matrix_list[[k]]
     if (!rlang::is_missing(j$subset)) {
-      local_j <- j$subset[j$subset >= col_start & j$subset <= col_end] - last_col
+      if (local_j_range[k] == local_j_range[k+1]) {
+        local_j <- integer(0)
+      } else {
+        local_j <- j$subset[(local_j_range[k]+1):(local_j_range[k+1])] - local_j_offset[k]
+      }
       mat <- mat[,local_j]
     }
     if (!rlang::is_missing(i$subset)) {
@@ -1338,8 +1353,6 @@ setMethod("[", "ColBindMatrices", function(x, i, j, ...) {
     if (ncol(mat) > 0) {
       new_mats <- c(new_mats, mat)
     }
-
-    last_col <- col_end
   }
   if (length(new_mats) > 1) {
     x@matrix_list <- new_mats
@@ -1378,6 +1391,10 @@ parallel_split <- function(mat, threads, chunks=threads) {
   assert_is_wholenumber(threads)
   assert_is_wholenumber(chunks)
   assert_true(chunks >= threads)
+
+  if (threads <= 1L) {
+    return(mat)
+  }
 
   if (mat@transpose) {
     return(t(parallel_split(t(mat), threads, chunks)))
@@ -2133,14 +2150,32 @@ setMethod("short_description", "AnnDataMatrixH5", function(x) {
 
 #' Read/write AnnData matrix
 #'
-#' Read or write a sparse matrix from an anndata hdf5 file. These functions will
+#' @description
+#' Read or write a matrix from an anndata hdf5 file. These functions will
 #' automatically transpose matrices when converting to/from the AnnData
 #' format. This is because the AnnData convention stores cells as rows, whereas the R
 #' convention stores cells as columns. If this behavior is undesired, call `t()`
 #' manually on the matrix inputs and outputs of these functions. 
-#' 
+#'
+#' Most users writing to AnnData files should default to `write_matrix_anndata_hdf5()` rather
+#' than the dense variant (see details for more information).
+#'
 #' @inheritParams open_matrix_hdf5
 #' @return AnnDataMatrixH5 object, with cells as the columns.
+#' @details 
+#'   **Efficiency considerations**: Reading from a dense AnnData matrix will generally be slower
+#'   than sparse for single cell datasets, so it is recommended to re-write any dense AnnData
+#'   inputs to a sparse format early in processing.
+#'
+#'   `write_matrix_anndata_hdf5()` should be used by default, as it always writes in the more efficient sparse format.
+#'   `write_matrix_anndata_hdf5_dense()` writes in the AnnData dense format, and can be used for smaller matrices 
+#'   when efficiency and file size are less of a concern than increased portability (e.g. writing to `obsm` or `varm` matrices).
+#'   See the [AnnData docs](https://anndata.readthedocs.io/en/latest/fileformat-prose.html#dense-arrays) for format details.
+#'
+#'   **Dimension names:** Dimnames are inferred from `obs/_index` or `var/_index` based on length matching.
+#'   This helps to infer dimnames for `obsp`,` varm`, etc. If the number of `len(obs) == len(var)`,
+#'   dimname inference will be disabled.
+#'
 #' @export
 open_matrix_anndata_hdf5 <- function(path, group = "X", buffer_size = 16384L) {
   assert_is_file(path)
@@ -2178,6 +2213,28 @@ write_matrix_anndata_hdf5 <- function(mat, path, group = "X", buffer_size = 1638
     gzip_level
   )
   open_matrix_anndata_hdf5(path, group, buffer_size)
+}
+
+#' @rdname open_matrix_anndata_hdf5
+#' @inheritParams write_matrix_anndata_hdf5
+#' 
+#' @param dataset The dataset within the hdf5 file to write the matrix to. Used for `write_matrix_anndata_hdf5_dense`
+#' 
+#' @export
+write_matrix_anndata_hdf5_dense <- function(mat, path, dataset = "X", buffer_size = 16384L, chunk_size = 1024L, gzip_level = 0L) {
+  assert_is(mat, "IterableMatrix")
+  assert_is(path, "character")
+  mat <- t(mat)
+  write_matrix_anndata_hdf5_dense_cpp(
+    iterate_matrix(mat),
+    path,
+    dataset,
+    matrix_type(mat),
+    mat@transpose,
+    chunk_size,
+    gzip_level
+  )
+  open_matrix_anndata_hdf5(path, dataset, buffer_size)
 }
 
 #' Import MatrixMarket files
@@ -2646,6 +2703,7 @@ convert_matrix_type <- function(matrix, type = c("uint32_t", "double", "float"))
 #' 
 #' # Convert to BPCells from R
 #' as(dgc_mat, "IterableMatrix")
+#' as(base_r_mat, "IterableMatrix")
 #' @name matrix_R_conversion
 NULL
 
@@ -2708,7 +2766,7 @@ setAs("IterableMatrix", "dgCMatrix", function(from) {
   }
 })
 
-# Add conversion to base R dense matrices
+# Add conversion to and from base R dense matrices
 setAs("IterableMatrix", "matrix", function(from) {
   rlang::inform(c(
       "Warning: Converting to a dense matrix may use excessive memory"
@@ -2721,6 +2779,8 @@ setAs("IterableMatrix", "matrix", function(from) {
   }
   mat
 })
+
+setAs("matrix", "IterableMatrix", function(from) mat <- as(as(from, "dgCMatrix"), "IterableMatrix"))
 
 matrix_to_integer <- function(matrix) { # a numeric matrix
     if (is.integer(matrix)) return(matrix) # styler: off
@@ -2760,7 +2820,13 @@ matrix_stats <- function(matrix,
                          col_stats = c("none", "nonzero", "mean", "variance"),
                          threads = 0L
                          ) {
-  assert_is(matrix, "IterableMatrix")
+  if (!is(matrix, "IterableMatrix")) {
+    if (canCoerce(matrix, "IterableMatrix")) {
+      matrix <- as(matrix, "IterableMatrix")
+    } else {
+      rlang::abort("Input matrix cannot be converted to an IterableMatrix object")
+    }
+  }
   assert_is_wholenumber(threads)
 
   stat_options <- c("none", "nonzero", "mean", "variance")
@@ -2776,14 +2842,10 @@ matrix_stats <- function(matrix,
   row_stats_number <- match(row_stats, stat_options) - 1
   col_stats_number <- match(col_stats, stat_options) - 1
 
-  matrix <- convert_matrix_type(matrix, "double")
-  if (threads == 0L) {
-    it <- iterate_matrix(matrix)
-  } else {
-    it <- iterate_matrix(
-      parallel_split(matrix, threads, threads*4)
-    )
-  }
+  it <- matrix %>%
+    convert_matrix_type("double") %>%
+    parallel_split(threads, threads*4) %>%
+    iterate_matrix()
   res <- matrix_stats_cpp(it, row_stats_number, col_stats_number)
   rownames(res$row_stats) <- stat_options[seq_len(row_stats_number) + 1]
   rownames(res$col_stats) <- stat_options[seq_len(col_stats_number) + 1]
@@ -2840,14 +2902,10 @@ svds.IterableMatrix <- function(A, k, nu = k, nv = k, opts = list(), threads=0, 
   )
   solver_params[names(opts)] <- opts
 
-  A <- convert_matrix_type(A, "double")
-  if (threads == 0L) {
-    it <- iterate_matrix(A)
-  } else {
-    it <- iterate_matrix(
-      parallel_split(A, threads, threads*4)
-    )
-  }
+  it <- A %>%
+    convert_matrix_type("double") %>%
+    parallel_split(threads, threads*4) %>%
+    iterate_matrix()
   
   svds_cpp(
     it, 

@@ -2,7 +2,7 @@
 requires = [
     "setuptools>=61",
     "pybind11>=2.10.0",
-    "setuptools-scm>=7.0,<8.0",
+    "setuptools-scm>=7.0",
 ]
 build-backend = "setuptools.build_meta"
 
@@ -63,11 +63,4 @@ addopts = [
 
 [tool.cibuildwheel]
 skip = "*-musllinux_* pp*"
-[tool.cibuildwheel.linux]
-before-all = [
-    "yum install -y hdf5-devel eigen3-devel wget",
-    "bash {package}/scripts/install_highway_cmake.sh",
-]
 archs = ["auto64"]
-
-environment = { CPATH="/usr/include/eigen3" }

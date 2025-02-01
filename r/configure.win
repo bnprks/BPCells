@@ -1,34 +1,37 @@
 #!/bin/bash
-if [ -z $BPCELLS_DEBUG_INSTALL ]; then 
-    ERR=/dev/null
-else
-    ERR=/dev/stdout
-    set -x
-fi
 
 if [ -z $BPCELLS_DEBUG_INSTALL ]; then 
-    ERR=/dev/null
+    exec 3>/dev/null
 else
-    ERR=/dev/stdout
+    exec 3>&1
     set -x
 fi
 
 # This curl request helps count daily installs prior to CRAN release:
 # No identifiable information or IP addresses are saved, and server logs are
 # deleted every 14 days. More information on data privacy policy: https://plausible.io/data-policy
-# You can delete the line `ENABLE_INSTALL_COUNTING="yes"` if you do not want your installation counted.
-ENABLE_INSTALL_COUNTING="yes"
-if [ -n $ENABLE_INSTALL_COUNTING ]; then
+
+# To skip counting your installation, either delete the following line, 
+# or set the CI or ENABLE_INSTALL_COUNTING environment variables ahead of installation.
+if [ -z "$CI" ]; then ENABLE_INSTALL_COUNTING=${ENABLE_INSTALL_COUNTING:-yes}; fi
+
+if [ "$ENABLE_INSTALL_COUNTING" == "yes" ]; then
     curl --silent "https://plausible.benparks.net/flask-plausible/bpcells-configure" > /dev/null 2> /dev/null \
         || true
+    echo "Recording install count metrics"
+else
+    echo "Skipping install count metrics"
 fi
+
 # Test compiling a simple hdf5 program to check for compatibility
 CC=$("${R_HOME}/bin/R" CMD config CC)
 CXX=$("${R_HOME}/bin/R" CMD config CXX)
 
-CFLAGS=$("${R_HOME}/bin/R" CMD config CFLAGS)
-CXXFLAGS=$("${R_HOME}/bin/R" CMD config CXXFLAGS)
-LDFLAGS=$("${R_HOME}/bin/R" CMD config LDFLAGS)
+ENV_CFLAGS="${CFLAGS-}"
+ENV_LDFLAGS="${LDFLAGS-}"
+CFLAGS="$("${R_HOME}/bin/R" CMD config CFLAGS) $ENV_CFLAGS"
+CXXFLAGS="$("${R_HOME}/bin/R" CMD config CXXFLAGS) $ENV_CFLAGS"
+LDFLAGS="$("${R_HOME}/bin/R" CMD config LDFLAGS) $ENV_LDFLAGS"
 ############################
 # HDF5 compatibility check
 ############################
@@ -65,11 +68,11 @@ echo "HDF5_LIBS='${HDF5_LIBS}'"
 CXX17_OK=""
 CXX_FS_FLAG=""
 printf "\nTesting C++17 filesystem feature support..."
-$CXX tools/cxx17_filesystem.cc $CXXFLAGS $LDFLAGS -std=c++17 $CXX_FS_FLAG -o tools/cxx17_filesystem 2>$ERR && CXX17_OK="yes";
+$CXX tools/cxx17_filesystem.cc $CXXFLAGS $LDFLAGS -std=c++17 $CXX_FS_FLAG -o tools/cxx17_filesystem 2>&3 && CXX17_OK="yes";
 if [ -z $CXX17_OK ]; then
     # Compiler support flag for gcc
     CXX_FS_FLAG="-lstdc++fs"
-    $CXX tools/cxx17_filesystem.cc $CXXFLAGS $LDFLAGS -std=c++17 $CXX_FS_FLAG -o tools/cxx17_filesystem 2>$ERR && CXX17_OK="yes";
+    $CXX tools/cxx17_filesystem.cc $CXXFLAGS $LDFLAGS -std=c++17 $CXX_FS_FLAG -o tools/cxx17_filesystem 2>&3 && CXX17_OK="yes";
     if [ ! -z $CXX17_OK ]; then
         printf "\nWarning: your compiler version is old, and may run in to compile errors with BPCells.\n"
         printf "Consider installing a newer compiler version and setting CC and CXX in ~/.R/Makevars\n"
@@ -80,13 +83,14 @@ fi
 if [ -z $CXX17_OK ]; then
     # Compiler support flag for llvm
     CXX_FS_FLAG="-lc++fs"
-    $CXX tools/cxx17_filesystem.cc $CXXFLAGS $LDFLAGS -std=c++17 $CXX_FS_FLAG -o tools/cxx17_filesystem 2>$ERR && CXX17_OK="yes";
+    $CXX tools/cxx17_filesystem.cc $CXXFLAGS $LDFLAGS -std=c++17 $CXX_FS_FLAG -o tools/cxx17_filesystem 2>&3 && CXX17_OK="yes";
     if [ ! -z $CXX17_OK ]; then
         printf "\nWarning: your compiler version is old, and may run in to compile errors with BPCells.\n"
         printf "Consider installing a newer compiler version and setting CC and CXX in ~/.R/Makevars\n"
         printf "\nUsed fallback compatibility flags for C++17 std::filesystem support: $CXX_FS_FLAG\n"
     fi
 fi
+
 if [ -z $CXX17_OK ]; then
     printf "\n\nUnable to compile program with C++17 std::filesystem.\nPlease install a newer compiler version and set CC and CXX in ~/.R/Makevars\n"
     exit 1
@@ -99,13 +103,13 @@ printf "\nTesting availability of highway SIMD library..."
 HWY_OK=""
 HWY_CFLAGS="-Ibpcells-cpp"
 HWY_LIBS="-lhwy"
-$CXX tools/hwy-test.cpp $CXXFLAGS $LDFLAGS 2>$ERR && HWY_OK="yes";
+$CXX tools/hwy-test.cpp $CXXFLAGS $LDFLAGS 2>&3 && HWY_OK="yes";
 if [ -z $HWY_OK ]; then
     if [ ! -f tools/highway/lib/libhwy.a ]; then
-        printf "\nBuilding highway SIMD library from source"
+        printf "\nBuilding highway SIMD library from source\n"
         CXX=$CXX bash src/vendor/highway/manual-build/build_highway.sh src/vendor/highway tools/highway && HWY_OK="yes";
     else
-        printf "\nUsing cached highway build"
+        printf "\nUsing cached highway build\n"
         HWY_OK="yes"
     fi
     HWY_CFLAGS="$HWY_CFLAGS -I../tools/highway/include"
@@ -123,9 +127,11 @@ sed \
     -e "s|%CXX_FS_FLAG%|${CXX_FS_FLAG}|g" \
     -e "s|%HWY_CFLAGS%|${HWY_CFLAGS}|g" \
     -e "s|%HWY_LIBS%|${HWY_LIBS}|g" \
+    -e "s|%ENV_CFLAGS%|${ENV_CFLAGS}|g" \
+    -e "s|%ENV_LDFLAGS%|${ENV_LDFLAGS}|g" \
     src/Makevars.in > src/Makevars
 
-if [ -n $ENABLE_INSTALL_COUNTING ]; then
+if [ "$ENABLE_INSTALL_COUNTING" == "yes" ]; then
     curl --silent https://plausible.benparks.net/flask-plausible/bpcells-configure-success > /dev/null 2> /dev/null \
         || true
 fi

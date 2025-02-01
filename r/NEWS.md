@@ -1,12 +1,34 @@
 # BPCells 1.0 Roadmap
 - ~~Parallelization~~ (basic support complete. See below)
-- Native python library (re-using C++ backend)
+- Native python library (re-using C++ backend; basic support started)
 - Peak-gene correlations
-- MACS peak calling
+- ~~MACS peak calling~~ (basic support complete. See below)
 
 Contributions welcome :)
 
-# BPCells 0.2.1 (main branch - in progress)
+# BPCells 0.3.1 (in-progress main branch)
+
+## Features
+- Add `write_matrix_anndata_hdf5_dense()` which allows writing matrices in AnnData's dense format, most commonly used for `obsm` or `varm` matrices. (Thanks to @ycli1995 for pull request #166)
+
+## Improvements
+- Speed up taking large subsets of large concatenated matrices, e.g. selecting 9M cells from a 10M cell matrix composed of ~100 concatenated pieces. (pull request #179)
+- `matrix_stats()` now also works with types `matrix` and `dgCMatrix`. (pull request #190)
+
+## Bug-fixes
+- Fix error message printing when MACS crashes during `call_peaks_macs()` (pull request #175)
+- Fix matrix transpose error when BPCells is loaded via `devtools::load_all()` and `BiocGenerics` has been imported previously. (pull request #191)
+
+# BPCells 0.3.0 (12/21/2024)
+
+The BPCells 0.3.0 release covers 6 months of changes and 45 commits from 5 contributors. Notable improvements
+this release include support for peak calling with MACS and the addition of pseudobulk matrix and stats calculations.
+We also released an initial prototype of a BPCells Python library (more details [here](https://bnprks.github.io/BPCells/python/index.html)).
+Full details of changes below.
+
+Thanks to @ycli1995, @Yunuuuu, and @douglasgscofield for pull requests that contributed to this release, as well as to users who
+sumitted github issues to help identify and fix bugs. We also added @immanuelazn to the team as a new hire! He is responsible for many
+of the new features this release and will continue to help with maintenance and new development moving forwards. 
 
 ## Features
 - `apply_by_col()` and `apply_by_row()` allow providing custom R functions to compute per row/col summaries.
@@ -18,12 +40,18 @@ Contributions welcome :)
 - Add `regress_out()` to allow removing unwanted sources of variation via least squares linear regression models.
   Thanks to @ycli1995 for pull request #110
 - Add `trackplot_genome_annotation()` for plotting peaks, with options for directional arrows, colors, labels, and peak widths. (pull request #113)
-- Add MACS2/3 input creation and peak calling through `call_macs_peaks()` (pull request #118)
+- Add MACS2/3 input creation and peak calling through `call_peaks_macs()`(pull request #118). Note, renamed from `call_macs_peaks()` in pull request #143
+- Add `rowQuantiles()` and `colQuantiles()` functions, which return the quantiles of each row/column of a matrix. Currently `rowQuantiles()` only works on row-major matrices and `colQuantiles()` only works on col-major matrices.
+  If `matrixStats` or `MatrixGenerics` packages are installed, `BPCells::colQuantiles()` will fall back to their implementations for non-BPCells objects. (pull request #128)
+- Add `pseudobulk_matrix()` which allows pseudobulk aggregation by `sum` or `mean` and calculation of per-pseudobulk `variance` and `nonzero` statistics for each gene (pull request #128)
 
 ## Improvements
 - `trackplot_loop()` now accepts discrete color scales
 - `trackplot_combine()` now has smarter layout logic for margins, as well as detecting when plots are being combined that cover different genomic regions. (pull request #116)
 - `select_cells()` and `select_chromosomes()` now also allow using a logical mask for selection. (pull request #117)
+- BPCells installation can now also be configured by setting the `LDFLAGS` or `CFLAGS` as environment variables in addition to setting them in `~/.R/Makevars` (pull request #124)
+- `open_matrix_anndata_hdf5()` now supports reading AnnData matrices in the dense format. (pull request #146)
+- `cluster_graph_leiden()` now has better defaults that produce reasonable cluster counts regardless of dataset size. (pull request #147) 
 
 ## Bug-fixes
 - Fixed error message when a matrix is too large to be converted to dgCMatrix. (Thanks to @RookieA1 for reporting issue #95)
@@ -31,8 +59,11 @@ Contributions welcome :)
   operations. (Thanks to @Yunuuuu for reporting issues #97 and #100)
 - Fixed plotting crashes when running `trackplot_coverage()` with fragments from a single cluster. (Thanks to @sjessa for directly reporting this bug and coming up with a fix)
 - Fixed issues with `trackplot_coverage()` when called with ranges less than 500 bp in length (Thanks to @bettybliu for directly reporting this bug.)
-- Fix Rcpp warning created when handling compressed matrices with only one non-zero entry (pull request #123)
 - Fixed memory errors when running `writeInsertionBed()` and `writeInsertionBedGraph()` (pull request #{118, 134})
+- Fixed discrepancy between default ArchR and BPCells peak calling insertion method, where BPCells defaulted to only using the start of each fragment as opposed to ArchR's method of using both start and end sites of fragments (pull request #143)
+- Fix error in `tile_matrix()` with fragment mode (pull request #141)
+- Fix precision bug in `sctransform_pearson()` on ARM architecture (pull request #141) 
+- Fix type-confusion error when `pseudobulk_matrix()` gets an integer matrix (pull request #174)
 
 ## Deprecations
 - `trackplot_coverage()` `legend_label` argument is now ignored, as the color legend is no longer shown by default for coverage plots.

@@ -69,3 +69,60 @@ marker_features <- function(mat, groups, method="wilcoxon") {
         background_mean = as.numeric(background_means)
     )
 }
+
+#' Aggregate counts matrices by cell group or feature.
+#'
+#' Given a `(features x cells)` matrix, group cells by `cell_groups` and aggregate counts by `method` for each
+#' feature.
+#' @param cell_groups (Character/factor) Vector of group/cluster assignments for each cell. Length must be `ncol(mat)`.
+#' @param method (Character vector) Method(s) to aggregate counts. If one method is provided, the output will be a matrix. If multiple methods are provided, the output will be a named list of matrices.
+#'
+#' Current options are: `nonzeros`, `sum`, `mean`, `variance`.
+#' @param threads (integer) Number of threads to use.
+#' @return
+#'  - If `method` is length `1`, returns a matrix of shape `(features x groups)`.
+#'  - If `method` is greater than length `1`, returns a list of matrices with each matrix representing a pseudobulk matrix with a different aggregation method.
+#' Each matrix is of shape `(features x groups)`, and names are one of `nonzeros`, `sum`, `mean`, `variance`.
+#' @details Some simpler stats are calculated in the process of calculating more complex
+#' statistics. So when calculating `variance`, `nonzeros` and `mean` can be included with no
+#' extra calculation time, and when calculating `mean`, adding `nonzeros` will take no extra time.
+#' @inheritParams marker_features
+#' @export
+pseudobulk_matrix <- function(mat, cell_groups, method = "sum", threads = 0L) {
+  assert_is(mat, "IterableMatrix")
+  assert_is(cell_groups, c("factor", "character", "numeric"))
+  assert_true(length(cell_groups) == ncol(mat))
+  cell_groups <- as.factor(cell_groups)
+  assert_is(method, "character")
+  methods <- c("variance", "mean", "sum", "nonzeros")
+  for (m in method) {
+    if (!(m %in% methods)) {
+      rlang::abort(sprintf("method must be one of: %s", paste(methods, collapse = ", ")))
+    }
+  }
+  assert_is_wholenumber(threads)
+
+  it <- mat %>%
+    convert_matrix_type("double") %>%
+    parallel_split(threads, threads*4) %>%
+    iterate_matrix()
+  
+  res <- pseudobulk_matrix_cpp(it, cell_groups = as.integer(cell_groups) - 1, method = method, transpose = mat@transpose)
+  # if res is a single matrix, return with colnames and rownames
+  if (length(method) == 1) {
+    colnames(res[[method]]) <- levels(cell_groups)
+    rownames(res[[method]]) <- rownames(mat)
+    return(res[[method]])
+  }
+  # give colnames and rownames for each matrix in res, which is a named list
+  for (res_slot in names(res)) {
+    # Filter out methods that weren't requested
+    if (!(res_slot %in% method)) {
+      res[[res_slot]] <- NULL
+    } else {
+      colnames(res[[res_slot]]) <- levels(cell_groups)
+      rownames(res[[res_slot]]) <- rownames(mat)
+    }
+  }
+  return(res)
+}

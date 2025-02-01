@@ -11,9 +11,7 @@
 
 #include <gtest/gtest.h>
 
-#include <arrayIO/vector.h>
 #include <matrixIterators/CSparseMatrix.h>
-#include <matrixIterators/ImportMatrixHDF5.h>
 #include <matrixIterators/StoredMatrixTransposeWriter.h>
 #include <matrixIterators/StoredMatrixWriter.h>
 

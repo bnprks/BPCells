@@ -27,7 +27,7 @@ repo:
 
 navbar:
   structure:
-    left: [introduction, reference, articles, news]
+    left: [introduction, reference, articles, news, python]
     right: [search, github]
   components:
     introduction:
@@ -36,6 +36,10 @@ navbar:
     news:
       text: "News"
       href: "news/index.html"
+    python:
+      text: "Python Docs"
+      icon: "fa-arrow-up-right-from-square"
+      href: "python/index.html"
 
 articles:
 - title: "Articles from dropdown list"
@@ -50,6 +54,7 @@ articles:
   - "web-only/programming-efficiency"
   - "web-only/programming-philosophy"
   - "web-only/developer-notes"
+  - "web-only/manuscript-draft"
 
 # cosmo, flatly, united, sandstone all look reasonable
 # pulse, lumen, zephyr
@@ -71,7 +76,7 @@ reference:
   - peak_matrix
   - tile_matrix
   - gene_score_weights_archr
-  - call_macs_peaks
+  - call_peaks_macs
   - call_peaks_tile
   - merge_peaks_iterative
   - write_insertion_bedgraph
@@ -123,6 +128,7 @@ reference:
   - apply_by_row
   - regress_out
   - IterableMatrix-methods
+  - pseudobulk_matrix
 
 - title: "Reference Annotations"
 - contents:

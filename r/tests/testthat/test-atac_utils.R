@@ -271,7 +271,7 @@ test_that("macs_e2e_works", {
   frags <- convert_to_fragments(dplyr::bind_rows(chr1, chr2))
   cell_groups <- dplyr::if_else(cellNames(frags) %in% c("A", "E", "I", "O", "U"), "v o w e l", "consonant;")
   # call each step seperately and hold in memory
-  macs_prep <- call_macs_peaks(
+  macs_prep <- call_peaks_macs(
     fragments = frags,
     cell_groups = cell_groups,
     effective_genome_size = 2.9e9,
@@ -289,7 +289,7 @@ test_that("macs_e2e_works", {
   }
   
   # call macs using the prepared inputs
-  macs_call <- call_macs_peaks(
+  macs_call <- call_peaks_macs(
     fragments = frags,
     cell_groups = cell_groups,
     effective_genome_size = 2.9e9,
@@ -307,7 +307,7 @@ test_that("macs_e2e_works", {
     expect_true(file.exists(file.path(dir, "output", cluster, paste0(cluster, "_summits.bed"))))
   }
   # Read in the outputs
-  macs_read <- call_macs_peaks(
+  macs_read <- call_peaks_macs(
     fragments = frags,
     cell_groups = cell_groups,
     effective_genome_size = 2.9e9,
@@ -320,7 +320,7 @@ test_that("macs_e2e_works", {
   )
   # Check length to see if the same number of clusters are returned
   expect_equal(length(unique(macs_read$group)), length(unique(cell_groups)))
-  macs_read_full_pipeline <- call_macs_peaks(
+  macs_read_full_pipeline <- call_peaks_macs(
     fragments = frags,
     cell_groups = cell_groups,
     effective_genome_size = 2.9e9,
@@ -333,4 +333,43 @@ test_that("macs_e2e_works", {
   )
   # Make sure the outputs are the same
   expect_equal(macs_read, macs_read_full_pipeline)
+})
+
+test_that("macs errors print when running in parallel", {
+  # The dummy macs script only works on a unix setup, and windows currently doesn't support
+  # multi-threading anyhow
+  skip_on_os("windows")
+  dir <- withr::local_tempdir()
+
+  # Make a dummy macs script that will register as valid but won't actually run
+  bad_macs_path <- file.path(dir, "bad_macs.sh")
+  writeLines(c(
+    "#!/bin/bash",
+    "if [[ $1 == '--version' ]]; then",
+    "    echo 'Bad macs demo'",
+    "else",
+    "    exit 1",
+    "fi"
+  ), bad_macs_path)
+  Sys.chmod(bad_macs_path, "0700")
+
+  frags <- tibble::tibble(chr="chr1", start=1:10, end=start+5, cell_id=rep(c("a","b"), 5)) %>% convert_to_fragments() 
+  call_peaks_macs(
+    frags, 
+    path=file.path(dir, "macs-test"), 
+    cell_groups=c(a="a_group", b="b_group"), 
+    step="prep-inputs",
+    macs_executable=bad_macs_path, 
+    threads=2
+  )
+  expect_error({
+    call_peaks_macs(
+      frags,
+      path=file.path(dir, "macs-test"), 
+      cell_groups=c(a="a_group", b="b_group"), 
+      step="run-macs",
+      macs_executable=bad_macs_path, 
+      threads=2
+    )
+  }, "MACS calls encountered .* failures")
 })

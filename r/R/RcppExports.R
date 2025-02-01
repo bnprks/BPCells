@@ -33,6 +33,14 @@ simd_version <- function() {
     .Call(`_BPCells_simd_version`)
 }
 
+available_simd_versions <- function() {
+    .Call(`_BPCells_available_simd_versions`)
+}
+
+set_simd_version <- function(version) {
+    invisible(.Call(`_BPCells_set_simd_version`, version))
+}
+
 simd_version_bp128 <- function() {
     .Call(`_BPCells_simd_version_bp128`)
 }
@@ -449,6 +457,10 @@ write_matrix_anndata_hdf5_cpp <- function(matrix, file, group, type, row_major, 
     invisible(.Call(`_BPCells_write_matrix_anndata_hdf5_cpp`, matrix, file, group, type, row_major, buffer_size, chunk_size, gzip_level))
 }
 
+write_matrix_anndata_hdf5_dense_cpp <- function(matrix, file, dataset, type, row_major, chunk_size, gzip_level) {
+    invisible(.Call(`_BPCells_write_matrix_anndata_hdf5_dense_cpp`, matrix, file, dataset, type, row_major, chunk_size, gzip_level))
+}
+
 read_hdf5_string_cpp <- function(path, group, buffer_size) {
     .Call(`_BPCells_read_hdf5_string_cpp`, path, group, buffer_size)
 }
@@ -747,6 +759,14 @@ matrix_max_per_row_cpp <- function(matrix) {
 
 matrix_max_per_col_cpp <- function(matrix) {
     .Call(`_BPCells_matrix_max_per_col_cpp`, matrix)
+}
+
+pseudobulk_matrix_cpp <- function(mat, cell_groups, method, transpose) {
+    .Call(`_BPCells_pseudobulk_matrix_cpp`, mat, cell_groups, method, transpose)
+}
+
+matrix_quantile_per_col_cpp <- function(mat, quantile, alpha, beta) {
+    .Call(`_BPCells_matrix_quantile_per_col_cpp`, mat, quantile, alpha, beta)
 }
 
 matrix_identical_uint32_t_cpp <- function(mat1, mat2) {

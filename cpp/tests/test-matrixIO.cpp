@@ -20,8 +20,6 @@
 #include <matrixIterators/StoredMatrix.h>
 #include <matrixIterators/StoredMatrixWriter.h>
 
-#include <matrixIterators/ImportMatrixHDF5.h>
-
 #include <Eigen/Core>
 
 using namespace BPCells;

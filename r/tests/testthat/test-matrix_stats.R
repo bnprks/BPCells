@@ -37,9 +37,16 @@ test_that("MatrixStats basic test", {
   i1 <- as(m1, "IterableMatrix")
   i2 <- t(i1)
 
-
+  
+  stats_m1 <- matrix_stats(as.matrix(m1), "variance", "variance")
+  stats_m1_dgc <- matrix_stats(m1, "variance", "variance")
   stats1 <- matrix_stats(i1, "variance", "variance")
   stats2 <- matrix_stats(i2, "variance", "variance")
+
+  expect_error(matrix_stats(list("a"), "variance"), "cannot be converted to an IterableMatrix object")
+
+  expect_identical(stats_m1_dgc, stats_m1)
+  expect_identical(stats_m1_dgc, stats1)
 
   expect_identical(c("nonzero", "mean", "variance"), rownames(stats1$row_stats))
   expect_identical(c("nonzero", "mean", "variance"), rownames(stats1$col_stats))
@@ -190,6 +197,7 @@ test_that("svds registers generic with RSpectra", {
 })
 
 test_that("rowMaxs and colMaxs works comprehensive", {
+  skip_if_not_installed("matrixStats")
   withr::local_seed(195123)
   m1_neg <- matrix(runif(12, min = -10, max = -1), nrow = 3, ncol = 4)
   m2_dense <- generate_dense_matrix(4, 64)
@@ -207,4 +215,42 @@ test_that("rowMaxs and colMaxs works comprehensive", {
       expect_identical(colMaxs(i), matrixStats::colMaxs(as.matrix(i)))
     }
   }
+})
+
+test_that("Matrix col quantiles works", {
+  skip_if_not_installed("matrixStats")
+  m0 <- generate_sparse_matrix(20, 10)
+  m1 <- m0 |> as("IterableMatrix")
+  m0 <- as.matrix(m0)
+  # For single quantiles
+  for (quantile in c(0, 0.25, 0.5, 0.75, 0.99)) {
+    for (type in c(4, 5, 6, 7, 8, 9)) {
+      m_quantile <- m0 %>% matrixStats::colQuantiles(probs = quantile, type = type)
+      m_quantile_bpcells <- colQuantiles(m1, probs = quantile, type = type)
+      expect_equal(m_quantile, m_quantile_bpcells, info = paste("Quantile:", quantile, "Type:", type))
+    }
+  }
+  # for multiple quantiles
+  for (quantiles in list(c(0, 0.25, 0.5, 0.75, 0.99), c(0.25, 0.5, 0.75))) {
+    for (type in c(4, 5, 6, 7, 8, 9)) {
+      m_quantile <- m0 %>% matrixStats::colQuantiles(probs = quantiles, type = type)
+      m_quantile_bpcells <- colQuantiles(m1, probs = quantiles, type = type)
+      expect_equal(m_quantile, m_quantile_bpcells, info = paste("Quantiles:", quantiles, "Type:", type))
+    }
+  }
+})
+
+test_that("Matrix row quantiles works with transposed matrices", {
+  skip_if_not_installed("matrixStats")
+  m0 <- generate_sparse_matrix(20, 10)
+  m1 <- m0 |> as("IterableMatrix") |> t()
+  m0 <- as.matrix(m0) |> t()
+  # For single quantile
+  m_quantile <-  m0 %>% matrixStats::rowQuantiles(probs = 0.75, type = 7)
+  m_quantile_bpcells <- rowQuantiles(m1, probs = 0.75, type = 7)
+  expect_equal(m_quantile, m_quantile_bpcells)
+  # With multiple quantiles
+  m_quantiles <-  m0 %>% matrixStats::rowQuantiles(probs = c(0.25, 0.75), type = 7)
+  m_quantiles_bpcells <- rowQuantiles(m1, probs = c(0.25, 0.75), type = 7)
+  expect_equal(m_quantiles, m_quantiles_bpcells)
 })

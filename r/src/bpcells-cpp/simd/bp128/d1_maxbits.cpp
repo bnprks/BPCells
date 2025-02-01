@@ -1,5 +1,5 @@
 // Copyright 2023 BPCells contributors
-// 
+//
 // Licensed under the Apache License, Version 2.0 <LICENSE-APACHE or
 // https://www.apache.org/licenses/LICENSE-2.0> or the MIT license
 // <LICENSE-MIT or https://opensource.org/licenses/MIT>, at your
@@ -25,19 +25,22 @@ HWY_BEFORE_NAMESPACE();
 
 namespace BPCells::simd::bp128::HWY_NAMESPACE {
 
-uint32_t maxbits_d1(uint32_t initvalue, const uint32_t *HWY_RESTRICT in) {
-    using namespace hwy::HWY_NAMESPACE;
-    using D = Full128<uint32_t>;
-    using Vec = Vec<D>;
-    D d;
+BP128_MAXBITS_DECL(
+    maxbits_d1,
+    // Setup Code
     Vec prevOffset = Set(d, initvalue);
-    return maxbits(in, [d, &prevOffset](auto v) {
-        // Input: [a,b,c,d]; [?,?,?,h]; Output [a-h, b-a, c-b, d-c]
-        const auto res = Sub(v, CombineShiftRightLanes<3>(d, v, prevOffset));
-        prevOffset = v;
-        return res;
-    });
-}
+    ,
+    // Transform Code (InReg is the input data)
+    {
+        const auto tmp = InReg;
+        // Delta encode: InReg=[a,b,c,d]; prevOffset=[?,?,?,h]; Output [a-h, b-a, c-b, d-c]
+        InReg = Sub(InReg, CombineShiftRightLanes<3>(d, InReg, prevOffset));
+        prevOffset = tmp;
+    },
+    // Arguments
+    uint32_t initvalue,
+    const uint32_t *HWY_RESTRICT in
+)
 
 } // namespace BPCells::simd::bp128::HWY_NAMESPACE
 
