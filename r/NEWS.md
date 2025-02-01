@@ -14,6 +14,7 @@ Contributions welcome :)
 ## Improvements
 - Speed up taking large subsets of large concatenated matrices, e.g. selecting 9M cells from a 10M cell matrix composed of ~100 concatenated pieces. (pull request #179)
 - `matrix_stats()` now also works with types `matrix` and `dgCMatrix`. (pull request #190)
+- Fixed memory errors when running `writeInsertionBed()` and `writeInsertionBedGraph()` (pull request #{118, 134})
 
 ## Bug-fixes
 - Fix error message printing when MACS crashes during `call_peaks_macs()` (pull request #175)
@@ -59,7 +60,6 @@ of the new features this release and will continue to help with maintenance and 
   operations. (Thanks to @Yunuuuu for reporting issues #97 and #100)
 - Fixed plotting crashes when running `trackplot_coverage()` with fragments from a single cluster. (Thanks to @sjessa for directly reporting this bug and coming up with a fix)
 - Fixed issues with `trackplot_coverage()` when called with ranges less than 500 bp in length (Thanks to @bettybliu for directly reporting this bug.)
-- Fixed memory errors when running `writeInsertionBed()` and `writeInsertionBedGraph()` (pull request #{118, 134})
 - Fixed discrepancy between default ArchR and BPCells peak calling insertion method, where BPCells defaulted to only using the start of each fragment as opposed to ArchR's method of using both start and end sites of fragments (pull request #143)
 - Fix error in `tile_matrix()` with fragment mode (pull request #141)
 - Fix precision bug in `sctransform_pearson()` on ARM architecture (pull request #141) 
