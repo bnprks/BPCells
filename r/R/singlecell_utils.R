@@ -44,13 +44,11 @@ select_features_variance <- function(
   assert_len(num_feats, 1)
   assert_is(num_feats, "numeric")
   if (rlang::is_missing(mat)) {
-    return(create_partial(
-      missing_args = list(
-        num_feats = missing(num_feats),
-        normalize = missing(normalize), 
-        threads = missing(threads)
-      )
-    ))
+    return(create_partial(missing_args = list(
+      num_feats = missing(num_feats),
+      normalize = missing(normalize), 
+      threads = missing(threads)
+    )))
   }
   assert_is(mat, "IterableMatrix")
   if (num_feats < 1 && num_feats > 0) num_feats <- floor(nrow(mat) * num_feats)
@@ -83,13 +81,11 @@ select_features_dispersion <- function(
   assert_len(num_feats, 1)
   assert_is(num_feats, "numeric")
   if (rlang::is_missing(mat)) {
-    return(create_partial(
-      missing_args = list(
-        num_feats = missing(num_feats),
-        normalize = missing(normalize), 
-        threads = missing(threads)
-      )
-    ))
+    return(create_partial(missing_args = list(
+      num_feats = missing(num_feats),
+      normalize = missing(normalize), 
+      threads = missing(threads)
+    )))
   }
   if (num_feats < 1 && num_feats > 0) num_feats <- floor(nrow(mat) * num_feats)
   if (min(max(num_feats, 0), nrow(mat)) != num_feats) {
@@ -116,13 +112,11 @@ select_features_mean <- function(mat, num_feats = 0.05, normalize = NULL, thread
   assert_greater_than_zero(num_feats)
   assert_is(num_feats, "numeric")
   if (rlang::is_missing(mat)) {
-    return(create_partial(
-      missing_args = list(
-        num_feats = missing(num_feats),
-        normalize = missing(normalize), 
-        threads = missing(threads)
-      )
-    ))
+    return(create_partial(missing_args = list(
+      num_feats = missing(num_feats),
+      normalize = missing(normalize), 
+      threads = missing(threads)
+    )))
   }
   assert_is(mat, "IterableMatrix")
   if (num_feats < 1 && num_feats > 0) num_feats <- floor(nrow(mat) * num_feats)
@@ -155,12 +149,21 @@ select_features_binned_dispersion <- function(
   mat, num_feats = 25000, n_bins = 20,
   threads = 1L, verbose = FALSE
 ) {
-  assert_is(mat, "IterableMatrix")
+  
   assert_greater_than_zero(num_feats)
   assert_len(num_feats, 1)
   assert_is_wholenumber(n_bins)
   assert_len(n_bins, 1)
   assert_greater_than_zero(n_bins)
+  if (rlang::is_missing(mat)) {
+    return(create_partial(missing_args = list(
+      num_feats = missing(num_feats),
+      n_bins = missing(n_bins),
+      threads = missing(threads),
+      verbose = missing(verbose)
+    )))
+  }
+  assert_is(mat, "IterableMatrix")
   if (num_feats < 1 && num_feats > 0) num_feats <- floor(nrow(mat) * num_feats)
   if (min(max(num_feats, 0), nrow(mat)) != num_feats) {
     if (verbose) log_progress(sprintf("Number of features asked for (%s) is greater than the number of features in the matrix (%s).", num_feats, nrow(mat)))
@@ -212,11 +215,10 @@ select_features_binned_dispersion <- function(
 DimReduction <- function(x, fitted_params = list(), ...) {
   assert_is(x, c("IterableMatrix", "dgCMatrix", "matrix"))
   assert_is(fitted_params, "list")
-  structure(
-    list(
-      cell_embeddings = x,
-      fitted_params = fitted_params,
-      ...
+  structure(list(
+    cell_embeddings = x,
+    fitted_params = fitted_params,
+    ...
     ),
     class = "DimReduction"
   )
@@ -276,16 +278,12 @@ LSI <- function(
   threads = 1L, verbose = FALSE
 ) {
   if (rlang::is_missing(mat)) {
-    return(
-      create_partial(
-        missing_args = list(
-          n_dimensions = missing(n_dimensions),
-          corr_cutoff = missing(corr_cutoff), 
-          threads = missing(threads),
-          verbose = missing(verbose)
-        )
-      )
-    )
+    return(create_partial(missing_args = list(
+      n_dimensions = missing(n_dimensions),
+      corr_cutoff = missing(corr_cutoff), 
+      threads = missing(threads),
+      verbose = missing(verbose)
+    )))
   }
   assert_is(mat, "IterableMatrix")
   assert_is_wholenumber(n_dimensions)
@@ -466,7 +464,7 @@ IterativeLSI <- function(
     fitted_params$iter_info$clusters[[i]] <- clustering_res
     # pseudobulk and pass onto next iteration
     if (verbose) log_progress("Pseudobulking matrix")
-    pseudobulk_res <- pseudobulk_matrix(mat, clustering_res, threads = as.integer(threads)) %>% as("dgCMatrix") %>% as("IterableMatrix")
+    pseudobulk_res <- pseudobulk_matrix(mat, clustering_res, threads = as.integer(threads))
     # Only take the SVD information required to project the matrix
     fitted_params$iter_info$lsi_results[[i]]$svd_params <- list(
       u = lsi_res_obj$fitted_params$svd_params$u
