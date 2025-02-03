@@ -203,7 +203,7 @@ gene_score_weights_archr <- function(genes, chromosome_sizes, blacklist = NULL, 
   assert_is_wholenumber(tile_width)
   assert_is(addArchRBug, "logical")
 
-  tiles <- gene_score_tiles_archr(genes, chromosome_sizes = chromosome_sizes, addArchRBug = addArchRBug)
+  tiles <- gene_score_tiles_archr(genes, chromosome_sizes = chromosome_sizes, tile_width = tile_width, addArchRBug = addArchRBug)
   # Correct distance to match the GenomicRanges convention
   tiles$distance <- tiles$distance - sign(tiles$distance)
   # Filter out blacklist if requested
@@ -231,6 +231,7 @@ gene_score_weights_archr <- function(genes, chromosome_sizes, blacklist = NULL, 
   gene_widths <- genes$end - genes$start + 5000
   gene_scale_factor <- 5
   gene_weights <- 1 + (1 / gene_widths) * (gene_scale_factor - 1) / (max(1 / gene_widths) - min(1 / gene_widths))
+  if (min(gene_widths) == max(gene_widths)) gene_weights <- 1L
   res <- res * gene_weights
   return(res)
 }
@@ -250,6 +251,8 @@ gene_score_archr <- function(fragments, genes, chromosome_sizes, blacklist=NULL,
   assert_is(fragments, "IterableFragments")
   if (!is.null(tile_max_count)) assert_is_wholenumber(tile_max_count)
   if (!is.null(scale_factor)) assert_is_numeric(scale_factor)
+  chromosome_sizes <- normalize_ranges(chromosome_sizes)
+  chromosome_sizes <- chromosome_sizes[order_ranges(chromosome_sizes, chrNames(fragments)),]
   gene_weights <- gene_score_weights_archr(genes=genes, chromosome_sizes=chromosome_sizes, blacklist=blacklist, tile_width=tile_width, gene_name_column=gene_name_column, addArchRBug=addArchRBug)
   
   tile_coords <- normalize_ranges(chromosome_sizes) %>%
