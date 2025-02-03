@@ -67,6 +67,8 @@
 <div class="section level3">
 <h3 id="bug-fixes-0-3-1">Bug-fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-0-3-1"></a></h3>
 <ul><li>Fix error message printing when MACS crashes during <code><a href="../reference/call_peaks_macs.html">call_peaks_macs()</a></code> (pull request <a href="https://github.com/bnprks/BPCells/issues/175" class="external-link">#175</a>)</li>
+<li>Fix <code><a href="../reference/gene_scores.html">gene_score_archr()</a></code> and <code><a href="../reference/gene_scores.html">gene_score_weights_archr()</a></code> malfunctioning for non-default <code>tile_width</code> settings. (Thanks to <a href="https://github.com/Baboon61" class="external-link">@Baboon61</a> for reporting issue <a href="https://github.com/bnprks/BPCells/issues/185" class="external-link">#185</a>)</li>
+<li>Fix <code><a href="../reference/gene_scores.html">gene_score_archr()</a></code> when <code>chromosome_sizes</code> argument is not sorted. (Thanks to <a href="https://github.com/Baboon61" class="external-link">@Baboon61</a> for reporting issue <a href="https://github.com/bnprks/BPCells/issues/188" class="external-link">#188</a>)</li>
 <li>Fix matrix transpose error when BPCells is loaded via <code><a href="https://devtools.r-lib.org/reference/load_all.html" class="external-link">devtools::load_all()</a></code> and <code>BiocGenerics</code> has been imported previously. (pull request <a href="https://github.com/bnprks/BPCells/issues/191" class="external-link">#191</a>)</li>
 </ul></div>
 </div>
