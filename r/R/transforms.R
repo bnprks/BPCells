@@ -952,8 +952,9 @@ normalize_log <- function(mat, scale_factor = 1e4, threads = 1L) {
     return(create_partial(missing_args = list(
       scale_factor = missing(scale_factor), 
       threads = missing(threads)
-    ))) 
+    )))
   }
+  if (!is(mat, "IterableMatrix") && canCoerce(mat, "IterableMatrix")) mat <- as(mat, "IterableMatrix")
   assert_is(mat, "IterableMatrix")
   read_depth <- matrix_stats(mat, col_stats = c("mean"), threads = threads)$col_stats["mean", ] * nrow(mat)
   mat <- mat %>% multiply_cols(1 / read_depth)
@@ -979,6 +980,7 @@ normalize_tfidf <- function(
       threads = missing(threads)
     )))
   }
+  if (!is(mat, "IterableMatrix") && canCoerce(mat, "IterableMatrix")) mat <- as(mat, "IterableMatrix")
   assert_is(mat, "IterableMatrix")
   # If feature means are passed in, only need to calculate term frequency
   if (is.null(feature_means)) {

@@ -50,6 +50,7 @@ select_features_variance <- function(
       threads = missing(threads)
     )))
   }
+  if (!is(mat, "IterableMatrix") && canCoerce(mat, "IterableMatrix")) mat <- as(mat, "IterableMatrix")
   assert_is(mat, "IterableMatrix")
   if (num_feats < 1 && num_feats > 0) num_feats <- floor(nrow(mat) * num_feats)
   if (min(max(num_feats, 0), nrow(mat)) != num_feats) {
@@ -92,6 +93,7 @@ select_features_dispersion <- function(
     if (verbose) log_progress(sprintf("Number of features asked for (%s) is greater than the number of features in the matrix (%s).", num_feats, nrow(mat)))
     num_feats <- min(max(num_feats, 0), nrow(mat))
   }
+  if (!is(mat, "IterableMatrix") && canCoerce(mat, "IterableMatrix")) mat <- as(mat, "IterableMatrix")
   assert_is(mat, "IterableMatrix")
   if (!is.null(normalize)) mat <- partial_apply(normalize, threads = threads)(mat)
   mat_stats <- matrix_stats(mat, row_stats = "variance", threads = threads)
@@ -118,6 +120,7 @@ select_features_mean <- function(mat, num_feats = 0.05, normalize = NULL, thread
       threads = missing(threads)
     )))
   }
+  if (!is(mat, "IterableMatrix") && canCoerce(mat, "IterableMatrix")) mat <- as(mat, "IterableMatrix")
   assert_is(mat, "IterableMatrix")
   if (num_feats < 1 && num_feats > 0) num_feats <- floor(nrow(mat) * num_feats)
   if (min(max(num_feats, 0), nrow(mat)) != num_feats) {
@@ -163,6 +166,7 @@ select_features_binned_dispersion <- function(
       verbose = missing(verbose)
     )))
   }
+  if (!is(mat, "IterableMatrix") && canCoerce(mat, "IterableMatrix")) mat <- as(mat, "IterableMatrix")
   assert_is(mat, "IterableMatrix")
   if (num_feats < 1 && num_feats > 0) num_feats <- floor(nrow(mat) * num_feats)
   if (min(max(num_feats, 0), nrow(mat)) != num_feats) {
