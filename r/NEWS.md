@@ -62,6 +62,7 @@ of the new features this release and will continue to help with maintenance and 
   operations. (Thanks to @Yunuuuu for reporting issues #97 and #100)
 - Fixed plotting crashes when running `trackplot_coverage()` with fragments from a single cluster. (Thanks to @sjessa for directly reporting this bug and coming up with a fix)
 - Fixed issues with `trackplot_coverage()` when called with ranges less than 500 bp in length (Thanks to @bettybliu for directly reporting this bug.)
+- Fix Rcpp warning created when handling compressed matrices with only one non-zero entry (pull request #123)
 - Fixed discrepancy between default ArchR and BPCells peak calling insertion method, where BPCells defaulted to only using the start of each fragment as opposed to ArchR's method of using both start and end sites of fragments (pull request #143)
 - Fix error in `tile_matrix()` with fragment mode (pull request #141)
 - Fix precision bug in `sctransform_pearson()` on ARM architecture (pull request #141) 
