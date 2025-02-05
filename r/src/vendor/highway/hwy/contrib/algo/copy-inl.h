@@ -14,12 +14,16 @@
 // limitations under the License.
 
 // Per-target include guard
-#if defined(HIGHWAY_HWY_CONTRIB_ALGO_COPY_INL_H_) == defined(HWY_TARGET_TOGGLE)
+#if defined(HIGHWAY_HWY_CONTRIB_ALGO_COPY_INL_H_) == \
+    defined(HWY_TARGET_TOGGLE)  // NOLINT
 #ifdef HIGHWAY_HWY_CONTRIB_ALGO_COPY_INL_H_
 #undef HIGHWAY_HWY_CONTRIB_ALGO_COPY_INL_H_
 #else
 #define HIGHWAY_HWY_CONTRIB_ALGO_COPY_INL_H_
 #endif
+
+#include <stddef.h>
+#include <stdint.h>
 
 #include "hwy/highway.h"
 
@@ -40,8 +44,10 @@ void Fill(D d, T value, size_t count, T* HWY_RESTRICT to) {
   const Vec<D> v = Set(d, value);
 
   size_t idx = 0;
-  for (; idx + N <= count; idx += N) {
-    StoreU(v, d, to + idx);
+  if (count >= N) {
+    for (; idx <= count - N; idx += N) {
+      StoreU(v, d, to + idx);
+    }
   }
 
   // `count` was a multiple of the vector length `N`: already done.
@@ -58,9 +64,11 @@ void Copy(D d, const T* HWY_RESTRICT from, size_t count, T* HWY_RESTRICT to) {
   const size_t N = Lanes(d);
 
   size_t idx = 0;
-  for (; idx + N <= count; idx += N) {
-    const Vec<D> v = LoadU(d, from + idx);
-    StoreU(v, d, to + idx);
+  if (count >= N) {
+    for (; idx <= count - N; idx += N) {
+      const Vec<D> v = LoadU(d, from + idx);
+      StoreU(v, d, to + idx);
+    }
   }
 
   // `count` was a multiple of the vector length `N`: already done.
@@ -89,9 +97,11 @@ T* CopyIf(D d, const T* HWY_RESTRICT from, size_t count, T* HWY_RESTRICT to,
   const size_t N = Lanes(d);
 
   size_t idx = 0;
-  for (; idx + N <= count; idx += N) {
-    const Vec<D> v = LoadU(d, from + idx);
-    to += CompressBlendedStore(v, func(d, v), d, to);
+  if (count >= N) {
+    for (; idx <= count - N; idx += N) {
+      const Vec<D> v = LoadU(d, from + idx);
+      to += CompressBlendedStore(v, func(d, v), d, to);
+    }
   }
 
   // `count` was a multiple of the vector length `N`: already done.

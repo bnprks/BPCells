@@ -17,8 +17,10 @@
 
 #include <stdlib.h>
 
-#include <chrono>  //NOLINT
+#include <chrono>  // NOLINT
+#include <ratio>   // NOLINT
 
+#include "hwy/base.h"
 #include "hwy/robust_statistics.h"
 #include "hwy/timer-inl.h"
 
@@ -33,7 +35,7 @@ namespace platform {
 namespace {
 
 // Measures the actual current frequency of Ticks. We cannot rely on the nominal
-// frequency encoded in x86 BrandString because it is misleading on M1 Rosetta,
+// frequency encoded in x86 GetCpuString because it is misleading on M1 Rosetta,
 // and not reported by AMD. CPUID 0x15 is also not yet widely supported. Also
 // used on RISC-V and aarch64.
 HWY_MAYBE_UNUSED double MeasureNominalClockRate() {
@@ -59,7 +61,7 @@ HWY_MAYBE_UNUSED double MeasureNominalClockRate() {
     const double dticks = static_cast<double>(ticks1 - ticks0);
     std::chrono::duration<double, std::ratio<1>> dtime = time1 - time0;
     const double ticks_per_sec = dticks / dtime.count();
-    max_ticks_per_sec = std::max(max_ticks_per_sec, ticks_per_sec);
+    max_ticks_per_sec = HWY_MAX(max_ticks_per_sec, ticks_per_sec);
   }
   return max_ticks_per_sec;
 }
@@ -93,26 +95,32 @@ bool HasRDTSCP() {
   return (abcd[3] & (1u << 27)) != 0;  // RDTSCP
 }
 
-void GetBrandString(char* cpu100) {
+#endif  // HWY_ARCH_X86
+}  // namespace
+
+HWY_DLLEXPORT bool GetCpuString(char* cpu100) {
+#if HWY_ARCH_X86
   uint32_t abcd[4];
 
   // Check if brand string is supported (it is on all reasonable Intel/AMD)
   Cpuid(0x80000000U, 0, abcd);
   if (abcd[0] < 0x80000004U) {
-    cpu100[0] = 0;
-    return;
+    cpu100[0] = '\0';
+    return false;
   }
 
   for (size_t i = 0; i < 3; ++i) {
     Cpuid(static_cast<uint32_t>(0x80000002U + i), 0, abcd);
     CopyBytes<sizeof(abcd)>(&abcd[0], cpu100 + i * 16);  // not same size
   }
-  cpu100[48] = 0;
+  cpu100[48] = '\0';
+  return true;
+#else
+  cpu100[0] = '?';
+  cpu100[1] = '\0';
+  return false;
+#endif
 }
-
-#endif  // HWY_ARCH_X86
-
-}  // namespace
 
 HWY_DLLEXPORT double Now() {
   static const double mul = 1.0 / InvariantTicksPerSecond();
@@ -122,18 +130,18 @@ HWY_DLLEXPORT double Now() {
 HWY_DLLEXPORT bool HaveTimerStop(char* cpu100) {
 #if HWY_ARCH_X86
   if (!HasRDTSCP()) {
-    GetBrandString(cpu100);
+    (void)GetCpuString(cpu100);
     return false;
   }
 #endif
-  (void)cpu100;
+  *cpu100 = '\0';
   return true;
 }
 
 HWY_DLLEXPORT double InvariantTicksPerSecond() {
 #if HWY_ARCH_PPC && defined(__GLIBC__) && defined(__powerpc64__)
   return static_cast<double>(__ppc_get_timebase_freq());
-#elif HWY_ARCH_X86 || HWY_ARCH_RVV || (HWY_ARCH_ARM_A64 && !HWY_COMPILER_MSVC)
+#elif HWY_ARCH_X86 || HWY_ARCH_RISCV || (HWY_ARCH_ARM_A64 && !HWY_COMPILER_MSVC)
   // We assume the x86 TSC is invariant; it is on all recent Intel/AMD CPUs.
   static const double freq = MeasureNominalClockRate();
   return freq;
