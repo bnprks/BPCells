@@ -35,13 +35,17 @@ transform to a normalized value \eqn{\tilde{x}_{ij}} calculated as:
 Apply standard normalizations to a \verb{(features x cells)} counts matrix.
 }
 \details{
+\strong{Passing to \code{normalize} parameters with non-default arguments}
+
 If the \code{mat} argument is missing, returns a "partial" function: a copy of the original function but with most arguments pre-defined.
-This can be used to customize \code{normalize} parameters in other single cell functions in BPCells (e.g. \code{select_features_mean()})
+This can be used to customize \code{normalize} parameters in other single cell functions in BPCells (e.g. \code{select_features_mean()}).
+
+\strong{Related functions from other packages}
 \itemize{
-\item \code{normalize_log}: Corresponds to \code{Seurat::NormalizeLog}
+\item \code{normalize_log}: Corresponds to \code{Seurat::NormalizeData()} with its default "LogNormalize" method.
 }
 
 \itemize{
-\item \code{normalize_tfidf}: This follows the formula from Stuart, Butler et al. 2019, used by default in \code{ArchR::addIterativeLSI()} and \code{Signac::RunTFIDF()}
+\item \code{normalize_tfidf}: This follows the formula from Stuart, Butler et al. 2019, matching the default behavior of \code{Signac::RunTFIDF()}. This also matches the normalization used within \code{ArchR::addIterativeLSI()}, but with \code{binarize = FALSE}.
 }
 }

@@ -33,6 +33,26 @@
 #' For each element \eqn{x_{ij}} in matrix \eqn{X} with \eqn{i} features and \eqn{j} cells, determine the score of
 #' each feature \eqn{x_i} as follows:
 #' - `select_features_by_variance`: \eqn{\mathrm{Score}(x_i) = \frac{1}{n - 1} \sum_{j=1}^{n} \bigl(x_{ij} - \bar{x}_i\bigr)^2}
+#' @examples
+#' set.seed(12345)
+#' mat <- matrix(rpois(4*5, lambda=1), nrow=4, ncol=5)
+#' rownames(mat) <- paste0("gene", seq_len(nrow(mat)))
+#' mat
+#'
+#' select_features_variance(
+#'     mat, 
+#'     num_feats=2, 
+#'     normalize=normalize_log
+#' )
+#' 
+#' # Because of how the BPCells normalize functions behave when the matrix 
+#' # argument is missing, we can also customize the normalization parameters:
+#' select_features_variance(
+#'     mat,
+#'     num_feats=2,
+#'     normalize=normalize_log(scale_factor=20)
+#' ) 
+#'
 #' @export
 select_features_variance <- function(
   mat, num_feats = 0.05, 
@@ -143,10 +163,13 @@ select_features_mean <- function(mat, num_feats = 0.05, normalize = NULL, thread
 #' @returns
 #'  - `select_features_binned_dispersion`: Process described in `details`.
 #' @details 
-#' `select_features_binned_dispersion` calculates the bin normalized dispersion of each feature using the following process, given by the Seurat package (Satjia et al. 2015):
-#'  1. Calculate the dispersion of each feature (variance / mean)
-#'  2. Log normalize dispersion and mean
-#'  3. Bin the features by their means, and normalize dispersion within each bin
+#' `select_features_binned_dispersion` implements the approach from Satija et al. 2015:
+#'  1. Bin features into equal-width bins by `log1p(mean)`
+#'  2. Calculate dispersion of each feature as `log(variance / mean)`
+#'  3. Z-score normalize dispersion within each bin, and select highest normalized dispersion across all bins
+#' 
+#' This should be equivalent to `Seurat::FindVariableFeatures()` with `selection.method="mean.var.plot"`
+#'  and `scanpy.pp.highly_variable_genes()` with `flavor="seurat"`.
 #' @export
 select_features_binned_dispersion <- function(
   mat, num_feats = 25000, n_bins = 20,

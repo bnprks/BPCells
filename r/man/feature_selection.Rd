@@ -86,10 +86,34 @@ each feature \eqn{x_i} as follows:
 Apply a feature selection method to a \verb{(features x cells)} matrix.
 }
 \details{
-\code{select_features_binned_dispersion} calculates the bin normalized dispersion of each feature using the following process, given by the Seurat package (Satjia et al. 2015):
+\code{select_features_binned_dispersion} implements the approach from Satija et al. 2015:
 \enumerate{
-\item Calculate the dispersion of each feature (variance / mean)
-\item Log normalize dispersion and mean
-\item Bin the features by their means, and normalize dispersion within each bin
+\item Bin features into equal-width bins by \code{log1p(mean)}
+\item Calculate dispersion of each feature as \code{log(variance / mean)}
+\item Z-score normalize dispersion within each bin, and select highest normalized dispersion across all bins
 }
+
+This should be equivalent to \code{Seurat::FindVariableFeatures()} with \code{selection.method="mean.var.plot"}
+and \code{scanpy.pp.highly_variable_genes()} with \code{flavor="seurat"}.
+}
+\examples{
+set.seed(12345)
+mat <- matrix(rpois(4*5, lambda=1), nrow=4, ncol=5)
+rownames(mat) <- paste0("gene", seq_len(nrow(mat)))
+mat
+
+select_features_variance(
+    mat, 
+    num_feats=2, 
+    normalize=normalize_log
+)
+
+# Because of how the BPCells normalize functions behave when the matrix 
+# argument is missing, we can also customize the normalization parameters:
+select_features_variance(
+    mat,
+    num_feats=2,
+    normalize=normalize_log(scale_factor=20)
+) 
+
 }

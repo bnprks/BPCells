@@ -941,9 +941,13 @@ regress_out <- function(mat, latent_data, prediction_axis = c("row", "col")) {
 #'  
 #'   - `normalize_log`: \eqn{\tilde{x}_{ij} = \log(\frac{x_{ij} \cdot \text{scaleFactor}}{\text{colSum}_j} + 1)}
 #' @details 
+#' **Passing to `normalize` parameters with non-default arguments**
+#' 
 #' If the `mat` argument is missing, returns a "partial" function: a copy of the original function but with most arguments pre-defined. 
-#' This can be used to customize `normalize` parameters in other single cell functions in BPCells (e.g. `select_features_mean()`)
-#' - `normalize_log`: Corresponds to `Seurat::NormalizeLog`
+#' This can be used to customize `normalize` parameters in other single cell functions in BPCells (e.g. `select_features_mean()`).
+#' 
+#' **Related functions from other packages**
+#' - `normalize_log`: Corresponds to `Seurat::NormalizeData()` with its default "LogNormalize" method.
 #' @export
 normalize_log <- function(mat, scale_factor = 1e4, threads = 1L) {
   assert_is_numeric(scale_factor)
@@ -967,7 +971,7 @@ normalize_log <- function(mat, scale_factor = 1e4, threads = 1L) {
 #' each numeric value is assumed to correspond to the feature mean for the corresponding row of the matrix.
 #' Else, map each feature name to its mean value.
 #' @returns - `normalize_tfidf`: \eqn{\tilde{x}_{ij} = \log(\frac{x_{ij} \cdot \text{scaleFactor}}{\text{rowMean}_i\cdot \text{colSum}_j} + 1)}
-#' @details - `normalize_tfidf`: This follows the formula from Stuart, Butler et al. 2019, used by default in `ArchR::addIterativeLSI()` and `Signac::RunTFIDF()`
+#' @details - `normalize_tfidf`: This follows the formula from Stuart, Butler et al. 2019, matching the default behavior of `Signac::RunTFIDF()`. This also matches the normalization used within `ArchR::addIterativeLSI()`, but with `binarize = FALSE`. 
 #' @export
 normalize_tfidf <- function(
   mat, feature_means = NULL,
