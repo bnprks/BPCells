@@ -950,14 +950,9 @@ regress_out <- function(mat, latent_data, prediction_axis = c("row", "col")) {
 #' - `normalize_log`: Corresponds to `Seurat::NormalizeData()` with its default "LogNormalize" method.
 #' @export
 normalize_log <- function(mat, scale_factor = 1e4, threads = 1L) {
-  assert_is_numeric(scale_factor)
   assert_greater_than_zero(scale_factor)
-  if (rlang::is_missing(mat)) {
-    return(create_partial(missing_args = list(
-      scale_factor = missing(scale_factor), 
-      threads = missing(threads)
-    )))
-  }
+  assert_is_wholenumber(threads)
+  if (rlang::is_missing(mat)) return(create_partial())
   if (!is(mat, "IterableMatrix") && canCoerce(mat, "IterableMatrix")) mat <- as(mat, "IterableMatrix")
   assert_is(mat, "IterableMatrix")
   read_depth <- matrix_stats(mat, col_stats = c("mean"), threads = threads)$col_stats["mean", ] * nrow(mat)
@@ -977,13 +972,9 @@ normalize_tfidf <- function(
   mat, feature_means = NULL,
   scale_factor = 1e4, threads = 1L
 ) {
+  assert_greater_than_zero(scale_factor)
   assert_is_wholenumber(threads)
-  if (rlang::is_missing(mat)) {
-    return(create_partial(missing_args = list(
-      feature_means = missing(feature_means),
-      threads = missing(threads)
-    )))
-  }
+  if (rlang::is_missing(mat)) return(create_partial())
   if (!is(mat, "IterableMatrix") && canCoerce(mat, "IterableMatrix")) mat <- as(mat, "IterableMatrix")
   assert_is(mat, "IterableMatrix")
   # If feature means are passed in, only need to calculate term frequency

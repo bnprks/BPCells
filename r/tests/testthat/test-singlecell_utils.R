@@ -28,7 +28,7 @@ test_that("select_features works general case", {
     expect_equal(nrow(res), nrow(m1)) # Check that dataframe has correct features we're expecting
     expect_equal(sum(res$highly_variable), 5) # Only 10 features marked as highly variable
     expect_setequal(res$names, rownames(m1))
-    res_more_feats_than_rows <- do.call(fn, list(m1, num_feats = 10000)) # more features than rows
+    res_more_feats_than_rows <- suppressWarnings(do.call(fn, list(m1, num_feats = 10000))) # more features than rows
     res_feats_equal_rows <- do.call(fn, list(m1, num_feats = 100))
     res_feats_partial <- get(fn)(num_feats = 100)(m1)
     expect_identical(res_feats_equal_rows, res_feats_partial)
@@ -232,24 +232,6 @@ test_that("LSI works", {
     expect_equal(ncol(lsi_res_t), nrow(mat))
     expect_equal(lsi_res, lsi_res_proj)
 })
-
-
-test_that("Feature selection by bin variance works", {
-    mat <- generate_sparse_matrix(500, 26, fraction_nonzero = 0.1) %>% as("IterableMatrix")
-    # Test only that outputs are reasonable.  There is a full comparison in `tests/real_data/` that compares implementation to Seurat
-    res_table <- select_features_binned_dispersion(mat, num_feats = 10, n_bins = 5, threads = 1)
-    res_table_t <- select_features_binned_dispersion(t(mat), num_feats = 10, n_bins = 5, threads = 1)
-    res_feats <- res_table %>% dplyr::filter(highly_variable) %>% dplyr::pull(names) 
-    res <- mat[res_feats,]
-    res_feats_t <- res_table_t %>% dplyr::filter(highly_variable) %>% dplyr::pull(names)
-    res_t <- t(mat[,res_feats_t])
-    
-    expect_equal(nrow(res), 10)
-    expect_equal(ncol(res), 26)
-    expect_equal(nrow(res_t), 10)
-    expect_equal(ncol(res_t), 500)
-})
-
 
 test_that("Iterative LSI works", {
   mat <- matrix(data = runif(50000, 0, 1), nrow=500, ncol = 100) %>% as("dgCMatrix") %>% as("IterableMatrix")

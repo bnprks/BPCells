@@ -32,7 +32,7 @@
 #' Each different feature selection method will have a different scoring method.
 #' For each element \eqn{x_{ij}} in matrix \eqn{X} with \eqn{i} features and \eqn{j} cells, determine the score of
 #' each feature \eqn{x_i} as follows:
-#' - `select_features_by_variance`: \eqn{\mathrm{Score}(x_i) = \frac{1}{n - 1} \sum_{j=1}^{n} \bigl(x_{ij} - \bar{x}_i\bigr)^2}
+#' - `select_features_variance`: \eqn{\mathrm{Score}(x_i) = \frac{1}{n - 1} \sum_{j=1}^{n} \bigl(x_{ij} - \bar{x}_i\bigr)^2}
 #' @examples
 #' set.seed(12345)
 #' mat <- matrix(rpois(4*5, lambda=1), nrow=4, ncol=5)
@@ -63,22 +63,15 @@ select_features_variance <- function(
   assert_greater_than_zero(num_feats)
   assert_len(num_feats, 1)
   assert_is(num_feats, "numeric")
-  if (rlang::is_missing(mat)) {
-    return(create_partial(missing_args = list(
-      num_feats = missing(num_feats),
-      normalize = missing(normalize), 
-      threads = missing(threads)
-    )))
-  }
+  if (rlang::is_missing(mat)) return(create_partial())
   if (!is(mat, "IterableMatrix") && canCoerce(mat, "IterableMatrix")) mat <- as(mat, "IterableMatrix")
   assert_is(mat, "IterableMatrix")
   if (num_feats < 1 && num_feats > 0) num_feats <- floor(nrow(mat) * num_feats)
   if (min(max(num_feats, 0), nrow(mat)) != num_feats) {
-    if (verbose) log_progress(sprintf("Number of features asked for (%s) is greater than the number of features in the matrix (%s).", num_feats, nrow(mat)))
-    num_feats <- min(max(num_feats, 0), nrow(mat))
+    rlang::warn(add_timestamp(sprintf("Number of features asked for (%s) is greater than the number of features in the matrix (%s).", num_feats, nrow(mat))))
   }
   num_feats <- min(max(num_feats, 0), nrow(mat))
-  if (!is.null(normalize)) mat <- partial_apply(normalize, threads = threads)(mat)
+  if (!is.null(normalize)) mat <- partial_apply(normalize, threads = threads, verbose = verbose)(mat)
   features_df <- tibble::tibble(
     names = rownames(mat),
     score = matrix_stats(mat, row_stats = "variance", threads = threads)$row_stats["variance",]
@@ -90,7 +83,7 @@ select_features_variance <- function(
 
 #' @rdname feature_selection
 #' @returns
-#'  - `select_features_by_dispersion`: \eqn{\mathrm{Score}(x_i) = \frac{\frac{1}{n - 1} \sum_{j=1}^{n} \bigl(x_{ij} - \bar{x}_i\bigr)^2}{\bar{x}_i}}
+#'  - `select_features_dispersion`: \eqn{\mathrm{Score}(x_i) = \frac{\frac{1}{n - 1} \sum_{j=1}^{n} \bigl(x_{ij} - \bar{x}_i\bigr)^2}{\bar{x}_i}}
 #' @export
 select_features_dispersion <- function(
   mat, num_feats = 0.05, 
@@ -101,21 +94,15 @@ select_features_dispersion <- function(
   assert_greater_than_zero(num_feats)
   assert_len(num_feats, 1)
   assert_is(num_feats, "numeric")
-  if (rlang::is_missing(mat)) {
-    return(create_partial(missing_args = list(
-      num_feats = missing(num_feats),
-      normalize = missing(normalize), 
-      threads = missing(threads)
-    )))
-  }
+  if (rlang::is_missing(mat)) return(create_partial())
   if (num_feats < 1 && num_feats > 0) num_feats <- floor(nrow(mat) * num_feats)
   if (min(max(num_feats, 0), nrow(mat)) != num_feats) {
-    if (verbose) log_progress(sprintf("Number of features asked for (%s) is greater than the number of features in the matrix (%s).", num_feats, nrow(mat)))
-    num_feats <- min(max(num_feats, 0), nrow(mat))
+    rlang::warn(add_timestamp(sprintf("Number of features asked for (%s) is greater than the number of features in the matrix (%s).", num_feats, nrow(mat))))
   }
+  num_feats <- min(max(num_feats, 0), nrow(mat))
   if (!is(mat, "IterableMatrix") && canCoerce(mat, "IterableMatrix")) mat <- as(mat, "IterableMatrix")
   assert_is(mat, "IterableMatrix")
-  if (!is.null(normalize)) mat <- partial_apply(normalize, threads = threads)(mat)
+  if (!is.null(normalize)) mat <- partial_apply(normalize, threads = threads, verbose = verbose)(mat)
   mat_stats <- matrix_stats(mat, row_stats = "variance", threads = threads)
   features_df <- tibble::tibble(
     names = rownames(mat),
@@ -128,26 +115,20 @@ select_features_dispersion <- function(
 
 #' @rdname feature_selection
 #' @returns
-#' - `select_features_by_mean`: \eqn{\mathrm{Score}(x_i) = \bar{x}_i}
+#' - `select_features_mean`: \eqn{\mathrm{Score}(x_i) = \bar{x}_i}
 #' @export
 select_features_mean <- function(mat, num_feats = 0.05, normalize = NULL, threads = 1L, verbose = FALSE) {
   assert_greater_than_zero(num_feats)
   assert_is(num_feats, "numeric")
-  if (rlang::is_missing(mat)) {
-    return(create_partial(missing_args = list(
-      num_feats = missing(num_feats),
-      normalize = missing(normalize), 
-      threads = missing(threads)
-    )))
-  }
+  if (rlang::is_missing(mat)) return(create_partial())
   if (!is(mat, "IterableMatrix") && canCoerce(mat, "IterableMatrix")) mat <- as(mat, "IterableMatrix")
   assert_is(mat, "IterableMatrix")
   if (num_feats < 1 && num_feats > 0) num_feats <- floor(nrow(mat) * num_feats)
   if (min(max(num_feats, 0), nrow(mat)) != num_feats) {
-    if (verbose) log_progress(sprintf("Number of features asked for (%s) is greater than the number of features in the matrix (%s).", num_feats, nrow(mat)))
-    num_feats <- min(max(num_feats, 0), nrow(mat))
+    rlang::warn(add_timestamp(sprintf("Number of features asked for (%s) is greater than the number of features in the matrix (%s).", num_feats, nrow(mat))))
   }
-  if (!is.null(normalize)) mat <- partial_apply(normalize, threads = threads)(mat)
+  num_feats <- min(max(num_feats, 0), nrow(mat))
+  if (!is.null(normalize)) mat <- partial_apply(normalize, threads = threads, verbose = verbose)(mat)
   # get the sum of each feature, binarized
   features_df <- tibble::tibble(
     names = rownames(mat),
@@ -172,30 +153,22 @@ select_features_mean <- function(mat, num_feats = 0.05, normalize = NULL, thread
 #'  and `scanpy.pp.highly_variable_genes()` with `flavor="seurat"`.
 #' @export
 select_features_binned_dispersion <- function(
-  mat, num_feats = 25000, n_bins = 20,
+  mat, num_feats = 0.05, n_bins = 20,
   threads = 1L, verbose = FALSE
 ) {
-  
   assert_greater_than_zero(num_feats)
   assert_len(num_feats, 1)
   assert_is_wholenumber(n_bins)
   assert_len(n_bins, 1)
   assert_greater_than_zero(n_bins)
-  if (rlang::is_missing(mat)) {
-    return(create_partial(missing_args = list(
-      num_feats = missing(num_feats),
-      n_bins = missing(n_bins),
-      threads = missing(threads),
-      verbose = missing(verbose)
-    )))
-  }
+  if (rlang::is_missing(mat)) return(create_partial())
   if (!is(mat, "IterableMatrix") && canCoerce(mat, "IterableMatrix")) mat <- as(mat, "IterableMatrix")
   assert_is(mat, "IterableMatrix")
   if (num_feats < 1 && num_feats > 0) num_feats <- floor(nrow(mat) * num_feats)
   if (min(max(num_feats, 0), nrow(mat)) != num_feats) {
-    if (verbose) log_progress(sprintf("Number of features asked for (%s) is greater than the number of features in the matrix (%s).", num_feats, nrow(mat)))
-    num_feats <- min(max(num_feats, 0), nrow(mat))
+    rlang::warn(add_timestamp(sprintf("Number of features asked for (%s) is greater than the number of features in the matrix (%s).", num_feats, nrow(mat))))
   }
+  num_feats <- min(max(num_feats, 0), nrow(mat))
   # Calculate row information for dispersion
   mat_stats <- matrix_stats(mat, row_stats = c("variance"), threads = threads)
   feature_means <- mat_stats$row_stats["mean", ]
@@ -208,18 +181,18 @@ select_features_binned_dispersion <- function(
   feature_means <- log1p(feature_means)
   features_df <- tibble::tibble(
     names = names(feature_means),
-    var = feature_vars, 
+    var = feature_vars,
     mean = feature_means,
     dispersion = feature_dispersion
   )
   # Bin by mean, and normalize dispersion with each bin
-  features_df <- features_df %>% 
+  features_df <- features_df %>%
     dplyr::mutate(bin = cut(mean, n_bins, labels=FALSE)) %>% 
-    dplyr::group_by(bin) %>% 
-    dplyr::mutate( 
+    dplyr::group_by(bin) %>%
+    dplyr::mutate(
       score = (dispersion - mean(dispersion)) / sd(dispersion),
       score = if (dplyr::n() == 1) {1} else {score} # Set feats that are in bins with only one feat to have a norm dispersion of 1  
-    ) %>% 
+    ) %>%
     dplyr::ungroup() %>%
     dplyr::mutate(highly_variable = dplyr::row_number(dplyr::desc(score)) <= num_feats) %>% 
     dplyr::select(c("names", "score", "highly_variable"))
@@ -305,12 +278,7 @@ LSI <- function(
   threads = 1L, verbose = FALSE
 ) {
   if (rlang::is_missing(mat)) {
-    return(create_partial(missing_args = list(
-      n_dimensions = missing(n_dimensions),
-      corr_cutoff = missing(corr_cutoff), 
-      threads = missing(threads),
-      verbose = missing(verbose)
-    )))
+    return(create_partial())
   }
   assert_is(mat, "IterableMatrix")
   assert_is_wholenumber(n_dimensions)
@@ -325,8 +293,7 @@ LSI <- function(
   if (verbose) log_progress("Normalizing matrix")
   mat_stats <- matrix_stats(mat, row_stats = c("mean"), col_stats = c("mean"), threads = threads)
   read_depth <- mat_stats$col_stats["mean", ] * nrow(mat)
-  mat <- partial_apply(
-    normalize_tfidf,
+  mat <- normalize_tfidf(
     feature_means = mat_stats$row_stats["mean", ],
     scale_factor = scale_factor,
     threads = threads
@@ -398,8 +365,8 @@ project.LSI <- function(x, mat, threads = 1L, ...) {
 #' Given a `(features x cells)` matrix, Compute an iterative LSI dimensionality reduction, using the method described in [ArchR](https://doi.org/10.1038/s41588-021-00790-6) (Granja et al; 2019).
 #' @param mat (IterableMatrix) 
 #' @param n_iterations (int) The number of LSI iterations to perform.
-#' @param first_feature_selection_method (function) Method to use for selecting features for the first iteration. Current builtin options are `select_features_by_variance`, `select_features_by_dispersion`, `select_features_by_mean`, `select_features_binned_dispersion`
-#' @param feature_selection_method (function) Method to use for selecting features for each iteration after the first. Current builtin options are `select_features_by_variance`, `select_features_by_dispersion`, `select_features_by_mean`, `select_features_binned_dispersion`
+#' @param first_feature_selection_method (function) Method to use for selecting features for the first iteration. Current builtin options are `select_features_variance`, `select_features_dispersion`, `select_features_mean`, `select_features_binned_dispersion`
+#' @param feature_selection_method (function) Method to use for selecting features for each iteration after the first. Current builtin options are `select_features_variance`, `select_features_dispersion`, `select_features_mean`, `select_features_binned_dispersion`
 #' @param cluster_method (function) Method to use for clustering. Current builtin options are `cluster_graph_{leiden, louvain, seurat}()`
 #' @param lsi_method (function) Method to use for LSI.  Only `LSI` is allowed.  The user can pass in partial parameters to `LSI` to customize the LSI method, such as by passing `LSI(n_dimensions = 30, corr_cutoff = 0.5)`.
 #' @return An object of class `c("IterativeLSI", "DimReduction")` with the following attributes:
@@ -437,7 +404,7 @@ IterativeLSI <- function(
   feature_selection_method = select_features_dispersion,
   lsi_method = LSI, # Make only allowed to be LSI
   cluster_method = cluster_graph_leiden,
-  verbose = FALSE, threads = 1L
+  threads = 1L, verbose = FALSE
 ) {
   assert_is(mat, "IterableMatrix")
   assert_true(n_iterations > 0)
@@ -478,7 +445,11 @@ IterativeLSI <- function(
     }
     # run LSI
     if (verbose) log_progress("Running LSI")
-    lsi_res_obj <- lsi_method(mat[mat_indices,], threads = threads)
+    lsi_res_obj <- partial_apply(
+      lsi_method,
+      threads = threads,
+      verbose = verbose
+    )(mat[mat_indices,])
     fitted_params$iter_info$lsi_results[[i]] <- lsi_res_obj$fitted_params
     # remove the feature means from the lsi results as they are already calculated
     # save minimum info for lsi results if not onn terminal iteration
@@ -510,7 +481,6 @@ IterativeLSI <- function(
 #' @export
 project.IterativeLSI <- function(x, mat, threads = 1L, ...) {
   assert_is(mat, "IterableMatrix")
-  assert_is(x, "IterativeLSI")
   fitted_params <- x$fitted_params
   # Get the final row of fitted params
   last_iter_info <- fitted_params$iter_info[nrow(fitted_params$iter_info),]
@@ -530,13 +500,12 @@ project.IterativeLSI <- function(x, mat, threads = 1L, ...) {
   # since we don't hold the LSI object, we copy the internal logic from `project.LSI()`
   lsi_attr <- attr(x$fitted_params$lsi_method, "args")
   
-  func <- partial_apply(
-    normalize_tfidf,
+  mat <- normalize_tfidf(
+    mat = mat,
     feature_means = fitted_params$feature_means,
     scale_factor = lsi_attr$scale_factor,
     threads = threads
   )
-  mat <- func(mat)
   mat <- write_matrix_dir(
     convert_matrix_type(mat, type = "float"),
     tempfile("mat"), compress = TRUE
@@ -613,7 +582,6 @@ marker_features <- function(mat, groups, method="wilcoxon") {
         background_mean = as.numeric(background_means)
     )
 }
-
 
                    
 #' Aggregate counts matrices by cell group or feature.
