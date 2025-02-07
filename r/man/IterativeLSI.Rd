@@ -11,8 +11,8 @@ IterativeLSI(
   feature_selection_method = select_features_dispersion,
   lsi_method = LSI,
   cluster_method = cluster_graph_leiden,
-  verbose = FALSE,
-  threads = 1L
+  threads = 1L,
+  verbose = FALSE
 )
 }
 \arguments{
@@ -20,9 +20,9 @@ IterativeLSI(
 
 \item{n_iterations}{(int) The number of LSI iterations to perform.}
 
-\item{first_feature_selection_method}{(function) Method to use for selecting features for the first iteration. Current builtin options are \code{select_features_by_variance}, \code{select_features_by_dispersion}, \code{select_features_by_mean}, \code{select_features_binned_dispersion}}
+\item{first_feature_selection_method}{(function) Method to use for selecting features for the first iteration. Current builtin options are \code{select_features_variance}, \code{select_features_dispersion}, \code{select_features_mean}, \code{select_features_binned_dispersion}}
 
-\item{feature_selection_method}{(function) Method to use for selecting features for each iteration after the first. Current builtin options are \code{select_features_by_variance}, \code{select_features_by_dispersion}, \code{select_features_by_mean}, \code{select_features_binned_dispersion}}
+\item{feature_selection_method}{(function) Method to use for selecting features for each iteration after the first. Current builtin options are \code{select_features_variance}, \code{select_features_dispersion}, \code{select_features_mean}, \code{select_features_binned_dispersion}}
 
 \item{lsi_method}{(function) Method to use for LSI.  Only \code{LSI} is allowed.  The user can pass in partial parameters to \code{LSI} to customize the LSI method, such as by passing \code{LSI(n_dimensions = 30, corr_cutoff = 0.5)}.}
 

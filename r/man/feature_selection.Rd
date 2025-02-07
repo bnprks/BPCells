@@ -33,7 +33,7 @@ select_features_mean(
 
 select_features_binned_dispersion(
   mat,
-  num_feats = 25000,
+  num_feats = 0.05,
   n_bins = 20,
   threads = 1L,
   verbose = FALSE
@@ -67,15 +67,15 @@ Each different feature selection method will have a different scoring method.
 For each element \eqn{x_{ij}} in matrix \eqn{X} with \eqn{i} features and \eqn{j} cells, determine the score of
 each feature \eqn{x_i} as follows:
 \itemize{
-\item \code{select_features_by_variance}: \eqn{\mathrm{Score}(x_i) = \frac{1}{n - 1} \sum_{j=1}^{n} \bigl(x_{ij} - \bar{x}_i\bigr)^2}
+\item \code{select_features_variance}: \eqn{\mathrm{Score}(x_i) = \frac{1}{n - 1} \sum_{j=1}^{n} \bigl(x_{ij} - \bar{x}_i\bigr)^2}
 }
 
 \itemize{
-\item \code{select_features_by_dispersion}: \eqn{\mathrm{Score}(x_i) = \frac{\frac{1}{n - 1} \sum_{j=1}^{n} \bigl(x_{ij} - \bar{x}_i\bigr)^2}{\bar{x}_i}}
+\item \code{select_features_dispersion}: \eqn{\mathrm{Score}(x_i) = \frac{\frac{1}{n - 1} \sum_{j=1}^{n} \bigl(x_{ij} - \bar{x}_i\bigr)^2}{\bar{x}_i}}
 }
 
 \itemize{
-\item \code{select_features_by_mean}: \eqn{\mathrm{Score}(x_i) = \bar{x}_i}
+\item \code{select_features_mean}: \eqn{\mathrm{Score}(x_i) = \bar{x}_i}
 }
 
 \itemize{
