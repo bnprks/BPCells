@@ -208,8 +208,9 @@ select_features_binned_dispersion <- function(
 #' Represents a latent space output of a matrix after a transformation function, with any required information to reproject other inputs using this object.
 #' Child classes should implement a `project` method to allow for the projection of other matrices using
 #' the fitted transformation object.
-#' @field cell_embeddings (IterableMatrix, dgCMatrix, matrix) The projected data
-#' @field fitted_params (list) A list of parameters used for the transformation of a matrix.
+#' @field cell_embeddings (IterableMatrix, dgCMatrix, matrix) Projected data of shape `(n_dimesions x n_cells)` of the original matrix after a dimensionality reduction.
+#' @field fitted_params (list) A list of parameters used for the transformation of a matrix.  This should include all necessary information to project new data with the same features.
+#' @field feature_names (character) The names of the features that this DimReduction object was fit on.  Matrices to be projected should have the same feature names.
 #' @export
 DimReduction <- function(x, fitted_params = list(), ...) {
   assert_is(x, c("IterableMatrix", "dgCMatrix", "matrix"))
@@ -228,7 +229,7 @@ DimReduction <- function(x, fitted_params = list(), ...) {
 #' @param mat IterableMatrix object.
 #' @return IterableMatrix object of the projected data.
 #' @details DimReduction subclasses should use this to project new data with the same features, to project into the same latent space.
-#' All required information to run a projection should be held in x$fitted_params, including pertinent parameters when construction the DimReduction subclass object.
+#' All required information to run a projection should be held in x$fitted_params, including pertinent parameters when constructing the DimReduction subclass object.
 #' If there are no rownames, assume that the matrix is in the same order as the original matrix, assuming that they have the same number of features.
 #' If there are rownames, reorder the matrix to match the order of the original matrix
 #' @export
@@ -251,8 +252,9 @@ project.DimReduction <- function(x, mat, ...) {
 
 #' Perform latent semantic indexing (LSI) on a matrix.
 #' 
-#' Given a `(features x cells)` matrix, perform LSI to perform tf-idf, z-score normalization, and PCA to create a latent space representation of the matrix of shape `(n_dimensions, ncol(mat))`.
-#' @param mat (IterableMatrix) dimensions features x cells.
+#' Given a `(features x cells)` counts matrix, perform LSI which sequentially executes tf-idf normalization and PCA to create a latent space representation of the matrix of shape `(n_dimensions, ncol(mat))`.
+#' Returns a DimReduction object, which allows for projection of new matrices with the same features into the same latent space.
+#' @param mat (IterableMatrix) Counts matrix of shape `(features x cells)`.
 #' @param n_dimensions (integer) Number of dimensions to keep during PCA.
 #' @param corr_cutoff (numeric) Numeric filter for the correlation of a PC to the sequencing depth.  If the PC has a correlation that is great or equal to
 #' the corr_cutoff, it will be excluded from the final PCA matrix.
@@ -361,12 +363,16 @@ project.LSI <- function(x, mat, threads = 1L, ...) {
 
 #' Run iterative LSI on a matrix.
 #' 
-#' Given a `(features x cells)` matrix, Compute an iterative LSI dimensionality reduction, using the method described in [ArchR](https://doi.org/10.1038/s41588-021-00790-6) (Granja et al; 2019).
-#' @param mat (IterableMatrix) 
+#' Given a `(features x cells)` counts matrix, perform IterativeLSI to create a latent space representation of the matrix of shape `(n_dimensions, ncol(mat))`.  This uses the method described in [ArchR](https://doi.org/10.1038/s41588-021-00790-6) (Granja et al; 2019). 
+#' See details for more specific information.  Returns a DimReduction object, which allows for projection of new matrices with the same features into the same latent space.
+#'
+#' @param mat (IterableMatrix) Counts matrix of shape `(features x cells)`.
 #' @param n_iterations (int) The number of LSI iterations to perform.
 #' @param first_feature_selection_method (function) Method to use for selecting features for the first iteration. Current builtin options are `select_features_variance`, `select_features_dispersion`, `select_features_mean`, `select_features_binned_dispersion`
 #' @param feature_selection_method (function) Method to use for selecting features for each iteration after the first. Current builtin options are `select_features_variance`, `select_features_dispersion`, `select_features_mean`, `select_features_binned_dispersion`
-#' @param cluster_method (function) Method to use for clustering. Current builtin options are `cluster_graph_{leiden, louvain, seurat}()`
+#' @param knn_method (function) Method to use for obtaining a kNN matrix for determining clusters assignments of cells.  Current builtin options are `knn_hnsw()` and `knn_annoy()`.  The 
+#' user can pass in partial parameters to the knn method, such as by passing `knn_hnsw(ef = 500, k = 12)`
+#' @param cluster_method (function) Method to use for clustering a kNN matrix. Current builtin options are `cluster_graph_{leiden, louvain, seurat}()`
 #' @param lsi_method (function) Method to use for LSI.  Only `LSI` is allowed.  The user can pass in partial parameters to `LSI` to customize the LSI method, such as by passing `LSI(n_dimensions = 30, corr_cutoff = 0.5)`.
 #' @return An object of class `c("IterativeLSI", "DimReduction")` with the following attributes:
 #' - `cell_embeddings`: The projected data
@@ -393,7 +399,9 @@ project.LSI <- function(x, mat, threads = 1L, ...) {
 #'    - Perform LSI on the selected features
 #'    - If this is the final iteration, return the PCA results
 #'    - Else, cluster the LSI results using `cluster_method`
-#' @seealso `LSI()`, `feature_selection`, `DimReduction()`
+#' @seealso `LSI()` `DimReduction()` `knn_hnsw()` `knn_annoy()` 
+#' `cluster_graph_leiden()` `cluster_graph_louvain()` `cluster_graph_seurat()` `select_features_variance()` `select_features_dispersion()` 
+#' `select_features_mean()` `select_features_binned_dispersion()`
 #' @inheritParams LSI
 #' @export
 IterativeLSI <- function(
@@ -401,7 +409,8 @@ IterativeLSI <- function(
   n_iterations = 2,
   first_feature_selection_method = select_features_binned_dispersion,
   feature_selection_method = select_features_dispersion,
-  lsi_method = LSI, # Make only allowed to be LSI
+  lsi_method = LSI,
+  knn_method = knn_hnsw(ef = 500),
   cluster_method = cluster_graph_leiden,
   threads = 1L, verbose = FALSE
 ) {
@@ -431,9 +440,9 @@ IterativeLSI <- function(
     # run variable feature selection
     if (verbose) log_progress("Selecting features")
     if (i == 1) {
-      variable_features <- first_feature_selection_method(mat, threads = threads)
+      variable_features <- partial_apply(first_feature_selection_method, threads = threads)(mat)
     } else {
-      variable_features <- feature_selection_method(pseudobulk_res, threads = threads)
+      variable_features <- partial_apply(feature_selection_method, threads = threads)(pseudobulk_res)
     }
     fitted_params$iter_info$feature_names[[i]] <- variable_features %>% dplyr::filter(highly_variable) %>% dplyr::pull(names)
     
@@ -457,7 +466,7 @@ IterativeLSI <- function(
     if (i == n_iterations) break 
     # cluster the LSI results
     if (verbose) log_progress("Clustering LSI results")
-    clustering_res <- t(lsi_res_obj$cell_embeddings) %>% knn_hnsw(ef = 500, threads = threads) %>% knn_to_snn_graph() %>% cluster_method()
+    clustering_res <- t(lsi_res_obj$cell_embeddings) %>% partial_apply(knn_method, threads = threads)()  %>% knn_to_snn_graph() %>% cluster_method()
     fitted_params$iter_info$clusters[[i]] <- clustering_res
     # pseudobulk and pass onto next iteration
     if (verbose) log_progress("Pseudobulking matrix")

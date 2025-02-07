@@ -238,6 +238,7 @@ cluster_membership_matrix <- function(groups, group_order = NULL) {
 #' @export
 knn_hnsw <- function(data, query = NULL, k = 10, metric = c("euclidean", "cosine"), verbose = TRUE, threads = 1, ef = 100) {
   metric <- match.arg(metric)
+  if (rlang::is_missing(data)) return(create_partial())
   index <- RcppHNSW::hnsw_build(
     data,
     distance = metric,
@@ -273,6 +274,7 @@ knn_hnsw <- function(data, query = NULL, k = 10, metric = c("euclidean", "cosine
 #' @export
 knn_annoy <- function(data, query = data, k = 10, metric = c("euclidean", "cosine", "manhattan", "hamming"), n_trees = 50, search_k = -1) {
   metric <- match.arg(metric)
+  if (rlang::is_missing(data)) return(create_partial())
   annoy <- switch(metric,
     "euclidean" = new(RcppAnnoy::AnnoyEuclidean, ncol(data)),
     "cosine" = new(RcppAnnoy::AnnoyAngular, ncol(data)),

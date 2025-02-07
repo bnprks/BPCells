@@ -19,7 +19,7 @@ Perform a dimensionality reduction on a matrix using a pre-fit DimReduction obje
 }
 \details{
 DimReduction subclasses should use this to project new data with the same features, to project into the same latent space.
-All required information to run a projection should be held in x$fitted_params, including pertinent parameters when construction the DimReduction subclass object.
+All required information to run a projection should be held in x$fitted_params, including pertinent parameters when constructing the DimReduction subclass object.
 If there are no rownames, assume that the matrix is in the same order as the original matrix, assuming that they have the same number of features.
 If there are rownames, reorder the matrix to match the order of the original matrix
 }

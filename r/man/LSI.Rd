@@ -14,7 +14,7 @@ LSI(
 )
 }
 \arguments{
-\item{mat}{(IterableMatrix) dimensions features x cells.}
+\item{mat}{(IterableMatrix) Counts matrix of shape \verb{(features x cells)}.}
 
 \item{n_dimensions}{(integer) Number of dimensions to keep during PCA.}
 
@@ -40,7 +40,8 @@ An object of class \code{c("LSI", "DimReduction")} with the following attributes
 }
 }
 \description{
-Given a \verb{(features x cells)} matrix, perform LSI to perform tf-idf, z-score normalization, and PCA to create a latent space representation of the matrix of shape \verb{(n_dimensions, ncol(mat))}.
+Given a \verb{(features x cells)} counts matrix, perform LSI which sequentially executes tf-idf normalization and PCA to create a latent space representation of the matrix of shape \verb{(n_dimensions, ncol(mat))}.
+Returns a DimReduction object, which allows for projection of new matrices with the same features into the same latent space.
 }
 \details{
 Compute LSI through first doing a log(tf-idf) transform, z-score normalization, then PCA.  Tf-idf implementation is from Stuart & Butler et al. 2019.

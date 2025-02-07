@@ -10,13 +10,14 @@ IterativeLSI(
   first_feature_selection_method = select_features_binned_dispersion,
   feature_selection_method = select_features_dispersion,
   lsi_method = LSI,
+  knn_method = knn_hnsw(ef = 500),
   cluster_method = cluster_graph_leiden,
   threads = 1L,
   verbose = FALSE
 )
 }
 \arguments{
-\item{mat}{(IterableMatrix)}
+\item{mat}{(IterableMatrix) Counts matrix of shape \verb{(features x cells)}.}
 
 \item{n_iterations}{(int) The number of LSI iterations to perform.}
 
@@ -26,7 +27,10 @@ IterativeLSI(
 
 \item{lsi_method}{(function) Method to use for LSI.  Only \code{LSI} is allowed.  The user can pass in partial parameters to \code{LSI} to customize the LSI method, such as by passing \code{LSI(n_dimensions = 30, corr_cutoff = 0.5)}.}
 
-\item{cluster_method}{(function) Method to use for clustering. Current builtin options are \verb{cluster_graph_\{leiden, louvain, seurat\}()}}
+\item{knn_method}{(function) Method to use for obtaining a kNN matrix for determining clusters assignments of cells.  Current builtin options are \code{knn_hnsw()} and \code{knn_annoy()}.  The
+user can pass in partial parameters to the knn method, such as by passing \code{knn_hnsw(ef = 500, k = 12)}}
+
+\item{cluster_method}{(function) Method to use for clustering a kNN matrix. Current builtin options are \verb{cluster_graph_\{leiden, louvain, seurat\}()}}
 
 \item{threads}{(integer) Number of threads to use.}
 }
@@ -50,7 +54,8 @@ An object of class \code{c("IterativeLSI", "DimReduction")} with the following a
 }
 }
 \description{
-Given a \verb{(features x cells)} matrix, Compute an iterative LSI dimensionality reduction, using the method described in \href{https://doi.org/10.1038/s41588-021-00790-6}{ArchR} (Granja et al; 2019).
+Given a \verb{(features x cells)} counts matrix, perform IterativeLSI to create a latent space representation of the matrix of shape \verb{(n_dimensions, ncol(mat))}.  This uses the method described in \href{https://doi.org/10.1038/s41588-021-00790-6}{ArchR} (Granja et al; 2019).
+See details for more specific information.  Returns a DimReduction object, which allows for projection of new matrices with the same features into the same latent space.
 }
 \details{
 The iterative LSI method is as follows:
@@ -72,5 +77,7 @@ The iterative LSI method is as follows:
 }
 }
 \seealso{
-\code{LSI()}, \code{feature_selection}, \code{DimReduction()}
+\code{LSI()} \code{DimReduction()} \code{knn_hnsw()} \code{knn_annoy()}
+\code{cluster_graph_leiden()} \code{cluster_graph_louvain()} \code{cluster_graph_seurat()} \code{select_features_variance()} \code{select_features_dispersion()}
+\code{select_features_mean()} \code{select_features_binned_dispersion()}
 }

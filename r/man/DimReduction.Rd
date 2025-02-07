@@ -14,8 +14,10 @@ the fitted transformation object.
 \section{Fields}{
 
 \describe{
-\item{\code{cell_embeddings}}{(IterableMatrix, dgCMatrix, matrix) The projected data}
+\item{\code{cell_embeddings}}{(IterableMatrix, dgCMatrix, matrix) Projected data of shape \verb{(n_dimesions x n_cells)} of the original matrix after a dimensionality reduction.}
 
-\item{\code{fitted_params}}{(list) A list of parameters used for the transformation of a matrix.}
+\item{\code{fitted_params}}{(list) A list of parameters used for the transformation of a matrix.  This should include all necessary information to project new data with the same features.}
+
+\item{\code{feature_names}}{(character) The names of the features that this DimReduction object was fit on.  Matrices to be projected should have the same feature names.}
 }}
 

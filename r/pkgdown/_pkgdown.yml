@@ -136,7 +136,7 @@ reference:
   - pseudobulk_matrix
 
 - title: "Single-cell analysis helpers"
-- subtitle: "Dimensionality reduction"
+- subtitle: "Normalizations and Feature Selection"
 - contents:
   - normalize_log
   - select_features_variance
@@ -146,8 +146,7 @@ reference:
   - cluster_graph_leiden
   - knn_to_graph
   - cluster_membership_matrix
-
-- title: "Dimensionality Reductions"
+- subtitle: "Dimensionality Reductions"
 - contents: 
   - DimReduction
   - project
