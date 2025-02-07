@@ -1,4 +1,4 @@
-# Copyright 2023 BPCells contributors
+# Copyright 2024 BPCells contributors
 # 
 # Licensed under the Apache License, Version 2.0 <LICENSE-APACHE or
 # https://www.apache.org/licenses/LICENSE-2.0> or the MIT license
@@ -70,6 +70,154 @@ marker_features <- function(mat, groups, method="wilcoxon") {
     )
 }
 
+
+#' Perform latent semantic indexing (LSI) on a matrix.
+#' 
+#' Given a `(features x cells)` matrix, perform LSI to perform tf-idf, z-score normalization, and PCA to create a latent space representation of the matrix of shape `(n_dimensions, ncol(mat))`.
+#' @param mat (IterableMatrix) dimensions features x cells
+#' @param n_dimensions (integer) Number of dimensions to keep during PCA.
+#' @param corr_cutoff (numeric) Numeric filter for the correlation of a PC to the sequencing depth.  If the PC has a correlation that is great or equal to
+#' the corr_cutoff, it will be excluded from the final PCA matrix.
+#' @param scale_factor (integer) Scale factor for the tf-idf log transform.
+#' @param save_lsi (logical) If `TRUE`, save the SVD attributes for the matrix, as well as the idf normalization vector.
+#' @param threads (integer) Number of threads to use.
+#' @return 
+#' - If `save_lsi` is `FALSE`, return a dgCMatrix of shape `(n_dimensions, ncol(mat))`.
+#' - If `save_lsi` is `TRUE`, return a list with the following elements:
+#'    - `pca_res`: dgCMatrix of shape `(n_dimensions, ncol(mat))`
+#'    - `unused_pcs`: Integer vector of PCs that were filtered out due to high correlation with sequencing depth
+#'    - `svd_attr`: List of SVD attributes
+#'    - `idf`: Inverse document frequency vector
+#' @details Compute LSI through first doing a log(tf-idf) transform, z-score normalization, then PCA.  Tf-idf implementation is from Stuart & Butler et al. 2019.
+#' 
+#' Running on a 2600 cell dataset with 50000 peaks and 4 threads, as an example:
+#' - 17.1 MB memory usage, 25.1 seconds runtime
+#' @export
+lsi <- function(
+  mat,
+  n_dimensions = 50L, corr_cutoff = 1, scale_factor = 1e4,
+  save_lsi = FALSE,
+  threads = 1L
+) {
+  assert_is(mat, "IterableMatrix")
+  assert_is_wholenumber(n_dimensions)
+  assert_len(n_dimensions, 1)
+  assert_greater_than_zero(n_dimensions)
+  assert_true(n_dimensions < min(ncol(mat), nrow(mat)))
+  assert_true((corr_cutoff >= 0) && (corr_cutoff <= 1))
+  assert_is_wholenumber(threads)
+
+  # log(tf-idf) transform
+  mat_stats <- matrix_stats(mat, row_stats = c("mean"), col_stats = c("mean"))
+  read_depth <- mat_stats$col_stats["mean",] * nrow(mat) 
+  tf <- mat %>% multiply_cols(1 / read_depth)
+  idf_ <- 1 / mat_stats$row_stats["mean",]
+  mat_tfidf <- tf %>% multiply_rows(idf_)
+  mat_log_tfidf <- log1p(scale_factor * mat_tfidf)
+  # Save to prevent re-calculation of queued operations
+  mat_log_tfidf <- write_matrix_dir(
+    convert_matrix_type(mat_log_tfidf, type = "float"), 
+    tempfile("mat_log_tfidf"), compress = TRUE
+  )
+  # Run pca
+  svd_attr_ <- svds(mat_log_tfidf, k = n_dimensions, threads = threads)
+  pca_res <- t(svd_attr_$u) %*% mat_log_tfidf
+  
+  # Filter out PCs that are highly correlated with sequencing depth
+  pca_corrs <- abs(cor(read_depth, t(pca_res)))
+  pca_feats_to_keep <- which(pca_corrs < corr_cutoff)
+  if (length(pca_feats_to_keep) != n_dimensions) {
+    # not sure if this is the route we want to take.  Should we just leave the PCs in,
+    # and not use them in downstream analysis?
+    pca_res <- t(svd_attr_$u[, pca_feats_to_keep]) %*% mat_log_tfidf
+  }
+
+  if(save_lsi) {
+    return(list(
+      pca_res = pca_res,
+      svd_attr = svd_attr_,
+      unused_pcs <- which(pca_corrs >= corr_cutoff),
+      idf = idf_
+    ))
+  }
+  return(pca_res)
+}
+
+#' Get the most variable features within a matrix.
+#' @param num_feats (integer) Number of features to return.  If the number is higher than the number of features in the matrix, 
+#' all features will be returned.
+#' @param n_bins (integer) Number of bins for binning mean gene expression.  Normalizing dispersion is done with respect to each bin, 
+#' and if the number of features
+#' within a bin is less than 2, the dispersion is set to 1.
+#' @param save_feat_selection (logical) If `TRUE`, save the dispersions, means, and the features selected.
+#' @returns 
+#' - If `save_feat_selection` is `FALSE`, return an IterableMatrix subset of the most variable features of shape `(num_variable_features, ncol(mat))`.
+#' - If `save_feat_selection` is `TRUE`, return a list with the following elements:
+#'    - `mat`: IterableMatrix subset of the most variable features of shape `(num_variable_features, ncol(mat))`.
+#'    - `feature_selection`: Dataframe with columns `name`, `mean`, `dispersion`, `bin`, `feature_dispersion_norm`.
+#' @inheritParams lsi
+#' @details The formula for calculating the most variable features is from the Seurat package (Satjia et al. 2015).
+#' 
+#' Calculate using the following process:
+#'  1. Calculate the dispersion of each feature (variance / mean)
+#'  2. Log normalize dispersion and mean
+#'  3. Bin the features by their means, and normalize dispersion within each bin
+#' @export
+highly_variable_features <- function(
+  mat, num_feats, n_bins = 20,
+  save_feat_selection = FALSE,
+  threads = 1L
+) {
+  assert_is(mat, "IterableMatrix")
+  assert_greater_than_zero(num_feats)
+  assert_is_wholenumber(num_feats)
+  assert_len(num_feats, 1)
+  assert_is_wholenumber(n_bins)
+  assert_len(n_bins, 1)
+  assert_greater_than_zero(n_bins)
+  if (nrow(mat) <= num_feats) {
+    log_progress(sprintf("Number of features (%s) is less than num_feats (%s), returning all features", nrow(mat), num_feats))
+    return(mat)
+  }
+  # Calculate row information for dispersion
+  mat_stats <- matrix_stats(mat, row_stats = c("variance"), threads = threads)
+  feature_means <- mat_stats$row_stats["mean", ]
+  feature_vars <- mat_stats$row_stats["variance", ]
+  # Calculate dispersion, and log normalize
+  feature_dispersion <- feature_vars / feature_means
+  feature_dispersion[feature_dispersion == 0] <- NA
+  feature_dispersion <- log(feature_dispersion)
+  feature_dispersion[feature_means == 0] <- 0
+  feature_means <- log1p(feature_means)
+  features_df <- data.frame(
+    name = names(feature_means),
+    var = feature_vars, 
+    mean = feature_means,
+    dispersion = feature_dispersion
+  ) 
+
+  # Bin by mean, and normalize dispersion with each bin
+  features_df <- features_df %>% 
+    dplyr::mutate(bin = cut(mean, n_bins, labels=FALSE)) %>% 
+    dplyr::group_by(bin) %>% 
+    dplyr::mutate( 
+      feature_dispersion_norm = (dispersion - mean(dispersion)) / sd(dispersion),
+      feature_dispersion_norm = if (dplyr::n() == 1) {1} else {feature_dispersion_norm} # Set feats that are in bins with only one feat to have a norm dispersion of 1  
+    ) %>%  
+    dplyr::ungroup() %>%
+    dplyr::slice_max(order_by = feature_dispersion_norm, n = num_feats, with_ties = FALSE)
+  feats_of_interest <- which(rownames(mat) %in% features_df$name) # get rownames to get original sorted order
+  if (save_feat_selection) {
+    # get rownames that are in features_df$name
+    return(list(
+      mat = mat[feats_of_interest,],
+      feature_selection = features_df
+    ))
+  }
+  return(mat[feats_of_interest,])
+}
+
+                   
 #' Aggregate counts matrices by cell group or feature.
 #'
 #' Given a `(features x cells)` matrix, group cells by `cell_groups` and aggregate counts by `method` for each
