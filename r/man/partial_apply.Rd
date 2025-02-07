@@ -4,7 +4,7 @@
 \alias{partial_apply}
 \title{Create partial function calls}
 \usage{
-partial_apply(f, ..., .overwrite = FALSE)
+partial_apply(f, ..., .overwrite = TRUE, .missing_args_error = FALSE)
 }
 \arguments{
 \item{f}{A function}
@@ -14,6 +14,10 @@ partial_apply(f, ..., .overwrite = FALSE)
 \item{.overwrite}{(bool) If \code{f} is already an output from
 \code{partial_apply()}, whether parameter re-definitions should
 be ignored or overwrite the existing definitions}
+
+\item{.missing_args_error}{(bool) If \code{TRUE}, passing in arguments
+that are not in the function's signature will raise an error, otherwise
+they will be ignored}
 }
 \value{
 A \code{bpcells_partial} object (a function with some extra attributes)
