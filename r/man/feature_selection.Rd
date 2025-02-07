@@ -42,18 +42,15 @@ select_features_binned_dispersion(
 \arguments{
 \item{mat}{(IterableMatrix) dimensions features x cells}
 
-\item{num_feats}{(float) Number of features to return.  If the number given is between 0 and 1, treat as a proportion of
-the number of rows, rounded down.  Otherwise, treat as an absolute number.
-If the number is higher than the number of features in the matrix,
-all features will be returned.}
+\item{num_feats}{(float) Number of features to mark as highly_variable. If 0 < num_feats < 1, then interpret it as a fraction of features.}
 
-\item{normalize}{(function) Normalize matrix using a given function. Normalization occurs on the input mat prior to feature
-selection. If \code{NULL}, no normalization is performed. @seealso \code{normalize_tfidf()} \code{normalize_log()}}
+\item{normalize}{(function) Normalize the matrix prior to feature selection by calling normalize(mat) if it's not NULL.
+For example, pass normalize_log() or normalize_tfidf().
+If the normalize function accepts a threads argument, that will passed as normalize(mat, threads=threads).}
 
 \item{threads}{(integer) Number of threads to use.}
 
-\item{n_bins}{(integer) Number of bins for binning mean gene expression.  Normalizing dispersion is done with respect to each bin,
-and if the number of features within a bin is less than 2, the dispersion is set to 1.}
+\item{n_bins}{(integer) Number of bins to split features into in order to control for the relationship between mean expression and dispersion (see details).}
 }
 \value{
 Return a dataframe with the following columns:
@@ -83,7 +80,9 @@ each feature \eqn{x_i} as follows:
 }
 }
 \description{
-Apply a feature selection method to a \verb{(features x cells)} matrix.
+Apply a feature selection method to a non-normalized \verb{(features x cells)} matrix.  We recommend using counts matrices as input and
+apply any normalizations prior to feature selection via the normalize argument (if available).  The output of these functions is a dataframe that has columns that
+at the minimum include the feature names and a score for each feature.
 }
 \details{
 \code{select_features_binned_dispersion} implements the approach from Satija et al. 2015:
@@ -92,6 +91,8 @@ Apply a feature selection method to a \verb{(features x cells)} matrix.
 \item Calculate dispersion of each feature as \code{log(variance / mean)}
 \item Z-score normalize dispersion within each bin, and select highest normalized dispersion across all bins
 }
+
+If the number of features within a bin is equal to 1, then dhe mean dispersion for that bin is set to 1.
 
 This should be equivalent to \code{Seurat::FindVariableFeatures()} with \code{selection.method="mean.var.plot"}
 and \code{scanpy.pp.highly_variable_genes()} with \code{flavor="seurat"}.
@@ -115,5 +116,7 @@ select_features_variance(
     num_feats=2,
     normalize=normalize_log(scale_factor=20)
 ) 
-
+}
+\seealso{
+\code{normalize_tfidf()} \code{normalize_log()}
 }

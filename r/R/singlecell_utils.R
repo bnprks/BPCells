@@ -13,15 +13,15 @@
 
 #' Feature selection functions
 #' 
-#' Apply a feature selection method to a `(features x cells)` matrix.
+#' Apply a feature selection method to a non-normalized `(features x cells)` matrix.  We recommend using counts matrices as input and 
+#' apply any normalizations prior to feature selection via the normalize argument (if available).  The output of these functions is a dataframe that has columns that
+#' at the minimum include the feature names and a score for each feature. 
 #' @rdname feature_selection
 #' @param mat (IterableMatrix) dimensions features x cells
-#' @param num_feats (float) Number of features to return.  If the number given is between 0 and 1, treat as a proportion of 
-#' the number of rows, rounded down.  Otherwise, treat as an absolute number.
-#' If the number is higher than the number of features in the matrix, 
-#' all features will be returned.
-#' @param normalize (function) Normalize matrix using a given function. Normalization occurs on the input mat prior to feature 
-#' selection. If `NULL`, no normalization is performed. @seealso `normalize_tfidf()` `normalize_log()`
+#' @param num_feats (float) Number of features to mark as highly_variable. If 0 < num_feats < 1, then interpret it as a fraction of features.
+#' @param normalize (function) Normalize the matrix prior to feature selection by calling normalize(mat) if it's not NULL. 
+#' For example, pass normalize_log() or normalize_tfidf(). 
+#' If the normalize function accepts a threads argument, that will passed as normalize(mat, threads=threads).
 #' @param threads (integer) Number of threads to use.
 #' @returns
 #' Return a dataframe with the following columns:
@@ -52,7 +52,7 @@
 #'     num_feats=2,
 #'     normalize=normalize_log(scale_factor=20)
 #' ) 
-#'
+#' @seealso `normalize_tfidf()` `normalize_log()`
 #' @export
 select_features_variance <- function(
   mat, num_feats = 0.05, 
@@ -139,8 +139,7 @@ select_features_mean <- function(mat, num_feats = 0.05, normalize = NULL, thread
 }
 
 #' @rdname feature_selection
-#' @param n_bins (integer) Number of bins for binning mean gene expression.  Normalizing dispersion is done with respect to each bin, 
-#' and if the number of features within a bin is less than 2, the dispersion is set to 1.
+#' @param n_bins (integer) Number of bins to split features into in order to control for the relationship between mean expression and dispersion (see details).
 #' @returns
 #'  - `select_features_binned_dispersion`: Process described in `details`.
 #' @details 
@@ -148,6 +147,8 @@ select_features_mean <- function(mat, num_feats = 0.05, normalize = NULL, thread
 #'  1. Bin features into equal-width bins by `log1p(mean)`
 #'  2. Calculate dispersion of each feature as `log(variance / mean)`
 #'  3. Z-score normalize dispersion within each bin, and select highest normalized dispersion across all bins
+#' 
+#' If the number of features within a bin is equal to 1, then dhe mean dispersion for that bin is set to 1.
 #' 
 #' This should be equivalent to `Seurat::FindVariableFeatures()` with `selection.method="mean.var.plot"`
 #'  and `scanpy.pp.highly_variable_genes()` with `flavor="seurat"`.
@@ -195,7 +196,8 @@ select_features_binned_dispersion <- function(
     ) %>%
     dplyr::ungroup() %>%
     dplyr::mutate(highly_variable = dplyr::row_number(dplyr::desc(score)) <= num_feats) %>% 
-    dplyr::select(c("names", "score", "highly_variable"))
+    dplyr::select(c("names", "dispersion", "bin",  "score", "highly_variable")) %>%
+    dplyr::rename("raw_log_dispersion" = "dispersion")
   return(features_df)
 }
 
@@ -257,7 +259,7 @@ project.DimReduction <- function(x, mat, ...) {
 #' @param n_dimensions (integer) Number of dimensions to keep during PCA.
 #' @param corr_cutoff (numeric) Numeric filter for the correlation of a PC to the sequencing depth.  If the PC has a correlation that is great or equal to
 #' the corr_cutoff, it will be excluded from the final PCA matrix.
-#' @param scale_factor (numeric) Scale factor to use for tf-idf normalization.
+#' @param scale_factor (numeric) Scaling factor to multiply matrix by prior to log normalization (see formulas below).
 #' @param threads (integer) Number of threads to use.
 #' @returns An object of class `c("LSI", "DimReduction")` with the following attributes:
 #' - `cell_embeddings`: The projected data
