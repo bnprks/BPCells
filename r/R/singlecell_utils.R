@@ -64,8 +64,7 @@ select_features_variance <- function(
   assert_len(num_feats, 1)
   assert_is(num_feats, "numeric")
   if (rlang::is_missing(mat)) return(create_partial())
-  if (!is(mat, "IterableMatrix") && canCoerce(mat, "IterableMatrix")) mat <- as(mat, "IterableMatrix")
-  assert_is(mat, "IterableMatrix")
+  assert_is_mat(mat)
   if (num_feats < 1 && num_feats > 0) num_feats <- floor(nrow(mat) * num_feats)
   if (min(max(num_feats, 0), nrow(mat)) != num_feats) {
     rlang::warn(add_timestamp(sprintf("Number of features asked for (%s) is greater than the number of features in the matrix (%s).", num_feats, nrow(mat))))
@@ -121,8 +120,7 @@ select_features_mean <- function(mat, num_feats = 0.05, normalize = NULL, thread
   assert_greater_than_zero(num_feats)
   assert_is(num_feats, "numeric")
   if (rlang::is_missing(mat)) return(create_partial())
-  if (!is(mat, "IterableMatrix") && canCoerce(mat, "IterableMatrix")) mat <- as(mat, "IterableMatrix")
-  assert_is(mat, "IterableMatrix")
+  assert_is_mat(mat)
   if (num_feats < 1 && num_feats > 0) num_feats <- floor(nrow(mat) * num_feats)
   if (min(max(num_feats, 0), nrow(mat)) != num_feats) {
     rlang::warn(add_timestamp(sprintf("Number of features asked for (%s) is greater than the number of features in the matrix (%s).", num_feats, nrow(mat))))
@@ -163,8 +161,7 @@ select_features_binned_dispersion <- function(
   assert_len(n_bins, 1)
   assert_greater_than_zero(n_bins)
   if (rlang::is_missing(mat)) return(create_partial())
-  if (!is(mat, "IterableMatrix") && canCoerce(mat, "IterableMatrix")) mat <- as(mat, "IterableMatrix")
-  assert_is(mat, "IterableMatrix")
+  assert_is_mat(mat)
   if (num_feats < 1 && num_feats > 0) num_feats <- floor(nrow(mat) * num_feats)
   if (min(max(num_feats, 0), nrow(mat)) != num_feats) {
     rlang::warn(add_timestamp(sprintf("Number of features asked for (%s) is greater than the number of features in the matrix (%s).", num_feats, nrow(mat))))
@@ -282,7 +279,7 @@ LSI <- function(
   if (rlang::is_missing(mat)) {
     return(create_partial())
   }
-  assert_is(mat, "IterableMatrix")
+  assert_is_mat(mat)
   assert_is_wholenumber(n_dimensions)
   assert_len(n_dimensions, 1)
   assert_greater_than_zero(n_dimensions)
@@ -334,7 +331,7 @@ LSI <- function(
 
 #' @export
 project.LSI <- function(x, mat, threads = 1L, ...) {
-  assert_is(mat, "IterableMatrix")
+  assert_is_mat(mat)
   assert_is(x, "LSI")
 
   fitted_params <- x$fitted_params
@@ -408,7 +405,7 @@ IterativeLSI <- function(
   cluster_method = cluster_graph_leiden,
   threads = 1L, verbose = FALSE
 ) {
-  assert_is(mat, "IterableMatrix")
+  assert_is_mat(mat)
   assert_true(n_iterations > 0)
   assert_is_wholenumber(n_iterations)
   assert_is_wholenumber(threads)
@@ -482,7 +479,7 @@ IterativeLSI <- function(
 }
 #' @export
 project.IterativeLSI <- function(x, mat, threads = 1L, ...) {
-  assert_is(mat, "IterableMatrix")
+  assert_is_mat(mat)
   fitted_params <- x$fitted_params
   # Get the final row of fitted params
   last_iter_info <- fitted_params$iter_info[nrow(fitted_params$iter_info),]

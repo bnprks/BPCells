@@ -12,13 +12,13 @@ normalize_tfidf(mat, feature_means = NULL, scale_factor = 10000, threads = 1L)
 \arguments{
 \item{mat}{(IterableMatrix) Counts matrix to normalize. \verb{(features x cells)}}
 
-\item{scale_factor}{(numeric) Scale factor to multiply matrix by for log normalization.}
+\item{scale_factor}{(numeric) Scaling factor to multiply matrix by prior to normalization (see formulas below).}
 
 \item{threads}{(integer) Number of threads to use.}
 
-\item{feature_means}{(numeric, optional) Pre-calculated means of the features to normalize by. If no names are provided, then
-each numeric value is assumed to correspond to the feature mean for the corresponding row of the matrix.
-Else, map each feature name to its mean value.}
+\item{feature_means}{(numeric, optional) Pre-calculated means of the features to normalize by (rowMeans(mat) by default).
+If feature_means has names and mat has row names, match values by name.
+Otherwise, assume feature_means has the same length and ordering as the matrix rows.}
 }
 \value{
 For each element \eqn{x_{ij}} in matrix \eqn{X} with \eqn{i} features and \eqn{j} cells,
