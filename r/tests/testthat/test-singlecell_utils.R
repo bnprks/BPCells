@@ -1,4 +1,4 @@
-# Copyright 2023 BPCells contributors
+# Copyright 2025 BPCells contributors
 # 
 # Licensed under the Apache License, Version 2.0 <LICENSE-APACHE or
 # https://www.apache.org/licenses/LICENSE-2.0> or the MIT license
@@ -27,7 +27,7 @@ test_that("select_features works general case", {
     res <- do.call(fn, list(m1, num_feats = 5))
     expect_equal(nrow(res), nrow(m1)) # Check that dataframe has correct features we're expecting
     expect_equal(sum(res$highly_variable), 5) # Only 10 features marked as highly variable
-    expect_setequal(res$names, rownames(m1))
+    expect_setequal(res$feature, rownames(m1))
     res_more_feats_than_rows <- suppressWarnings(do.call(fn, list(m1, num_feats = 10000))) # more features than rows
     res_feats_equal_rows <- do.call(fn, list(m1, num_feats = 100))
     res_feats_partial <- get(fn)(num_feats = 100)(m1)
@@ -40,7 +40,7 @@ test_that("select_features works general case", {
       res_norm_partial <- do.call(fn, list(m1, num_feats = 10, normalize = normalize_log(scale = 1e3, threads = 1L)))
       res_norm_implicit_partial <- select_features_variance(normalize = normalize_log(scale_factor = 1e3), num_feats = 10)(m1)
       expect_identical(res_norm_partial, res_norm_implicit_partial)
-      expect_true(!all((res_no_norm %>% dplyr::arrange(names))$score == (res_norm_partial %>% dplyr::arrange(names))$score))
+      expect_true(!all((res_no_norm %>% dplyr::arrange(feature))$score == (res_norm_partial %>% dplyr::arrange(feature))$score))
     }
   }
 })
@@ -203,9 +203,9 @@ test_that("Feature selection by bin variance works", {
     # Test only that outputs are reasonable.  There is a full comparison in `tests/real_data/` that compares implementation to Seurat
     res_table <- select_features_binned_dispersion(mat, num_feats = 10, n_bins = 5, threads = 1)
     res_table_t <- select_features_binned_dispersion(t(mat), num_feats = 10, n_bins = 5, threads = 1)
-    res_feats <- res_table %>% dplyr::filter(highly_variable) %>% dplyr::pull(names) 
+    res_feats <- res_table %>% dplyr::filter(highly_variable) %>% dplyr::pull(feature) 
     res <- mat[res_feats,]
-    res_feats_t <- res_table_t %>% dplyr::filter(highly_variable) %>% dplyr::pull(names)
+    res_feats_t <- res_table_t %>% dplyr::filter(highly_variable) %>% dplyr::pull(feature)
     res_t <- t(mat[,res_feats_t])
     
     expect_equal(nrow(res), 10)

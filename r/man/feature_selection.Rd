@@ -55,7 +55,7 @@ If the normalize function accepts a threads argument, that will passed as normal
 \value{
 Return a dataframe with the following columns:
 \itemize{
-\item \code{names}: Feature name.
+\item \code{feature}: Feature name.
 \item \code{score}: Scoring of the feature, depending on the method used.
 \item \code{highly_variable}: Logical vector of whether the feature is highly variable.
 }

@@ -1,4 +1,4 @@
-# Copyright 2023 BPCells contributors
+# Copyright 2025 BPCells contributors
 # 
 # Licensed under the Apache License, Version 2.0 <LICENSE-APACHE or
 # https://www.apache.org/licenses/LICENSE-2.0> or the MIT license
@@ -25,7 +25,7 @@
 #' @param threads (integer) Number of threads to use.
 #' @returns
 #' Return a dataframe with the following columns:
-#' - `names`: Feature name.
+#' - `feature`: Feature name.
 #' - `score`: Scoring of the feature, depending on the method used.  
 #' - `highly_variable`: Logical vector of whether the feature is highly variable.
 #'
@@ -72,7 +72,7 @@ select_features_variance <- function(
   num_feats <- min(max(num_feats, 0), nrow(mat))
   if (!is.null(normalize)) mat <- partial_apply(normalize, threads = threads, verbose = verbose)(mat)
   features_df <- tibble::tibble(
-    names = rownames(mat),
+    feature = rownames(mat),
     score = matrix_stats(mat, row_stats = "variance", threads = threads)$row_stats["variance",]
   ) %>% 
     dplyr::mutate(highly_variable = dplyr::row_number(dplyr::desc(score)) <= num_feats)
@@ -104,7 +104,7 @@ select_features_dispersion <- function(
   if (!is.null(normalize)) mat <- partial_apply(normalize, threads = threads, verbose = verbose)(mat)
   mat_stats <- matrix_stats(mat, row_stats = "variance", threads = threads)
   features_df <- tibble::tibble(
-    names = rownames(mat),
+    feature = rownames(mat),
     score = mat_stats$row_stats["variance", ] / mat_stats$row_stats["mean", ]
   ) %>% 
     dplyr::mutate(highly_variable = dplyr::row_number(dplyr::desc(score)) <= num_feats)
@@ -129,7 +129,7 @@ select_features_mean <- function(mat, num_feats = 0.05, normalize = NULL, thread
   if (!is.null(normalize)) mat <- partial_apply(normalize, threads = threads, verbose = verbose)(mat)
   # get the sum of each feature, binarized
   features_df <- tibble::tibble(
-    names = rownames(mat),
+    feature = rownames(mat),
     score = matrix_stats(mat, row_stats = "nonzero", threads = threads)$row_stats["nonzero", ]
   ) %>%
     dplyr::mutate(highly_variable = dplyr::row_number(dplyr::desc(score)) <= num_feats)
@@ -178,7 +178,7 @@ select_features_binned_dispersion <- function(
   feature_dispersion[feature_means == 0] <- 0
   feature_means <- log1p(feature_means)
   features_df <- tibble::tibble(
-    names = names(feature_means),
+    feature = names(feature_means),
     var = feature_vars,
     mean = feature_means,
     dispersion = feature_dispersion
@@ -193,7 +193,7 @@ select_features_binned_dispersion <- function(
     ) %>%
     dplyr::ungroup() %>%
     dplyr::mutate(highly_variable = dplyr::row_number(dplyr::desc(score)) <= num_feats) %>% 
-    dplyr::select(c("names", "dispersion", "bin",  "score", "highly_variable")) %>%
+    dplyr::select(c("feature", "dispersion", "bin",  "score", "highly_variable")) %>%
     dplyr::rename("raw_log_dispersion" = "dispersion")
   return(features_df)
 }
@@ -444,7 +444,7 @@ IterativeLSI <- function(
     } else {
       variable_features <- partial_apply(feature_selection_method, threads = threads)(pseudobulk_res)
     }
-    fitted_params$iter_info$feature_names[[i]] <- variable_features %>% dplyr::filter(highly_variable) %>% dplyr::pull(names)
+    fitted_params$iter_info$feature_names[[i]] <- variable_features %>% dplyr::filter(highly_variable) %>% dplyr::pull(feature)
     
     if (is.character(fitted_params$iter_info$feature_names[[i]])) {
       mat_indices <- which(rownames(mat) %in% fitted_params$iter_info$feature_names[[i]])
