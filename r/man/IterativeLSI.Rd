@@ -10,7 +10,7 @@ IterativeLSI(
   first_feature_selection_method = select_features_binned_dispersion,
   feature_selection_method = select_features_dispersion,
   lsi_method = LSI,
-  knn_method = knn_hnsw(ef = 500),
+  knn_method = knn_hnsw,
   cluster_method = cluster_graph_leiden,
   threads = 1L,
   verbose = FALSE
@@ -41,9 +41,10 @@ An object of class \code{c("IterativeLSI", "DimReduction")} with the following a
 \item \code{fitted_params}: A tibble of the parameters used for iterative LSI, with rows as iterations. Columns include the following:
 \item \code{first_feature_selection_method}: The method used for selecting features for the first iteration
 \item \code{lsi_method}: The method used for LSI
+\item \code{knn_method}: The method used for obtaining a kNN matrix
 \item \code{cluster_method}: The method used for clustering
-\item \code{feature_means}: The means of the features used for normalization
-\item \code{iterations}: The number of iterations
+\item \code{feature_means}: The means of the features used for tf-idf normalization
+\item \code{iterations}: The number of LSI iterations ran
 \item \code{iter_info}: A tibble with the following columns:
 \itemize{
 \item \code{iteration}: The iteration number
@@ -64,15 +65,15 @@ The iterative LSI method is as follows:
 \itemize{
 \item Select features based on the \code{first_feature_selection_method} argument
 \item Perform LSI on the selected features
-\item If \code{n_iterations} is 1, return the PCA results
-\item Else, cluster the LSI results using \code{cluster_method}
+\item If \code{n_iterations} is 1, return the projected data from the first PCA projection
+\item Else, turn the LSI results into a kNN matrix using \code{knn_method}, then cluster the kNN matrix using \code{cluster_method}
 }
 \item For each subsequent iteration:
 \itemize{
 \item Pseudobulk the clusters and select the top features based on the variance of the pseudobulked clusters
 \item Perform LSI on the selected features
-\item If this is the final iteration, return the PCA results
-\item Else, cluster the LSI results using \code{cluster_method}
+\item If this is the final iteration, return the projected data from this PCA projection
+\item Else, turn the LSI results into a kNN matrix using \code{knn_method}, then cluster the kNN matrix using \code{cluster_method}
 }
 }
 }

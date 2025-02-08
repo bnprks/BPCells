@@ -2,7 +2,6 @@
 
 S3method(base::as.data.frame,IterableFragments)
 S3method(base::as.matrix,IterableMatrix)
-S3method(project,DimReduction)
 S3method(project,IterativeLSI)
 S3method(project,LSI)
 S3method(project,default)

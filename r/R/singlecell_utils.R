@@ -238,11 +238,7 @@ project <- function(x, mat, ...) {
 }
 #' @export 
 project.default <- function(x, mat, ...) {
-  rlang::abort("project method not implemented for BPCells objects.")
-}
-#' @export
-project.DimReduction <- function(x, mat, ...) {
-  rlang::abort("project method not implemented for base DimReduction object.")
+  rlang::abort("project method not implemented for objects that are not a fitted DimReduction")
 }
 
 #################
@@ -346,6 +342,7 @@ project.LSI <- function(x, mat, threads = 1L, ...) {
   mat <- partial_apply(
     normalize_tfidf,
     feature_means = fitted_params$feature_means,
+    scale_factor = fitted_params$scale_factor,
     threads = threads
   )(mat)
   mat <- write_matrix_dir(
@@ -377,12 +374,13 @@ project.LSI <- function(x, mat, threads = 1L, ...) {
 #' @return An object of class `c("IterativeLSI", "DimReduction")` with the following attributes:
 #' - `cell_embeddings`: The projected data
 #' - `fitted_params`: A tibble of the parameters used for iterative LSI, with rows as iterations. Columns include the following:
-#' - `first_feature_selection_method`: The method used for selecting features for the first iteration
-#' - `lsi_method`: The method used for LSI
-#' - `cluster_method`: The method used for clustering
-#' - `feature_means`: The means of the features used for normalization
-#' - `iterations`: The number of iterations
-#' - `iter_info`: A tibble with the following columns:
+#'  - `first_feature_selection_method`: The method used for selecting features for the first iteration
+#'  - `lsi_method`: The method used for LSI
+#'  - `knn_method`: The method used for obtaining a kNN matrix
+#'  - `cluster_method`: The method used for clustering
+#'  - `feature_means`: The means of the features used for tf-idf normalization
+#'  - `iterations`: The number of LSI iterations ran
+#'  - `iter_info`: A tibble with the following columns:
 #'    - `iteration`: The iteration number
 #'    - `feature_names`: The names of the features used for the iteration
 #'    - `lsi_results`: The results of LSI for the iteration.  This follows the same structure as the `fitted_params` attribute of the `LSI` object, but information such as the `v` and `d` matrices are removed.
@@ -392,13 +390,13 @@ project.LSI <- function(x, mat, threads = 1L, ...) {
 #' - First iteration:
 #'    - Select features based on the `first_feature_selection_method` argument
 #'    - Perform LSI on the selected features
-#'    - If `n_iterations` is 1, return the PCA results
-#'    - Else, cluster the LSI results using `cluster_method`
+#'    - If `n_iterations` is 1, return the projected data from the first PCA projection
+#'    - Else, turn the LSI results into a kNN matrix using `knn_method`, then cluster the kNN matrix using `cluster_method`
 #' - For each subsequent iteration:
 #'    - Pseudobulk the clusters and select the top features based on the variance of the pseudobulked clusters
 #'    - Perform LSI on the selected features
-#'    - If this is the final iteration, return the PCA results
-#'    - Else, cluster the LSI results using `cluster_method`
+#'    - If this is the final iteration, return the projected data from this PCA projection
+#'    - Else, turn the LSI results into a kNN matrix using `knn_method`, then cluster the kNN matrix using `cluster_method`
 #' @seealso `LSI()` `DimReduction()` `knn_hnsw()` `knn_annoy()` 
 #' `cluster_graph_leiden()` `cluster_graph_louvain()` `cluster_graph_seurat()` `select_features_variance()` `select_features_dispersion()` 
 #' `select_features_mean()` `select_features_binned_dispersion()`
@@ -410,7 +408,7 @@ IterativeLSI <- function(
   first_feature_selection_method = select_features_binned_dispersion,
   feature_selection_method = select_features_dispersion,
   lsi_method = LSI,
-  knn_method = knn_hnsw(ef = 500),
+  knn_method = knn_hnsw,
   cluster_method = cluster_graph_leiden,
   threads = 1L, verbose = FALSE
 ) {
@@ -422,6 +420,7 @@ IterativeLSI <- function(
   fitted_params = list(
     first_feature_selection_method = first_feature_selection_method,
     lsi_method = lsi_method,
+    knn_method = knn_method,
     cluster_method = cluster_method,
     feature_means = matrix_stats(mat, row_stats = "mean", threads = threads)$row_stats["mean",],
     iterations = n_iterations,
@@ -477,7 +476,7 @@ IterativeLSI <- function(
     )
     rownames(pseudobulk_res) <- rownames(mat)
   }
-  if (verbose) log_progress("Finished running LSI")
+  if (verbose) log_progress("Finished running Iterative LSI")
   res <- DimReduction(
     x = lsi_res_obj$cell_embeddings,
     fitted_params = fitted_params,
