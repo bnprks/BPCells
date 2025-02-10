@@ -21,9 +21,9 @@ IterativeLSI(
 
 \item{n_iterations}{(int) The number of LSI iterations to perform.}
 
-\item{first_feature_selection_method}{(function) Method to use for selecting features for the first iteration. Current builtin options are \code{select_features_variance}, \code{select_features_dispersion}, \code{select_features_mean}, \code{select_features_binned_dispersion}}
+\item{first_feature_selection_method}{(function) Method to use for selecting features for the first iteration. Current builtin options are \code{select_features_variance}, \code{select_features_dispersion}, \code{select_features_accessibility}, \code{select_features_binned_dispersion}}
 
-\item{feature_selection_method}{(function) Method to use for selecting features for each iteration after the first. Current builtin options are \code{select_features_variance}, \code{select_features_dispersion}, \code{select_features_mean}, \code{select_features_binned_dispersion}}
+\item{feature_selection_method}{(function) Method to use for selecting features for each iteration after the first. Current builtin options are \code{select_features_variance}, \code{select_features_dispersion}, \code{select_features_accessibility}, \code{select_features_binned_dispersion}}
 
 \item{lsi_method}{(function) Method to use for LSI.  Only \code{LSI} is allowed.  The user can pass in partial parameters to \code{LSI} to customize the LSI method, such as by passing \code{LSI(n_dimensions = 30, corr_cutoff = 0.5)}.}
 
@@ -76,9 +76,15 @@ The iterative LSI method is as follows:
 \item Else, turn the LSI results into a kNN matrix using \code{knn_method}, then cluster the kNN matrix using \code{cluster_method}
 }
 }
+
+There are some minor differences when compared to the ArchR implementation.  Firstly, the ArchR implementation uses a different method for selecting features in the first iteration.  ArchR utilizes top accessibility as the default, while this implementation uses binned dispersion as the default.
+\code{select_features_accessibility()} can be passed in for the \code{first_feature_selection_method} argument to mimic the ArchR implementation.
+
+Secondly, the ArchR implementation calculates LSI during non-terminal iterations using a default subset of 10000 cells.  ArchR does this to prevent a memory bottleneck,
+which BPCells does not encounter even with a non-subsetted matrix.
 }
 \seealso{
 \code{LSI()} \code{DimReduction()} \code{knn_hnsw()} \code{knn_annoy()}
 \code{cluster_graph_leiden()} \code{cluster_graph_louvain()} \code{cluster_graph_seurat()} \code{select_features_variance()} \code{select_features_dispersion()}
-\code{select_features_mean()} \code{select_features_binned_dispersion()}
+\code{select_features_accessibility()} \code{select_features_binned_dispersion()}
 }

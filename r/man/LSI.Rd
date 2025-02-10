@@ -40,7 +40,7 @@ An object of class \code{c("LSI", "DimReduction")} with the following attributes
 }
 }
 \description{
-Given a \verb{(features x cells)} counts matrix, perform LSI which sequentially executes tf-idf normalization and PCA to create a latent space representation of the matrix of shape \verb{(n_dimensions, ncol(mat))}.
+Given a \verb{(features x cells)} counts matrix, perform LSI, which sequentially executes tf-idf normalization and PCA to create a latent space representation of the matrix of shape \verb{(n_dimensions, ncol(mat))}.
 Returns a DimReduction object, which allows for projection of new matrices with the same features into the same latent space.
 }
 \details{

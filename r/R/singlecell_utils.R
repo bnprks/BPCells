@@ -65,6 +65,7 @@ select_features_variance <- function(
   assert_is(num_feats, "numeric")
   if (rlang::is_missing(mat)) return(create_partial())
   assert_is_mat(mat)
+  
   if (num_feats < 1 && num_feats > 0) num_feats <- floor(nrow(mat) * num_feats)
   if (min(max(num_feats, 0), nrow(mat)) != num_feats) {
     rlang::warn(add_timestamp(sprintf("Number of features asked for (%s) is greater than the number of features in the matrix (%s).", num_feats, nrow(mat))))
@@ -397,6 +398,12 @@ project.LSI <- function(x, mat, threads = 1L, ...) {
 #'    - Perform LSI on the selected features
 #'    - If this is the final iteration, return the projected data from this PCA projection
 #'    - Else, turn the LSI results into a kNN matrix using `knn_method`, then cluster the kNN matrix using `cluster_method`
+#' 
+#' There are some minor differences when compared to the ArchR implementation.  Firstly, the ArchR implementation uses a different method for selecting features in the first iteration.  ArchR utilizes top accessibility as the default, while this implementation uses binned dispersion as the default.
+#' `select_features_accessibility()` can be passed in for the `first_feature_selection_method` argument to mimic the ArchR implementation.
+#' 
+#' Secondly, the ArchR implementation calculates LSI during non-terminal iterations using a default subset of 10000 cells.  ArchR does this to prevent a memory bottleneck,
+#' which BPCells does not encounter even with a non-subsetted matrix.
 #' @seealso `LSI()` `DimReduction()` `knn_hnsw()` `knn_annoy()` 
 #' `cluster_graph_leiden()` `cluster_graph_louvain()` `cluster_graph_seurat()` `select_features_variance()` `select_features_dispersion()` 
 #' `select_features_accessibility()` `select_features_binned_dispersion()`
