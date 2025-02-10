@@ -944,7 +944,7 @@ regress_out <- function(mat, latent_data, prediction_axis = c("row", "col")) {
 #' **Passing to `normalize` parameters with non-default arguments**
 #' 
 #' If the `mat` argument is missing, returns a "partial" function: a copy of the original function but with most arguments pre-defined. 
-#' This can be used to customize `normalize` parameters in other single cell functions in BPCells (e.g. `select_features_mean()`).
+#' This can be used to customize `normalize` parameters in other single cell functions in BPCells (e.g. `select_features_accessibility()`).
 #' 
 #' **Related functions from other packages**
 #' - `normalize_log`: Corresponds to `Seurat::NormalizeData()` with its default "LogNormalize" method.

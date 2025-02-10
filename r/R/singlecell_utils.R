@@ -111,12 +111,12 @@ select_features_dispersion <- function(
   return(features_df)
 }
 
-
+#where \eqn{x_ij} = 1 & \text{if } x_{ij} == 0 \\ 0 & \text{otherwise} \end{cases}
 #' @rdname feature_selection
 #' @returns
-#' - `select_features_mean`: \eqn{\mathrm{Score}(x_i) = \bar{x}_i}
+#' - `select_features_accessibility`: \eqn{\mathrm{Score}(x_i) = \sum_{j=1}^{n} \bigl({x}_{ij}^{\mathrm{binarized}})\bigr)},  where \eqn{x_{ij}^{\mathrm{binarized}}} is defined as \eqn{1} if \eqn{x_{ij} != 0} and \eqn{0} otherwise.
 #' @export
-select_features_mean <- function(mat, num_feats = 0.05, normalize = NULL, threads = 1L, verbose = FALSE) {
+select_features_accessibility <- function(mat, num_feats = 0.05, normalize = NULL, threads = 1L, verbose = FALSE) {
   assert_greater_than_zero(num_feats)
   assert_is(num_feats, "numeric")
   if (rlang::is_missing(mat)) return(create_partial())
@@ -248,7 +248,7 @@ project.default <- function(x, mat, ...) {
 
 #' Perform latent semantic indexing (LSI) on a matrix.
 #' 
-#' Given a `(features x cells)` counts matrix, perform LSI which sequentially executes tf-idf normalization and PCA to create a latent space representation of the matrix of shape `(n_dimensions, ncol(mat))`.
+#' Given a `(features x cells)` counts matrix, perform LSI, which sequentially executes tf-idf normalization and PCA to create a latent space representation of the matrix of shape `(n_dimensions, ncol(mat))`.
 #' Returns a DimReduction object, which allows for projection of new matrices with the same features into the same latent space.
 #' @param mat (IterableMatrix) Counts matrix of shape `(features x cells)`.
 #' @param n_dimensions (integer) Number of dimensions to keep during PCA.
@@ -365,8 +365,8 @@ project.LSI <- function(x, mat, threads = 1L, ...) {
 #'
 #' @param mat (IterableMatrix) Counts matrix of shape `(features x cells)`.
 #' @param n_iterations (int) The number of LSI iterations to perform.
-#' @param first_feature_selection_method (function) Method to use for selecting features for the first iteration. Current builtin options are `select_features_variance`, `select_features_dispersion`, `select_features_mean`, `select_features_binned_dispersion`
-#' @param feature_selection_method (function) Method to use for selecting features for each iteration after the first. Current builtin options are `select_features_variance`, `select_features_dispersion`, `select_features_mean`, `select_features_binned_dispersion`
+#' @param first_feature_selection_method (function) Method to use for selecting features for the first iteration. Current builtin options are `select_features_variance`, `select_features_dispersion`, `select_features_accessibility`, `select_features_binned_dispersion`
+#' @param feature_selection_method (function) Method to use for selecting features for each iteration after the first. Current builtin options are `select_features_variance`, `select_features_dispersion`, `select_features_accessibility`, `select_features_binned_dispersion`
 #' @param knn_method (function) Method to use for obtaining a kNN matrix for determining clusters assignments of cells.  Current builtin options are `knn_hnsw()` and `knn_annoy()`.  The 
 #' user can pass in partial parameters to the knn method, such as by passing `knn_hnsw(ef = 500, k = 12)`
 #' @param cluster_method (function) Method to use for clustering a kNN matrix. Current builtin options are `cluster_graph_{leiden, louvain, seurat}()`
@@ -399,7 +399,7 @@ project.LSI <- function(x, mat, threads = 1L, ...) {
 #'    - Else, turn the LSI results into a kNN matrix using `knn_method`, then cluster the kNN matrix using `cluster_method`
 #' @seealso `LSI()` `DimReduction()` `knn_hnsw()` `knn_annoy()` 
 #' `cluster_graph_leiden()` `cluster_graph_louvain()` `cluster_graph_seurat()` `select_features_variance()` `select_features_dispersion()` 
-#' `select_features_mean()` `select_features_binned_dispersion()`
+#' `select_features_accessibility()` `select_features_binned_dispersion()`
 #' @inheritParams LSI
 #' @export
 IterativeLSI <- function(

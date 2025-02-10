@@ -38,7 +38,7 @@ Apply standard normalizations to a \verb{(features x cells)} counts matrix.
 \strong{Passing to \code{normalize} parameters with non-default arguments}
 
 If the \code{mat} argument is missing, returns a "partial" function: a copy of the original function but with most arguments pre-defined.
-This can be used to customize \code{normalize} parameters in other single cell functions in BPCells (e.g. \code{select_features_mean()}).
+This can be used to customize \code{normalize} parameters in other single cell functions in BPCells (e.g. \code{select_features_accessibility()}).
 
 \strong{Related functions from other packages}
 \itemize{

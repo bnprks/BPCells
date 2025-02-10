@@ -3,7 +3,7 @@
 \name{select_features_variance}
 \alias{select_features_variance}
 \alias{select_features_dispersion}
-\alias{select_features_mean}
+\alias{select_features_accessibility}
 \alias{select_features_binned_dispersion}
 \title{Feature selection functions}
 \usage{
@@ -23,7 +23,7 @@ select_features_dispersion(
   verbose = FALSE
 )
 
-select_features_mean(
+select_features_accessibility(
   mat,
   num_feats = 0.05,
   normalize = NULL,
@@ -72,7 +72,7 @@ each feature \eqn{x_i} as follows:
 }
 
 \itemize{
-\item \code{select_features_mean}: \eqn{\mathrm{Score}(x_i) = \bar{x}_i}
+\item \code{select_features_accessibility}: \eqn{\mathrm{Score}(x_i) = \sum_{j=1}^{n} \bigl({x}_{ij}^{\mathrm{binarized}})\bigr)},  where \eqn{x_{ij}^{\mathrm{binarized}}} is defined as \eqn{1} if \eqn{x_{ij} != 0} and \eqn{0} otherwise.
 }
 
 \itemize{
