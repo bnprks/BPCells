@@ -7,36 +7,27 @@
 \alias{select_features_binned_dispersion}
 \title{Feature selection functions}
 \usage{
-select_features_variance(
-  mat,
-  num_feats = 0.05,
-  normalize = NULL,
-  threads = 1L,
-  verbose = FALSE
-)
+select_features_variance(mat, num_feats = 0.05, normalize = NULL, threads = 1L)
 
 select_features_dispersion(
   mat,
   num_feats = 0.05,
   normalize = NULL,
-  threads = 1L,
-  verbose = FALSE
+  threads = 1L
 )
 
 select_features_accessibility(
   mat,
   num_feats = 0.05,
   normalize = NULL,
-  threads = 1L,
-  verbose = FALSE
+  threads = 1L
 )
 
 select_features_binned_dispersion(
   mat,
   num_feats = 0.05,
   n_bins = 20,
-  threads = 1L,
-  verbose = FALSE
+  threads = 1L
 )
 }
 \arguments{

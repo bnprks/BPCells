@@ -57,8 +57,7 @@
 select_features_variance <- function(
   mat, num_feats = 0.05, 
   normalize = NULL,
-  threads = 1L,
-  verbose = FALSE
+  threads = 1L
 ) {
   assert_greater_than_zero(num_feats)
   assert_len(num_feats, 1)
@@ -71,7 +70,7 @@ select_features_variance <- function(
     rlang::warn(add_timestamp(sprintf("Number of features asked for (%s) is greater than the number of features in the matrix (%s).", num_feats, nrow(mat))))
   }
   num_feats <- min(max(num_feats, 0), nrow(mat))
-  if (!is.null(normalize)) mat <- partial_apply(normalize, threads = threads, verbose = verbose)(mat)
+  if (!is.null(normalize)) mat <- partial_apply(normalize, threads = threads)(mat)
   features_df <- tibble::tibble(
     feature = rownames(mat),
     score = matrix_stats(mat, row_stats = "variance", threads = threads)$row_stats["variance",]
@@ -88,8 +87,7 @@ select_features_variance <- function(
 select_features_dispersion <- function(
   mat, num_feats = 0.05, 
   normalize = NULL,
-  threads = 1L,
-  verbose = FALSE
+  threads = 1L
 ) {
   assert_greater_than_zero(num_feats)
   assert_len(num_feats, 1)
@@ -102,7 +100,7 @@ select_features_dispersion <- function(
   num_feats <- min(max(num_feats, 0), nrow(mat))
   if (!is(mat, "IterableMatrix") && canCoerce(mat, "IterableMatrix")) mat <- as(mat, "IterableMatrix")
   assert_is(mat, "IterableMatrix")
-  if (!is.null(normalize)) mat <- partial_apply(normalize, threads = threads, verbose = verbose)(mat)
+  if (!is.null(normalize)) mat <- partial_apply(normalize, threads = threads)(mat)
   mat_stats <- matrix_stats(mat, row_stats = "variance", threads = threads)
   features_df <- tibble::tibble(
     feature = rownames(mat),
@@ -117,7 +115,7 @@ select_features_dispersion <- function(
 #' @returns
 #' - `select_features_accessibility`: \eqn{\mathrm{Score}(x_i) = \sum_{j=1}^{n} \bigl({x}_{ij}^{\mathrm{binarized}})\bigr)},  where \eqn{x_{ij}^{\mathrm{binarized}}} is defined as \eqn{1} if \eqn{x_{ij} != 0} and \eqn{0} otherwise.
 #' @export
-select_features_accessibility <- function(mat, num_feats = 0.05, normalize = NULL, threads = 1L, verbose = FALSE) {
+select_features_accessibility <- function(mat, num_feats = 0.05, normalize = NULL, threads = 1L) {
   assert_greater_than_zero(num_feats)
   assert_is(num_feats, "numeric")
   if (rlang::is_missing(mat)) return(create_partial())
@@ -127,7 +125,7 @@ select_features_accessibility <- function(mat, num_feats = 0.05, normalize = NUL
     rlang::warn(add_timestamp(sprintf("Number of features asked for (%s) is greater than the number of features in the matrix (%s).", num_feats, nrow(mat))))
   }
   num_feats <- min(max(num_feats, 0), nrow(mat))
-  if (!is.null(normalize)) mat <- partial_apply(normalize, threads = threads, verbose = verbose)(mat)
+  if (!is.null(normalize)) mat <- partial_apply(normalize, threads = threads)(mat)
   # get the sum of each feature, binarized
   features_df <- tibble::tibble(
     feature = rownames(mat),
@@ -154,7 +152,7 @@ select_features_accessibility <- function(mat, num_feats = 0.05, normalize = NUL
 #' @export
 select_features_binned_dispersion <- function(
   mat, num_feats = 0.05, n_bins = 20,
-  threads = 1L, verbose = FALSE
+  threads = 1L
 ) {
   assert_greater_than_zero(num_feats)
   assert_len(num_feats, 1)
