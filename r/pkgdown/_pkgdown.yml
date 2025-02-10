@@ -176,3 +176,7 @@ reference:
   - discrete_palette
   - collect_features
   - rotate_x_labels
+  
+- title: "Data"
+- contents:
+  - get_demo_mat

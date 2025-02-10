@@ -30,6 +30,7 @@ Imports:
     Matrix,
     Rcpp,
     rlang,
+    tools,
     vctrs,
     lifecycle,
     stringr,
@@ -50,5 +51,5 @@ Suggests:
     matrixStats,
     igraph
 Depends: 
-    R (>= 3.5.0)
+    R (>= 4.0.0)
 Config/Needs/website: pkgdown, devtools, uwot, irlba, RcppHNSW, igraph, BiocManager, bioc::BSgenome.Hsapiens.UCSC.hg38, github::GreenleafLab/motifmatchr, github::GreenleafLab/chromVARmotifs
