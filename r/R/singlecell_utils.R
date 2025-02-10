@@ -417,6 +417,7 @@ IterativeLSI <- function(
   cluster_method = cluster_graph_leiden,
   threads = 1L, verbose = FALSE
 ) {
+  assert_has_package("RcppHNSW")
   assert_is_mat(mat)
   assert_true(n_iterations > 0)
   assert_is_wholenumber(n_iterations)

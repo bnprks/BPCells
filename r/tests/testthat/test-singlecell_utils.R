@@ -234,6 +234,7 @@ test_that("LSI works", {
 })
 
 test_that("Iterative LSI works", {
+  skip_if_not_installed("RcppHNSW")
   mat <- matrix(data = runif(50000, 0, 1), nrow=500, ncol = 100) %>% as("dgCMatrix") %>% as("IterableMatrix")
   rownames(mat) <- paste0("feat", seq_len(nrow(mat)))
   colnames(mat) <- paste0("cell", seq_len(ncol(mat)))

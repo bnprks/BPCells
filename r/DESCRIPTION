@@ -43,13 +43,13 @@ Imports:
     scattermore,
     ggrepel,
     RColorBrewer,
-    hexbin,
-    RcppHNSW
+    hexbin
 Suggests:
     IRanges,
     GenomicRanges,
     matrixStats,
-    igraph
+    igraph,
+    RcppHNSW
 Depends: 
     R (>= 3.5.0)
 Config/Needs/website: pkgdown, devtools, uwot, irlba, RcppHNSW, igraph, BiocManager, bioc::BSgenome.Hsapiens.UCSC.hg38, github::GreenleafLab/motifmatchr, github::GreenleafLab/chromVARmotifs
