@@ -23,7 +23,7 @@ generate_dense_matrix <- function(nrow, ncol) {
 
 test_that("select_features works general case", {
   m1 <- generate_sparse_matrix(100, 50) %>% as("IterableMatrix")
-  for (fn in c("select_features_variance", "select_features_dispersion", "select_features_accessibility")) {
+  for (fn in c("select_features_variance", "select_features_dispersion", "select_features_mean")) {
     res <- do.call(fn, list(m1, num_feats = 5))
     expect_equal(nrow(res), nrow(m1)) # Check that dataframe has correct features we're expecting
     expect_equal(sum(res$highly_variable), 5) # Only 10 features marked as highly variable
@@ -238,7 +238,7 @@ test_that("Iterative LSI works", {
   mat <- matrix(data = runif(50000, 0, 1), nrow=500, ncol = 100) %>% as("dgCMatrix") %>% as("IterableMatrix")
   rownames(mat) <- paste0("feat", seq_len(nrow(mat)))
   colnames(mat) <- paste0("cell", seq_len(ncol(mat)))
-  lsi_res_obj <- IterativeLSI(mat, n_iterations = 2, lsi_method = LSI(n_dimensions = 10))
+  lsi_res_obj <- expect_no_error(IterativeLSI(mat, n_iterations = 2, lsi_method = LSI(n_dimensions = 10)))
   lsi_res_proj <- project(lsi_res_obj, mat)
   lsi_res_embedding <- lsi_res_obj$cell_embeddings
   expect_equal(ncol(lsi_res_embedding), ncol(mat))

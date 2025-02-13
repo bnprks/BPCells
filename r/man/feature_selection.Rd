@@ -3,7 +3,7 @@
 \name{select_features_variance}
 \alias{select_features_variance}
 \alias{select_features_dispersion}
-\alias{select_features_accessibility}
+\alias{select_features_mean}
 \alias{select_features_binned_dispersion}
 \title{Feature selection functions}
 \usage{
@@ -16,12 +16,7 @@ select_features_dispersion(
   threads = 1L
 )
 
-select_features_accessibility(
-  mat,
-  num_feats = 0.05,
-  normalize = NULL,
-  threads = 1L
-)
+select_features_mean(mat, num_feats = 0.05, normalize = NULL, threads = 1L)
 
 select_features_binned_dispersion(
   mat,
@@ -63,7 +58,7 @@ each feature \eqn{x_i} as follows:
 }
 
 \itemize{
-\item \code{select_features_accessibility}: \eqn{\mathrm{Score}(x_i) = \sum_{j=1}^{n} \bigl({x}_{ij}^{\mathrm{binarized}})\bigr)},  where \eqn{x_{ij}^{\mathrm{binarized}}} is defined as \eqn{1} if \eqn{x_{ij} != 0} and \eqn{0} otherwise.
+\item \code{select_features_mean}: \eqn{\mathrm{Score}(x_i) = \frac{\sum_{j=1}^{n}\bigl(x_{ij}\bigr)}{n}}
 }
 
 \itemize{
@@ -72,8 +67,8 @@ each feature \eqn{x_i} as follows:
 }
 \description{
 Apply a feature selection method to a non-normalized \verb{(features x cells)} matrix.  We recommend using counts matrices as input and
-apply any normalizations prior to feature selection via the normalize argument (if available).  The output of these functions is a dataframe that has columns that
-at the minimum include the feature names and a score for each feature.
+apply any normalizations prior to feature selection via the normalize argument (if available).  Instead of directly subsetting the input matrix,
+an output dataframe is provided indicating which features are highly variable, and the scoring of each feature.
 }
 \details{
 \code{select_features_binned_dispersion} implements the approach from Satija et al. 2015:
@@ -83,7 +78,7 @@ at the minimum include the feature names and a score for each feature.
 \item Z-score normalize dispersion within each bin, and select highest normalized dispersion across all bins
 }
 
-If the number of features within a bin is equal to 1, then dhe mean dispersion for that bin is set to 1.
+If the number of features within a bin is equal to 1, then the mean dispersion for that bin is set to 1.
 
 This should be equivalent to \code{Seurat::FindVariableFeatures()} with \code{selection.method="mean.var.plot"}
 and \code{scanpy.pp.highly_variable_genes()} with \code{flavor="seurat"}.
@@ -93,15 +88,15 @@ set.seed(12345)
 mat <- matrix(rpois(4*5, lambda=1), nrow=4, ncol=5)
 rownames(mat) <- paste0("gene", seq_len(nrow(mat)))
 mat
-
+mat <- as(mat, "IterableMatrix")
 select_features_variance(
     mat, 
     num_feats=2, 
     normalize=normalize_log
 )
 
-# Because of how the BPCells normalize functions behave when the matrix 
-# argument is missing, we can also customize the normalization parameters:
+# Because of how the BPCells `normalize` functions behave when the matrix 
+# argument is missing, we can also customize the normalization parameters using partial arguments:
 select_features_variance(
     mat,
     num_feats=2,

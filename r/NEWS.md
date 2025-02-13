@@ -12,7 +12,7 @@ Contributions welcome :)
 - Add `write_matrix_anndata_hdf5_dense()` which allows writing matrices in AnnData's dense format, most commonly used for `obsm` or `varm` matrices. (Thanks to @ycli1995 for pull request #166)
 - Add normalization helper functions `normalize_log()` and `normalize_tfidf()` (pull request #168)
 - Add functions `normalize_tfidf()` and `normalize_log()`, which allow for easy normalization of iterable matrices using TF-IDF or log1p(pull request #189)
-- Add feature selection functions `select_features_variance()`, and `select_features_{dispersion,accessibility,binned_dispersion}()`, with parameterization for normalization steps, and number of variable features (pull request #189)
+- Add feature selection functions `select_features_variance()`, and `select_features_{dispersion,mean,binned_dispersion}()`, with parameterization for normalization steps, and number of variable features (pull request #189)
 - Add `LSI()` and `IterativeLSI()` dimensionality functions to perform latent semantic indexing on a matrix (pull request #189).
 
 ## Improvements

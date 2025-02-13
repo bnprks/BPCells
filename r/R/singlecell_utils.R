@@ -14,8 +14,8 @@
 #' Feature selection functions
 #' 
 #' Apply a feature selection method to a non-normalized `(features x cells)` matrix.  We recommend using counts matrices as input and 
-#' apply any normalizations prior to feature selection via the normalize argument (if available).  The output of these functions is a dataframe that has columns that
-#' at the minimum include the feature names and a score for each feature. 
+#' apply any normalizations prior to feature selection via the normalize argument (if available).  Instead of directly subsetting the input matrix,
+#' an output dataframe is provided indicating which features are highly variable, and the scoring of each feature.
 #' @rdname feature_selection
 #' @param mat (IterableMatrix) dimensions features x cells
 #' @param num_feats (float) Number of features to mark as highly_variable. If 0 < num_feats < 1, then interpret it as a fraction of features.
@@ -38,15 +38,15 @@
 #' mat <- matrix(rpois(4*5, lambda=1), nrow=4, ncol=5)
 #' rownames(mat) <- paste0("gene", seq_len(nrow(mat)))
 #' mat
-#'
+#' mat <- as(mat, "IterableMatrix")
 #' select_features_variance(
 #'     mat, 
 #'     num_feats=2, 
 #'     normalize=normalize_log
 #' )
 #' 
-#' # Because of how the BPCells normalize functions behave when the matrix 
-#' # argument is missing, we can also customize the normalization parameters:
+#' # Because of how the BPCells `normalize` functions behave when the matrix 
+#' # argument is missing, we can also customize the normalization parameters using partial arguments:
 #' select_features_variance(
 #'     mat,
 #'     num_feats=2,
@@ -61,7 +61,7 @@ select_features_variance <- function(
 ) {
   assert_greater_than_zero(num_feats)
   assert_len(num_feats, 1)
-  assert_is(num_feats, "numeric")
+  assert_is_wholenumber(threads)
   if (rlang::is_missing(mat)) return(create_partial())
   assert_is_mat(mat)
   
@@ -82,7 +82,7 @@ select_features_variance <- function(
 
 #' @rdname feature_selection
 #' @returns
-#'  - `select_features_dispersion`: \eqn{\mathrm{Score}(x_i) = \frac{\frac{1}{n - 1} \sum_{j=1}^{n} \bigl(x_{ij} - \bar{x}_i\bigr)^2}{\bar{x}_i}}
+#' - `select_features_dispersion`: \eqn{\mathrm{Score}(x_i) = \frac{\frac{1}{n - 1} \sum_{j=1}^{n} \bigl(x_{ij} - \bar{x}_i\bigr)^2}{\bar{x}_i}}
 #' @export
 select_features_dispersion <- function(
   mat, num_feats = 0.05, 
@@ -91,7 +91,7 @@ select_features_dispersion <- function(
 ) {
   assert_greater_than_zero(num_feats)
   assert_len(num_feats, 1)
-  assert_is(num_feats, "numeric")
+  assert_is_wholenumber(threads)
   if (rlang::is_missing(mat)) return(create_partial())
   if (num_feats < 1 && num_feats > 0) num_feats <- floor(nrow(mat) * num_feats)
   if (min(max(num_feats, 0), nrow(mat)) != num_feats) {
@@ -110,14 +110,13 @@ select_features_dispersion <- function(
   return(features_df)
 }
 
-#where \eqn{x_ij} = 1 & \text{if } x_{ij} == 0 \\ 0 & \text{otherwise} \end{cases}
 #' @rdname feature_selection
 #' @returns
-#' - `select_features_accessibility`: \eqn{\mathrm{Score}(x_i) = \sum_{j=1}^{n} \bigl({x}_{ij}^{\mathrm{binarized}})\bigr)},  where \eqn{x_{ij}^{\mathrm{binarized}}} is defined as \eqn{1} if \eqn{x_{ij} != 0} and \eqn{0} otherwise.
+#' - `select_features_mean`: \eqn{\mathrm{Score}(x_i) = \frac{\sum_{j=1}^{n}\bigl(x_{ij}\bigr)}{n}}
 #' @export
-select_features_accessibility <- function(mat, num_feats = 0.05, normalize = NULL, threads = 1L) {
+select_features_mean <- function(mat, num_feats = 0.05, normalize = NULL, threads = 1L) {
   assert_greater_than_zero(num_feats)
-  assert_is(num_feats, "numeric")
+  assert_is_wholenumber(threads)
   if (rlang::is_missing(mat)) return(create_partial())
   assert_is_mat(mat)
   if (num_feats < 1 && num_feats > 0) num_feats <- floor(nrow(mat) * num_feats)
@@ -129,7 +128,7 @@ select_features_accessibility <- function(mat, num_feats = 0.05, normalize = NUL
   # get the sum of each feature, binarized
   features_df <- tibble::tibble(
     feature = rownames(mat),
-    score = matrix_stats(mat, row_stats = "nonzero", threads = threads)$row_stats["nonzero", ]
+    score = matrix_stats(mat, row_stats = "mean", threads = threads)$row_stats["mean", ]
   ) %>%
     dplyr::mutate(highly_variable = dplyr::row_number(dplyr::desc(score)) <= num_feats)
   return(features_df)
@@ -145,7 +144,7 @@ select_features_accessibility <- function(mat, num_feats = 0.05, normalize = NUL
 #'  2. Calculate dispersion of each feature as `log(variance / mean)`
 #'  3. Z-score normalize dispersion within each bin, and select highest normalized dispersion across all bins
 #' 
-#' If the number of features within a bin is equal to 1, then dhe mean dispersion for that bin is set to 1.
+#' If the number of features within a bin is equal to 1, then the mean dispersion for that bin is set to 1.
 #' 
 #' This should be equivalent to `Seurat::FindVariableFeatures()` with `selection.method="mean.var.plot"`
 #'  and `scanpy.pp.highly_variable_genes()` with `flavor="seurat"`.
@@ -159,6 +158,7 @@ select_features_binned_dispersion <- function(
   assert_is_wholenumber(n_bins)
   assert_len(n_bins, 1)
   assert_greater_than_zero(n_bins)
+  assert_is_wholenumber(threads)
   if (rlang::is_missing(mat)) return(create_partial())
   assert_is_mat(mat)
   if (num_feats < 1 && num_feats > 0) num_feats <- floor(nrow(mat) * num_feats)
@@ -359,52 +359,56 @@ project.LSI <- function(x, mat, threads = 1L, ...) {
 
 #' Run iterative LSI on a matrix.
 #' 
-#' Given a `(features x cells)` counts matrix, perform IterativeLSI to create a latent space representation of the matrix of shape `(n_dimensions, ncol(mat))`.  This uses the method described in [ArchR](https://doi.org/10.1038/s41588-021-00790-6) (Granja et al; 2019). 
-#' See details for more specific information.  Returns a DimReduction object, which allows for projection of new matrices with the same features into the same latent space.
+#' Given a `(features x cells)` counts matrix, perform IterativeLSI to create a latent space representation of the matrix of shape `(n_dimensions, ncol(mat))`.  
+#' This uses the method described in [ArchR](https://doi.org/10.1038/s41588-021-00790-6) (Granja et al; 2019). 
+#' See details for more specific information.  Returns a DimReduction object, which allows for projection of matrices with the same features into the same latent space.
 #'
 #' @param mat (IterableMatrix) Counts matrix of shape `(features x cells)`.
 #' @param n_iterations (int) The number of LSI iterations to perform.
-#' @param first_feature_selection_method (function) Method to use for selecting features for the first iteration. Current builtin options are `select_features_variance`, `select_features_dispersion`, `select_features_accessibility`, `select_features_binned_dispersion`
-#' @param feature_selection_method (function) Method to use for selecting features for each iteration after the first. Current builtin options are `select_features_variance`, `select_features_dispersion`, `select_features_accessibility`, `select_features_binned_dispersion`
-#' @param knn_method (function) Method to use for obtaining a kNN matrix for determining clusters assignments of cells.  Current builtin options are `knn_hnsw()` and `knn_annoy()`.  The 
-#' user can pass in partial parameters to the knn method, such as by passing `knn_hnsw(ef = 500, k = 12)`
-#' @param cluster_method (function) Method to use for clustering a kNN matrix. Current builtin options are `cluster_graph_{leiden, louvain, seurat}()`
-#' @param lsi_method (function) Method to use for LSI.  Only `LSI` is allowed.  The user can pass in partial parameters to `LSI` to customize the LSI method, such as by passing `LSI(n_dimensions = 30, corr_cutoff = 0.5)`.
+#' @param first_feature_selection_method (function) Method to use for selecting features for the first iteration. 
+#' Current builtin options are `select_features_variance`, `select_features_dispersion`, `select_features_mean`, `select_features_binned_dispersion`
+#' @param feature_selection_method (function) Method to use for selecting features for each iteration after the first. 
+#' Current builtin options are `select_features_variance`, `select_features_dispersion`, `select_features_mean`, `select_features_binned_dispersion`
+#' @param cluster_method (function) Method to use for clustering a kNN matrix. 
+#' Current builtin options are `cluster_graph_{leiden, louvain, seurat}()`.
+#' The user can pass in partial parameters to the cluster method, such as by passing 
+#' `cluster_graph_leiden(resolution = 0.5, knn_mat_method = knn_hnsw(ef = 500, k = 12), knn_graph_method = knn_to_snn_graph(min_val = 0.1))`
+#' @param lsi_method (function) Method to use for LSI.  Only `LSI` is allowed.  The user can pass in partial parameters to `LSI` to customize the LSI method, 
+#' such as by passing `LSI(n_dimensions = 30, corr_cutoff = 0.5)`.
 #' @return An object of class `c("IterativeLSI", "DimReduction")` with the following attributes:
 #' - `cell_embeddings`: The projected data
 #' - `fitted_params`: A tibble of the parameters used for iterative LSI, with rows as iterations. Columns include the following:
-#'  - `first_feature_selection_method`: The method used for selecting features for the first iteration
-#'  - `lsi_method`: The method used for LSI
-#'  - `knn_method`: The method used for obtaining a kNN matrix
-#'  - `cluster_method`: The method used for clustering
-#'  - `feature_means`: The means of the features used for tf-idf normalization
-#'  - `iterations`: The number of LSI iterations ran
-#'  - `iter_info`: A tibble with the following columns:
-#'    - `iteration`: The iteration number
-#'    - `feature_names`: The names of the features used for the iteration
-#'    - `lsi_results`: The results of LSI for the iteration.  This follows the same structure as the `fitted_params` attribute of the `LSI` object, but information such as the `v` and `d` matrices are removed.
-#'    - `clusters`: The clusters for the iteration.  This is blank for the first iteration
+#'    - `first_feature_selection_method`: The method used for selecting features for the first iteration
+#'    - `lsi_method`: The method used for LSI
+#'    - `cluster_method`: The method used for clustering
+#'    - `feature_means`: The means of the features used for tf-idf normalization
+#'    - `iterations`: The number of LSI iterations ran
+#'    - `iter_info`: A tibble with the following columns:
+#'        - `iteration`: The iteration number
+#'        - `feature_names`: The names of the features used for the iteration
+#'        - `lsi_results`: The results of LSI for the iteration.  This follows the same structure as the `fitted_params` attribute of the `LSI` object, but information such as the `v` and `d` matrices are removed.
+#'        - `clusters`: The clusters for the iteration.  This is blank for the first iteration
 #' @details
 #' The iterative LSI method is as follows:
 #' - First iteration:
 #'    - Select features based on the `first_feature_selection_method` argument
 #'    - Perform LSI on the selected features
 #'    - If `n_iterations` is 1, return the projected data from the first PCA projection
-#'    - Else, turn the LSI results into a kNN matrix using `knn_method`, then cluster the kNN matrix using `cluster_method`
+#'    - Else, cluster the LSI results using `cluster_method`
 #' - For each subsequent iteration:
 #'    - Pseudobulk the clusters and select the top features based on the variance of the pseudobulked clusters
 #'    - Perform LSI on the selected features
 #'    - If this is the final iteration, return the projected data from this PCA projection
-#'    - Else, turn the LSI results into a kNN matrix using `knn_method`, then cluster the kNN matrix using `cluster_method`
+#'    - Else, cluster the LSI results using `cluster_method`
 #' 
-#' There are some minor differences when compared to the ArchR implementation.  Firstly, the ArchR implementation uses a different method for selecting features in the first iteration.  ArchR utilizes top accessibility as the default, while this implementation uses binned dispersion as the default.
-#' `select_features_accessibility()` can be passed in for the `first_feature_selection_method` argument to mimic the ArchR implementation.
+#' There are some minor differences when compared to the ArchR implementation.  Firstly, the ArchR implementation uses a different method for selecting features in the first iteration.  
+#' `select_features_mean(normalize = binarize)` can be passed in for the `first_feature_selection_method` argument to mimic the ArchR implementation.
 #' 
 #' Secondly, the ArchR implementation calculates LSI during non-terminal iterations using a default subset of 10000 cells.  ArchR does this to prevent a memory bottleneck,
 #' which BPCells does not encounter even with a non-subsetted matrix.
 #' @seealso `LSI()` `DimReduction()` `knn_hnsw()` `knn_annoy()` 
 #' `cluster_graph_leiden()` `cluster_graph_louvain()` `cluster_graph_seurat()` `select_features_variance()` `select_features_dispersion()` 
-#' `select_features_accessibility()` `select_features_binned_dispersion()`
+#' `select_features_mean()` `select_features_binned_dispersion()`
 #' @inheritParams LSI
 #' @export
 IterativeLSI <- function(
@@ -413,20 +417,19 @@ IterativeLSI <- function(
   first_feature_selection_method = select_features_binned_dispersion,
   feature_selection_method = select_features_dispersion,
   lsi_method = LSI,
-  knn_method = knn_hnsw,
   cluster_method = cluster_graph_leiden,
   threads = 1L, verbose = FALSE
 ) {
   assert_has_package("RcppHNSW")
   assert_is_mat(mat)
-  assert_true(n_iterations > 0)
+  assert_greater_than_zero(n_iterations)
   assert_is_wholenumber(n_iterations)
   assert_is_wholenumber(threads)
+  assert_is(verbose, "logical")
   
-  fitted_params = list(
+  fitted_params <- list(
     first_feature_selection_method = first_feature_selection_method,
     lsi_method = lsi_method,
-    knn_method = knn_method,
     cluster_method = cluster_method,
     feature_means = matrix_stats(mat, row_stats = "mean", threads = threads)$row_stats["mean",],
     iterations = n_iterations,
@@ -471,7 +474,7 @@ IterativeLSI <- function(
     if (i == n_iterations) break 
     # cluster the LSI results
     if (verbose) log_progress("Clustering LSI results")
-    clustering_res <- t(lsi_res_obj$cell_embeddings) %>% partial_apply(knn_method, threads = threads)()  %>% knn_to_snn_graph() %>% cluster_method()
+    clustering_res <- t(lsi_res_obj$cell_embeddings) %>% partial_apply(cluster_method, threads = threads)()
     fitted_params$iter_info$clusters[[i]] <- clustering_res
     # pseudobulk and pass onto next iteration
     if (verbose) log_progress("Pseudobulking matrix")

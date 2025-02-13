@@ -10,7 +10,6 @@ IterativeLSI(
   first_feature_selection_method = select_features_binned_dispersion,
   feature_selection_method = select_features_dispersion,
   lsi_method = LSI,
-  knn_method = knn_hnsw,
   cluster_method = cluster_graph_leiden,
   threads = 1L,
   verbose = FALSE
@@ -21,16 +20,19 @@ IterativeLSI(
 
 \item{n_iterations}{(int) The number of LSI iterations to perform.}
 
-\item{first_feature_selection_method}{(function) Method to use for selecting features for the first iteration. Current builtin options are \code{select_features_variance}, \code{select_features_dispersion}, \code{select_features_accessibility}, \code{select_features_binned_dispersion}}
+\item{first_feature_selection_method}{(function) Method to use for selecting features for the first iteration.
+Current builtin options are \code{select_features_variance}, \code{select_features_dispersion}, \code{select_features_mean}, \code{select_features_binned_dispersion}}
 
-\item{feature_selection_method}{(function) Method to use for selecting features for each iteration after the first. Current builtin options are \code{select_features_variance}, \code{select_features_dispersion}, \code{select_features_accessibility}, \code{select_features_binned_dispersion}}
+\item{feature_selection_method}{(function) Method to use for selecting features for each iteration after the first.
+Current builtin options are \code{select_features_variance}, \code{select_features_dispersion}, \code{select_features_mean}, \code{select_features_binned_dispersion}}
 
-\item{lsi_method}{(function) Method to use for LSI.  Only \code{LSI} is allowed.  The user can pass in partial parameters to \code{LSI} to customize the LSI method, such as by passing \code{LSI(n_dimensions = 30, corr_cutoff = 0.5)}.}
+\item{lsi_method}{(function) Method to use for LSI.  Only \code{LSI} is allowed.  The user can pass in partial parameters to \code{LSI} to customize the LSI method,
+such as by passing \code{LSI(n_dimensions = 30, corr_cutoff = 0.5)}.}
 
-\item{knn_method}{(function) Method to use for obtaining a kNN matrix for determining clusters assignments of cells.  Current builtin options are \code{knn_hnsw()} and \code{knn_annoy()}.  The
-user can pass in partial parameters to the knn method, such as by passing \code{knn_hnsw(ef = 500, k = 12)}}
-
-\item{cluster_method}{(function) Method to use for clustering a kNN matrix. Current builtin options are \verb{cluster_graph_\{leiden, louvain, seurat\}()}}
+\item{cluster_method}{(function) Method to use for clustering a kNN matrix.
+Current builtin options are \verb{cluster_graph_\{leiden, louvain, seurat\}()}.
+The user can pass in partial parameters to the cluster method, such as by passing
+\code{cluster_graph_leiden(resolution = 0.5, knn_mat_method = knn_hnsw(ef = 500, k = 12), knn_graph_method = knn_to_snn_graph(min_val = 0.1))}}
 
 \item{threads}{(integer) Number of threads to use.}
 }
@@ -39,9 +41,9 @@ An object of class \code{c("IterativeLSI", "DimReduction")} with the following a
 \itemize{
 \item \code{cell_embeddings}: The projected data
 \item \code{fitted_params}: A tibble of the parameters used for iterative LSI, with rows as iterations. Columns include the following:
+\itemize{
 \item \code{first_feature_selection_method}: The method used for selecting features for the first iteration
 \item \code{lsi_method}: The method used for LSI
-\item \code{knn_method}: The method used for obtaining a kNN matrix
 \item \code{cluster_method}: The method used for clustering
 \item \code{feature_means}: The means of the features used for tf-idf normalization
 \item \code{iterations}: The number of LSI iterations ran
@@ -54,9 +56,11 @@ An object of class \code{c("IterativeLSI", "DimReduction")} with the following a
 }
 }
 }
+}
 \description{
-Given a \verb{(features x cells)} counts matrix, perform IterativeLSI to create a latent space representation of the matrix of shape \verb{(n_dimensions, ncol(mat))}.  This uses the method described in \href{https://doi.org/10.1038/s41588-021-00790-6}{ArchR} (Granja et al; 2019).
-See details for more specific information.  Returns a DimReduction object, which allows for projection of new matrices with the same features into the same latent space.
+Given a \verb{(features x cells)} counts matrix, perform IterativeLSI to create a latent space representation of the matrix of shape \verb{(n_dimensions, ncol(mat))}.
+This uses the method described in \href{https://doi.org/10.1038/s41588-021-00790-6}{ArchR} (Granja et al; 2019).
+See details for more specific information.  Returns a DimReduction object, which allows for projection of matrices with the same features into the same latent space.
 }
 \details{
 The iterative LSI method is as follows:
@@ -66,19 +70,19 @@ The iterative LSI method is as follows:
 \item Select features based on the \code{first_feature_selection_method} argument
 \item Perform LSI on the selected features
 \item If \code{n_iterations} is 1, return the projected data from the first PCA projection
-\item Else, turn the LSI results into a kNN matrix using \code{knn_method}, then cluster the kNN matrix using \code{cluster_method}
+\item Else, cluster the LSI results using \code{cluster_method}
 }
 \item For each subsequent iteration:
 \itemize{
 \item Pseudobulk the clusters and select the top features based on the variance of the pseudobulked clusters
 \item Perform LSI on the selected features
 \item If this is the final iteration, return the projected data from this PCA projection
-\item Else, turn the LSI results into a kNN matrix using \code{knn_method}, then cluster the kNN matrix using \code{cluster_method}
+\item Else, cluster the LSI results using \code{cluster_method}
 }
 }
 
-There are some minor differences when compared to the ArchR implementation.  Firstly, the ArchR implementation uses a different method for selecting features in the first iteration.  ArchR utilizes top accessibility as the default, while this implementation uses binned dispersion as the default.
-\code{select_features_accessibility()} can be passed in for the \code{first_feature_selection_method} argument to mimic the ArchR implementation.
+There are some minor differences when compared to the ArchR implementation.  Firstly, the ArchR implementation uses a different method for selecting features in the first iteration.
+\code{select_features_mean(normalize = binarize)} can be passed in for the \code{first_feature_selection_method} argument to mimic the ArchR implementation.
 
 Secondly, the ArchR implementation calculates LSI during non-terminal iterations using a default subset of 10000 cells.  ArchR does this to prevent a memory bottleneck,
 which BPCells does not encounter even with a non-subsetted matrix.
@@ -86,5 +90,5 @@ which BPCells does not encounter even with a non-subsetted matrix.
 \seealso{
 \code{LSI()} \code{DimReduction()} \code{knn_hnsw()} \code{knn_annoy()}
 \code{cluster_graph_leiden()} \code{cluster_graph_louvain()} \code{cluster_graph_seurat()} \code{select_features_variance()} \code{select_features_dispersion()}
-\code{select_features_accessibility()} \code{select_features_binned_dispersion()}
+\code{select_features_mean()} \code{select_features_binned_dispersion()}
 }
