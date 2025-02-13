@@ -6,16 +6,27 @@
 \alias{knn_to_geodesic_graph}
 \title{K Nearest Neighbor (KNN) Graph}
 \usage{
-knn_to_graph(knn, use_weights = FALSE, self_loops = TRUE)
+knn_to_graph(
+  knn,
+  use_weights = FALSE,
+  self_loops = TRUE,
+  knn_mat_method = knn_annoy
+)
 
 knn_to_snn_graph(
   knn,
   min_val = 1/15,
   self_loops = FALSE,
-  return_type = c("matrix", "list")
+  return_type = c("matrix", "list"),
+  knn_mat_method = knn_annoy
 )
 
-knn_to_geodesic_graph(knn, return_type = c("matrix", "list"), threads = 0L)
+knn_to_geodesic_graph(
+  knn,
+  return_type = c("matrix", "list"),
+  threads = 0L,
+  knn_mat_method = knn_annoy
+)
 }
 \arguments{
 \item{knn}{List of 2 matrices -- idx for cell x K neighbor indices,
@@ -24,6 +35,9 @@ dist for cell x K neighbor distances}
 \item{use_weights}{boolean for whether to replace all distance weights with 1}
 
 \item{self_loops}{Whether to allow self-loops in the output graph}
+
+\item{knn_mat_method}{(function) if knn is not a knn matrix, this function will attempt to convert it to one.
+Must be a (optionally partialized) version of \code{knn_hnsw()} or \code{knn_annoy()}.  Ignored if knn is already a knn matrix.}
 
 \item{min_val}{minimum jaccard index between neighbors. Values below this will
 round to 0}

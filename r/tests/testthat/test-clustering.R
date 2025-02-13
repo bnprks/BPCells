@@ -19,11 +19,11 @@ test_that("C++ SNN calculation works",{
                 neighbor_sim[i,] <- sample.int(cells, k)
             }
         }
-
+        input <- list(idx = neighbor_sim)
+        attr(input, "mat_type") <- "knn"
         min_val <- 1/15
-        snn <- knn_to_snn_graph(list(idx=neighbor_sim), min_val=min_val, self_loops=TRUE)
-
-        mat <- knn_to_graph(list(idx=neighbor_sim), use_weights=FALSE)
+        snn <- knn_to_snn_graph(input, min_val=min_val, self_loops=TRUE)
+        mat <- knn_to_graph(input, use_weights=FALSE)
 
         mat <- mat %*% t(mat)
         mat <- mat / (2 * k - mat)
@@ -31,13 +31,16 @@ test_that("C++ SNN calculation works",{
         # Prune the explicit 0 entries from storage
         mat <- Matrix::drop0(mat) 
         mat <- Matrix::tril(mat)
+        attr(snn, "mat_type") <- NULL
         expect_identical(
             snn,
             as(mat, "dgCMatrix")
         )
-        snn2 <- knn_to_snn_graph(list(idx=neighbor_sim), min_val=min_val, self_loops=FALSE)
+        
+        snn2 <- knn_to_snn_graph(input, min_val=min_val, self_loops=FALSE)
         diag(mat) <- 0
         mat <- Matrix::drop0(mat)
+        attr(snn2, "mat_type") <- NULL
         expect_identical(
             snn2,
             as(mat, "dgCMatrix")

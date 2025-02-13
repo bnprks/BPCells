@@ -10,13 +10,27 @@ cluster_graph_leiden(
   snn,
   resolution = 1,
   objective_function = c("modularity", "CPM"),
+  knn_mat_method = knn_annoy,
+  knn_graph_method = knn_to_geodesic_graph,
   seed = 12531,
   ...
 )
 
-cluster_graph_louvain(snn, resolution = 1, seed = 12531)
+cluster_graph_louvain(
+  snn,
+  resolution = 1,
+  knn_mat_method = knn_annoy,
+  knn_graph_method = knn_to_geodesic_graph,
+  seed = 12531
+)
 
-cluster_graph_seurat(snn, resolution = 0.8, ...)
+cluster_graph_seurat(
+  snn,
+  resolution = 0.8,
+  knn_mat_method = knn_annoy,
+  knn_graph_method = knn_to_geodesic_graph,
+  ...
+)
 }
 \arguments{
 \item{snn}{Symmetric adjacency matrix (dgCMatrix) output from e.g. \code{knn_to_snn_graph()} or \code{knn_to_geodesic_graph()}. Only the lower triangle is used}
@@ -25,6 +39,13 @@ cluster_graph_seurat(snn, resolution = 0.8, ...)
 
 \item{objective_function}{Graph statistic to optimize during clustering. Modularity is the default as it keeps resolution independent of dataset size (see details below).
 For the meaning of each option, see \code{igraph::cluster_leiden()}.}
+
+\item{knn_mat_method}{(function) if snn represents a regular non-knn matrix, this function will attempt to convert it a knn matrix.
+Must be a (optionally partialized) version of \code{knn_hnsw()} or \code{knn_annoy()}.  Ignored if knn is already a knn matrix.}
+
+\item{knn_graph_method}{(function) if snn represents a knn matrix, this function will attempt to convert it to a graph matrix.
+Must be a (optionally partialized) version of \code{knn_to_graph()}, \code{knn_to_snn_graph()} or \code{knn_to_geodesic_graph()}.
+Ignored if snn is already a graph matrix.}
 
 \item{seed}{Random seed for clustering initialization}
 
