@@ -27,4 +27,19 @@ are set to one; otherwise, set to zero. When strict_inequality
 is set to FALSE, element values greater than or equal to the
 threshold are set to one. As an alternative, the \code{<}, \code{<=}, \code{>},
 and \code{>=} operators are also supported.
+
+If the \code{mat} argument is missing, returns a "partial" function: a copy of the original function but with most arguments pre-defined.
+This can be used to customize \code{normalize} parameters in other single cell functions in BPCells (e.g. \code{select_features_mean()}).
+}
+\examples{
+set.seed(12345)
+mat <- matrix(rpois(4*5, lambda=1), nrow=4, ncol=5)
+mat
+mat <- as(mat, "IterableMatrix")
+mat_binarized <- binarize(mat, threshold=1)
+mat_binarized
+as(mat_binarized, "dgCMatrix")
+
+# We can also call as a partialized function
+binarize(threshold = 0.1)(mat)
 }

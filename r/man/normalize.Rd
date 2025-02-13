@@ -38,7 +38,7 @@ Apply standard normalizations to a \verb{(features x cells)} counts matrix.
 \strong{Passing to \code{normalize} parameters with non-default arguments}
 
 If the \code{mat} argument is missing, returns a "partial" function: a copy of the original function but with most arguments pre-defined.
-This can be used to customize \code{normalize} parameters in other single cell functions in BPCells (e.g. \code{select_features_accessibility()}).
+This can be used to customize \code{normalize} parameters in other single cell functions in BPCells (e.g. \code{select_features_mean()}).
 
 \strong{Related functions from other packages}
 \itemize{
@@ -48,4 +48,14 @@ This can be used to customize \code{normalize} parameters in other single cell f
 \itemize{
 \item \code{normalize_tfidf}: This follows the formula from Stuart, Butler et al. 2019, matching the default behavior of \code{Signac::RunTFIDF()}. This also matches the normalization used within \code{ArchR::addIterativeLSI()}, but with \code{binarize = FALSE}.
 }
+}
+\examples{
+set.seed(12345)
+mat <- matrix(rpois(4*5, lambda=1), nrow=4, ncol=5)
+mat
+mat <- as(mat, "IterableMatrix")
+normalize_log(mat)
+# normalize functions can also be called with partial arguments 
+normalize_log(scale_factor = 1e5)(mat)
+normalize_tfidf(mat)
 }
