@@ -192,7 +192,7 @@ select_features_binned_dispersion <- function(
     ) %>%
     dplyr::ungroup() %>%
     dplyr::mutate(highly_variable = dplyr::row_number(dplyr::desc(score)) <= num_feats) %>% 
-    dplyr::select(c("feature", "dispersion", "bin",  "score", "highly_variable")) %>%
+    dplyr::select(c("feature", "score", "highly_variable", "dispersion", "bin")) %>%
     dplyr::rename("raw_log_dispersion" = "dispersion")
   return(features_df)
 }
@@ -256,12 +256,12 @@ project.default <- function(x, mat, ...) {
 #' @param scale_factor (numeric) Scaling factor to multiply matrix by prior to log normalization (see formulas below).
 #' @param threads (integer) Number of threads to use.
 #' @returns An object of class `c("LSI", "DimReduction")` with the following attributes:
-#' - `cell_embeddings`: The projected data
+#' - `x`: The projected data as a matrix of shape `(n_dimensions, ncol(mat))`
 #' - `fitted_params`: A tibble of the parameters used for iterative LSI, with rows as iterations. Columns include the following:
 #'   - `scale_factor`: The scale factor used for tf-idf normalization
 #'   - `feature_means`: The means of the features used for normalization
 #'   - `pcs_to_keep`: The PCs that were kept after filtering by correlation to sequencing depth
-#'   - `svd_params`: The matrix calculated for SVD
+#'   - `feature_loadings`: SVD component u with dimension `(n_variable_features, n_dimensions)`
 #' - `feature_names`: The names of the features in the matrix
 #' @details Compute LSI through first doing a log(tf-idf) transform, z-score normalization, then PCA.  Tf-idf implementation is from Stuart & Butler et al. 2019.
 #' 
@@ -315,7 +315,7 @@ LSI <- function(
     scale_factor = scale_factor,
     feature_means = mat_stats$row_stats["mean", ],
     pcs_to_keep = pca_feats_to_keep,
-    svd_params = svd_attr
+    feature_loadings = svd_attr$u
   )
   res <- DimReduction(
     x = pca_res,
@@ -333,7 +333,7 @@ project.LSI <- function(x, mat, threads = 1L, ...) {
 
   fitted_params <- x$fitted_params
   # Do a check to make sure that the number of rows in the matrix is the same as the number of rows in SVD$u
-  assert_true(nrow(mat) == nrow(fitted_params$svd_params$u))
+  assert_true(nrow(mat) == nrow(fitted_params$feature_loadings))
   if (!is.null(rownames(mat)) && !is.null(x$feature_names)) {
     assert_true(all(x$feature_names %in% rownames(mat)))
     mat <- mat[x$feature_names, ]
@@ -348,8 +348,8 @@ project.LSI <- function(x, mat, threads = 1L, ...) {
     convert_matrix_type(mat, type = "float"),
     tempfile("mat"), compress = TRUE
   )
-  pca_attr <- fitted_params$svd_params
-  res <- t(pca_attr$u) %*% mat
+  feature_loadings <- fitted_params$feature_loadings
+  res <- t(feature_loadings) %*% mat
   if (length(fitted_params$pcs_to_keep) != nrow(res)) {
     res <- res[fitted_params$pcs_to_keep, ]
   }
@@ -376,7 +376,7 @@ project.LSI <- function(x, mat, threads = 1L, ...) {
 #' @param lsi_method (function) Method to use for LSI.  Only `LSI` is allowed.  The user can pass in partial parameters to `LSI` to customize the LSI method, 
 #' such as by passing `LSI(n_dimensions = 30, corr_cutoff = 0.5)`.
 #' @return An object of class `c("IterativeLSI", "DimReduction")` with the following attributes:
-#' - `cell_embeddings`: The projected data
+#' - `x`: The projected data
 #' - `fitted_params`: A tibble of the parameters used for iterative LSI, with rows as iterations. Columns include the following:
 #'    - `first_feature_selection_method`: The method used for selecting features for the first iteration
 #'    - `lsi_method`: The method used for LSI
@@ -386,7 +386,7 @@ project.LSI <- function(x, mat, threads = 1L, ...) {
 #'    - `iter_info`: A tibble with the following columns:
 #'        - `iteration`: The iteration number
 #'        - `feature_names`: The names of the features used for the iteration
-#'        - `lsi_results`: The results of LSI for the iteration.  This follows the same structure as the `fitted_params` attribute of the `LSI` object, but information such as the `v` and `d` matrices are removed.
+#'        - `feature_loadings`: SVD component u with dimension `(n_dimensions, n_variable_features)`
 #'        - `clusters`: The clusters for the iteration.  This is blank for the first iteration
 #' @details
 #' The iterative LSI method is as follows:
@@ -420,13 +420,13 @@ IterativeLSI <- function(
   cluster_method = cluster_graph_leiden,
   threads = 1L, verbose = FALSE
 ) {
+  
   assert_has_package("RcppHNSW")
   assert_is_mat(mat)
   assert_greater_than_zero(n_iterations)
   assert_is_wholenumber(n_iterations)
   assert_is_wholenumber(threads)
   assert_is(verbose, "logical")
-  
   fitted_params <- list(
     first_feature_selection_method = first_feature_selection_method,
     lsi_method = lsi_method,
@@ -480,9 +480,7 @@ IterativeLSI <- function(
     if (verbose) log_progress("Pseudobulking matrix")
     pseudobulk_res <- pseudobulk_matrix(mat, clustering_res, threads = as.integer(threads))
     # Only take the SVD information required to project the matrix
-    fitted_params$iter_info$lsi_results[[i]]$svd_params <- list(
-      u = lsi_res_obj$fitted_params$svd_params$u
-    )
+    fitted_params$iter_info$lsi_results[[i]]$feature_loadings <- lsi_res_obj$fitted_params$feature_loadings
     rownames(pseudobulk_res) <- rownames(mat)
   }
   if (verbose) log_progress("Finished running Iterative LSI")
@@ -513,7 +511,7 @@ project.IterativeLSI <- function(x, mat, threads = 1L, ...) {
   }
   mat <- mat[mat_indices,]
   # Run LSI
-  # since we don't hold the LSI object, we copy the internal logic from `project.LSI()`
+  # since we don't hold the LSI object, copy the internal logic from `project.LSI()`
   lsi_attr <- attr(x$fitted_params$lsi_method, "args")
   
   mat <- normalize_tfidf(
@@ -527,8 +525,8 @@ project.IterativeLSI <- function(x, mat, threads = 1L, ...) {
     tempfile("mat"), compress = TRUE
   )
   
-  pca_attr <- last_iter_info$lsi_results[[1]]$svd_params
-  res <- t(pca_attr$u) %*% mat
+  feature_loadings <- last_iter_info$lsi_results[[1]]$feature_loadings
+  res <- t(feature_loadings) %*% mat
   if (length(last_iter_info$lsi_results[[1]]$pcs_to_keep) != nrow(res)) {
     res <- res[last_iter_info$lsi_results[[1]]$pcs_to_keep,]
   }

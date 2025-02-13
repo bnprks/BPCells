@@ -363,9 +363,10 @@ knn_hnsw <- function(data, query = NULL, k = 10, metric = c("euclidean", "cosine
 #' @param n_trees Number of trees during index build time. More trees gives higher accuracy
 #' @param search_k Number of nodes to inspect during the query, or -1 for default value. Higher number gives higher accuracy
 #' @export
-knn_annoy <- function(data, query = data, k = 10, metric = c("euclidean", "cosine", "manhattan", "hamming"), n_trees = 50, search_k = -1) {
+knn_annoy <- function(data, query = NULL, k = 10, metric = c("euclidean", "cosine", "manhattan", "hamming"), n_trees = 50, search_k = -1) {
   metric <- match.arg(metric)
   if (rlang::is_missing(data)) return(create_partial())
+  if (is.null(query)) query <- data
   annoy <- switch(metric,
     "euclidean" = new(RcppAnnoy::AnnoyEuclidean, ncol(data)),
     "cosine" = new(RcppAnnoy::AnnoyAngular, ncol(data)),

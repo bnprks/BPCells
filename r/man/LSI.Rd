@@ -28,13 +28,13 @@ the corr_cutoff, it will be excluded from the final PCA matrix.}
 \value{
 An object of class \code{c("LSI", "DimReduction")} with the following attributes:
 \itemize{
-\item \code{cell_embeddings}: The projected data
+\item \code{x}: The projected data
 \item \code{fitted_params}: A tibble of the parameters used for iterative LSI, with rows as iterations. Columns include the following:
 \itemize{
 \item \code{scale_factor}: The scale factor used for tf-idf normalization
 \item \code{feature_means}: The means of the features used for normalization
 \item \code{pcs_to_keep}: The PCs that were kept after filtering by correlation to sequencing depth
-\item \code{svd_params}: The matrix calculated for SVD
+\item \code{feature_loadings}: SVD component u with dimension \verb{(n_variable_features, n_dimensions)}
 }
 \item \code{feature_names}: The names of the features in the matrix
 }

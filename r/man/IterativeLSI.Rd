@@ -39,7 +39,7 @@ The user can pass in partial parameters to the cluster method, such as by passin
 \value{
 An object of class \code{c("IterativeLSI", "DimReduction")} with the following attributes:
 \itemize{
-\item \code{cell_embeddings}: The projected data
+\item \code{x}: The projected data
 \item \code{fitted_params}: A tibble of the parameters used for iterative LSI, with rows as iterations. Columns include the following:
 \itemize{
 \item \code{first_feature_selection_method}: The method used for selecting features for the first iteration
@@ -51,7 +51,7 @@ An object of class \code{c("IterativeLSI", "DimReduction")} with the following a
 \itemize{
 \item \code{iteration}: The iteration number
 \item \code{feature_names}: The names of the features used for the iteration
-\item \code{lsi_results}: The results of LSI for the iteration.  This follows the same structure as the \code{fitted_params} attribute of the \code{LSI} object, but information such as the \code{v} and \code{d} matrices are removed.
+\item \code{feature_loadings}: SVD component u with dimension \verb{(n_dimensions, n_variable_features)}
 \item \code{clusters}: The clusters for the iteration.  This is blank for the first iteration
 }
 }

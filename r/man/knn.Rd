@@ -17,7 +17,7 @@ knn_hnsw(
 
 knn_annoy(
   data,
-  query = data,
+  query = NULL,
   k = 10,
   metric = c("euclidean", "cosine", "manhattan", "hamming"),
   n_trees = 50,
