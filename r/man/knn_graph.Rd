@@ -10,7 +10,7 @@ knn_to_graph(
   knn,
   use_weights = FALSE,
   self_loops = TRUE,
-  knn_mat_method = knn_annoy
+  knn_mat_method = knn_hnsw
 )
 
 knn_to_snn_graph(
@@ -18,14 +18,14 @@ knn_to_snn_graph(
   min_val = 1/15,
   self_loops = FALSE,
   return_type = c("matrix", "list"),
-  knn_mat_method = knn_annoy
+  knn_mat_method = knn_hnsw
 )
 
 knn_to_geodesic_graph(
   knn,
   return_type = c("matrix", "list"),
   threads = 0L,
-  knn_mat_method = knn_annoy
+  knn_mat_method = knn_hnsw
 )
 }
 \arguments{

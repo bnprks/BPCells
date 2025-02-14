@@ -2,42 +2,39 @@
 % Please edit documentation in R/clustering.R
 \name{convert_mat_to_cluster_matrix}
 \alias{convert_mat_to_cluster_matrix}
-\title{Convert a matrix to a required input type for a clustering step}
+\title{Convert a matrix to the required input type for clustering}
 \usage{
 convert_mat_to_cluster_matrix(
   mat,
   required_mat_type = c("knn", "adjacency"),
-  knn_mat_method = knn_annoy,
+  knn_mat_method = knn_hnsw,
   knn_graph_method = knn_to_geodesic_graph
 )
 }
 \arguments{
-\item{mat}{Input matrix to be converted}
+\item{mat}{Input matrix to be converted.}
 
-\item{required_mat_type}{(character) Type of matrix required for clustering. Must be one of "adjacency" or "knn".}
+\item{required_mat_type}{(character) Required matrix type: "adjacency" or "knn".}
 
-\item{knn_mat_method}{(function) Function to convert input matrix to knn matrix. Must be a (optionally partialized)
-version of \code{knn_hnsw()} or \code{knn_annoy()}.  Unused if mat is already a knn or graph matrix.}
+\item{knn_mat_method}{(function) Function to convert to a knn matrix (e.g., \code{knn_hnsw}, \code{knn_annoy}).
+Ignored if \code{mat} is already a knn or graph matrix.}
 
-\item{knn_graph_method}{(function) Function to convert input matrix to knn graph. Must be a (optionally partialized)
-version of \code{knn_to_graph()}, \code{knn_to_snn_graph()} or \code{knn_to_geodesic_graph()}.  Unused if required_mat_type is "knn",
-or if mat is already a graph matrix.}
+\item{knn_graph_method}{(function) Function to convert a knn matrix to a graph matrix
+(e.g., \code{knn_to_geodesic_graph}). Ignored if \code{required_mat_type} is "knn" or if
+\code{mat} is already a graph matrix.
+#' @details
+This function checks the type of the input matrix \code{mat}. \code{mat} is returned without modification if
+it is already the required type (adjacency or knn).
+If \code{mat} is a standard matrix and \code{required_mat_type} is "knn", then \code{knn_mat_method} is used to convert \code{mat} to a knn matrix.
+If \code{required_mat_type} is "adjacency", then \code{knn_mat_method} is used to first convert \code{mat} to a knn matrix,
+then \code{knn_graph_method} is used to convert the knn matrix to an adjacency matrix.}
+}
+\value{
+The converted matrix.
 }
 \description{
-Ensure that if a user is using a clustering function, the input matrix is converted to a knn or graph matrix.
-Returns the input matrix if it is already the correct type, otherwise converts it to the correct type.
-If the required matrix is an adjacency matrix, the input matrix will optionally be converted to a knn matrix if it is not one already.
-}
-\details{
-Clustering steps in BPCells use the following pattern:
-\enumerate{
-\item The input matrix is converted to a knn matrix using a function named \verb{knn_\{hnsw, annoy\}()}
-\item The knn matrix is converted to a graph matrix using one of the functions named \verb{knn_to_*_graph()}
-\item The graph matrix is clustered using a function named \verb{cluster_graph_*()}.
-}
-
-Each one of these steps requires a specific type of matrix as input.
-The typing of the input matrices is determined by the \code{mat_type} attribute given by the knn_to_*_graph() and \verb{knn_\{hnsw, annoy\}()}
-functions,as returned data types vary between all clustering functions.
+Ensures that the input matrix is converted to the correct type (knn or adjacency)
+required by a clustering function. If the input is already of the correct type,
+it is returned as is.
 }
 \keyword{internal}

@@ -10,7 +10,7 @@ cluster_graph_leiden(
   snn,
   resolution = 1,
   objective_function = c("modularity", "CPM"),
-  knn_mat_method = knn_annoy,
+  knn_mat_method = knn_hnsw,
   knn_graph_method = knn_to_geodesic_graph,
   seed = 12531,
   ...
@@ -19,7 +19,7 @@ cluster_graph_leiden(
 cluster_graph_louvain(
   snn,
   resolution = 1,
-  knn_mat_method = knn_annoy,
+  knn_mat_method = knn_hnsw,
   knn_graph_method = knn_to_geodesic_graph,
   seed = 12531
 )
@@ -27,7 +27,7 @@ cluster_graph_louvain(
 cluster_graph_seurat(
   snn,
   resolution = 0.8,
-  knn_mat_method = knn_annoy,
+  knn_mat_method = knn_hnsw,
   knn_graph_method = knn_to_geodesic_graph,
   ...
 )
