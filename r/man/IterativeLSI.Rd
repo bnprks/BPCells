@@ -38,7 +38,7 @@ The user can pass in partial parameters to the cluster method, such as by passin
 \item{x}{DimReduction object.}
 }
 \value{
-An object of class \code{c("IterativeLSI", "DimReduction")} with the following attributes:
+\strong{IterativeLSI()} An object of class \code{c("IterativeLSI", "DimReduction")} with the following attributes:
 \itemize{
 \item \code{cell_embeddings}: The projected data as a matrix of shape \verb{(n_dimensions, ncol(mat))}
 \item \code{fitted_params}: A tibble of the parameters used for iterative LSI, with rows as iterations. Columns include the following:
@@ -56,6 +56,8 @@ An object of class \code{c("IterativeLSI", "DimReduction")} with the following a
 }
 }
 }
+
+\strong{project()} IterableMatrix of the projected data of shape \verb{(n_dimensions, ncol(mat))}.
 }
 \description{
 Given a \verb{(features x cells)} counts matrix, perform IterativeLSI to create a latent space representation of the matrix of shape \verb{(n_dimensions, ncol(mat))}.

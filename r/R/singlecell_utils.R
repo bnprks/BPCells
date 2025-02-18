@@ -266,7 +266,8 @@ project.default <- function(x, mat, ...) {
 #' the corr_cutoff, it will be excluded from the final PCA matrix.
 #' @param scale_factor (numeric) Scaling factor to multiply matrix by prior to log normalization (see formulas below).
 #' @param threads (integer) Number of threads to use.
-#' @returns An object of class `c("LSI", "DimReduction")` with the following attributes:
+#' @returns 
+#' **LSI()** An object of class `c("LSI", "DimReduction")` with the following attributes:
 #' - `cell_embeddings`: The projected data as a matrix of shape `(n_dimensions, ncol(mat))`
 #' - `fitted_params`: A tibble of the parameters used for iterative LSI, with rows as iterations. Columns include the following:
 #'   - `scale_factor`: The scale factor used for tf-idf normalization
@@ -338,6 +339,8 @@ LSI <- function(
   return(res)
 }
 #' @rdname LSI
+#' @return 
+#' **project()** IterableMatrix of the projected data of shape `(n_dimensions, ncol(mat))`.
 #' @inheritParams project
 #' @export
 project.LSI <- function(x, mat, threads = 1L, ...) {
@@ -387,7 +390,8 @@ project.LSI <- function(x, mat, threads = 1L, ...) {
 #' `cluster_graph_leiden(resolution = 0.5, knn_mat_method = knn_hnsw(ef = 500, k = 12), knn_graph_method = knn_to_snn_graph(min_val = 0.1))`
 #' @param lsi_method (function) Method to use for LSI.  Only `LSI` is allowed.  The user can pass in partial parameters to `LSI` to customize the LSI method, 
 #' such as by passing `LSI(n_dimensions = 30, corr_cutoff = 0.5)`.
-#' @return An object of class `c("IterativeLSI", "DimReduction")` with the following attributes:
+#' @return 
+#' **IterativeLSI()** An object of class `c("IterativeLSI", "DimReduction")` with the following attributes:
 #' - `cell_embeddings`: The projected data as a matrix of shape `(n_dimensions, ncol(mat))`
 #' - `fitted_params`: A tibble of the parameters used for iterative LSI, with rows as iterations. Columns include the following:
 #'    - `lsi_method`: The method used for LSI
@@ -505,6 +509,8 @@ IterativeLSI <- function(
   return(res)
 }
 #' @rdname IterativeLSI
+#' @return
+#' **project()** IterableMatrix of the projected data of shape `(n_dimensions, ncol(mat))`.
 #' @inheritParams project
 #' @export
 project.IterativeLSI <- function(x, mat, threads = 1L, ...) {
