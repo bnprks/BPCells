@@ -47,11 +47,13 @@
 #' 
 #' # Because of how the BPCells `normalize` functions behave when the matrix 
 #' # argument is missing, we can also customize the normalization parameters using partial arguments:
-#' select_features_variance(
+#' variable_features <- select_features_variance(
 #'     mat,
 #'     num_feats=2,
 #'     normalize=normalize_log(scale_factor=20)
 #' ) 
+#' # One can then filter to only variable features using the subset operator:
+#' mat[variable_features$feature[variable_features$highly_variable],]
 #' @seealso `normalize_tfidf()` `normalize_log()`
 #' @export
 select_features_variance <- function(
