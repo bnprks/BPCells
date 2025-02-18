@@ -93,18 +93,21 @@ create_partial <- function() {
 #'
 #' @param f A function
 #' @param ... Named arguments to `f`
+#' @param .overwrite (bool) If `f` is already an output from
+#'   `partial_apply()`, whether parameter re-definitions should
+#'   be ignored or overwrite the existing definitions
 #' @param .missing_args_error (bool) If `TRUE`, passing in arguments
 #'  that are not in the function's signature will raise an error, otherwise
 #'  they will be ignored
 #' @return A `bpcells_partial` object (a function with some extra attributes)
 #' @keywords internal
-partial_apply <- function(f, ..., .missing_args_error = TRUE) {
+partial_apply <- function(f, ..., .overwrite = TRUE, .missing_args_error = TRUE) {
   args <- rlang::list2(...)
 
   if (is(f, "bpcells_partial")) {
     prev_args <- attr(f, "args")
     for (a in names(prev_args)) {
-      if (!(a %in% names(args))) {
+      if (!(.overwrite && a %in% names(args))) {
         args[[a]] <- prev_args[[a]]
       }
     }
