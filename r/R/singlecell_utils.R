@@ -379,8 +379,6 @@ project.LSI <- function(x, mat, threads = 1L, ...) {
 #' @rdname IterativeLSI
 #' @param mat (IterableMatrix) Counts matrix of shape `(features x cells)`.
 #' @param n_iterations (int) The number of LSI iterations to perform.
-#' @param first_feature_selection_method (function) Method to use for selecting features for the first iteration. 
-#' Current builtin options are `select_features_variance`, `select_features_dispersion`, `select_features_mean`, `select_features_binned_dispersion`
 #' @param feature_selection_method (function) Method to use for selecting features for each iteration after the first. 
 #' Current builtin options are `select_features_variance`, `select_features_dispersion`, `select_features_mean`, `select_features_binned_dispersion`
 #' @param cluster_method (function) Method to use for clustering a kNN matrix. 
@@ -392,7 +390,6 @@ project.LSI <- function(x, mat, threads = 1L, ...) {
 #' @return An object of class `c("IterativeLSI", "DimReduction")` with the following attributes:
 #' - `cell_embeddings`: The projected data as a matrix of shape `(n_dimensions, ncol(mat))`
 #' - `fitted_params`: A tibble of the parameters used for iterative LSI, with rows as iterations. Columns include the following:
-#'    - `first_feature_selection_method`: The method used for selecting features for the first iteration
 #'    - `lsi_method`: The method used for LSI
 #'    - `cluster_method`: The method used for clustering
 #'    - `feature_means`: The means of the features used for tf-idf normalization
@@ -405,7 +402,7 @@ project.LSI <- function(x, mat, threads = 1L, ...) {
 #' @details
 #' The Iterative LSI method is as follows:
 #' - First iteration:
-#'    - Select features based on the `first_feature_selection_method` argument
+#'    - Select features based on the `feature_selection_method` argument
 #'    - Perform LSI on the selected features
 #'    - If `n_iterations` is 1, return the projected data from the first PCA projection
 #'    - Else, cluster the LSI results using `cluster_method`
@@ -416,9 +413,11 @@ project.LSI <- function(x, mat, threads = 1L, ...) {
 #'    - Else, cluster the LSI results using `cluster_method`
 #' 
 #' There are some minor differences when compared to the ArchR implementation.  Firstly, the ArchR implementation uses a different method for selecting features in the first iteration.  
-#' `select_features_mean(normalize = binarize)` can be passed in for the `first_feature_selection_method` argument to mimic the ArchR implementation.
+#' `select_features_mean(normalize = binarize)` can be passed in for the `feature_selection_method` argument to mimic the ArchR implementation, if choosing to only run one iteration.  This function
+#' currently does not support utilization of different feature selection methods across each iteration.  If one desires to use a different feature selection method for each iteration, 
+#' they can take the cluster assignments from the previous iteration and use them to select features and run LSI.
 #' 
-#' Secondly, the ArchR implementation calculates LSI during non-terminal iterations using a default subset of 10000 cells.  ArchR does this to prevent a memory bottleneck,
+#' Additionally, the ArchR implementation calculates LSI during non-terminal iterations using a default subset of 10000 cells.  ArchR does this to prevent a memory bottleneck,
 #' which BPCells does not encounter even with a non-subsetted matrix.
 #' @seealso `LSI()` `DimReduction()` `knn_hnsw()` `knn_annoy()` 
 #' `cluster_graph_leiden()` `cluster_graph_louvain()` `cluster_graph_seurat()` `select_features_variance()` `select_features_dispersion()` 
@@ -428,10 +427,9 @@ project.LSI <- function(x, mat, threads = 1L, ...) {
 IterativeLSI <- function(
   mat, 
   n_iterations = 2,
-  first_feature_selection_method = select_features_binned_dispersion,
   feature_selection_method = select_features_dispersion,
   lsi_method = LSI,
-  cluster_method = cluster_graph_leiden,
+  cluster_method = cluster_graph_louvain,
   threads = 1L, verbose = FALSE
 ) {
   
@@ -442,7 +440,6 @@ IterativeLSI <- function(
   assert_is_wholenumber(threads)
   assert_is(verbose, "logical")
   fitted_params <- list(
-    first_feature_selection_method = first_feature_selection_method,
     lsi_method = lsi_method,
     cluster_method = cluster_method,
     feature_means = matrix_stats(mat, row_stats = "mean", threads = threads)$row_stats["mean",],
@@ -462,7 +459,7 @@ IterativeLSI <- function(
     # run variable feature selection
     if (verbose) log_progress("Selecting features")
     if (i == 1) {
-      variable_features <- partial_apply(first_feature_selection_method, threads = threads, .missing_args_error = FALSE)(mat)
+      variable_features <- partial_apply(feature_selection_method, threads = threads, .missing_args_error = FALSE)(mat)
     } else {
       variable_features <- partial_apply(feature_selection_method, threads = threads, .missing_args_error = FALSE)(pseudobulk_res)
     }

@@ -8,10 +8,9 @@
 IterativeLSI(
   mat,
   n_iterations = 2,
-  first_feature_selection_method = select_features_binned_dispersion,
   feature_selection_method = select_features_dispersion,
   lsi_method = LSI,
-  cluster_method = cluster_graph_leiden,
+  cluster_method = cluster_graph_louvain,
   threads = 1L,
   verbose = FALSE
 )
@@ -22,9 +21,6 @@ IterativeLSI(
 \item{mat}{(IterableMatrix) Counts matrix of shape \verb{(features x cells)}.}
 
 \item{n_iterations}{(int) The number of LSI iterations to perform.}
-
-\item{first_feature_selection_method}{(function) Method to use for selecting features for the first iteration.
-Current builtin options are \code{select_features_variance}, \code{select_features_dispersion}, \code{select_features_mean}, \code{select_features_binned_dispersion}}
 
 \item{feature_selection_method}{(function) Method to use for selecting features for each iteration after the first.
 Current builtin options are \code{select_features_variance}, \code{select_features_dispersion}, \code{select_features_mean}, \code{select_features_binned_dispersion}}
@@ -47,7 +43,6 @@ An object of class \code{c("IterativeLSI", "DimReduction")} with the following a
 \item \code{cell_embeddings}: The projected data as a matrix of shape \verb{(n_dimensions, ncol(mat))}
 \item \code{fitted_params}: A tibble of the parameters used for iterative LSI, with rows as iterations. Columns include the following:
 \itemize{
-\item \code{first_feature_selection_method}: The method used for selecting features for the first iteration
 \item \code{lsi_method}: The method used for LSI
 \item \code{cluster_method}: The method used for clustering
 \item \code{feature_means}: The means of the features used for tf-idf normalization
@@ -68,11 +63,11 @@ This uses the method described in \href{https://doi.org/10.1038/s41588-021-00790
 See details for more specific information.  Returns a DimReduction object, which allows for projection of matrices with the same features into the same latent space.
 }
 \details{
-The iterative LSI method is as follows:
+The Iterative LSI method is as follows:
 \itemize{
 \item First iteration:
 \itemize{
-\item Select features based on the \code{first_feature_selection_method} argument
+\item Select features based on the \code{feature_selection_method} argument
 \item Perform LSI on the selected features
 \item If \code{n_iterations} is 1, return the projected data from the first PCA projection
 \item Else, cluster the LSI results using \code{cluster_method}
@@ -87,9 +82,11 @@ The iterative LSI method is as follows:
 }
 
 There are some minor differences when compared to the ArchR implementation.  Firstly, the ArchR implementation uses a different method for selecting features in the first iteration.
-\code{select_features_mean(normalize = binarize)} can be passed in for the \code{first_feature_selection_method} argument to mimic the ArchR implementation.
+\code{select_features_mean(normalize = binarize)} can be passed in for the \code{feature_selection_method} argument to mimic the ArchR implementation, if choosing to only run one iteration.  This function
+currently does not support utilization of different feature selection methods across each iteration.  If one desires to use a different feature selection method for each iteration,
+they can take the cluster assignments from the previous iteration and use them to select features and run LSI.
 
-Secondly, the ArchR implementation calculates LSI during non-terminal iterations using a default subset of 10000 cells.  ArchR does this to prevent a memory bottleneck,
+Additionally, the ArchR implementation calculates LSI during non-terminal iterations using a default subset of 10000 cells.  ArchR does this to prevent a memory bottleneck,
 which BPCells does not encounter even with a non-subsetted matrix.
 }
 \seealso{

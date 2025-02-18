@@ -4,13 +4,7 @@
 \alias{create_partial}
 \title{Helper to create partial functions}
 \usage{
-create_partial(missing_args = list())
-}
-\arguments{
-\item{missing_args}{(named list\link{bool}) Any named index with a TRUE value
-will be treated as missing. Designed to be used in the caller with the
-\code{base::missing()} function to detect unspecified arguments with default values,
-or to manually specifiy other arguments that should not be specialized}
+create_partial()
 }
 \value{
 A \code{bpcells_partial} object (a function with some extra attributes)
