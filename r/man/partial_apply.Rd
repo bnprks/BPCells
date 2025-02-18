@@ -4,16 +4,12 @@
 \alias{partial_apply}
 \title{Create partial function calls}
 \usage{
-partial_apply(f, ..., .overwrite = TRUE, .missing_args_error = FALSE)
+partial_apply(f, ..., .missing_args_error = TRUE)
 }
 \arguments{
 \item{f}{A function}
 
 \item{...}{Named arguments to \code{f}}
-
-\item{.overwrite}{(bool) If \code{f} is already an output from
-\code{partial_apply()}, whether parameter re-definitions should
-be ignored or overwrite the existing definitions}
 
 \item{.missing_args_error}{(bool) If \code{TRUE}, passing in arguments
 that are not in the function's signature will raise an error, otherwise

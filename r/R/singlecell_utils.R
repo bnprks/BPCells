@@ -72,7 +72,7 @@ select_features_variance <- function(
     rlang::warn(add_timestamp(sprintf("Number of features asked for (%s) is greater than the number of features in the matrix (%s).", num_feats, nrow(mat))))
   }
   num_feats <- min(max(num_feats, 0), nrow(mat))
-  if (!is.null(normalize)) mat <- partial_apply(normalize, threads = threads)(mat)
+  if (!is.null(normalize)) mat <- partial_apply(normalize, threads = threads, .missing_args_error = FALSE)(mat)
   features_df <- tibble::tibble(
     feature = rownames(mat),
     score = matrix_stats(mat, row_stats = "variance", threads = threads)$row_stats["variance",]
@@ -102,7 +102,7 @@ select_features_dispersion <- function(
   num_feats <- min(max(num_feats, 0), nrow(mat))
   if (!is(mat, "IterableMatrix") && canCoerce(mat, "IterableMatrix")) mat <- as(mat, "IterableMatrix")
   assert_is(mat, "IterableMatrix")
-  if (!is.null(normalize)) mat <- partial_apply(normalize, threads = threads)(mat)
+  if (!is.null(normalize)) mat <- partial_apply(normalize, threads = threads, .missing_args_error = FALSE)(mat)
   mat_stats <- matrix_stats(mat, row_stats = "variance", threads = threads)
   features_df <- tibble::tibble(
     feature = rownames(mat),
@@ -126,7 +126,7 @@ select_features_mean <- function(mat, num_feats = 0.05, normalize = NULL, thread
     rlang::warn(add_timestamp(sprintf("Number of features asked for (%s) is greater than the number of features in the matrix (%s).", num_feats, nrow(mat))))
   }
   num_feats <- min(max(num_feats, 0), nrow(mat))
-  if (!is.null(normalize)) mat <- partial_apply(normalize, threads = threads)(mat)
+  if (!is.null(normalize)) mat <- partial_apply(normalize, threads = threads, .missing_args_error = FALSE)(mat)
   # get the sum of each feature, binarized
   features_df <- tibble::tibble(
     feature = rownames(mat),
@@ -282,6 +282,7 @@ LSI <- function(
   assert_is_wholenumber(n_dimensions)
   assert_len(n_dimensions, 1)
   assert_greater_than_zero(n_dimensions)
+  
   assert_true(n_dimensions < min(ncol(mat), nrow(mat)))
   assert_true((corr_cutoff >= 0) && (corr_cutoff <= 1))
   assert_is_wholenumber(threads)
@@ -344,7 +345,8 @@ project.LSI <- function(x, mat, threads = 1L, ...) {
     normalize_tfidf,
     feature_means = fitted_params$feature_means,
     scale_factor = fitted_params$scale_factor,
-    threads = threads
+    threads = threads,
+    .missing_args_error = TRUE
   )(mat)
   mat <- write_matrix_dir(
     convert_matrix_type(mat, type = "float"),
@@ -450,9 +452,9 @@ IterativeLSI <- function(
     # run variable feature selection
     if (verbose) log_progress("Selecting features")
     if (i == 1) {
-      variable_features <- partial_apply(first_feature_selection_method, threads = threads)(mat)
+      variable_features <- partial_apply(first_feature_selection_method, threads = threads, .missing_args_error = FALSE)(mat)
     } else {
-      variable_features <- partial_apply(feature_selection_method, threads = threads)(pseudobulk_res)
+      variable_features <- partial_apply(feature_selection_method, threads = threads, .missing_args_error = FALSE)(pseudobulk_res)
     }
     fitted_params$iter_info$feature_names[[i]] <- variable_features %>% dplyr::filter(highly_variable) %>% dplyr::pull(feature)
     
@@ -466,7 +468,8 @@ IterativeLSI <- function(
     lsi_res_obj <- partial_apply(
       lsi_method,
       threads = threads,
-      verbose = verbose
+      verbose = verbose,
+      .missing_args_error = FALSE
     )(mat[mat_indices,])
     fitted_params$iter_info$lsi_results[[i]] <- lsi_res_obj$fitted_params
     # remove the feature means from the lsi results as they are already calculated
@@ -476,7 +479,7 @@ IterativeLSI <- function(
     if (i == n_iterations) break 
     # cluster the LSI results
     if (verbose) log_progress("Clustering LSI results")
-    clustering_res <- t(lsi_res_obj$cell_embeddings) %>% partial_apply(cluster_method, threads = threads)()
+    clustering_res <- t(lsi_res_obj$cell_embeddings) %>% partial_apply(cluster_method, threads = threads, .missing_args_error = FALSE)()
     fitted_params$iter_info$clusters[[i]] <- clustering_res
     # pseudobulk and pass onto next iteration
     if (verbose) log_progress("Pseudobulking matrix")

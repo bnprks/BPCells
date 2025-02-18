@@ -190,7 +190,7 @@ knn_to_geodesic_graph <- function(knn, return_type=c("matrix", "list"), threads=
   return_type <- match.arg(return_type)
   assert_is_wholenumber(threads)
   if (rlang::is_missing(knn)) return(create_partial())
-  knn_mat_method <- partial_apply(knn_mat_method, threads = threads)
+  knn_mat_method <- partial_apply(knn_mat_method, threads = threads, , .missing_args_error = FALSE)
   knn <- convert_mat_to_cluster_matrix(knn, required_mat_type = "knn", knn_mat_method = knn_mat_method)
   graph <- build_umap_graph_cpp(knn$dist, knn$idx, threads=threads)
   

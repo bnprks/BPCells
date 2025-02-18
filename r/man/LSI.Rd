@@ -28,7 +28,7 @@ the corr_cutoff, it will be excluded from the final PCA matrix.}
 \value{
 An object of class \code{c("LSI", "DimReduction")} with the following attributes:
 \itemize{
-\item \code{x}: The projected data
+\item \code{x}: The projected data as a matrix of shape \verb{(n_dimensions, ncol(mat))}
 \item \code{fitted_params}: A tibble of the parameters used for iterative LSI, with rows as iterations. Columns include the following:
 \itemize{
 \item \code{scale_factor}: The scale factor used for tf-idf normalization
