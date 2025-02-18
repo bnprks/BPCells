@@ -8,7 +8,7 @@
 IterativeLSI(
   mat,
   n_iterations = 2,
-  feature_selection_method = select_features_dispersion,
+  feature_selection_method = select_features_variance,
   lsi_method = LSI,
   cluster_method = cluster_graph_louvain,
   threads = 1L,
@@ -69,7 +69,7 @@ The Iterative LSI method is as follows:
 \itemize{
 \item First iteration:
 \itemize{
-\item Select features based on the \code{feature_selection_method} argument
+\item Select features using \code{feature_selection_method}
 \item Perform LSI on the selected features
 \item If \code{n_iterations} is 1, return the projected data from the first PCA projection
 \item Else, cluster the LSI results using \code{cluster_method}
