@@ -356,7 +356,7 @@ project.LSI <- function(x, mat, threads = 1L, ...) {
     feature_means = fitted_params$feature_means,
     scale_factor = fitted_params$scale_factor,
     threads = threads,
-    .missing_args_error = TRUE
+    .missing_args_error = FALSE
   )(mat)
   mat <- write_matrix_dir(
     convert_matrix_type(mat, type = "float"),
