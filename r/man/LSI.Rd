@@ -2,6 +2,7 @@
 % Please edit documentation in R/singlecell_utils.R
 \name{LSI}
 \alias{LSI}
+\alias{project.LSI}
 \title{Perform latent semantic indexing (LSI) on a matrix.}
 \usage{
 LSI(
@@ -12,6 +13,8 @@ LSI(
   threads = 1L,
   verbose = FALSE
 )
+
+\method{project}{LSI}(x, mat, threads = 1L, ...)
 }
 \arguments{
 \item{mat}{(IterableMatrix) Counts matrix of shape \verb{(features x cells)}.}
@@ -24,11 +27,13 @@ the corr_cutoff, it will be excluded from the final PCA matrix.}
 \item{scale_factor}{(numeric) Scaling factor to multiply matrix by prior to log normalization (see formulas below).}
 
 \item{threads}{(integer) Number of threads to use.}
+
+\item{x}{DimReduction object.}
 }
 \value{
 An object of class \code{c("LSI", "DimReduction")} with the following attributes:
 \itemize{
-\item \code{x}: The projected data as a matrix of shape \verb{(n_dimensions, ncol(mat))}
+\item \code{cell_embeddings}: The projected data as a matrix of shape \verb{(n_dimensions, ncol(mat))}
 \item \code{fitted_params}: A tibble of the parameters used for iterative LSI, with rows as iterations. Columns include the following:
 \itemize{
 \item \code{scale_factor}: The scale factor used for tf-idf normalization

@@ -209,30 +209,38 @@ select_features_binned_dispersion <- function(
 #' Represents a latent space output of a matrix after a transformation function, with any required information to reproject other inputs using this object.
 #' Child classes should implement a `project` method to allow for the projection of other matrices using
 #' the fitted transformation object.
+#' @rdname DimReduction
+#' @param mat (IterableMatrix) Input matrix of shape `(features x cells)`.
 #' @field cell_embeddings (IterableMatrix, dgCMatrix, matrix) Projected data of shape `(n_dimesions x n_cells)` of the original matrix after a dimensionality reduction.
 #' @field fitted_params (list) A list of parameters used for the transformation of a matrix.  This should include all necessary information to project new data with the same features.
 #' @field feature_names (character) The names of the features that this DimReduction object was fit on.  Matrices to be projected should have the same feature names.
+#' @return - `DimReduction()`: DimReduction object.
 #' @export
-DimReduction <- function(x, fitted_params = list(), ...) {
-  assert_is(x, c("IterableMatrix", "dgCMatrix", "matrix"))
+DimReduction <- function(mat, fitted_params = list(), feature_names = character(0), ...) {
+  assert_is(mat, c("IterableMatrix", "dgCMatrix", "matrix"))
   assert_is(fitted_params, "list")
   structure(list(
-    cell_embeddings = x,
+    cell_embeddings = mat,
     fitted_params = fitted_params,
+    feature_names = feature_names,
     ...
     ),
     class = "DimReduction"
   )
 }
 
-#' Perform a dimensionality reduction on a matrix using a pre-fit DimReduction object.
+#' @rdname DimReduction
 #' @param x DimReduction object.
-#' @param mat IterableMatrix object.
-#' @return IterableMatrix object of the projected data.
-#' @details DimReduction subclasses should use this to project new data with the same features, to project into the same latent space.
-#' All required information to run a projection should be held in x$fitted_params, including pertinent parameters when constructing the DimReduction subclass object.
+#' @return - `project()`: IterableMatrix object of the projected data.
+#' @details 
+#' **project()**: Perform a dimensionality reduction on a matrix using a pre-fit DimReduction object.
+#' 
+#' DimReduction subclasses should use the `project` method on new data with the same features, to project into the same latent space.
+#' All required information to run a projection should be held in `x$fitted_params`, including pertinent parameters when constructing the DimReduction subclass object.
+#' 
 #' If there are no rownames, assume that the matrix is in the same order as the original matrix, assuming that they have the same number of features.
 #' If there are rownames, reorder the matrix to match the order of the original matrix
+#' @inheritParams DimReduction
 #' @export
 project <- function(x, mat, ...) {
   UseMethod("project")
@@ -251,6 +259,7 @@ project.default <- function(x, mat, ...) {
 #' 
 #' Given a `(features x cells)` counts matrix, perform LSI, which sequentially executes tf-idf normalization and PCA to create a latent space representation of the matrix of shape `(n_dimensions, ncol(mat))`.
 #' Returns a DimReduction object, which allows for projection of new matrices with the same features into the same latent space.
+#' @rdname LSI
 #' @param mat (IterableMatrix) Counts matrix of shape `(features x cells)`.
 #' @param n_dimensions (integer) Number of dimensions to keep during PCA.
 #' @param corr_cutoff (numeric) Numeric filter for the correlation of a PC to the sequencing depth.  If the PC has a correlation that is great or equal to
@@ -258,7 +267,7 @@ project.default <- function(x, mat, ...) {
 #' @param scale_factor (numeric) Scaling factor to multiply matrix by prior to log normalization (see formulas below).
 #' @param threads (integer) Number of threads to use.
 #' @returns An object of class `c("LSI", "DimReduction")` with the following attributes:
-#' - `x`: The projected data as a matrix of shape `(n_dimensions, ncol(mat))`
+#' - `cell_embeddings`: The projected data as a matrix of shape `(n_dimensions, ncol(mat))`
 #' - `fitted_params`: A tibble of the parameters used for iterative LSI, with rows as iterations. Columns include the following:
 #'   - `scale_factor`: The scale factor used for tf-idf normalization
 #'   - `feature_means`: The means of the features used for normalization
@@ -321,14 +330,15 @@ LSI <- function(
     feature_loadings = svd_attr$u
   )
   res <- DimReduction(
-    x = pca_res,
+    mat = pca_res,
     fitted_params = fitted_params,
     feature_names = rownames(mat)
   )
   class(res) <- c("LSI", class(res))
   return(res)
 }
-
+#' @rdname LSI
+#' @inheritParams project
 #' @export
 project.LSI <- function(x, mat, threads = 1L, ...) {
   assert_is_mat(mat)
@@ -366,7 +376,7 @@ project.LSI <- function(x, mat, threads = 1L, ...) {
 #' Given a `(features x cells)` counts matrix, perform IterativeLSI to create a latent space representation of the matrix of shape `(n_dimensions, ncol(mat))`.  
 #' This uses the method described in [ArchR](https://doi.org/10.1038/s41588-021-00790-6) (Granja et al; 2019). 
 #' See details for more specific information.  Returns a DimReduction object, which allows for projection of matrices with the same features into the same latent space.
-#'
+#' @rdname IterativeLSI
 #' @param mat (IterableMatrix) Counts matrix of shape `(features x cells)`.
 #' @param n_iterations (int) The number of LSI iterations to perform.
 #' @param first_feature_selection_method (function) Method to use for selecting features for the first iteration. 
@@ -380,7 +390,7 @@ project.LSI <- function(x, mat, threads = 1L, ...) {
 #' @param lsi_method (function) Method to use for LSI.  Only `LSI` is allowed.  The user can pass in partial parameters to `LSI` to customize the LSI method, 
 #' such as by passing `LSI(n_dimensions = 30, corr_cutoff = 0.5)`.
 #' @return An object of class `c("IterativeLSI", "DimReduction")` with the following attributes:
-#' - `x`: The projected data
+#' - `cell_embeddings`: The projected data as a matrix of shape `(n_dimensions, ncol(mat))`
 #' - `fitted_params`: A tibble of the parameters used for iterative LSI, with rows as iterations. Columns include the following:
 #'    - `first_feature_selection_method`: The method used for selecting features for the first iteration
 #'    - `lsi_method`: The method used for LSI
@@ -390,10 +400,10 @@ project.LSI <- function(x, mat, threads = 1L, ...) {
 #'    - `iter_info`: A tibble with the following columns:
 #'        - `iteration`: The iteration number
 #'        - `feature_names`: The names of the features used for the iteration
-#'        - `feature_loadings`: SVD component u with dimension `(n_dimensions, n_variable_features)`
+#'        - `feature_loadings`: SVD component `u` with dimension `(n_dimensions, n_variable_features)`
 #'        - `clusters`: The clusters for the iteration.  This is blank for the first iteration
 #' @details
-#' The iterative LSI method is as follows:
+#' The Iterative LSI method is as follows:
 #' - First iteration:
 #'    - Select features based on the `first_feature_selection_method` argument
 #'    - Perform LSI on the selected features
@@ -490,13 +500,15 @@ IterativeLSI <- function(
   }
   if (verbose) log_progress("Finished running Iterative LSI")
   res <- DimReduction(
-    x = lsi_res_obj$cell_embeddings,
+    mat = lsi_res_obj$cell_embeddings,
     fitted_params = fitted_params,
     feature_names = rownames(mat)
   )
   class(res) <- c("IterativeLSI", class(res))
   return(res)
 }
+#' @rdname IterativeLSI
+#' @inheritParams project
 #' @export
 project.IterativeLSI <- function(x, mat, threads = 1L, ...) {
   assert_is_mat(mat)

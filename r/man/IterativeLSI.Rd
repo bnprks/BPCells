@@ -2,6 +2,7 @@
 % Please edit documentation in R/singlecell_utils.R
 \name{IterativeLSI}
 \alias{IterativeLSI}
+\alias{project.IterativeLSI}
 \title{Run iterative LSI on a matrix.}
 \usage{
 IterativeLSI(
@@ -14,6 +15,8 @@ IterativeLSI(
   threads = 1L,
   verbose = FALSE
 )
+
+\method{project}{IterativeLSI}(x, mat, threads = 1L, ...)
 }
 \arguments{
 \item{mat}{(IterableMatrix) Counts matrix of shape \verb{(features x cells)}.}
@@ -35,11 +38,13 @@ The user can pass in partial parameters to the cluster method, such as by passin
 \code{cluster_graph_leiden(resolution = 0.5, knn_mat_method = knn_hnsw(ef = 500, k = 12), knn_graph_method = knn_to_snn_graph(min_val = 0.1))}}
 
 \item{threads}{(integer) Number of threads to use.}
+
+\item{x}{DimReduction object.}
 }
 \value{
 An object of class \code{c("IterativeLSI", "DimReduction")} with the following attributes:
 \itemize{
-\item \code{x}: The projected data
+\item \code{cell_embeddings}: The projected data as a matrix of shape \verb{(n_dimensions, ncol(mat))}
 \item \code{fitted_params}: A tibble of the parameters used for iterative LSI, with rows as iterations. Columns include the following:
 \itemize{
 \item \code{first_feature_selection_method}: The method used for selecting features for the first iteration
@@ -51,7 +56,7 @@ An object of class \code{c("IterativeLSI", "DimReduction")} with the following a
 \itemize{
 \item \code{iteration}: The iteration number
 \item \code{feature_names}: The names of the features used for the iteration
-\item \code{feature_loadings}: SVD component u with dimension \verb{(n_dimensions, n_variable_features)}
+\item \code{feature_loadings}: SVD component \code{u} with dimension \verb{(n_dimensions, n_variable_features)}
 \item \code{clusters}: The clusters for the iteration.  This is blank for the first iteration
 }
 }

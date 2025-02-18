@@ -2,14 +2,40 @@
 % Please edit documentation in R/singlecell_utils.R
 \name{DimReduction}
 \alias{DimReduction}
+\alias{project}
 \title{Barebones definition of a DimReduction class.}
 \usage{
-DimReduction(x, fitted_params = list(), ...)
+DimReduction(mat, fitted_params = list(), feature_names = character(0), ...)
+
+project(x, mat, ...)
+}
+\arguments{
+\item{mat}{(IterableMatrix) Input matrix of shape \verb{(features x cells)}.}
+
+\item{x}{DimReduction object.}
+}
+\value{
+\itemize{
+\item \code{DimReduction()}: DimReduction object.
+}
+
+\itemize{
+\item \code{project()}: IterableMatrix object of the projected data.
+}
 }
 \description{
 Represents a latent space output of a matrix after a transformation function, with any required information to reproject other inputs using this object.
 Child classes should implement a \code{project} method to allow for the projection of other matrices using
 the fitted transformation object.
+}
+\details{
+\strong{project()}: Perform a dimensionality reduction on a matrix using a pre-fit DimReduction object.
+
+DimReduction subclasses should use the \code{project} method on new data with the same features, to project into the same latent space.
+All required information to run a projection should be held in \code{x$fitted_params}, including pertinent parameters when constructing the DimReduction subclass object.
+
+If there are no rownames, assume that the matrix is in the same order as the original matrix, assuming that they have the same number of features.
+If there are rownames, reorder the matrix to match the order of the original matrix
 }
 \section{Fields}{
 
