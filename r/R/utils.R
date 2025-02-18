@@ -68,20 +68,15 @@ log_progress <- function(msg, add_timestamp = TRUE){
 #' Automatically creates a partial application of the caller
 #' function including all non-missing arguments. 
 #'
-#' @param missing_args (named list[bool]) Any named index with a TRUE value
-#'   will be treated as missing. Designed to be used in the caller with the
-#'   `base::missing()` function to detect unspecified arguments with default values,
-#'   or to manually specifiy other arguments that should not be specialized
 #' @return A `bpcells_partial` object (a function with some extra attributes)
 #' @keywords internal
-create_partial <- function(missing_args=list()) {
+create_partial <- function() {
   env <- rlang::caller_env()
   fn_sym <- rlang::caller_call()[[1]]
   fn <- rlang::caller_fn()
 
   args <- list()
   for (n in names(formals(fn))) {
-    if (n %in% names(missing_args) && missing_args[[n]]) next
     if (rlang::is_missing(env[[n]])) next
     args[[n]] <- env[[n]]
   }
