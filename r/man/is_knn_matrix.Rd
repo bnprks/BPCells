@@ -12,6 +12,6 @@ TRUE if the mat is a kNN matrix, FALSE otherwise
 \description{
 knn matrix functions \code{knn_hnsw()} and \code{knn_annoy()} return a list of two matrices, \code{idx} and \code{dist}.
 These are used as inputs to create graph adjacency matrices for clustering.
-Assume any list with at least an
+Assume any list with both \code{idx} and \code{dist} is a kNN object.
 }
 \keyword{internal}

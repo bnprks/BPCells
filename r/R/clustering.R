@@ -11,7 +11,7 @@
 #'
 #' knn matrix functions `knn_hnsw()` and `knn_annoy()` return a list of two matrices, `idx` and `dist`.
 #' These are used as inputs to create graph adjacency matrices for clustering.
-#' Assume any list with at least an 
+#' Assume any list with both `idx` and `dist` is a kNN object.
 #' @return TRUE if the mat is a kNN matrix, FALSE otherwise
 #' @keywords internal
 is_knn_matrix <- function(mat) {
@@ -41,11 +41,11 @@ is_adjacency_matrix <- function(mat) {
 #' @param knn_graph_method (function) Function to convert a knn matrix to a graph matrix
 #'   (e.g., `knn_to_geodesic_graph`). Ignored if `required_mat_type` is "knn" or if
 #'   `mat` is already a graph matrix.
-#' #' @details
+#' @details
 #' This function checks the type of the input matrix `mat`. `mat` is returned without modification if
 #' it is already the required type (adjacency or knn).
 #' If `mat` is a standard matrix and `required_mat_type` is "knn", then `knn_mat_method` is used to convert `mat` to a knn matrix.
-#' If `required_mat_type` is "adjacency", then `knn_mat_method` is used to first convert `mat` to a knn matrix, 
+#' If `required_mat_type` is "adjacency", then `knn_mat_method` is used to first convert `mat` to a knn matrix,
 #' then `knn_graph_method` is used to convert the knn matrix to an adjacency matrix.
 #' @return The converted matrix.
 #' @keywords internal
@@ -190,7 +190,7 @@ knn_to_geodesic_graph <- function(knn, return_type=c("matrix", "list"), threads=
   return_type <- match.arg(return_type)
   assert_is_wholenumber(threads)
   if (rlang::is_missing(knn)) return(create_partial())
-  knn_mat_method <- partial_apply(knn_mat_method, threads = threads, , .missing_args_error = FALSE)
+  knn_mat_method <- partial_apply(knn_mat_method, threads = threads, .missing_args_error = FALSE)
   knn <- convert_mat_to_cluster_matrix(knn, required_mat_type = "knn", knn_mat_method = knn_mat_method)
   graph <- build_umap_graph_cpp(knn$dist, knn$idx, threads=threads)
   
