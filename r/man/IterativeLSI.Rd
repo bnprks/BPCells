@@ -41,17 +41,18 @@ The user can pass in partial parameters to the cluster method, such as by passin
 \strong{IterativeLSI()} An object of class \code{c("IterativeLSI", "DimReduction")} with the following attributes:
 \itemize{
 \item \code{cell_embeddings}: The projected data as a matrix of shape \verb{(n_dimensions, ncol(mat))}
-\item \code{fitted_params}: A tibble of the parameters used for iterative LSI, with rows as iterations. Columns include the following:
+\item \code{fitted_params}: A list of the parameters used for iterative LSI, with rows as iterations. Columns include the following:
 \itemize{
 \item \code{lsi_method}: The method used for LSI
 \item \code{cluster_method}: The method used for clustering
 \item \code{feature_means}: The means of the features used for tf-idf normalization
 \item \code{iterations}: The number of LSI iterations ran
-\item \code{iter_info}: A tibble with the following columns:
+\item \code{iter_info}: A tibble of iteration info with rows as iterations. Columns include the following:
 \itemize{
 \item \code{iteration}: The iteration number
 \item \code{feature_names}: The names of the features used for the iteration
 \item \code{feature_loadings}: SVD component \code{u} with dimension \verb{(n_dimensions, n_variable_features)}
+\item \code{pcs_to_keep}: The PCs that were kept after filtering by correlation to sequencing depth
 \item \code{clusters}: The clusters for the iteration.  This is blank for the first iteration
 }
 }

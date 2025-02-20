@@ -393,20 +393,21 @@ project.LSI <- function(x, mat, threads = 1L, ...) {
 #' @return 
 #' **IterativeLSI()** An object of class `c("IterativeLSI", "DimReduction")` with the following attributes:
 #' - `cell_embeddings`: The projected data as a matrix of shape `(n_dimensions, ncol(mat))`
-#' - `fitted_params`: A tibble of the parameters used for iterative LSI, with rows as iterations. Columns include the following:
+#' - `fitted_params`: A list of the parameters used for iterative LSI.  Includes the following:
 #'    - `lsi_method`: The method used for LSI
 #'    - `cluster_method`: The method used for clustering
 #'    - `feature_means`: The means of the features used for tf-idf normalization
 #'    - `iterations`: The number of LSI iterations ran
-#'    - `iter_info`: A tibble with the following columns:
+#'    - `iter_info`: A tibble of iteration info with rows as iterations. Columns include the following:
 #'        - `iteration`: The iteration number
 #'        - `feature_names`: The names of the features used for the iteration
 #'        - `feature_loadings`: SVD component `u` with dimension `(n_dimensions, n_variable_features)`
+#'        - `pcs_to_keep`: The PCs that were kept after filtering by correlation to sequencing depth
 #'        - `clusters`: The clusters for the iteration.  This is blank for the first iteration
 #' @details
 #' The Iterative LSI method is as follows:
 #' - First iteration:
-#'    - Select features based on the `feature_selection_method` argument
+#'    - Select features using `feature_selection_method`
 #'    - Perform LSI on the selected features
 #'    - If `n_iterations` is 1, return the projected data from the first PCA projection
 #'    - Else, cluster the LSI results using `cluster_method`
@@ -450,12 +451,14 @@ IterativeLSI <- function(
     iter_info = tibble::tibble(
       iteration = integer(),
       feature_names = list(),
-      lsi_results = list(),
+      feature_loadings = list(),
+      pcs_to_keep = list(),
       clusters = list()
     )
   )
   if (verbose) log_progress("Starting Iterative LSI")
   for (i in seq_len(n_iterations)) {
+    
     if (verbose) log_progress(sprintf("Starting Iterative LSI iteration %s of %s", i, n_iterations))
     # add a blank row to the iter_info tibble
     fitted_params$iter_info <- tibble::add_row(fitted_params$iter_info, iteration = i)
@@ -480,21 +483,18 @@ IterativeLSI <- function(
       verbose = verbose,
       .missing_args_error = FALSE
     )(mat[mat_indices,])
-    fitted_params$iter_info$lsi_results[[i]] <- lsi_res_obj$fitted_params
-    # remove the feature means from the lsi results as they are already calculated
-    # save minimum info for lsi results if not onn terminal iteration
-    fitted_params$iter_info$lsi_results[[i]]$feature_means <- NULL
+    fitted_params$iter_info$feature_loadings[[i]] <- lsi_res_obj$fitted_params$feature_loadings
+    fitted_params$iter_info$pcs_to_keep[[i]] <- lsi_res_obj$fitted_params$pcs_to_keep
     # only cluster + pseudobulk if this isn't the last iteration
-    if (i == n_iterations) break 
+    if (i == n_iterations) break
     # cluster the LSI results
     if (verbose) log_progress("Clustering LSI results")
-    clustering_res <- t(lsi_res_obj$cell_embeddings) %>% partial_apply(cluster_method, threads = threads, .missing_args_error = FALSE)()
+    clustering_res <- t(lsi_res_obj$cell_embeddings[fitted_params$iter_info$pcs_to_keep[[i]], ]) %>%
+      partial_apply(cluster_method, threads = threads, .missing_args_error = FALSE)()
     fitted_params$iter_info$clusters[[i]] <- clustering_res
     # pseudobulk and pass onto next iteration
     if (verbose) log_progress("Pseudobulking matrix")
     pseudobulk_res <- pseudobulk_matrix(mat, clustering_res, threads = as.integer(threads))
-    # Only take the SVD information required to project the matrix
-    fitted_params$iter_info$lsi_results[[i]]$feature_loadings <- lsi_res_obj$fitted_params$feature_loadings
     rownames(pseudobulk_res) <- rownames(mat)
   }
   if (verbose) log_progress("Finished running Iterative LSI")
@@ -515,7 +515,7 @@ project.IterativeLSI <- function(x, mat, threads = 1L, ...) {
   assert_is_mat(mat)
   fitted_params <- x$fitted_params
   # Get the final row of fitted params
-  last_iter_info <- fitted_params$iter_info[nrow(fitted_params$iter_info),]
+  last_iter_info <- fitted_params$iter_info[nrow(fitted_params$iter_info), ]
 
   # Do a check to make sure that the fitted features all exist in input matrix
   if (!is.null(rownames(mat)) && !is.null(x$feature_names)) {
@@ -531,7 +531,7 @@ project.IterativeLSI <- function(x, mat, threads = 1L, ...) {
   # Run LSI
   # since we don't hold the LSI object, copy the internal logic from `project.LSI()`
   lsi_attr <- attr(x$fitted_params$lsi_method, "args")
-  
+
   mat <- normalize_tfidf(
     mat = mat,
     feature_means = fitted_params$feature_means,
@@ -542,11 +542,11 @@ project.IterativeLSI <- function(x, mat, threads = 1L, ...) {
     convert_matrix_type(mat, type = "float"),
     tempfile("mat"), compress = TRUE
   )
-  
-  feature_loadings <- last_iter_info$lsi_results[[1]]$feature_loadings
+
+  feature_loadings <- last_iter_info$feature_loadings[[1]]
   res <- t(feature_loadings) %*% mat
-  if (length(last_iter_info$lsi_results[[1]]$pcs_to_keep) != nrow(res)) {
-    res <- res[last_iter_info$lsi_results[[1]]$pcs_to_keep,]
+  if (length(last_iter_info$pcs_to_keep[[1]]) != nrow(res)) {
+    res <- res[last_iter_info$pcs_to_keep[[1]]$pcs_to_keep,]
   }
   return(res)
 }
