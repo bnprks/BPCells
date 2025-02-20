@@ -514,25 +514,28 @@ IterativeLSI <- function(
   return(res)
 }
 #' @rdname IterativeLSI
+#' @param iteration (integer) Which iteration of `IterativeLSI`'s features, loadings, and kept PCs to use for projection.
 #' @return
 #' **project()** IterableMatrix of the projected data of shape `(n_dimensions, ncol(mat))`.
 #' @inheritParams project
 #' @export
-project.IterativeLSI <- function(x, mat, threads = 1L, ...) {
+project.IterativeLSI <- function(x, mat, iteration = x$fitted_params$iterations, threads = 1L, ...) {
   assert_is_mat(mat)
   fitted_params <- x$fitted_params
-  # Get the final row of fitted params
-  last_iter_info <- fitted_params$iter_info[nrow(fitted_params$iter_info), ]
+  # Get the desired row of iter_info tibble
+  assert_is_wholenumber(iteration)
+  assert_true(iteration <= x$fitted_params$iterations)
+  iter_info <- fitted_params$iter_info[iteration, ]
 
   # Do a check to make sure that the fitted features all exist in input matrix
   if (!is.null(rownames(mat)) && !is.null(x$feature_names)) {
     assert_true(all(x$feature_names %in% rownames(mat)))
   }
   # Subset to variable features
-  if (is.character(last_iter_info$feature_names[[1]])) {
-    mat_indices <- which(rownames(mat) %in% last_iter_info$feature_names[[1]])
+  if (is.character(iter_info$feature_names[[1]])) {
+    mat_indices <- which(rownames(mat) %in% iter_info$feature_names[[1]])
   } else {
-    mat_indices <- last_iter_info$feature_names[[1]]
+    mat_indices <- iter_info$feature_names[[1]]
   }
   mat <- mat[mat_indices,]
   # Run LSI
@@ -550,10 +553,10 @@ project.IterativeLSI <- function(x, mat, threads = 1L, ...) {
     tempfile("mat"), compress = TRUE
   )
 
-  feature_loadings <- last_iter_info$feature_loadings[[1]]
+  feature_loadings <- iter_info$feature_loadings[[1]]
   res <- t(feature_loadings) %*% mat
-  if (length(last_iter_info$pcs_to_keep[[1]]) != nrow(res)) {
-    res <- res[last_iter_info$pcs_to_keep[[1]]$pcs_to_keep,]
+  if (length(iter_info$pcs_to_keep[[1]]) != nrow(res)) {
+    res <- res[iter_info$pcs_to_keep[[1]]$pcs_to_keep,]
   }
   return(res)
 }

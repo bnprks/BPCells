@@ -240,9 +240,12 @@ test_that("Iterative LSI works", {
   colnames(mat) <- paste0("cell", seq_len(ncol(mat)))
   lsi_res_obj <- expect_no_error(IterativeLSI(mat, n_iterations = 2, n_dimensions = 10L, cluster_method = cluster_graph_louvain(knn_mat_method = knn_hnsw)))
   lsi_res_proj <- project(lsi_res_obj, mat)
+  lsi_res_proj_iter_1 <- expect_no_error(project(lsi_res_obj, mat, iteration = 1L))
   lsi_res_embedding <- lsi_res_obj$cell_embeddings
   expect_equal(ncol(lsi_res_embedding), ncol(mat))
   expect_equal(nrow(lsi_res_embedding), 10)
+  expect_equal(ncol(lsi_res_proj_iter_1), ncol(mat))
+  expect_equal(nrow(lsi_res_proj_iter_1), 10)
   expect_equal(lsi_res_embedding, lsi_res_proj)
 })
 

@@ -17,7 +17,7 @@ IterativeLSI(
   verbose = FALSE
 )
 
-\method{project}{IterativeLSI}(x, mat, threads = 1L, ...)
+\method{project}{IterativeLSI}(x, mat, iteration = x$fitted_params$iterations, threads = 1L, ...)
 }
 \arguments{
 \item{mat}{(IterableMatrix) Counts matrix of shape \verb{(features x cells)}.}
@@ -42,6 +42,8 @@ The user can pass in partial parameters to the cluster method, such as by passin
 \item{threads}{(integer) Number of threads to use.}
 
 \item{x}{DimReduction object.}
+
+\item{iteration}{(integer) Which iteration of \code{IterativeLSI}'s features, loadings, and kept PCs to use for projection.}
 }
 \value{
 \strong{IterativeLSI()} An object of class \code{c("IterativeLSI", "DimReduction")} with the following attributes:
