@@ -19,7 +19,7 @@
 #' @rdname feature_selection
 #' @param mat (IterableMatrix) dimensions features x cells
 #' @param num_feats (float) Number of features to mark as highly_variable. If 0 < num_feats < 1, then interpret it as a fraction of features.
-#' @param normalize (function) Normalize the matrix prior to feature selection by calling normalize(mat) if it's not NULL. 
+#' @param normalize_method (function) Normalize the matrix prior to feature selection by calling normalize(mat) if it's not NULL. 
 #' For example, pass normalize_log() or normalize_tfidf(). 
 #' If the normalize function accepts a threads argument, that will passed as normalize(mat, threads=threads).
 #' @param threads (integer) Number of threads to use.
@@ -42,7 +42,7 @@
 #' select_features_variance(
 #'     mat, 
 #'     num_feats=2, 
-#'     normalize=normalize_log
+#'     normalize_method=normalize_log
 #' )
 #' 
 #' # Because of how the BPCells `normalize` functions behave when the matrix 
@@ -50,7 +50,7 @@
 #' variable_features <- select_features_variance(
 #'     mat,
 #'     num_feats=2,
-#'     normalize=normalize_log(scale_factor=20)
+#'     normalize_method=normalize_log(scale_factor=20)
 #' ) 
 #' # One can then filter to only variable features using the subset operator:
 #' mat[variable_features$feature[variable_features$highly_variable],]
@@ -58,7 +58,7 @@
 #' @export
 select_features_variance <- function(
   mat, num_feats = 0.05, 
-  normalize = NULL,
+  normalize_method = NULL,
   threads = 1L
 ) {
   assert_greater_than_zero(num_feats)
@@ -72,7 +72,7 @@ select_features_variance <- function(
     rlang::warn(add_timestamp(sprintf("Number of features asked for (%s) is greater than the number of features in the matrix (%s).", num_feats, nrow(mat))))
   }
   num_feats <- min(max(num_feats, 0), nrow(mat))
-  if (!is.null(normalize)) mat <- partial_apply(normalize, threads = threads, .missing_args_error = FALSE)(mat)
+  if (!is.null(normalize_method)) mat <- partial_apply(normalize_method, threads = threads, .missing_args_error = FALSE)(mat)
   features_df <- tibble::tibble(
     feature = rownames(mat),
     score = matrix_stats(mat, row_stats = "variance", threads = threads)$row_stats["variance",]
@@ -88,7 +88,7 @@ select_features_variance <- function(
 #' @export
 select_features_dispersion <- function(
   mat, num_feats = 0.05, 
-  normalize = NULL,
+  normalize_method = NULL,
   threads = 1L
 ) {
   assert_greater_than_zero(num_feats)
@@ -102,7 +102,7 @@ select_features_dispersion <- function(
   num_feats <- min(max(num_feats, 0), nrow(mat))
   if (!is(mat, "IterableMatrix") && canCoerce(mat, "IterableMatrix")) mat <- as(mat, "IterableMatrix")
   assert_is(mat, "IterableMatrix")
-  if (!is.null(normalize)) mat <- partial_apply(normalize, threads = threads, .missing_args_error = FALSE)(mat)
+  if (!is.null(normalize_method)) mat <- partial_apply(normalize_method, threads = threads, .missing_args_error = FALSE)(mat)
   mat_stats <- matrix_stats(mat, row_stats = "variance", threads = threads)
   features_df <- tibble::tibble(
     feature = rownames(mat),
@@ -256,9 +256,9 @@ project.default <- function(x, mat, ...) {
 
 
 #' Perform latent semantic indexing (LSI) on a matrix.
-#'
+#' 
 #' Given a `(features x cells)` counts matrix, perform LSI, which sequentially executes tf-idf normalization and PCA to create a latent space representation of the matrix of shape `(n_dimensions, ncol(mat))`.
-#' Returns a DimReduction object, which contains the projected matrix and also allows for projection of new matrices with the same features into the same latent space.
+#' Returns a DimReduction object, which allows for projection of new matrices with the same features into the same latent space.
 #' @rdname LSI
 #' @param mat (IterableMatrix) Counts matrix of shape `(features x cells)`.
 #' @param n_dimensions (integer) Number of dimensions to keep during PCA.
@@ -269,14 +269,14 @@ project.default <- function(x, mat, ...) {
 #' @returns 
 #' **LSI()** An object of class `c("LSI", "DimReduction")` with the following attributes:
 #' - `cell_embeddings`: The projected data as a matrix of shape `(n_dimensions, ncol(mat))`
-#' - `fitted_params`: A list of the parameters used for iterative LSI, with rows as iterations. Columns include the following:
+#' - `fitted_params`: A tibble of the parameters used for iterative LSI, with rows as iterations. Columns include the following:
 #'   - `scale_factor`: The scale factor used for tf-idf normalization
 #'   - `feature_means`: The means of the features used for normalization
 #'   - `pcs_to_keep`: The PCs that were kept after filtering by correlation to sequencing depth
 #'   - `feature_loadings`: SVD component u with dimension `(n_variable_features, n_dimensions)`
 #' - `feature_names`: The names of the features in the matrix
 #' @details Compute LSI through first doing a log(tf-idf) transform, z-score normalization, then PCA.  Tf-idf implementation is from Stuart & Butler et al. 2019.
-#'
+#' 
 #' Running on a 2600 cell dataset with 50000 peaks and 4 threads, as an example:
 #' - 17.1 MB memory usage, 25.1 seconds runtime
 #' @seealso `project()` `DimReduction()` `normalize_tfidf()` 
@@ -375,7 +375,7 @@ project.LSI <- function(x, mat, threads = 1L, ...) {
 
 
 #' Run iterative LSI on a matrix.
-#'
+#' 
 #' Given a `(features x cells)` counts matrix, perform IterativeLSI to create a latent space representation of the matrix of shape `(n_dimensions, ncol(mat))`.  
 #' This uses the method described in [ArchR](https://doi.org/10.1038/s41588-021-00790-6) (Granja et al; 2019). 
 #' See details for more specific information.  Returns a DimReduction object, which allows for projection of matrices with the same features into the same latent space.
@@ -384,7 +384,7 @@ project.LSI <- function(x, mat, threads = 1L, ...) {
 #' @param n_iterations (int) The number of LSI iterations to perform.
 #' @param feature_selection_method (function) Method to use for selecting features for each iteration after the first. 
 #' Current builtin options are `select_features_variance`, `select_features_dispersion`, `select_features_mean`, `select_features_binned_dispersion`
-#' @param cluster_method (function) Method to use for clustering a kNN matrix.
+#' @param cluster_method (function) Method to use for clustering a kNN matrix. 
 #' Current builtin options are `cluster_graph_{leiden, louvain, seurat}()`.
 #' The user can pass in partial parameters to the cluster method, such as by passing 
 #' `cluster_graph_leiden(resolution = 0.5, knn_mat_method = knn_hnsw(ef = 500, k = 12), knn_graph_method = knn_to_snn_graph(min_val = 0.1))`
@@ -406,7 +406,7 @@ project.LSI <- function(x, mat, threads = 1L, ...) {
 #' @details
 #' The Iterative LSI method is as follows:
 #' - First iteration:
-#'    - Select features using `feature_selection_method` 
+#'    - Select features based on the `feature_selection_method` argument
 #'    - Perform LSI on the selected features
 #'    - If `n_iterations` is 1, return the projected data from the first PCA projection
 #'    - Else, cluster the LSI results using `cluster_method`
@@ -415,27 +415,27 @@ project.LSI <- function(x, mat, threads = 1L, ...) {
 #'    - Perform LSI on the selected features
 #'    - If this is the final iteration, return the projected data from this PCA projection
 #'    - Else, cluster the LSI results using `cluster_method`
-#'
+#' 
 #' There are some minor differences when compared to the ArchR implementation.  Firstly, the ArchR implementation uses a different method for selecting features in the first iteration.  
 #' `select_features_mean(normalize = binarize)` can be passed in for the `feature_selection_method` argument to mimic the ArchR implementation, if choosing to only run one iteration.  This function
 #' currently does not support utilization of different feature selection methods across each iteration.  If one desires to use a different feature selection method for each iteration, 
 #' they can take the cluster assignments from the previous iteration and use them to select features and run LSI.
-#'
+#' 
 #' Additionally, the ArchR implementation calculates LSI during non-terminal iterations using a default subset of 10000 cells.  ArchR does this to prevent a memory bottleneck,
 #' which BPCells does not encounter even with a non-subsetted matrix.
-#' @seealso `LSI()` `DimReduction()` `knn_hnsw()` `knn_annoy()`
-#' `cluster_graph_leiden()` `cluster_graph_louvain()` `cluster_graph_seurat()` `select_features_variance()` `select_features_dispersion()`
+#' @seealso `LSI()` `DimReduction()` `knn_hnsw()` `knn_annoy()` 
+#' `cluster_graph_leiden()` `cluster_graph_louvain()` `cluster_graph_seurat()` `select_features_variance()` `select_features_dispersion()` 
 #' `select_features_mean()` `select_features_binned_dispersion()`
 #' @inheritParams LSI
 #' @export
 IterativeLSI <- function(
-  mat,
+  mat, 
   n_iterations = 2,
   feature_selection_method = select_features_variance,
   lsi_method = LSI,
-  cluster_method = cluster_graph_louvain,
+  cluster_method = cluster_graph_leiden,
   threads = 1L, verbose = FALSE
-) {  
+) {
   assert_has_package("RcppHNSW")
   assert_is_mat(mat)
   assert_greater_than_zero(n_iterations)
@@ -443,7 +443,6 @@ IterativeLSI <- function(
   assert_is_wholenumber(threads)
   assert_is(verbose, "logical")
   fitted_params <- list(
-    feature_selection_method = feature_selection_method,
     lsi_method = lsi_method,
     cluster_method = cluster_method,
     feature_means = matrix_stats(mat, row_stats = "mean", threads = threads)$row_stats["mean",],

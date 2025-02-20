@@ -7,12 +7,17 @@
 \alias{select_features_binned_dispersion}
 \title{Feature selection functions}
 \usage{
-select_features_variance(mat, num_feats = 0.05, normalize = NULL, threads = 1L)
+select_features_variance(
+  mat,
+  num_feats = 0.05,
+  normalize_method = NULL,
+  threads = 1L
+)
 
 select_features_dispersion(
   mat,
   num_feats = 0.05,
-  normalize = NULL,
+  normalize_method = NULL,
   threads = 1L
 )
 
@@ -30,7 +35,7 @@ select_features_binned_dispersion(
 
 \item{num_feats}{(float) Number of features to mark as highly_variable. If 0 < num_feats < 1, then interpret it as a fraction of features.}
 
-\item{normalize}{(function) Normalize the matrix prior to feature selection by calling normalize(mat) if it's not NULL.
+\item{normalize_method}{(function) Normalize the matrix prior to feature selection by calling normalize(mat) if it's not NULL.
 For example, pass normalize_log() or normalize_tfidf().
 If the normalize function accepts a threads argument, that will passed as normalize(mat, threads=threads).}
 
@@ -92,7 +97,7 @@ mat <- as(mat, "IterableMatrix")
 select_features_variance(
     mat, 
     num_feats=2, 
-    normalize=normalize_log
+    normalize_method=normalize_log
 )
 
 # Because of how the BPCells `normalize` functions behave when the matrix 
@@ -100,7 +105,7 @@ select_features_variance(
 variable_features <- select_features_variance(
     mat,
     num_feats=2,
-    normalize=normalize_log(scale_factor=20)
+    normalize_method=normalize_log(scale_factor=20)
 ) 
 # One can then filter to only variable features using the subset operator:
 mat[variable_features$feature[variable_features$highly_variable],]
