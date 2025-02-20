@@ -16,26 +16,25 @@ convert_mat_to_cluster_matrix(
 
 \item{required_mat_type}{(character) Required matrix type: "adjacency" or "knn".}
 
-\item{knn_mat_method}{(function) Function to convert to a knn object (e.g., \code{knn_hnsw}, \code{knn_annoy}).
+\item{knn_mat_method}{(function) Function to convert to a knn matrix (e.g., \code{knn_hnsw}, \code{knn_annoy}).
 Ignored if \code{mat} is already a knn or graph matrix.}
 
-\item{knn_graph_method}{(function) Function to convert a knn object to a graph matrix
+\item{knn_graph_method}{(function) Function to convert a knn matrix to a graph matrix
 (e.g., \code{knn_to_geodesic_graph}). Ignored if \code{required_mat_type} is "knn" or if
-\code{mat} is already a graph matrix.}
+\code{mat} is already a graph matrix.
+#' @details
+This function checks the type of the input matrix \code{mat}. \code{mat} is returned without modification if
+it is already the required type (adjacency or knn).
+If \code{mat} is a standard matrix and \code{required_mat_type} is "knn", then \code{knn_mat_method} is used to convert \code{mat} to a knn matrix.
+If \code{required_mat_type} is "adjacency", then \code{knn_mat_method} is used to first convert \code{mat} to a knn matrix,
+then \code{knn_graph_method} is used to convert the knn matrix to an adjacency matrix.}
 }
 \value{
-The converted matrix object.
+The converted matrix.
 }
 \description{
 Ensures that the input matrix is converted to the correct type (knn or adjacency)
 required by a clustering function. If the input is already of the correct type,
 it is returned as is.
-}
-\details{
-This function checks the type of the input matrix \code{mat}. \code{mat} is returned without modification if
-it is already the required type (adjacency or knn).
-If \code{mat} is a standard matrix and \code{required_mat_type} is "knn", then \code{knn_mat_method} is used to convert \code{mat} to a knn object.
-If \code{required_mat_type} is "adjacency", then \code{knn_mat_method} is used to first convert \code{mat} to a knn object,
-then \code{knn_graph_method} is used to convert the knn object to an adjacency matrix.
 }
 \keyword{internal}

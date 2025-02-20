@@ -9,10 +9,10 @@
 
 #' Check if an input is a kNN output matrix
 #'
-#' knn object functions `knn_hnsw()` and `knn_annoy()` return a list of two matrices, `idx` and `dist`.
+#' knn matrix functions `knn_hnsw()` and `knn_annoy()` return a list of two matrices, `idx` and `dist`.
 #' These are used as inputs to create graph adjacency matrices for clustering.
-#' Assume any list with both `idx` and `dist` is a kNN object.
-#' @return TRUE if the mat is a knn object, FALSE otherwise
+#' Assume any list with at least both `idx` and `dist` items is a kNN object.
+#' @return TRUE if the mat is a kNN matrix, FALSE otherwise
 #' @keywords internal
 is_knn_matrix <- function(mat) {
   return(is(mat, "list") && all(c("idx", "dist") %in% names(mat)))
@@ -36,18 +36,18 @@ is_adjacency_matrix <- function(mat) {
 #'
 #' @param mat Input matrix to be converted.
 #' @param required_mat_type (character) Required matrix type: "adjacency" or "knn".
-#' @param knn_mat_method (function) Function to convert to a knn object (e.g., `knn_hnsw`, `knn_annoy`).
+#' @param knn_mat_method (function) Function to convert to a knn matrix (e.g., `knn_hnsw`, `knn_annoy`).
 #'   Ignored if `mat` is already a knn or graph matrix.
-#' @param knn_graph_method (function) Function to convert a knn object to a graph matrix
+#' @param knn_graph_method (function) Function to convert a knn matrix to a graph matrix
 #'   (e.g., `knn_to_geodesic_graph`). Ignored if `required_mat_type` is "knn" or if
 #'   `mat` is already a graph matrix.
-#' @details
+#' #' @details
 #' This function checks the type of the input matrix `mat`. `mat` is returned without modification if
 #' it is already the required type (adjacency or knn).
-#' If `mat` is a standard matrix and `required_mat_type` is "knn", then `knn_mat_method` is used to convert `mat` to a knn object.
-#' If `required_mat_type` is "adjacency", then `knn_mat_method` is used to first convert `mat` to a knn object,
-#' then `knn_graph_method` is used to convert the knn object to an adjacency matrix.
-#' @return The converted matrix object.
+#' If `mat` is a standard matrix and `required_mat_type` is "knn", then `knn_mat_method` is used to convert `mat` to a knn matrix.
+#' If `required_mat_type` is "adjacency", then `knn_mat_method` is used to first convert `mat` to a knn matrix, 
+#' then `knn_graph_method` is used to convert the knn matrix to an adjacency matrix.
+#' @return The converted matrix.
 #' @keywords internal
 convert_mat_to_cluster_matrix <- function(
   mat,
@@ -60,7 +60,7 @@ convert_mat_to_cluster_matrix <- function(
     mat <- knn_mat_method(mat)
   }
   if (required_mat_type == "knn" && !is_knn_matrix(mat)) {
-    pretty_error(mat, "must be a knn object, or convertible to one", 1)
+    pretty_error(mat, "must be a knn matrix, or convertible to one", 1)
   }
   if (required_mat_type == "adjacency" && is_knn_matrix(mat)) {
     mat <- knn_graph_method(mat)
@@ -84,8 +84,8 @@ convert_mat_to_cluster_matrix <- function(
 #'  dist for cell x K neighbor distances
 #' @param use_weights boolean for whether to replace all distance weights with 1
 #' @param self_loops boolean for whether to allow cells to count themselves as neighbors
-#' @param knn_mat_method (function) if knn is not a knn object, this function will attempt to convert it to one. 
-#' Must be a (optionally partialized) version of `knn_hnsw()` or `knn_annoy()`.  Ignored if knn is already a knn object.
+#' @param knn_mat_method (function) if knn is not a knn matrix, this function will attempt to convert it to one. 
+#' Must be a (optionally partialized) version of `knn_hnsw()` or `knn_annoy()`.  Ignored if knn is already a knn matrix.
 #' @return **knn_to_graph**
 #'   Sparse matrix (dgCMatrix) where `mat[i,j]` = distance from cell `i` to
 #'   cell `j`, or 0 if cell `j` is not in the K nearest neighbors of `i`
@@ -190,7 +190,7 @@ knn_to_geodesic_graph <- function(knn, return_type=c("matrix", "list"), threads=
   return_type <- match.arg(return_type)
   assert_is_wholenumber(threads)
   if (rlang::is_missing(knn)) return(create_partial())
-  knn_mat_method <- partial_apply(knn_mat_method, threads = threads, .missing_args_error = FALSE)
+  knn_mat_method <- partial_apply(knn_mat_method, threads = threads)
   knn <- convert_mat_to_cluster_matrix(knn, required_mat_type = "knn", knn_mat_method = knn_mat_method)
   graph <- build_umap_graph_cpp(knn$dist, knn$idx, threads=threads)
   
@@ -211,28 +211,28 @@ knn_to_geodesic_graph <- function(knn, return_type=c("matrix", "list"), threads=
 #'    Note that when using `objective_function = "CPM"` the number of clusters empirically scales with `cells * resolution`,
 #'    so 1e-3 is a good resolution for 10k cells, but 1M cells is better with a 1e-5 resolution. A resolution of 1 is a 
 #'    good default when `objective_function = "modularity"` per the default.
-#' @param snn Symmetric adjacency matrix (dgCMatrix) output from e.g. `knn_to_snn_graph()` or `knn_to_geodesic_graph()`. Only the lower triangle is used
+#' @param mat Symmetric adjacency matrix (dgCMatrix) output from e.g. `knn_to_snn_graph()` or `knn_to_geodesic_graph()`. Only the lower triangle is used
 #' @param resolution Resolution parameter. Higher values result in more clusters
 #' @param objective_function Graph statistic to optimize during clustering. Modularity is the default as it keeps resolution independent of dataset size (see details below). 
 #'    For the meaning of each option, see `igraph::cluster_leiden()`.
-#' @param knn_mat_method (function) if snn represents a regular non-knn object, this function will attempt to convert it a knn object.
-#' Must be a (optionally partialized) version of `knn_hnsw()` or `knn_annoy()`.  Ignored if knn is already a knn object.
-#' @param knn_graph_method (function) if snn represents a knn object, this function will attempt to convert it to a graph matrix.
+#' @param knn_mat_method (function) if mat represents a regular non-knn matrix, this function will attempt to convert it a knn matrix.
+#' Must be a (optionally partialized) version of `knn_hnsw()` or `knn_annoy()`.  Ignored if knn is already a knn matrix.
+#' @param knn_graph_method (function) if mat represents a knn matrix, this function will attempt to convert it to a graph matrix.
 #' Must be a (optionally partialized) version of `knn_to_graph()`, `knn_to_snn_graph()` or `knn_to_geodesic_graph()`.  
-#' Ignored if snn is already a graph matrix.
+#' Ignored if mat is already a graph adjacency matrix.
 #' @param seed Random seed for clustering initialization
 #' @param ... Additional arguments to underlying clustering function
 #' @return Factor vector containing the cluster assignment for each cell.
 #' @export
 cluster_graph_leiden <- function(
-  snn, resolution = 1, objective_function = c("modularity", "CPM"), 
+  mat, resolution = 1, objective_function = c("modularity", "CPM"), 
   knn_mat_method = knn_hnsw, knn_graph_method = knn_to_geodesic_graph, seed = 12531, ...
 ) {
   assert_has_package("igraph")
   # Set seed without permanently changing seed state
-  if (rlang::is_missing(snn)) return(create_partial())
-  snn <- convert_mat_to_cluster_matrix(
-    snn, required_mat_type = "adjacency", knn_mat_method = knn_mat_method,
+  if (rlang::is_missing(mat)) return(create_partial())
+  mat <- convert_mat_to_cluster_matrix(
+    mat, required_mat_type = "adjacency", knn_mat_method = knn_mat_method,
     knn_graph_method = knn_graph_method
   )
   prev_seed <- get_seed()
@@ -241,7 +241,7 @@ cluster_graph_leiden <- function(
 
   objective_function <- match.arg(objective_function)
 
-  igraph::graph_from_adjacency_matrix(snn, weighted = TRUE, diag = FALSE, mode = "lower") %>%
+  igraph::graph_from_adjacency_matrix(mat, weighted = TRUE, diag = FALSE, mode = "lower") %>%
     igraph::cluster_leiden(resolution_parameter = resolution, objective_function=objective_function, ...) %>%
     igraph::membership() %>%
     as.factor()
@@ -252,14 +252,14 @@ cluster_graph_leiden <- function(
 #' @details **cluster_graph_louvain**: Louvain graph clustering algorithm `igraph::cluster_louvain()`
 #' @export
 cluster_graph_louvain <- function(
-  snn, resolution = 1, knn_mat_method = knn_hnsw, 
+  mat, resolution = 1, knn_mat_method = knn_hnsw, 
   knn_graph_method = knn_to_geodesic_graph, seed = 12531
 ) {
   assert_has_package("igraph")
   # Set seed without permanently changing seed state
-  if (rlang::is_missing(snn)) return(create_partial())
-  snn <- convert_mat_to_cluster_matrix(
-    snn, required_mat_type = "adjacency", knn_mat_method = knn_mat_method,
+  if (rlang::is_missing(mat)) return(create_partial())
+  mat <- convert_mat_to_cluster_matrix(
+    mat, required_mat_type = "adjacency", knn_mat_method = knn_mat_method,
     knn_graph_method = knn_graph_method
   )
 
@@ -267,7 +267,7 @@ cluster_graph_louvain <- function(
   on.exit(restore_seed(prev_seed), add = TRUE)
   set.seed(seed)
 
-  igraph::graph_from_adjacency_matrix(snn, weighted = TRUE, diag = FALSE, mode = "lower") %>%
+  igraph::graph_from_adjacency_matrix(mat, weighted = TRUE, diag = FALSE, mode = "lower") %>%
     igraph::cluster_louvain(resolution = resolution) %>%
     igraph::membership() %>%
     as.factor()
@@ -277,16 +277,16 @@ cluster_graph_louvain <- function(
 #' @details **cluster_graph_seurat**: Seurat's clustering algorithm `Seurat::FindClusters()`
 #' @export
 cluster_graph_seurat <- function(
-  snn, resolution = 0.8, knn_mat_method = knn_hnsw, 
+  mat, resolution = 0.8, knn_mat_method = knn_hnsw, 
   knn_graph_method = knn_to_geodesic_graph, ...
 ) {
   assert_has_package("Seurat")
-  if (rlang::is_missing(snn)) return(create_partial())
-  snn <- convert_mat_to_cluster_matrix(
-    snn, required_mat_type = "adjacency", knn_mat_method = knn_mat_method,
+  if (rlang::is_missing(mat)) return(create_partial())
+  mat <- convert_mat_to_cluster_matrix(
+    mat, required_mat_type = "adjacency", knn_mat_method = knn_mat_method,
     knn_graph_method = knn_graph_method
   )
-  Seurat::as.Graph(snn) %>%
+  Seurat::as.Graph(mat) %>%
     Seurat::FindClusters(resolution = resolution, ...) %>%
     .[[1]]
 }
@@ -321,7 +321,7 @@ cluster_membership_matrix <- function(groups, group_order = NULL) {
 }
 
 
-#' Get a knn object from reduced dimensions
+#' Get a knn matrix from reduced dimensions
 #'
 #' Search for approximate nearest neighbors between cells in the reduced
 #' dimensions (e.g. PCA), and return the k nearest neighbors (knn) for each
