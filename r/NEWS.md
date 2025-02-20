@@ -14,11 +14,13 @@ Contributions welcome :)
 - Add functions `normalize_tfidf()` and `normalize_log()`, which allow for easy normalization of iterable matrices using TF-IDF or log1p(pull request #189)
 - Add feature selection functions `select_features_variance()`, and `select_features_{dispersion,mean,binned_dispersion}()`, with parameterization for normalization steps, and number of variable features (pull request #189)
 - Add `LSI()` and `IterativeLSI()` dimensionality functions to perform latent semantic indexing on a matrix (pull request #189).
+- Add capability to create partial function objects in when excluding the first argument of a function.  This is implemented in normalizations, feature selections, dimensionality reductions, and clustering functions. See `select_features_variance()` for usage.  (pull request #189)
 
 ## Improvements
 - Speed up taking large subsets of large concatenated matrices, e.g. selecting 9M cells from a 10M cell matrix composed of ~100 concatenated pieces. (pull request #179)
 - `matrix_stats()` now also works with types `matrix` and `dgCMatrix`. (pull request #190)
 - Fixed memory errors when running `writeInsertionBed()` and `writeInsertionBedGraph()` (pull request #{118, 134})
+- Change parameter name of `cluster_graph_leiden()`, `cluster_graph_louvain()` and `cluster_graph_seurat()` from `snn` to `mat` to more accurately reflect the input type.  (pull request #189)
 
 ## Bug-fixes
 - Fix error message printing when MACS crashes during `call_peaks_macs()` (pull request #175)
