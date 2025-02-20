@@ -387,9 +387,7 @@ project.LSI <- function(x, mat, threads = 1L, ...) {
 #' @param cluster_method (function) Method to use for clustering a kNN matrix. 
 #' Current builtin options are `cluster_graph_{leiden, louvain, seurat}()`.
 #' The user can pass in partial parameters to the cluster method, such as by passing 
-#' `cluster_graph_leiden(resolution = 0.5, knn_mat_method = knn_hnsw(ef = 500, k = 12), knn_graph_method = knn_to_snn_graph(min_val = 0.1))`
-#' @param lsi_method (function) Method to use for LSI.  Only `LSI` is allowed.  The user can pass in partial parameters to `LSI` to customize the LSI method, 
-#' such as by passing `LSI(n_dimensions = 30, corr_cutoff = 0.5)`.
+#' `cluster_graph_leiden(resolution = 0.5, knn_mat_method = knn_hnsw(ef = 500, k = 12), knn_graph_method = knn_to_snn_graph(min_val = 0.1))`.
 #' @return 
 #' **IterativeLSI()** An object of class `c("IterativeLSI", "DimReduction")` with the following attributes:
 #' - `cell_embeddings`: The projected data as a matrix of shape `(n_dimensions, ncol(mat))`
@@ -433,7 +431,9 @@ IterativeLSI <- function(
   mat, 
   n_iterations = 2,
   feature_selection_method = select_features_variance,
-  lsi_method = LSI,
+  scale_factor = 1e4, 
+  n_dimensions = 50L, 
+  corr_cutoff = 1,
   cluster_method = cluster_graph_leiden,
   threads = 1L, verbose = FALSE
 ) {
@@ -444,7 +444,7 @@ IterativeLSI <- function(
   assert_is_wholenumber(threads)
   assert_is(verbose, "logical")
   fitted_params <- list(
-    lsi_method = lsi_method,
+    lsi_method = LSI(n_dimensions = n_dimensions, corr_cutoff = corr_cutoff, scale_factor = scale_factor, threads = threads),
     cluster_method = cluster_method,
     feature_means = matrix_stats(mat, row_stats = "mean", threads = threads)$row_stats["mean",],
     iterations = n_iterations,
@@ -461,35 +461,42 @@ IterativeLSI <- function(
     
     if (verbose) log_progress(sprintf("Starting Iterative LSI iteration %s of %s", i, n_iterations))
     # add a blank row to the iter_info tibble
-    fitted_params$iter_info <- tibble::add_row(fitted_params$iter_info, iteration = i)
+    
     # run variable feature selection
     if (verbose) log_progress("Selecting features")
     if (i == 1) {
-      variable_features <- partial_apply(feature_selection_method, threads = threads, .missing_args_error = FALSE)(mat)
+      var_feature_table <- partial_apply(feature_selection_method, threads = threads, .missing_args_error = FALSE)(mat)
     } else {
-      variable_features <- partial_apply(feature_selection_method, threads = threads, .missing_args_error = FALSE)(pseudobulk_res)
+      var_feature_table <- partial_apply(feature_selection_method, threads = threads, .missing_args_error = FALSE)(pseudobulk_res)
     }
-    fitted_params$iter_info$feature_names[[i]] <- variable_features %>% dplyr::filter(highly_variable) %>% dplyr::pull(feature)
-    if (is.character(fitted_params$iter_info$feature_names[[i]])) {
-      mat_indices <- which(rownames(mat) %in% fitted_params$iter_info$feature_names[[i]])
+    variable_features <- var_feature_table %>% dplyr::filter(highly_variable) %>% dplyr::pull(feature)
+    if (is.character(variable_features)) {
+      mat_indices <- which(rownames(mat) %in% variable_features)
     } else {
-      mat_indices <- fitted_params$iter_info$feature_names[[i]]
+      mat_indices <- variable_features
     }
     # run LSI
     if (verbose) log_progress("Running LSI")
-    lsi_res_obj <- partial_apply(
-      lsi_method,
+
+    lsi_res_obj <- LSI(
+      mat = mat[mat_indices,],
+      n_dimensions = n_dimensions,
+      scale_factor = scale_factor,
       threads = threads,
-      verbose = verbose,
-      .missing_args_error = FALSE
-    )(mat[mat_indices,])
-    fitted_params$iter_info$feature_loadings[[i]] <- lsi_res_obj$fitted_params$feature_loadings
-    fitted_params$iter_info$pcs_to_keep[[i]] <- lsi_res_obj$fitted_params$pcs_to_keep
+      verbose = verbose
+    )
     # only cluster + pseudobulk if this isn't the last iteration
+    fitted_params$iter_info <- tibble::add_row(
+      fitted_params$iter_info, iteration = i,
+      feature_names = list(variable_features),
+      feature_loadings = list(lsi_res_obj$fitted_params$feature_loadings),
+      pcs_to_keep = list(lsi_res_obj$fitted_params$pcs_to_keep)
+    )
     if (i == n_iterations) break
+    
     # cluster the LSI results
     if (verbose) log_progress("Clustering LSI results")
-    clustering_res <- t(lsi_res_obj$cell_embeddings[fitted_params$iter_info$pcs_to_keep[[i]], ]) %>%
+    clustering_res <- t(lsi_res_obj$cell_embeddings[lsi_res_obj$fitted_params$pcs_to_keep, ]) %>%
       partial_apply(cluster_method, threads = threads, .missing_args_error = FALSE)()
     fitted_params$iter_info$clusters[[i]] <- clustering_res
     # pseudobulk and pass onto next iteration

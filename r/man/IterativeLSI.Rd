@@ -9,7 +9,9 @@ IterativeLSI(
   mat,
   n_iterations = 2,
   feature_selection_method = select_features_variance,
-  lsi_method = LSI,
+  scale_factor = 10000,
+  n_dimensions = 50L,
+  corr_cutoff = 1,
   cluster_method = cluster_graph_leiden,
   threads = 1L,
   verbose = FALSE
@@ -25,13 +27,17 @@ IterativeLSI(
 \item{feature_selection_method}{(function) Method to use for selecting features for each iteration after the first.
 Current builtin options are \code{select_features_variance}, \code{select_features_dispersion}, \code{select_features_mean}, \code{select_features_binned_dispersion}}
 
-\item{lsi_method}{(function) Method to use for LSI.  Only \code{LSI} is allowed.  The user can pass in partial parameters to \code{LSI} to customize the LSI method,
-such as by passing \code{LSI(n_dimensions = 30, corr_cutoff = 0.5)}.}
+\item{scale_factor}{(numeric) Scaling factor to multiply matrix by prior to log normalization (see formulas below).}
+
+\item{n_dimensions}{(integer) Number of dimensions to keep during PCA.}
+
+\item{corr_cutoff}{(numeric) Numeric filter for the correlation of a PC to the sequencing depth.  If the PC has a correlation that is great or equal to
+the corr_cutoff, it will be excluded from the final PCA matrix.}
 
 \item{cluster_method}{(function) Method to use for clustering a kNN matrix.
 Current builtin options are \verb{cluster_graph_\{leiden, louvain, seurat\}()}.
 The user can pass in partial parameters to the cluster method, such as by passing
-\code{cluster_graph_leiden(resolution = 0.5, knn_mat_method = knn_hnsw(ef = 500, k = 12), knn_graph_method = knn_to_snn_graph(min_val = 0.1))}}
+\code{cluster_graph_leiden(resolution = 0.5, knn_mat_method = knn_hnsw(ef = 500, k = 12), knn_graph_method = knn_to_snn_graph(min_val = 0.1))}.}
 
 \item{threads}{(integer) Number of threads to use.}
 
@@ -41,7 +47,7 @@ The user can pass in partial parameters to the cluster method, such as by passin
 \strong{IterativeLSI()} An object of class \code{c("IterativeLSI", "DimReduction")} with the following attributes:
 \itemize{
 \item \code{cell_embeddings}: The projected data as a matrix of shape \verb{(n_dimensions, ncol(mat))}
-\item \code{fitted_params}: A list of the parameters used for iterative LSI, with rows as iterations. Columns include the following:
+\item \code{fitted_params}: A list of the parameters used for iterative LSI.  Includes the following:
 \itemize{
 \item \code{lsi_method}: The method used for LSI
 \item \code{cluster_method}: The method used for clustering
@@ -70,7 +76,7 @@ The Iterative LSI method is as follows:
 \itemize{
 \item First iteration:
 \itemize{
-\item Select features based on the \code{feature_selection_method} argument
+\item Select features using \code{feature_selection_method}
 \item Perform LSI on the selected features
 \item If \code{n_iterations} is 1, return the projected data from the first PCA projection
 \item Else, cluster the LSI results using \code{cluster_method}
