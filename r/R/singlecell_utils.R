@@ -233,7 +233,7 @@ DimReduction <- function(mat, fitted_params = list(), feature_names = character(
 #' @param x DimReduction object.
 #' @return - `project()`: IterableMatrix object of the projected data.
 #' @details 
-#' **project()**: Perform a dimensionality reduction on a matrix using a pre-fit DimReduction object.
+#' `project()`: Perform a dimensionality reduction on a matrix using a pre-fit DimReduction object.
 #' 
 #' DimReduction subclasses should use the `project` method on new data with the same features, to project into the same latent space.
 #' All required information to run a projection should be held in `x$fitted_params`, including pertinent parameters when constructing the DimReduction subclass object.
@@ -267,7 +267,7 @@ project.default <- function(x, mat, ...) {
 #' @param scale_factor (numeric) Scaling factor to multiply matrix by prior to log normalization (see formulas below).
 #' @param threads (integer) Number of threads to use.
 #' @returns 
-#' **LSI()** An object of class `c("LSI", "DimReduction")` with the following attributes:
+#' `LSI()` An object of class `c("LSI", "DimReduction")` with the following attributes:
 #' - `cell_embeddings`: The projected data as a matrix of shape `(n_dimensions, ncol(mat))`
 #' - `fitted_params`: A tibble of the parameters used for iterative LSI, with rows as iterations. Columns include the following:
 #'   - `scale_factor`: The scale factor used for tf-idf normalization
@@ -279,7 +279,7 @@ project.default <- function(x, mat, ...) {
 #' 
 #' Running on a 2600 cell dataset with 50000 peaks and 4 threads, as an example:
 #' - 17.1 MB memory usage, 25.1 seconds runtime
-#' @seealso `project()` `DimReduction()` `normalize_tfidf()` 
+#' @seealso `project()` `DimReduction()` `normalize_tfidf()` `normalize_log()` `svds()`
 #' @export
 LSI <- function(
   mat, n_dimensions = 50L, corr_cutoff = 1, scale_factor = 1e4,
@@ -340,7 +340,7 @@ LSI <- function(
 }
 #' @rdname LSI
 #' @return 
-#' **project()** IterableMatrix of the projected data of shape `(n_dimensions, ncol(mat))`.
+#' `project()` IterableMatrix of the projected data of shape `(n_dimensions, ncol(mat))`.
 #' @inheritParams project
 #' @export
 project.LSI <- function(x, mat, threads = 1L, ...) {
@@ -389,7 +389,7 @@ project.LSI <- function(x, mat, threads = 1L, ...) {
 #' The user can pass in partial parameters to the cluster method, such as by passing 
 #' `cluster_graph_leiden(resolution = 0.5, knn_mat_method = knn_hnsw(ef = 500, k = 12), knn_graph_method = knn_to_snn_graph(min_val = 0.1))`.
 #' @return 
-#' **IterativeLSI()** An object of class `c("IterativeLSI", "DimReduction")` with the following attributes:
+#' `IterativeLSI()` An object of class `c("IterativeLSI", "DimReduction")` with the following attributes:
 #' - `cell_embeddings`: The projected data as a matrix of shape `(n_dimensions, ncol(mat))`
 #' - `fitted_params`: A list of the parameters used for iterative LSI.  Includes the following:
 #'    - `lsi_method`: The method used for LSI
@@ -422,7 +422,7 @@ project.LSI <- function(x, mat, threads = 1L, ...) {
 #' 
 #' Additionally, the ArchR implementation calculates LSI during non-terminal iterations using a default subset of 10000 cells.  ArchR does this to prevent a memory bottleneck,
 #' which BPCells does not encounter even with a non-subsetted matrix.
-#' @seealso `LSI()` `DimReduction()` `knn_hnsw()` `knn_annoy()` 
+#' @seealso `LSI()` `DimReduction()` `svd()` `knn_hnsw()` `knn_annoy()` 
 #' `cluster_graph_leiden()` `cluster_graph_louvain()` `cluster_graph_seurat()` `select_features_variance()` `select_features_dispersion()` 
 #' `select_features_mean()` `select_features_binned_dispersion()`
 #' @inheritParams LSI
@@ -516,7 +516,7 @@ IterativeLSI <- function(
 #' @rdname IterativeLSI
 #' @param iteration (integer) Which iteration of `IterativeLSI`'s features, loadings, and kept PCs to use for projection.
 #' @return
-#' **project()** IterableMatrix of the projected data of shape `(n_dimensions, ncol(mat))`.
+#' `project()` IterableMatrix of the projected data of shape `(n_dimensions, ncol(mat))`.
 #' @inheritParams project
 #' @export
 project.IterativeLSI <- function(x, mat, iteration = x$fitted_params$iterations, threads = 1L, ...) {

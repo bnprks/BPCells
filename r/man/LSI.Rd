@@ -31,7 +31,7 @@ the corr_cutoff, it will be excluded from the final PCA matrix.}
 \item{x}{DimReduction object.}
 }
 \value{
-\strong{LSI()} An object of class \code{c("LSI", "DimReduction")} with the following attributes:
+\code{LSI()} An object of class \code{c("LSI", "DimReduction")} with the following attributes:
 \itemize{
 \item \code{cell_embeddings}: The projected data as a matrix of shape \verb{(n_dimensions, ncol(mat))}
 \item \code{fitted_params}: A tibble of the parameters used for iterative LSI, with rows as iterations. Columns include the following:
@@ -44,7 +44,7 @@ the corr_cutoff, it will be excluded from the final PCA matrix.}
 \item \code{feature_names}: The names of the features in the matrix
 }
 
-\strong{project()} IterableMatrix of the projected data of shape \verb{(n_dimensions, ncol(mat))}.
+\code{project()} IterableMatrix of the projected data of shape \verb{(n_dimensions, ncol(mat))}.
 }
 \description{
 Given a \verb{(features x cells)} counts matrix, perform LSI, which sequentially executes tf-idf normalization and PCA to create a latent space representation of the matrix of shape \verb{(n_dimensions, ncol(mat))}.
@@ -59,5 +59,5 @@ Running on a 2600 cell dataset with 50000 peaks and 4 threads, as an example:
 }
 }
 \seealso{
-\code{project()} \code{DimReduction()} \code{normalize_tfidf()}
+\code{project()} \code{DimReduction()} \code{normalize_tfidf()} \code{normalize_log()} \code{svds()}
 }

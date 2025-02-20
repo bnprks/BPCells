@@ -29,7 +29,7 @@ Child classes should implement a \code{project} method to allow for the projecti
 the fitted transformation object.
 }
 \details{
-\strong{project()}: Perform a dimensionality reduction on a matrix using a pre-fit DimReduction object.
+\code{project()}: Perform a dimensionality reduction on a matrix using a pre-fit DimReduction object.
 
 DimReduction subclasses should use the \code{project} method on new data with the same features, to project into the same latent space.
 All required information to run a projection should be held in \code{x$fitted_params}, including pertinent parameters when constructing the DimReduction subclass object.

@@ -46,7 +46,7 @@ The user can pass in partial parameters to the cluster method, such as by passin
 \item{iteration}{(integer) Which iteration of \code{IterativeLSI}'s features, loadings, and kept PCs to use for projection.}
 }
 \value{
-\strong{IterativeLSI()} An object of class \code{c("IterativeLSI", "DimReduction")} with the following attributes:
+\code{IterativeLSI()} An object of class \code{c("IterativeLSI", "DimReduction")} with the following attributes:
 \itemize{
 \item \code{cell_embeddings}: The projected data as a matrix of shape \verb{(n_dimensions, ncol(mat))}
 \item \code{fitted_params}: A list of the parameters used for iterative LSI.  Includes the following:
@@ -66,7 +66,7 @@ The user can pass in partial parameters to the cluster method, such as by passin
 }
 }
 
-\strong{project()} IterableMatrix of the projected data of shape \verb{(n_dimensions, ncol(mat))}.
+\code{project()} IterableMatrix of the projected data of shape \verb{(n_dimensions, ncol(mat))}.
 }
 \description{
 Given a \verb{(features x cells)} counts matrix, perform IterativeLSI to create a latent space representation of the matrix of shape \verb{(n_dimensions, ncol(mat))}.
@@ -101,7 +101,7 @@ Additionally, the ArchR implementation calculates LSI during non-terminal iterat
 which BPCells does not encounter even with a non-subsetted matrix.
 }
 \seealso{
-\code{LSI()} \code{DimReduction()} \code{knn_hnsw()} \code{knn_annoy()}
+\code{LSI()} \code{DimReduction()} \code{svd()} \code{knn_hnsw()} \code{knn_annoy()}
 \code{cluster_graph_leiden()} \code{cluster_graph_louvain()} \code{cluster_graph_seurat()} \code{select_features_variance()} \code{select_features_dispersion()}
 \code{select_features_mean()} \code{select_features_binned_dispersion()}
 }
