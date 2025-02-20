@@ -9,23 +9,28 @@
 knn_to_graph(
   knn,
   use_weights = FALSE,
+  knn_mat_method = knn_hnsw,
   self_loops = TRUE,
-  knn_mat_method = knn_hnsw
+  threads = 0L,
+  verbose = FALSE
 )
 
 knn_to_snn_graph(
   knn,
   min_val = 1/15,
   self_loops = FALSE,
+  knn_mat_method = knn_hnsw,
   return_type = c("matrix", "list"),
-  knn_mat_method = knn_hnsw
+  threads = 0L,
+  verbose = FALSE
 )
 
 knn_to_geodesic_graph(
   knn,
+  knn_mat_method = knn_hnsw,
   return_type = c("matrix", "list"),
   threads = 0L,
-  knn_mat_method = knn_hnsw
+  verbose = FALSE
 )
 }
 \arguments{
@@ -34,17 +39,19 @@ dist for cell x K neighbor distances}
 
 \item{use_weights}{boolean for whether to replace all distance weights with 1}
 
-\item{self_loops}{Whether to allow self-loops in the output graph}
-
 \item{knn_mat_method}{(function) if knn is not a knn matrix, this function will attempt to convert it to one.
 Must be a (optionally partialized) version of \code{knn_hnsw()} or \code{knn_annoy()}.  Ignored if knn is already a knn matrix.}
+
+\item{self_loops}{Whether to allow self-loops in the output graph}
+
+\item{threads}{(integer) Number of threads to use.}
+
+\item{verbose}{(logical) Whether to print progress information during search}
 
 \item{min_val}{minimum jaccard index between neighbors. Values below this will
 round to 0}
 
 \item{return_type}{Whether to return a sparse adjacency matrix or an edge list}
-
-\item{threads}{Number of threads to use during calculations}
 }
 \value{
 \strong{knn_to_graph}

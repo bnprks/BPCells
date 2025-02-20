@@ -8,7 +8,9 @@ convert_mat_to_cluster_matrix(
   mat,
   required_mat_type = c("knn", "adjacency"),
   knn_mat_method = knn_hnsw,
-  knn_graph_method = knn_to_geodesic_graph
+  knn_graph_method = knn_to_geodesic_graph,
+  threads = 1L,
+  verbose = FALSE
 )
 }
 \arguments{

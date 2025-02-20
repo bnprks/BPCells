@@ -13,6 +13,8 @@ cluster_graph_leiden(
   knn_mat_method = knn_hnsw,
   knn_graph_method = knn_to_geodesic_graph,
   seed = 12531,
+  threads = 0L,
+  verbose = FALSE,
   ...
 )
 
@@ -21,7 +23,9 @@ cluster_graph_louvain(
   resolution = 1,
   knn_mat_method = knn_hnsw,
   knn_graph_method = knn_to_geodesic_graph,
-  seed = 12531
+  seed = 12531,
+  threads = 0L,
+  verbose = FALSE
 )
 
 cluster_graph_seurat(
@@ -29,6 +33,8 @@ cluster_graph_seurat(
   resolution = 0.8,
   knn_mat_method = knn_hnsw,
   knn_graph_method = knn_to_geodesic_graph,
+  threads = 0L,
+  verbose = FALSE,
   ...
 )
 }
@@ -48,6 +54,10 @@ Must be a (optionally partialized) version of \code{knn_to_graph()}, \code{knn_t
 Ignored if mat is already a graph adjacency matrix.}
 
 \item{seed}{Random seed for clustering initialization}
+
+\item{threads}{(integer) Number of threads to use.}
+
+\item{verbose}{(logical) Whether to print progress information during search}
 
 \item{...}{Additional arguments to underlying clustering function}
 }
