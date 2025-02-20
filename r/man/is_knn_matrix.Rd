@@ -2,15 +2,15 @@
 % Please edit documentation in R/clustering.R
 \name{is_knn_matrix}
 \alias{is_knn_matrix}
-\title{Check if an input is a kNN output matrix}
+\title{Check if an input is a kNN object}
 \usage{
 is_knn_matrix(mat)
 }
 \value{
-TRUE if the mat is a kNN matrix, FALSE otherwise
+TRUE if the mat is a knn object, FALSE otherwise
 }
 \description{
-knn matrix functions \code{knn_hnsw()} and \code{knn_annoy()} return a list of two matrices, \code{idx} and \code{dist}.
+knn object functions \code{knn_hnsw()} and \code{knn_annoy()} return a list of two matrices, \code{idx} and \code{dist}.
 These are used as inputs to create graph adjacency matrices for clustering.
 Assume any list with at least both \code{idx} and \code{dist} items is a kNN object.
 }
