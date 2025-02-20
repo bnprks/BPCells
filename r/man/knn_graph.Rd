@@ -36,8 +36,8 @@ dist for cell x K neighbor distances}
 
 \item{self_loops}{Whether to allow self-loops in the output graph}
 
-\item{knn_mat_method}{(function) if knn is not a knn matrix, this function will attempt to convert it to one.
-Must be a (optionally partialized) version of \code{knn_hnsw()} or \code{knn_annoy()}.  Ignored if knn is already a knn matrix.}
+\item{knn_mat_method}{(function) if knn is not a knn object, this function will attempt to convert it to one.
+Must be a (optionally partialized) version of \code{knn_hnsw()} or \code{knn_annoy()}.  Ignored if knn is already a knn object.}
 
 \item{min_val}{minimum jaccard index between neighbors. Values below this will
 round to 0}

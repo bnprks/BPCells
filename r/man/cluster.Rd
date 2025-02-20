@@ -40,10 +40,10 @@ cluster_graph_seurat(
 \item{objective_function}{Graph statistic to optimize during clustering. Modularity is the default as it keeps resolution independent of dataset size (see details below).
 For the meaning of each option, see \code{igraph::cluster_leiden()}.}
 
-\item{knn_mat_method}{(function) if snn represents a regular non-knn matrix, this function will attempt to convert it a knn matrix.
-Must be a (optionally partialized) version of \code{knn_hnsw()} or \code{knn_annoy()}.  Ignored if knn is already a knn matrix.}
+\item{knn_mat_method}{(function) if snn represents a regular non-knn object, this function will attempt to convert it a knn object.
+Must be a (optionally partialized) version of \code{knn_hnsw()} or \code{knn_annoy()}.  Ignored if knn is already a knn object.}
 
-\item{knn_graph_method}{(function) if snn represents a knn matrix, this function will attempt to convert it to a graph matrix.
+\item{knn_graph_method}{(function) if snn represents a knn object, this function will attempt to convert it to a graph matrix.
 Must be a (optionally partialized) version of \code{knn_to_graph()}, \code{knn_to_snn_graph()} or \code{knn_to_geodesic_graph()}.
 Ignored if snn is already a graph matrix.}
 

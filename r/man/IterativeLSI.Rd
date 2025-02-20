@@ -34,7 +34,7 @@ Current builtin options are \code{select_features_variance}, \code{select_featur
 \item{corr_cutoff}{(numeric) Numeric filter for the correlation of a PC to the sequencing depth.  If the PC has a correlation that is great or equal to
 the corr_cutoff, it will be excluded from the final PCA matrix.}
 
-\item{cluster_method}{(function) Method to use for clustering a kNN matrix.
+\item{cluster_method}{(function) Method to use for clustering the post-SVD matrix.
 Current builtin options are \verb{cluster_graph_\{leiden, louvain, seurat\}()}.
 The user can pass in partial parameters to the cluster method, such as by passing
 \code{cluster_graph_leiden(resolution = 0.5, knn_mat_method = knn_hnsw(ef = 500, k = 12), knn_graph_method = knn_to_snn_graph(min_val = 0.1))}.}

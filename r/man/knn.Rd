@@ -3,7 +3,7 @@
 \name{knn_hnsw}
 \alias{knn_hnsw}
 \alias{knn_annoy}
-\title{Get a knn matrix from reduced dimensions}
+\title{Get a knn object from reduced dimensions}
 \usage{
 knn_hnsw(
   data,

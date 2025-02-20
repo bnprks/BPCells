@@ -384,7 +384,7 @@ project.LSI <- function(x, mat, threads = 1L, ...) {
 #' @param n_iterations (int) The number of LSI iterations to perform.
 #' @param feature_selection_method (function) Method to use for selecting features for each iteration after the first. 
 #' Current builtin options are `select_features_variance`, `select_features_dispersion`, `select_features_mean`, `select_features_binned_dispersion`
-#' @param cluster_method (function) Method to use for clustering a kNN matrix. 
+#' @param cluster_method (function) Method to use for clustering the post-SVD matrix. 
 #' Current builtin options are `cluster_graph_{leiden, louvain, seurat}()`.
 #' The user can pass in partial parameters to the cluster method, such as by passing 
 #' `cluster_graph_leiden(resolution = 0.5, knn_mat_method = knn_hnsw(ef = 500, k = 12), knn_graph_method = knn_to_snn_graph(min_val = 0.1))`.
