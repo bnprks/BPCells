@@ -14,7 +14,7 @@
 #' Assume any list with at least both `idx` and `dist` items is a kNN object.
 #' @return TRUE if the mat is a knn object, FALSE otherwise
 #' @keywords internal
-is_knn_matrix <- function(mat) {
+is_knn_object <- function(mat) {
   return(is(mat, "list") && all(c("idx", "dist") %in% names(mat)))
 }
 
@@ -61,10 +61,10 @@ convert_mat_to_cluster_matrix <- function(
   if (is(mat, "matrix")) {
     mat <- partial_apply(knn_mat_method, threads = threads, verbose = verbose, .missing_args_error = FALSE)(mat)
   }
-  if (required_mat_type == "knn" && !is_knn_matrix(mat)) {
+  if (required_mat_type == "knn" && !is_knn_object(mat)) {
     pretty_error(mat, "must be a knn object, or convertible to one", 1)
   }
-  if (required_mat_type == "adjacency" && is_knn_matrix(mat)) {
+  if (required_mat_type == "adjacency" && is_knn_object(mat)) {
     mat <- partial_apply(knn_graph_method, threads = threads, verbose = verbose, .missing_args_error = FALSE)(mat)
   }
   if (required_mat_type == "adjacency" && !is_adjacency_matrix(mat)) {
