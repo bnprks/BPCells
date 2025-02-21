@@ -322,7 +322,7 @@ LSI <- function(
   pca_feats_to_keep <- which(pca_corrs < corr_cutoff)
   if (length(pca_feats_to_keep) != n_dimensions) {
     if (verbose) log_progress(sprintf("Dropping PCs %s due to high correlation with sequencing depth", paste(setdiff(1:n_dimensions, pca_feats_to_keep), collapse = ", ")))
-    pca_res <- pca_res[, pca_feats_to_keep]
+    pca_res <- pca_res[, pca_feats_to_keep] %>% as.matrix()
   }
   fitted_params <- list(
     scale_factor = scale_factor,
@@ -368,7 +368,7 @@ project.LSI <- function(x, mat, threads = 1L, ...) {
   feature_loadings <- fitted_params$feature_loadings
   res <- t(mat) %*% feature_loadings
   if (length(fitted_params$pcs_to_keep) != ncol(res)) {
-    res <- res[, fitted_params$pcs_to_keep]
+    res <- res[, fitted_params$pcs_to_keep] %>% as.matrix()
   }
   return(res)
 }
@@ -500,6 +500,7 @@ IterativeLSI <- function(
     # cluster the LSI results
     if (verbose) log_progress("Clustering LSI results")
     clustering_res <- lsi_res_obj$cell_embeddings[, lsi_res_obj$fitted_params$pcs_to_keep] %>%
+      as.matrix() %>%
       partial_apply(cluster_method, threads = threads, .missing_args_error = FALSE)()
     fitted_params$iter_info$clusters[[i]] <- clustering_res
     # pseudobulk and pass onto next iteration

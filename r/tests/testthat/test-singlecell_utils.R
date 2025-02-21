@@ -215,21 +215,27 @@ test_that("Feature selection by bin variance works", {
 })
 
 test_that("LSI works", {
+    set.seed(12345)
     mat <- matrix(runif(240), nrow=10) %>% as("dgCMatrix") %>% as("IterableMatrix")
     rownames(mat) <- paste0("feat", seq_len(nrow(mat)))
     colnames(mat) <- paste0("cell", seq_len(ncol(mat)))
     # Test only that outputs are reasonable.  There is a full comparison in `tests/real_data/` that compares implementation to ArchR
-    lsi_res_obj <- LSI(mat, n_dimensions = 5)
-    lsi_res_t_obj <- LSI(t(mat), n_dimensions = 5)
+    n_dimensions <- 5
+    lsi_res_obj <- LSI(mat, n_dimensions = n_dimensions)
+    lsi_res_t_obj <- LSI(t(mat), n_dimensions = n_dimensions)
     lsi_res <- lsi_res_obj$cell_embeddings
     lsi_res_t <- lsi_res_t_obj$cell_embeddings
     # Check that projection results in the same output if used on the same input matrix
     lsi_res_proj <- project(lsi_res_obj, mat)
+    # Check setting pca correlations to non-1 value
+    lsi_res_obj_corr <- LSI(mat, n_dimensions = n_dimensions, corr_cutoff = 0.2)
 
     expect_equal(ncol(lsi_res), 5)
     expect_equal(nrow(lsi_res), ncol(mat))
     expect_equal(ncol(lsi_res_t), 5)
     expect_equal(nrow(lsi_res_t), nrow(mat))
+    expect_equal(nrow(lsi_res_proj), ncol(mat))
+    expect_lt(ncol(lsi_res_obj_corr$cell_embeddings), n_dimensions)
     expect_equal(lsi_res, lsi_res_proj)
 })
 
