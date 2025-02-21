@@ -40,7 +40,7 @@ If there are rownames, reorder the matrix to match the order of the original mat
 \section{Fields}{
 
 \describe{
-\item{\code{cell_embeddings}}{(IterableMatrix, dgCMatrix, matrix) Projected data of shape \verb{(n_dimesions x n_cells)} of the original matrix after a dimensionality reduction.}
+\item{\code{cell_embeddings}}{(IterableMatrix, dgCMatrix, matrix) Projected data of shape \verb{(cells x n_dimensions)} of the original matrix after a dimensionality reduction.}
 
 \item{\code{fitted_params}}{(list) A list of parameters used for the transformation of a matrix.  This should include all necessary information to project new data with the same features.}
 

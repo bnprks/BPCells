@@ -211,7 +211,7 @@ select_features_binned_dispersion <- function(
 #' the fitted transformation object.
 #' @rdname DimReduction
 #' @param mat (IterableMatrix) Input matrix of shape `(features x cells)`.
-#' @field cell_embeddings (IterableMatrix, dgCMatrix, matrix) Projected data of shape `(n_dimesions x n_cells)` of the original matrix after a dimensionality reduction.
+#' @field cell_embeddings (IterableMatrix, dgCMatrix, matrix) Projected data of shape `(cells x n_dimensions)` of the original matrix after a dimensionality reduction.
 #' @field fitted_params (list) A list of parameters used for the transformation of a matrix.  This should include all necessary information to project new data with the same features.
 #' @field feature_names (character) The names of the features that this DimReduction object was fit on.  Matrices to be projected should have the same feature names.
 #' @return - `DimReduction()`: DimReduction object.
@@ -268,7 +268,7 @@ project.default <- function(x, mat, ...) {
 #' @param threads (integer) Number of threads to use.
 #' @returns 
 #' `LSI()` An object of class `c("LSI", "DimReduction")` with the following attributes:
-#' - `cell_embeddings`: The projected data as a matrix of shape `(n_dimensions, ncol(mat))`
+#' - `cell_embeddings`: The projected data as a matrix of shape `(cells, n_dimensions)`
 #' - `fitted_params`: A tibble of the parameters used for iterative LSI, with rows as iterations. Columns include the following:
 #'   - `scale_factor`: The scale factor used for tf-idf normalization
 #'   - `feature_means`: The means of the features used for normalization
@@ -315,14 +315,14 @@ LSI <- function(
   # Run pca
   if (verbose) log_progress("Calculating SVD")
   svd_attr <- svds(mat, k = n_dimensions, threads = threads)
-  pca_res <- t(svd_attr$u) %*% mat
+  pca_res <- t(mat) %*% svd_attr$u
   
   # Filter out PCs that are highly correlated with sequencing depth
-  pca_corrs <- abs(cor(read_depth, t(pca_res)))
+  pca_corrs <- abs(cor(read_depth, pca_res))
   pca_feats_to_keep <- which(pca_corrs < corr_cutoff)
   if (length(pca_feats_to_keep) != n_dimensions) {
     if (verbose) log_progress(sprintf("Dropping PCs %s due to high correlation with sequencing depth", paste(setdiff(1:n_dimensions, pca_feats_to_keep), collapse = ", ")))
-    pca_res <- pca_res[pca_feats_to_keep, ]
+    pca_res <- pca_res[, pca_feats_to_keep]
   }
   fitted_params <- list(
     scale_factor = scale_factor,
@@ -366,9 +366,9 @@ project.LSI <- function(x, mat, threads = 1L, ...) {
     tempfile("mat"), compress = TRUE
   )
   feature_loadings <- fitted_params$feature_loadings
-  res <- t(feature_loadings) %*% mat
-  if (length(fitted_params$pcs_to_keep) != nrow(res)) {
-    res <- res[fitted_params$pcs_to_keep, ]
+  res <- t(mat) %*% feature_loadings
+  if (length(fitted_params$pcs_to_keep) != ncol(res)) {
+    res <- res[, fitted_params$pcs_to_keep]
   }
   return(res)
 }
@@ -390,7 +390,7 @@ project.LSI <- function(x, mat, threads = 1L, ...) {
 #' `cluster_graph_leiden(resolution = 0.5, knn_mat_method = knn_hnsw(ef = 500, k = 12), knn_graph_method = knn_to_snn_graph(min_val = 0.1))`.
 #' @return 
 #' `IterativeLSI()` An object of class `c("IterativeLSI", "DimReduction")` with the following attributes:
-#' - `cell_embeddings`: The projected data as a matrix of shape `(n_dimensions, ncol(mat))`
+#' - `cell_embeddings`: The projected data as a matrix of shape `(cells, n_dimensions)`
 #' - `fitted_params`: A list of the parameters used for iterative LSI.  Includes the following:
 #'    - `lsi_method`: The method used for LSI
 #'    - `cluster_method`: The method used for clustering
@@ -482,7 +482,7 @@ IterativeLSI <- function(
     if (verbose) log_progress("Running LSI")
 
     lsi_res_obj <- LSI(
-      mat = mat[mat_indices,],
+      mat = mat[mat_indices, ],
       n_dimensions = n_dimensions,
       scale_factor = scale_factor,
       threads = threads,
@@ -499,7 +499,7 @@ IterativeLSI <- function(
     
     # cluster the LSI results
     if (verbose) log_progress("Clustering LSI results")
-    clustering_res <- t(lsi_res_obj$cell_embeddings[lsi_res_obj$fitted_params$pcs_to_keep, ]) %>%
+    clustering_res <- lsi_res_obj$cell_embeddings[, lsi_res_obj$fitted_params$pcs_to_keep] %>%
       partial_apply(cluster_method, threads = threads, .missing_args_error = FALSE)()
     fitted_params$iter_info$clusters[[i]] <- clustering_res
     # pseudobulk and pass onto next iteration
@@ -519,7 +519,7 @@ IterativeLSI <- function(
 #' @rdname IterativeLSI
 #' @param iteration (integer) Which iteration of `IterativeLSI`'s features, loadings, and kept PCs to use for projection.
 #' @return
-#' `project()` IterableMatrix of the projected data of shape `(n_dimensions, ncol(mat))`.
+#' `project()` IterableMatrix of the projected data of shape `(cells, n_dimensions)`.
 #' @inheritParams project
 #' @export
 project.IterativeLSI <- function(x, mat, iteration = x$fitted_params$iterations, threads = 1L, ...) {
@@ -557,9 +557,9 @@ project.IterativeLSI <- function(x, mat, iteration = x$fitted_params$iterations,
   )
 
   feature_loadings <- iter_info$feature_loadings[[1]]
-  res <- t(feature_loadings) %*% mat
-  if (length(iter_info$pcs_to_keep[[1]]) != nrow(res)) {
-    res <- res[iter_info$pcs_to_keep[[1]]$pcs_to_keep,]
+  res <-  t(mat) %*% feature_loadings
+  if (length(iter_info$pcs_to_keep[[1]]) != ncol(res)) {
+    res <- res[, iter_info$pcs_to_keep[[1]]]
   }
   return(res)
 }

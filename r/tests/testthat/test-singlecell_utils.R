@@ -226,10 +226,10 @@ test_that("LSI works", {
     # Check that projection results in the same output if used on the same input matrix
     lsi_res_proj <- project(lsi_res_obj, mat)
 
-    expect_equal(nrow(lsi_res), 5)
-    expect_equal(ncol(lsi_res), ncol(mat))
-    expect_equal(nrow(lsi_res_t), 5)
-    expect_equal(ncol(lsi_res_t), nrow(mat))
+    expect_equal(ncol(lsi_res), 5)
+    expect_equal(nrow(lsi_res), ncol(mat))
+    expect_equal(ncol(lsi_res_t), 5)
+    expect_equal(nrow(lsi_res_t), nrow(mat))
     expect_equal(lsi_res, lsi_res_proj)
 })
 
@@ -242,10 +242,10 @@ test_that("Iterative LSI works", {
   lsi_res_proj <- project(lsi_res_obj, mat)
   lsi_res_proj_iter_1 <- expect_no_error(project(lsi_res_obj, mat, iteration = 1L))
   lsi_res_embedding <- lsi_res_obj$cell_embeddings
-  expect_equal(ncol(lsi_res_embedding), ncol(mat))
-  expect_equal(nrow(lsi_res_embedding), 10)
-  expect_equal(ncol(lsi_res_proj_iter_1), ncol(mat))
-  expect_equal(nrow(lsi_res_proj_iter_1), 10)
+  expect_equal(nrow(lsi_res_embedding), ncol(mat))
+  expect_equal(ncol(lsi_res_embedding), 10)
+  expect_equal(nrow(lsi_res_proj_iter_1), ncol(mat))
+  expect_equal(ncol(lsi_res_proj_iter_1), 10)
   expect_equal(lsi_res_embedding, lsi_res_proj)
 })
 
@@ -265,7 +265,7 @@ test_that("Iterative LSI works with parameterized clustering", {
   )
   lsi_res_proj <- project(lsi_res_obj, mat)
   lsi_res_embedding <- lsi_res_obj$cell_embeddings
-  expect_equal(ncol(lsi_res_embedding), ncol(mat))
-  expect_equal(nrow(lsi_res_embedding), 10)
+  expect_equal(nrow(lsi_res_embedding), ncol(mat))
+  expect_equal(ncol(lsi_res_embedding), 10)
   expect_equal(lsi_res_embedding, lsi_res_proj)
 })
