@@ -424,6 +424,8 @@ project.LSI <- function(x, mat, threads = 1L, ...) {
 #' which BPCells does not encounter even with a non-subsetted matrix. Therefore, IterativeLSI will run LSI on the entire matrix for each iteraiton.
 #' - The ArchR implementation defaults on using Seurat clustering for default, which utilizes the Louvain algorithm (See `Seurat::FindClusters()`).  In constrast, `IterativeLSI()` utilizes
 #' leiden, which should provide the same clustering results while being faster.
+#' - The ArchR implementation also plots a umap of every iteration's dimensionality reduction.  While this is not implemented in `IterativeLSI()`,
+#' one can use the `project()` method with the `iteration` argument set to the desired iteration to get projected data.  This can then be fed into `uwot::umap()`
 #' 
 #' @seealso `LSI()` `DimReduction()` `svd()` `knn_hnsw()` `knn_annoy()` 
 #' `cluster_graph_leiden()` `cluster_graph_louvain()` `cluster_graph_seurat()` `select_features_variance()` `select_features_dispersion()` 

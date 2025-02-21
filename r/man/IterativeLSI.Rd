@@ -102,6 +102,8 @@ If one desires to use a different feature selection method for each iteration, t
 which BPCells does not encounter even with a non-subsetted matrix. Therefore, IterativeLSI will run LSI on the entire matrix for each iteraiton.
 \item The ArchR implementation defaults on using Seurat clustering for default, which utilizes the Louvain algorithm (See \code{Seurat::FindClusters()}).  In constrast, \code{IterativeLSI()} utilizes
 leiden, which should provide the same clustering results while being faster.
+\item The ArchR implementation also plots a umap of every iteration's dimensionality reduction.  While this is not implemented in \code{IterativeLSI()},
+one can use the \code{project()} method with the \code{iteration} argument set to the desired iteration to get projected data.  This can then be fed into \code{uwot::umap()}
 }
 }
 \seealso{
