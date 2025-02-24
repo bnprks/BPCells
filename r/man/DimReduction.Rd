@@ -5,14 +5,19 @@
 \alias{project}
 \title{Barebones definition of a DimReduction class.}
 \usage{
-DimReduction(mat, fitted_params = list(), feature_names = character(0), ...)
+DimReduction(
+  cell_embeddings,
+  fitted_params = list(),
+  feature_names = character(0),
+  ...
+)
 
 project(x, mat, ...)
 }
 \arguments{
-\item{mat}{(IterableMatrix) Input matrix of shape \verb{(features x cells)}.}
-
 \item{x}{DimReduction object.}
+
+\item{(IterableMatrix)}{Input matrix of shape \verb{(features x cells)}.}
 }
 \value{
 \itemize{

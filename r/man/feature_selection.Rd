@@ -31,11 +31,11 @@ select_features_binned_dispersion(
 )
 }
 \arguments{
-\item{mat}{(IterableMatrix) dimensions features x cells}
+\item{mat}{(IterableMatrix) Counts matrix with dimensions \verb{(features x cells)}.}
 
 \item{num_feats}{(float) Number of features to mark as highly_variable. If 0 < num_feats < 1, then interpret it as a fraction of features.}
 
-\item{normalize_method}{(function) Normalize the matrix prior to feature selection by calling normalize(mat) if it's not NULL.
+\item{normalize_method}{(function) Used to normalize the matrix prior to feature selection by calling \code{normalize_method(mat)} if it is not NULL.
 For example, pass normalize_log() or normalize_tfidf().
 If the normalize function accepts a threads argument, that will passed as normalize(mat, threads=threads).}
 
@@ -71,11 +71,14 @@ each feature \eqn{x_i} as follows:
 }
 }
 \description{
-Apply a feature selection method to a non-normalized \verb{(features x cells)} matrix.  We recommend using counts matrices as input and
-apply any normalizations prior to feature selection via the normalize argument (if available).  Instead of directly subsetting the input matrix,
-an output dataframe is provided indicating which features are highly variable, and the scoring of each feature.
+Apply a feature selection method to a non-normalized \verb{(features x cells)} matrix.
 }
 \details{
+We recommend using counts matrices as input and to
+apply any normalizations prior to feature selection via the normalize argument (if available).
+Instead of directly subsetting the input matrix,
+an output dataframe is returned, indicating which features are highly variable, and the scoring of each feature.
+
 \code{select_features_binned_dispersion} implements the approach from Satija et al. 2015:
 \enumerate{
 \item Bin features into equal-width bins by \code{log1p(mean)}

@@ -13,13 +13,16 @@
 
 #' Feature selection functions
 #' 
-#' Apply a feature selection method to a non-normalized `(features x cells)` matrix.  We recommend using counts matrices as input and 
-#' apply any normalizations prior to feature selection via the normalize argument (if available).  Instead of directly subsetting the input matrix,
-#' an output dataframe is provided indicating which features are highly variable, and the scoring of each feature.
+#' Apply a feature selection method to a non-normalized `(features x cells)` matrix. 
+#' 
+#'  We recommend using counts matrices as input and to
+#' apply any normalizations prior to feature selection via the normalize argument (if available).  
+#' Instead of directly subsetting the input matrix,
+#' an output dataframe is returned, indicating which features are highly variable, and the scoring of each feature.
 #' @rdname feature_selection
-#' @param mat (IterableMatrix) dimensions features x cells
+#' @param mat (IterableMatrix) Counts matrix with dimensions `(features x cells)`.
 #' @param num_feats (float) Number of features to mark as highly_variable. If 0 < num_feats < 1, then interpret it as a fraction of features.
-#' @param normalize_method (function) Normalize the matrix prior to feature selection by calling normalize(mat) if it's not NULL. 
+#' @param normalize_method (function) Used to normalize the matrix prior to feature selection by calling `normalize_method(mat)` if it is not NULL. 
 #' For example, pass normalize_log() or normalize_tfidf(). 
 #' If the normalize function accepts a threads argument, that will passed as normalize(mat, threads=threads).
 #' @param threads (integer) Number of threads to use.
@@ -186,7 +189,7 @@ select_features_binned_dispersion <- function(
   )
   # Bin by mean, and normalize dispersion with each bin
   features_df <- features_df %>%
-    dplyr::mutate(bin = cut(mean, n_bins, labels=FALSE)) %>% 
+    dplyr::mutate(bin = cut(mean, n_bins, labels = FALSE)) %>% 
     dplyr::group_by(bin) %>%
     dplyr::mutate(
       score = (dispersion - mean(dispersion)) / sd(dispersion),
@@ -210,17 +213,16 @@ select_features_binned_dispersion <- function(
 #' Child classes should implement a `project` method to allow for the projection of other matrices using
 #' the fitted transformation object.
 #' @rdname DimReduction
-#' @param mat (IterableMatrix) Input matrix of shape `(features x cells)`.
 #' @field cell_embeddings (IterableMatrix, dgCMatrix, matrix) Projected data of shape `(cells x n_dimensions)` of the original matrix after a dimensionality reduction.
 #' @field fitted_params (list) A list of parameters used for the transformation of a matrix.  This should include all necessary information to project new data with the same features.
 #' @field feature_names (character) The names of the features that this DimReduction object was fit on.  Matrices to be projected should have the same feature names.
 #' @return - `DimReduction()`: DimReduction object.
 #' @export
-DimReduction <- function(mat, fitted_params = list(), feature_names = character(0), ...) {
-  assert_is(mat, c("IterableMatrix", "dgCMatrix", "matrix"))
+DimReduction <- function(cell_embeddings, fitted_params = list(), feature_names = character(0), ...) {
+  assert_is(cell_embeddings, c("IterableMatrix", "dgCMatrix", "matrix"))
   assert_is(fitted_params, "list")
   structure(list(
-    cell_embeddings = mat,
+    cell_embeddings = cell_embeddings,
     fitted_params = fitted_params,
     feature_names = feature_names,
     ...
@@ -230,6 +232,7 @@ DimReduction <- function(mat, fitted_params = list(), feature_names = character(
 }
 
 #' @rdname DimReduction
+#' @param (IterableMatrix) Input matrix of shape `(features x cells)`.
 #' @param x DimReduction object.
 #' @return - `project()`: IterableMatrix object of the projected data.
 #' @details 
@@ -257,7 +260,8 @@ project.default <- function(x, mat, ...) {
 
 #' Perform latent semantic indexing (LSI) on a matrix.
 #' 
-#' Given a `(features x cells)` counts matrix, perform LSI, which sequentially executes tf-idf normalization and PCA to create a latent space representation of the matrix of shape `(n_dimensions, ncol(mat))`.
+#' Given a `(features x cells)` counts matrix, perform LSI, which sequentially executes tf-idf normalization and PCA to create a latent space representation 
+#' of the matrix of shape `(n_dimensions, ncol(mat))`.
 #' Returns a DimReduction object, which allows for projection of new matrices with the same features into the same latent space.
 #' @rdname LSI
 #' @param mat (IterableMatrix) Counts matrix of shape `(features x cells)`.
@@ -331,7 +335,7 @@ LSI <- function(
     feature_loadings = svd_attr$u
   )
   res <- DimReduction(
-    mat = pca_res,
+    cell_embeddings = pca_res,
     fitted_params = fitted_params,
     feature_names = rownames(mat)
   )
@@ -512,7 +516,7 @@ IterativeLSI <- function(
   }
   if (verbose) log_progress("Finished running Iterative LSI")
   res <- DimReduction(
-    mat = lsi_res_obj$cell_embeddings,
+    cell_embeddings = lsi_res_obj$cell_embeddings,
     fitted_params = fitted_params,
     feature_names = rownames(mat)
   )
@@ -520,13 +524,14 @@ IterativeLSI <- function(
   return(res)
 }
 #' @rdname IterativeLSI
-#' @param iteration (integer) Which iteration of `IterativeLSI`'s features, loadings, and kept PCs to use for projection.
+#' @param iteration (integer) Which iteration of `IterativeLSI`'s features and loadings to use for projection.
 #' @return
 #' `project()` IterableMatrix of the projected data of shape `(cells, n_dimensions)`.
 #' @inheritParams project
 #' @export
 project.IterativeLSI <- function(x, mat, iteration = x$fitted_params$iterations, threads = 1L, ...) {
   assert_is_mat(mat)
+  assert_is_wholenumber(threads)
   fitted_params <- x$fitted_params
   # Get the desired row of iter_info tibble
   assert_is_wholenumber(iteration)

@@ -948,7 +948,7 @@ regress_out <- function(mat, latent_data, prediction_axis = c("row", "col")) {
 #' Apply standard normalizations to a `(features x cells)` counts matrix.
 #' 
 #' @rdname normalize
-#' @param mat (IterableMatrix) Counts matrix to normalize. `(features x cells)`
+#' @param mat (IterableMatrix) Counts matrix with dimensions `(features x cells)`.
 #' @param scale_factor (numeric) Scaling factor to multiply matrix by prior to normalization (see formulas below).
 #' @param threads (integer) Number of threads to use.
 #' @returns For each element \eqn{x_{ij}} in matrix \eqn{X} with \eqn{i} features and \eqn{j} cells, 

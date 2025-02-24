@@ -36,9 +36,9 @@ is_adjacency_matrix <- function(mat) {
 #'
 #' @param mat Input matrix to be converted.
 #' @param required_mat_type (character) Required matrix type: "adjacency" or "knn".
-#' @param knn_mat_method (function) Function to convert to a knn object (e.g., `knn_hnsw`, `knn_annoy`).
-#'   Ignored if `mat` is already a knn or graph matrix.
-#' @param knn_graph_method (function) Function to convert a knn object to a graph matrix
+#' @param knn_mat_method (function) Function to convert input to a knn object (e.g., `knn_hnsw`, `knn_annoy`).
+#'   Ignored if `mat` is already a knn object or graph matrix.
+#' @param knn_graph_method (function) Function to convert a knn object to a graph adjacency matrix
 #'   (e.g., `knn_to_geodesic_graph`). Ignored if `required_mat_type` is "knn" or if
 #'   `mat` is already a graph matrix.
 #' #' @details
@@ -46,7 +46,7 @@ is_adjacency_matrix <- function(mat) {
 #' it is already the required type (adjacency or knn).
 #' If `mat` is a standard matrix and `required_mat_type` is "knn", then `knn_mat_method` is used to convert `mat` to a knn object.
 #' If `required_mat_type` is "adjacency", then `knn_mat_method` is used to first convert `mat` to a knn object, 
-#' then `knn_graph_method` is used to convert the knn object to an adjacency matrix.
+#' then `knn_graph_method` is used to convert the knn object to a graph adjacency matrix.
 #' @return The converted matrix.
 #' @keywords internal
 convert_mat_to_cluster_matrix <- function(

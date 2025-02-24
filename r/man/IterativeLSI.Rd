@@ -43,7 +43,7 @@ The user can pass in partial parameters to the cluster method, such as by passin
 
 \item{x}{DimReduction object.}
 
-\item{iteration}{(integer) Which iteration of \code{IterativeLSI}'s features, loadings, and kept PCs to use for projection.}
+\item{iteration}{(integer) Which iteration of \code{IterativeLSI}'s features and loadings to use for projection.}
 }
 \value{
 \code{IterativeLSI()} An object of class \code{c("IterativeLSI", "DimReduction")} with the following attributes:

@@ -10,7 +10,7 @@ normalize_log(mat, scale_factor = 10000, threads = 1L)
 normalize_tfidf(mat, feature_means = NULL, scale_factor = 10000, threads = 1L)
 }
 \arguments{
-\item{mat}{(IterableMatrix) Counts matrix to normalize. \verb{(features x cells)}}
+\item{mat}{(IterableMatrix) Counts matrix with dimensions \verb{(features x cells)}.}
 
 \item{scale_factor}{(numeric) Scaling factor to multiply matrix by prior to normalization (see formulas below).}
 
