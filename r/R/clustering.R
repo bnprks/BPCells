@@ -356,6 +356,7 @@ knn_hnsw <- function(data, query = NULL, k = 10, metric = c("euclidean", "cosine
   metric <- match.arg(metric)
   assert_is(verbose, "logical")
   assert_is_wholenumber(threads)
+  assert_has_package("RcppHNSW")
   if (rlang::is_missing(data)) return(create_partial())
   index <- RcppHNSW::hnsw_build(
     data,
@@ -392,6 +393,7 @@ knn_hnsw <- function(data, query = NULL, k = 10, metric = c("euclidean", "cosine
 #' @export
 knn_annoy <- function(data, query = NULL, k = 10, metric = c("euclidean", "cosine", "manhattan", "hamming"), n_trees = 50, search_k = -1) {
   metric <- match.arg(metric)
+  assert_has_package("RcppAnnoy")
   if (rlang::is_missing(data)) return(create_partial())
   if (is.null(query)) query <- data
   annoy <- switch(metric,
