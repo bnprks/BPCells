@@ -71,14 +71,12 @@ each feature \eqn{x_i} as follows:
 }
 }
 \description{
-Apply a feature selection method to a non-normalized \verb{(features x cells)} matrix.
-}
-\details{
-We recommend using counts matrices as input and to
+Apply a feature selection method to a non-normalized \verb{(features x cells)} matrix.  We recommend using counts matrices as input and to
 apply any normalizations prior to feature selection via the normalize argument (if available).
 Instead of directly subsetting the input matrix,
 an output dataframe is returned, indicating which features are highly variable, and the scoring of each feature.
-
+}
+\details{
 \code{select_features_binned_dispersion} implements the approach from Satija et al. 2015:
 \enumerate{
 \item Bin features into equal-width bins by \code{log1p(mean)}

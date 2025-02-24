@@ -13,9 +13,7 @@
 
 #' Feature selection functions
 #' 
-#' Apply a feature selection method to a non-normalized `(features x cells)` matrix. 
-#' 
-#'  We recommend using counts matrices as input and to
+#' Apply a feature selection method to a non-normalized `(features x cells)` matrix.  We recommend using counts matrices as input and to
 #' apply any normalizations prior to feature selection via the normalize argument (if available).  
 #' Instead of directly subsetting the input matrix,
 #' an output dataframe is returned, indicating which features are highly variable, and the scoring of each feature.
