@@ -117,7 +117,7 @@ select_features_dispersion <- function(
 #' @returns
 #' - `select_features_mean`: \eqn{\mathrm{Score}(x_i) = \frac{\sum_{j=1}^{n}\bigl(x_{ij}\bigr)}{n}}
 #' @export
-select_features_mean <- function(mat, num_feats = 0.05, normalize = NULL, threads = 1L) {
+select_features_mean <- function(mat, num_feats = 0.05, normalize_method = NULL, threads = 1L) {
   assert_greater_than_zero(num_feats)
   assert_is_wholenumber(threads)
   if (rlang::is_missing(mat)) return(create_partial())
@@ -127,7 +127,7 @@ select_features_mean <- function(mat, num_feats = 0.05, normalize = NULL, thread
     rlang::warn(add_timestamp(sprintf("Number of features asked for (%s) is greater than the number of features in the matrix (%s).", num_feats, nrow(mat))))
   }
   num_feats <- min(max(num_feats, 0), nrow(mat))
-  if (!is.null(normalize)) mat <- partial_apply(normalize, threads = threads, .missing_args_error = FALSE)(mat)
+  if (!is.null(normalize_method)) mat <- partial_apply(normalize_method, threads = threads, .missing_args_error = FALSE)(mat)
   # get the sum of each feature, binarized
   features_df <- tibble::tibble(
     feature = rownames(mat),
@@ -418,15 +418,15 @@ project.LSI <- function(x, mat, threads = 1L, ...) {
 #'    - Else, cluster the LSI results using `cluster_method`
 #' 
 #' There are some minor differences when compared to the ArchR implementation:
-#' - The ArchR implementation uses a different method for selecting features in the first iteration.  The default method is `select_features_variance`, which is the same as the ArchR implementation.
+#' - ArchR uses a different method for selecting features in the first iteration.  The default method is `select_features_variance`, which is the same as the ArchR implementation.
 #' `select_features_mean(normalize_method = binarize)` can be passed in for the `feature_selection_method` argument to mimic the ArchR implementation, if choosing to only run one iteration.
-#' Firstly, the ArchR implementation uses a different method for selecting features in the first iteration.  This function currently does not support utilization of different feature selection methods across each iteration.  
+#' - `IterativeLSI()` currently does not support utilization of different feature selection methods across each iteration.  
 #' If one desires to use a different feature selection method for each iteration, they can take the cluster assignments from the previous iteration and use them to select features and run LSI.
-#' - The ArchR implementation calculates LSI during non-terminal iterations using a default subset of 10000 cells.  ArchR does this to prevent a memory bottleneck,
-#' which BPCells does not encounter even with a non-subsetted matrix. Therefore, IterativeLSI will run LSI on the entire matrix for each iteraiton.
-#' - The ArchR implementation defaults on using Seurat clustering for default, which utilizes the Louvain algorithm (See `Seurat::FindClusters()`).  In constrast, `IterativeLSI()` utilizes
+#' - ArchR calculates LSI during non-terminal iterations using a default subset of 10000 cells.  ArchR does this to prevent a memory bottleneck,
+#' which BPCells does not encounter even with a non-subsetted matrix. Therefore, IterativeLSI will run LSI on the entire matrix for each iteration.
+#' - ArchR defaults on using Seurat clustering for default, which utilizes the Louvain algorithm (See `Seurat::FindClusters()`).  In constrast, `IterativeLSI()` utilizes
 #' leiden, which should provide the same clustering results while being faster.
-#' - The ArchR implementation also plots a umap of every iteration's dimensionality reduction.  While this is not implemented in `IterativeLSI()`,
+#' - ArchR also plots a umap of every iteration's dimensionality reduction.  While this is not implemented in `IterativeLSI()`,
 #' one can use the `project()` method with the `iteration` argument set to the desired iteration to get projected data.  This can then be fed into `uwot::umap()`
 #' 
 #' @seealso `LSI()` `DimReduction()` `svd()` `knn_hnsw()` `knn_annoy()` 

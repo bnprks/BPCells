@@ -21,7 +21,12 @@ select_features_dispersion(
   threads = 1L
 )
 
-select_features_mean(mat, num_feats = 0.05, normalize = NULL, threads = 1L)
+select_features_mean(
+  mat,
+  num_feats = 0.05,
+  normalize_method = NULL,
+  threads = 1L
+)
 
 select_features_binned_dispersion(
   mat,
