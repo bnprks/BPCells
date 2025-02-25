@@ -53,9 +53,14 @@ This can be used to customize \code{normalize} parameters in other single cell f
 set.seed(12345)
 mat <- matrix(rpois(4*5, lambda=1), nrow=4, ncol=5)
 mat
+
 mat <- as(mat, "IterableMatrix")
 normalize_log(mat)
-# normalize functions can also be called with partial arguments 
-normalize_log(scale_factor = 1e5)(mat)
+
+# normalization functions can also be called with partial arguments 
+partial_log <- normalize_log(scale_factor = 1e5)
+partial_log
+
+partial_log(mat)
 normalize_tfidf(mat)
 }

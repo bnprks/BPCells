@@ -967,10 +967,15 @@ regress_out <- function(mat, latent_data, prediction_axis = c("row", "col")) {
 #' set.seed(12345)
 #' mat <- matrix(rpois(4*5, lambda=1), nrow=4, ncol=5)
 #' mat
+#' 
 #' mat <- as(mat, "IterableMatrix")
 #' normalize_log(mat)
-#' # normalize functions can also be called with partial arguments 
-#' normalize_log(scale_factor = 1e5)(mat)
+#' 
+#' # normalization functions can also be called with partial arguments 
+#' partial_log <- normalize_log(scale_factor = 1e5)
+#' partial_log
+#' 
+#' partial_log(mat)
 #' @export
 normalize_log <- function(mat, scale_factor = 1e4, threads = 1L) {
   assert_greater_than_zero(scale_factor)
