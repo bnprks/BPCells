@@ -8,6 +8,10 @@ Contributions welcome :)
 
 # BPCells 0.3.1 (in-progress main branch)
 
+## Breaking changes
+- Change first parameter name of `cluster_graph_leiden()`, `cluster_graph_louvain()` and `cluster_graph_seurat()` from `snn` to `mat` to more accurately reflect the input type.  (pull request #189)
+- Added non-final parameters, `knn_obj_method` and `knn_graph_method` to `cluster_graph_leiden()`, `cluster_graph_louvain()` and `cluster_graph_seurat()`. (pull request #189)
+
 ## Features
 - Add `write_matrix_anndata_hdf5_dense()` which allows writing matrices in AnnData's dense format, most commonly used for `obsm` or `varm` matrices. (Thanks to @ycli1995 for pull request #166)
 - Add normalization helper functions `normalize_log()` and `normalize_tfidf()` (pull request #168)
@@ -15,12 +19,13 @@ Contributions welcome :)
 - Add feature selection functions `select_features_variance()`, and `select_features_{dispersion,mean,binned_dispersion}()`, with parameterization for normalization steps, and number of variable features (pull request #189)
 - Add `LSI()` and `IterativeLSI()` dimensionality functions to perform latent semantic indexing on a matrix (pull request #189).
 - Add capability to create partial function objects in when excluding the first argument of a function.  This is implemented in normalizations, feature selections, dimensionality reductions, and clustering functions. See `select_features_variance()` for usage.  (pull request #189)
+- Allowed clustering functions `cluster_graph_leiden()`, `cluster_graph_louvain()`, and `cluster_graph_seurat()` to also perform knn object and graph adjacency construction intermediate steps with `knn_obj_method` and `knn_graph_method` parameters. Also provided
+`threads` and `verbose` arguments to clustering functions that are automatically passed down to knn object/graph adjacency construction steps. (pull request #189)
 
 ## Improvements
 - Speed up taking large subsets of large concatenated matrices, e.g. selecting 9M cells from a 10M cell matrix composed of ~100 concatenated pieces. (pull request #179)
 - `matrix_stats()` now also works with types `matrix` and `dgCMatrix`. (pull request #190)
 - Fixed memory errors when running `writeInsertionBed()` and `writeInsertionBedGraph()` (pull request #{118, 134})
-- Change parameter name of `cluster_graph_leiden()`, `cluster_graph_louvain()` and `cluster_graph_seurat()` from `snn` to `mat` to more accurately reflect the input type.  (pull request #189)
 
 ## Bug-fixes
 - Fix error message printing when MACS crashes during `call_peaks_macs()` (pull request #175)

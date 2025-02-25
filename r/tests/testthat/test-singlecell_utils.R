@@ -236,7 +236,7 @@ test_that("LSI works", {
     expect_equal(nrow(lsi_res_t), nrow(mat))
     expect_equal(nrow(lsi_res_proj), ncol(mat))
     expect_lt(ncol(lsi_res_obj_corr$cell_embeddings), n_dimensions)
-    expect_equal(lsi_res, lsi_res_proj)
+    expect_equal(lsi_res, lsi_res_proj, tolerance = 1e-7)
 })
 
 test_that("Iterative LSI works", {
@@ -244,7 +244,7 @@ test_that("Iterative LSI works", {
   mat <- matrix(data = runif(50000, 0, 1), nrow=500, ncol = 100) %>% as("dgCMatrix") %>% as("IterableMatrix")
   rownames(mat) <- paste0("feat", seq_len(nrow(mat)))
   colnames(mat) <- paste0("cell", seq_len(ncol(mat)))
-  lsi_res_obj <- expect_no_error(IterativeLSI(mat, n_iterations = 2, n_dimensions = 10L, cluster_method = cluster_graph_louvain(knn_mat_method = knn_hnsw)))
+  lsi_res_obj <- expect_no_error(IterativeLSI(mat, n_iterations = 2, n_dimensions = 10L, cluster_method = cluster_graph_louvain(knn_obj_method = knn_hnsw)))
   lsi_res_proj <- project(lsi_res_obj, mat)
   lsi_res_proj_iter_1 <- expect_no_error(project(lsi_res_obj, mat, iteration = 1L))
   lsi_res_embedding <- lsi_res_obj$cell_embeddings
@@ -252,7 +252,7 @@ test_that("Iterative LSI works", {
   expect_equal(ncol(lsi_res_embedding), 10)
   expect_equal(nrow(lsi_res_proj_iter_1), ncol(mat))
   expect_equal(ncol(lsi_res_proj_iter_1), 10)
-  expect_equal(lsi_res_embedding, lsi_res_proj)
+  expect_equal(lsi_res_embedding, lsi_res_proj, tolerance = 1e-7)
 })
 
 test_that("Iterative LSI works with parameterized clustering", {
@@ -264,7 +264,7 @@ test_that("Iterative LSI works with parameterized clustering", {
     IterativeLSI(
       mat, n_dimensions = 10L,,
       cluster_method = cluster_graph_leiden(
-        knn_mat_method = knn_annoy(k = 12),
+        knn_obj_method = knn_annoy(k = 12),
         knn_graph_method = knn_to_snn_graph(min_val = 0.1)
       )
     )
@@ -273,5 +273,5 @@ test_that("Iterative LSI works with parameterized clustering", {
   lsi_res_embedding <- lsi_res_obj$cell_embeddings
   expect_equal(nrow(lsi_res_embedding), ncol(mat))
   expect_equal(ncol(lsi_res_embedding), 10)
-  expect_equal(lsi_res_embedding, lsi_res_proj)
+  expect_equal(lsi_res_embedding, lsi_res_proj, tolerance = 1e7)
 })

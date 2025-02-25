@@ -356,21 +356,16 @@ project.LSI <- function(x, mat, threads = 1L, ...) {
     assert_true(all(x$feature_names %in% rownames(mat)))
     mat <- mat[x$feature_names, ]
   }
-  mat <- partial_apply(
-    normalize_tfidf,
+  mat <- normalize_tfidf(
+    mat,
     feature_means = fitted_params$feature_means,
     scale_factor = fitted_params$scale_factor,
-    threads = threads,
-    .missing_args_error = FALSE
-  )(mat)
-  mat <- write_matrix_dir(
-    convert_matrix_type(mat, type = "float"),
-    tempfile("mat"), compress = TRUE
+    threads = threads
   )
   feature_loadings <- fitted_params$feature_loadings
   res <- t(mat) %*% feature_loadings
   if (length(fitted_params$pcs_to_keep) != ncol(res)) {
-    res <- res[, fitted_params$pcs_to_keep] %>% as.matrix()
+    res <- res[, fitted_params$pcs_to_keep, drop = FALSE]
   }
   return(res)
 }
@@ -389,7 +384,7 @@ project.LSI <- function(x, mat, threads = 1L, ...) {
 #' @param cluster_method (function) Method to use for clustering the post-SVD matrix. 
 #' Current builtin options are `cluster_graph_{leiden, louvain, seurat}()`.
 #' The user can pass in partial parameters to the cluster method, such as by passing 
-#' `cluster_graph_leiden(resolution = 0.5, knn_mat_method = knn_hnsw(ef = 500, k = 12), knn_graph_method = knn_to_snn_graph(min_val = 0.1))`.
+#' `cluster_graph_leiden(resolution = 0.5, knn_obj_method = knn_hnsw(ef = 500, k = 12), knn_graph_method = knn_to_snn_graph(min_val = 0.1))`.
 #' @return 
 #' `IterativeLSI()` An object of class `c("IterativeLSI", "DimReduction")` with the following attributes:
 #' - `cell_embeddings`: The projected data as a matrix of shape `(cells, n_dimensions)`
@@ -428,8 +423,9 @@ project.LSI <- function(x, mat, threads = 1L, ...) {
 #' leiden, which should provide the same clustering results while being faster.
 #' - ArchR also plots a umap of every iteration's dimensionality reduction.  While this is not implemented in `IterativeLSI()`,
 #' one can use the `project()` method with the `iteration` argument set to the desired iteration to get projected data.  This can then be fed into `uwot::umap()`
-#' 
-#' @seealso `LSI()` `DimReduction()` `svd()` `knn_hnsw()` `knn_annoy()` 
+#' - ArchR by default filters out PCs with a correlation to sequencing depth greater than 0.75. 
+#' While corr_cutoff is provided as an argument in `IterativeLSI()`, it is set to not removing any PCs by default.
+#' @seealso `LSI()` `DimReduction()` `svds()` `knn_hnsw()` `knn_annoy()` 
 #' `cluster_graph_leiden()` `cluster_graph_louvain()` `cluster_graph_seurat()` `select_features_variance()` `select_features_dispersion()` 
 #' `select_features_mean()` `select_features_binned_dispersion()`
 #' @inheritParams LSI
@@ -488,6 +484,7 @@ IterativeLSI <- function(
     lsi_res_obj <- LSI(
       mat = mat[mat_indices, ],
       n_dimensions = n_dimensions,
+      corr_cutoff = corr_cutoff,
       scale_factor = scale_factor,
       threads = threads,
       verbose = verbose
@@ -557,15 +554,11 @@ project.IterativeLSI <- function(x, mat, iteration = x$fitted_params$iterations,
     scale_factor = lsi_attr$scale_factor,
     threads = threads
   )
-  mat <- write_matrix_dir(
-    convert_matrix_type(mat, type = "float"),
-    tempfile("mat"), compress = TRUE
-  )
 
   feature_loadings <- iter_info$feature_loadings[[1]]
   res <-  t(mat) %*% feature_loadings
   if (length(iter_info$pcs_to_keep[[1]]) != ncol(res)) {
-    res <- res[, iter_info$pcs_to_keep[[1]]]
+    res <- res[, iter_info$pcs_to_keep[[1]], drop = FALSE]
   }
   return(res)
 }

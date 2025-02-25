@@ -37,7 +37,7 @@ the corr_cutoff, it will be excluded from the final PCA matrix.}
 \item{cluster_method}{(function) Method to use for clustering the post-SVD matrix.
 Current builtin options are \verb{cluster_graph_\{leiden, louvain, seurat\}()}.
 The user can pass in partial parameters to the cluster method, such as by passing
-\code{cluster_graph_leiden(resolution = 0.5, knn_mat_method = knn_hnsw(ef = 500, k = 12), knn_graph_method = knn_to_snn_graph(min_val = 0.1))}.}
+\code{cluster_graph_leiden(resolution = 0.5, knn_obj_method = knn_hnsw(ef = 500, k = 12), knn_graph_method = knn_to_snn_graph(min_val = 0.1))}.}
 
 \item{threads}{(integer) Number of threads to use.}
 
@@ -104,10 +104,12 @@ which BPCells does not encounter even with a non-subsetted matrix. Therefore, It
 leiden, which should provide the same clustering results while being faster.
 \item ArchR also plots a umap of every iteration's dimensionality reduction.  While this is not implemented in \code{IterativeLSI()},
 one can use the \code{project()} method with the \code{iteration} argument set to the desired iteration to get projected data.  This can then be fed into \code{uwot::umap()}
+\item ArchR by default filters out PCs with a correlation to sequencing depth greater than 0.75.
+While corr_cutoff is provided as an argument in \code{IterativeLSI()}, it is set to not removing any PCs by default.
 }
 }
 \seealso{
-\code{LSI()} \code{DimReduction()} \code{svd()} \code{knn_hnsw()} \code{knn_annoy()}
+\code{LSI()} \code{DimReduction()} \code{svds()} \code{knn_hnsw()} \code{knn_annoy()}
 \code{cluster_graph_leiden()} \code{cluster_graph_louvain()} \code{cluster_graph_seurat()} \code{select_features_variance()} \code{select_features_dispersion()}
 \code{select_features_mean()} \code{select_features_binned_dispersion()}
 }
