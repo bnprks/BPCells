@@ -32,7 +32,7 @@ to cells with at least 1000 reads.  Both the matrix and the fragments are subset
 \details{
 The first time either \code{get_demo_mat()} are ran \code{get_demo_frags()}, the pre-subsetted
 demo data is downloaded and stored in the BPCells data directory  (under \code{file.path(tools::R_user_dir("BPcells", which="data"), "demo_data")}).
-Subsequent calls to this function will use the previously downloaded matrix.
+Subsequent calls to this function will use the previously downloaded matrix/fragments.
 The preperation of this matrix can be reproduced by running the internal function \code{prepare_demo_data()} with \code{directory} set to the BPCells data directory.
 
 In the case that demo data is not pre-downloaded and demo data download fails, \code{prepare_demo_data()} will act

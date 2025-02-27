@@ -94,17 +94,17 @@ prepare_demo_data <- function(directory = NULL, mat_name = NULL, frags_name = NU
 #' - `get_demo_mat()`: (IterableMatrix) A `(features x cells)` matrix of shape `(1984 x 2724)`.
 #' @details 
 #' The first time either `get_demo_mat()` are ran `get_demo_frags()`, the pre-subsetted 
-#' demo data is downloaded and stored in the BPCells data directory  (under `file.path(tools::R_user_dir("BPcells", which="data"), "demo_data")`).  
-#' Subsequent calls to this function will use the previously downloaded matrix.
+#' demo data is downloaded and stored in the BPCells data directory  (under `file.path(tools::R_user_dir("BPcells", which="data"), "demo_data")`).
+#' Subsequent calls to this function will use the previously downloaded matrix/fragments.
 #' The preperation of this matrix can be reproduced by running the internal function `prepare_demo_data()` with `directory` set to the BPCells data directory.
 #' 
-#' In the case that demo data is not pre-downloaded and demo data download fails, `prepare_demo_data()` will act 
+#' In the case that demo data is not pre-downloaded and demo data download fails, `prepare_demo_data()` will act
 #' as a fallback.
 #' 
-#' Both the matrix from `get_demo_mat()` and the fragments from `get_demo_frags()` 
+#' Both the matrix from `get_demo_mat()` and the fragments from `get_demo_frags()`
 #' may be removed by running `remove_demo_data()`.
 #' 
-#' - `get_demo_mat()`: Retrieve a 1 MB demo matrix, representing a subset of the 10X Genomics PBMC 3k dataset.  
+#' - `get_demo_mat()`: Retrieve a 1 MB demo matrix, representing a subset of the 10X Genomics PBMC 3k dataset.
 #' @export
 get_demo_mat <- function() {
     # Use the data directory for BPCells
