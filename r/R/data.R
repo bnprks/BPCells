@@ -6,8 +6,10 @@
 # option. This file may not be copied, modified, or distributed
 # except according to those terms.
 
-#' Prepare a demo matrix and demo fragments for BPCells.
-#'
+#' Create a small demo matrix and fragment object
+#' 
+#' Downloads a 10x Genomics dataset, then performs QC and subsetting.  Holds subsetted objects in disk,
+#' and returns a list with both the matrix and fragments. 
 #' @param directory (character) Where the input/output data should be stored.  If NULL, a temporary directory is created.
 #' @param mat_name (character) Name of the RNA matrix file. If NULL, the matrix is named "demo_mat."
 #' @param frags_name (character) Name of the ATAC fragments file. If NULL, the fragments are named "demo_frags".
@@ -91,12 +93,13 @@ prepare_demo_data <- function(directory = NULL, mat_name = NULL, frags_name = NU
 #' @return 
 #' - `get_demo_mat()`: (IterableMatrix) A `(features x cells)` matrix of shape `(1984 x 2724)`.
 #' @details 
-#' The first time either `get_demo_mat()` are ran `get_demo_frags()`, the demo data is downloaded and stored in the BPCells data directory 
-#' (under `file.path(tools::R_user_dir("BPcells", which="data"), "demo_data")`).  Subsequent calls to this function will use the previously downloaded matrix.
-#' The preperation of this matrix can be reproduced by running the internal function `prepare_demo_data()`.  
+#' The first time either `get_demo_mat()` are ran `get_demo_frags()`, the pre-subsetted 
+#' demo data is downloaded and stored in the BPCells data directory  (under `file.path(tools::R_user_dir("BPcells", which="data"), "demo_data")`).  
+#' Subsequent calls to this function will use the previously downloaded matrix.
+#' The preperation of this matrix can be reproduced by running the internal function `prepare_demo_data()` with `directory` set to the BPCells data directory.
 #' 
-#' In the case that demo data is not pre-downloaded and demo data download fails, `prepare_demo_data()` will be run,
-#'  which manually builds the demo dataset from the 10x Genomics PBMC 3k dataset.
+#' In the case that demo data is not pre-downloaded and demo data download fails, `prepare_demo_data()` will act 
+#' as a fallback.
 #' 
 #' Both the matrix from `get_demo_mat()` and the fragments from `get_demo_frags()` 
 #' may be removed by running `remove_demo_data()`.

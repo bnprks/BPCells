@@ -30,12 +30,13 @@ The demo dataset is a subset of the  10x Genomics PBMC 3k dataset, and filters b
 to cells with at least 1000 reads.  Both the matrix and the fragments are subset to only genes on chromosomes 4 and 11.
 }
 \details{
-The first time either \code{get_demo_mat()} are ran \code{get_demo_frags()}, the demo data is downloaded and stored in the BPCells data directory
-(under \code{file.path(tools::R_user_dir("BPcells", which="data"), "demo_data")}).  Subsequent calls to this function will use the previously downloaded matrix.
-The preperation of this matrix can be reproduced by running the internal function \code{prepare_demo_data()}.
+The first time either \code{get_demo_mat()} are ran \code{get_demo_frags()}, the pre-subsetted
+demo data is downloaded and stored in the BPCells data directory  (under \code{file.path(tools::R_user_dir("BPcells", which="data"), "demo_data")}).
+Subsequent calls to this function will use the previously downloaded matrix.
+The preperation of this matrix can be reproduced by running the internal function \code{prepare_demo_data()} with \code{directory} set to the BPCells data directory.
 
-In the case that demo data is not pre-downloaded and demo data download fails, \code{prepare_demo_data()} will be run,
-which manually builds the demo dataset from the 10x Genomics PBMC 3k dataset.
+In the case that demo data is not pre-downloaded and demo data download fails, \code{prepare_demo_data()} will act
+as a fallback.
 
 Both the matrix from \code{get_demo_mat()} and the fragments from \code{get_demo_frags()}
 may be removed by running \code{remove_demo_data()}.

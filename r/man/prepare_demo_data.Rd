@@ -2,7 +2,7 @@
 % Please edit documentation in R/data.R
 \name{prepare_demo_data}
 \alias{prepare_demo_data}
-\title{Prepare a demo matrix and demo fragments for BPCells.}
+\title{Create a small demo matrix and fragment object}
 \usage{
 prepare_demo_data(
   directory = NULL,
@@ -28,7 +28,8 @@ after processing.}
 (list) A list with the RNA matrix under the name "mat", and the ATAC fragments under the name "frags".
 }
 \description{
-Prepare a demo matrix and demo fragments for BPCells.
+Downloads a 10x Genomics dataset, then performs QC and subsetting.  Holds subsetted objects in disk,
+and returns a list with both the matrix and fragments.
 }
 \details{
 This function downloads the 10x Genomics PBMC 3k dataset, and filters the fragments and matrix to cells with at least 1000 reads.
