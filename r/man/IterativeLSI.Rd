@@ -97,6 +97,9 @@ There are some minor differences when compared to the ArchR implementation:
 \item ArchR uses a different method for selecting features in the first iteration.  The default method is \code{select_features_variance}, which is the same as the ArchR implementation.
 \code{select_features_mean(normalize_method = binarize)} can be passed in for the \code{feature_selection_method} argument to mimic the ArchR implementation, if choosing to only run one iteration.
 \item \code{IterativeLSI()} currently does not support utilization of different feature selection methods across each iteration.
+\item ArchR uses a default of 25000 features picked during feature selection. As the number of input features is dependent on the input matrix fed into \code{IterativeLSI()},
+the default for \code{select_features_variance()} instead picks the number of variable features as a proportion of the total features provided.  To mimic the ArchR implementation,
+\code{feature_selection_method} can be set to \code{select_features_variance(num_feats = 25000)}.
 If one desires to use a different feature selection method for each iteration, they can take the cluster assignments from the previous iteration and use them to select features and run LSI.
 \item ArchR calculates LSI during non-terminal iterations using a default subset of 10000 cells.  ArchR does this to prevent a memory bottleneck,
 which BPCells does not encounter even with a non-subsetted matrix. Therefore, IterativeLSI will run LSI on the entire matrix for each iteration.
@@ -106,6 +109,8 @@ leiden, which should provide the same clustering results while being faster.
 one can use the \code{project()} method with the \code{iteration} argument set to the desired iteration to get projected data.  This can then be fed into \code{uwot::umap()}
 \item ArchR by default filters out PCs with a correlation to sequencing depth greater than 0.75.
 While corr_cutoff is provided as an argument in \code{IterativeLSI()}, it is set to not removing any PCs by default.
+\item ArchR by default filters out outliers dependent on number of accesible regions of cells, by the bottom and top quantiles.  This is not implemented in \code{IterativeLSI()},
+but can be done as a preprocessing step.
 }
 }
 \seealso{
