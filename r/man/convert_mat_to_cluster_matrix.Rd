@@ -7,7 +7,7 @@
 convert_mat_to_cluster_matrix(
   mat,
   required_mat_type = c("knn", "adjacency"),
-  knn_mat_method = knn_hnsw,
+  knn_obj_method = knn_hnsw,
   knn_graph_method = knn_to_geodesic_graph,
   threads = 1L,
   verbose = FALSE
@@ -18,7 +18,7 @@ convert_mat_to_cluster_matrix(
 
 \item{required_mat_type}{(character) Required matrix type: "adjacency" or "knn".}
 
-\item{knn_mat_method}{(function) Function to convert input to a knn object (e.g., \code{knn_hnsw}, \code{knn_annoy}).
+\item{knn_obj_method}{(function) Function to convert input to a knn object (e.g., \code{knn_hnsw}, \code{knn_annoy}).
 Ignored if \code{mat} is already a knn object or graph matrix.}
 
 \item{knn_graph_method}{(function) Function to convert a knn object to a graph adjacency matrix
@@ -27,8 +27,8 @@ Ignored if \code{mat} is already a knn object or graph matrix.}
 #' @details
 This function checks the type of the input matrix \code{mat}. \code{mat} is returned without modification if
 it is already the required type (adjacency or knn).
-If \code{mat} is a standard matrix and \code{required_mat_type} is "knn", then \code{knn_mat_method} is used to convert \code{mat} to a knn object.
-If \code{required_mat_type} is "adjacency", then \code{knn_mat_method} is used to first convert \code{mat} to a knn object,
+If \code{mat} is a standard matrix and \code{required_mat_type} is "knn", then \code{knn_obj_method} is used to convert \code{mat} to a knn object.
+If \code{required_mat_type} is "adjacency", then \code{knn_obj_method} is used to first convert \code{mat} to a knn object,
 then \code{knn_graph_method} is used to convert the knn object to a graph adjacency matrix.}
 }
 \value{
