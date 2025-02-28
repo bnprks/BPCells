@@ -87,7 +87,7 @@ convert_mat_to_cluster_matrix <- function(
 #' @param use_weights boolean for whether to replace all distance weights with 1
 #' @param self_loops boolean for whether to allow cells to count themselves as neighbors
 #' @param knn_obj_method (function) if knn is not a knn object, this function will attempt to convert it to one. 
-#' Must be a (optionally partialized) version of `knn_hnsw()` or `knn_annoy()`.  Ignored if `knn`` is already a knn object.
+#' Must be a (optionally partialized) version of `knn_hnsw()` or `knn_annoy()`.  Ignored if `knn` is already a knn object.
 #' @param threads (integer) Number of threads to use.
 #' @param verbose (logical) Whether to print progress information during search
 #' @return **knn_to_graph**
@@ -344,7 +344,7 @@ cluster_membership_matrix <- function(groups, group_order = NULL) {
 #' @param metric distance metric to use
 #' @param threads Number of threads to use. Note that result is non-deterministic
 #'          if threads > 1
-#' @param ef ef parameter for RccppHNSW::hnsw_search. Increase for slower search but
+#' @param ef ef parameter for `RcppHNSW::hnsw_search()`. Increase for slower search but
 #'          improved accuracy
 #' @param verbose whether to print progress information during search
 #' @return List of 2 matrices -- idx for cell x K neighbor indices,

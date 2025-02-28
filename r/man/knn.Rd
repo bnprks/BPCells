@@ -38,7 +38,7 @@ knn_annoy(
 \item{threads}{Number of threads to use. Note that result is non-deterministic
 if threads > 1}
 
-\item{ef}{ef parameter for RccppHNSW::hnsw_search. Increase for slower search but
+\item{ef}{ef parameter for \code{RcppHNSW::hnsw_search()}. Increase for slower search but
 improved accuracy}
 
 \item{n_trees}{Number of trees during index build time. More trees gives higher accuracy}
