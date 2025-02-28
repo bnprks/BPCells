@@ -40,7 +40,7 @@ dist for cell x K neighbor distances}
 \item{use_weights}{boolean for whether to replace all distance weights with 1}
 
 \item{knn_obj_method}{(function) if knn is not a knn object, this function will attempt to convert it to one.
-Must be a (optionally partialized) version of \code{knn_hnsw()} or \code{knn_annoy()}.  Ignored if knn is already a knn object.}
+Must be a (optionally partialized) version of \code{knn_hnsw()} or \code{knn_annoy()}.  Ignored if `knn`` is already a knn object.}
 
 \item{self_loops}{Whether to allow self-loops in the output graph}
 

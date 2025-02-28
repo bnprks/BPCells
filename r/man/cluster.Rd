@@ -47,17 +47,17 @@ cluster_graph_seurat(
 For the meaning of each option, see \code{igraph::cluster_leiden()}.}
 
 \item{knn_obj_method}{(function) if mat represents a regular non-knn object, this function will attempt to convert it a knn object.
-Must be a (optionally partialized) version of \code{knn_hnsw()} or \code{knn_annoy()}.  Ignored if knn is already a knn object.}
+Must be a (optionally partialized) version of \code{knn_hnsw()} or \code{knn_annoy()}.  Ignored if \code{mat} is already a knn object.}
 
 \item{knn_graph_method}{(function) if mat represents a knn object, this function will attempt to convert it to a graph matrix.
 Must be a (optionally partialized) version of \code{knn_to_graph()}, \code{knn_to_snn_graph()} or \code{knn_to_geodesic_graph()}.
-Ignored if mat is already a graph adjacency matrix.}
+Ignored if \code{mat} is already a graph adjacency matrix.}
 
 \item{seed}{Random seed for clustering initialization}
 
 \item{threads}{(integer) Number of threads to use.}
 
-\item{verbose}{(logical) Whether to print progress information during search}
+\item{verbose}{(logical) Whether to print progress information.}
 
 \item{...}{Additional arguments to underlying clustering function}
 }

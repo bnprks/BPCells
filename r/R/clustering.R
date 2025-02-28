@@ -41,7 +41,7 @@ is_adjacency_matrix <- function(mat) {
 #' @param knn_graph_method (function) Function to convert a knn object to a graph adjacency matrix
 #'   (e.g., `knn_to_geodesic_graph`). Ignored if `required_mat_type` is "knn" or if
 #'   `mat` is already a graph matrix.
-#' #' @details
+#' @details
 #' This function checks the type of the input matrix `mat`. `mat` is returned without modification if
 #' it is already the required type (adjacency or knn).
 #' If `mat` is a standard matrix and `required_mat_type` is "knn", then `knn_obj_method` is used to convert `mat` to a knn object.
@@ -87,7 +87,7 @@ convert_mat_to_cluster_matrix <- function(
 #' @param use_weights boolean for whether to replace all distance weights with 1
 #' @param self_loops boolean for whether to allow cells to count themselves as neighbors
 #' @param knn_obj_method (function) if knn is not a knn object, this function will attempt to convert it to one. 
-#' Must be a (optionally partialized) version of `knn_hnsw()` or `knn_annoy()`.  Ignored if knn is already a knn object.
+#' Must be a (optionally partialized) version of `knn_hnsw()` or `knn_annoy()`.  Ignored if `knn`` is already a knn object.
 #' @param threads (integer) Number of threads to use.
 #' @param verbose (logical) Whether to print progress information during search
 #' @return **knn_to_graph**
@@ -222,13 +222,13 @@ knn_to_geodesic_graph <- function(knn, knn_obj_method = knn_hnsw, return_type = 
 #' @param objective_function Graph statistic to optimize during clustering. Modularity is the default as it keeps resolution independent of dataset size (see details below). 
 #'    For the meaning of each option, see `igraph::cluster_leiden()`.
 #' @param knn_obj_method (function) if mat represents a regular non-knn object, this function will attempt to convert it a knn object.
-#' Must be a (optionally partialized) version of `knn_hnsw()` or `knn_annoy()`.  Ignored if knn is already a knn object.
+#' Must be a (optionally partialized) version of `knn_hnsw()` or `knn_annoy()`.  Ignored if `mat` is already a knn object.
 #' @param knn_graph_method (function) if mat represents a knn object, this function will attempt to convert it to a graph matrix.
 #' Must be a (optionally partialized) version of `knn_to_graph()`, `knn_to_snn_graph()` or `knn_to_geodesic_graph()`.  
-#' Ignored if mat is already a graph adjacency matrix.
+#' Ignored if `mat` is already a graph adjacency matrix.
 #' @param seed Random seed for clustering initialization
 #' @param threads (integer) Number of threads to use.
-#' @param verbose (logical) Whether to print progress information during search
+#' @param verbose (logical) Whether to print progress information.
 #' @param ... Additional arguments to underlying clustering function
 #' @return Factor vector containing the cluster assignment for each cell.
 #' @export
