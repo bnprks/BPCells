@@ -37,7 +37,7 @@ is_adjacency_matrix <- function(mat) {
 #' @param mat Input matrix to be converted.
 #' @param required_mat_type (character) Required matrix type: "adjacency" or "knn".
 #' @param knn_obj_method (function) Function to convert input to a knn object (e.g., `knn_hnsw`, `knn_annoy`).
-#'   Ignored if `mat` is already a knn object or graph matrix.
+#'   Ignored if `mat` is already a knn object or graph matrix, or if `mat` is a graph adjacency matrix.
 #' @param knn_graph_method (function) Function to convert a knn object to a graph adjacency matrix
 #'   (e.g., `knn_to_geodesic_graph`). Ignored if `required_mat_type` is "knn" or if
 #'   `mat` is already a graph matrix.
@@ -222,7 +222,7 @@ knn_to_geodesic_graph <- function(knn, knn_obj_method = knn_hnsw, return_type = 
 #' @param objective_function Graph statistic to optimize during clustering. Modularity is the default as it keeps resolution independent of dataset size (see details below). 
 #'    For the meaning of each option, see `igraph::cluster_leiden()`.
 #' @param knn_obj_method (function) if mat represents a regular non-knn object, this function will attempt to convert it a knn object.
-#' Must be a (optionally partialized) version of `knn_hnsw()` or `knn_annoy()`.  Ignored if `mat` is already a knn object.
+#' Must be a (optionally partialized) version of `knn_hnsw()` or `knn_annoy()`.  Ignored if `mat` is already a knn object, or if `mat` is a graph adjacency matrix.
 #' @param knn_graph_method (function) if mat represents a knn object, this function will attempt to convert it to a graph matrix.
 #' Must be a (optionally partialized) version of `knn_to_graph()`, `knn_to_snn_graph()` or `knn_to_geodesic_graph()`.  
 #' Ignored if `mat` is already a graph adjacency matrix.

@@ -19,7 +19,7 @@ convert_mat_to_cluster_matrix(
 \item{required_mat_type}{(character) Required matrix type: "adjacency" or "knn".}
 
 \item{knn_obj_method}{(function) Function to convert input to a knn object (e.g., \code{knn_hnsw}, \code{knn_annoy}).
-Ignored if \code{mat} is already a knn object or graph matrix.}
+Ignored if \code{mat} is already a knn object or graph matrix, or if \code{mat} is a graph adjacency matrix.}
 
 \item{knn_graph_method}{(function) Function to convert a knn object to a graph adjacency matrix
 (e.g., \code{knn_to_geodesic_graph}). Ignored if \code{required_mat_type} is "knn" or if
