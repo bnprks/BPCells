@@ -57,8 +57,8 @@ Return a dataframe with the following columns:
 }
 
 Each different feature selection method will have a different scoring method.
-For each element \eqn{x_{ij}} in matrix \eqn{X} with \eqn{i} features and \eqn{j} cells, determine the score of
-each feature \eqn{x_i} as follows:
+Consider a matrix \eqn{X}, where the row index \eqn{i} refers to each feature
+and the column index \eqn{j} refers to each cell. For each feature \eqn{x_{i} \in X}, we define the following feature-selection scores:
 \itemize{
 \item \code{select_features_variance}: \eqn{\mathrm{Score}(x_i) = \frac{1}{n - 1} \sum_{j=1}^{n} \bigl(x_{ij} - \bar{x}_i\bigr)^2}
 }
