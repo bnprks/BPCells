@@ -16,13 +16,14 @@ normalize_tfidf(mat, feature_means = NULL, scale_factor = 10000, threads = 1L)
 
 \item{threads}{(integer) Number of threads to use.}
 
-\item{feature_means}{(numeric, optional) Pre-calculated means of the features to normalize by (rowMeans(mat) by default).
+\item{feature_means}{(numeric, optional) Pre-calculated means of the features to normalize by (\code{rowMeans(mat)} by default).
 If feature_means has names and mat has row names, match values by name.
 Otherwise, assume feature_means has the same length and ordering as the matrix rows.}
 }
 \value{
-For each element \eqn{x_{ij}} in matrix \eqn{X} with \eqn{i} features and \eqn{j} cells,
-transform to a normalized value \eqn{\tilde{x}_{ij}} calculated as:
+Consider a matrix \eqn{X}, where the row index \eqn{i} refers to each feature
+and the column index \eqn{j} refers to each cell. For each element \eqn{{x}_{ij} \in X}, the
+normalized value \eqn{\tilde{x}_{ij}} is calculated as:
 \itemize{
 \item \code{normalize_log}: \eqn{\tilde{x}_{ij} = \log(\frac{x_{ij} \cdot \text{scaleFactor}}{\text{colSum}_j} + 1)}
 }
