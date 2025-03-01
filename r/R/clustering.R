@@ -199,7 +199,7 @@ knn_to_geodesic_graph <- function(knn, return_type = c("matrix", "list"), thread
 }
 
 #' Cluster a cell embedding matrix using a graph based algorithm
-#' @rdname cluster
+#' @rdname cluster_graph
 #' @details **cluster_graph_leiden**: Leiden clustering algorithm `igraph::cluster_leiden()`. 
 #'    Note that when using `objective_function = "CPM"` the number of clusters empirically scales with `cells * resolution`,
 #'    so 1e-3 is a good resolution for 10k cells, but 1M cells is better with a 1e-5 resolution. A resolution of 1 is a 
@@ -249,7 +249,7 @@ cluster_graph_leiden <- function(
 }
 
 
-#' @rdname cluster
+#' @rdname cluster_graph
 #' @details **cluster_graph_louvain**: Louvain graph clustering algorithm `igraph::cluster_louvain()`
 #' @export
 cluster_graph_louvain <- function(
@@ -275,7 +275,7 @@ cluster_graph_louvain <- function(
     as.factor()
 }
 
-#' @rdname cluster
+#' @rdname cluster_graph
 #' @details **cluster_graph_seurat**: Seurat's clustering algorithm `Seurat::FindClusters()`
 #' @export
 cluster_graph_seurat <- function(
