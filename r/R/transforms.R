@@ -307,7 +307,8 @@ setMethod("short_description", "TransformBinarize", function(x) {
 #' as(mat_binarized, "dgCMatrix")
 #' 
 #' # We can also call as a partialized function
-#' binarize(threshold = 0.1)(mat)
+#' partial_binarize <- binarize(threshold = 0.1)
+#' partial_binarize(mat)
 #' @export
 binarize <- function(mat, threshold = 0, strict_inequality = TRUE) {
   assert_is(threshold, "numeric")

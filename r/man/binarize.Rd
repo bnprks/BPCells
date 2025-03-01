@@ -41,5 +41,6 @@ mat_binarized
 as(mat_binarized, "dgCMatrix")
 
 # We can also call as a partialized function
-binarize(threshold = 0.1)(mat)
+partial_binarize <- binarize(threshold = 0.1)
+partial_binarize(mat)
 }
