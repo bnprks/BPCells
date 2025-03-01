@@ -10,7 +10,7 @@ is_adjacency_matrix(mat)
 TRUE if the mat is a graph adjacency matrix, FALSE otherwise
 }
 \description{
-Clustering function like \code{cluster_graph_leiden()} and \code{cluster_graph_louvain()} require a graph adjacency matrix as input.
-We assume that any \code{dgCMatrix} that is square is a graph adjacency matrix.
+Clustering functions like \code{cluster_graph_leiden()} and \code{cluster_graph_louvain()} require a graph adjacency matrix as input.
+We assume that any square \code{dgCMatrix} is a graph adjacency matrix.
 }
 \keyword{internal}

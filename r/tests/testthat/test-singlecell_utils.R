@@ -244,7 +244,7 @@ test_that("Iterative LSI works", {
   mat <- matrix(data = runif(50000, 0, 1), nrow=500, ncol = 100) %>% as("dgCMatrix") %>% as("IterableMatrix")
   rownames(mat) <- paste0("feat", seq_len(nrow(mat)))
   colnames(mat) <- paste0("cell", seq_len(ncol(mat)))
-  lsi_res_obj <- expect_no_error(IterativeLSI(mat, n_iterations = 2, n_dimensions = 10L, cluster_method = cluster_graph_louvain(knn_obj_method = knn_hnsw)))
+  lsi_res_obj <- expect_no_error(IterativeLSI(mat, n_iterations = 2, n_dimensions = 10L, cluster_method = cluster_graph_louvain(knn_method = knn_hnsw)))
   lsi_res_proj <- project(lsi_res_obj, mat)
   lsi_res_proj_iter_1 <- expect_no_error(project(lsi_res_obj, mat, iteration = 1L))
   lsi_res_embedding <- lsi_res_obj$cell_embeddings
@@ -264,8 +264,8 @@ test_that("Iterative LSI works with parameterized clustering", {
     IterativeLSI(
       mat, n_dimensions = 10L,,
       cluster_method = cluster_graph_leiden(
-        knn_obj_method = knn_annoy(k = 12),
-        knn_graph_method = knn_to_snn_graph(min_val = 0.1)
+        knn_method = knn_annoy(k = 12),
+        knn_to_graph_method = knn_to_snn_graph(min_val = 0.1)
       )
     )
   )

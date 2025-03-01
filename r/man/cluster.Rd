@@ -4,14 +4,14 @@
 \alias{cluster_graph_leiden}
 \alias{cluster_graph_louvain}
 \alias{cluster_graph_seurat}
-\title{Cluster an adjacency matrix}
+\title{Cluster a cell embedding matrix using a graph based algorithm}
 \usage{
 cluster_graph_leiden(
   mat,
   resolution = 1,
   objective_function = c("modularity", "CPM"),
-  knn_obj_method = knn_hnsw,
-  knn_graph_method = knn_to_geodesic_graph,
+  knn_method = knn_hnsw,
+  knn_to_graph_method = knn_to_geodesic_graph,
   seed = 12531,
   threads = 0L,
   verbose = FALSE,
@@ -21,8 +21,8 @@ cluster_graph_leiden(
 cluster_graph_louvain(
   mat,
   resolution = 1,
-  knn_obj_method = knn_hnsw,
-  knn_graph_method = knn_to_geodesic_graph,
+  knn_method = knn_hnsw,
+  knn_to_graph_method = knn_to_geodesic_graph,
   seed = 12531,
   threads = 0L,
   verbose = FALSE
@@ -31,33 +31,38 @@ cluster_graph_louvain(
 cluster_graph_seurat(
   mat,
   resolution = 0.8,
-  knn_obj_method = knn_hnsw,
-  knn_graph_method = knn_to_geodesic_graph,
+  knn_method = knn_hnsw,
+  knn_to_graph_method = knn_to_geodesic_graph,
   threads = 0L,
   verbose = FALSE,
   ...
 )
 }
 \arguments{
-\item{mat}{Symmetric adjacency matrix (dgCMatrix) output from e.g. \code{knn_to_snn_graph()} or \code{knn_to_geodesic_graph()}. Only the lower triangle is used}
+\item{mat}{(matrix) \verb{(cells x n_embeddings)} matrix from a dimensionality reduction.
+\code{mat} can also be a knn object (list), with names \code{idx} and \code{dist}, returned from a knn method (See \code{knn_hnsw()}, \code{knn_annoy()}).
+Additionally, \code{mat} can be a symmetric graph adjacency matrix (dgCMatrix) from e.g. \code{knn_to_snn_graph()} or \code{knn_to_geodesic_graph()}.
+Only the lower triangle from a graph adjacency matrix is used.}
 
 \item{resolution}{Resolution parameter. Higher values result in more clusters}
 
 \item{objective_function}{Graph statistic to optimize during clustering. Modularity is the default as it keeps resolution independent of dataset size (see details below).
 For the meaning of each option, see \code{igraph::cluster_leiden()}.}
 
-\item{knn_obj_method}{(function) if mat represents a regular non-knn object, this function will attempt to convert it a knn object.
-Must be a (optionally partialized) version of \code{knn_hnsw()} or \code{knn_annoy()}.  Ignored if \code{mat} is already a knn object, or if \code{mat} is a graph adjacency matrix.}
+\item{knn_method}{(function) Function to convert \code{mat} from cell embeddings to a knn object.
+Must be a (optionally partialized) version of \code{knn_hnsw()} or \code{knn_annoy()}.  Ignored if \code{mat} is already a knn object/graph adjacency matrix.}
 
-\item{knn_graph_method}{(function) if mat represents a knn object, this function will attempt to convert it to a graph matrix.
+\item{knn_to_graph_method}{(function) Function to convert \code{mat} from a knn object generated from \code{knn_method} to a graph adjacency matrix.
 Must be a (optionally partialized) version of \code{knn_to_graph()}, \code{knn_to_snn_graph()} or \code{knn_to_geodesic_graph()}.
 Ignored if \code{mat} is already a graph adjacency matrix.}
 
 \item{seed}{Random seed for clustering initialization}
 
-\item{threads}{(integer) Number of threads to use.}
+\item{threads}{(integer) Number of threads to use in \code{knn_method} and \code{knn_to_graph_method}.  If these functions do not utilize
+a \code{threads} argument, this is silently ignored.}
 
-\item{verbose}{(logical) Whether to print progress information.}
+\item{verbose}{(logical) Whether to print progress information in \code{knn_method} and \code{knn_to_graph_method}.  If these functions do not utilize
+a \code{verbose} argument, this is silently ignored.}
 
 \item{...}{Additional arguments to underlying clustering function}
 }
@@ -65,7 +70,7 @@ Ignored if \code{mat} is already a graph adjacency matrix.}
 Factor vector containing the cluster assignment for each cell.
 }
 \description{
-Cluster an adjacency matrix
+Cluster a cell embedding matrix using a graph based algorithm
 }
 \details{
 \strong{cluster_graph_leiden}: Leiden clustering algorithm \code{igraph::cluster_leiden()}.
