@@ -386,6 +386,7 @@ project.LSI <- function(x, mat, threads = 1L, ...) {
 #' Current builtin options are `cluster_graph_{leiden, louvain, seurat}()`.
 #' The user can pass in partial parameters to the cluster method, such as by passing 
 #' `cluster_graph_leiden(resolution = 0.5, knn_method = knn_hnsw(ef = 500, k = 12), knn_to_graph_method = knn_to_snn_graph(min_val = 0.1))`.
+#' @param threads (integer) Number of threads to use.  Also gets passed down into `feature_selection_method` and `cluster_method`
 #' @return 
 #' `IterativeLSI()` An object of class `c("IterativeLSI", "DimReduction")` with the following attributes:
 #' - `cell_embeddings`: The projected data as a matrix of shape `(cells, n_dimensions)`
