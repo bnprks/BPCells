@@ -24,7 +24,7 @@ LSI(
 \item{corr_cutoff}{(numeric) Numeric filter for the correlation of a PC to the sequencing depth.  If the PC has a correlation that is greater or equal to
 the corr_cutoff, it will be excluded from the final PCA matrix.}
 
-\item{scale_factor}{(numeric) Scaling factor to multiply matrix by prior to log normalization (see formulas below).}
+\item{scale_factor}{(numeric) Scaling factor to multiply matrix by during tf-idf normalization.}
 
 \item{threads}{(integer) Number of threads to use.}
 

@@ -266,7 +266,7 @@ project.default <- function(x, mat, ...) {
 #' @param n_dimensions (integer) Number of dimensions to keep during PCA.
 #' @param corr_cutoff (numeric) Numeric filter for the correlation of a PC to the sequencing depth.  If the PC has a correlation that is greater or equal to
 #' the corr_cutoff, it will be excluded from the final PCA matrix.
-#' @param scale_factor (numeric) Scaling factor to multiply matrix by prior to log normalization (see formulas below).
+#' @param scale_factor (numeric) Scaling factor to multiply matrix by during tf-idf normalization.
 #' @param threads (integer) Number of threads to use.
 #' @returns 
 #' `LSI()` An object of class `c("LSI", "DimReduction")` with the following attributes:
@@ -305,10 +305,11 @@ LSI <- function(
   mat_stats <- matrix_stats(mat, row_stats = c("mean"), col_stats = c("mean"), threads = threads)
   read_depth <- mat_stats$col_stats["mean", ] * nrow(mat)
   mat <- normalize_tfidf(
+    mat = mat,
     feature_means = mat_stats$row_stats["mean", ],
     scale_factor = scale_factor,
     threads = threads
-  )(mat)
+  )
   # Save to prevent repeating queued calculations during SVD
   mat <- write_matrix_dir(
     convert_matrix_type(mat, type = "float"),

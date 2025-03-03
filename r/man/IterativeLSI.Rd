@@ -27,7 +27,7 @@ IterativeLSI(
 \item{feature_selection_method}{(function) Method to use for selecting features for LSI.
 Current builtin options are \code{select_features_variance}, \code{select_features_dispersion}, \code{select_features_mean}, \code{select_features_binned_dispersion}}
 
-\item{scale_factor}{(numeric) Scaling factor to multiply matrix by prior to log normalization (see formulas below).}
+\item{scale_factor}{(numeric) Scaling factor to multiply matrix by during tf-idf normalization.}
 
 \item{n_dimensions}{(integer) Number of dimensions to keep during PCA.}
 
