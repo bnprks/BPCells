@@ -41,10 +41,9 @@ select_features_binned_dispersion(
 \item{num_feats}{(float) Number of features to mark as highly_variable. If 0 < num_feats < 1, then interpret it as a fraction of features.}
 
 \item{normalize_method}{(function) Used to normalize the matrix prior to feature selection by calling \code{normalize_method(mat)} if it is not NULL.
-For example, pass normalize_log() or normalize_tfidf().
-If the normalize function accepts a threads argument, that will passed as normalize(mat, threads=threads).}
+For example, pass \code{normalize_log()} or \code{normalize_tfidf()}.}
 
-\item{threads}{(integer) Number of threads to use.}
+\item{threads}{(integer) Number of threads to use. Also overrides the threads argument in \code{normalize_method}}
 
 \item{n_bins}{(integer) Number of bins to split features into in order to control for the relationship between mean expression and dispersion (see details).}
 }
