@@ -264,18 +264,18 @@ project.default <- function(x, mat, ...) {
 #' @rdname LSI
 #' @param mat (IterableMatrix) Counts matrix of shape `(features x cells)`.
 #' @param n_dimensions (integer) Number of dimensions to keep during PCA.
-#' @param corr_cutoff (numeric) Numeric filter for the correlation of a PC to the sequencing depth.  If the PC has a correlation that is great or equal to
+#' @param corr_cutoff (numeric) Numeric filter for the correlation of a PC to the sequencing depth.  If the PC has a correlation that is greater or equal to
 #' the corr_cutoff, it will be excluded from the final PCA matrix.
 #' @param scale_factor (numeric) Scaling factor to multiply matrix by prior to log normalization (see formulas below).
 #' @param threads (integer) Number of threads to use.
 #' @returns 
 #' `LSI()` An object of class `c("LSI", "DimReduction")` with the following attributes:
 #' - `cell_embeddings`: The projected data as a matrix of shape `(cells, n_dimensions)`
-#' - `fitted_params`: A tibble of the parameters used for iterative LSI, with rows as iterations. Columns include the following:
+#' - `fitted_params`: A named list of the parameters used for LSI, including the following:
 #'   - `scale_factor`: The scale factor used for tf-idf normalization
 #'   - `feature_means`: The means of the features used for normalization
 #'   - `pcs_to_keep`: The PCs that were kept after filtering by correlation to sequencing depth
-#'   - `feature_loadings`: SVD component u with dimension `(n_variable_features, n_dimensions)`
+#'   - `feature_loadings`: SVD component with dimension `(n_variable_features, n_dimensions)` used to linearly transform input data into cell embeddings
 #' - `feature_names`: The names of the features in the matrix
 #' @details Compute LSI through first doing a log(tf-idf) transform, z-score normalization, then PCA.  Tf-idf implementation is from Stuart & Butler et al. 2019.
 #' 
@@ -309,7 +309,7 @@ LSI <- function(
     scale_factor = scale_factor,
     threads = threads
   )(mat)
-  # Save to prevent re-calculation of queued operations
+  # Save to prevent repeating queued calculations during SVD
   mat <- write_matrix_dir(
     convert_matrix_type(mat, type = "float"),
     tempfile("mat"), compress = TRUE
@@ -324,7 +324,7 @@ LSI <- function(
   pca_feats_to_keep <- which(pca_corrs < corr_cutoff)
   if (length(pca_feats_to_keep) != n_dimensions) {
     if (verbose) log_progress(sprintf("Dropping PCs %s due to high correlation with sequencing depth", paste(setdiff(1:n_dimensions, pca_feats_to_keep), collapse = ", ")))
-    pca_res <- pca_res[, pca_feats_to_keep] %>% as.matrix()
+    pca_res <- pca_res[, pca_feats_to_keep, drop = FALSE]
   }
   fitted_params <- list(
     scale_factor = scale_factor,
@@ -371,7 +371,7 @@ project.LSI <- function(x, mat, threads = 1L, ...) {
 }
 
 
-#' Run iterative LSI on a matrix.
+#' Run Iterative LSI on a matrix.
 #' 
 #' Given a `(features x cells)` counts matrix, perform IterativeLSI to create a latent space representation of the matrix of shape `(n_dimensions, ncol(mat))`.  
 #' This uses the method described in [ArchR](https://doi.org/10.1038/s41588-021-00790-6) (Granja et al; 2019). 
@@ -379,7 +379,7 @@ project.LSI <- function(x, mat, threads = 1L, ...) {
 #' @rdname IterativeLSI
 #' @param mat (IterableMatrix) Counts matrix of shape `(features x cells)`.
 #' @param n_iterations (int) The number of LSI iterations to perform.
-#' @param feature_selection_method (function) Method to use for selecting features for each iteration after the first. 
+#' @param feature_selection_method (function) Method to use for selecting features for LSI. 
 #' Current builtin options are `select_features_variance`, `select_features_dispersion`, `select_features_mean`, `select_features_binned_dispersion`
 #' @param cluster_method (function) Method to use for clustering the post-SVD matrix. 
 #' Current builtin options are `cluster_graph_{leiden, louvain, seurat}()`.
@@ -390,6 +390,7 @@ project.LSI <- function(x, mat, threads = 1L, ...) {
 #' - `cell_embeddings`: The projected data as a matrix of shape `(cells, n_dimensions)`
 #' - `fitted_params`: A list of the parameters used for iterative LSI.  Includes the following:
 #'    - `lsi_method`: The method used for LSI
+#'    - `feature_selection_method`: The method used for selecting features
 #'    - `cluster_method`: The method used for clustering
 #'    - `feature_means`: The means of the features used for tf-idf normalization
 #'    - `iterations`: The number of LSI iterations ran
@@ -407,28 +408,28 @@ project.LSI <- function(x, mat, threads = 1L, ...) {
 #'    - If `n_iterations` is 1, return the projected data from the first PCA projection
 #'    - Else, cluster the LSI results using `cluster_method`
 #' - For each subsequent iteration:
-#'    - Pseudobulk the clusters and select the top features based on the variance of the pseudobulked clusters
+#'    - Pseudobulk the clusters and select the top features based on the pseudobulked clusters
 #'    - Perform LSI on the selected features
 #'    - If this is the final iteration, return the projected data from this PCA projection
 #'    - Else, cluster the LSI results using `cluster_method`
 #' 
 #' There are some minor differences when compared to the ArchR implementation:
-#' - ArchR uses a different method for selecting features in the first iteration.  The default method is `select_features_variance`, which is the same as the ArchR implementation.
-#' `select_features_mean(normalize_method = binarize)` can be passed in for the `feature_selection_method` argument to mimic the ArchR implementation, if choosing to only run one iteration.
-#' - `IterativeLSI()` currently does not support utilization of different feature selection methods across each iteration.
+#' - ArchR binarizes data prior to feature selection.  To replicate this, the user can pass `select_features_variance(normalize=binarize)` for their `feature_selection_method`.
+#' - `IterativeLSI()` currently does not support utilization of different feature selection methods across each iteration. 
+#' If one desires to use a different feature selection method for each iteration, they can take the cluster assignments from the previous 
+#' iteration and use them to select features and run LSI.
 #' - ArchR uses a default of 25000 features picked during feature selection. As the number of input features is dependent on the input matrix fed into `IterativeLSI()`, 
 #' the default for `select_features_variance()` instead picks the number of variable features as a proportion of the total features provided.  To mimic the ArchR implementation,
 #' `feature_selection_method` can be set to `select_features_variance(num_feats = 25000)`.
-#' If one desires to use a different feature selection method for each iteration, they can take the cluster assignments from the previous iteration and use them to select features and run LSI.
 #' - ArchR calculates LSI during non-terminal iterations using a default subset of 10000 cells.  ArchR does this to prevent a memory bottleneck,
 #' which BPCells does not encounter even with a non-subsetted matrix. Therefore, IterativeLSI will run LSI on the entire matrix for each iteration.
 #' - ArchR defaults on using Seurat clustering for default, which utilizes the Louvain algorithm (See `Seurat::FindClusters()`).  In constrast, `IterativeLSI()` utilizes
 #' leiden, which should provide the same clustering results while being faster.
-#' - ArchR also plots a umap of every iteration's dimensionality reduction.  While this is not implemented in `IterativeLSI()`,
+#' - ArchR also plots and calculates a umap of every iteration's dimensionality reduction.  While this is not implemented in `IterativeLSI()`,
 #' one can use the `project()` method with the `iteration` argument set to the desired iteration to get projected data.  This can then be fed into `uwot::umap()`
-#' - ArchR by default filters out PCs with a correlation to sequencing depth greater than 0.75. 
+#' - ArchR filters out PCs with a correlation to sequencing depth greater than 0.75. 
 #' While corr_cutoff is provided as an argument in `IterativeLSI()`, it is set to not removing any PCs by default.
-#' - ArchR by default filters out outliers dependent on number of accesible regions of cells, by the bottom and top quantiles.  This is not implemented in `IterativeLSI()`, 
+#' - ArchR filters out outliers dependent on number of accesible regions of cells, by the bottom and top quantiles.  This is not implemented in `IterativeLSI()`, 
 #' but can be done as a preprocessing step.
 #' @seealso `LSI()` `DimReduction()` `svds()` `knn_hnsw()` `knn_annoy()` 
 #' `cluster_graph_leiden()` `cluster_graph_louvain()` `cluster_graph_seurat()` `select_features_variance()` `select_features_dispersion()` 
@@ -454,6 +455,7 @@ IterativeLSI <- function(
   fitted_params <- list(
     lsi_method = LSI(n_dimensions = n_dimensions, corr_cutoff = corr_cutoff, scale_factor = scale_factor, threads = threads),
     cluster_method = cluster_method,
+    feature_selection_method = feature_selection_method,
     feature_means = matrix_stats(mat, row_stats = "mean", threads = threads)$row_stats["mean",],
     iterations = n_iterations,
     iter_info = tibble::tibble(
@@ -464,18 +466,17 @@ IterativeLSI <- function(
       clusters = list()
     )
   )
+  feature_selection_method <- partial_apply(feature_selection_method, threads = threads, .missing_args_error = FALSE)
   if (verbose) log_progress("Starting Iterative LSI")
   for (i in seq_len(n_iterations)) {
     
     if (verbose) log_progress(sprintf("Starting Iterative LSI iteration %s of %s", i, n_iterations))
-    # add a blank row to the iter_info tibble
-    
     # run variable feature selection
     if (verbose) log_progress("Selecting features")
     if (i == 1) {
-      var_feature_table <- partial_apply(feature_selection_method, threads = threads, .missing_args_error = FALSE)(mat)
+      var_feature_table <- feature_selection_method(mat)
     } else {
-      var_feature_table <- partial_apply(feature_selection_method, threads = threads, .missing_args_error = FALSE)(pseudobulk_res)
+      var_feature_table <- feature_selection_method(pseudobulk_res)
     }
     variable_features <- var_feature_table %>% dplyr::filter(highly_variable) %>% dplyr::pull(feature)
     if (is.character(variable_features)) {
@@ -494,24 +495,23 @@ IterativeLSI <- function(
       threads = threads,
       verbose = verbose
     )
-    # only cluster + pseudobulk if this isn't the last iteration
     fitted_params$iter_info <- tibble::add_row(
       fitted_params$iter_info, iteration = i,
       feature_names = list(variable_features),
       feature_loadings = list(lsi_res_obj$fitted_params$feature_loadings),
       pcs_to_keep = list(lsi_res_obj$fitted_params$pcs_to_keep)
     )
+    # only cluster + pseudobulk if this isn't the last iteration
     if (i == n_iterations) break
     
     # cluster the LSI results
     if (verbose) log_progress("Clustering LSI results")
-    clustering_res <- lsi_res_obj$cell_embeddings[, lsi_res_obj$fitted_params$pcs_to_keep] %>%
-      as.matrix() %>%
+    clustering_res <- lsi_res_obj$cell_embeddings[, lsi_res_obj$fitted_params$pcs_to_keep, drop = FALSE] %>%
       partial_apply(cluster_method, threads = threads, .missing_args_error = FALSE)()
     fitted_params$iter_info$clusters[[i]] <- clustering_res
     # pseudobulk and pass onto next iteration
     if (verbose) log_progress("Pseudobulking matrix")
-    pseudobulk_res <- pseudobulk_matrix(mat, clustering_res, threads = as.integer(threads))
+    pseudobulk_res <- pseudobulk_matrix(mat, clustering_res, threads = threads)
     rownames(pseudobulk_res) <- rownames(mat)
   }
   if (verbose) log_progress("Finished running Iterative LSI")
@@ -526,15 +526,15 @@ IterativeLSI <- function(
 #' @rdname IterativeLSI
 #' @param iteration (integer) Which iteration of `IterativeLSI`'s features and loadings to use for projection.
 #' @return
-#' `project()` IterableMatrix of the projected data of shape `(cells, n_dimensions)`.
+#' `project()` Matrix of the projected data of shape `(cells, n_dimensions)`.
 #' @inheritParams project
 #' @export
 project.IterativeLSI <- function(x, mat, iteration = x$fitted_params$iterations, threads = 1L, ...) {
   assert_is_mat(mat)
   assert_is_wholenumber(threads)
-  fitted_params <- x$fitted_params
-  # Get the desired row of iter_info tibble
   assert_is_wholenumber(iteration)
+  fitted_params <- x$fitted_params
+  # Get the desired iteration row of iter_info tibble
   assert_true(iteration <= x$fitted_params$iterations)
   iter_info <- fitted_params$iter_info[iteration, ]
 

@@ -3,7 +3,7 @@
 \name{IterativeLSI}
 \alias{IterativeLSI}
 \alias{project.IterativeLSI}
-\title{Run iterative LSI on a matrix.}
+\title{Run Iterative LSI on a matrix.}
 \usage{
 IterativeLSI(
   mat,
@@ -24,14 +24,14 @@ IterativeLSI(
 
 \item{n_iterations}{(int) The number of LSI iterations to perform.}
 
-\item{feature_selection_method}{(function) Method to use for selecting features for each iteration after the first.
+\item{feature_selection_method}{(function) Method to use for selecting features for LSI.
 Current builtin options are \code{select_features_variance}, \code{select_features_dispersion}, \code{select_features_mean}, \code{select_features_binned_dispersion}}
 
 \item{scale_factor}{(numeric) Scaling factor to multiply matrix by prior to log normalization (see formulas below).}
 
 \item{n_dimensions}{(integer) Number of dimensions to keep during PCA.}
 
-\item{corr_cutoff}{(numeric) Numeric filter for the correlation of a PC to the sequencing depth.  If the PC has a correlation that is great or equal to
+\item{corr_cutoff}{(numeric) Numeric filter for the correlation of a PC to the sequencing depth.  If the PC has a correlation that is greater or equal to
 the corr_cutoff, it will be excluded from the final PCA matrix.}
 
 \item{cluster_method}{(function) Method to use for clustering the post-SVD matrix.
@@ -52,6 +52,7 @@ The user can pass in partial parameters to the cluster method, such as by passin
 \item \code{fitted_params}: A list of the parameters used for iterative LSI.  Includes the following:
 \itemize{
 \item \code{lsi_method}: The method used for LSI
+\item \code{feature_selection_method}: The method used for selecting features
 \item \code{cluster_method}: The method used for clustering
 \item \code{feature_means}: The means of the features used for tf-idf normalization
 \item \code{iterations}: The number of LSI iterations ran
@@ -66,7 +67,7 @@ The user can pass in partial parameters to the cluster method, such as by passin
 }
 }
 
-\code{project()} IterableMatrix of the projected data of shape \verb{(cells, n_dimensions)}.
+\code{project()} Matrix of the projected data of shape \verb{(cells, n_dimensions)}.
 }
 \description{
 Given a \verb{(features x cells)} counts matrix, perform IterativeLSI to create a latent space representation of the matrix of shape \verb{(n_dimensions, ncol(mat))}.
@@ -85,7 +86,7 @@ The Iterative LSI method is as follows:
 }
 \item For each subsequent iteration:
 \itemize{
-\item Pseudobulk the clusters and select the top features based on the variance of the pseudobulked clusters
+\item Pseudobulk the clusters and select the top features based on the pseudobulked clusters
 \item Perform LSI on the selected features
 \item If this is the final iteration, return the projected data from this PCA projection
 \item Else, cluster the LSI results using \code{cluster_method}
@@ -94,22 +95,22 @@ The Iterative LSI method is as follows:
 
 There are some minor differences when compared to the ArchR implementation:
 \itemize{
-\item ArchR uses a different method for selecting features in the first iteration.  The default method is \code{select_features_variance}, which is the same as the ArchR implementation.
-\code{select_features_mean(normalize_method = binarize)} can be passed in for the \code{feature_selection_method} argument to mimic the ArchR implementation, if choosing to only run one iteration.
+\item ArchR binarizes data prior to feature selection.  To replicate this, the user can pass \code{select_features_variance(normalize=binarize)} for their \code{feature_selection_method}.
 \item \code{IterativeLSI()} currently does not support utilization of different feature selection methods across each iteration.
+If one desires to use a different feature selection method for each iteration, they can take the cluster assignments from the previous
+iteration and use them to select features and run LSI.
 \item ArchR uses a default of 25000 features picked during feature selection. As the number of input features is dependent on the input matrix fed into \code{IterativeLSI()},
 the default for \code{select_features_variance()} instead picks the number of variable features as a proportion of the total features provided.  To mimic the ArchR implementation,
 \code{feature_selection_method} can be set to \code{select_features_variance(num_feats = 25000)}.
-If one desires to use a different feature selection method for each iteration, they can take the cluster assignments from the previous iteration and use them to select features and run LSI.
 \item ArchR calculates LSI during non-terminal iterations using a default subset of 10000 cells.  ArchR does this to prevent a memory bottleneck,
 which BPCells does not encounter even with a non-subsetted matrix. Therefore, IterativeLSI will run LSI on the entire matrix for each iteration.
 \item ArchR defaults on using Seurat clustering for default, which utilizes the Louvain algorithm (See \code{Seurat::FindClusters()}).  In constrast, \code{IterativeLSI()} utilizes
 leiden, which should provide the same clustering results while being faster.
-\item ArchR also plots a umap of every iteration's dimensionality reduction.  While this is not implemented in \code{IterativeLSI()},
+\item ArchR also plots and calculates a umap of every iteration's dimensionality reduction.  While this is not implemented in \code{IterativeLSI()},
 one can use the \code{project()} method with the \code{iteration} argument set to the desired iteration to get projected data.  This can then be fed into \code{uwot::umap()}
-\item ArchR by default filters out PCs with a correlation to sequencing depth greater than 0.75.
+\item ArchR filters out PCs with a correlation to sequencing depth greater than 0.75.
 While corr_cutoff is provided as an argument in \code{IterativeLSI()}, it is set to not removing any PCs by default.
-\item ArchR by default filters out outliers dependent on number of accesible regions of cells, by the bottom and top quantiles.  This is not implemented in \code{IterativeLSI()},
+\item ArchR filters out outliers dependent on number of accesible regions of cells, by the bottom and top quantiles.  This is not implemented in \code{IterativeLSI()},
 but can be done as a preprocessing step.
 }
 }

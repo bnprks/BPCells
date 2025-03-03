@@ -21,7 +21,7 @@ LSI(
 
 \item{n_dimensions}{(integer) Number of dimensions to keep during PCA.}
 
-\item{corr_cutoff}{(numeric) Numeric filter for the correlation of a PC to the sequencing depth.  If the PC has a correlation that is great or equal to
+\item{corr_cutoff}{(numeric) Numeric filter for the correlation of a PC to the sequencing depth.  If the PC has a correlation that is greater or equal to
 the corr_cutoff, it will be excluded from the final PCA matrix.}
 
 \item{scale_factor}{(numeric) Scaling factor to multiply matrix by prior to log normalization (see formulas below).}
@@ -34,12 +34,12 @@ the corr_cutoff, it will be excluded from the final PCA matrix.}
 \code{LSI()} An object of class \code{c("LSI", "DimReduction")} with the following attributes:
 \itemize{
 \item \code{cell_embeddings}: The projected data as a matrix of shape \verb{(cells, n_dimensions)}
-\item \code{fitted_params}: A tibble of the parameters used for iterative LSI, with rows as iterations. Columns include the following:
+\item \code{fitted_params}: A named list of the parameters used for LSI, including the following:
 \itemize{
 \item \code{scale_factor}: The scale factor used for tf-idf normalization
 \item \code{feature_means}: The means of the features used for normalization
 \item \code{pcs_to_keep}: The PCs that were kept after filtering by correlation to sequencing depth
-\item \code{feature_loadings}: SVD component u with dimension \verb{(n_variable_features, n_dimensions)}
+\item \code{feature_loadings}: SVD component with dimension \verb{(n_variable_features, n_dimensions)} used to linearly transform input data into cell embeddings
 }
 \item \code{feature_names}: The names of the features in the matrix
 }
