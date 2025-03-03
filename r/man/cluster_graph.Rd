@@ -52,7 +52,7 @@ For the meaning of each option, see \code{igraph::cluster_leiden()}.}
 \item{knn_method}{(function) Function to convert \code{mat} from cell embeddings to a knn object.
 Must be a (optionally partialized) version of \code{knn_hnsw()} or \code{knn_annoy()}.  Ignored if \code{mat} is already a knn object/graph adjacency matrix.}
 
-\item{knn_to_graph_method}{(function) Function to convert \code{mat} from a knn object generated from \code{knn_method} to a graph adjacency matrix.
+\item{knn_to_graph_method}{(function) Function to convert \code{mat} from a knn object to a graph adjacency matrix.
 Must be a (optionally partialized) version of \code{knn_to_graph()}, \code{knn_to_snn_graph()} or \code{knn_to_geodesic_graph()}.
 Ignored if \code{mat} is already a graph adjacency matrix.}
 

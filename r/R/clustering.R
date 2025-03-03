@@ -213,7 +213,7 @@ knn_to_geodesic_graph <- function(knn, return_type = c("matrix", "list"), thread
 #'    For the meaning of each option, see `igraph::cluster_leiden()`.
 #' @param knn_method (function) Function to convert `mat` from cell embeddings to a knn object.
 #' Must be a (optionally partialized) version of `knn_hnsw()` or `knn_annoy()`.  Ignored if `mat` is already a knn object/graph adjacency matrix.
-#' @param knn_to_graph_method (function) Function to convert `mat` from a knn object generated from `knn_method` to a graph adjacency matrix.
+#' @param knn_to_graph_method (function) Function to convert `mat` from a knn object to a graph adjacency matrix.
 #' Must be a (optionally partialized) version of `knn_to_graph()`, `knn_to_snn_graph()` or `knn_to_geodesic_graph()`.  
 #' Ignored if `mat` is already a graph adjacency matrix.
 #' @param seed Random seed for clustering initialization
