@@ -12,7 +12,7 @@ test_that("assert_is_mat works", {
     mat_iterable <- as(mat, "IterableMatrix")
     expect_no_error(assert_is_mat(mat))
     expect_no_error(assert_is_mat(mat_dgc))
-    expect_no_error(assert_is_mat(c(mat_iterable, mat_iterable)))
+    expect_error(assert_is_mat(c(mat_iterable, mat_iterable)))
     expect_error(assert_is_mat("a"))
     expect_error(assert_is_mat(c("a", "a")))
     expect_error(assert_is_mat(1))
