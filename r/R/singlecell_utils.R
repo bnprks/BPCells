@@ -317,7 +317,8 @@ LSI <- function(
   # Run pca
   if (verbose) log_progress("Calculating SVD")
   svd_attr <- svds(mat, k = n_dimensions, threads = threads)
-  pca_res <- t(mat) %*% svd_attr$u
+  pca_res <- svd_attr$v %*% diag(svd_attr$d)
+  rownames(pca_res) <- colnames(mat)
   
   # Filter out PCs that are highly correlated with sequencing depth
   pca_corrs <- abs(cor(read_depth, pca_res))
