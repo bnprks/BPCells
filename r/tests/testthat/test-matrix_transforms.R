@@ -362,6 +362,8 @@ test_that("tf-idf normalization works", {
     row_means_shuffled <- row_means[sample(1:length(row_means))]
     # Test that row means can have an extra element as long as all rownames are in the vector
     row_means_plus_one <- c(row_means, row6 = 1)
+    # Check when row means has no row names
+    row_means_no_names <- unname(row_means)
     
 
     res <- normalize_tfidf(m2)
@@ -376,6 +378,17 @@ test_that("tf-idf normalization works", {
 
     res_with_row_means_with_extra_element <- normalize_tfidf(m2, feature_means = row_means_plus_one)
     expect_identical(res, res_with_row_means_with_extra_element)
+    
+    # Check cases where names exists in either row means xor rownames(mat)
+    # check where both don't have names
+    res_with_unnamed_row_means <- normalize_tfidf(m2, feature_means = row_means_no_names)
+    expect_identical(res_with_unnamed_row_means, res)
+    rownames(m2) <- NULL
+    res_with_unnamed_row_names <- normalize_tfidf(m2, feature_means = row_means)
+    res_with_unnamed_row_names_row_means <- normalize_tfidf(m2, feature_means = row_means_no_names)
+    rownames(res) <- NULL
+    expect_identical(as(res_with_unnamed_row_names, "dgCMatrix"), as(res, "dgCMatrix"))
+    expect_identical(as(res_with_unnamed_row_names_row_means, "dgCMatrix"), as(res, "dgCMatrix"))
 })
 
 test_that("normalize_log works", {

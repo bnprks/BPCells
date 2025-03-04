@@ -1015,7 +1015,7 @@ normalize_tfidf <- function(
     read_depth <- mat_stats$col_stats["mean", ] * nrow(mat)
   } else {
     assert_is_numeric(feature_means)
-    if (!is.null(rownames(mat))) {
+    if (!is.null(names(feature_means)) && !is.null(rownames(mat))) {
       # Make sure every name in feature means exists in rownames(mat)
       assert_true(all(rownames(mat) %in% names(feature_means)))
       # subset feature_means to the rownames of mat in the case there is a length mismatch 
