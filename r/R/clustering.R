@@ -28,11 +28,10 @@ is_adjacency_matrix <- function(mat) {
   return(is(mat, "dgCMatrix") && nrow(mat) == ncol(mat))
 }
 
-#' Cluster Embeddings using a kNN-Graph Based Algorithm
+#' Cluster embeddings using a KNN-Graph based algorithm
 #' 
 #' Take in a cell embedding matrix, and sequentially convert it into a kNN object, then to
-#' a graph adjacency matrix.  Following, a clustering algorithm assigns a label
-#' to every cell.
+#' a graph adjacency matrix.  Following, assign a label to every cell using a clustering algorithm.
 #' 
 #' @param mat (matrix) Cell embeddings matrix of shape `(cells x n_embeddings)`
 #' @param knn_method (function) Function to convert cell embeddings into a knn object.
