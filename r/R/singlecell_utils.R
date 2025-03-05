@@ -310,10 +310,12 @@ LSI <- function(
     threads = threads
   )
   # Save to prevent repeating queued calculations during SVD
+  temp_mat_dir <- tempfile("mat")
   mat <- write_matrix_dir(
     convert_matrix_type(mat, type = "float"),
-    tempfile("mat"), compress = TRUE
+    temp_mat_dir, compress = TRUE
   )
+  on.exit(unlink(temp_mat_dir, recursive = TRUE, expand = FALSE))
   # Run pca
   if (verbose) log_progress("Calculating SVD")
   svd_attr <- svds(mat, k = n_dimensions, threads = threads)
