@@ -383,9 +383,8 @@ project.LSI <- function(x, mat, threads = 1L, ...) {
 #' @param feature_selection_method (function) Method to use for selecting features for LSI. 
 #' Current builtin options are `select_features_variance`, `select_features_dispersion`, `select_features_mean`, `select_features_binned_dispersion`
 #' @param cluster_method (function) Method to use for clustering the post-SVD matrix. 
-#' Current builtin options are `cluster_graph_{leiden, louvain, seurat}()`.
 #' The user can pass in partial parameters to the cluster method, such as by passing 
-#' `cluster_graph_leiden(resolution = 0.5, knn_method = knn_hnsw(ef = 500, k = 12), knn_to_graph_method = knn_to_snn_graph(min_val = 0.1))`.
+#' `cluster_cells_graph(mat, graph_to_cluster_method = cluter_graph_louvain(resolution = 0.5))` into `cluster_method`.
 #' @param threads (integer) Number of threads to use.  Also gets passed down into `feature_selection_method` and `cluster_method`
 #' @return 
 #' `IterativeLSI()` An object of class `c("IterativeLSI", "DimReduction")` with the following attributes:
@@ -410,7 +409,7 @@ project.LSI <- function(x, mat, threads = 1L, ...) {
 #'    - If `n_iterations` is 1, return the projected data from the first PCA projection
 #'    - Else, cluster the LSI results using `cluster_method`
 #' - For each subsequent iteration:
-#'    - Pseudobulk the clusters and select the top features based on the pseudobulked clusters
+#'    - Pseudobulk the clusters from the previous iteration and select the top features based on the pseudobulked clusters
 #'    - Perform LSI on the selected features
 #'    - If this is the final iteration, return the projected data from this PCA projection
 #'    - Else, cluster the LSI results using `cluster_method`
@@ -433,8 +432,8 @@ project.LSI <- function(x, mat, threads = 1L, ...) {
 #' While corr_cutoff is provided as an argument in `IterativeLSI()`, it is set to not removing any PCs by default.
 #' - ArchR filters out outliers dependent on number of accesible regions of cells, by the bottom and top quantiles.  This is not implemented in `IterativeLSI()`, 
 #' but can be done as a preprocessing step.
-#' @seealso `LSI()` `DimReduction()` `svds()` `knn_hnsw()` `knn_annoy()` 
-#' `cluster_graph_leiden()` `cluster_graph_louvain()` `cluster_graph_seurat()` `select_features_variance()` `select_features_dispersion()` 
+#' @seealso `LSI()` `DimReduction()` `svds()`
+#' `cluster_cells_graph` `select_features_variance()` `select_features_dispersion()` 
 #' `select_features_mean()` `select_features_binned_dispersion()`
 #' @inheritParams LSI
 #' @export
@@ -445,7 +444,7 @@ IterativeLSI <- function(
   scale_factor = 1e4, 
   n_dimensions = 50L, 
   corr_cutoff = 1,
-  cluster_method = cluster_graph_leiden,
+  cluster_method = cluster_cells_graph,
   threads = 1L, verbose = FALSE
 ) {
   assert_has_package("RcppHNSW")

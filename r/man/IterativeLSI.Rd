@@ -12,7 +12,7 @@ IterativeLSI(
   scale_factor = 10000,
   n_dimensions = 50L,
   corr_cutoff = 1,
-  cluster_method = cluster_graph_leiden,
+  cluster_method = cluster_cells_graph,
   threads = 1L,
   verbose = FALSE
 )
@@ -35,9 +35,8 @@ Current builtin options are \code{select_features_variance}, \code{select_featur
 the corr_cutoff, it will be excluded from the final PCA matrix.}
 
 \item{cluster_method}{(function) Method to use for clustering the post-SVD matrix.
-Current builtin options are \verb{cluster_graph_\{leiden, louvain, seurat\}()}.
 The user can pass in partial parameters to the cluster method, such as by passing
-\code{cluster_graph_leiden(resolution = 0.5, knn_method = knn_hnsw(ef = 500, k = 12), knn_to_graph_method = knn_to_snn_graph(min_val = 0.1))}.}
+\code{cluster_cells_graph(mat, graph_to_cluster_method = cluter_graph_louvain(resolution = 0.5))} into \code{cluster_method}.}
 
 \item{threads}{(integer) Number of threads to use.  Also gets passed down into \code{feature_selection_method} and \code{cluster_method}}
 
@@ -86,7 +85,7 @@ The Iterative LSI method is as follows:
 }
 \item For each subsequent iteration:
 \itemize{
-\item Pseudobulk the clusters and select the top features based on the pseudobulked clusters
+\item Pseudobulk the clusters from the previous iteration and select the top features based on the pseudobulked clusters
 \item Perform LSI on the selected features
 \item If this is the final iteration, return the projected data from this PCA projection
 \item Else, cluster the LSI results using \code{cluster_method}
@@ -115,7 +114,7 @@ but can be done as a preprocessing step.
 }
 }
 \seealso{
-\code{LSI()} \code{DimReduction()} \code{svds()} \code{knn_hnsw()} \code{knn_annoy()}
-\code{cluster_graph_leiden()} \code{cluster_graph_louvain()} \code{cluster_graph_seurat()} \code{select_features_variance()} \code{select_features_dispersion()}
+\code{LSI()} \code{DimReduction()} \code{svds()}
+\code{cluster_cells_graph} \code{select_features_variance()} \code{select_features_dispersion()}
 \code{select_features_mean()} \code{select_features_binned_dispersion()}
 }

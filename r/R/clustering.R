@@ -28,56 +28,18 @@ is_adjacency_matrix <- function(mat) {
   return(is(mat, "dgCMatrix") && nrow(mat) == ncol(mat))
 }
 
-#' Converts a matrix to a graph adjacency matrix
-#'
-#' Handles inputs so that cell embeddings and knn objects are converted into graph adjacency matrices.
-#' @param mat Input matrix to be converted of shape `(cells x n_embeddings)`
-#' @param knn_method (function) Function to convert input to a knn object (e.g., `knn_hnsw`, `knn_annoy`).
-#'   Ignored if `mat` is already a knn object or graph matrix.
-#' @param knn_to_graph_method (function) Function to convert a knn object to a graph adjacency matrix
-#'   (e.g., `knn_to_geodesic_graph`). Ignored if `mat` is already a graph matrix.
-#' @details
-#' If `mat` is a `(cells x n_embeddings)` matrix then `knn_method` is used to convert `mat` to a knn object.
-#' Knn objects are then converted into a graph adjacency matrix using `knn_to_graph_method`. Also does intermediate checks to ensure 
-#' that `knn_method` and `knn_to_graph` properly converted matrix into a correct output.
-#' @return  Symmetric graph adjacency matrix (dgCMatrix)
-#' @keywords internal
-convert_mat_to_graph <- function(
-  mat,
-  knn_method = knn_hnsw,
-  knn_to_graph_method = knn_to_geodesic_graph,
-  threads = 1L,
-  verbose = FALSE
-) {
-  if (is(mat, "matrix")) {
-    mat <- partial_apply(knn_method, threads = threads, verbose = verbose, .missing_args_error = FALSE)(mat)
-  }
-  if (!(is_knn_object(mat) || is_adjacency_matrix(mat))) {
-    pretty_error(mat, "must be a knn object, or convertible to one", 1)
-  }
-  # There currently aren't any `knn_to_graph` functions that utilize a verbose argument.  
-  # However, we still pass `verbose` in case future functions do provide this functionality.
-  if (is_knn_object(mat)) {
-    mat <- partial_apply(knn_to_graph_method, threads = threads, verbose = verbose, .missing_args_error = FALSE)(mat)
-  }
-  if (!is_adjacency_matrix(mat)) {
-    pretty_error(mat, "must be a graph adjacency matrix, or convertible to one", 1)
-  }
-  return(mat)
-}
-
-#' Cluster Embeddings using a kNN-Graph Based Community Algorithm
+#' Cluster Embeddings using a kNN-Graph Based Algorithm
 #' 
 #' Take in a cell embedding matrix, and sequentially convert it into a kNN object, then to
-#' a graph adjacency matrix.  Following, a community detection algorithm assigns a cluster label
+#' a graph adjacency matrix.  Following, a clustering algorithm assigns a label
 #' to every cell.
 #' 
 #' @param mat (matrix) Cell embeddings matrix of shape `(cells x n_embeddings)`
-#' @param knn_method (function) Function to convert input to a knn object (e.g., `knn_hnsw`, `knn_annoy`).
+#' @param knn_method (function) Function to convert cell embeddings into a knn object.
 #' Must be a (optionally partialized) version of `knn_hnsw()` or `knn_annoy()`. 
 #' @param knn_to_graph_method (function) Function to convert the knn object returned from `knn_method` to a graph adjacency matrix.
 #' Must be a (optionally partialized) version of `knn_to_graph()`, `knn_to_snn_graph()` or `knn_to_geodesic_graph()`.  
-#' @param graph_to_cluster_method (function) Community detection algorithm that converts a graph adjacency matrix 
+#' @param graph_to_cluster_method (function) Clustering algorithm that converts a graph adjacency matrix 
 #' returned from `graph_to_cluster_method` into cluster labels for each cell.
 #' Must be a (optionally partialized) version of `cluster_graph_leiden()`, `cluster_graph_louvain()` or `cluster_graph_seurat()`.
 #' @param threads (integer) Number of threads to use in `knn_method`, `knn_to_graph_method` and `graph_to_cluster_method`.  If these functions do not utilize
@@ -106,14 +68,13 @@ cluster_cells_graph <- function(
   graph_to_cluster_method = cluster_graph_leiden, 
   threads = 0L, verbose = FALSE
 ) {
-  assert_true(is.matrix(mat))
   assert_is_wholenumber(threads)
   assert_is(verbose, "logical")
+  if (rlang::is_missing(mat)) return(create_partial())
+  assert_is(mat, "matrix")
   # There currently aren't any `knn_to_graph` functions that utilize a verbose argument.  
   # However, we still pass `verbose` in case future functions do provide this functionality.
-  if (is(mat, "matrix")) {
-    mat <- partial_apply(knn_method, threads = threads, verbose = verbose, .missing_args_error = FALSE)(mat)
-  }
+  mat <- partial_apply(knn_method, threads = threads, verbose = verbose, .missing_args_error = FALSE)(mat)
   if (!is_knn_object(mat)) pretty_error(mat, "`knn_method` was unable to convert `mat` into a knn object", 1)
   # Return type has to be constrained to "matrix", so this is silently provided.
   mat <- partial_apply(knn_to_graph_method, threads = threads, verbose = verbose, return_type = "matrix", .missing_args_error = FALSE)(mat)
@@ -254,44 +215,27 @@ knn_to_geodesic_graph <- function(knn, return_type = c("matrix", "list"), thread
   return(res)
 }
 
-#' Cluster a cell embedding matrix using a graph based algorithm
+#' Cluster an adjacency matrix
 #' @rdname cluster_graph
 #' @details **cluster_graph_leiden**: Leiden clustering algorithm `igraph::cluster_leiden()`. 
 #'    Note that when using `objective_function = "CPM"` the number of clusters empirically scales with `cells * resolution`,
 #'    so 1e-3 is a good resolution for 10k cells, but 1M cells is better with a 1e-5 resolution. A resolution of 1 is a 
 #'    good default when `objective_function = "modularity"` per the default.
-#' @param mat (matrix) `(cells x n_embeddings)` matrix from a dimensionality reduction.
-#' `mat` can also be a knn object (list), with names `idx` and `dist`, returned from a knn method (See `knn_hnsw()`, `knn_annoy()`).
-#' Additionally, `mat` can be a symmetric graph adjacency matrix (dgCMatrix) from e.g. `knn_to_snn_graph()` or `knn_to_geodesic_graph()`. 
-#' Only the lower triangle from a graph adjacency matrix is used.
+#' @param mat Symmetric adjacency matrix (dgCMatrix) output from e.g. `knn_to_snn_graph()` or `knn_to_geodesic_graph()`. Only the lower triangle is used.
 #' @param resolution Resolution parameter. Higher values result in more clusters
 #' @param objective_function Graph statistic to optimize during clustering. Modularity is the default as it keeps resolution independent of dataset size (see details below). 
 #'    For the meaning of each option, see `igraph::cluster_leiden()`.
-#' @param knn_method (function) Function to convert `mat` from cell embeddings to a knn object.
-#' Must be a (optionally partialized) version of `knn_hnsw()` or `knn_annoy()`.  Ignored if `mat` is already a knn object/graph adjacency matrix.
-#' @param knn_to_graph_method (function) Function to convert `mat` from a knn object to a graph adjacency matrix.
-#' Must be a (optionally partialized) version of `knn_to_graph()`, `knn_to_snn_graph()` or `knn_to_geodesic_graph()`.  
-#' Ignored if `mat` is already a graph adjacency matrix.
 #' @param seed Random seed for clustering initialization
-#' @param threads (integer) Number of threads to use in `knn_method` and `knn_to_graph_method`.  If these functions do not utilize
-#' a `threads` argument, this is silently ignored.
-#' @param verbose (logical) Whether to print progress information in `knn_method` and `knn_to_graph_method`.  If these functions do not utilize 
-#' a `verbose` argument, this is silently ignored.
 #' @param ... Additional arguments to underlying clustering function
 #' @return Factor vector containing the cluster assignment for each cell.
 #' @export
 cluster_graph_leiden <- function(
   mat, resolution = 1, objective_function = c("modularity", "CPM"),
-  knn_method = knn_hnsw, knn_to_graph_method = knn_to_geodesic_graph, seed = 12531, threads = 0L, verbose = FALSE, ...
+  seed = 12531, ...
 ) {
   assert_has_package("igraph")
   # Set seed without permanently changing seed state
   if (rlang::is_missing(mat)) return(create_partial())
-  mat <- convert_mat_to_graph(
-    mat, knn_method = knn_method,
-    knn_to_graph_method = knn_to_graph_method, 
-    threads = threads, verbose = verbose
-  )
   prev_seed <- get_seed()
   on.exit(restore_seed(prev_seed), add = TRUE)
   set.seed(seed)
@@ -309,17 +253,11 @@ cluster_graph_leiden <- function(
 #' @details **cluster_graph_louvain**: Louvain graph clustering algorithm `igraph::cluster_louvain()`
 #' @export
 cluster_graph_louvain <- function(
-  mat, resolution = 1, knn_method = knn_hnsw, 
-  knn_to_graph_method = knn_to_geodesic_graph, seed = 12531, threads = 0L, verbose = FALSE
+  mat, resolution = 1, seed = 12531
 ) {
   assert_has_package("igraph")
   # Set seed without permanently changing seed state
   if (rlang::is_missing(mat)) return(create_partial())
-  mat <- convert_mat_to_graph(
-    mat, knn_method = knn_method,
-    knn_to_graph_method = knn_to_graph_method, 
-    threads = threads, verbose = verbose
-  )
 
   prev_seed <- get_seed()
   on.exit(restore_seed(prev_seed), add = TRUE)
@@ -335,16 +273,10 @@ cluster_graph_louvain <- function(
 #' @details **cluster_graph_seurat**: Seurat's clustering algorithm `Seurat::FindClusters()`
 #' @export
 cluster_graph_seurat <- function(
-  mat, resolution = 0.8, knn_method = knn_hnsw, 
-  knn_to_graph_method = knn_to_geodesic_graph, threads = 0L, verbose = FALSE, ...
+  mat, resolution = 0.8, ...
 ) {
   assert_has_package("Seurat")
   if (rlang::is_missing(mat)) return(create_partial())
-  mat <- convert_mat_to_graph(
-    mat, knn_method = knn_method,
-    knn_to_graph_method = knn_to_graph_method, 
-    threads = threads, verbose = verbose
-  )
   Seurat::as.Graph(mat) %>%
     Seurat::FindClusters(resolution = resolution, ...) %>%
     .[[1]]

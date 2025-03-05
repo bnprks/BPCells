@@ -4,65 +4,29 @@
 \alias{cluster_graph_leiden}
 \alias{cluster_graph_louvain}
 \alias{cluster_graph_seurat}
-\title{Cluster a cell embedding matrix using a graph based algorithm}
+\title{Cluster an adjacency matrix}
 \usage{
 cluster_graph_leiden(
   mat,
   resolution = 1,
   objective_function = c("modularity", "CPM"),
-  knn_method = knn_hnsw,
-  knn_to_graph_method = knn_to_geodesic_graph,
   seed = 12531,
-  threads = 0L,
-  verbose = FALSE,
   ...
 )
 
-cluster_graph_louvain(
-  mat,
-  resolution = 1,
-  knn_method = knn_hnsw,
-  knn_to_graph_method = knn_to_geodesic_graph,
-  seed = 12531,
-  threads = 0L,
-  verbose = FALSE
-)
+cluster_graph_louvain(mat, resolution = 1, seed = 12531)
 
-cluster_graph_seurat(
-  mat,
-  resolution = 0.8,
-  knn_method = knn_hnsw,
-  knn_to_graph_method = knn_to_geodesic_graph,
-  threads = 0L,
-  verbose = FALSE,
-  ...
-)
+cluster_graph_seurat(mat, resolution = 0.8, ...)
 }
 \arguments{
-\item{mat}{(matrix) \verb{(cells x n_embeddings)} matrix from a dimensionality reduction.
-\code{mat} can also be a knn object (list), with names \code{idx} and \code{dist}, returned from a knn method (See \code{knn_hnsw()}, \code{knn_annoy()}).
-Additionally, \code{mat} can be a symmetric graph adjacency matrix (dgCMatrix) from e.g. \code{knn_to_snn_graph()} or \code{knn_to_geodesic_graph()}.
-Only the lower triangle from a graph adjacency matrix is used.}
+\item{mat}{Symmetric adjacency matrix (dgCMatrix) output from e.g. \code{knn_to_snn_graph()} or \code{knn_to_geodesic_graph()}. Only the lower triangle is used.}
 
 \item{resolution}{Resolution parameter. Higher values result in more clusters}
 
 \item{objective_function}{Graph statistic to optimize during clustering. Modularity is the default as it keeps resolution independent of dataset size (see details below).
 For the meaning of each option, see \code{igraph::cluster_leiden()}.}
 
-\item{knn_method}{(function) Function to convert \code{mat} from cell embeddings to a knn object.
-Must be a (optionally partialized) version of \code{knn_hnsw()} or \code{knn_annoy()}.  Ignored if \code{mat} is already a knn object/graph adjacency matrix.}
-
-\item{knn_to_graph_method}{(function) Function to convert \code{mat} from a knn object to a graph adjacency matrix.
-Must be a (optionally partialized) version of \code{knn_to_graph()}, \code{knn_to_snn_graph()} or \code{knn_to_geodesic_graph()}.
-Ignored if \code{mat} is already a graph adjacency matrix.}
-
 \item{seed}{Random seed for clustering initialization}
-
-\item{threads}{(integer) Number of threads to use in \code{knn_method} and \code{knn_to_graph_method}.  If these functions do not utilize
-a \code{threads} argument, this is silently ignored.}
-
-\item{verbose}{(logical) Whether to print progress information in \code{knn_method} and \code{knn_to_graph_method}.  If these functions do not utilize
-a \code{verbose} argument, this is silently ignored.}
 
 \item{...}{Additional arguments to underlying clustering function}
 }
@@ -70,7 +34,7 @@ a \code{verbose} argument, this is silently ignored.}
 Factor vector containing the cluster assignment for each cell.
 }
 \description{
-Cluster a cell embedding matrix using a graph based algorithm
+Cluster an adjacency matrix
 }
 \details{
 \strong{cluster_graph_leiden}: Leiden clustering algorithm \code{igraph::cluster_leiden()}.

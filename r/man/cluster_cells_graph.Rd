@@ -2,7 +2,7 @@
 % Please edit documentation in R/clustering.R
 \name{cluster_cells_graph}
 \alias{cluster_cells_graph}
-\title{Cluster Embeddings using a kNN-Graph Based Community Algorithm}
+\title{Cluster Embeddings using a kNN-Graph Based Algorithm}
 \usage{
 cluster_cells_graph(
   mat,
@@ -16,13 +16,13 @@ cluster_cells_graph(
 \arguments{
 \item{mat}{(matrix) Cell embeddings matrix of shape \verb{(cells x n_embeddings)}}
 
-\item{knn_method}{(function) Function to convert input to a knn object (e.g., \code{knn_hnsw}, \code{knn_annoy}).
+\item{knn_method}{(function) Function to convert cell embeddings into a knn object.
 Must be a (optionally partialized) version of \code{knn_hnsw()} or \code{knn_annoy()}.}
 
 \item{knn_to_graph_method}{(function) Function to convert the knn object returned from \code{knn_method} to a graph adjacency matrix.
 Must be a (optionally partialized) version of \code{knn_to_graph()}, \code{knn_to_snn_graph()} or \code{knn_to_geodesic_graph()}.}
 
-\item{graph_to_cluster_method}{(function) Community detection algorithm that converts a graph adjacency matrix
+\item{graph_to_cluster_method}{(function) Clustering algorithm that converts a graph adjacency matrix
 returned from \code{graph_to_cluster_method} into cluster labels for each cell.
 Must be a (optionally partialized) version of \code{cluster_graph_leiden()}, \code{cluster_graph_louvain()} or \code{cluster_graph_seurat()}.}
 
@@ -37,7 +37,7 @@ a \code{verbose} argument, this is silently ignored.}
 }
 \description{
 Take in a cell embedding matrix, and sequentially convert it into a kNN object, then to
-a graph adjacency matrix.  Following, a community detection algorithm assigns a cluster label
+a graph adjacency matrix.  Following, a clustering algorithm assigns a label
 to every cell.
 }
 \details{
