@@ -142,6 +142,7 @@ reference:
   - select_features_variance
 - subtitle: "Clustering"
 - contents:
+  - cluster_cells_graph
   - knn_hnsw
   - cluster_graph_leiden
   - knn_to_graph

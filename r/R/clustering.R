@@ -66,6 +66,62 @@ convert_mat_to_graph <- function(
   return(mat)
 }
 
+#' Cluster Embeddings using a kNN-Graph Based Community Algorithm
+#' 
+#' Take in a cell embedding matrix, and sequentially convert it into a kNN object, then to
+#' a graph adjacency matrix.  Following, a community detection algorithm assigns a cluster label
+#' to every cell.
+#' 
+#' @param mat (matrix) Cell embeddings matrix of shape `(cells x n_embeddings)`
+#' @param knn_method (function) Function to convert input to a knn object (e.g., `knn_hnsw`, `knn_annoy`).
+#' Must be a (optionally partialized) version of `knn_hnsw()` or `knn_annoy()`. 
+#' @param knn_to_graph_method (function) Function to convert the knn object returned from `knn_method` to a graph adjacency matrix.
+#' Must be a (optionally partialized) version of `knn_to_graph()`, `knn_to_snn_graph()` or `knn_to_geodesic_graph()`.  
+#' @param graph_to_cluster_method (function) Community detection algorithm that converts a graph adjacency matrix 
+#' returned from `graph_to_cluster_method` into cluster labels for each cell.
+#' Must be a (optionally partialized) version of `cluster_graph_leiden()`, `cluster_graph_louvain()` or `cluster_graph_seurat()`.
+#' @param threads (integer) Number of threads to use in `knn_method`, `knn_to_graph_method` and `graph_to_cluster_method`.  If these functions do not utilize
+#' a `threads` argument, this is silently ignored.
+#' @param verbose (logical) Whether to print progress information in `knn_method`, `knn_to_graph_method` and `graph_to_cluster_method`.  If these functions do not utilize 
+#' a `verbose` argument, this is silently ignored.
+#' @returns (factor) Factor vector containing the cluster assignment for each cell.
+#' @details 
+#' `cluster_cells_graph()` acts as a helper function to wrap input creation and `kNN` graph adjacency-based clustering to be done together.  The user
+#' can also manually pass cell embeddings to their preferred knn/clustering functions of choices.  
+#' 
+#' **Clustering customization through partialized parameters**
+#' 
+#' Customization of clustering is possible through partialization of each parameter in `cluster_cells_graph()` that is a function.  
+#' In detail, each parameter that requests a function 
+#' may take in one with only some of the arguments provided.  If the first argument is not provided, a copy of a function is utilized that has its parameters
+#' changed with the arguments provided.
+#' 
+#' For instance, if the user desires for `cluster_cells_graph()` to instead use `cluster_graph_louvain()` with resolution different than the default,
+#' they can instead call `cluster_cells_graph()` like so: 
+#' `cluster_cells_graph(mat, graph_to_cluster_method = cluter_graph_louvain(resolution = 0.5))`
+#' @seealso `knn_hnsw()` `knn_annoy()` `knn_to_graph()` `knn_to_snn_graph()` `knn_to_geodesic_graph()` `cluster_graph_leiden()` `knn_to_snn_graph()` `knn_to_geodesic_graph()`
+cluster_cells_graph <- function(
+  mat, knn_method = knn_hnsw, 
+  knn_to_graph_method = knn_to_geodesic_graph, 
+  graph_to_cluster_method = cluster_graph_leiden, 
+  threads = 0L, verbose = FALSE
+) {
+  assert_true(is.matrix(mat))
+  assert_is_wholenumber(threads)
+  assert_is(verbose, "logical")
+  # There currently aren't any `knn_to_graph` functions that utilize a verbose argument.  
+  # However, we still pass `verbose` in case future functions do provide this functionality.
+  if (is(mat, "matrix")) {
+    mat <- partial_apply(knn_method, threads = threads, verbose = verbose, .missing_args_error = FALSE)(mat)
+  }
+  if (!is_knn_object(mat)) pretty_error(mat, "`knn_method` was unable to convert `mat` into a knn object", 1)
+  # Return type has to be constrained to "matrix", so this is silently provided.
+  mat <- partial_apply(knn_to_graph_method, threads = threads, verbose = verbose, return_type = "matrix", .missing_args_error = FALSE)(mat)
+  if (!is_adjacency_matrix(mat)) pretty_error(mat, "`knn_to_graph_method` was unable to convert `mat` from a knn object to a graph adjacency matrix", 1)
+  # Also pass verbose and threads to clustering functions in case they are given these params in the future
+  mat <- partial_apply(graph_to_cluster_method, threads = threads, verbose = verbose, .missing_args_error = FALSE)(mat)
+  return(mat)
+}
 
 #' K Nearest Neighbor (KNN) Graph
 #'

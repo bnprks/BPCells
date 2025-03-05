@@ -73,3 +73,22 @@ test_that("igraph clustering doesn't crash", {
 
     expect_no_condition(cluster_graph_louvain(graph))
 })
+
+test_that("cluster_cells_graph works", {
+    skip_if_not_installed("RcppAnnoy")
+    skip_if_not_installed("RcppHNSW")
+    mat <- matrix(sample.int(1000, 10000, replace=TRUE), nrow=1000)
+    # check with default params
+    res <- expect_no_error(cluster_cells_graph(mat))
+    # check with threads, method partialization
+    expect_true(class(res) == "factor")
+    expect_equal(nrow(mat), length(res))
+    res_partialized <- expect_no_error(
+        cluster_cells_graph(
+            mat, knn_method = knn_annoy(k = 9),
+            knn_to_graph_method = knn_to_snn_graph(min_val = 1/10),
+            graph_to_cluster_method = cluster_graph_louvain(resolution = 0.8),
+        ))
+    expect_true(class(res) == "factor")
+    expect_equal(nrow(mat), length(res))
+})
