@@ -87,8 +87,8 @@ prepare_demo_data <- function(directory = NULL, mat_name = NULL, frags_name = NU
 
 #' Retrieve BPCells demo data
 #' 
-#' The demo dataset is a subset of the  10x Genomics PBMC 3k dataset, and filters both the matrix and the fragments
-#' to cells with at least 1000 reads.  Both the matrix and the fragments are subset to only genes on chromosomes 4 and 11.  
+#' The demo dataset is a subset of the  10x Genomics PBMC 3k dataset, with the matrix and fragments
+#' filtered to cells with at least 1000 reads.  Both the matrix and the fragments are also subset to only genes on chromosomes 4 and 11.  
 #' @rdname demo_data
 #' @return 
 #' - `get_demo_mat()`: (IterableMatrix) A `(features x cells)` matrix of shape `(1984 x 2724)`.
@@ -104,7 +104,7 @@ prepare_demo_data <- function(directory = NULL, mat_name = NULL, frags_name = NU
 #' Both the matrix from `get_demo_mat()` and the fragments from `get_demo_frags()`
 #' may be removed by running `remove_demo_data()`.
 #' 
-#' - `get_demo_mat()`: Retrieve a 1 MB demo matrix, representing a subset of the 10X Genomics PBMC 3k dataset.
+#' - `get_demo_mat()`: Retrieve a 1 MB demo `IterableMatrix`, representing a subset of the 10X Genomics PBMC 3k dataset.
 #' @export
 get_demo_mat <- function() {
     # Use the data directory for BPCells
@@ -130,7 +130,7 @@ get_demo_mat <- function() {
 #' @return
 #' - `get_demo_frags()`: (IterableFragments) A Fragments object with 2724 cells and fragments on chromosomes 4 and 11.
 #' @details
-#' - `get_demo_frags()`: Retrieve a 12.5 MB demo fragments object, representing a subset of the 10X Genomics PBMC 3k dataset.
+#' - `get_demo_frags()`: Retrieve a 12.5 MB demo `IterableFragments` object, representing a subset of the 10X Genomics PBMC 3k dataset.
 #' @export 
 get_demo_frags <- function() {
     data_dir <- file.path(tools::R_user_dir("BPCells", which = "data"), "demo_data")
@@ -152,7 +152,7 @@ get_demo_frags <- function() {
 
 #' @rdname demo_data
 #' @return
-#' - `remove_demo_data()`: NULL
+#' - `remove_demo_data()`: `NULL`
 #' @details 
 #'  - `remove_demo_data()`: Remove the demo data from the BPCells data directory.
 #' @export

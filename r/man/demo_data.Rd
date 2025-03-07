@@ -22,12 +22,12 @@ remove_demo_data()
 }
 
 \itemize{
-\item \code{remove_demo_data()}: NULL
+\item \code{remove_demo_data()}: \code{NULL}
 }
 }
 \description{
-The demo dataset is a subset of the  10x Genomics PBMC 3k dataset, and filters both the matrix and the fragments
-to cells with at least 1000 reads.  Both the matrix and the fragments are subset to only genes on chromosomes 4 and 11.
+The demo dataset is a subset of the  10x Genomics PBMC 3k dataset, with the matrix and fragments
+filtered to cells with at least 1000 reads.  Both the matrix and the fragments are also subset to only genes on chromosomes 4 and 11.
 }
 \details{
 The first time either \code{get_demo_mat()} are ran \code{get_demo_frags()}, the pre-subsetted
@@ -41,11 +41,11 @@ as a fallback.
 Both the matrix from \code{get_demo_mat()} and the fragments from \code{get_demo_frags()}
 may be removed by running \code{remove_demo_data()}.
 \itemize{
-\item \code{get_demo_mat()}: Retrieve a 1 MB demo matrix, representing a subset of the 10X Genomics PBMC 3k dataset.
+\item \code{get_demo_mat()}: Retrieve a 1 MB demo \code{IterableMatrix}, representing a subset of the 10X Genomics PBMC 3k dataset.
 }
 
 \itemize{
-\item \code{get_demo_frags()}: Retrieve a 12.5 MB demo fragments object, representing a subset of the 10X Genomics PBMC 3k dataset.
+\item \code{get_demo_frags()}: Retrieve a 12.5 MB demo \code{IterableFragments} object, representing a subset of the 10X Genomics PBMC 3k dataset.
 }
 
 \itemize{
