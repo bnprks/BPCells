@@ -36,3 +36,25 @@ less complex stats are calculated in the process of calculating a more complicat
 So to calculate mean and variance simultaneously, just ask for variance,
 which will compute mean and nonzero counts as a side-effect
 }
+\examples{
+mat <- matrix(rpois(100, lambda = 5), nrow = 10)
+rownames(mat) <- paste0("gene", 1:10)
+colnames(mat) <- paste0("cell", 1:10)
+mat <- mat \%>\% as("dgCMatrix") \%>\% as("IterableMatrix")
+
+# 1. By default, no row or column stats are calculated
+res_none <- matrix_stats(mat)
+res_none
+
+# 2. Request row variance (automatically computes mean and nonzero too)
+res_row_var <- matrix_stats(mat, row_stats = "variance")
+res_row_var
+
+# 3. Request both row variance and column variance
+res_both_var <- matrix_stats(
+  mat = mat,
+  row_stats = "variance",
+  col_stats = "mean"
+)
+res_both_var
+}
