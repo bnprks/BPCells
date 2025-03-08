@@ -18,3 +18,11 @@ IterableMatrix object
 \description{
 Convert the type of a matrix
 }
+\examples{
+mat <- matrix(rnorm(500), nrow = 50, ncol = 10)
+rownames(mat) <- paste0("gene", seq_len(10))
+colnames(mat) <- paste0("cell", seq_len(5))
+mat <- mat \%>\% as("dgCMatrix") \%>\% as("IterableMatrix")
+mat
+convert_matrix_type(mat, "float")
+}

@@ -1540,6 +1540,17 @@ setMethod("iterate_matrix", "UnpackedMatrixMem_double", function(x) {
 #' passes through the data, and ~7.3TB of data to be sorted in three passes
 #' through the data.
 #' @return MatrixDir object with a copy of the input matrix, but the storage order flipped
+#' @examples
+#' mat <- matrix(rnorm(50), nrow = 10, ncol = 5)
+#' rownames(mat) <- paste0("gene", seq_len(10))
+#' colnames(mat) <- paste0("cell", seq_len(5))
+#' mat <- mat %>% as("dgCMatrix") %>% as("IterableMatrix")
+#' mat
+#' # A regular transpose operation switches a user's rows and cols 
+#' t(mat)
+#' # Running `transpose_storage_order()` instead changes whether the storage is in row-major or col-major,
+#' # but does not switch the rows and cols
+#' transpose_storage_order(mat)
 #' @export
 transpose_storage_order <- function(matrix, outdir = tempfile("transpose"), tmpdir = tempdir(), load_bytes = 4194304L, sort_bytes = 1073741824L) {
   assert_true(matrix_type(matrix) %in% c("uint32_t", "float", "double"))
@@ -2649,6 +2660,13 @@ setMethod("[", "ConvertMatrixType", function(x, i, j, ...) {
 #' @param type One of uint32_t (unsigned 32-bit integer), float (32-bit real number),
 #'   or double (64-bit real number)
 #' @return IterableMatrix object
+#' @examples
+#' mat <- matrix(rnorm(500), nrow = 50, ncol = 10)
+#' rownames(mat) <- paste0("gene", seq_len(10))
+#' colnames(mat) <- paste0("cell", seq_len(5))
+#' mat <- mat %>% as("dgCMatrix") %>% as("IterableMatrix")
+#' mat
+#' convert_matrix_type(mat, "float")
 #' @export
 convert_matrix_type <- function(matrix, type = c("uint32_t", "double", "float")) {
   assert_is(matrix, c("dgCMatrix", "IterableMatrix"))
@@ -2797,6 +2815,27 @@ setMethod("as.matrix", signature(x = "IterableMatrix"), function(x, ...) as(x, "
 #' less complex stats are calculated in the process of calculating a more complicated stat.
 #' So to calculate mean and variance simultaneously, just ask for variance,
 #' which will compute mean and nonzero counts as a side-effect
+#' @examples
+#' mat <- matrix(rpois(100, lambda = 5), nrow = 10)
+#' rownames(mat) <- paste0("gene", 1:10)
+#' colnames(mat) <- paste0("cell", 1:10)
+#' mat <- mat %>% as("dgCMatrix") %>% as("IterableMatrix")
+#' 
+#' # 1. By default, no row or column stats are calculated
+#' res_none <- matrix_stats(mat)
+#' res_none
+#' 
+#' # 2. Request row variance (automatically computes mean and nonzero too)
+#' res_row_var <- matrix_stats(mat, row_stats = "variance")
+#' res_row_var
+#' 
+#' # 3. Request both row variance and column variance
+#' res_both_var <- matrix_stats(
+#'   mat = mat,
+#'   row_stats = "variance",
+#'   col_stats = "mean"
+#' )
+#' res_both_var
 #' @export
 matrix_stats <- function(matrix,
                          row_stats = c("none", "nonzero", "mean", "variance"),
