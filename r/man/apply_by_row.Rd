@@ -41,6 +41,37 @@ input matrix.
 If vector/matrix outputs are desired instead of lists, calling \code{unlist(x)} or \code{do.call(cbind, x)} or \code{do.call(rbind, x)}
 can convert the list output.
 }
+\examples{
+mat <- matrix(rbinom(40, 1, 0.5) * sample.int(5, 40, replace = TRUE), nrow = 4)
+rownames(mat) <- paste0("gene", 1:4)
+mat
+
+mat <- mat \%>\% as("IterableMatrix")
+
+## apply_by_row() example
+## Get mean of every row
+
+## expect an error in the case that col-major matrix is passed
+apply_by_row(mat, function(val, row, col) {sum(val) / nrow(mat)}) \%>\% 
+ unlist()
+
+## Need to transpose matrix to make sure it is in row-order
+mat_row_order <- transpose_storage_order(mat)
+
+## works as expected for row major
+apply_by_row(mat_row_order, 
+ function(val, row, col) sum(val) / ncol(mat_row_order)
+) \%>\% unlist()
+
+# Also analogous to running rowMeans()
+rowMeans(mat)
+
+## apply_by_col() example
+## Get argmax of every col
+apply_by_col(mat, 
+ function(val, row, col) if (length(val) > 0) row[which.max(val)] else 1L
+) \%>\% unlist()
+}
 \seealso{
 For an interface more similar to \code{base::apply}, see the \href{https://github.com/Yunuuuu/BPCellsArray/}{BPCellsArray}
 project. For calculating colMeans on a sparse single cell RNA matrix it is about 8x slower than \code{apply_by_col}, due to the

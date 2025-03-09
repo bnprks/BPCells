@@ -27,3 +27,24 @@ Matrix-like object
 Convenience functions for adding or multiplying
 each row / column of a matrix by a number.
 }
+\examples{
+set.seed(12345)
+mat <- matrix(rpois(40, lambda = 5), nrow = 4)
+rownames(mat) <- paste0("gene", 1:4)
+
+mat <- mat \%>\% as("dgCMatrix")
+mat
+mat <- mat \%>\% as("IterableMatrix")
+
+## add_rows() example
+add_rows(mat, 1:4) \%>\% as("dgCMatrix")
+
+## add_cols() example
+add_cols(mat, 1:10) \%>\% as("dgCMatrix")
+
+## multiply_rows() example
+multiply_rows(mat, 1:4) \%>\% as("dgCMatrix")
+
+## multiply_cols() example
+multiply_cols(mat, 1:10) \%>\% as("dgCMatrix")
+}
