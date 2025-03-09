@@ -43,9 +43,11 @@ rownames(mat) <- paste0("gene", seq_len(10))
 colnames(mat) <- paste0("cell", seq_len(5))
 mat <- mat \%>\% as("dgCMatrix") \%>\% as("IterableMatrix")
 mat
-# A regular transpose operation switches a user's rows and cols 
+
+## A regular transpose operation switches a user's rows and cols 
 t(mat)
-# Running `transpose_storage_order()` instead changes whether the storage is in row-major or col-major,
-# but does not switch the rows and cols
+
+## Running `transpose_storage_order()` instead changes whether the storage is in row-major or col-major,
+## but does not switch the rows and cols
 transpose_storage_order(mat)
 }

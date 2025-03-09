@@ -74,10 +74,15 @@ mat <- matrix(rnorm(500), nrow = 50, ncol = 10)
 rownames(mat) <- paste0("gene", seq_len(50))
 colnames(mat) <- paste0("cell", seq_len(10))
 mat <- mat \%>\% as("dgCMatrix") \%>\% as("IterableMatrix")
+
 svd_res <- svds(mat, k = 5)
+
 names(svd_res)
+
 svd_res$d
+
 dim(svd_res$u)
+
 dim(svd_res$v)
 # Can also pass in values directly into RSpectra::svds
 svd_res <- svds(mat, k = 5, opts=c(maxitr = 500))

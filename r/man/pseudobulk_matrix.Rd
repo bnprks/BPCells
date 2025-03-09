@@ -34,13 +34,14 @@ statistics. So when calculating \code{variance}, \code{nonzeros} and \code{mean}
 extra calculation time, and when calculating \code{mean}, adding \code{nonzeros} will take no extra time.
 }
 \examples{
+mat.seed(12345)
 mat <- matrix(rpois(100, lambda = 5), nrow = 10)
 rownames(mat) <- paste0("gene", 1:10)
-colnames(mat) <- paste0("cell", 1:10)
-
+colnames(mat) <- paste0("cell", 1:10) 
 mat <- mat \%>\% as("dgCMatrix") \%>\% as("IterableMatrix")
 groups <- rep(c("Cluster1", "Cluster2"), each = 5)
 
+## When calculating only sum across two groups
 pseudobulk_res <- pseudobulk_matrix(
   mat = mat,
   cell_groups = groups,
@@ -48,12 +49,14 @@ pseudobulk_res <- pseudobulk_matrix(
 )
 pseudobulk_res
 
-# Can also request multiple summary statistics for pseudoulking
+## Can also request multiple summary statistics for pseudoulking
 pseudobulk_res_multi <- pseudobulk_matrix(
   mat = mat,
   cell_groups = groups,
   method = c("mean",  "variance")
 )
+
 names(pseudobulk_res_multi)
+
 pseudobulk_res_multi$mean
 }
