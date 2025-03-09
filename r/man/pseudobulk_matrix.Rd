@@ -34,7 +34,7 @@ statistics. So when calculating \code{variance}, \code{nonzeros} and \code{mean}
 extra calculation time, and when calculating \code{mean}, adding \code{nonzeros} will take no extra time.
 }
 \examples{
-mat.seed(12345)
+set.seed(12345)
 mat <- matrix(rpois(100, lambda = 5), nrow = 10)
 rownames(mat) <- paste0("gene", 1:10)
 colnames(mat) <- paste0("cell", 1:10) 
