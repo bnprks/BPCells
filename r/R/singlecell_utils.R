@@ -35,9 +35,10 @@
 #' groups <- sample(c("A", "B", "C", "D"), ncol(mat), replace = TRUE)
 #' marker_feats <- marker_features(mat, groups)
 #' 
-#' # to see the results of one specific group vs all other groups
+#' ## to see the results of one specific group vs all other groups
 #' marker_feats %>% dplyr::filter(foreground == "A")
-#' # get only differential genes given a threshold value
+#' 
+#' ## get only differential genes given a threshold value
 #' marker_feats %>% dplyr::filter(p_val_raw < 0.05)
 #' @export
 marker_features <- function(mat, groups, method="wilcoxon") {
@@ -96,13 +97,14 @@ marker_features <- function(mat, groups, method="wilcoxon") {
 #' statistics. So when calculating `variance`, `nonzeros` and `mean` can be included with no
 #' extra calculation time, and when calculating `mean`, adding `nonzeros` will take no extra time.
 #' @examples
+#' mat.seed(12345)
 #' mat <- matrix(rpois(100, lambda = 5), nrow = 10)
 #' rownames(mat) <- paste0("gene", 1:10)
-#' colnames(mat) <- paste0("cell", 1:10)
-#' 
+#' colnames(mat) <- paste0("cell", 1:10) 
 #' mat <- mat %>% as("dgCMatrix") %>% as("IterableMatrix")
 #' groups <- rep(c("Cluster1", "Cluster2"), each = 5)
 #' 
+#' ## When calculating only sum across two groups
 #' pseudobulk_res <- pseudobulk_matrix(
 #'   mat = mat,
 #'   cell_groups = groups,
@@ -110,13 +112,15 @@ marker_features <- function(mat, groups, method="wilcoxon") {
 #' )
 #' pseudobulk_res
 #' 
-#' # Can also request multiple summary statistics for pseudoulking
+#' ## Can also request multiple summary statistics for pseudoulking
 #' pseudobulk_res_multi <- pseudobulk_matrix(
 #'   mat = mat,
 #'   cell_groups = groups,
 #'   method = c("mean",  "variance")
 #' )
+#' 
 #' names(pseudobulk_res_multi)
+#' 
 #' pseudobulk_res_multi$mean
 #' @inheritParams marker_features
 #' @export

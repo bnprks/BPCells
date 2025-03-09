@@ -1546,10 +1546,12 @@ setMethod("iterate_matrix", "UnpackedMatrixMem_double", function(x) {
 #' colnames(mat) <- paste0("cell", seq_len(5))
 #' mat <- mat %>% as("dgCMatrix") %>% as("IterableMatrix")
 #' mat
-#' # A regular transpose operation switches a user's rows and cols 
+#' 
+#' ## A regular transpose operation switches a user's rows and cols 
 #' t(mat)
-#' # Running `transpose_storage_order()` instead changes whether the storage is in row-major or col-major,
-#' # but does not switch the rows and cols
+#' 
+#' ## Running `transpose_storage_order()` instead changes whether the storage is in row-major or col-major,
+#' ## but does not switch the rows and cols
 #' transpose_storage_order(mat)
 #' @export
 transpose_storage_order <- function(matrix, outdir = tempfile("transpose"), tmpdir = tempdir(), load_bytes = 4194304L, sort_bytes = 1073741824L) {
@@ -2821,15 +2823,15 @@ setMethod("as.matrix", signature(x = "IterableMatrix"), function(x, ...) as(x, "
 #' colnames(mat) <- paste0("cell", 1:10)
 #' mat <- mat %>% as("dgCMatrix") %>% as("IterableMatrix")
 #' 
-#' # 1. By default, no row or column stats are calculated
+#' ## By default, no row or column stats are calculated
 #' res_none <- matrix_stats(mat)
 #' res_none
 #' 
-#' # 2. Request row variance (automatically computes mean and nonzero too)
+#' ## Request row variance (automatically computes mean and nonzero too)
 #' res_row_var <- matrix_stats(mat, row_stats = "variance")
 #' res_row_var
 #' 
-#' # 3. Request both row variance and column variance
+#' ## Request both row variance and column variance
 #' res_both_var <- matrix_stats(
 #'   mat = mat,
 #'   row_stats = "variance",

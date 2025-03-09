@@ -47,8 +47,9 @@ mat <- get_demo_mat()
 groups <- sample(c("A", "B", "C", "D"), ncol(mat), replace = TRUE)
 marker_feats <- marker_features(mat, groups)
 
-# to see the results of one specific group vs all other groups
+## to see the results of one specific group vs all other groups
 marker_feats \%>\% dplyr::filter(foreground == "A")
-# get only differential genes given a threshold value
+
+## get only differential genes given a threshold value
 marker_feats \%>\% dplyr::filter(p_val_raw < 0.05)
 }
