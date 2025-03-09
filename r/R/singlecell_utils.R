@@ -97,7 +97,7 @@ marker_features <- function(mat, groups, method="wilcoxon") {
 #' statistics. So when calculating `variance`, `nonzeros` and `mean` can be included with no
 #' extra calculation time, and when calculating `mean`, adding `nonzeros` will take no extra time.
 #' @examples
-#' mat.seed(12345)
+#' set.seed(12345)
 #' mat <- matrix(rpois(100, lambda = 5), nrow = 10)
 #' rownames(mat) <- paste0("gene", 1:10)
 #' colnames(mat) <- paste0("cell", 1:10) 
