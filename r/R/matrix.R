@@ -2990,6 +2990,30 @@ checksum <- function(matrix) {
 #' @seealso For an interface more similar to `base::apply`, see the [BPCellsArray](https://github.com/Yunuuuu/BPCellsArray/)
 #' project. For calculating colMeans on a sparse single cell RNA matrix it is about 8x slower than `apply_by_col`, due to the
 #' `base::apply` interface not being sparsity-aware. (See [pull request #104](https://github.com/bnprks/BPCells/pull/104) for benchmarking.)
+#' @examples
+#' mat <- matrix(rbinom(40, 1, 0.5) * sample.int(5, 40, replace = TRUE), nrow = 4)
+#' rownames(mat) <- paste0("gene", 1:4)
+#' mat
+#' 
+#' mat <- mat %>% as("IterableMatrix")
+#' 
+#' ## apply_by_row() example
+#' ## Get mean of every row
+#' 
+#' ## expect an error in the case that col-major matrix is passed
+#' apply_by_row(mat, function(val, row, col) {sum(val) / nrow(mat)}) %>% 
+#'  unlist()
+#' 
+#' ## Need to transpose matrix to make sure it is in row-order
+#' mat_row_order <- transpose_storage_order(mat)
+#' 
+#' ## works as expected for row major
+#' apply_by_row(mat_row_order, 
+#'  function(val, row, col) sum(val) / ncol(mat_row_order)
+#' ) %>% unlist()
+#' 
+#' # Also analogous to running rowMeans()
+#' rowMeans(mat)
 #' @export
 apply_by_row <- function(mat, fun, ...) {
   assert_is(mat, "IterableMatrix")
@@ -3006,6 +3030,13 @@ apply_by_row <- function(mat, fun, ...) {
 
 #' @return **apply_by_col** - A list of length `ncol(matrix)` with the results returned by `fun()` on each row
 #' @rdname apply_by_row
+#' @examples
+#' 
+#' ## apply_by_col() example
+#' ## Get argmax of every col
+#' apply_by_col(mat, 
+#'  function(val, row, col) if (length(val) > 0) row[which.max(val)] else 1L
+#' ) %>% unlist()
 #' @export
 apply_by_col <- function(mat, fun, ...) {
   if (storage_order(mat) != "col") {
