@@ -15,6 +15,7 @@ Contributions welcome :)
 - Speed up taking large subsets of large concatenated matrices, e.g. selecting 9M cells from a 10M cell matrix composed of ~100 concatenated pieces. (pull request #179)
 - `matrix_stats()` now also works with types `matrix` and `dgCMatrix`. (pull request #190)
 - Fixed memory errors when running `writeInsertionBed()` and `writeInsertionBedGraph()` (pull request #{118, 134})
+- Fix equation, parameter styling in `svds()`. (pull request #206)
 
 ## Bug-fixes
 - Fix error message printing when MACS crashes during `call_peaks_macs()` (pull request #175)
