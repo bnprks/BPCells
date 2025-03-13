@@ -178,6 +178,16 @@ read_gencode_transcripts <- function(dir, release = "latest", transcript_choice 
 #' @inheritParams read_gtf
 #' @param additional_columns Names for additional columns in the bed file
 #' @return Data frame with coordinates using the 0-based convention.
+#' @examples
+#' ## read_bed() example
+#' 
+#' ## Create a bed file from a table
+#' data.frame(
+#'  chrom = rep("chr1", 6),
+#'  start = seq(20, 121, 20),
+#'  end = seq(39, 140, 20)
+#' ) %>% write.table("example.bed", row.names = FALSE, col.names = FALSE, sep = "\t")
+#' read_bed(example.bed)
 #' @seealso [read_gtf()], [read_gencode_genes()]
 #' @export
 read_bed <- function(path, additional_columns = character(0), backup_url = NULL, timeout = 300) {
@@ -195,6 +205,10 @@ read_bed <- function(path, additional_columns = character(0), backup_url = NULL,
 #'
 #' Downloads the Boyle Lab blacklist, as described in <https://doi.org/10.1038/s41598-019-45839-z>
 #' @param genome genome name
+#' @examples 
+#' 
+#' ## read_encode_blacklist() example
+#' read_encode_blacklist("./reference")
 #' @export
 read_encode_blacklist <- function(dir, genome = c("hg38", "mm10", "hg19", "dm6", "dm3", "ce11", "ce10"), timeout = 300) {
   genome <- match.arg(genome)
@@ -209,6 +223,9 @@ read_encode_blacklist <- function(dir, genome = c("hg38", "mm10", "hg19", "dm6",
 #' chromosome.
 #' The underlying data is pulled from here: <https://hgdownload.soe.ucsc.edu/downloads.html>
 #'
+#' @examples
+#' read_ucsc_chrom_sizes("./reference")
+
 #' @export
 read_ucsc_chrom_sizes <- function(dir, genome = c("hg38", "mm39", "mm10", "mm9", "hg19"),
                                   keep_chromosomes = "chr[0-9]+|chrX|chrY", timeout = 300) {
