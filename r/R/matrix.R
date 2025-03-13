@@ -2663,7 +2663,7 @@ setMethod("[", "ConvertMatrixType", function(x, i, j, ...) {
 #'   or double (64-bit real number)
 #' @return IterableMatrix object
 #' @examples
-#' mat <- matrix(rnorm(500), nrow = 50, ncol = 10)
+#' mat <- matrix(rnorm(50), nrow = 10, ncol = 5)
 #' rownames(mat) <- paste0("gene", seq_len(10))
 #' colnames(mat) <- paste0("cell", seq_len(5))
 #' mat <- mat %>% as("dgCMatrix") %>% as("IterableMatrix")
