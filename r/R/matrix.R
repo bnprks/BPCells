@@ -2997,8 +2997,9 @@ checksum <- function(matrix) {
 #' rownames(mat) <- paste0("gene", 1:4)
 #' mat
 #' 
-#' mat <- mat %>% as("IterableMatrix")
+#' mat <- mat %>% as("dgCMatrix") %>% as("IterableMatrix")
 #' 
+#' #######################################################################
 #' ## apply_by_row() example
 #' ## Get mean of every row
 #' 
@@ -3014,8 +3015,9 @@ checksum <- function(matrix) {
 #'  function(val, row, col) sum(val) / ncol(mat_row_order)
 #' ) %>% unlist()
 #' 
-#' # Also analogous to running rowMeans()
+#' # Also analogous to running rowMeans() without names
 #' rowMeans(mat)
+#' #######################################################################
 #' @export
 apply_by_row <- function(mat, fun, ...) {
   assert_is(mat, "IterableMatrix")
@@ -3033,12 +3035,13 @@ apply_by_row <- function(mat, fun, ...) {
 #' @return **apply_by_col** - A list of length `ncol(matrix)` with the results returned by `fun()` on each row
 #' @rdname apply_by_row
 #' @examples
-#' 
+#' #######################################################################
 #' ## apply_by_col() example
 #' ## Get argmax of every col
 #' apply_by_col(mat, 
 #'  function(val, row, col) if (length(val) > 0) row[which.max(val)] else 1L
 #' ) %>% unlist()
+#' #######################################################################
 #' @export
 apply_by_col <- function(mat, fun, ...) {
   if (storage_order(mat) != "col") {

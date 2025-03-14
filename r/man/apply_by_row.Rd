@@ -46,8 +46,9 @@ mat <- matrix(rbinom(40, 1, 0.5) * sample.int(5, 40, replace = TRUE), nrow = 4)
 rownames(mat) <- paste0("gene", 1:4)
 mat
 
-mat <- mat \%>\% as("IterableMatrix")
+mat <- mat \%>\% as("dgCMatrix") \%>\% as("IterableMatrix")
 
+#######################################################################
 ## apply_by_row() example
 ## Get mean of every row
 
@@ -63,14 +64,16 @@ apply_by_row(mat_row_order,
  function(val, row, col) sum(val) / ncol(mat_row_order)
 ) \%>\% unlist()
 
-# Also analogous to running rowMeans()
+# Also analogous to running rowMeans() without names
 rowMeans(mat)
-
+#######################################################################
+#######################################################################
 ## apply_by_col() example
 ## Get argmax of every col
 apply_by_col(mat, 
  function(val, row, col) if (length(val) > 0) row[which.max(val)] else 1L
 ) \%>\% unlist()
+#######################################################################
 }
 \seealso{
 For an interface more similar to \code{base::apply}, see the \href{https://github.com/Yunuuuu/BPCellsArray/}{BPCellsArray}
