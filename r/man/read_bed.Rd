@@ -48,18 +48,21 @@ Read a bed file from disk or a url.
 Downloads the Boyle Lab blacklist, as described in \url{https://doi.org/10.1038/s41598-019-45839-z}
 }
 \examples{
-## read_bed() example
-
-## Create a bed file from a table
+## Dummy bed file creation
 data.frame(
  chrom = rep("chr1", 6),
  start = seq(20, 121, 20),
  end = seq(39, 140, 20)
 ) \%>\% write.table("example.bed", row.names = FALSE, col.names = FALSE, sep = "\t")
-read_bed(example.bed)
 
+#######################################################################
+## read_bed() example
+read_bed("example.bed")
+#######################################################################
+#######################################################################
 ## read_encode_blacklist() example
 read_encode_blacklist("./reference")
+#######################################################################
 }
 \seealso{
 \code{\link[=read_gtf]{read_gtf()}}, \code{\link[=read_gencode_genes]{read_gencode_genes()}}
