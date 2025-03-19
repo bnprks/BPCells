@@ -17,8 +17,8 @@ normalize_tfidf(mat, feature_means = NULL, scale_factor = 10000, threads = 1L)
 \item{threads}{(integer) Number of threads to use.}
 
 \item{feature_means}{(numeric, optional) Pre-calculated means of the features to normalize by (\code{rowMeans(mat)} by default).
-If feature_means has names and mat has row names, match values by name.
-Otherwise, assume feature_means has the same length and ordering as the matrix rows.}
+If \code{feature_means} has names and \code{mat} has row names, match values by name.
+Otherwise, assume \code{feature_means} has the same length and ordering as the matrix rows.}
 }
 \value{
 Consider a matrix \eqn{X}, where the row index \eqn{i} refers to each feature
@@ -56,12 +56,20 @@ mat <- matrix(rpois(4*5, lambda=1), nrow=4, ncol=5)
 mat
 
 mat <- as(mat, "IterableMatrix")
+
+
+#######################################################################
+## normalize_log() example
 normalize_log(mat)
 
-# normalization functions can also be called with partial arguments 
+## normalization functions can also be called with partial arguments 
 partial_log <- normalize_log(scale_factor = 1e5)
 partial_log
 
 partial_log(mat)
+#######################################################################
+#######################################################################
+## normalize_tfidf() example
 normalize_tfidf(mat)
+#######################################################################
 }

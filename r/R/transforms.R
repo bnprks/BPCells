@@ -294,21 +294,16 @@ setMethod("short_description", "TransformBinarize", function(x) {
 #'   comparison to the threshold is >= (strict_inequality=FALSE)
 #'   or > (strict_inequality=TRUE).
 #' @return binarized IterableMatrix object
-#' @description 
-#' If the `mat` argument is missing, returns a "partial" function: a copy of the original function but with most arguments pre-defined. 
-#' This can be used to customize `normalize` parameters in other single cell functions in BPCells (e.g. `select_features_mean()`).
 #' @examples
 #' set.seed(12345)
 #' mat <- matrix(rpois(4*5, lambda=1), nrow=4, ncol=5)
 #' mat
 #' mat <- as(mat, "IterableMatrix")
+#' 
+#' 
 #' mat_binarized <- binarize(mat, threshold=1)
 #' mat_binarized
 #' as(mat_binarized, "dgCMatrix")
-#' 
-#' # We can also call as a partialized function
-#' partial_binarize <- binarize(threshold = 0.1)
-#' partial_binarize(mat)
 #' @export
 binarize <- function(mat, threshold = 0, strict_inequality = TRUE) {
   assert_is(threshold, "numeric")
@@ -318,7 +313,6 @@ binarize <- function(mat, threshold = 0, strict_inequality = TRUE) {
       stop("binarize threshold must be greater than or equal to zero when strict_inequality is TRUE")
   if (!strict_inequality && threshold <= 0)
      stop("binarize threshold must be greater than zero when strict_inequality is FALSE")
-  if (rlang::is_missing(mat)) return(create_partial())
   assert_is(mat, "IterableMatrix")
 
   res <- wrapMatrix("TransformBinarize",
@@ -972,13 +966,18 @@ regress_out <- function(mat, latent_data, prediction_axis = c("row", "col")) {
 #' mat
 #' 
 #' mat <- as(mat, "IterableMatrix")
+#' 
+#' 
+#' #######################################################################
+#' ## normalize_log() example
 #' normalize_log(mat)
 #' 
-#' # normalization functions can also be called with partial arguments 
+#' ## normalization functions can also be called with partial arguments 
 #' partial_log <- normalize_log(scale_factor = 1e5)
 #' partial_log
 #' 
 #' partial_log(mat)
+#' #######################################################################
 #' @export
 normalize_log <- function(mat, scale_factor = 1e4, threads = 1L) {
   assert_greater_than_zero(scale_factor)
@@ -993,12 +992,15 @@ normalize_log <- function(mat, scale_factor = 1e4, threads = 1L) {
 
 #' @rdname normalize
 #' @param feature_means (numeric, optional) Pre-calculated means of the features to normalize by (`rowMeans(mat)` by default). 
-#' If feature_means has names and mat has row names, match values by name. 
-#' Otherwise, assume feature_means has the same length and ordering as the matrix rows.
+#' If `feature_means` has names and `mat` has row names, match values by name. 
+#' Otherwise, assume `feature_means` has the same length and ordering as the matrix rows.
 #' @returns - `normalize_tfidf`: \eqn{\tilde{x}_{ij} = \log(\frac{x_{ij} \cdot \text{scaleFactor}}{\text{rowMean}_i\cdot \text{colSum}_j} + 1)}
 #' @details - `normalize_tfidf`: This follows the formula from Stuart, Butler et al. 2019, matching the default behavior of `Signac::RunTFIDF()`. This also matches the normalization used within `ArchR::addIterativeLSI()`, but with `binarize = FALSE`. 
 #' @examples 
+#' #######################################################################
+#' ## normalize_tfidf() example
 #' normalize_tfidf(mat)
+#' #######################################################################
 #' @export
 normalize_tfidf <- function(
   mat, feature_means = NULL,
