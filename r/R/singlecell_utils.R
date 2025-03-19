@@ -19,8 +19,8 @@
 #' an output dataframe is returned, indicating which features are highly variable, and the scoring of each feature.
 #' @rdname feature_selection
 #' @param mat (IterableMatrix) Counts matrix with dimensions `(features x cells)`.
-#' @param num_feats (float) Number of features to mark as highly_variable. If 0 < num_feats < 1, then interpret it as a fraction of features.
-#' @param normalize_method (function) Used to normalize the matrix prior to feature selection by calling `normalize_method(mat)` if it is not NULL. 
+#' @param num_feats (float) Number of features to mark as highly_variable. If 0 < `num_feats` < 1, then interpret as a fraction of features.
+#' @param normalize_method (function) Used to normalize the matrix prior to feature selection by calling `normalize_method(mat)` if it is not `NULL`. 
 #' For example, pass `normalize_log()` or `normalize_tfidf()`. 
 #' @param threads (integer) Number of threads to use. Also overrides the threads argument in `normalize_method`
 #' @returns
@@ -386,7 +386,7 @@ project.LSI <- function(x, mat, threads = 1L, ...) {
 #' Current builtin options are `select_features_variance`, `select_features_dispersion`, `select_features_mean`, `select_features_binned_dispersion`
 #' @param cluster_method (function) Method to use for clustering the post-SVD matrix. 
 #' The user can pass in partial parameters to the cluster method, such as by passing 
-#' `cluster_cells_graph(mat, graph_to_cluster_method = cluter_graph_louvain(resolution = 0.5))` into `cluster_method`.
+#' `cluster_cells_graph(mat, graph_to_cluster_method = cluster_graph_louvain(resolution = 0.5))` into `cluster_method`.
 #' @param threads (integer) Number of threads to use.  Also gets passed down into `feature_selection_method` and `cluster_method`
 #' @return 
 #' `IterativeLSI()` An object of class `c("IterativeLSI", "DimReduction")` with the following attributes:
@@ -435,7 +435,7 @@ project.LSI <- function(x, mat, threads = 1L, ...) {
 #' - ArchR filters out outliers dependent on number of accesible regions of cells, by the bottom and top quantiles.  This is not implemented in `IterativeLSI()`, 
 #' but can be done as a preprocessing step.
 #' @seealso `LSI()` `DimReduction()` `svds()`
-#' `cluster_cells_graph` `select_features_variance()` `select_features_dispersion()` 
+#' `cluster_cells_graph()` `select_features_variance()` `select_features_dispersion()` 
 #' `select_features_mean()` `select_features_binned_dispersion()`
 #' @inheritParams LSI
 #' @export
@@ -472,7 +472,6 @@ IterativeLSI <- function(
   feature_selection_method <- partial_apply(feature_selection_method, threads = threads, .missing_args_error = FALSE)
   if (verbose) log_progress("Starting Iterative LSI")
   for (i in seq_len(n_iterations)) {
-    
     if (verbose) log_progress(sprintf("Starting Iterative LSI iteration %s of %s", i, n_iterations))
     # run variable feature selection
     if (verbose) log_progress("Selecting features")
@@ -486,6 +485,15 @@ IterativeLSI <- function(
       mat_indices <- which(rownames(mat) %in% variable_features)
     } else {
       mat_indices <- variable_features
+    }
+    if (length(mat_indices) < n_dimensions) {
+      rlang::abort(
+        sprintf(paste0(
+          "Number of variable features selected (%s) is smaller than number of dimensions requested (%s). \n",
+          "Try setting the num_feats arg in feature_selection_method as a larger value."), 
+          length(mat_indices), n_dimensions
+        )
+      )
     }
     # run LSI
     if (verbose) log_progress("Running LSI")

@@ -38,9 +38,9 @@ select_features_binned_dispersion(
 \arguments{
 \item{mat}{(IterableMatrix) Counts matrix with dimensions \verb{(features x cells)}.}
 
-\item{num_feats}{(float) Number of features to mark as highly_variable. If 0 < num_feats < 1, then interpret it as a fraction of features.}
+\item{num_feats}{(float) Number of features to mark as highly_variable. If 0 < \code{num_feats} < 1, then interpret as a fraction of features.}
 
-\item{normalize_method}{(function) Used to normalize the matrix prior to feature selection by calling \code{normalize_method(mat)} if it is not NULL.
+\item{normalize_method}{(function) Used to normalize the matrix prior to feature selection by calling \code{normalize_method(mat)} if it is not \code{NULL}.
 For example, pass \code{normalize_log()} or \code{normalize_tfidf()}.}
 
 \item{threads}{(integer) Number of threads to use. Also overrides the threads argument in \code{normalize_method}}

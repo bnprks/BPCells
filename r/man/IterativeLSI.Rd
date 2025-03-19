@@ -36,7 +36,7 @@ the corr_cutoff, it will be excluded from the final PCA matrix.}
 
 \item{cluster_method}{(function) Method to use for clustering the post-SVD matrix.
 The user can pass in partial parameters to the cluster method, such as by passing
-\code{cluster_cells_graph(mat, graph_to_cluster_method = cluter_graph_louvain(resolution = 0.5))} into \code{cluster_method}.}
+\code{cluster_cells_graph(mat, graph_to_cluster_method = cluster_graph_louvain(resolution = 0.5))} into \code{cluster_method}.}
 
 \item{threads}{(integer) Number of threads to use.  Also gets passed down into \code{feature_selection_method} and \code{cluster_method}}
 
@@ -115,6 +115,6 @@ but can be done as a preprocessing step.
 }
 \seealso{
 \code{LSI()} \code{DimReduction()} \code{svds()}
-\code{cluster_cells_graph} \code{select_features_variance()} \code{select_features_dispersion()}
+\code{cluster_cells_graph()} \code{select_features_variance()} \code{select_features_dispersion()}
 \code{select_features_mean()} \code{select_features_binned_dispersion()}
 }

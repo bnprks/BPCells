@@ -2,7 +2,7 @@
 % Please edit documentation in R/clustering.R
 \name{cluster_cells_graph}
 \alias{cluster_cells_graph}
-\title{Cluster Embeddings using a kNN-Graph Based Algorithm}
+\title{Cluster embeddings using a KNN-Graph based algorithm}
 \usage{
 cluster_cells_graph(
   mat,
@@ -37,8 +37,7 @@ a \code{verbose} argument, this is silently ignored.}
 }
 \description{
 Take in a cell embedding matrix, and sequentially convert it into a kNN object, then to
-a graph adjacency matrix.  Following, a clustering algorithm assigns a label
-to every cell.
+a graph adjacency matrix.  Following, assign a label to every cell using a clustering algorithm.
 }
 \details{
 \code{cluster_cells_graph()} acts as a helper function to wrap input creation and \code{kNN} graph adjacency-based clustering to be done together.  The user
