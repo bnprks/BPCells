@@ -401,8 +401,8 @@ write_insertion_bedgraph <- function(fragments, path, cell_groups = rlang::rep_a
     assert_len(cell_groups, length(cellNames(fragments)))
     assert_has_names(path, levels(cell_groups))
     path <- path[levels(cell_groups)]
-    cell_groups <- as.integer(cell_groups) - 1L
   }
+  cell_groups <- as.integer(cell_groups) - 1L
   write_insertion_bedgraph_cpp(iterate_fragments(fragments), cell_groups, path, insertion_mode)
 }
 
