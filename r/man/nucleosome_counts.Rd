@@ -23,3 +23,39 @@ Shorter than \code{nucleosome_width} is \code{subNucleosomal},
 \code{nucleosome_width} to \code{2*nucleosome_width-1} is \code{monoNucleosomal}, and anything longer is \code{multiNucleosomal}.
 The sum of all fragments is given as \code{nFrags}
 }
+\examples{
+## Prep data
+frags_sub_nucleosomal <- tibble::tibble(
+  chr = 1,
+  start = seq(0, 3000, by = 1000),
+  end = start + 146,
+  cell_id = c(rep("cell1", 3), rep("cell2", 1))
+)
+frags_sub_nucleosomal
+
+frags_nucleosomal <- tibble::tibble(
+  chr = 1,
+  start = seq(5000, 7000, by = 1000),
+  end = start + 147, # Value equal to nucleosome_width is inclusive
+  cell_id = c(rep("cell1", 1), rep("cell2", 2))
+)
+frags_nucleosomal
+
+frags_multi_nucleosomal <- tibble::tibble(
+  chr = 1,
+  start = seq(12000, 15000, by = 1000),
+  end = start + 294,  # Value equal to 2x nucleosome_width
+  cell_id = c(rep("cell1", 2), rep("cell2", 2))
+)
+frags_multi_nucleosomal
+
+frags <- dplyr::bind_rows(
+  frags_sub_nucleosomal, 
+  frags_nucleosomal, 
+  frags_multi_nucleosomal
+) \%>\% convert_to_fragments()
+ 
+ 
+## Get nucleosome counts
+head(nucleosome_counts(frags))
+}
