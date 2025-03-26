@@ -80,3 +80,16 @@ significant of the overlapping candidate peaks
 prioritizing each peak by its within-group significance rank
 }
 }
+\examples{
+## Prep data
+reference_dir <- file.path(tempdir(), "references")
+frags <- get_demo_frags() 
+## Remove blacklist regions from fragments
+blacklist <- read_encode_blacklist(reference_dir, genome="hg38")
+frags_filter_blacklist <- select_regions(frags, blacklist, invert_selection = TRUE)
+chrom_sizes <- read_ucsc_chrom_sizes(reference_dir, genome="hg38") \%>\% dplyr::filter(chr \%in\% c("chr4", "chr11"))
+
+
+## Call peaks
+call_peaks_tile(frags_filter_blacklist, chrom_sizes, effective_genome_size = 2.8e9)
+}

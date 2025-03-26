@@ -52,3 +52,16 @@ Calculate ranges x cells overlap matrix
 When calculating the matrix directly from a fragments tsv, it's necessary to first call \code{select_chromosomes()} in order to
 provide the ordering of chromosomes to expect while reading the tsv.
 }
+\examples{
+## Prep data
+reference_dir <- file.path(tempdir(), "references")
+frags <- get_demo_frags()
+blacklist <- read_encode_blacklist(reference_dir, genome="hg38")
+frags_filter_blacklist <- select_regions(frags, blacklist, invert_selection = TRUE)
+chrom_sizes <- read_ucsc_chrom_sizes(reference_dir, genome="hg38") \%>\% 
+ dplyr::filter(chr \%in\% c("chr4", "chr11"))
+
+
+## Call peaks
+peaks <- call_peaks_tile(frags_filter_blacklist, chrom_sizes, effective_genome_size = 2.8e9)
+}
