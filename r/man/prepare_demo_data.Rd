@@ -2,12 +2,12 @@
 % Please edit documentation in R/data.R
 \name{prepare_demo_data}
 \alias{prepare_demo_data}
-\title{Create a small demo matrix and fragment object}
+\title{Create a small demo matrix and fragment object.}
 \usage{
 prepare_demo_data(
   directory = NULL,
-  mat_name = NULL,
-  frags_name = NULL,
+  filter_qc = TRUE,
+  subset = TRUE,
   timeout = 300,
   remove_input_data = TRUE
 )
@@ -15,9 +15,9 @@ prepare_demo_data(
 \arguments{
 \item{directory}{(character) Where the input/output data should be stored.  If NULL, a temporary directory is created.}
 
-\item{mat_name}{(character) Name of the RNA matrix file. If NULL, the matrix is named "demo_mat."}
+\item{filter_qc}{(bool) Whether to filter both the RNA and ATAC data using QC information.}
 
-\item{frags_name}{(character) Name of the ATAC fragments file. If NULL, the fragments are named "demo_frags".}
+\item{subset}{(bool) Whether to subset to only genes/insertions on chromosome 4 and 11.}
 
 \item{timeout}{(numeric) Timeout for downloading files in seconds.}
 
@@ -28,12 +28,14 @@ after processing.}
 (list) A list with the RNA matrix under the name "mat", and the ATAC fragments under the name "frags".
 }
 \description{
-Downloads a 10x Genomics dataset, then performs QC and subsetting.  Holds subsetted objects in disk,
+Downloads a 10x Genomics dataset consisting of 3k cells, then performs optional QC and subsetting.  Holds subsetted objects in disk,
 and returns a list with both the matrix and fragments.
 }
 \details{
-This function downloads the 10x Genomics PBMC 3k dataset, and filters the fragments and matrix to cells with at least 1000 reads.
-Following, both fragments and the matrix is subset to only genes and insertions on chromosomes 4 and 11.
-The RNA matrix is 1 MB and the fragments are 12.5 MB, after BPCells compression.
+This function downloads the 10x Genomics PBMC 3k dataset.
+Filtering using QC information on the fragments and matrix provides cells with at least 1000 reads, 1000 frags, and a minimum tss enrichment of 10.
+Subsetting provides only genes and insertions on chromosomes 4 and 11.
+The name of the matrix and fragments folders are \code{demo_mat} and \code{demo_frags} respectively.
+Additionally, choosing to qc filter appends a \verb{_filtered}, and choosing to subset data appends a \verb{_subsetted} to the name.
 }
 \keyword{internal}

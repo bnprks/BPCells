@@ -6,19 +6,24 @@
 \alias{remove_demo_data}
 \title{Retrieve BPCells demo data}
 \usage{
-get_demo_mat()
+get_demo_mat(filter_qc = TRUE, subset = TRUE)
 
-get_demo_frags()
+get_demo_frags(filter_qc = TRUE, subset = TRUE)
 
 remove_demo_data()
 }
+\arguments{
+\item{filter_qc}{(bool) Whether to filter both the RNA and ATAC data using qc metrics (described in \code{details}).}
+
+\item{subset}{(bool) Whether to subset to only genes/insertions on chromosome 4 and 11.}
+}
 \value{
 \itemize{
-\item \code{get_demo_mat()}: (IterableMatrix) A \verb{(features x cells)} matrix of shape \verb{(1984 x 2724)}.
+\item \code{get_demo_mat()}: (IterableMatrix) A \verb{(features x cells)} matrix.
 }
 
 \itemize{
-\item \code{get_demo_frags()}: (IterableFragments) A Fragments object with 2724 cells and fragments on chromosomes 4 and 11.
+\item \code{get_demo_frags()}: (IterableFragments) A Fragments object.
 }
 
 \itemize{
@@ -26,13 +31,16 @@ remove_demo_data()
 }
 }
 \description{
-The demo dataset is a subset of the  10x Genomics PBMC 3k dataset, with the matrix and fragments
-filtered to cells with at least 1000 reads.  Both the matrix and the fragments are also subset to only genes on chromosomes 4 and 11.
+Functions to download matrices and fragments derived from the 10X Genomics PBMC 3k dataset,
+with options to filter with common qc metrics, and to subset genes and fragments to only chromosome 4 and 11.
 }
 \details{
-The first time either \code{get_demo_mat()} are ran \code{get_demo_frags()}, the pre-subsetted
+\strong{Data Processing}:
+
+The first time either \code{get_demo_mat()} are ran \code{get_demo_frags()},
 demo data is downloaded and stored in the BPCells data directory  (under \code{file.path(tools::R_user_dir("BPcells", which="data"), "demo_data")}).
-Subsequent calls to this function will use the previously downloaded matrix/fragments.
+Subsequent calls to this function will use the previously downloaded matrix/fragments, given that the same combination of filtering and
+subsetting has been performed previously.
 The preperation of this matrix can be reproduced by running the internal function \code{prepare_demo_data()} with \code{directory} set to the BPCells data directory.
 
 In the case that demo data is not pre-downloaded and demo data download fails, \code{prepare_demo_data()} will act
@@ -40,12 +48,34 @@ as a fallback.
 
 Both the matrix from \code{get_demo_mat()} and the fragments from \code{get_demo_frags()}
 may be removed by running \code{remove_demo_data()}.
+
+Filtering using QC information on the fragments and matrix object chooses cells with at least 1000 reads, 1000 frags, and a minimum tss enrichment of 10.
+Subsetting provides only genes and insertions on chromosomes 4 and 11.
+
+\strong{Dimensions}:
+\tabular{lll}{
+\strong{Condition} \tab \strong{RNA matrix (features x cells)} \tab \strong{Fragments (chromosomes x cells)} \cr
+Raw                \tab (36601 x 650165)                       \tab (39 x 462264)                            \cr
+Filter             \tab (36601 x 2600)                         \tab (39 x 2600)                              \cr
+Subset             \tab (3582 x 650165)                        \tab (2 x 462264)                             \cr
+Filter + Subset    \tab (3582 x 2600)                          \tab (2 x 2600)                               \cr
+}
+\strong{Data size}:
+\tabular{lll}{
+\strong{Condition}          \tab \strong{RNA matrix (MB)} \tab \strong{Fragments (MB)} \cr
+Raw                         \tab 31.9                     \tab 200                     \cr
+Filter                      \tab 9.4                      \tab 137                     \cr
+Subset                      \tab 18.3                     \tab 25.6                    \cr
+Filter + Subset             \tab 1.2                      \tab 12.3                    \cr
+}
+
+\strong{Function Description}:
 \itemize{
-\item \code{get_demo_mat()}: Retrieve a 1 MB demo \code{IterableMatrix}, representing a subset of the 10X Genomics PBMC 3k dataset.
+\item \code{get_demo_mat()}: Retrieve a demo \code{IterableMatrix} object representing the 10X Genomics PBMC 3k dataset.
 }
 
 \itemize{
-\item \code{get_demo_frags()}: Retrieve a 12.5 MB demo \code{IterableFragments} object, representing a subset of the 10X Genomics PBMC 3k dataset.
+\item \code{get_demo_frags()}: Retrieve a demo \code{IterableFragments} object representing the 10X Genomics PBMC 3k dataset.
 }
 
 \itemize{
