@@ -17,3 +17,35 @@ boolean for whether the fragments objects are identical
 \description{
 Check if two fragments objects are identical
 }
+\examples{
+## Prep data
+frags_1 <- tibble::tibble(
+  chr = "chr1",
+  start = seq(10, 260, 50),
+  end = start + seq(5, 30, 5),
+  cell_id = paste0("cell", c(rep(1, 2), rep(2,2), rep(3,2)))
+) \%>\% convert_to_fragments()
+frags_1
+
+frags_2_identical <- tibble::tibble(
+  chr = "chr1",
+  start = seq(10, 260, 50),
+  end = start + seq(5, 30, 5),
+  cell_id = paste0("cell", c(rep(1, 2), rep(2,2), rep(3,2)))
+) \%>\% convert_to_fragments()
+
+frags_3_different <- tibble::tibble(
+  chr = "chr1",
+  start = seq(10, 260, 50),
+  end = start + seq(5, 30, 5),
+  cell_id = paste0("cell", c(rep(1, 2), rep(2,2), rep(4,2)))
+) \%>\% convert_to_fragments()
+
+
+## In the case of mismatching cell ids
+fragments_identical(frags_1, frags_3_different)
+
+
+## In the case of two identical frag objects
+fragments_identical(frags_1, frags_2_identical)
+}

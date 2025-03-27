@@ -22,3 +22,17 @@ Subset fragments by length
 \details{
 Fragment length is calculated as \code{end-start}
 }
+\examples{
+## Prep data
+frags <- tibble::tibble(
+  chr = "chr1",
+  start = seq(10, 260, 50),
+  end = start + seq(5, 30, 5),
+  cell_id = paste0("cell", c(rep(1, 2), rep(2,2), rep(3,2)))
+) 
+frags
+frags <- frags \%>\% convert_to_fragments()
+
+## Subset lengths
+subset_lengths(frags, min_len = 10, max_len = 20) \%>\% as("GRanges")
+}

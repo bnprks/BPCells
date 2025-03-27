@@ -17,3 +17,16 @@ Peak and tile matrix calculations can be sped up by reducing the number of
 cells. For cases where the outputs are going to be added together afterwards, this can
 provide a performance improvement
 }
+\examples{
+frags <- tibble::tibble(
+  chr = "chr1",
+  start = seq(10, 260, 50),
+  end = start + 30,
+  cell_id = paste0("cell", c(rep(1, 2), rep(2,2), rep(3,2)))
+) \%>\% convert_to_fragments()
+frags
+
+
+## Pseudobulk into two groups
+merge_cells(frags, as.factor(c(rep(1,3), rep(2,3))))
+}
