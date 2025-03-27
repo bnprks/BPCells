@@ -33,3 +33,25 @@ Fragments object filtered according to the selected regions
 \description{
 Fragments can be subset based on overlapping (or not overlapping) a set of regions
 }
+\examples{
+frags <- tibble::tibble(
+  chr = "chr1",
+  start = seq(10, 260, 50),
+  end = start + seq(5, 30, 5),
+  cell_id = "cell1"
+) 
+frags
+frags <- frags \%>\% convert_to_fragments()
+
+region <- tibble::tibble(
+  chr = "chr1",
+  start = 60,
+  end = 130
+) \%>\% as("GRanges")
+
+## Select ranges overlapping with region
+select_regions(frags, region) \%>\% as("GRanges")
+
+## Select ranges not overlapping with region
+select_regions(frags, region, invert_selection = TRUE) \%>\% as("GRanges")
+}
