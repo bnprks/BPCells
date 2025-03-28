@@ -27,6 +27,31 @@ test_that("range_overlaps works", {
   expect_identical(range_overlaps(a, b), expected)
 })
 
+test_that("range_distance_to_nearest works", {
+  frags <- tibble::tibble(
+    chr = "chr1",
+    start = seq(10, 410, 100),
+    end = start + 50,
+    strand = "+"
+  )
+  res <- tibble::tibble(
+    upstream = c(Inf, rep(51, 4)),
+    downstream = c(rep(51, 4), Inf)
+  )
+  expect_identical(
+    range_distance_to_nearest(frags),
+    res
+  )
+  frags_with_nested <- frags %>% 
+    tibble::add_row(chr = "chr1", start = 11, end = 20, strand = "+")
+  res_with_nested <- res %>%
+    tibble::add_row(upstream = 0, downstream = 0)
+  expect_identical(
+    range_distance_to_nearest(frags_with_nested),
+    res_with_nested
+  )
+})
+
 test_that("tile_ranges works", {
   frags <- convert_to_fragments(tibble::tibble(
     chr = paste0("chr", 1:10),

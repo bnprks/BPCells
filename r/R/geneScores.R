@@ -46,7 +46,7 @@ range_distance_to_nearest <- function(ranges, addArchRBug = FALSE, zero_based_co
       ) %>%
       dplyr::pull(from) %>%
       unique()
-    ranges <- ranges[-overlaps, ]
+    if (length(overlaps) != 0) ranges <- ranges[-overlaps, ]
   }
 
   dists <- ranges %>%
