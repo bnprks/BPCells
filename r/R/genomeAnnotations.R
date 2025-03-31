@@ -235,6 +235,18 @@ read_ucsc_chrom_sizes <- function(dir, genome = c("hg38", "mm39", "mm10", "mm9",
 #' @param sort_by_end If TRUE (defualt), sort by (chr, end, start). Else sort by (chr, start, end)
 #' @return Numeric vector analagous to the `order` function. Provides an index
 #' selection that will reorder the input ranges to be sorted by chr, end, start
+#' @examples
+#' ## Prep data
+#' frags <- tibble::tibble(
+#'   chr = "chr1",
+#'   start = seq(10, 260, 50),
+#'   end = start + seq(310, 0, -60),
+#'   cell_id = paste0("cell1")
+#' ) %>% as("GRanges")
+#' frags
+#' 
+#' ## Get end-sorted ordering
+#' order_ranges(frags, levels(GenomicRanges::seqnames(frags)))
 #' @export
 order_ranges <- function(ranges, chr_levels, sort_by_end = TRUE) {
   ranges <- normalize_ranges(ranges)
