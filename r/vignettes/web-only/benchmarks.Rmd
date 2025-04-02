@@ -85,7 +85,7 @@ genome-sorted order, so it's able to perform peak calculations much faster than 
 BPCells takes only seconds to find all overlaps with a small set of 10 peaks, which also means that it is
 very fast at calculating genomic coverage tracks for visualization of large datasets.
 
-<img src="benchmark-plots/peak_comparison" class="mx-auto d-block" style="max-height: 20rem" />
+<img src="benchmark-plots/peaks_comparison.png" class="mx-auto d-block" style="max-height: 20rem" />
 
 ## 44M cell analysis of CELLxGENE census
 
@@ -108,8 +108,8 @@ up to an order of magnitude larger.
 <img src="benchmark-plots/cellxgene_compute_tasks.png" class="mx-auto d-block" style="max-height: 20rem" />
 
 Benchmark details: Mean and variance computed on a log-normalized matrix, unlike the plots in the BPCells manuscript which were just scaled by read counts
-to match the default normalization of the CELLxGENE census. Laptop has 32GB of RAM and 16 threads; server has 256GB of RAM and 32 threads. See BPCells
-manuscript for further details.
+to match the default normalization of the CELLxGENE census. Laptop has 32GB of RAM and 16 threads; server has 256GB of RAM and 32 threads. See [BPCells
+manuscript](https://www.biorxiv.org/content/10.1101/2025.03.27.645853v1) for further details.
 
 # Update log
 - March 29, 2025: Update benchmarks with numbers + performance from BPCells manuscript
