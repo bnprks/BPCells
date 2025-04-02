@@ -9,9 +9,16 @@ output:
 ---
 
 This provides an overview of the BPCells compressed and uncompressed matrix
-formats as they stand as of version 0.3.0 While BPCells is pre-1.0 these formats
-may be updated, though with a goal of maintaining backwards read-compatibility
-across updates.
+formats. While BPCells is pre-1.0 these formats may be updated, though BPCells 
+aims to maintain backwards read-compatibility across updates.
+
+Format version changes:
+
+- v2 (March 2023): Add support for $>2^32$ non-zero entries or fragments in a single file.
+    - `idxptr`: uint32 -> uint64
+    - `chr_ptr`: uint32 -> uint64
+    - Add `*_idx_offsets` fields to bitpacked data.
+- v1 (August 2022): Initial stability of v1 file formats
 
 ## Matrix Logical Storage Layout
 
@@ -31,12 +38,11 @@ compressed sparse column/row (CSC/CSR) format with the following data arrays:
 
 The interpretation of each array is as follows:
 
-- `val` - Values of non-zero entries in increasing order of (column, row)
-  position of the non-zero value.
+- `val` - Values of non-zero entries in increasing order of (column, row) position.
 - `index` - `index[i]` provides the 0-based row index for the value found in
   `val[i]` (or column index for row-major storage order)
 - `idxptr` - The indexes in `idx` and `val` for the entries in column `j` can be
-  found from `idxptr[j]` to `idxptr[j+1] - 1` , inclusive. (or row j for
+  found from `idxptr[j]` to `idxptr[j+1] - 1` , inclusive. (or row `j` for
   row-major storage order)
 - `shape` - number of rows in matrix, followed by number of columns 
 - `row_names` - Names for each row of the matrix (optional) 
@@ -56,7 +62,7 @@ Each matrix is stored as a single directory, HDF5 group, or R S4 object. The
 storage format for each matrix is encoded as a version string. The current
 version string is of the format `[compression]-[datatype]-matrix-v2`, where
 `[compression]` can be either `packed` or `unpacked`, and `[datatype]` can be
-one of `uint`, `float`, and `double` corresponding to 32-bit unsigned integer,
+one of `uint`, `float`, or `double` corresponding to 32-bit unsigned integer,
 32-bit float, and 64-bit double respectively. In v1 formats, the only difference
 is that `idxptr` had type uint32.
 
@@ -74,26 +80,26 @@ Uncompressed fragment data is stored in the following arrays:
 | `cell`       | uint32 | # fragments                      |
 | `start`      | uint32 | # fragments                      |
 | `end`        | uint32 | # fragments                      |
-| `end_max`    | uint32 | $\lceil$# fragments $/128\rceil$ |
-| `chr_ptr`    | uint64 | $2\times$ # chromosomes          |
+| `end_max`    | uint32 | $\lceil$# fragments/128$\rceil$|
+| `chr_ptr`    | uint64 | 2 $\times$ # chromosomes          |
 | `cell_names` | string | # cells                          |
 | `chr_names`  | string | # chromosomes                    |
 
 
 These arrays have the following contents:
 
-- cell: List of numeric cell IDs, one per fragment. The smallest cell ID is 0.  
-- start: List of fragment start coordinates. The first base in a chromosome is 0.
-- end: List of fragment end coordinates. The base of the end coordinate is one past the last base in the fragment.  
-- end_max: `end_max[i]` is the maximum end coordinate of all fragments from the start of the chromosome to the fragment at index `i*128-127`. 
+- `cell`: List of numeric cell IDs, one per fragment. The smallest cell ID is 0.  
+- `start`: List of fragment start coordinates. The first base in a chromosome is 0.
+- `end`: List of fragment end coordinates. The base of the end coordinate is one past the last base in the fragment.  
+- `end_max`: `end_max[i]` is the maximum end coordinate of all fragments from the start of the chromosome to the fragment at index `i*128-127`. 
   If multiple chromosomes have fragments in a given chunk of 128 fragments, `end_max` is the maximum of all those end coordinates. 
   The `end_max` array allows for quickly seeking to fragments overlapping a given genomic region.  
-- chr_ptr: `chr_ptr[2*i]` is the index of the first fragment in chromosome `i` in the `cell`, `start`, and `end` arrays. 
+- `chr_ptr`: `chr_ptr[2*i]` is the index of the first fragment in chromosome `i` in the `cell`, `start`, and `end` arrays. 
   `chr_ptr[2*i + 1]-1` is the index of the last fragment in chromosome `i`. 
   Fragments need not necessarily be sorted in order of increasing chromosome ID, though all fragments for a given chromosome must still be stored contiguously. 
   This allows logically re-ordering chromosomes at write-time even if the input data source does not support reading chromosomes out-of-order (i.e. 10x fragment files without a genome index).  
-- cell_names: string identifiers for each numeric cell ID.
-- chr_names: string identifiers for each numeric chromosome ID.
+- `cell_names`: string identifiers for each numeric cell ID.
+- `chr_names`: string identifiers for each numeric chromosome ID.
 
 Compressed fragments are stored with the following modifications: 
 
@@ -152,9 +158,8 @@ This is best for lists of close but not fully sorted runs of integers.
 - `idx`, `idx_offsets` - identical to BP-128
 - `starts` - identical to BP128-d1
 
- The core bitpacking code can be found in [`src/bitpacking/bp128.cpp`](https://github.com/bnprks/BPCells/blob/main/src/bitpacking/bp128.cpp) in the github repository.
-
-
+Illustrative reference code for BP-128 and the d1 and zigzag transformations can be found 
+[here](https://github.com/GreenleafLab/BPCells_paper/blob/main/utils/bitpacking-reference-implementation.cpp).
 
 ## Physical storage layout
 
@@ -163,25 +168,27 @@ The three currently supported by BPCells are:
 
 #### Directory of files format:
 
-An array of numbers is stored as a single file with an 8-byte header, followed
-by the data values in little-endian binary format. Unsigned integers are encoded
-according to standard little-endian representation, and 32-bit and 64-bit
-floating point numbers as IEEE-754 format. Header values are 8-byte ASCII text
+This is the default storage backend due to its simplicity and high performance. 
+Arrays are stored as binary files within a directory. 
+Numeric array files have an 8-byte header followed by data values in little-endian binary format for integers 
+and IEEE-754 for 32-bit and 64-bit floating point numbers. Header values are 8-byte ASCII text 
 as follows: unsigned 32-bit integer `UINT32v1`, unsigned 64-bit integer
 `UINT64v1`, 32-bit float `FLOATSv1`, 64-bit float `DOUBLEv1`. Arrays of strings
 are stored as ASCII text with one array value per line with no header. The
-version string is stored as a file named version containing the version string
+version string is stored as a file named "version" containing the version string
 followed by a newline.
 
 #### Hdf5 file format:
 
+This storage backend can be useful for embedding BPCells formats as a group within an h5ad or other HDF5 file. 
 Arrays of numbers are stored as HDF5 datasets using the built-in HDF5 encoding
 format. Arrays of strings are stored as HDF5 variable length string datasets.
 
-The version string is stored as a version attribute on the HDF5 group
+The version string is stored as a version attribute on the HDF5 group.
 
 #### R object format:
 
+This storage backend is primarily useful for testing, or when bitpacking compression of in-memory data is desired to avoid disk bandwidth bottlenecks. 
 Strings are stored as native R character arrays. Unsigned integers and 32-bit
 floats are stored in native R integer arrays by bitcasting the R signed integers
 into the required data types. 64-bit floats are stored in native R numeric
@@ -189,5 +196,5 @@ arrays. 64-bit integers are stored as doubles in R numeric arrays. This reduces
 the highest representable value from $2^{64}-1$ to $2^{53}-1$ (about 9
 quadrillion), which we do not expect to pose practical problems. Named
 collections of arrays are stored in R lists (when writing) or S4 objects (when
-reading). The version string is stored as a string vector named version of
+reading). The version string is stored as a string vector named "version" of
 length 1.
