@@ -1,5 +1,5 @@
 ---
-title: "Matrix Storage Format"
+title: "Matrix and Fragment Storage Formats"
 output: 
   html_document:
     toc: true
@@ -9,11 +9,11 @@ output:
 ---
 
 This provides an overview of the BPCells compressed and uncompressed matrix
-formats as they stand as of April 2023. While BPCells is pre-1.0 these formats
+formats as they stand as of version 0.3.0 While BPCells is pre-1.0 these formats
 may be updated, though with a goal of maintaining backwards read-compatibility
 across updates.
 
-### Matrix Logical Storage Layout
+## Matrix Logical Storage Layout
 
 For data storage, we use a storage abstraction of named data arrays, stored as
 e.g. a single group hdf5 or a directory of files. The matrix format is a
@@ -59,6 +59,50 @@ version string is of the format `[compression]-[datatype]-matrix-v2`, where
 one of `uint`, `float`, and `double` corresponding to 32-bit unsigned integer,
 32-bit float, and 64-bit double respectively. In v1 formats, the only difference
 is that `idxptr` had type uint32.
+
+## Genomic fragments logical storage layout
+
+BPCells fragment files store (chromosome, start, end, cell ID) for each fragment, sorted by (chromosome, start). 
+The coordinate system follows the bed format convention, where the first base of a chromosome is numbered 0 and the end coordinate of each fragment is non-inclusive. 
+This means a 10 base pair long fragment starting at the first base of the genome will have start=0 and end=10. 
+End coordinates are always guaranteed to be at least as large as start coordinates.
+
+Uncompressed fragment data is stored in the following arrays:
+
+| Name         | Type   | Length                           |
+| ------------ | ------ | -------------------------------- |
+| `cell`       | uint32 | # fragments                      |
+| `start`      | uint32 | # fragments                      |
+| `end`        | uint32 | # fragments                      |
+| `end_max`    | uint32 | $\lceil$# fragments $/128\rceil$ |
+| `chr_ptr`    | uint64 | $2\times$ # chromosomes          |
+| `cell_names` | string | # cells                          |
+| `chr_names`  | string | # chromosomes                    |
+
+
+These arrays have the following contents:
+
+- cell: List of numeric cell IDs, one per fragment. The smallest cell ID is 0.  
+- start: List of fragment start coordinates. The first base in a chromosome is 0.
+- end: List of fragment end coordinates. The base of the end coordinate is one past the last base in the fragment.  
+- end_max: `end_max[i]` is the maximum end coordinate of all fragments from the start of the chromosome to the fragment at index `i*128-127`. 
+  If multiple chromosomes have fragments in a given chunk of 128 fragments, `end_max` is the maximum of all those end coordinates. 
+  The `end_max` array allows for quickly seeking to fragments overlapping a given genomic region.  
+- chr_ptr: `chr_ptr[2*i]` is the index of the first fragment in chromosome `i` in the `cell`, `start`, and `end` arrays. 
+  `chr_ptr[2*i + 1]-1` is the index of the last fragment in chromosome `i`. 
+  Fragments need not necessarily be sorted in order of increasing chromosome ID, though all fragments for a given chromosome must still be stored contiguously. 
+  This allows logically re-ordering chromosomes at write-time even if the input data source does not support reading chromosomes out-of-order (i.e. 10x fragment files without a genome index).  
+- cell_names: string identifiers for each numeric cell ID.
+- chr_names: string identifiers for each numeric chromosome ID.
+
+Compressed fragments are stored with the following modifications: 
+
+- `cell` is replaced with `cell_data`, `cell_idx`, and `cell_idx_offsets`, compressed according to BP-128 encoding.
+- `start` is replaced with `start_data`, `start_idx`, `start_idx_offsets`, and `start_starts`, compressed according to BP-128d1 encoding.
+- `end` is replaced with `end_data`, `end_idx`, and `end_idx_offsets`, which stores `start - end` for each fragment, encoded using BP-128 encoding.
+
+The current version string is equal to `unpacked-fragments-v2` for uncompressed fragments, and `packed-fragments-v2` for compressed fragments. 
+In v1 formats, the only difference is that `chr_ptr` had type uint32.
 
 ## Bitpacking formats
 
