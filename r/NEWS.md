@@ -1,11 +1,3 @@
-# BPCells 1.0 Roadmap
-- ~~Parallelization~~ (basic support complete. See below)
-- Native python library (re-using C++ backend; basic support started)
-- Peak-gene correlations
-- ~~MACS peak calling~~ (basic support complete. See below)
-
-Contributions welcome :)
-
 # BPCells 0.3.1 (in-progress main branch)
 
 ## Features
