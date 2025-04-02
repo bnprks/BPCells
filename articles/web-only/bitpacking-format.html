@@ -75,9 +75,24 @@
     
     
 <p>This provides an overview of the BPCells compressed and uncompressed
-matrix formats as they stand as of version 0.3.0 While BPCells is
-pre-1.0 these formats may be updated, though with a goal of maintaining
-backwards read-compatibility across updates.</p>
+matrix formats. While BPCells is pre-1.0 these formats may be updated,
+though BPCells aims to maintain backwards read-compatibility across
+updates.</p>
+<p>Format version changes:</p>
+<ul>
+<li>v2 (March 2023): Add support for
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo>&gt;</mo><msup><mn>2</mn><mn>32</mn></msup></mrow><annotation encoding="application/x-tex">&gt;2^32</annotation></semantics></math>
+non-zero entries or fragments in a single file.
+<ul>
+<li>
+<code>idxptr</code>: uint32 -&gt; uint64</li>
+<li>
+<code>chr_ptr</code>: uint32 -&gt; uint64</li>
+<li>Add <code>*_idx_offsets</code> fields to bitpacked data.</li>
+</ul>
+</li>
+<li>v1 (August 2022): Initial stability of v1 file formats</li>
+</ul>
 <div class="section level2">
 <h2 id="matrix-logical-storage-layout">Matrix Logical Storage Layout<a class="anchor" aria-label="anchor" href="#matrix-logical-storage-layout"></a>
 </h2>
@@ -133,7 +148,7 @@ following data arrays:</p>
 <ul>
 <li>
 <code>val</code> - Values of non-zero entries in increasing order of
-(column, row) position of the non-zero value.</li>
+(column, row) position.</li>
 <li>
 <code>index</code> - <code>index[i]</code> provides the 0-based row
 index for the value found in <code>val[i]</code> (or column index for
@@ -142,7 +157,7 @@ row-major storage order)</li>
 <code>idxptr</code> - The indexes in <code>idx</code> and
 <code>val</code> for the entries in column <code>j</code> can be found
 from <code>idxptr[j]</code> to <code>idxptr[j+1] - 1</code> , inclusive.
-(or row j for row-major storage order)</li>
+(or row <code>j</code> for row-major storage order)</li>
 <li>
 <code>shape</code> - number of rows in matrix, followed by number of
 columns</li>
@@ -180,7 +195,7 @@ string. The current version string is of the format
 <code>[compression]-[datatype]-matrix-v2</code>, where
 <code>[compression]</code> can be either <code>packed</code> or
 <code>unpacked</code>, and <code>[datatype]</code> can be one of
-<code>uint</code>, <code>float</code>, and <code>double</code>
+<code>uint</code>, <code>float</code>, or <code>double</code>
 corresponding to 32-bit unsigned integer, 32-bit float, and 64-bit
 double respectively. In v1 formats, the only difference is that
 <code>idxptr</code> had type uint32.</p>
@@ -223,15 +238,14 @@ guaranteed to be at least as large as start coordinates.</p>
 <td>uint32</td>
 <td>
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mo stretchy="false" form="prefix">⌈</mo><annotation encoding="application/x-tex">\lceil</annotation></semantics></math>#
-fragments
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>/</mi><mn>128</mn><mo stretchy="false" form="postfix">⌉</mo></mrow><annotation encoding="application/x-tex">/128\rceil</annotation></semantics></math>
+fragments/128<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mo stretchy="false" form="postfix">⌉</mo><annotation encoding="application/x-tex">\rceil</annotation></semantics></math>
 </td>
 </tr>
 <tr class="odd">
 <td><code>chr_ptr</code></td>
 <td>uint64</td>
-<td>
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>2</mn><mo>×</mo></mrow><annotation encoding="application/x-tex">2\times</annotation></semantics></math>
+<td>2
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mo>×</mo><annotation encoding="application/x-tex">\times</annotation></semantics></math>
 # chromosomes</td>
 </tr>
 <tr class="even">
@@ -248,23 +262,29 @@ fragments
 </table>
 <p>These arrays have the following contents:</p>
 <ul>
-<li>cell: List of numeric cell IDs, one per fragment. The smallest cell
-ID is 0.<br>
+<li>
+<code>cell</code>: List of numeric cell IDs, one per fragment. The
+smallest cell ID is 0.<br>
 </li>
-<li>start: List of fragment start coordinates. The first base in a
-chromosome is 0.</li>
-<li>end: List of fragment end coordinates. The base of the end
-coordinate is one past the last base in the fragment.<br>
+<li>
+<code>start</code>: List of fragment start coordinates. The first
+base in a chromosome is 0.</li>
+<li>
+<code>end</code>: List of fragment end coordinates. The base of the
+end coordinate is one past the last base in the fragment.<br>
 </li>
-<li>end_max: <code>end_max[i]</code> is the maximum end coordinate of
-all fragments from the start of the chromosome to the fragment at index
-<code>i*128-127</code>. If multiple chromosomes have fragments in a
-given chunk of 128 fragments, <code>end_max</code> is the maximum of all
-those end coordinates. The <code>end_max</code> array allows for quickly
-seeking to fragments overlapping a given genomic region.<br>
+<li>
+<code>end_max</code>: <code>end_max[i]</code> is the maximum end
+coordinate of all fragments from the start of the chromosome to the
+fragment at index <code>i*128-127</code>. If multiple chromosomes have
+fragments in a given chunk of 128 fragments, <code>end_max</code> is the
+maximum of all those end coordinates. The <code>end_max</code> array
+allows for quickly seeking to fragments overlapping a given genomic
+region.<br>
 </li>
-<li>chr_ptr: <code>chr_ptr[2*i]</code> is the index of the first
-fragment in chromosome <code>i</code> in the <code>cell</code>,
+<li>
+<code>chr_ptr</code>: <code>chr_ptr[2*i]</code> is the index of the
+first fragment in chromosome <code>i</code> in the <code>cell</code>,
 <code>start</code>, and <code>end</code> arrays.
 <code>chr_ptr[2*i + 1]-1</code> is the index of the last fragment in
 chromosome <code>i</code>. Fragments need not necessarily be sorted in
@@ -274,8 +294,12 @@ re-ordering chromosomes at write-time even if the input data source does
 not support reading chromosomes out-of-order (i.e. 10x fragment files
 without a genome index).<br>
 </li>
-<li>cell_names: string identifiers for each numeric cell ID.</li>
-<li>chr_names: string identifiers for each numeric chromosome ID.</li>
+<li>
+<code>cell_names</code>: string identifiers for each numeric cell
+ID.</li>
+<li>
+<code>chr_names</code>: string identifiers for each numeric
+chromosome ID.</li>
 </ul>
 <p>Compressed fragments are stored with the following modifications:</p>
 <ul>
@@ -390,8 +414,8 @@ BP-128</li>
 <li>
 <code>starts</code> - identical to BP128-d1</li>
 </ul>
-<p>The core bitpacking code can be found in <a href="https://github.com/bnprks/BPCells/blob/main/src/bitpacking/bp128.cpp" class="external-link"><code>src/bitpacking/bp128.cpp</code></a>
-in the github repository.</p>
+<p>Illustrative reference code for BP-128 and the d1 and zigzag
+transformations can be found <a href="https://github.com/GreenleafLab/BPCells_paper/blob/main/utils/bitpacking-reference-implementation.cpp" class="external-link">here</a>.</p>
 </div>
 </div>
 <div class="section level2">
@@ -402,41 +426,46 @@ different formats. The three currently supported by BPCells are:</p>
 <div class="section level4">
 <h4 id="directory-of-files-format">Directory of files format:<a class="anchor" aria-label="anchor" href="#directory-of-files-format"></a>
 </h4>
-<p>An array of numbers is stored as a single file with an 8-byte header,
-followed by the data values in little-endian binary format. Unsigned
-integers are encoded according to standard little-endian representation,
-and 32-bit and 64-bit floating point numbers as IEEE-754 format. Header
-values are 8-byte ASCII text as follows: unsigned 32-bit integer
-<code>UINT32v1</code>, unsigned 64-bit integer <code>UINT64v1</code>,
-32-bit float <code>FLOATSv1</code>, 64-bit float <code>DOUBLEv1</code>.
-Arrays of strings are stored as ASCII text with one array value per line
-with no header. The version string is stored as a file named version
-containing the version string followed by a newline.</p>
+<p>This is the default storage backend due to its simplicity and high
+performance. Arrays are stored as binary files within a directory.
+Numeric array files have an 8-byte header followed by data values in
+little-endian binary format for integers and IEEE-754 for 32-bit and
+64-bit floating point numbers. Header values are 8-byte ASCII text as
+follows: unsigned 32-bit integer <code>UINT32v1</code>, unsigned 64-bit
+integer <code>UINT64v1</code>, 32-bit float <code>FLOATSv1</code>,
+64-bit float <code>DOUBLEv1</code>. Arrays of strings are stored as
+ASCII text with one array value per line with no header. The version
+string is stored as a file named “version” containing the version string
+followed by a newline.</p>
 </div>
 <div class="section level4">
 <h4 id="hdf5-file-format">Hdf5 file format:<a class="anchor" aria-label="anchor" href="#hdf5-file-format"></a>
 </h4>
-<p>Arrays of numbers are stored as HDF5 datasets using the built-in HDF5
-encoding format. Arrays of strings are stored as HDF5 variable length
-string datasets.</p>
+<p>This storage backend can be useful for embedding BPCells formats as a
+group within an h5ad or other HDF5 file. Arrays of numbers are stored as
+HDF5 datasets using the built-in HDF5 encoding format. Arrays of strings
+are stored as HDF5 variable length string datasets.</p>
 <p>The version string is stored as a version attribute on the HDF5
-group</p>
+group.</p>
 </div>
 <div class="section level4">
 <h4 id="r-object-format">R object format:<a class="anchor" aria-label="anchor" href="#r-object-format"></a>
 </h4>
-<p>Strings are stored as native R character arrays. Unsigned integers
-and 32-bit floats are stored in native R integer arrays by bitcasting
-the R signed integers into the required data types. 64-bit floats are
-stored in native R numeric arrays. 64-bit integers are stored as doubles
-in R numeric arrays. This reduces the highest representable value from
+<p>This storage backend is primarily useful for testing, or when
+bitpacking compression of in-memory data is desired to avoid disk
+bandwidth bottlenecks. Strings are stored as native R character arrays.
+Unsigned integers and 32-bit floats are stored in native R integer
+arrays by bitcasting the R signed integers into the required data types.
+64-bit floats are stored in native R numeric arrays. 64-bit integers are
+stored as doubles in R numeric arrays. This reduces the highest
+representable value from
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msup><mn>2</mn><mn>64</mn></msup><mo>−</mo><mn>1</mn></mrow><annotation encoding="application/x-tex">2^{64}-1</annotation></semantics></math>
 to
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msup><mn>2</mn><mn>53</mn></msup><mo>−</mo><mn>1</mn></mrow><annotation encoding="application/x-tex">2^{53}-1</annotation></semantics></math>
 (about 9 quadrillion), which we do not expect to pose practical
 problems. Named collections of arrays are stored in R lists (when
 writing) or S4 objects (when reading). The version string is stored as a
-string vector named version of length 1.</p>
+string vector named “version” of length 1.</p>
 </div>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
