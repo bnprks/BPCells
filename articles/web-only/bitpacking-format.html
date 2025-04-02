@@ -5,14 +5,15 @@
 <meta charset="utf-8">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-<title>Matrix Storage Format • BPCells</title>
+<title>Matrix and Fragment Storage Formats • BPCells</title>
 <script src="../../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <link href="../../deps/bootstrap-5.3.1/bootstrap.min.css" rel="stylesheet">
-<script src="../../deps/bootstrap-5.3.1/bootstrap.bundle.min.js"></script><link href="../../deps/font-awesome-6.4.2/css/all.min.css" rel="stylesheet">
-<link href="../../deps/font-awesome-6.4.2/css/v4-shims.min.css" rel="stylesheet">
+<script src="../../deps/bootstrap-5.3.1/bootstrap.bundle.min.js"></script><link href="../../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
+<link href="../../deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet">
 <script src="../../deps/headroom-0.11.0/headroom.min.js"></script><script src="../../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../../deps/search-1.0.0/fuse.min.js"></script><script src="../../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../../pkgdown.js"></script><link href="../../extra.css" rel="stylesheet">
-<meta property="og:title" content="Matrix Storage Format">
-<script defer data-domain="benparks.net" src="https://plausible.benparks.net/js/visit-counts.js"></script>
+<meta property="og:title" content="Matrix and Fragment Storage Formats">
+<script defer data-domain="benparks.net" src="https://plausible.benparks.net/js/visit-counts.js"></script><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.15/dist/katex.min.css" integrity="sha384-Htz9HMhiwV8GuQ28Xr9pEs1B4qJiYu/nYLLwlDklR53QibDfmQzi7rYxXhMH/5/u" crossorigin="anonymous">
+<!-- The loading of KaTeX is deferred to speed up page rendering --><script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.15/dist/katex.min.js" integrity="sha384-bxmi2jLGCvnsEqMuYLKE/KsVCxV3PqmKeK6Y6+lmNXBry6+luFkEOsmp5vD9I/7+" crossorigin="anonymous"></script><!-- To automatically render math in text elements, include the auto-render extension: --><script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.15/dist/contrib/auto-render.min.js" integrity="sha384-hCXGrW6PitJEwbkoStFjeJxv+fSOOQKOPbJxSfM6G5sWZjAyWhXiTIIAmQqnlLlh" crossorigin="anonymous" onload="renderMathInElement(document.body);"></script>
 </head>
 <body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
@@ -22,7 +23,7 @@
 
     <a class="navbar-brand me-2" href="../../index.html">BPCells</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -64,7 +65,7 @@
 <div class="row">
   <main id="main" class="col-md-9"><div class="page-header">
 
-      <h1>Matrix Storage Format</h1>
+      <h1>Matrix and Fragment Storage Formats</h1>
             
       
       <small class="dont-index">Source: <a href="https://github.com/bnprks/BPCells/tree/main/r/vignettes/web-only/bitpacking-format.Rmd" class="external-link"><code>vignettes/web-only/bitpacking-format.Rmd</code></a></small>
@@ -74,12 +75,12 @@
     
     
 <p>This provides an overview of the BPCells compressed and uncompressed
-matrix formats as they stand as of April 2023. While BPCells is pre-1.0
-these formats may be updated, though with a goal of maintaining
+matrix formats as they stand as of version 0.3.0 While BPCells is
+pre-1.0 these formats may be updated, though with a goal of maintaining
 backwards read-compatibility across updates.</p>
-<div class="section level3">
-<h3 id="matrix-logical-storage-layout">Matrix Logical Storage Layout<a class="anchor" aria-label="anchor" href="#matrix-logical-storage-layout"></a>
-</h3>
+<div class="section level2">
+<h2 id="matrix-logical-storage-layout">Matrix Logical Storage Layout<a class="anchor" aria-label="anchor" href="#matrix-logical-storage-layout"></a>
+</h2>
 <p>For data storage, we use a storage abstraction of named data arrays,
 stored as e.g. a single group hdf5 or a directory of files. The matrix
 format is a compressed sparse column/row (CSC/CSR) format with the
@@ -183,6 +184,121 @@ string. The current version string is of the format
 corresponding to 32-bit unsigned integer, 32-bit float, and 64-bit
 double respectively. In v1 formats, the only difference is that
 <code>idxptr</code> had type uint32.</p>
+</div>
+<div class="section level2">
+<h2 id="genomic-fragments-logical-storage-layout">Genomic fragments logical storage layout<a class="anchor" aria-label="anchor" href="#genomic-fragments-logical-storage-layout"></a>
+</h2>
+<p>BPCells fragment files store (chromosome, start, end, cell ID) for
+each fragment, sorted by (chromosome, start). The coordinate system
+follows the bed format convention, where the first base of a chromosome
+is numbered 0 and the end coordinate of each fragment is non-inclusive.
+This means a 10 base pair long fragment starting at the first base of
+the genome will have start=0 and end=10. End coordinates are always
+guaranteed to be at least as large as start coordinates.</p>
+<p>Uncompressed fragment data is stored in the following arrays:</p>
+<table class="table">
+<thead><tr class="header">
+<th>Name</th>
+<th>Type</th>
+<th>Length</th>
+</tr></thead>
+<tbody>
+<tr class="odd">
+<td><code>cell</code></td>
+<td>uint32</td>
+<td># fragments</td>
+</tr>
+<tr class="even">
+<td><code>start</code></td>
+<td>uint32</td>
+<td># fragments</td>
+</tr>
+<tr class="odd">
+<td><code>end</code></td>
+<td>uint32</td>
+<td># fragments</td>
+</tr>
+<tr class="even">
+<td><code>end_max</code></td>
+<td>uint32</td>
+<td>
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mo stretchy="false" form="prefix">⌈</mo><annotation encoding="application/x-tex">\lceil</annotation></semantics></math>#
+fragments
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>/</mi><mn>128</mn><mo stretchy="false" form="postfix">⌉</mo></mrow><annotation encoding="application/x-tex">/128\rceil</annotation></semantics></math>
+</td>
+</tr>
+<tr class="odd">
+<td><code>chr_ptr</code></td>
+<td>uint64</td>
+<td>
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>2</mn><mo>×</mo></mrow><annotation encoding="application/x-tex">2\times</annotation></semantics></math>
+# chromosomes</td>
+</tr>
+<tr class="even">
+<td><code>cell_names</code></td>
+<td>string</td>
+<td># cells</td>
+</tr>
+<tr class="odd">
+<td><code>chr_names</code></td>
+<td>string</td>
+<td># chromosomes</td>
+</tr>
+</tbody>
+</table>
+<p>These arrays have the following contents:</p>
+<ul>
+<li>cell: List of numeric cell IDs, one per fragment. The smallest cell
+ID is 0.<br>
+</li>
+<li>start: List of fragment start coordinates. The first base in a
+chromosome is 0.</li>
+<li>end: List of fragment end coordinates. The base of the end
+coordinate is one past the last base in the fragment.<br>
+</li>
+<li>end_max: <code>end_max[i]</code> is the maximum end coordinate of
+all fragments from the start of the chromosome to the fragment at index
+<code>i*128-127</code>. If multiple chromosomes have fragments in a
+given chunk of 128 fragments, <code>end_max</code> is the maximum of all
+those end coordinates. The <code>end_max</code> array allows for quickly
+seeking to fragments overlapping a given genomic region.<br>
+</li>
+<li>chr_ptr: <code>chr_ptr[2*i]</code> is the index of the first
+fragment in chromosome <code>i</code> in the <code>cell</code>,
+<code>start</code>, and <code>end</code> arrays.
+<code>chr_ptr[2*i + 1]-1</code> is the index of the last fragment in
+chromosome <code>i</code>. Fragments need not necessarily be sorted in
+order of increasing chromosome ID, though all fragments for a given
+chromosome must still be stored contiguously. This allows logically
+re-ordering chromosomes at write-time even if the input data source does
+not support reading chromosomes out-of-order (i.e. 10x fragment files
+without a genome index).<br>
+</li>
+<li>cell_names: string identifiers for each numeric cell ID.</li>
+<li>chr_names: string identifiers for each numeric chromosome ID.</li>
+</ul>
+<p>Compressed fragments are stored with the following modifications:</p>
+<ul>
+<li>
+<code>cell</code> is replaced with <code>cell_data</code>,
+<code>cell_idx</code>, and <code>cell_idx_offsets</code>, compressed
+according to BP-128 encoding.</li>
+<li>
+<code>start</code> is replaced with <code>start_data</code>,
+<code>start_idx</code>, <code>start_idx_offsets</code>, and
+<code>start_starts</code>, compressed according to BP-128d1
+encoding.</li>
+<li>
+<code>end</code> is replaced with <code>end_data</code>,
+<code>end_idx</code>, and <code>end_idx_offsets</code>, which stores
+<code>start - end</code> for each fragment, encoded using BP-128
+encoding.</li>
+</ul>
+<p>The current version string is equal to
+<code>unpacked-fragments-v2</code> for uncompressed fragments, and
+<code>packed-fragments-v2</code> for compressed fragments. In v1
+formats, the only difference is that <code>chr_ptr</code> had type
+uint32.</p>
 </div>
 <div class="section level2">
 <h2 id="bitpacking-formats">Bitpacking formats<a class="anchor" aria-label="anchor" href="#bitpacking-formats"></a>
@@ -334,7 +450,7 @@ string vector named version of length 1.</p>
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.0.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.1.</p>
 </div>
 
     </footer>
