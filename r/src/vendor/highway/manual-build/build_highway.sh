@@ -27,11 +27,14 @@ HWY_FLAGS=(
 
 # Skip the CONTRIB, since we don't need sorting or image libraries
 HWY_SOURCES=(
-    hwy/aligned_allocator.cc 
+    hwy/abort.cc
+    hwy/aligned_allocator.cc
     hwy/nanobenchmark.cc
     hwy/per_target.cc
     hwy/print.cc
+    hwy/stats.cc
     hwy/targets.cc
+    hwy/timer.cc
 )
 
 HWY_HEADERS=(
@@ -40,6 +43,7 @@ HWY_HEADERS=(
     hwy/contrib/algo/find-inl.h
     hwy/contrib/algo/transform-inl.h
 
+    hwy/abort.h
     hwy/aligned_allocator.h
     hwy/base.h
     hwy/cache_control.h
@@ -53,21 +57,26 @@ HWY_HEADERS=(
     hwy/ops/arm_sve-inl.h
     hwy/ops/emu128-inl.h
     hwy/ops/generic_ops-inl.h
+    hwy/ops/inside-inl.h
     hwy/ops/ppc_vsx-inl.h
     hwy/ops/rvv-inl.h
     hwy/ops/scalar-inl.h
     hwy/ops/set_macros-inl.h
     hwy/ops/shared-inl.h
     hwy/ops/wasm_128-inl.h
-    hwy/ops/tuple-inl.h
+    hwy/ops/wasm_256-inl.h
     hwy/ops/x86_128-inl.h
     hwy/ops/x86_256-inl.h
     hwy/ops/x86_512-inl.h
     hwy/per_target.h
     hwy/print-inl.h
     hwy/print.h
+    hwy/profiler.h
+    hwy/robust_statistics.h
+    hwy/stats.h
     hwy/targets.h
     hwy/timer-inl.h
+    hwy/timer.h
 )
 
 
