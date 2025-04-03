@@ -11,7 +11,7 @@ svds(A, k, nu = k, nv = k, opts = list(), threads=0L, ...)
 
 \item{k}{Number of singular values requested.}
 
-\item{nu}{Number of right singular vectors to be computed. This must be between 0 and 'k'. (Must be equal to 'k' for BPCells IterableMatrix)}
+\item{nu}{Number of right singular vectors to be computed. This must be between \code{0} and \code{k}. (Must be equal to \code{k} for BPCells IterableMatrix)}
 
 \item{opts}{Control parameters related to computing algorithm. See \emph{Details} below}
 
@@ -48,24 +48,24 @@ following parameters:
 \describe{
 \item{\code{ncv}}{Number of Lanzcos basis vectors to use. More vectors
 will result in faster convergence, but with greater
-memory use. \code{ncv} must be satisfy
-\eqn{k < ncv \le p}{k < ncv <= p} where
+memory use. \code{ncv} must satisfy
+\code{k < ncv <= p} where
 \code{p = min(m, n)}.
 Default is \code{min(p, max(2*k+1, 20))}.}
-\item{\code{tol}}{Precision parameter. Default is 1e-10.}
-\item{\code{maxitr}}{Maximum number of iterations. Default is 1000.}
+\item{\code{tol}}{Precision parameter. Default is \code{1e-10}.}
+\item{\code{maxitr}}{Maximum number of iterations. Default is \code{1000}.}
 \item{\code{center}}{Either a logical value (\code{TRUE}/\code{FALSE}), or a numeric
-vector of length \eqn{n}. If a vector \eqn{c} is supplied, then
-SVD is computed on the matrix \eqn{A - 1c'}{A - 1 * c'},
+vector of length \code{n}. If a vector \code{c} is supplied, then
+SVD is computed on the matrix \verb{A-1c'},
 in an implicit way without actually forming this matrix.
 \code{center = TRUE} has the same effect as
 \code{center = colMeans(A)}. Default is \code{FALSE}. Ignored in BPCells}
 \item{\code{scale}}{Either a logical value (\code{TRUE}/\code{FALSE}), or a numeric
-vector of length \eqn{n}. If a vector \eqn{s} is supplied, then
-SVD is computed on the matrix \eqn{(A - 1c')S}{(A - 1 * c')S},
-where \eqn{c} is the centering vector and \eqn{S = diag(1/s)}.
-If \code{scale = TRUE}, then the vector \eqn{s} is computed as
-the column norm of \eqn{A - 1c'}{A - 1 * c'}.
+vector of length \code{n}. If a vector \code{s} is supplied, then
+SVD is computed on the matrix \verb{(A-1c')S},
+where \code{c} is the centering vector and \code{S = diag(1/s)}.
+If \code{scale = TRUE}, then the vector \code{s} is computed as
+the column norm of \verb{A - 1c'}.
 Default is \code{FALSE}. Ignored in BPCells}
 }
 }
