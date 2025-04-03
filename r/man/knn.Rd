@@ -3,7 +3,7 @@
 \name{knn_hnsw}
 \alias{knn_hnsw}
 \alias{knn_annoy}
-\title{Get a knn matrix from reduced dimensions}
+\title{Get a knn object from reduced dimensions}
 \usage{
 knn_hnsw(
   data,
@@ -17,7 +17,7 @@ knn_hnsw(
 
 knn_annoy(
   data,
-  query = data,
+  query = NULL,
   k = 10,
   metric = c("euclidean", "cosine", "manhattan", "hamming"),
   n_trees = 50,
@@ -38,7 +38,7 @@ knn_annoy(
 \item{threads}{Number of threads to use. Note that result is non-deterministic
 if threads > 1}
 
-\item{ef}{ef parameter for RccppHNSW::hnsw_search. Increase for slower search but
+\item{ef}{ef parameter for \code{RcppHNSW::hnsw_search()}. Increase for slower search but
 improved accuracy}
 
 \item{n_trees}{Number of trees during index build time. More trees gives higher accuracy}

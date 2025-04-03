@@ -28,3 +28,14 @@ is set to FALSE, element values greater than or equal to the
 threshold are set to one. As an alternative, the \code{<}, \code{<=}, \code{>},
 and \code{>=} operators are also supported.
 }
+\examples{
+set.seed(12345)
+mat <- matrix(rpois(4*5, lambda=1), nrow=4, ncol=5)
+mat
+mat <- as(mat, "IterableMatrix")
+
+
+mat_binarized <- binarize(mat, threshold=1)
+mat_binarized
+as(mat_binarized, "dgCMatrix")
+}
