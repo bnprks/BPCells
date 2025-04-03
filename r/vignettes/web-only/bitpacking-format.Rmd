@@ -32,8 +32,8 @@ compressed sparse column/row (CSC/CSR) format with the following data arrays:
 | `index`         | uint32                 | # non-zeros |
 | `idxptr`        | uint64                 | # cols + 1  |
 | `shape`         | uint32                 | 2           |
-| `row_names`     | string                 | 0 or #rows  |
-| `col_names`     | string                 | 0 or #cols  |
+| `row_names`     | string                 | 0 or # rows  |
+| `col_names`     | string                 | 0 or # cols  |
 | `storage_order` | string                 | 1           |
 
 The interpretation of each array is as follows:

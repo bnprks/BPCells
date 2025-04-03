@@ -1,4 +1,4 @@
-# BPCells
+# BPCells <img src="man/figures/logo.png" align="right" />
 
 *This site is for the R package. Python site [here](python/index.html) (experimental)*
 
@@ -12,7 +12,7 @@ BPCells provides:
   - Fast, disk-backed RNA-seq and ATAC-seq data processing powered by C++
   - Downstream analysis such as marker genes, and clustering
   - Interoperability with AnnData, 10x datasets, R sparse matrices, and GRanges
-  - Demonstrated scalability up to 44M cells on a laptop
+  - Demonstrated scalability to 44M cells on a laptop
 
 Additionally, BPCells exposes its optimized data processing infrastructure for use in scaling 3rd party single cell tools (e.g. Seurat)
 
