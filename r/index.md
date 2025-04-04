@@ -1,4 +1,4 @@
-# BPCells <img src="man/figures/logo.png" align="right" />
+# BPCells
 
 *This site is for the R package. Python site [here](python/index.html) (experimental)*
 

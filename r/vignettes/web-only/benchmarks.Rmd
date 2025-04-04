@@ -7,7 +7,7 @@ output:
     toc_float: true
     theme: simplex
 ---
-
+<!-- This is to make sure the logo file gets copied to output on a full website rebuild <img src="logo.png" style="visibility: hidden; width: 0px" /> -->
 These performance benchmarks are based on extensive benchmarks from the [BPCells
 manuscript](https://www.biorxiv.org/content/10.1101/2025.03.27.645853v1). 
 Full benchmarking/plotting code and data TSVs are available 
@@ -112,7 +112,7 @@ to match the default normalization of the CELLxGENE census. Laptop has 32GB of R
 manuscript](https://www.biorxiv.org/content/10.1101/2025.03.27.645853v1) for further details.
 
 # Update log
-- March 29, 2025: Update benchmarks with numbers + performance from BPCells manuscript
+- March 29, 2025: Update benchmarks with numbers + performance from BPCells manuscript.
   - Normalization & PCA: Add more comparison datasets, add DelayedArray results, and add multithreading plot
   - RNA storage: Add comparisons with zarr and include write times.
   - ATAC storage: Add 10x and SnapATAC2 results and include read times, and switch comparison to be on a larger dataset.
@@ -121,4 +121,4 @@ manuscript](https://www.biorxiv.org/content/10.1101/2025.03.27.645853v1) for fur
   - Add results for 44M cell analysis.
 - March 30, 2023: Added clarification that AnnData benchmarks referred to h5ad with
   default compression settings (i.e. none).
-- March 29, 2023: Created benchmark page
+- March 29, 2023: Created benchmark page.

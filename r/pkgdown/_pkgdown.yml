@@ -29,6 +29,15 @@ repo:
     issue: https://github.com/bnprks/BPCells/issues/
     user: https://github.com/
 
+home:
+  sidebar:
+    structure: [logo, links, license, community, citation, authors, dev]
+    components:
+      logo:
+        # To get logo.png copied into the built website, it is "included" in
+        # a commented out image tag in vignettes/web-only/benchmarks.Rmd
+        title: ""
+        text: '<img src="vignettes/web-only/logo.png" width=150px />'
 
 navbar:
   structure:
@@ -53,10 +62,10 @@ articles:
   - "pbmc3k"
   - "web-only/benchmarks"
   - "web-only/how-it-works"
+  - "web-only/programming-efficiency"
 - title: "Additional articles"
   contents:
   - "web-only/bitpacking-format"
-  - "web-only/programming-efficiency"
   - "web-only/programming-philosophy"
 
 # cosmo, flatly, united, sandstone all look reasonable
