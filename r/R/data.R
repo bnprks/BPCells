@@ -6,6 +6,214 @@
 # option. This file may not be copied, modified, or distributed
 # except according to those terms.
 
+#' Create a small demo matrix and fragment object.
+#' 
+#' Downloads a 10x Genomics dataset consisting of 3k cells, then performs optional QC and subsetting.  Holds subsetted objects in disk,
+#' and returns a list with both the matrix and fragments. 
+#' @param directory (character) Where the input/output data should be stored.  If NULL, a temporary directory is created.
+#' @param filter_qc (bool) Whether to filter both the RNA and ATAC data using QC information.
+#' @param subset (bool) Whether to subset to only genes/insertions on chromosome 4 and 11.
+#' @param timeout (numeric) Timeout for downloading files in seconds.
+#' @param remove_input_data (logical) Whether to remove the downloaded non-procesed matrix, frags, gencode transcripts, and gencode genes
+#' after processing.
+#' @return (list) A list with the RNA matrix under the name "mat", and the ATAC fragments under the name "frags".
+#' @details
+#' This function downloads the 10x Genomics PBMC 3k dataset. 
+#' Filtering using QC information on the fragments and matrix provides cells with at least 1000 reads, 1000 frags, and a minimum tss enrichment of 10.
+#' Subsetting provides only genes and insertions on chromosomes 4 and 11.
+#' The name of the matrix and fragments folders are `demo_mat` and `demo_frags` respectively.  
+#' Additionally, choosing to qc filter appends a `_filtered`, and choosing to subset data appends a `_subsetted` to the name.
+#' @keywords internal
+prepare_demo_data <- function(directory = NULL, filter_qc = TRUE, subset = TRUE, timeout = 300, remove_input_data = TRUE) {
+    if (is.null(directory)) {
+      directory <- file.path(tempdir())
+      dir.create(directory, recursive = TRUE, showWarnings = FALSE)
+    }
+    mat_name <- "demo_mat"
+    frags_name <- "demo_frags"
+    if (filter_qc) {
+        mat_name <- paste0(mat_name, "_filtered")
+        frags_name <- paste0(frags_name, "_filtered")
+    }
+    if (subset) {
+        mat_name <- paste0(mat_name, "_subsetted")
+        frags_name <- paste0(frags_name, "_subsetted")
+    }
+    # Download matrix/frags if not done previously, and open
+    url_base <- "https://cf.10xgenomics.com/samples/cell-arc/2.0.0/pbmc_granulocyte_sorted_3k/"
+    if (!file.exists(file.path(directory, "pbmc_3k_rna_raw"))) {
+        rna_raw_url <- paste0(url_base, "pbmc_granulocyte_sorted_3k_raw_feature_bc_matrix.h5")
+        ensure_downloaded(file.path(directory, "pbmc_3k_10x.h5"), rna_raw_url, timeout = timeout)
+        mat <- open_matrix_10x_hdf5(file.path(directory, "pbmc_3k_10x.h5"), feature_type="Gene Expression") %>% 
+            write_matrix_dir(file.path(directory, "pbmc_3k_rna_raw"))
+    } else {
+        mat <- open_matrix_dir(file.path(directory, "pbmc_3k_rna_raw"))
+    }
+    # Check if we already ran import
+    if (!file.exists(file.path(directory, "pbmc_3k_frags"))) {
+        atac_raw_url <- paste0(url_base, "pbmc_granulocyte_sorted_3k_atac_fragments.tsv.gz")
+        ensure_downloaded(file.path(directory, "pbmc_3k_10x.fragments.tsv.gz"), atac_raw_url, timeout = timeout)
+        frags <- open_fragments_10x(file.path(directory, "pbmc_3k_10x.fragments.tsv.gz")) %>%
+            write_fragments_dir(file.path(directory, "pbmc_3k_frags"))
+    } else {
+        frags <- open_fragments_dir(file.path(directory, "pbmc_3k_frags"))
+    }
+    if (filter_qc) {
+        # Download annotations for transcripts
+        transcripts <- read_gencode_transcripts(
+            file.path(directory, "references"), 
+            release = "42", 
+            transcript_choice = "MANE_Select",
+            annotation_set = "basic", 
+            features = "transcript"
+        )
+        blacklist <- read_encode_blacklist(file.path(directory, "references"), genome="hg38")
+        atac_qc <- qc_scATAC(frags, transcripts, blacklist)
+        # Filter to only cells that have at least 1000 reads on the RNA side
+        # a minimum of 1000 frag reads, and greater than 10 tss enrichment
+        pass_atac <- atac_qc %>%
+            dplyr::filter(nFrags > 1000, TSSEnrichment > 10) %>%
+            dplyr::pull(cellName)
+        pass_rna <- colnames(mat)[colSums(mat) > 1000]
+        filtered_cells <- intersect(pass_atac, pass_rna)
+        frags <- select_cells(frags, filtered_cells)
+        mat <- mat[, filtered_cells]
+    }
+    if (subset) {
+        # Subset to only genes/fragments that exist on chr4 and 11
+        genes_demo <- read_gencode_genes(
+            file.path(directory, "./references"),
+            release = "42",
+            annotation_set = "basic",
+        )
+        filtered_genes  <- genes_demo[genes_demo$chr %in% c("chr4", "chr11"),]$gene_id
+        # remove version numbers
+        filtered_genes <- gsub("\\..*", "", filtered_genes)
+        mat <- mat[which(rownames(mat) %in% filtered_genes), ]
+        frags <- frags %>% select_chromosomes(c("chr4", "chr11"))
+    }    
+    mat <- write_matrix_dir(mat, file.path(directory, mat_name), overwrite = TRUE)
+    frags <- write_fragments_dir(frags, file.path(directory, frags_name), overwrite = TRUE)
+    if (remove_input_data) {
+        unlink(file.path(directory, "pbmc_3k_10x.h5"))
+        unlink(file.path(directory, "pbmc_3k_10x.fragments.tsv.gz"))
+        unlink(file.path(directory, "pbmc_3k_rna_raw"))
+        unlink(file.path(directory, "pbmc_3k_frags"))
+    }
+    return(list(mat = mat, frags = frags))
+}
+
+#' Retrieve BPCells demo data
+#' 
+#' Functions to download matrices and fragments derived from the 10X Genomics PBMC 3k dataset,
+#' with options to filter with common qc metrics, and to subset genes and fragments to only chromosome 4 and 11.
+#' @rdname demo_data
+#' @param filter_qc (bool) Whether to filter both the RNA and ATAC data using qc metrics (described in `details`).
+#' @param subset (bool) Whether to subset to only genes/insertions on chromosome 4 and 11.
+#' @return 
+#' - `get_demo_mat()`: (IterableMatrix) A `(features x cells)` matrix.
+#' @details
+#' **Data Processing**:
+#' 
+#' The first time either `get_demo_mat()` are ran `get_demo_frags()`,
+#' demo data is downloaded and stored in the BPCells data directory  (under `file.path(tools::R_user_dir("BPcells", which="data"), "demo_data")`).
+#' Subsequent calls to this function will use the previously downloaded matrix/fragments, given that the same combination of filtering and 
+#' subsetting has been performed previously.
+#' The preperation of this matrix can be reproduced by running the internal function `prepare_demo_data()` with `directory` set to the BPCells data directory.
+#' 
+#' In the case that demo data is not pre-downloaded and demo data download fails, `prepare_demo_data()` will act
+#' as a fallback.
+#' 
+#' Both the matrix from `get_demo_mat()` and the fragments from `get_demo_frags()`
+#' may be removed by running `remove_demo_data()`.
+#' 
+#' Filtering using QC information on the fragments and matrix object chooses cells with at least 1000 reads, 1000 frags, and a minimum tss enrichment of 10.
+#' Subsetting provides only genes and insertions on chromosomes 4 and 11.
+#' 
+#' **Dimensions**:
+#' \tabular{lll}{
+#'   \strong{Condition} \tab \strong{RNA matrix (features x cells)} \tab \strong{Fragments (chromosomes x cells)} \cr
+#'   Raw                \tab (36601 x 650165)                       \tab (39 x 462264)                            \cr
+#'   Filter             \tab (36601 x 2600)                         \tab (39 x 2600)                              \cr
+#'   Subset             \tab (3582 x 650165)                        \tab (2 x 462264)                             \cr
+#'   Filter + Subset    \tab (3582 x 2600)                          \tab (2 x 2600)                               \cr
+#' }
+#' **Data size**:
+#' \tabular{lll}{
+#'   \strong{Condition}          \tab \strong{RNA matrix (MB)} \tab \strong{Fragments (MB)} \cr
+#'   Raw                         \tab 31.9                     \tab 200                     \cr
+#'   Filter                      \tab 9.4                      \tab 137                     \cr
+#'   Subset                      \tab 18.3                     \tab 25.6                    \cr
+#'   Filter + Subset             \tab 1.2                      \tab 12.3                    \cr
+#' }
+#' 
+#' **Function Description**:
+#' 
+#' - `get_demo_mat()`: Retrieve a demo `IterableMatrix` object representing the 10X Genomics PBMC 3k dataset.
+#' @export
+get_demo_mat <- function(filter_qc = TRUE, subset = TRUE) {
+    # Use the data directory for BPCells
+    data_dir <- file.path(tools::R_user_dir("BPCells", which = "data"), "demo_data")
+    if (!dir.exists(data_dir)) {
+        dir.create(data_dir, recursive = TRUE)
+    }
+    mat_name = "demo_mat"
+    if (filter_qc) mat_name <- paste0(mat_name, "_filtered")
+    if (subset) mat_name <- paste0(mat_name, "_subsetted")
+    if (!dir.exists(file.path(data_dir, mat_name))) {
+        url <- paste0("https://pub-c4e56988ff67429e9856ffa33aecb0c1.r2.dev/", mat_name, ".tar.gz")
+        suppressWarnings(try(download.file(url, file.path(data_dir, paste0(mat_name, ".tar.gz"))), silent = TRUE))
+        # Check if file download failed
+        if (!file.exists(file.path(data_dir, paste0(mat_name, ".tar.gz")))) {
+            prepare_demo_data(data_dir, filter_qc = filter_qc, subset = subset)
+        } else {
+            untar(file.path(data_dir, paste0(mat_name, ".tar.gz")), exdir=data_dir)
+            file.remove(file.path(data_dir, paste0(mat_name, ".tar.gz")))
+        }
+    }
+    return(open_matrix_dir(file.path(data_dir, mat_name)))
+}
+
+#' @rdname demo_data
+#' @return
+#' - `get_demo_frags()`: (IterableFragments) A Fragments object.
+#' @details
+#' - `get_demo_frags()`: Retrieve a demo `IterableFragments` object representing the 10X Genomics PBMC 3k dataset.
+#' @export 
+get_demo_frags <- function(filter_qc = TRUE, subset = TRUE) {
+    data_dir <- file.path(tools::R_user_dir("BPCells", which = "data"), "demo_data")
+    if (!dir.exists(data_dir)) {
+        dir.create(data_dir, recursive = TRUE)
+    }
+    frags_name <- "demo_frags"
+    if (filter_qc) frags_name <- paste0(frags_name, "_filtered")
+    if (subset) frags_name <- paste0(frags_name, "_subsetted")
+    if (!dir.exists(file.path(data_dir, frags_name))) {
+        url <- paste0("https://pub-c4e56988ff67429e9856ffa33aecb0c1.r2.dev/", frags_name, ".tar.gz")
+        suppressWarnings(try(download.file(url, file.path(data_dir, paste0(frags_name, ".tar.gz"))), silent = TRUE))
+        if (!file.exists(file.path(data_dir, paste0(frags_name, ".tar.gz")))) {
+            prepare_demo_data(data_dir)
+        } else {
+            untar(file.path(data_dir, paste0(frags_name, ".tar.gz")), exdir = data_dir)
+            file.remove(file.path(data_dir, paste0(frags_name, ".tar.gz")))
+        }
+    }
+    return(open_fragments_dir(file.path(data_dir, frags_name)))
+}
+
+#' @rdname demo_data
+#' @return
+#' - `remove_demo_data()`: `NULL`
+#' @details 
+#' - `remove_demo_data()`: Remove the demo data from the BPCells data directory.
+#' @export
+remove_demo_data <- function() {
+    data_dir <- file.path(tools::R_user_dir("BPCells", which = "data"), "demo_data")
+    if (dir.exists(data_dir)) {
+        unlink(data_dir, recursive = TRUE)
+    }
+}
+
 #' Gene Symbol Mapping data
 #'
 #' Mapping of the canonical gene symbols corresponding to each
@@ -36,3 +244,5 @@
 #' <http://www.informatics.jax.org/downloads/reports/MGI_EntrezGene.rpt>
 #' <http://www.informatics.jax.org/downloads/reports/MRK_ENSEMBL.rpt>
 "mouse_gene_mapping"
+
+
