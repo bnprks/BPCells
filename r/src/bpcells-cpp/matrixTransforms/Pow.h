@@ -14,7 +14,7 @@ namespace BPCells {
 
 class Pow : public MatrixTransform {
   public:
-    using MatrixTransform::MatrixTransform;
+    Pow(std::unique_ptr<MatrixLoader<double>> &&loader, TransformFit fit);
 
     bool load() override;
 };

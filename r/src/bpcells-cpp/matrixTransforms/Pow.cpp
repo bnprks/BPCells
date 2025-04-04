@@ -12,6 +12,12 @@
 
 namespace BPCells {
 
+Pow::Pow(std::unique_ptr<MatrixLoader<double>> &&loader, TransformFit fit) : MatrixTransform::MatrixTransform(std::move(loader), fit) {
+    if (fit.global_params.size() != 1 || fit.global_params(0) <= 0) {
+        throw std::runtime_error("C++ error constructing Pow: exponent <= 0");
+    }
+}
+
 bool Pow::load() {
     if (!loader->load()) return false;
 
