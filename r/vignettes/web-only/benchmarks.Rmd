@@ -24,7 +24,7 @@ also extensively optimized the underlying C++ code to make BPCells much faster t
 disk-backed tools like DelayedArray.
 
 In the benchmark below, we show the time and memory usage to perform a standardized workflow
-of data import, normalization, variable gene selection, and PCA. Note that we
+of data normalization, variable gene selection, and PCA. Note that we
 show Seurat's in-memory workflow, though Seurat v5 also offers a BPCells integration
 for disk-backed operations. All tools were given a 3 hour time limit and up to 256GB of RAM,
 but only BPCells was able to process the largest datasets within these resource limits.
