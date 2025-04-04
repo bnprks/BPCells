@@ -198,6 +198,7 @@ qc_scATAC <- function(fragments, genes, blacklist) {
 #'  Must be ordered by priority and have columns chr, start, end.
 #' @return `tibble::tibble()` with a nonoverlapping subset of the rows in peaks. All metadata
 #'  columns are preserved
+#' @export
 merge_peaks_iterative <- function(peaks) {
   assert_is(peaks, c("data.frame", "list"))
   assert_has_names(peaks, c("chr", "start", "end"))
