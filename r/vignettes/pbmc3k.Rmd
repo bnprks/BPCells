@@ -212,7 +212,7 @@ bitpacking compression. In this case, the storage space is a little misleading
 since `r sprintf("%.2g",rna_sizes["names"]/sum(rna_sizes)*100)`% of the bitpacked
 storage is spent on the gene + cell names. In this case both 10x compressed hdf5
 and bitpacking compression are 4-6x smaller than an uncompressed sparse matrix 
-format such as AnnData.
+format such as AnnData h5ad's default.
 
 Aside from compact storage, bitpacking compression also enables very fast read
 speeds which is useful for downstream calculations.
@@ -486,7 +486,7 @@ plot_dot(
 # ATAC Normalization, PCA and UMAP
 We start with tile-based peak calling, which tests pre-determined overlapping tile
 positions for significant enrichment of ATAC-seq signal over the genome-wide background
-in each cell type independently. This is faster than using a real peak-caller like
+in each cell type independently. This is faster than using a traditional peak-caller like
 MACS, though with the default parameters the peaks will always be 200bp wide and the positioning
 resolution is approximately +/- 30bp.
 ```{r, warning=FALSE, message=FALSE}
