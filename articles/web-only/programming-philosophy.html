@@ -40,6 +40,7 @@
 <li><a class="dropdown-item" href="../../articles/pbmc3k.html">Basic tutorial</a></li>
     <li><a class="dropdown-item" href="../../articles/web-only/benchmarks.html">Performance Benchmarks</a></li>
     <li><a class="dropdown-item" href="../../articles/web-only/how-it-works.html">How BPCells works</a></li>
+    <li><a class="dropdown-item" href="../../articles/web-only/programming-efficiency.html">Efficiency tips</a></li>
     <li><hr class="dropdown-divider"></li>
     <li><a class="dropdown-item" href="../../articles/index.html">More articles...</a></li>
   </ul>
@@ -74,9 +75,6 @@
 
     
     
-<div class="section level2">
-<h2 id="programming-philosopy">Programming philosopy<a class="anchor" aria-label="anchor" href="#programming-philosopy"></a>
-</h2>
 <p>BPCells operates according to a somewhat different programming
 philosophy from other tools. In particular:</p>
 <ul>
@@ -95,9 +93,9 @@ values on-the-fly. This helps to avoid wasteful storage use.</li>
 <li>BPCells does not (currently) have a concept of a “project” object
 that combines data + metadata in a complex structure.</li>
 </ul>
-<div class="section level3">
-<h3 id="working-without-a-project-object">Working without a project object<a class="anchor" aria-label="anchor" href="#working-without-a-project-object"></a>
-</h3>
+<div class="section level2">
+<h2 id="working-without-a-project-object">Working without a project object<a class="anchor" aria-label="anchor" href="#working-without-a-project-object"></a>
+</h2>
 <p>Imagine you want to plot a UMAP of your cells colored by cluster. In
 BPCells, the way you do this is by providing:</p>
 <p>1, The matrix of cells x UMAP coordinates 2. A vector listing which
@@ -132,9 +130,7 @@ keep track of metadata. Keeping BPCells flexible for power users while
 retaining ease-of-use for newbies is an ongoing effort, but BPCells
 currently falls more on the side of power users</p>
 </div>
-</div>
-  </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
-    </nav></aside>
+  </main>
 </div>
 
 

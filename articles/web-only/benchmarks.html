@@ -40,6 +40,7 @@
 <li><a class="dropdown-item" href="../../articles/pbmc3k.html">Basic tutorial</a></li>
     <li><a class="dropdown-item" href="../../articles/web-only/benchmarks.html">Performance Benchmarks</a></li>
     <li><a class="dropdown-item" href="../../articles/web-only/how-it-works.html">How BPCells works</a></li>
+    <li><a class="dropdown-item" href="../../articles/web-only/programming-efficiency.html">Efficiency tips</a></li>
     <li><hr class="dropdown-divider"></li>
     <li><a class="dropdown-item" href="../../articles/index.html">More articles...</a></li>
   </ul>
@@ -74,13 +75,14 @@
 
     
     
+<!-- This is to make sure the logo file gets copied to output on a full website rebuild <img src="/home/bparks/dev/github/bnprks/BPCells/r/vignettes/web-only/logo.png" style="visibility: hidden; width: 0px" /> -->
 <p>These performance benchmarks are based on extensive benchmarks from
 the <a href="https://www.biorxiv.org/content/10.1101/2025.03.27.645853v1" class="external-link">BPCells
 manuscript</a>. Full benchmarking/plotting code and data TSVs are
-available at <a href="https://github.com/GreenleafLab/BPCells_paper" class="external-link">https://github.com/GreenleafLab/BPCells_paper</a>.
-These numbers are just a snapshot of tool performance as of December
-2024, so we encourage you to check performance on your own datasets with
-the latest versions of all software packages to get the most up-to-date
+available <a href="https://github.com/GreenleafLab/BPCells_paper" class="external-link">here</a>. These
+numbers are just a snapshot of tool performance as of December 2024, so
+we encourage you to check performance on your own datasets with the
+latest versions of all software packages to get the most up-to-date
 results.</p>
 <div class="section level3">
 <h3 id="rna-seq-normalization-pca">RNA-seq normalization + PCA<a class="anchor" aria-label="anchor" href="#rna-seq-normalization-pca"></a>
@@ -90,15 +92,15 @@ able to use dramatically less memory than traditional in-memory
 workflows. We have also extensively optimized the underlying C++ code to
 make BPCells much faster than traditional disk-backed tools like
 DelayedArray.</p>
-<p>In the benchmark below, we show the time and memory to perform a
-standardized workflow of data import, normalization, variable gene
+<p>In the benchmark below, we show the time and memory usage to perform
+a standardized workflow of data import, normalization, variable gene
 selection, and PCA. Note that we show Seurat’s in-memory workflow,
 though Seurat v5 also offers a BPCells integration for disk-backed
 operations. All tools were given a 3 hour time limit and up to 256GB of
 RAM, but only BPCells was able to process the largest datasets within
 these resource limits.</p>
 <p><img src="benchmark-plots%2Fpca_comparison.png" class="mx-auto d-block" style="max-height: 20rem"></p>
-<p>We noticed that execution speed tends to scale with the number of
+<p>Notice that execution speed tends to scale with the number of
 non-zero entries in a matrix, whereas memory usage for BPCells scales
 with the number of cells (i.e. space required to store the output PCA
 embeddings).</p>
@@ -188,9 +190,9 @@ compression.</p>
 <p>Because of these much faster file read speeds, BPCells is able to do
 light compute tasks like computing per-gene mean and variance across 44M
 cells in &lt;3 minutes. PCA is the most expensive operation BPCells
-performs, requiring 167 passes over the input matrix to calculate 32
-PCs. Still, it completes in less than 1 hour on a server and 6.2 hours
-on a laptop. This makes atlas-scale analysis possible on a laptop while
+performs, using 167 passes over the input matrix to calculate 32 PCs.
+Still, it completes in less than 1 hour on a server and 6.2 hours on a
+laptop. This makes atlas-scale analysis possible on a laptop while
 leaving headroom on a server for datasets up to an order of magnitude
 larger.</p>
 <p><img src="benchmark-plots%2Fcellxgene_compute_tasks.png" class="mx-auto d-block" style="max-height: 20rem"></p>
@@ -206,7 +208,7 @@ manuscript</a> for further details.</p>
 </h2>
 <ul>
 <li>March 29, 2025: Update benchmarks with numbers + performance from
-BPCells manuscript
+BPCells manuscript.
 <ul>
 <li>Normalization &amp; PCA: Add more comparison datasets, add
 DelayedArray results, and add multithreading plot</li>
@@ -221,7 +223,7 @@ comparisons to SnapATAC2.</li>
 </li>
 <li>March 30, 2023: Added clarification that AnnData benchmarks referred
 to h5ad with default compression settings (i.e. none).</li>
-<li>March 29, 2023: Created benchmark page</li>
+<li>March 29, 2023: Created benchmark page.</li>
 </ul>
 </div>
 
