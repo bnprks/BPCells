@@ -5,14 +5,15 @@
 <meta charset="utf-8">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-<title>Matrix Storage Format • BPCells</title>
+<title>Matrix and Fragment Storage Formats • BPCells</title>
 <script src="../../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <link href="../../deps/bootstrap-5.3.1/bootstrap.min.css" rel="stylesheet">
-<script src="../../deps/bootstrap-5.3.1/bootstrap.bundle.min.js"></script><link href="../../deps/font-awesome-6.4.2/css/all.min.css" rel="stylesheet">
-<link href="../../deps/font-awesome-6.4.2/css/v4-shims.min.css" rel="stylesheet">
+<script src="../../deps/bootstrap-5.3.1/bootstrap.bundle.min.js"></script><link href="../../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
+<link href="../../deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet">
 <script src="../../deps/headroom-0.11.0/headroom.min.js"></script><script src="../../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../../deps/search-1.0.0/fuse.min.js"></script><script src="../../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../../pkgdown.js"></script><link href="../../extra.css" rel="stylesheet">
-<meta property="og:title" content="Matrix Storage Format">
-<script defer data-domain="benparks.net" src="https://plausible.benparks.net/js/visit-counts.js"></script>
+<meta property="og:title" content="Matrix and Fragment Storage Formats">
+<script defer data-domain="benparks.net" src="https://plausible.benparks.net/js/visit-counts.js"></script><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.15/dist/katex.min.css" integrity="sha384-Htz9HMhiwV8GuQ28Xr9pEs1B4qJiYu/nYLLwlDklR53QibDfmQzi7rYxXhMH/5/u" crossorigin="anonymous">
+<!-- The loading of KaTeX is deferred to speed up page rendering --><script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.15/dist/katex.min.js" integrity="sha384-bxmi2jLGCvnsEqMuYLKE/KsVCxV3PqmKeK6Y6+lmNXBry6+luFkEOsmp5vD9I/7+" crossorigin="anonymous"></script><!-- To automatically render math in text elements, include the auto-render extension: --><script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.15/dist/contrib/auto-render.min.js" integrity="sha384-hCXGrW6PitJEwbkoStFjeJxv+fSOOQKOPbJxSfM6G5sWZjAyWhXiTIIAmQqnlLlh" crossorigin="anonymous" onload="renderMathInElement(document.body);"></script>
 </head>
 <body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
@@ -22,7 +23,7 @@
 
     <a class="navbar-brand me-2" href="../../index.html">BPCells</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -39,6 +40,7 @@
 <li><a class="dropdown-item" href="../../articles/pbmc3k.html">Basic tutorial</a></li>
     <li><a class="dropdown-item" href="../../articles/web-only/benchmarks.html">Performance Benchmarks</a></li>
     <li><a class="dropdown-item" href="../../articles/web-only/how-it-works.html">How BPCells works</a></li>
+    <li><a class="dropdown-item" href="../../articles/web-only/programming-efficiency.html">Efficiency tips</a></li>
     <li><hr class="dropdown-divider"></li>
     <li><a class="dropdown-item" href="../../articles/index.html">More articles...</a></li>
   </ul>
@@ -64,7 +66,7 @@
 <div class="row">
   <main id="main" class="col-md-9"><div class="page-header">
 
-      <h1>Matrix Storage Format</h1>
+      <h1>Matrix and Fragment Storage Formats</h1>
             
       
       <small class="dont-index">Source: <a href="https://github.com/bnprks/BPCells/tree/main/r/vignettes/web-only/bitpacking-format.Rmd" class="external-link"><code>vignettes/web-only/bitpacking-format.Rmd</code></a></small>
@@ -74,12 +76,27 @@
     
     
 <p>This provides an overview of the BPCells compressed and uncompressed
-matrix formats as they stand as of April 2023. While BPCells is pre-1.0
-these formats may be updated, though with a goal of maintaining
-backwards read-compatibility across updates.</p>
-<div class="section level3">
-<h3 id="matrix-logical-storage-layout">Matrix Logical Storage Layout<a class="anchor" aria-label="anchor" href="#matrix-logical-storage-layout"></a>
-</h3>
+matrix formats. While BPCells is pre-1.0 these formats may be updated,
+though BPCells aims to maintain backwards read-compatibility across
+updates.</p>
+<p>Format version changes:</p>
+<ul>
+<li>v2 (March 2023): Add support for
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo>&gt;</mo><msup><mn>2</mn><mn>32</mn></msup></mrow><annotation encoding="application/x-tex">&gt;2^32</annotation></semantics></math>
+non-zero entries or fragments in a single file.
+<ul>
+<li>
+<code>idxptr</code>: uint32 -&gt; uint64</li>
+<li>
+<code>chr_ptr</code>: uint32 -&gt; uint64</li>
+<li>Add <code>*_idx_offsets</code> fields to bitpacked data.</li>
+</ul>
+</li>
+<li>v1 (August 2022): Initial stability of v1 file formats</li>
+</ul>
+<div class="section level2">
+<h2 id="matrix-logical-storage-layout">Matrix Logical Storage Layout<a class="anchor" aria-label="anchor" href="#matrix-logical-storage-layout"></a>
+</h2>
 <p>For data storage, we use a storage abstraction of named data arrays,
 stored as e.g. a single group hdf5 or a directory of files. The matrix
 format is a compressed sparse column/row (CSC/CSR) format with the
@@ -114,12 +131,12 @@ following data arrays:</p>
 <tr class="odd">
 <td><code>row_names</code></td>
 <td>string</td>
-<td>0 or #rows</td>
+<td>0 or # rows</td>
 </tr>
 <tr class="even">
 <td><code>col_names</code></td>
 <td>string</td>
-<td>0 or #cols</td>
+<td>0 or # cols</td>
 </tr>
 <tr class="odd">
 <td><code>storage_order</code></td>
@@ -132,7 +149,7 @@ following data arrays:</p>
 <ul>
 <li>
 <code>val</code> - Values of non-zero entries in increasing order of
-(column, row) position of the non-zero value.</li>
+(column, row) position.</li>
 <li>
 <code>index</code> - <code>index[i]</code> provides the 0-based row
 index for the value found in <code>val[i]</code> (or column index for
@@ -141,7 +158,7 @@ row-major storage order)</li>
 <code>idxptr</code> - The indexes in <code>idx</code> and
 <code>val</code> for the entries in column <code>j</code> can be found
 from <code>idxptr[j]</code> to <code>idxptr[j+1] - 1</code> , inclusive.
-(or row j for row-major storage order)</li>
+(or row <code>j</code> for row-major storage order)</li>
 <li>
 <code>shape</code> - number of rows in matrix, followed by number of
 columns</li>
@@ -179,10 +196,134 @@ string. The current version string is of the format
 <code>[compression]-[datatype]-matrix-v2</code>, where
 <code>[compression]</code> can be either <code>packed</code> or
 <code>unpacked</code>, and <code>[datatype]</code> can be one of
-<code>uint</code>, <code>float</code>, and <code>double</code>
+<code>uint</code>, <code>float</code>, or <code>double</code>
 corresponding to 32-bit unsigned integer, 32-bit float, and 64-bit
 double respectively. In v1 formats, the only difference is that
 <code>idxptr</code> had type uint32.</p>
+</div>
+<div class="section level2">
+<h2 id="genomic-fragments-logical-storage-layout">Genomic fragments logical storage layout<a class="anchor" aria-label="anchor" href="#genomic-fragments-logical-storage-layout"></a>
+</h2>
+<p>BPCells fragment files store (chromosome, start, end, cell ID) for
+each fragment, sorted by (chromosome, start). The coordinate system
+follows the bed format convention, where the first base of a chromosome
+is numbered 0 and the end coordinate of each fragment is non-inclusive.
+This means a 10 base pair long fragment starting at the first base of
+the genome will have start=0 and end=10. End coordinates are always
+guaranteed to be at least as large as start coordinates.</p>
+<p>Uncompressed fragment data is stored in the following arrays:</p>
+<table class="table">
+<thead><tr class="header">
+<th>Name</th>
+<th>Type</th>
+<th>Length</th>
+</tr></thead>
+<tbody>
+<tr class="odd">
+<td><code>cell</code></td>
+<td>uint32</td>
+<td># fragments</td>
+</tr>
+<tr class="even">
+<td><code>start</code></td>
+<td>uint32</td>
+<td># fragments</td>
+</tr>
+<tr class="odd">
+<td><code>end</code></td>
+<td>uint32</td>
+<td># fragments</td>
+</tr>
+<tr class="even">
+<td><code>end_max</code></td>
+<td>uint32</td>
+<td>
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mo stretchy="false" form="prefix">⌈</mo><annotation encoding="application/x-tex">\lceil</annotation></semantics></math>#
+fragments/128<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mo stretchy="false" form="postfix">⌉</mo><annotation encoding="application/x-tex">\rceil</annotation></semantics></math>
+</td>
+</tr>
+<tr class="odd">
+<td><code>chr_ptr</code></td>
+<td>uint64</td>
+<td>2
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mo>×</mo><annotation encoding="application/x-tex">\times</annotation></semantics></math>
+# chromosomes</td>
+</tr>
+<tr class="even">
+<td><code>cell_names</code></td>
+<td>string</td>
+<td># cells</td>
+</tr>
+<tr class="odd">
+<td><code>chr_names</code></td>
+<td>string</td>
+<td># chromosomes</td>
+</tr>
+</tbody>
+</table>
+<p>These arrays have the following contents:</p>
+<ul>
+<li>
+<code>cell</code>: List of numeric cell IDs, one per fragment. The
+smallest cell ID is 0.<br>
+</li>
+<li>
+<code>start</code>: List of fragment start coordinates. The first
+base in a chromosome is 0.</li>
+<li>
+<code>end</code>: List of fragment end coordinates. The base of the
+end coordinate is one past the last base in the fragment.<br>
+</li>
+<li>
+<code>end_max</code>: <code>end_max[i]</code> is the maximum end
+coordinate of all fragments from the start of the chromosome to the
+fragment at index <code>i*128-127</code>. If multiple chromosomes have
+fragments in a given chunk of 128 fragments, <code>end_max</code> is the
+maximum of all those end coordinates. The <code>end_max</code> array
+allows for quickly seeking to fragments overlapping a given genomic
+region.<br>
+</li>
+<li>
+<code>chr_ptr</code>: <code>chr_ptr[2*i]</code> is the index of the
+first fragment in chromosome <code>i</code> in the <code>cell</code>,
+<code>start</code>, and <code>end</code> arrays.
+<code>chr_ptr[2*i + 1]-1</code> is the index of the last fragment in
+chromosome <code>i</code>. Fragments need not necessarily be sorted in
+order of increasing chromosome ID, though all fragments for a given
+chromosome must still be stored contiguously. This allows logically
+re-ordering chromosomes at write-time even if the input data source does
+not support reading chromosomes out-of-order (i.e. 10x fragment files
+without a genome index).<br>
+</li>
+<li>
+<code>cell_names</code>: string identifiers for each numeric cell
+ID.</li>
+<li>
+<code>chr_names</code>: string identifiers for each numeric
+chromosome ID.</li>
+</ul>
+<p>Compressed fragments are stored with the following modifications:</p>
+<ul>
+<li>
+<code>cell</code> is replaced with <code>cell_data</code>,
+<code>cell_idx</code>, and <code>cell_idx_offsets</code>, compressed
+according to BP-128 encoding.</li>
+<li>
+<code>start</code> is replaced with <code>start_data</code>,
+<code>start_idx</code>, <code>start_idx_offsets</code>, and
+<code>start_starts</code>, compressed according to BP-128d1
+encoding.</li>
+<li>
+<code>end</code> is replaced with <code>end_data</code>,
+<code>end_idx</code>, and <code>end_idx_offsets</code>, which stores
+<code>start - end</code> for each fragment, encoded using BP-128
+encoding.</li>
+</ul>
+<p>The current version string is equal to
+<code>unpacked-fragments-v2</code> for uncompressed fragments, and
+<code>packed-fragments-v2</code> for compressed fragments. In v1
+formats, the only difference is that <code>chr_ptr</code> had type
+uint32.</p>
 </div>
 <div class="section level2">
 <h2 id="bitpacking-formats">Bitpacking formats<a class="anchor" aria-label="anchor" href="#bitpacking-formats"></a>
@@ -274,8 +415,8 @@ BP-128</li>
 <li>
 <code>starts</code> - identical to BP128-d1</li>
 </ul>
-<p>The core bitpacking code can be found in <a href="https://github.com/bnprks/BPCells/blob/main/src/bitpacking/bp128.cpp" class="external-link"><code>src/bitpacking/bp128.cpp</code></a>
-in the github repository.</p>
+<p>Illustrative reference code for BP-128 and the d1 and zigzag
+transformations can be found <a href="https://github.com/GreenleafLab/BPCells_paper/blob/main/utils/bitpacking-reference-implementation.cpp" class="external-link">here</a>.</p>
 </div>
 </div>
 <div class="section level2">
@@ -286,41 +427,46 @@ different formats. The three currently supported by BPCells are:</p>
 <div class="section level4">
 <h4 id="directory-of-files-format">Directory of files format:<a class="anchor" aria-label="anchor" href="#directory-of-files-format"></a>
 </h4>
-<p>An array of numbers is stored as a single file with an 8-byte header,
-followed by the data values in little-endian binary format. Unsigned
-integers are encoded according to standard little-endian representation,
-and 32-bit and 64-bit floating point numbers as IEEE-754 format. Header
-values are 8-byte ASCII text as follows: unsigned 32-bit integer
-<code>UINT32v1</code>, unsigned 64-bit integer <code>UINT64v1</code>,
-32-bit float <code>FLOATSv1</code>, 64-bit float <code>DOUBLEv1</code>.
-Arrays of strings are stored as ASCII text with one array value per line
-with no header. The version string is stored as a file named version
-containing the version string followed by a newline.</p>
+<p>This is the default storage backend due to its simplicity and high
+performance. Arrays are stored as binary files within a directory.
+Numeric array files have an 8-byte header followed by data values in
+little-endian binary format for integers and IEEE-754 for 32-bit and
+64-bit floating point numbers. Header values are 8-byte ASCII text as
+follows: unsigned 32-bit integer <code>UINT32v1</code>, unsigned 64-bit
+integer <code>UINT64v1</code>, 32-bit float <code>FLOATSv1</code>,
+64-bit float <code>DOUBLEv1</code>. Arrays of strings are stored as
+ASCII text with one array value per line with no header. The version
+string is stored as a file named “version” containing the version string
+followed by a newline.</p>
 </div>
 <div class="section level4">
 <h4 id="hdf5-file-format">Hdf5 file format:<a class="anchor" aria-label="anchor" href="#hdf5-file-format"></a>
 </h4>
-<p>Arrays of numbers are stored as HDF5 datasets using the built-in HDF5
-encoding format. Arrays of strings are stored as HDF5 variable length
-string datasets.</p>
+<p>This storage backend can be useful for embedding BPCells formats as a
+group within an h5ad or other HDF5 file. Arrays of numbers are stored as
+HDF5 datasets using the built-in HDF5 encoding format. Arrays of strings
+are stored as HDF5 variable length string datasets.</p>
 <p>The version string is stored as a version attribute on the HDF5
-group</p>
+group.</p>
 </div>
 <div class="section level4">
 <h4 id="r-object-format">R object format:<a class="anchor" aria-label="anchor" href="#r-object-format"></a>
 </h4>
-<p>Strings are stored as native R character arrays. Unsigned integers
-and 32-bit floats are stored in native R integer arrays by bitcasting
-the R signed integers into the required data types. 64-bit floats are
-stored in native R numeric arrays. 64-bit integers are stored as doubles
-in R numeric arrays. This reduces the highest representable value from
+<p>This storage backend is primarily useful for testing, or when
+bitpacking compression of in-memory data is desired to avoid disk
+bandwidth bottlenecks. Strings are stored as native R character arrays.
+Unsigned integers and 32-bit floats are stored in native R integer
+arrays by bitcasting the R signed integers into the required data types.
+64-bit floats are stored in native R numeric arrays. 64-bit integers are
+stored as doubles in R numeric arrays. This reduces the highest
+representable value from
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msup><mn>2</mn><mn>64</mn></msup><mo>−</mo><mn>1</mn></mrow><annotation encoding="application/x-tex">2^{64}-1</annotation></semantics></math>
 to
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msup><mn>2</mn><mn>53</mn></msup><mo>−</mo><mn>1</mn></mrow><annotation encoding="application/x-tex">2^{53}-1</annotation></semantics></math>
 (about 9 quadrillion), which we do not expect to pose practical
 problems. Named collections of arrays are stored in R lists (when
 writing) or S4 objects (when reading). The version string is stored as a
-string vector named version of length 1.</p>
+string vector named “version” of length 1.</p>
 </div>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
@@ -334,7 +480,7 @@ string vector named version of length 1.</p>
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.0.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.1.</p>
 </div>
 
     </footer>

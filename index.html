@@ -8,13 +8,14 @@
 <title>Single Cell Counts Matrices to PCA • BPCells</title>
 <script src="deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <link href="deps/bootstrap-5.3.1/bootstrap.min.css" rel="stylesheet">
-<script src="deps/bootstrap-5.3.1/bootstrap.bundle.min.js"></script><link href="deps/font-awesome-6.4.2/css/all.min.css" rel="stylesheet">
-<link href="deps/font-awesome-6.4.2/css/v4-shims.min.css" rel="stylesheet">
+<script src="deps/bootstrap-5.3.1/bootstrap.bundle.min.js"></script><link href="deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
+<link href="deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet">
 <script src="deps/headroom-0.11.0/headroom.min.js"></script><script src="deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="deps/search-1.0.0/fuse.min.js"></script><script src="deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="pkgdown.js"></script><link href="extra.css" rel="stylesheet">
 <meta property="og:title" content="Single Cell Counts Matrices to PCA">
 <meta name="description" content="&gt; Efficient operations for single cell ATAC-seq fragments and RNA counts matrices. Interoperable with standard file formats, and introduces efficient bit-packed formats that allow large storage savings and increased read speeds.">
 <meta property="og:description" content="&gt; Efficient operations for single cell ATAC-seq fragments and RNA counts matrices. Interoperable with standard file formats, and introduces efficient bit-packed formats that allow large storage savings and increased read speeds.">
-<script defer data-domain="benparks.net" src="https://plausible.benparks.net/js/visit-counts.js"></script>
+<script defer data-domain="benparks.net" src="https://plausible.benparks.net/js/visit-counts.js"></script><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.15/dist/katex.min.css" integrity="sha384-Htz9HMhiwV8GuQ28Xr9pEs1B4qJiYu/nYLLwlDklR53QibDfmQzi7rYxXhMH/5/u" crossorigin="anonymous">
+<!-- The loading of KaTeX is deferred to speed up page rendering --><script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.15/dist/katex.min.js" integrity="sha384-bxmi2jLGCvnsEqMuYLKE/KsVCxV3PqmKeK6Y6+lmNXBry6+luFkEOsmp5vD9I/7+" crossorigin="anonymous"></script><!-- To automatically render math in text elements, include the auto-render extension: --><script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.15/dist/contrib/auto-render.min.js" integrity="sha384-hCXGrW6PitJEwbkoStFjeJxv+fSOOQKOPbJxSfM6G5sWZjAyWhXiTIIAmQqnlLlh" crossorigin="anonymous" onload="renderMathInElement(document.body);"></script>
 </head>
 <body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
@@ -41,6 +42,7 @@
 <li><a class="dropdown-item" href="articles/pbmc3k.html">Basic tutorial</a></li>
     <li><a class="dropdown-item" href="articles/web-only/benchmarks.html">Performance Benchmarks</a></li>
     <li><a class="dropdown-item" href="articles/web-only/how-it-works.html">How BPCells works</a></li>
+    <li><a class="dropdown-item" href="articles/web-only/programming-efficiency.html">Efficiency tips</a></li>
     <li><hr class="dropdown-divider"></li>
     <li><a class="dropdown-item" href="articles/index.html">More articles...</a></li>
   </ul>
@@ -64,20 +66,21 @@
 <div class="page-header"><h1 id="bpcells">BPCells<a class="anchor" aria-label="anchor" href="#bpcells"></a>
 </h1></div>
 <p><em>This site is for the R package. Python site <a href="python/index.html">here</a> (experimental)</em></p>
-<p>BPCells is a package for high performance single cell analysis on RNA-seq and ATAC-seq datasets. It can analyze a 1.3M cell dataset with 2GB of RAM in around 10 minutes (<a href="articles/web-only/benchmarks.html">benchmarks</a>). This makes analysis of million-cell datasets practical on a laptop.</p>
+<p>BPCells is a package for high performance single cell analysis of large RNA-seq and ATAC-seq datasets. It can run normalization and PCA of a 1.3M cell dataset in 4 minutes with 2GB of RAM, or create scATAC-seq peak matrices from fragment coordinates with 50x less CPU time than ArchR or SnapATAC2. BPCells can even handle the full CELLxGENE census human dataset, running full precision PCA on a 44M cell x 60k gene matrix in 6 hours on a laptop or &lt;1 hour on a server. See our <a href="articles/web-only/benchmarks.html">benchmarks page</a> for details.</p>
 <p>BPCells provides:</p>
 <ul>
 <li>Efficient storage of single cell datasets via bitpacking compression</li>
 <li>Fast, disk-backed RNA-seq and ATAC-seq data processing powered by C++</li>
 <li>Downstream analysis such as marker genes, and clustering</li>
 <li>Interoperability with AnnData, 10x datasets, R sparse matrices, and GRanges</li>
+<li>Demonstrated scalability to 44M cells on a laptop</li>
 </ul>
 <p>Additionally, BPCells exposes its optimized data processing infrastructure for use in scaling 3rd party single cell tools (e.g. Seurat)</p>
 <div class="section level2">
 <h2 id="learn-more">Learn more<a class="anchor" aria-label="anchor" href="#learn-more"></a>
 </h2>
 <ul>
-<li><a href="articles/web-only/manuscript-draft.html">Draft manuscript</a></li>
+<li><a href="https://www.biorxiv.org/content/10.1101/2025.03.27.645853v1" class="external-link">BioRxiv preprint</a></li>
 <li><a href="articles/web-only/benchmarks.html">Benchmarks</a></li>
 <li><a href="articles/pbmc3k.html">Multiomic analysis example</a></li>
 <li><a href="articles/web-only/how-it-works.html">How BPCells works</a></li>
@@ -151,12 +154,19 @@ Click here for operating system specific installation information for github-bas
 <div class="section level2">
 <h2 id="contributing">Contributing<a class="anchor" aria-label="anchor" href="#contributing"></a>
 </h2>
-<p>BPCells is an open source project, and we welcome quality contributions. If you are interested in contributing and have experience with C++, along with Python or R, feel free to reach out with ideas you would like to implement yourself. I’m happy to provide pointers for how to get started, my time permitting.</p>
-<p>If you are unfamiliar with C++ it will be difficult for you to contribute code, but detailed bug reports with <a href="https://reprex.tidyverse.org/articles/reprex-dos-and-donts.html" class="external-link">reproducible examples</a> are still a useful way to help out. Github issues are the best forum for this.</p>
-<p>If you maintain a single cell analysis package and want to use BPCells to improve your scalability, I’m happy to provide advice. We have had a couple of labs try this so far, with promising success. Email is the best way to get in touch for this (look in the <code>DESCRIPTION</code> file on github for contact info). Python developers welcome, though the full python package will likely not be available until after summer 2023.</p>
+<p>BPCells is an open source project, and we welcome quality contributions. If you are interested in contributing and have experience with C++, along with Python or R, feel free to reach out with ideas you would like to implement yourself. We’re happy to provide pointers for how to get started, time permitting.</p>
+<p>If you are unfamiliar with C++ it will be difficult for you to contribute code, but detailed bug reports with <a href="https://reprex.tidyverse.org/articles/reprex-dos-and-donts.html" class="external-link">reproducible examples</a> are still a great way to help out. Github issues are the best forum for this.</p>
+<p>If you maintain a single cell analysis package and want to use BPCells to improve your scalability, we’re happy to provide advice. We have had a couple of labs try this so far, with promising success. Email is the best way to get in touch for this (look in the <code>DESCRIPTION</code> file on github for contact info). Python developers welcome, though the current python package is still in experimental status.</p>
 </div>
 </div>
-  </main><aside class="col-md-3"><div class="links">
+  </main><aside class="col-md-3"><div class="">
+<h2 data-toc-skip></h2>
+<ul class="list-unstyled">
+<li><p><img src="articles/web-only/logo.png" width="150px"></p></li>
+</ul>
+</div>
+
+<div class="links">
 <h2 data-toc-skip>Links</h2>
 <ul class="list-unstyled">
 <li><a href="https://github.com/bnprks/BPCells" class="external-link">Browse source code</a></li>
