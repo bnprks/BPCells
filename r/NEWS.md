@@ -13,6 +13,7 @@
 - Fix `gene_score_archr()` and `gene_score_weights_archr()` malfunctioning for non-default `tile_width` settings. (Thanks to @Baboon61 for reporting issue #185)
 - Fix `gene_score_archr()` when `chromosome_sizes` argument is not sorted. (Thanks to @Baboon61 for reporting issue #188)
 - Fix matrix transpose error when BPCells is loaded via `devtools::load_all()` and `BiocGenerics` has been imported previously. (pull request #191)
+- Fix error when using a single group in `write_insertion_bedgraph()` (pull request #214)
 
 # BPCells 0.3.0 (12/21/2024)
 

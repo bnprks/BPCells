@@ -132,6 +132,11 @@ test_that("write_insertion_bedgraph works", {
   frag_table <- dplyr::bind_rows(chr1, chr2) %>%
     dplyr::mutate(cell_group = dplyr::if_else(cell_id %in% c("A", "E", "I", "O", "U"), "vowel", "consonant"))
 
+  coverage_start_single_group <- dplyr::bind_rows(chr1, chr2) %>%
+    dplyr::mutate(end=start+1L) %>%
+    dplyr::group_by(chr, start, end) %>%
+    dplyr::summarize(value = dplyr::n(), .groups="drop")
+
   coverage_start <- frag_table %>%
     dplyr::mutate(end=start+1L) %>%
     dplyr::group_by(chr, start, end, cell_group) %>%
@@ -176,6 +181,13 @@ test_that("write_insertion_bedgraph works", {
       data.frame(result_consonant)
     )
   }
+  # Test single group
+  write_insertion_bedgraph(frags, file.path(dir, "all.bg"), insertion_mode = "start")
+  expect_identical(
+    readr::read_tsv(file.path(dir, "all.bg"), col_names = c("chr", "start", "end", "value"), col_types = "ciii") %>% 
+      data.frame(),
+    coverage_start_single_group %>% data.frame()
+  )
 })
 
 test_that("write_insertion_bed works", {
