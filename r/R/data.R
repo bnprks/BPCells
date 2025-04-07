@@ -14,7 +14,7 @@
 #' @param filter_qc (bool) Whether to filter both the RNA and ATAC data using QC information.
 #' @param subset (bool) Whether to subset to only genes/insertions on chromosome 4 and 11.
 #' @param timeout (numeric) Timeout for downloading files in seconds.
-#' @param remove_input_data (logical) Whether to remove the downloaded non-procesed matrix, frags, gencode transcripts, and gencode genes
+#' @param remove_input_data (logical) Whether to remove the downloaded non-processed matrix, frags, gencode transcripts, and gencode genes
 #' after processing.
 #' @return (list) A list with the RNA matrix under the name "mat", and the ATAC fragments under the name "frags".
 #' @details
@@ -119,7 +119,7 @@ prepare_demo_data <- function(directory = NULL, filter_qc = TRUE, subset = TRUE,
 #' demo data is downloaded and stored in the BPCells data directory  (under `file.path(tools::R_user_dir("BPcells", which="data"), "demo_data")`).
 #' Subsequent calls to this function will use the previously downloaded matrix/fragments, given that the same combination of filtering and 
 #' subsetting has been performed previously.
-#' The preperation of this matrix can be reproduced by running the internal function `prepare_demo_data()` with `directory` set to the BPCells data directory.
+#' The preparation of this matrix can be reproduced by running the internal function `prepare_demo_data()` with `directory` set to the BPCells data directory.
 #' 
 #' In the case that demo data is not pre-downloaded and demo data download fails, `prepare_demo_data()` will act
 #' as a fallback.
