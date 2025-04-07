@@ -59,7 +59,7 @@ mat <- as(mat, "IterableMatrix")
 
 
 #######################################################################
-## normalize_log() example
+## normalize_log() examples
 normalize_log(mat)
 
 ## normalization functions can also be called with partial arguments 

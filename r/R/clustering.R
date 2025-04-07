@@ -61,6 +61,7 @@ is_adjacency_matrix <- function(mat) {
 #' they can instead call `cluster_cells_graph()` like so: 
 #' `cluster_cells_graph(mat, graph_to_cluster_method = cluter_graph_louvain(resolution = 0.5))`
 #' @seealso `knn_hnsw()` `knn_annoy()` `knn_to_graph()` `knn_to_snn_graph()` `knn_to_geodesic_graph()` `cluster_graph_leiden()` `knn_to_snn_graph()` `knn_to_geodesic_graph()`
+#' @export
 cluster_cells_graph <- function(
   mat, knn_method = knn_hnsw, 
   knn_to_graph_method = knn_to_geodesic_graph, 

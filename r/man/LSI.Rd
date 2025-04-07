@@ -59,6 +59,23 @@ Running on a 2600 cell dataset with 50000 peaks and 4 threads, as an example:
 \item 17.1 MB memory usage, 25.1 seconds runtime
 }
 }
+\examples{
+nrows <- 50
+ncols <- 1000
+mat <- matrix(1:(nrows*ncols), nrow = nrows) \%>\% as("IterableMatrix")
+rownames(mat) <- paste0("feat", seq(nrows))
+colnames(mat) <- paste0("cell", seq(ncols))
+
+
+#######################################################################
+## LSI() example
+lsi_result <- LSI(mat, n_dimensions = 10)
+#######################################################################
+#######################################################################
+## project(<LSI>) example
+dim(project(lsi_result, mat))
+#######################################################################
+}
 \seealso{
 \code{project()} \code{DimReduction()} \code{normalize_tfidf()} \code{normalize_log()} \code{svds()}
 }

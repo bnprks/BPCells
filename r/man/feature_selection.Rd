@@ -94,11 +94,17 @@ This should be equivalent to \code{Seurat::FindVariableFeatures()} with \code{se
 and \code{scanpy.pp.highly_variable_genes()} with \code{flavor="seurat"}.
 }
 \examples{
+
+## Prep data
 set.seed(12345)
 mat <- matrix(rpois(4*5, lambda=1), nrow=4, ncol=5)
 rownames(mat) <- paste0("gene", seq_len(nrow(mat)))
 mat
 mat <- as(mat, "IterableMatrix")
+
+
+#######################################################################
+## select_features_variance() examples
 select_features_variance(
     mat, 
     num_feats=2, 
@@ -114,6 +120,31 @@ variable_features <- select_features_variance(
 ) 
 # One can then filter to only variable features using the subset operator:
 mat[variable_features$feature[variable_features$highly_variable],]
+#######################################################################
+#######################################################################
+## select_features_dispersion() example
+select_features_dispersion(
+  mat,
+  num_feats = 2,
+  normalize_method = normalize_log
+)
+#######################################################################
+#######################################################################
+## select_features_mean() example
+select_features_mean(
+  mat,
+  num_feats = 2,
+  normalize_method = normalize_log
+)
+#######################################################################
+#######################################################################
+## select_features_binned_dispersion() example
+select_features_binned_dispersion(
+  mat,
+  num_feats = 2
+  n_bins = 2
+)
+#######################################################################
 }
 \seealso{
 \code{normalize_tfidf()} \code{normalize_log()}

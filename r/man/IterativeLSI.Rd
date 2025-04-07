@@ -113,6 +113,38 @@ While corr_cutoff is provided as an argument in \code{IterativeLSI()}, it is set
 but can be done as a preprocessing step.
 }
 }
+\examples{
+## Prep data
+nrows <- 500
+ncols <- 10000
+mat <- matrix(1:(nrows*ncols), nrow = nrows) \%>\% as("IterableMatrix")
+rownames(mat) <- paste0("feat", seq(nrows))
+colnames(mat) <- paste0("cell", seq(ncols))
+
+
+#######################################################################
+## IterativeLSI() examples
+dim_reduction <- IterativeLSI(mat, n_dimensions = 5)
+
+## Can customize parameters using partialization
+dim_reduction <- IterativeLSI(
+  mat,
+  n_dimensions = 10,
+  feature_selection_method = select_features_variance(
+    num_feats = 0.5,
+    normalize_method = normalize_tfidf(scale_factor = 5000)
+  ),
+  cluster_method = cluster_cells_graph(
+    graph_to_cluster_method = cluster_graph_louvain(resolution = 0.5),
+    knn_to_graph_method = knn_to_snn_graph
+  )
+)
+#######################################################################
+#######################################################################
+## project(<IterativeLSI>) example
+dim(project(dim_reduction, mat))
+#######################################################################
+}
 \seealso{
 \code{LSI()} \code{DimReduction()} \code{svds()}
 \code{cluster_cells_graph()} \code{select_features_variance()} \code{select_features_dispersion()}

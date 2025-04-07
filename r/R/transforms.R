@@ -969,7 +969,7 @@ regress_out <- function(mat, latent_data, prediction_axis = c("row", "col")) {
 #' 
 #' 
 #' #######################################################################
-#' ## normalize_log() example
+#' ## normalize_log() examples
 #' normalize_log(mat)
 #' 
 #' ## normalization functions can also be called with partial arguments 

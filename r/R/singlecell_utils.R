@@ -34,11 +34,17 @@
 #' and the column index \eqn{j} refers to each cell. For each feature \eqn{x_{i} \in X}, we define the following feature-selection scores:
 #' - `select_features_variance`: \eqn{\mathrm{Score}(x_i) = \frac{1}{n - 1} \sum_{j=1}^{n} \bigl(x_{ij} - \bar{x}_i\bigr)^2}
 #' @examples
+#' 
+#' ## Prep data
 #' set.seed(12345)
 #' mat <- matrix(rpois(4*5, lambda=1), nrow=4, ncol=5)
 #' rownames(mat) <- paste0("gene", seq_len(nrow(mat)))
 #' mat
 #' mat <- as(mat, "IterableMatrix")
+#' 
+#' 
+#' #######################################################################
+#' ## select_features_variance() examples
 #' select_features_variance(
 #'     mat, 
 #'     num_feats=2, 
@@ -54,6 +60,7 @@
 #' ) 
 #' # One can then filter to only variable features using the subset operator:
 #' mat[variable_features$feature[variable_features$highly_variable],]
+#' #######################################################################
 #' @seealso `normalize_tfidf()` `normalize_log()`
 #' @export
 select_features_variance <- function(
@@ -85,6 +92,15 @@ select_features_variance <- function(
 #' @rdname feature_selection
 #' @returns
 #' - `select_features_dispersion`: \eqn{\mathrm{Score}(x_i) = \frac{\frac{1}{n - 1} \sum_{j=1}^{n} \bigl(x_{ij} - \bar{x}_i\bigr)^2}{\bar{x}_i}}
+#' @examples
+#' #######################################################################
+#' ## select_features_dispersion() example
+#' select_features_dispersion(
+#'   mat,
+#'   num_feats = 2,
+#'   normalize_method = normalize_log
+#' )
+#' #######################################################################
 #' @export
 select_features_dispersion <- function(
   mat, num_feats = 0.05, 
@@ -115,6 +131,15 @@ select_features_dispersion <- function(
 #' @rdname feature_selection
 #' @returns
 #' - `select_features_mean`: \eqn{\mathrm{Score}(x_i) = \frac{\sum_{j=1}^{n}\bigl(x_{ij}\bigr)}{n}}
+#' @examples
+#' #######################################################################
+#' ## select_features_mean() example
+#' select_features_mean(
+#'   mat,
+#'   num_feats = 2,
+#'   normalize_method = normalize_log
+#' )
+#' #######################################################################
 #' @export
 select_features_mean <- function(mat, num_feats = 0.05, normalize_method = NULL, threads = 1L) {
   assert_greater_than_zero(num_feats)
@@ -150,6 +175,15 @@ select_features_mean <- function(mat, num_feats = 0.05, normalize_method = NULL,
 #' 
 #' This should be equivalent to `Seurat::FindVariableFeatures()` with `selection.method="mean.var.plot"`
 #'  and `scanpy.pp.highly_variable_genes()` with `flavor="seurat"`.
+#' @examples
+#' #######################################################################
+#' ## select_features_binned_dispersion() example
+#' select_features_binned_dispersion(
+#'   mat,
+#'   num_feats = 2
+#'   n_bins = 2
+#' )
+#' #######################################################################
 #' @export
 select_features_binned_dispersion <- function(
   mat, num_feats = 0.05, n_bins = 20,
@@ -281,6 +315,19 @@ project.default <- function(x, mat, ...) {
 #' Running on a 2600 cell dataset with 50000 peaks and 4 threads, as an example:
 #' - 17.1 MB memory usage, 25.1 seconds runtime
 #' @seealso `project()` `DimReduction()` `normalize_tfidf()` `normalize_log()` `svds()`
+#' @examples
+## Prep data
+#' nrows <- 50
+#' ncols <- 1000
+#' mat <- matrix(1:(nrows*ncols), nrow = nrows) %>% as("IterableMatrix")
+#' rownames(mat) <- paste0("feat", seq(nrows))
+#' colnames(mat) <- paste0("cell", seq(ncols))
+#' 
+#' 
+#' #######################################################################
+#' ## LSI() example
+#' lsi_result <- LSI(mat, n_dimensions = 10)
+#' #######################################################################
 #' @export
 LSI <- function(
   mat, n_dimensions = 50L, corr_cutoff = 1, scale_factor = 1e4,
@@ -347,6 +394,11 @@ LSI <- function(
 #' @return 
 #' `project()` IterableMatrix of the projected data of shape `(n_dimensions, ncol(mat))`.
 #' @inheritParams project
+#' @examples
+#' #######################################################################
+#' ## project(<LSI>) example
+#' dim(project(lsi_result, mat))
+#' #######################################################################
 #' @export
 project.LSI <- function(x, mat, threads = 1L, ...) {
   assert_is_mat(mat)
@@ -438,6 +490,33 @@ project.LSI <- function(x, mat, threads = 1L, ...) {
 #' `cluster_cells_graph()` `select_features_variance()` `select_features_dispersion()` 
 #' `select_features_mean()` `select_features_binned_dispersion()`
 #' @inheritParams LSI
+#' @examples
+#' ## Prep data
+#' nrows <- 500
+#' ncols <- 10000
+#' mat <- matrix(1:(nrows*ncols), nrow = nrows) %>% as("IterableMatrix")
+#' rownames(mat) <- paste0("feat", seq(nrows))
+#' colnames(mat) <- paste0("cell", seq(ncols))
+#' 
+#' 
+#' #######################################################################
+#' ## IterativeLSI() examples
+#' dim_reduction <- IterativeLSI(mat, n_dimensions = 5)
+#' 
+#' ## Can customize parameters using partialization
+#' dim_reduction <- IterativeLSI(
+#'   mat,
+#'   n_dimensions = 10,
+#'   feature_selection_method = select_features_variance(
+#'     num_feats = 0.5,
+#'     normalize_method = normalize_tfidf(scale_factor = 5000)
+#'   ),
+#'   cluster_method = cluster_cells_graph(
+#'     graph_to_cluster_method = cluster_graph_louvain(resolution = 0.5),
+#'     knn_to_graph_method = knn_to_snn_graph
+#'   )
+#' )
+#' #######################################################################
 #' @export
 IterativeLSI <- function(
   mat, 
@@ -539,6 +618,11 @@ IterativeLSI <- function(
 #' @return
 #' `project()` Matrix of the projected data of shape `(cells, n_dimensions)`.
 #' @inheritParams project
+#' @examples
+#' #######################################################################
+#' ## project(<IterativeLSI>) example
+#' dim(project(dim_reduction, mat))
+#' #######################################################################
 #' @export
 project.IterativeLSI <- function(x, mat, iteration = x$fitted_params$iterations, threads = 1L, ...) {
   assert_is_mat(mat)
