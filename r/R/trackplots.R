@@ -510,6 +510,24 @@ trackplot_coverage <- function(fragments, region, groups,
 #' @param label_size size for transcript labels in units of mm
 #' @return Plot of gene locations
 #' @seealso `trackplot_combine()`, `trackplot_coverage()`, `trackplot_loop()`, `trackplot_scalebar()`
+#' @examples
+#' transcripts <- read_gencode_transcripts(
+#'   file.path(tempdir(), "references"), release = "42",
+#'   annotation_set = "basic"
+#' )
+#' 
+#' region <- gene_region(transcripts, "CD19", extend_bp = 1e5)
+#' plot <- trackplot_gene(transcripts, region)
+#' 
+#' ## Boiler plate for getting plot sizing correct
+#' image_path <- file.path(tempdir(), "trackplot_gene.png")
+#' ggsave(
+#'   image_path,
+#'   trackplot_gene(transcripts, region), 
+#'   width = 6, height = 1
+#' )
+#' img <- png::readPNG(image_path)
+#' grid::grid.raster(img)
 #' @export
 trackplot_gene <- function(transcripts, region, exon_size = 2.5, gene_size = 0.5, label_size = 11*.8/ggplot2::.pt, track_label="Genes", return_data = FALSE) {
   region <- normalize_ranges(region)
