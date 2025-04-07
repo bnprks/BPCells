@@ -13,7 +13,9 @@ prepare_demo_data(
 )
 }
 \arguments{
-\item{directory}{(character) Where the input/output data should be stored.  If NULL, a temporary directory is created.}
+\item{directory}{(character) The directory where all the input/output data will be stored.
+Downloaded intermediates will be stored in subdir \code{intermediates}.
+If \code{NULL}, a temporary directory is created.}
 
 \item{filter_qc}{(bool) Whether to filter both the RNA and ATAC data using QC information.}
 
@@ -21,11 +23,11 @@ prepare_demo_data(
 
 \item{timeout}{(numeric) Timeout for downloading files in seconds.}
 
-\item{remove_input_data}{(logical) Whether to remove the downloaded non-procesed matrix, frags, gencode transcripts, and gencode genes
-after processing.}
+\item{remove_input_data}{(logical) Whether to remove the intermediate non-processed matrix, frags, gencode transcripts,
+and gencode genes after processing.  If this function errors out, will also remove intermediate data if \code{remove_input_data} is \code{TRUE}.}
 }
 \value{
-(list) A list with the RNA matrix under the name "mat", and the ATAC fragments under the name "frags".
+(list) A list with the RNA matrix under the name \code{mat}, and the ATAC fragments under the name \code{frags}.
 }
 \description{
 Downloads a 10x Genomics dataset consisting of 3k cells, then performs optional QC and subsetting.  Holds subsetted objects in disk,

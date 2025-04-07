@@ -31,17 +31,20 @@ remove_demo_data()
 }
 }
 \description{
-Functions to download matrices and fragments derived from the 10X Genomics PBMC 3k dataset,
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}} \cr Functions to download matrices and fragments derived from the 10X Genomics PBMC 3k dataset,
 with options to filter with common qc metrics, and to subset genes and fragments to only chromosome 4 and 11.
 }
 \details{
+These data functions are experimental.
+The interface, as well as the demo dataset itself will likely undergo changes in the near future.
+
 \strong{Data Processing}:
 
 The first time either \code{get_demo_mat()} are ran \code{get_demo_frags()},
 demo data is downloaded and stored in the BPCells data directory  (under \code{file.path(tools::R_user_dir("BPcells", which="data"), "demo_data")}).
 Subsequent calls to this function will use the previously downloaded matrix/fragments, given that the same combination of filtering and
 subsetting has been performed previously.
-The preperation of this matrix can be reproduced by running the internal function \code{prepare_demo_data()} with \code{directory} set to the BPCells data directory.
+The preparation of this matrix can be reproduced by running the internal function \code{prepare_demo_data()} with \code{directory} set to the BPCells data directory.
 
 In the case that demo data is not pre-downloaded and demo data download fails, \code{prepare_demo_data()} will act
 as a fallback.
@@ -81,4 +84,23 @@ Filter + Subset             \tab 1.2                      \tab 12.3             
 \itemize{
 \item \code{remove_demo_data()}: Remove the demo data from the BPCells data directory.
 }
+}
+\examples{
+#######################################################################
+## get_demo_mat() example
+get_demo_mat()
+#######################################################################
+#######################################################################
+## get_demo_frags() example
+get_demo_frags()
+#######################################################################
+#######################################################################
+## remove_demo_data() example
+remove_demo_data()
+
+
+## Demo data folder is now empty
+data_dir <- file.path(tools::R_user_dir("BPCells", which = "data"), "demo_data")
+list.files(data_dir)
+#######################################################################
 }
