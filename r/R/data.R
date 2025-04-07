@@ -8,7 +8,9 @@
 
 #' Create a small demo matrix and fragment object.
 #' 
-#' Downloads a 10x Genomics dataset consisting of 3k cells, then performs optional QC and subsetting.  Holds subsetted objects in disk,
+#' Downloads a 
+#' [10x Genomics dataset](https://cf.10xgenomics.com/samples/cell-arc/2.0.0/pbmc_granulocyte_sorted_3k/pbmc_granulocyte_sorted_3k_web_summary.html), 
+#'  consisting of 3k cells then performs optional QC and subsetting.  Holds subsetted objects in disk,
 #' and returns a list with both the matrix and fragments. 
 #' @param directory (character) The directory where all the input/output data will be stored.
 #' Downloaded intermediates will be stored in subdir `intermediates`.
@@ -105,7 +107,8 @@ prepare_demo_data <- function(directory = NULL, filter_qc = TRUE, subset = TRUE,
 
 #' Retrieve BPCells demo data
 #' 
-#' `r lifecycle::badge("experimental")` \cr Functions to download matrices and fragments derived from the 10X Genomics PBMC 3k dataset,
+#' `r lifecycle::badge("experimental")` \cr Functions to download matrices and fragments derived from a 
+#' [10X Genomics PBMC 3k dataset](https://cf.10xgenomics.com/samples/cell-arc/2.0.0/pbmc_granulocyte_sorted_3k/pbmc_granulocyte_sorted_3k_web_summary.html),
 #' with options to filter with common qc metrics, and to subset genes and fragments to only chromosome 4 and 11.
 #' @rdname demo_data
 #' @param filter_qc (bool) Whether to filter both the RNA and ATAC data using qc metrics (described in `details`).

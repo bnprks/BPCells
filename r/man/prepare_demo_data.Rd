@@ -30,7 +30,9 @@ and gencode genes after processing.  If this function errors out, will also remo
 (list) A list with the RNA matrix under the name \code{mat}, and the ATAC fragments under the name \code{frags}.
 }
 \description{
-Downloads a 10x Genomics dataset consisting of 3k cells, then performs optional QC and subsetting.  Holds subsetted objects in disk,
+Downloads a
+\href{https://cf.10xgenomics.com/samples/cell-arc/2.0.0/pbmc_granulocyte_sorted_3k/pbmc_granulocyte_sorted_3k_web_summary.html}{10x Genomics dataset},
+consisting of 3k cells then performs optional QC and subsetting.  Holds subsetted objects in disk,
 and returns a list with both the matrix and fragments.
 }
 \details{
