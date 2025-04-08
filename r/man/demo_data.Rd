@@ -32,7 +32,7 @@ remove_demo_data()
 }
 \description{
 \ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}} \cr Functions to download matrices and fragments derived from a
-\href{https://cf.10xgenomics.com/samples/cell-arc/2.0.0/pbmc_granulocyte_sorted_3k/pbmc_granulocyte_sorted_3k_web_summary.html}{10X Genomics PBMC 3k dataset},
+\href{https://www.10xgenomics.com/datasets/pbmc-from-a-healthy-donor-granulocytes-removed-through-cell-sorting-3-k-1-standard-2-0-0}{10X Genomics PBMC 3k dataset},
 with options to filter with common qc metrics, and to subset genes and fragments to only chromosome 4 and 11.
 }
 \details{
@@ -89,19 +89,25 @@ Filter + Subset             \tab 1.2                      \tab 12.3             
 \examples{
 #######################################################################
 ## get_demo_mat() example
-get_demo_mat()
 #######################################################################
+get_demo_mat()
+
+
 #######################################################################
 ## get_demo_frags() example
-get_demo_frags()
 #######################################################################
+get_demo_frags()
+
+
 #######################################################################
 ## remove_demo_data() example
+#######################################################################
 remove_demo_data()
 
 
 ## Demo data folder is now empty
 data_dir <- file.path(tools::R_user_dir("BPCells", which = "data"), "demo_data")
 list.files(data_dir)
-#######################################################################
+
+
 }

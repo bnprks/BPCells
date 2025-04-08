@@ -8,6 +8,7 @@
 
 
 test_that("Getting test data works", {
+    expect_no_error(BPCells:::prepare_demo_data(file.path(tools::R_user_dir("BPCells", which = "data"), "demo_data")))
     mat <- get_demo_mat()
     frags <- get_demo_frags()
     expect_true(is(mat, "IterableMatrix"))
