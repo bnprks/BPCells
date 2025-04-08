@@ -8,8 +8,7 @@ prepare_demo_data(
   directory = NULL,
   filter_qc = TRUE,
   subset = TRUE,
-  timeout = 300,
-  remove_input_data = TRUE
+  timeout = 300
 )
 }
 \arguments{
@@ -22,16 +21,13 @@ If \code{NULL}, a temporary directory is created.}
 \item{subset}{(bool) Whether to subset to only genes/insertions on chromosome 4 and 11.}
 
 \item{timeout}{(numeric) Timeout for downloading files in seconds.}
-
-\item{remove_input_data}{(logical) Whether to remove the intermediate non-processed matrix, frags, gencode transcripts,
-and gencode genes after processing.  If this function errors out, will also remove intermediate data if \code{remove_input_data} is \code{TRUE}.}
 }
 \value{
 (list) A list with the RNA matrix under the name \code{mat}, and the ATAC fragments under the name \code{frags}.
 }
 \description{
 Downloads a
-\href{https://cf.10xgenomics.com/samples/cell-arc/2.0.0/pbmc_granulocyte_sorted_3k/pbmc_granulocyte_sorted_3k_web_summary.html}{10x Genomics dataset},
+\href{https://www.10xgenomics.com/datasets/pbmc-from-a-healthy-donor-granulocytes-removed-through-cell-sorting-3-k-1-standard-2-0-0}{10x Genomics dataset},
 consisting of 3k cells then performs optional QC and subsetting.  Holds subsetted objects in disk,
 and returns a list with both the matrix and fragments.
 }
