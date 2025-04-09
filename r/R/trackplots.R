@@ -689,8 +689,8 @@ trackplot_gene <- function(transcripts, region, exon_size = 2.5, gene_size = 0.5
 #' @return Plot of genomic loci if return_data is FALSE, otherwise returns the data frame used to generate the plot
 #' @seealso `trackplot_combine()`, `trackplot_coverage()`, `trackplot_loop()`, `trackplot_scalebar()`, `trackplot_gene()`
 #' @examples
-## Prep data
-## Peaks generated from demo frags, as input into `call_peaks_tile()`
+#' ## Prep data
+#' ## Peaks generated from demo frags, as input into `call_peaks_tile()`
 #' peaks <- tibble::tibble(
 #'   chr = factor(rep("chr4", 16)),
 #'   start = c(3041400, 3041733, 3037400, 3041933, 3040466, 3041200, 
@@ -833,18 +833,18 @@ trackplot_genome_annotation <- function(loci, region, color_by = NULL, colors = 
 #' @return Plot of loops connecting genomic coordinates
 #' @seealso `trackplot_combine()`, `trackplot_coverage()`, `trackplot_gene()`, `trackplot_scalebar()`, `trackplot_genome_annotation()`
 #' @examples
-#' peaks <-c(3054877, 3334877, 3534877, 3634877, 3734877)
+#' peaks <- c(3054877, 3334877, 3534877, 3634877, 3734877)
 #' loops <- tibble::tibble(
 #'   chr = "chr4",
-#'   start = fake_peaks[c(1,1,2,3)],
-#'   end = fake_peaks[c(2,3,4,5)],
+#'   start = peaks[c(1,1,2,3)],
+#'   end = peaks[c(2,3,4,5)],
 #'   score = c(4,1,3,2)
 #' )
 #' region <- "chr4:3034877-4034877"
 #' 
 #' ## Plot loops
 #' plot <- trackplot_loop(loops, region, color_by = "score")
-#' BPCells:::render_plot_from_storage(plot, width = 6, height = 1)
+#' BPCells:::render_plot_from_storage(plot, width = 6, height = 1.5)
 #' @export
 trackplot_loop <- function(loops, region, color_by=NULL, colors=NULL, allow_truncated=TRUE, curvature=0.75, track_label="Links", return_data = FALSE) {
   region <- normalize_ranges(region)
