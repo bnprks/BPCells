@@ -48,6 +48,8 @@ Plot of genomic loci if return_data is FALSE, otherwise returns the data frame u
 Plot range-based annotation tracks (e.g. peaks)
 }
 \examples{
+## Prep data
+## Peaks generated from demo frags, as input into `call_peaks_tile()`
 peaks <- tibble::tibble(
   chr = factor(rep("chr4", 16)),
   start = c(3041400, 3041733, 3037400, 3041933, 3040466, 3041200, 
