@@ -4,7 +4,7 @@
 \alias{render_plot_from_storage}
 \title{Render a plot with intermediate disk storage step}
 \usage{
-render_plot_from_storage(plot, width = 6, height)
+render_plot_from_storage(plot, width, height)
 }
 \arguments{
 \item{plot}{(ggplot) ggplot output from a plotting function}

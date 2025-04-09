@@ -260,7 +260,7 @@ trackplot_normalize_ranges_with_metadata <- function(data, metadata) {
 #' @param width (numeric) width of rendered plot
 #' @param height (numeric) height of rendered plot
 #' @keywords internal
-render_plot_from_storage <- function(plot, width = 6, height) {
+render_plot_from_storage <- function(plot, width, height) {
   assert_is(plot, "ggplot")
   image_path <- tempfile(fileext = ".png")
   ggplot2::ggsave(image_path, plot, width = width, height = height)
