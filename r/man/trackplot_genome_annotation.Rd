@@ -47,6 +47,27 @@ Plot of genomic loci if return_data is FALSE, otherwise returns the data frame u
 \description{
 Plot range-based annotation tracks (e.g. peaks)
 }
+\examples{
+peaks <- tibble::tibble(
+  chr = factor(rep("chr4", 16)),
+  start = c(3041400, 3041733, 3037400, 3041933, 3040466, 3041200, 
+            3038200, 3038000, 3040266, 3037733, 3040800, 3042133, 
+            3038466, 3037200, 3043333, 3040066),
+  end = c(3041600, 3041933, 3037600, 3042133, 3040666, 3041400, 
+          3038400, 3038200, 3040466, 3037933, 3041000, 3042333, 
+          3038666, 3037400, 3043533, 3040266),
+  enrichment = c(46.4, 43.5, 28.4, 27.3, 17.3, 11.7, 
+                 10.5, 7.95, 7.22, 6.86, 6.32, 6.14, 
+                 5.96, 5.06, 4.51, 3.43)
+)
+region <- "chr4:3034877-3044877"
+
+## Plot peaks
+BPCells:::render_plot_from_storage(
+  trackplot_genome_annotation(peaks, region, color_by = "enrichment"),
+  width = 6, height = 1
+)
+}
 \seealso{
 \code{trackplot_combine()}, \code{trackplot_coverage()}, \code{trackplot_loop()}, \code{trackplot_scalebar()}, \code{trackplot_gene()}
 }
