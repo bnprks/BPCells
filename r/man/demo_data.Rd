@@ -41,10 +41,12 @@ The interface, as well as the demo dataset itself will likely undergo changes in
 
 \strong{Data Processing}:
 
-The first time either \code{get_demo_mat()} are ran \code{get_demo_frags()},
+The first time either \code{get_demo_mat()}, or \code{get_demo_frags()}, are ran
 demo data is downloaded and stored in the BPCells data directory  (under \code{file.path(tools::R_user_dir("BPcells", which="data"), "demo_data")}).
+
 Subsequent calls to this function will use the previously downloaded matrix/fragments, given that the same combination of filtering and
 subsetting has been performed previously.
+
 The preparation of this matrix can be reproduced by running the internal function \code{prepare_demo_data()} with \code{directory} set to the BPCells data directory.
 
 In the case that demo data is not pre-downloaded and demo data download fails, \code{prepare_demo_data()} will act

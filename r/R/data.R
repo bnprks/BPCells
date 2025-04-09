@@ -119,10 +119,12 @@ prepare_demo_data <- function(directory = NULL, filter_qc = TRUE, subset = TRUE,
 #' 
 #' **Data Processing**:
 #' 
-#' The first time either `get_demo_mat()` are ran `get_demo_frags()`,
+#' The first time either `get_demo_mat()`, or `get_demo_frags()`, are ran 
 #' demo data is downloaded and stored in the BPCells data directory  (under `file.path(tools::R_user_dir("BPcells", which="data"), "demo_data")`).
+#' 
 #' Subsequent calls to this function will use the previously downloaded matrix/fragments, given that the same combination of filtering and 
 #' subsetting has been performed previously.
+#' 
 #' The preparation of this matrix can be reproduced by running the internal function `prepare_demo_data()` with `directory` set to the BPCells data directory.
 #' 
 #' In the case that demo data is not pre-downloaded and demo data download fails, `prepare_demo_data()` will act
