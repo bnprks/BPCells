@@ -40,6 +40,18 @@ Plot the enrichmment of insertions relative to transcription start sites (TSS).
 Typically, this plot shows strong enrichment of insertions near a TSS, and a
 small bump downstream around 220bp downstream of the TSS for the +1 nucleosome.
 }
+\examples{
+## Prep data
+frags <- get_demo_frags(filter_qc = FALSE, subset = FALSE)
+genes <- read_gencode_transcripts(
+  file.path(tempdir(), "references"), release = "42",
+  annotation_set = "basic",
+  features = "transcript"
+)
+
+## Plot tss profile
+plot_tss_profile(frags, genes)
+}
 \seealso{
 \code{footprint()}, \code{plot_tf_footprint()}
 }
