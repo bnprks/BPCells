@@ -48,23 +48,17 @@ Plot of gene locations
 Plot transcript models
 }
 \examples{
+## Prep data
 transcripts <- read_gencode_transcripts(
   file.path(tempdir(), "references"), release = "42",
-  annotation_set = "basic"
+  annotation_set = "basic", features = "transcript"
 )
+region <- "chr4:3034877-4034877"
 
-region <- gene_region(transcripts, "CD19", extend_bp = 1e5)
+
+## Plot gene trackplot
 plot <- trackplot_gene(transcripts, region)
-
-## Boiler plate for getting plot sizing correct
-image_path <- file.path(tempdir(), "trackplot_gene.png")
-ggsave(
-  image_path,
-  trackplot_gene(transcripts, region), 
-  width = 6, height = 1
-)
-img <- png::readPNG(image_path)
-grid::grid.raster(img)
+BPCells:::render_plot_from_storage(plot, width = 6, height = 1)
 }
 \seealso{
 \code{trackplot_combine()}, \code{trackplot_coverage()}, \code{trackplot_loop()}, \code{trackplot_scalebar()}

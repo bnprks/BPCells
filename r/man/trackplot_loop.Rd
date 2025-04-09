@@ -41,6 +41,20 @@ Plot of loops connecting genomic coordinates
 \description{
 Plot loops
 }
+\examples{
+peaks <-c(3054877, 3334877, 3534877, 3634877, 3734877)
+loops <- tibble::tibble(
+  chr = "chr4",
+  start = fake_peaks[c(1,1,2,3)],
+  end = fake_peaks[c(2,3,4,5)],
+  score = c(4,1,3,2)
+)
+region <- "chr4:3034877-4034877"
+
+## Plot loops
+plot <- trackplot_loop(loops, region, color_by = "score")
+BPCells:::render_plot_from_storage(plot, width = 6, height = 1)
+}
 \seealso{
 \code{trackplot_combine()}, \code{trackplot_coverage()}, \code{trackplot_gene()}, \code{trackplot_scalebar()}, \code{trackplot_genome_annotation()}
 }
