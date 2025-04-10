@@ -4,7 +4,7 @@
 \alias{pseudobulk_matrix}
 \title{Aggregate counts matrices by cell group or feature.}
 \usage{
-pseudobulk_matrix(mat, cell_groups, method = "sum", threads = 1L)
+pseudobulk_matrix(mat, cell_groups, method = "sum", threads = 0L)
 }
 \arguments{
 \item{mat}{IterableMatrix object of dimensions features x cells}
