@@ -1587,6 +1587,20 @@ transpose_storage_order <- function(matrix, outdir = tempfile("transpose"), tmpd
 #' @param matrix Input matrix, either IterableMatrix or dgCMatrix
 #' @param compress Whether or not to compress the data.
 #' @return BPCells matrix object
+#' @examples
+#' ## Create temporary directory to keep demo matrix
+#' data_dir <- file.path(tempdir(), "mat")
+#' if (dir.exists(data_dir)) unlink(data_dir, recursive = TRUE)
+#' dir.create(data_dir, recursive = TRUE, showWarnings = FALSE)
+#' 
+#' mat <- get_demo_mat()
+#' mat
+#' 
+#' #######################################################################
+#' ## write_matrix_memory() example
+#' mat_memory <- write_matrix_memory(mat)
+#' mat_memory
+#' #######################################################################
 #' @rdname matrix_io
 #' @export
 write_matrix_memory <- function(mat, compress = TRUE) {
@@ -1659,6 +1673,14 @@ setMethod("short_description", "MatrixDir", function(x) {
 #' in memory before calling writes to disk.
 #' @param overwrite If `TRUE`, write to a temp dir then overwrite existing data. Alternatively,
 #'   pass a temp path as a string to customize the temp dir location.
+#' @examples
+#' #######################################################################
+#' ## write_matrix_dir() example
+#' mat %>% write_matrix_dir(
+#'  file.path(data_dir, "demo_mat"),
+#'  overwrite = TRUE
+#' )
+#' #######################################################################
 #' @export
 write_matrix_dir <- function(mat, dir, compress = TRUE, buffer_size = 8192L, overwrite = FALSE) {
   assert_is(mat, c("IterableMatrix", "dgCMatrix"))
@@ -1705,6 +1727,14 @@ write_matrix_dir <- function(mat, dir, compress = TRUE, buffer_size = 8192L, ove
 }
 
 #' @rdname matrix_io
+#' @examples
+#' #######################################################################
+#' ## open_matrix_dir() example
+#' mat <- open_matrix_dir(
+#'  file.path(data_dir, "demo_mat")
+#' )
+#' mat
+#' #######################################################################
 #' @export
 open_matrix_dir <- function(dir, buffer_size = 8192L) {
   assert_is_file(dir)
@@ -1856,6 +1886,12 @@ setMethod("short_description", "MatrixH5", function(x) {
 
 #' @rdname matrix_io
 #' @inheritParams write_fragments_hdf5
+#' @examples
+#' #######################################################################
+#' ## write_matrix_hdf5() example
+#' 
+#' mat %>% write_matrix_hdf5(path = file.path(data_dir, "demo_mat.h5"), group = "mat")
+#' #######################################################################
 #' @export
 write_matrix_hdf5 <- function(
     mat, 
@@ -1922,6 +1958,15 @@ write_matrix_hdf5 <- function(
 
 #' @rdname matrix_io
 #' @inheritParams open_fragments_hdf5
+#' @examples
+#' #######################################################################
+#' ## open_matrix_hdf5() example
+#' mat_hdf5 <- open_matrix_hdf5(
+#'  file.path(data_dir, "demo_mat.h5"),
+#'  group = 'mat'
+#' )
+#' mat_hdf5
+#' #######################################################################
 #' @export
 open_matrix_hdf5 <- function(path, group, buffer_size = 16384L) {
   assert_is_file(path)
@@ -1973,6 +2018,24 @@ setMethod("short_description", "10xMatrixH5", function(x) {
 #' @details The 10x format makes use of gzip compression for the matrix data,
 #' which can slow down read performance. Consider writing into another format
 #' if the read performance is important to you.
+#' @examples
+#' ## Download example matrices from pbmc 500 dataset and save in temp directory
+#' data_dir <- file.path(tempdir(), "mat_10x")
+#' dir.create(data_dir, recursive = TRUE, showWarnings = FALSE)
+#' url_base <- "https://cf.10xgenomics.com/samples/cell-exp/6.1.0/500_PBMC_3p_LT_Chromium_X/"
+#' mat_file <- "500_PBMC_3p_LT_Chromium_X_filtered_feature_bc_matrix.h5"
+#' rna_url <- paste0(url_base, mat_file)
+#' if (!file.exists(file.path(data_dir, mat_file))) {
+#'  download.file(rna_url, file.path(data_dir, mat_file), mode="wb")
+#' }
+#' 
+#' #######################################################################
+#' ## open_matrix_10x_hdf5() example
+#' mat <- open_matrix_10x_hdf5(
+#'  file.path(data_dir, mat_file)
+#' )
+#' mat
+#' #######################################################################
 #' @export
 open_matrix_10x_hdf5 <- function(path, feature_type = NULL, buffer_size = 16384L) {
   assert_is_file(path)
@@ -2027,6 +2090,15 @@ open_matrix_10x_hdf5 <- function(path, feature_type = NULL, buffer_size = 16384L
 #' provided for the relevant metadata parameters. Some of the
 #' metadata parameters are not read by default in BPCells, but
 #' it is possible to export them for use with other tools.
+#' @examples
+#' #######################################################################
+#' ## write_matrix_10x_hdf5() example
+#' mat <- write_matrix_10x_hdf5(
+#'  mat,
+#'  file.path(data_dir, paste0("new", mat_file))
+#' )
+#' mat
+#' #######################################################################
 #' @export
 write_matrix_10x_hdf5 <- function(
     mat,
@@ -2161,7 +2233,28 @@ setMethod("short_description", "AnnDataMatrixH5", function(x) {
 #'   **Dimension names:** Dimnames are inferred from `obs/_index` or `var/_index` based on length matching.
 #'   This helps to infer dimnames for `obsp`,` varm`, etc. If the number of `len(obs) == len(var)`,
 #'   dimname inference will be disabled.
-#'
+#' @examples
+#' ## Create temporary directory to keep demo matrix
+#' data_dir <- file.path(tempdir(), "mat_anndata")
+#' if (dir.exists(data_dir)) unlink(data_dir, recursive = TRUE)
+#' dir.create(data_dir, recursive = TRUE, showWarnings = FALSE)
+#' mat <- get_demo_mat()
+#' 
+#' #######################################################################
+#' ## write_matrix_anndata_hdf5() example
+#' mat <- write_matrix_anndata_hdf5(
+#'  mat,
+#'  file.path(data_dir, paste0("new_demo_mat.h5"))
+#' )
+#' mat
+#' #######################################################################
+#' #######################################################################
+#' ## open_matrix_anndata_hdf5() example
+#' mat <- open_matrix_anndata_hdf5(
+#'  file.path(data_dir, paste0("new_demo_mat.h5"))
+#' )
+#' mat
+#' #######################################################################
 #' @export
 open_matrix_anndata_hdf5 <- function(path, group = "X", buffer_size = 16384L) {
   assert_is_file(path)
@@ -2205,7 +2298,15 @@ write_matrix_anndata_hdf5 <- function(mat, path, group = "X", buffer_size = 1638
 #' @inheritParams write_matrix_anndata_hdf5
 #' 
 #' @param dataset The dataset within the hdf5 file to write the matrix to. Used for `write_matrix_anndata_hdf5_dense`
-#' 
+#' @examples
+#' #######################################################################
+#' ## write_matrix_anndata_hdf5_dense() example
+#' mat <- write_matrix_anndata_hdf5_dense(
+#'  mat,
+#'  file.path(data_dir, paste0("new_demo_mat_dense.h5"))
+#' )
+#' mat
+#' #######################################################################
 #' @export
 write_matrix_anndata_hdf5_dense <- function(mat, path, dataset = "X", buffer_size = 16384L, chunk_size = 1024L, gzip_level = 0L) {
   assert_is(mat, "IterableMatrix")
@@ -2689,6 +2790,26 @@ convert_matrix_type <- function(matrix, type = c("uint32_t", "double", "float"))
 #' 
 #' # Convert to BPCells from R
 #' as(dgc_mat, "IterableMatrix")
+#' @examples
+#' mat <- get_demo_mat()[1:2, 1:2]
+#' mat
+#' 
+#' #######################################################################
+#' ## as(bpcells_mat, "dgCMatrix") example
+#' mat_dgc <- as(mat, "dgCMatrix")
+#' mat_dgc
+#' #######################################################################
+#' #######################################################################
+#' ## as.matrix(bpcells_mat) example
+#' as.matrix(mat)
+#' 
+#' ## Alternatively, can also use function as()
+#' as(mat, "matrix")
+#' #######################################################################
+#' #######################################################################
+#' ## as(dgc_mat, "IterableMatrix") example
+#' as(mat_dgc, "IterableMatrix")
+#' #######################################################################
 #' @name matrix_R_conversion
 NULL
 
