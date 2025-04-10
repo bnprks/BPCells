@@ -57,6 +57,7 @@
 <url><loc>https://bnprks.github.io/BPCells/reference/collect_features.html</loc></url>
 <url><loc>https://bnprks.github.io/BPCells/reference/concat_dimnames.html</loc></url>
 <url><loc>https://bnprks.github.io/BPCells/reference/convert_matrix_type.html</loc></url>
+<url><loc>https://bnprks.github.io/BPCells/reference/demo_data.html</loc></url>
 <url><loc>https://bnprks.github.io/BPCells/reference/draw_trackplot_grid.html</loc></url>
 <url><loc>https://bnprks.github.io/BPCells/reference/ensure_downloaded.html</loc></url>
 <url><loc>https://bnprks.github.io/BPCells/reference/extend_ranges.html</loc></url>
@@ -107,6 +108,7 @@
 <url><loc>https://bnprks.github.io/BPCells/reference/plot_tss_profile.html</loc></url>
 <url><loc>https://bnprks.github.io/BPCells/reference/plot_tss_scatter.html</loc></url>
 <url><loc>https://bnprks.github.io/BPCells/reference/prefix_cell_names.html</loc></url>
+<url><loc>https://bnprks.github.io/BPCells/reference/prepare_demo_data.html</loc></url>
 <url><loc>https://bnprks.github.io/BPCells/reference/pseudobulk_matrix.html</loc></url>
 <url><loc>https://bnprks.github.io/BPCells/reference/qc_scATAC.html</loc></url>
 <url><loc>https://bnprks.github.io/BPCells/reference/range_distance_to_nearest.html</loc></url>

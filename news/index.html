@@ -48,6 +48,7 @@
 <div class="section level3">
 <h3 id="features-0-3-1">Features<a class="anchor" aria-label="anchor" href="#features-0-3-1"></a></h3>
 <ul><li>Add <code><a href="../reference/open_matrix_anndata_hdf5.html">write_matrix_anndata_hdf5_dense()</a></code> which allows writing matrices in AnnData’s dense format, most commonly used for <code>obsm</code> or <code>varm</code> matrices. (Thanks to <a href="https://github.com/ycli1995" class="external-link">@ycli1995</a> for pull request <a href="https://github.com/bnprks/BPCells/issues/166" class="external-link">#166</a>)</li>
+<li>Add <code><a href="../reference/demo_data.html">get_demo_mat()</a></code>, <code><a href="../reference/demo_data.html">get_demo_frags()</a></code> and <code><a href="../reference/demo_data.html">remove_demo_data()</a></code> to retrieve a small test matrix/fragments object from the <a href="https://www.10xgenomics.com/datasets/pbmc-from-a-healthy-donor-granulocytes-removed-through-cell-sorting-3-k-1-standard-2-0-0" class="external-link">PBMC 3k dataset from 10X Genomics</a>. (pull request <a href="https://github.com/bnprks/BPCells/issues/193" class="external-link">#193</a>)</li>
 </ul></div>
 <div class="section level3">
 <h3 id="improvements-0-3-1">Improvements<a class="anchor" aria-label="anchor" href="#improvements-0-3-1"></a></h3>
@@ -65,6 +66,7 @@
 <li>Fix matrix transpose error when BPCells is loaded via <code><a href="https://devtools.r-lib.org/reference/load_all.html" class="external-link">devtools::load_all()</a></code> and <code>BiocGenerics</code> has been imported previously. (pull request <a href="https://github.com/bnprks/BPCells/issues/191" class="external-link">#191</a>)</li>
 <li>Fix error when using a single group in <code><a href="../reference/write_insertion_bedgraph.html">write_insertion_bedgraph()</a></code> (pull request <a href="https://github.com/bnprks/BPCells/issues/214" class="external-link">#214</a>)</li>
 <li>Fix GRanges conversion functions sometimes not being defined if BPCells is built as a binary package prior to GenomicRanges being installed. (pull request <a href="https://github.com/bnprks/BPCells/issues/231" class="external-link">#231</a>; thanks to <a href="https://github.com/mfansler" class="external-link">@mfansler</a> for reporting issue <a href="https://github.com/bnprks/BPCells/issues/229" class="external-link">#229</a>)</li>
+<li>Fix error in <code><a href="../reference/matrix_io.html">write_matrix_hdf5()</a></code> when overwriting to a <code>.h5</code> file that does not exist. (pull request <a href="https://github.com/bnprks/BPCells/issues/234" class="external-link">#234</a>)</li>
 </ul></div>
 </div>
     <div class="section level2">
