@@ -25,6 +25,11 @@
 #'   useNames = TRUE,
 #'   drop = TRUE
 #' )
+#' @examples
+#' #######################################################################
+#' ## rowQuantiles() example
+#' rowQuantiles(transpose_storage_order(mat))
+#' #######################################################################
 #' @export
 rowQuantiles <- function(x, rows = NULL, cols = NULL,
                          probs = seq(from = 0, to = 1, by = 0.25),
@@ -101,6 +106,11 @@ rowQuantiles.IterableMatrix <- function(x, rows = NULL, cols = NULL,
 #'   useNames = TRUE,
 #'   drop = TRUE
 #' )
+#' @examples
+#' #######################################################################
+#' ## colQuantiles() example
+#' colQuantiles(mat)
+#' #######################################################################
 #' @export
 colQuantiles <- function(x, rows = NULL, cols = NULL,
                          probs = seq(from = 0, to = 1, by = 0.25),
