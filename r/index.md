@@ -47,7 +47,7 @@ Obtaining the HDF5 dependency is usually pretty straightforward on Linux
 
 - apt: `sudo apt-get install libhdf5-dev` 
 - yum: `sudo yum install hdf5-devel`
-- conda: `conda install -c anaconda hdf5` 
+- conda: `conda install -c conda-forge hdf5` 
   - Note: Linux users should prefer their distro's package manager (e.g. `apt` or `yum`) when possible,
     as it appears to give a slightly more reliable installation experience.
 
