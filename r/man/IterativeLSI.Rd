@@ -124,6 +124,7 @@ colnames(mat) <- paste0("cell", seq(ncols))
 
 #######################################################################
 ## IterativeLSI() examples
+#######################################################################
 dim_reduction <- IterativeLSI(mat, n_dimensions = 5)
 
 ## Can customize parameters using partialization
@@ -139,11 +140,14 @@ dim_reduction <- IterativeLSI(
     knn_to_graph_method = knn_to_snn_graph
   )
 )
-#######################################################################
+
+
 #######################################################################
 ## project(<IterativeLSI>) example
-dim(project(dim_reduction, mat))
 #######################################################################
+dim(project(dim_reduction, mat))
+
+
 }
 \seealso{
 \code{LSI()} \code{DimReduction()} \code{svds()}

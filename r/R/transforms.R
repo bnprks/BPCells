@@ -970,6 +970,7 @@ regress_out <- function(mat, latent_data, prediction_axis = c("row", "col")) {
 #' 
 #' #######################################################################
 #' ## normalize_log() examples
+#' #######################################################################
 #' normalize_log(mat)
 #' 
 #' ## normalization functions can also be called with partial arguments 
@@ -977,7 +978,8 @@ regress_out <- function(mat, latent_data, prediction_axis = c("row", "col")) {
 #' partial_log
 #' 
 #' partial_log(mat)
-#' #######################################################################
+#' 
+#' 
 #' @export
 normalize_log <- function(mat, scale_factor = 1e4, threads = 1L) {
   assert_greater_than_zero(scale_factor)
@@ -999,8 +1001,10 @@ normalize_log <- function(mat, scale_factor = 1e4, threads = 1L) {
 #' @examples 
 #' #######################################################################
 #' ## normalize_tfidf() example
-#' normalize_tfidf(mat)
 #' #######################################################################
+#' normalize_tfidf(mat)
+#' 
+#' 
 #' @export
 normalize_tfidf <- function(
   mat, feature_means = NULL,

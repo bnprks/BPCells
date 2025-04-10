@@ -69,12 +69,16 @@ colnames(mat) <- paste0("cell", seq(ncols))
 
 #######################################################################
 ## LSI() example
-lsi_result <- LSI(mat, n_dimensions = 10)
 #######################################################################
+lsi_result <- LSI(mat, n_dimensions = 10)
+
+
 #######################################################################
 ## project(<LSI>) example
-dim(project(lsi_result, mat))
 #######################################################################
+dim(project(lsi_result, mat))
+
+
 }
 \seealso{
 \code{project()} \code{DimReduction()} \code{normalize_tfidf()} \code{normalize_log()} \code{svds()}

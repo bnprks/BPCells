@@ -60,6 +60,7 @@ mat <- as(mat, "IterableMatrix")
 
 #######################################################################
 ## normalize_log() examples
+#######################################################################
 normalize_log(mat)
 
 ## normalization functions can also be called with partial arguments 
@@ -67,9 +68,12 @@ partial_log <- normalize_log(scale_factor = 1e5)
 partial_log
 
 partial_log(mat)
-#######################################################################
+
+
 #######################################################################
 ## normalize_tfidf() example
-normalize_tfidf(mat)
 #######################################################################
+normalize_tfidf(mat)
+
+
 }

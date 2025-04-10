@@ -34,10 +34,9 @@
 #' and the column index \eqn{j} refers to each cell. For each feature \eqn{x_{i} \in X}, we define the following feature-selection scores:
 #' - `select_features_variance`: \eqn{\mathrm{Score}(x_i) = \frac{1}{n - 1} \sum_{j=1}^{n} \bigl(x_{ij} - \bar{x}_i\bigr)^2}
 #' @examples
-#' 
 #' ## Prep data
 #' set.seed(12345)
-#' mat <- matrix(rpois(4*5, lambda=1), nrow=4, ncol=5)
+#' mat <- matrix(rpois(5*8, lambda=1), nrow=5, ncol=8)
 #' rownames(mat) <- paste0("gene", seq_len(nrow(mat)))
 #' mat
 #' mat <- as(mat, "IterableMatrix")
@@ -45,6 +44,7 @@
 #' 
 #' #######################################################################
 #' ## select_features_variance() examples
+#' #######################################################################
 #' select_features_variance(
 #'     mat, 
 #'     num_feats=2, 
@@ -52,7 +52,8 @@
 #' )
 #' 
 #' # Because of how the BPCells `normalize` functions behave when the matrix 
-#' # argument is missing, we can also customize the normalization parameters using partial arguments:
+#' # argument is missing, we can also customize the normalization parameters 
+#' # using partial arguments:
 #' variable_features <- select_features_variance(
 #'     mat,
 #'     num_feats=2,
@@ -60,7 +61,8 @@
 #' ) 
 #' # One can then filter to only variable features using the subset operator:
 #' mat[variable_features$feature[variable_features$highly_variable],]
-#' #######################################################################
+#' 
+#' 
 #' @seealso `normalize_tfidf()` `normalize_log()`
 #' @export
 select_features_variance <- function(
@@ -95,12 +97,14 @@ select_features_variance <- function(
 #' @examples
 #' #######################################################################
 #' ## select_features_dispersion() example
+#' #######################################################################
 #' select_features_dispersion(
 #'   mat,
 #'   num_feats = 2,
 #'   normalize_method = normalize_log
 #' )
-#' #######################################################################
+#' 
+#' 
 #' @export
 select_features_dispersion <- function(
   mat, num_feats = 0.05, 
@@ -134,12 +138,14 @@ select_features_dispersion <- function(
 #' @examples
 #' #######################################################################
 #' ## select_features_mean() example
+#' #######################################################################
 #' select_features_mean(
 #'   mat,
-#'   num_feats = 2,
+#'   num_feats = 1,
 #'   normalize_method = normalize_log
 #' )
-#' #######################################################################
+#' 
+#' 
 #' @export
 select_features_mean <- function(mat, num_feats = 0.05, normalize_method = NULL, threads = 1L) {
   assert_greater_than_zero(num_feats)
@@ -178,12 +184,14 @@ select_features_mean <- function(mat, num_feats = 0.05, normalize_method = NULL,
 #' @examples
 #' #######################################################################
 #' ## select_features_binned_dispersion() example
+#' #######################################################################
 #' select_features_binned_dispersion(
 #'   mat,
-#'   num_feats = 2
+#'   num_feats = 2,
 #'   n_bins = 2
 #' )
-#' #######################################################################
+#' 
+#' 
 #' @export
 select_features_binned_dispersion <- function(
   mat, num_feats = 0.05, n_bins = 20,
@@ -326,8 +334,10 @@ project.default <- function(x, mat, ...) {
 #' 
 #' #######################################################################
 #' ## LSI() example
-#' lsi_result <- LSI(mat, n_dimensions = 10)
 #' #######################################################################
+#' lsi_result <- LSI(mat, n_dimensions = 10)
+#' 
+#' 
 #' @export
 LSI <- function(
   mat, n_dimensions = 50L, corr_cutoff = 1, scale_factor = 1e4,
@@ -397,8 +407,10 @@ LSI <- function(
 #' @examples
 #' #######################################################################
 #' ## project(<LSI>) example
-#' dim(project(lsi_result, mat))
 #' #######################################################################
+#' dim(project(lsi_result, mat))
+#' 
+#' 
 #' @export
 project.LSI <- function(x, mat, threads = 1L, ...) {
   assert_is_mat(mat)
@@ -501,6 +513,7 @@ project.LSI <- function(x, mat, threads = 1L, ...) {
 #' 
 #' #######################################################################
 #' ## IterativeLSI() examples
+#' #######################################################################
 #' dim_reduction <- IterativeLSI(mat, n_dimensions = 5)
 #' 
 #' ## Can customize parameters using partialization
@@ -516,7 +529,8 @@ project.LSI <- function(x, mat, threads = 1L, ...) {
 #'     knn_to_graph_method = knn_to_snn_graph
 #'   )
 #' )
-#' #######################################################################
+#' 
+#' 
 #' @export
 IterativeLSI <- function(
   mat, 
@@ -621,8 +635,10 @@ IterativeLSI <- function(
 #' @examples
 #' #######################################################################
 #' ## project(<IterativeLSI>) example
-#' dim(project(dim_reduction, mat))
 #' #######################################################################
+#' dim(project(dim_reduction, mat))
+#' 
+#' 
 #' @export
 project.IterativeLSI <- function(x, mat, iteration = x$fitted_params$iterations, threads = 1L, ...) {
   assert_is_mat(mat)
