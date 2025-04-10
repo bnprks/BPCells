@@ -18,6 +18,12 @@ Plot with coordinates and scalebar for plotted genomic region
 \description{
 Plots a human-readable scale bar and coordinates of the region being plotted
 }
+\examples{
+region <- "chr4:3034877-3044877"
+BPCells:::render_plot_from_storage(
+  trackplot_scalebar(region), width = 6, height = 1
+)
+}
 \seealso{
 \code{trackplot_combine()}, \code{trackplot_coverage()}, \code{trackplot_gene()}, \code{trackplot_loop()}
 }

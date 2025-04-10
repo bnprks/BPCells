@@ -29,3 +29,7 @@ x-axis, and proportion of fragments on the y-axis. Typical plots will show
 10-basepair periodicity, as well as humps spaced at multiples of a nucleosome
 width (about 150bp).
 }
+\examples{
+frags <- get_demo_frags(filter_qc = FALSE, subset = FALSE)
+plot_fragment_length(frags)
+}
