@@ -118,6 +118,7 @@ test_that("pow works", {
 
     expect_equal(m^2, m2^2 %>% as("dgCMatrix"))
     expect_equal(m^3, m2^3 %>% as("dgCMatrix"))
+    expect_error(m2^-2)
 })
 
 test_that("binarize works", {
