@@ -19,11 +19,10 @@ test_that("C++ SNN calculation works",{
                 neighbor_sim[i,] <- sample.int(cells, k)
             }
         }
-
+        input <- list(idx = neighbor_sim, dist = matrix(runif(cells*k), nrow=cells))
         min_val <- 1/15
-        snn <- knn_to_snn_graph(list(idx=neighbor_sim), min_val=min_val, self_loops=TRUE)
-
-        mat <- knn_to_graph(list(idx=neighbor_sim), use_weights=FALSE)
+        snn <- knn_to_snn_graph(input, min_val=min_val, self_loops=TRUE)
+        mat <- knn_to_graph(input, use_weights=FALSE)
 
         mat <- mat %*% t(mat)
         mat <- mat / (2 * k - mat)
@@ -35,7 +34,7 @@ test_that("C++ SNN calculation works",{
             snn,
             as(mat, "dgCMatrix")
         )
-        snn2 <- knn_to_snn_graph(list(idx=neighbor_sim), min_val=min_val, self_loops=FALSE)
+        snn2 <- knn_to_snn_graph(input, min_val=min_val, self_loops=FALSE)
         diag(mat) <- 0
         mat <- Matrix::drop0(mat)
         expect_identical(
@@ -73,4 +72,23 @@ test_that("igraph clustering doesn't crash", {
     })
 
     expect_no_condition(cluster_graph_louvain(graph))
+})
+
+test_that("cluster_cells_graph works", {
+    skip_if_not_installed("RcppAnnoy")
+    skip_if_not_installed("RcppHNSW")
+    mat <- matrix(sample.int(1000, 10000, replace=TRUE), nrow=1000)
+    # check with default params
+    res <- expect_no_error(cluster_cells_graph(mat))
+    # check with threads, method partialization
+    expect_true(class(res) == "factor")
+    expect_equal(nrow(mat), length(res))
+    res_partialized <- expect_no_error(
+        cluster_cells_graph(
+            mat, knn_method = knn_annoy(k = 9),
+            knn_to_graph_method = knn_to_snn_graph(min_val = 1/10),
+            graph_to_cluster_method = cluster_graph_louvain(resolution = 0.8),
+        ))
+    expect_true(class(res) == "factor")
+    expect_equal(nrow(mat), length(res))
 })

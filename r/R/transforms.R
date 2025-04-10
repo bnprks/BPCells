@@ -294,16 +294,26 @@ setMethod("short_description", "TransformBinarize", function(x) {
 #'   comparison to the threshold is >= (strict_inequality=FALSE)
 #'   or > (strict_inequality=TRUE).
 #' @return binarized IterableMatrix object
+#' @examples
+#' set.seed(12345)
+#' mat <- matrix(rpois(4*5, lambda=1), nrow=4, ncol=5)
+#' mat
+#' mat <- as(mat, "IterableMatrix")
+#' 
+#' 
+#' mat_binarized <- binarize(mat, threshold=1)
+#' mat_binarized
+#' as(mat_binarized, "dgCMatrix")
 #' @export
-binarize <- function(mat, threshold=0, strict_inequality=TRUE) {
-  assert_is(mat, "IterableMatrix")
+binarize <- function(mat, threshold = 0, strict_inequality = TRUE) {
   assert_is(threshold, "numeric")
   assert_len(threshold, 1)
   assert_is(strict_inequality, "logical")
-  if (strict_inequality == TRUE && threshold < 0)
+  if (strict_inequality && threshold < 0)
       stop("binarize threshold must be greater than or equal to zero when strict_inequality is TRUE")
-  if (strict_inequality == FALSE && threshold <= 0)
+  if (!strict_inequality && threshold <= 0)
      stop("binarize threshold must be greater than zero when strict_inequality is FALSE")
+  assert_is(mat, "IterableMatrix")
 
   res <- wrapMatrix("TransformBinarize",
              convert_matrix_type(mat, "double"),
@@ -922,4 +932,104 @@ regress_out <- function(mat, latent_data, prediction_axis = c("row", "col")) {
     global_params = numeric(),
     vars_to_regress = vars_to_regress
   )
+}
+
+#################
+# Normalizations
+#################
+
+#' Normalization helper functions
+#' 
+#' Apply standard normalizations to a `(features x cells)` counts matrix.
+#' 
+#' @rdname normalize
+#' @param mat (IterableMatrix) Counts matrix with dimensions `(features x cells)`.
+#' @param scale_factor (numeric) Scaling factor to multiply matrix by prior to normalization (see formulas below).
+#' @param threads (integer) Number of threads to use.
+#' @returns 
+#' Consider a matrix \eqn{X}, where the row index \eqn{i} refers to each feature
+#' and the column index \eqn{j} refers to each cell. For each element \eqn{{x}_{ij} \in X}, the 
+#' normalized value \eqn{\tilde{x}_{ij}} is calculated as:
+#'  
+#'   - `normalize_log`: \eqn{\tilde{x}_{ij} = \log(\frac{x_{ij} \cdot \text{scaleFactor}}{\text{colSum}_j} + 1)}
+#' @details 
+#' **Passing to `normalize` parameters with non-default arguments**
+#' 
+#' If the `mat` argument is missing, returns a "partial" function: a copy of the original function but with most arguments pre-defined. 
+#' This can be used to customize `normalize` parameters in other single cell functions in BPCells (e.g. `select_features_mean()`).
+#' 
+#' **Related functions from other packages**
+#' - `normalize_log`: Corresponds to `Seurat::NormalizeData()` with its default "LogNormalize" method.
+#' @examples
+#' set.seed(12345)
+#' mat <- matrix(rpois(4*5, lambda=1), nrow=4, ncol=5)
+#' mat
+#' 
+#' mat <- as(mat, "IterableMatrix")
+#' 
+#' 
+#' #######################################################################
+#' ## normalize_log() examples
+#' normalize_log(mat)
+#' 
+#' ## normalization functions can also be called with partial arguments 
+#' partial_log <- normalize_log(scale_factor = 1e5)
+#' partial_log
+#' 
+#' partial_log(mat)
+#' #######################################################################
+#' @export
+normalize_log <- function(mat, scale_factor = 1e4, threads = 1L) {
+  assert_greater_than_zero(scale_factor)
+  assert_is_wholenumber(threads)
+  if (rlang::is_missing(mat)) return(create_partial())
+  assert_is_mat(mat)
+  read_depth <- matrix_stats(mat, col_stats = "mean", threads = threads)$col_stats["mean", ] * nrow(mat)
+  mat <- mat %>% multiply_cols(1 / read_depth)
+  return(log1p(mat * scale_factor))
+}
+
+
+#' @rdname normalize
+#' @param feature_means (numeric, optional) Pre-calculated means of the features to normalize by (`rowMeans(mat)` by default). 
+#' If `feature_means` has names and `mat` has row names, match values by name. 
+#' Otherwise, assume `feature_means` has the same length and ordering as the matrix rows.
+#' @returns - `normalize_tfidf`: \eqn{\tilde{x}_{ij} = \log(\frac{x_{ij} \cdot \text{scaleFactor}}{\text{rowMean}_i\cdot \text{colSum}_j} + 1)}
+#' @details - `normalize_tfidf`: This follows the formula from Stuart, Butler et al. 2019, matching the default behavior of `Signac::RunTFIDF()`. This also matches the normalization used within `ArchR::addIterativeLSI()`, but with `binarize = FALSE`. 
+#' @examples 
+#' #######################################################################
+#' ## normalize_tfidf() example
+#' normalize_tfidf(mat)
+#' #######################################################################
+#' @export
+normalize_tfidf <- function(
+  mat, feature_means = NULL,
+  scale_factor = 1e4, threads = 1L
+) {
+  assert_greater_than_zero(scale_factor)
+  assert_is_wholenumber(threads)
+  if (rlang::is_missing(mat)) return(create_partial())
+  assert_is_mat(mat)
+  # If feature means are passed in, only need to calculate term frequency
+  if (is.null(feature_means)) {
+    mat_stats <- matrix_stats(mat, row_stats = "mean", col_stats = "mean", threads = threads)
+    feature_means <- mat_stats$row_stats["mean", ]
+    read_depth <- mat_stats$col_stats["mean", ] * nrow(mat)
+  } else {
+    assert_is_numeric(feature_means)
+    if (!is.null(names(feature_means)) && !is.null(rownames(mat))) {
+      # Make sure every name in feature means exists in rownames(mat)
+      assert_true(all(rownames(mat) %in% names(feature_means)))
+      # subset feature_means to the rownames of mat in the case there is a length mismatch 
+      # but the feature names all exist in feature_means, 
+      feature_means <- feature_means[rownames(mat)]
+    } else {
+      assert_len(feature_means, nrow(mat))
+    }
+    read_depth <- matrix_stats(mat, col_stats = "mean", threads = threads)$col_stats["mean", ] * nrow(mat)
+  }
+  tf <- mat %>% multiply_cols(1 / read_depth)
+  idf <- 1 / feature_means
+  tf_idf_mat <- tf %>% multiply_rows(idf)
+  return(log1p(tf_idf_mat * scale_factor))
 }

@@ -347,3 +347,61 @@ test_that("linear regression works", {
     expect_equal(as(m1, "matrix"), ans)
     expect_equal(as(m1t, "matrix"), ans)
 })
+
+test_that("tf-idf normalization works", {
+    m <- generate_sparse_matrix(5, 5)
+    rownames(m) <- paste0("row", seq_len(nrow(m)))
+    rev_rownames <- rev(rownames(m))
+    # Create tf-idf normalization for dgCMatrix
+    res_dgc <- log1p((diag(1/rowMeans(m)) %*% (m %*% diag(1/colSums(m))) %>% as("dgCMatrix")) * 1e4)
+    
+    rownames(res_dgc) <- rownames(m)
+    m2 <- as(m, "IterableMatrix")
+    # Check that we can pass in row means as a (named) vector
+    row_means <- matrix_stats(m2, row_stats = c("mean"))$row_stats["mean",]
+    # Test that row means ordering does not matter as long as names exist
+    row_means_shuffled <- row_means[sample(1:length(row_means))]
+    # Test that row means can have an extra element as long as all rownames are in the vector
+    row_means_plus_one <- c(row_means, row6 = 1)
+    # Check when row means has no row names
+    row_means_no_names <- unname(row_means)
+    
+
+    res <- normalize_tfidf(m2)
+    expect_equal(res %>% as("dgCMatrix"), res_dgc, tolerance = 1e-6)
+    res_with_row_means <- normalize_tfidf(m2, feature_means = row_means)
+    res_with_row_means_partial <- normalize_tfidf(feature_means = row_means)(m2)
+    expect_equal(res_with_row_means, res_with_row_means_partial)
+    expect_identical(res, res_with_row_means)
+
+    res_with_shuffled_row_means <- normalize_tfidf(m2, feature_means = row_means_shuffled)
+    expect_identical(res_with_row_means, res_with_shuffled_row_means, res)
+
+    res_with_row_means_with_extra_element <- normalize_tfidf(m2, feature_means = row_means_plus_one)
+    expect_identical(res, res_with_row_means_with_extra_element)
+    
+    # Check cases where names exists in either row means xor rownames(mat)
+    # check where both don't have names
+    res_with_unnamed_row_means <- normalize_tfidf(m2, feature_means = row_means_no_names)
+    expect_identical(res_with_unnamed_row_means, res)
+    rownames(m2) <- NULL
+    res_with_unnamed_row_names <- normalize_tfidf(m2, feature_means = row_means)
+    res_with_unnamed_row_names_row_means <- normalize_tfidf(m2, feature_means = row_means_no_names)
+    rownames(res) <- NULL
+    expect_identical(as(res_with_unnamed_row_names, "dgCMatrix"), as(res, "dgCMatrix"))
+    expect_identical(as(res_with_unnamed_row_names_row_means, "dgCMatrix"), as(res, "dgCMatrix"))
+})
+
+test_that("normalize_log works", {
+    m <- generate_sparse_matrix(5, 5)
+    res_dgc <- m %*% diag(1/colSums(m)) %>% as("dgCMatrix")
+    m2 <- as(m, "IterableMatrix")
+    # Test that default params yield the same as log1p on dgCMatrix
+    res_1 <- as(normalize_log(m2), "dgCMatrix")
+    expect_equal(res_1, log1p(res_dgc*1e4), tolerance = 1e-6)
+    
+    # Test that changing scale factor works
+    res_2 <- as(normalize_log(m2, scale_factor = 1e5), "dgCMatrix")
+    res_2_partial <- as(normalize_log(scale_factor = 1e5)(m2), "dgCMatrix")
+    expect_equal(res_2, log1p(res_dgc*1e5), tolerance = 1e-6)
+})

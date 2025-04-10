@@ -1,4 +1,4 @@
-# Copyright 2023 BPCells contributors
+# Copyright 2025 BPCells contributors
 # 
 # Licensed under the Apache License, Version 2.0 <LICENSE-APACHE or
 # https://www.apache.org/licenses/LICENSE-2.0> or the MIT license
@@ -12,6 +12,39 @@ generate_sparse_matrix <- function(nrow, ncol, fraction_nonzero = 0.5, max_val =
   colnames(m) <- paste0("col", seq_len(ncol(m)))
   as(m, "dgCMatrix")
 }
+
+generate_dense_matrix <- function(nrow, ncol) {
+  m <- matrix(runif(nrow * ncol), nrow = nrow)
+}
+
+generate_dense_matrix <- function(nrow, ncol) {
+  m <- matrix(runif(nrow * ncol), nrow = nrow)
+}
+
+test_that("select_features works general case", {
+  m1 <- generate_sparse_matrix(100, 50) %>% as("IterableMatrix")
+  for (fn in c("select_features_variance", "select_features_dispersion", "select_features_mean")) {
+    res <- do.call(fn, list(m1, num_feats = 5))
+    expect_equal(nrow(res), nrow(m1)) # Check that dataframe has correct features we're expecting
+    expect_equal(sum(res$highly_variable), 5) # Only 10 features marked as highly variable
+    expect_setequal(res$feature, rownames(m1))
+    res_more_feats_than_rows <- suppressWarnings(do.call(fn, list(m1, num_feats = 10000))) # more features than rows
+    res_feats_equal_rows <- do.call(fn, list(m1, num_feats = 100))
+    res_feats_partial <- get(fn)(num_feats = 100)(m1)
+    expect_identical(res_feats_equal_rows, res_feats_partial)
+    expect_identical(res_more_feats_than_rows, res_feats_equal_rows)
+    if (fn == "select_features_variance") {
+      # Check that normalization actually does something
+      res_no_norm <- do.call(fn, list(m1, num_feats = 10, normalize_method = NULL))
+      # Check that we can do partial functions on normalization too
+      res_norm_partial <- do.call(fn, list(m1, num_feats = 10, normalize_method = normalize_log(scale = 1e3, threads = 1L)))
+      res_norm_implicit_partial <- select_features_variance(normalize_method = normalize_log(scale_factor = 1e3), num_feats = 10)(m1)
+      expect_identical(res_norm_partial, res_norm_implicit_partial)
+      expect_true(!all((res_no_norm %>% dplyr::arrange(feature))$score == (res_norm_partial %>% dplyr::arrange(feature))$score))
+    }
+  }
+})
+
 
 test_that("Wilcoxon rank sum works (small)", {
     x <- c(0.80, 0.83, 1.89, 1.04, 1.45, 1.38, 1.91, 1.64, 0.73, 1.46)
@@ -161,4 +194,84 @@ test_that("Pseudobulk aggregation works with multiple return types", {
       }
     }
   }
+})
+
+
+
+test_that("Feature selection by bin variance works", {
+    mat <- generate_sparse_matrix(500, 26, fraction_nonzero = 0.1) %>% as("IterableMatrix")
+    # Test only that outputs are reasonable.  There is a full comparison in `tests/real_data/` that compares implementation to Seurat
+    res_table <- select_features_binned_dispersion(mat, num_feats = 10, n_bins = 5, threads = 1)
+    res_table_t <- select_features_binned_dispersion(t(mat), num_feats = 10, n_bins = 5, threads = 1)
+    res_feats <- res_table %>% dplyr::filter(highly_variable) %>% dplyr::pull(feature) 
+    res <- mat[res_feats,]
+    res_feats_t <- res_table_t %>% dplyr::filter(highly_variable) %>% dplyr::pull(feature)
+    res_t <- t(mat[,res_feats_t])
+    
+    expect_equal(nrow(res), 10)
+    expect_equal(ncol(res), 26)
+    expect_equal(nrow(res_t), 10)
+    expect_equal(ncol(res_t), 500)
+})
+
+test_that("LSI works", {
+    set.seed(12345)
+    mat <- matrix(runif(240), nrow=10) %>% as("dgCMatrix") %>% as("IterableMatrix")
+    rownames(mat) <- paste0("feat", seq_len(nrow(mat)))
+    colnames(mat) <- paste0("cell", seq_len(ncol(mat)))
+    # Test only that outputs are reasonable.  There is a full comparison in `tests/real_data/` that compares implementation to ArchR
+    n_dimensions <- 5
+    lsi_res_obj <- LSI(mat, n_dimensions = n_dimensions)
+    lsi_res_t_obj <- LSI(t(mat), n_dimensions = n_dimensions)
+    lsi_res <- lsi_res_obj$cell_embeddings
+    lsi_res_t <- lsi_res_t_obj$cell_embeddings
+    # Check that projection results in the same output if used on the same input matrix
+    lsi_res_proj <- project(lsi_res_obj, mat)
+    # Check setting pca correlations to non-1 value
+    lsi_res_obj_corr <- LSI(mat, n_dimensions = n_dimensions, corr_cutoff = 0.2)
+
+    expect_equal(ncol(lsi_res), 5)
+    expect_equal(nrow(lsi_res), ncol(mat))
+    expect_equal(ncol(lsi_res_t), 5)
+    expect_equal(nrow(lsi_res_t), nrow(mat))
+    expect_equal(nrow(lsi_res_proj), ncol(mat))
+    expect_lt(ncol(lsi_res_obj_corr$cell_embeddings), n_dimensions)
+    expect_equal(lsi_res, lsi_res_proj, tolerance = 1e-7)
+})
+
+test_that("Iterative LSI works", {
+  skip_if_not_installed("RcppHNSW")
+  mat <- matrix(data = runif(50000, 0, 1), nrow=500, ncol = 100) %>% as("dgCMatrix") %>% as("IterableMatrix")
+  rownames(mat) <- paste0("feat", seq_len(nrow(mat)))
+  colnames(mat) <- paste0("cell", seq_len(ncol(mat)))
+  lsi_res_obj <- expect_no_error(IterativeLSI(mat, n_iterations = 2, n_dimensions = 10L, cluster_method = cluster_cells_graph(knn_method = knn_annoy)))
+  lsi_res_proj <- project(lsi_res_obj, mat)
+  lsi_res_proj_iter_1 <- expect_no_error(project(lsi_res_obj, mat, iteration = 1L))
+  lsi_res_embedding <- lsi_res_obj$cell_embeddings
+  expect_equal(nrow(lsi_res_embedding), ncol(mat))
+  expect_equal(ncol(lsi_res_embedding), 10)
+  expect_equal(nrow(lsi_res_proj_iter_1), ncol(mat))
+  expect_equal(ncol(lsi_res_proj_iter_1), 10)
+  expect_equal(lsi_res_embedding, lsi_res_proj, tolerance = 1e-7)
+})
+
+test_that("Iterative LSI works with parameterized clustering", {
+  skip_if_not_installed("RcppAnnoy")
+  mat <- matrix(data = runif(50000, 0, 1), nrow=500, ncol = 100) %>% as("dgCMatrix") %>% as("IterableMatrix")
+  rownames(mat) <- paste0("feat", seq_len(nrow(mat)))
+  colnames(mat) <- paste0("cell", seq_len(ncol(mat)))
+  lsi_res_obj <- expect_no_error(
+    IterativeLSI(
+      mat, n_dimensions = 10L,
+      cluster_method = cluster_cells_graph(
+        knn_method = knn_annoy(k = 12),
+        knn_to_graph_method = knn_to_snn_graph(min_val = 0.1)
+      )
+    )
+  )
+  lsi_res_proj <- project(lsi_res_obj, mat)
+  lsi_res_embedding <- lsi_res_obj$cell_embeddings
+  expect_equal(nrow(lsi_res_embedding), ncol(mat))
+  expect_equal(ncol(lsi_res_embedding), 10)
+  expect_equal(lsi_res_embedding, lsi_res_proj, tolerance = 1e7)
 })
