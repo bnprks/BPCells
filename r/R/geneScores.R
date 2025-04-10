@@ -23,6 +23,21 @@
 #' Note that this definition of distance is one off from
 #' `GenomicRanges::distance()`, as ranges that neighbor but don't overlap are given
 #' a distance of 1 rather than 0.
+#' @examples
+#' ## Prep data
+#' ranges <- tibble::tibble(
+#'  chr = "chr1",
+#'  start = seq(10, 410, 100),
+#'  end = start + 50,
+#'  strand = "+"
+#' )
+#' ## Add one range that is completely nested in the other ranges
+#' ranges_with_nesting <- ranges %>% 
+#'  tibble::add_row(chr = "chr1", start = 11, end = 20, strand = "+")
+#' 
+#' 
+#' ## Get range distance to nearest
+#' range_distance_to_nearest(ranges_with_nesting)
 #' @export
 range_distance_to_nearest <- function(ranges, addArchRBug = FALSE, zero_based_coords = !is(ranges, "GRanges")) {
   ranges <- normalize_ranges(ranges, metadata_cols = "strand", zero_based_coords = zero_based_coords)
@@ -76,7 +91,19 @@ range_distance_to_nearest <- function(ranges, addArchRBug = FALSE, zero_based_co
 #' @param chromosome_sizes (optional) Size of chromosomes as a [genomic-ranges] object
 #' @details Note that ranges will be blocked from extending past the beginning of the chromosome (base 0),
 #' and if `chromosome_sizes` is given then they will also be blocked from extending past the end of the chromosome
-#'
+#' @examples
+#' ## Prep data
+#' ranges <- tibble::tibble(
+#'  chr = "chr1",
+#'  start = seq(50, 4050, 1000),
+#'  end = start + 50,
+#'  strand = "+"
+#' )
+#' ranges
+#' 
+#' 
+#' ## Extend ranges 1 bp upstream, 1 bp downstream
+#' extend_ranges(ranges, upstream = 1, downstream = 1)
 #' @export
 extend_ranges <- function(ranges, upstream = 0, downstream = 0, metadata_cols = c("strand"),
                           chromosome_sizes = NULL, zero_based_coords = !is(ranges, "GRanges")) {
@@ -124,6 +151,20 @@ extend_ranges <- function(ranges, upstream = 0, downstream = 0, metadata_cols = 
 #' start coordinate than the gene and the gene is on the + strand, distance will
 #' be negative. The distance of adjacent but non-overlapping regions is 1bp, counting
 #' up from there.
+#' @examples
+#' ## Prep data
+#' directory  <- file.path(tempdir(), "references")
+#' genes <- read_gencode_genes(
+#'     directory,
+#'     release = "42",
+#'     annotation_set = "basic",    
+#' )
+#' 
+#' 
+#' ## Get gene scores by tile
+#' gene_score_tiles_archr(
+#'     genes
+#' )
 #' @export
 gene_score_tiles_archr <- function(genes, chromosome_sizes = NULL, tile_width = 500, addArchRBug = FALSE) {
   assert_is_wholenumber(tile_width)
