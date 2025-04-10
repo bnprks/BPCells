@@ -21,3 +21,17 @@ characters like "_" must be included in the given \code{prefix}. Use this prior 
 fragments from different experiments with \code{c()} in order to help prevent cell name
 clashes.
 }
+\examples{
+## Prep data
+frags <- tibble::tibble(
+  chr = "chr1",
+  start = seq(10, 260, 50),
+  end = start + 30,
+  cell_id = paste0("cell", c(rep(1, 2), rep(2,2), rep(3,2)))
+) \%>\% convert_to_fragments()
+frags
+
+
+## Prefix cells with foo
+prefix_cell_names(frags, "foo_") \%>\% as("GRanges")
+}
