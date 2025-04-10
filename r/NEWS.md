@@ -17,6 +17,7 @@
 - Fix matrix transpose error when BPCells is loaded via `devtools::load_all()` and `BiocGenerics` has been imported previously. (pull request #191)
 - Fix error when using a single group in `write_insertion_bedgraph()` (pull request #214)
 - Fix GRanges conversion functions sometimes not being defined if BPCells is built as a binary package prior to GenomicRanges being installed. (pull request #231; thanks to @mfansler for reporting issue #229)
+- Fix error in `write_matrix_hdf5()` when overwriting to a `.h5` file that does not exist. (pull request #234)
 
 # BPCells 0.3.0 (12/21/2024)
 

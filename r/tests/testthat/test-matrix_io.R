@@ -550,6 +550,14 @@ test_that("H5 overwrite works", {
     open_matrix_hdf5(file.path(dir, "overwrite.h5"), "mat") %>%
       as("dgCMatrix")
   )
+  # Should work even when the overwritten h5 doesn't exist
+  expect_identical(
+    as(m2, "dgCMatrix"),
+    m2 %>% 
+      as("IterableMatrix") %>%
+      write_matrix_hdf5(file.path(dir, "overwrite_new.h5"), "mat", overwrite = TRUE) %>%
+      as("dgCMatrix")
+  )
   # It should be okay even if we overwrite the same source we're loading from
   expect_identical(
     as(m2, "dgCMatrix")[c(1,3),],
@@ -558,6 +566,8 @@ test_that("H5 overwrite works", {
       write_matrix_hdf5(file.path(dir, "overwrite.h5"), "mat", overwrite=TRUE) %>%
       as("dgCMatrix")
   )
+
+  
 })
 
 test_that("Dir overwrite works", {
