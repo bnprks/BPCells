@@ -47,6 +47,7 @@ prepare_demo_data <- function(directory = NULL, filter_qc = TRUE, subset = TRUE,
     # Download matrix/frags if not done previously, and open
     url_base <- "https://cf.10xgenomics.com/samples/cell-arc/2.0.0/pbmc_granulocyte_sorted_3k/"
     # Recreate mat if mat is malformed
+    mat <- NULL
     tryCatch({
         mat <- open_matrix_dir(file.path(directory, "pbmc_3k_rna_raw"))
     }, error = function(e) {
