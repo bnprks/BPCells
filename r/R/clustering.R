@@ -28,44 +28,63 @@ is_adjacency_matrix <- function(mat) {
   return(is(mat, "dgCMatrix") && nrow(mat) == ncol(mat))
 }
 
-#' Cluster embeddings using a KNN-Graph based algorithm
+#' Cluster cell embeddings using a KNN graph-based algorithm
 #' 
-#' Take in a cell embedding matrix, and sequentially convert it into a kNN object, then to
-#' a graph adjacency matrix.  Following, assign a label to every cell using a clustering algorithm.
+#' Take in a cell embedding matrix, then find k nearest neighbors (KNN) for each cell, convert the
+#' KNN into a graph (adjacency matrix), then run a graph-based clustering algorithm. Each of these
+#' steps can be customized by passing a function that performs the step (see details).
 #' 
 #' @param mat (matrix) Cell embeddings matrix of shape `(cells x n_embeddings)`
-#' @param knn_method (function) Function to convert cell embeddings into a knn object.
-#' Must be a (optionally partialized) version of `knn_hnsw()` or `knn_annoy()`. 
-#' @param knn_to_graph_method (function) Function to convert the knn object returned from `knn_method` to a graph adjacency matrix.
-#' Must be a (optionally partialized) version of `knn_to_graph()`, `knn_to_snn_graph()` or `knn_to_geodesic_graph()`.  
-#' @param graph_to_cluster_method (function) Clustering algorithm that converts a graph adjacency matrix 
-#' returned from `graph_to_cluster_method` into cluster labels for each cell.
-#' Must be a (optionally partialized) version of `cluster_graph_leiden()`, `cluster_graph_louvain()` or `cluster_graph_seurat()`.
-#' @param threads (integer) Number of threads to use in `knn_method`, `knn_to_graph_method` and `graph_to_cluster_method`.  If these functions do not utilize
+#' @param knn_method (function) Function to that takes an embedding matrix as the first argument and returns a k nearest neighbors (KNN) object.
+#'   For example, `knn_hnsw()`, `knn_annoy()`, or a parameterized version (see Details).
+#' @param knn_to_graph_method (function) Function that takes a KNN object and returns a graph as an undirected graph (lower-triangular dgCMatrix adjacency matrix).
+#'   For example, `knn_to_graph()`, `knn_to_snn_graph()`, `knn_to_geodesic_graph()`, or a parameterized version (see Details).
+#' @param cluster_graph_method (function) Function that takes an undirected graph of cell similarity and returns a factor with cluster assignments for each cell.
+#'   For example, `cluster_graph_leiden()`, `cluster_graph_louvain()`, `cluster_graph_seurat()`, or a parameterized version (see Details).
+#' @param threads (integer) Number of threads to use in `knn_method`, `knn_to_graph_method` and `cluster_graph_method`.  If these functions do not utilize
 #' a `threads` argument, this is silently ignored.
-#' @param verbose (logical) Whether to print progress information in `knn_method`, `knn_to_graph_method` and `graph_to_cluster_method`.  If these functions do not utilize 
+#' @param verbose (logical) Whether to print progress information in `knn_method`, `knn_to_graph_method` and `cluster_graph_method`.  If these functions do not utilize 
 #' a `verbose` argument, this is silently ignored.
 #' @returns (factor) Factor vector containing the cluster assignment for each cell.
 #' @details 
-#' `cluster_cells_graph()` acts as a helper function to wrap input creation and `kNN` graph adjacency-based clustering to be done together.  The user
-#' can also manually pass cell embeddings to their preferred knn/clustering functions of choices.  
 #' 
-#' **Clustering customization through partialized parameters**
+#' **Customizing clustering steps**
 #' 
-#' Customization of clustering is possible through partialization of each parameter in `cluster_cells_graph()` that is a function.  
-#' In detail, each parameter that requests a function 
-#' may take in one with only some of the arguments provided.  If the first argument is not provided, a copy of a function is utilized that has its parameters
-#' changed with the arguments provided.
+#' All of the BPCells functions named like `knn_*`, `knn_to_graph_*`, and `cluster_graph_*` support customizing parameters
+#' via partial function application. For example, look for 20 neighbors during the k nearest neighbors search, setting
+#' `knn_method=knn_hnsw(k=20)` is a convenient shortcut for `knn_method=function(x) knn_hnsw(x, k=20)`. Similarly, lowering the 
+#'  default clustering resolution can be done as `cluster_graph_method=cluster_graph_louvain(resolution=0.5)`. This works because
+#' all these functions are written to return a partially parameterized copy of themselves as a function object when their
+#' first argument is missing.
+#'
+#' For even more advanced customization, users can manually call the `knn`, `knn_to_graph`, and `cluster_graph` methods rather
+#' than using `cluster_cells_graph()` as a convenient wrapper.
+#'
+#' **Implementing custom clustering steps**
 #' 
-#' For instance, if the user desires for `cluster_cells_graph()` to instead use `cluster_graph_louvain()` with resolution different than the default,
-#' they can instead call `cluster_cells_graph()` like so: 
-#' `cluster_cells_graph(mat, graph_to_cluster_method = cluter_graph_louvain(resolution = 0.5))`
-#' @seealso `knn_hnsw()` `knn_annoy()` `knn_to_graph()` `knn_to_snn_graph()` `knn_to_geodesic_graph()` `cluster_graph_leiden()` `knn_to_snn_graph()` `knn_to_geodesic_graph()`
+#' The required interfaces for each step are as follows:
+#'
+#' **knn_method**: First argument is a matrix of cell embeddings, shape `(cells x n_embeddings)`.
+#'  Returns a named list of two matrices of dimension (cells x k):
+#'  - `idx`: Neighbor indices, where `idx[c, n]` is the index of the
+#'    nth nearest neighbor to cell `c`.
+#'  - `dist`: Neighbor distances, where `dist[c, n]` is the distance between
+#'    cell `c` and its nth nearest neighbor.
+#'  Self-neighbors are allowed, so with sufficient search effort `idx[c,1] == c` for nearly all cells.
+#' 
+#' **knn_to_graph_method**: First argument is a KNN object as returned by `knn_method`.
+#'  Returns a weighted similarity graph as a lower triangular sparse adjacency matrix (`dgCMatrix`). 
+#'  For cells `i` and `j`, their similarity score is in `adjacency_mat[max(i,j), min(i,j)]`.
+#'
+#' **cluster_graph_method**: First argument is a weighted similarity graph as returned by `knn_to_graph_method`.
+#'  Returns a factor vector of length `cells` with a cluster assignment for each cell.
+#'
+#' @seealso `knn_hnsw()` `knn_annoy()` `knn_to_graph()` `knn_to_snn_graph()` `knn_to_geodesic_graph()` `cluster_graph_leiden()` `cluster_graph_louvain()` `cluster_graph_seurat()` 
 #' @export
 cluster_cells_graph <- function(
   mat, knn_method = knn_hnsw, 
   knn_to_graph_method = knn_to_geodesic_graph, 
-  graph_to_cluster_method = cluster_graph_leiden, 
+  cluster_graph_method = cluster_graph_leiden, 
   threads = 0L, verbose = FALSE
 ) {
   assert_is_wholenumber(threads)
@@ -80,7 +99,7 @@ cluster_cells_graph <- function(
   mat <- partial_apply(knn_to_graph_method, threads = threads, verbose = verbose, return_type = "matrix", .missing_args_error = FALSE)(mat)
   if (!is_adjacency_matrix(mat)) pretty_error(mat, "`knn_to_graph_method` was unable to convert `mat` from a knn object to a graph adjacency matrix", 1)
   # Also pass verbose and threads to clustering functions in case they are given these params in the future
-  mat <- partial_apply(graph_to_cluster_method, threads = threads, verbose = verbose, .missing_args_error = FALSE)(mat)
+  mat <- partial_apply(cluster_graph_method, threads = threads, verbose = verbose, .missing_args_error = FALSE)(mat)
   return(mat)
 }
 
@@ -330,10 +349,14 @@ cluster_membership_matrix <- function(groups, group_order = NULL) {
 #' @param ef ef parameter for `RcppHNSW::hnsw_search()`. Increase for slower search but
 #'          improved accuracy
 #' @param verbose whether to print progress information during search
-#' @return List of 2 matrices -- idx for cell x K neighbor indices,
-#'         dist for cell x K neighbor distances.
-#'         If no query is given, nearest neighbors are found mapping
-#'         the data matrix to itself, prohibiting self-neighbors
+#' @return Named list of two matrices of dimension (cells x k):
+#'  - `idx`: Neighbor indices, where `idx[c, n]` is the index of the
+#'    nth nearest neighbor to cell `c`.
+#'  - `dist`: Neighbor distances, where `dist[c, n]` is the distance between
+#'    cell `c` and its nth nearest neighbor.
+#'
+#'  If no query is given, nearest neighbors are found by mapping the data matrix to itself, 
+#'  likely including self-neighbors (i.e. `idx[c,1] == c` for most cells).
 #' @export
 knn_hnsw <- function(data, query = NULL, k = 10, metric = c("euclidean", "cosine"), verbose = TRUE, threads = 1, ef = 100) {
   metric <- match.arg(metric)

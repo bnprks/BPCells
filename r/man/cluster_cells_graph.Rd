@@ -2,13 +2,13 @@
 % Please edit documentation in R/clustering.R
 \name{cluster_cells_graph}
 \alias{cluster_cells_graph}
-\title{Cluster embeddings using a KNN-Graph based algorithm}
+\title{Cluster cell embeddings using a KNN graph-based algorithm}
 \usage{
 cluster_cells_graph(
   mat,
   knn_method = knn_hnsw,
   knn_to_graph_method = knn_to_geodesic_graph,
-  graph_to_cluster_method = cluster_graph_leiden,
+  cluster_graph_method = cluster_graph_leiden,
   threads = 0L,
   verbose = FALSE
 )
@@ -16,44 +16,63 @@ cluster_cells_graph(
 \arguments{
 \item{mat}{(matrix) Cell embeddings matrix of shape \verb{(cells x n_embeddings)}}
 
-\item{knn_method}{(function) Function to convert cell embeddings into a knn object.
-Must be a (optionally partialized) version of \code{knn_hnsw()} or \code{knn_annoy()}.}
+\item{knn_method}{(function) Function to that takes an embedding matrix as the first argument and returns a k nearest neighbors (KNN) object.
+For example, \code{knn_hnsw()}, \code{knn_annoy()}, or a parameterized version (see Details).}
 
-\item{knn_to_graph_method}{(function) Function to convert the knn object returned from \code{knn_method} to a graph adjacency matrix.
-Must be a (optionally partialized) version of \code{knn_to_graph()}, \code{knn_to_snn_graph()} or \code{knn_to_geodesic_graph()}.}
+\item{knn_to_graph_method}{(function) Function that takes a KNN object and returns a graph as an undirected graph (lower-triangular dgCMatrix adjacency matrix).
+For example, \code{knn_to_graph()}, \code{knn_to_snn_graph()}, \code{knn_to_geodesic_graph()}, or a parameterized version (see Details).}
 
-\item{graph_to_cluster_method}{(function) Clustering algorithm that converts a graph adjacency matrix
-returned from \code{graph_to_cluster_method} into cluster labels for each cell.
-Must be a (optionally partialized) version of \code{cluster_graph_leiden()}, \code{cluster_graph_louvain()} or \code{cluster_graph_seurat()}.}
+\item{cluster_graph_method}{(function) Function that takes an undirected graph of cell similarity and returns a factor with cluster assignments for each cell.
+For example, \code{cluster_graph_leiden()}, \code{cluster_graph_louvain()}, \code{cluster_graph_seurat()}, or a parameterized version (see Details).}
 
-\item{threads}{(integer) Number of threads to use in \code{knn_method}, \code{knn_to_graph_method} and \code{graph_to_cluster_method}.  If these functions do not utilize
+\item{threads}{(integer) Number of threads to use in \code{knn_method}, \code{knn_to_graph_method} and \code{cluster_graph_method}.  If these functions do not utilize
 a \code{threads} argument, this is silently ignored.}
 
-\item{verbose}{(logical) Whether to print progress information in \code{knn_method}, \code{knn_to_graph_method} and \code{graph_to_cluster_method}.  If these functions do not utilize
+\item{verbose}{(logical) Whether to print progress information in \code{knn_method}, \code{knn_to_graph_method} and \code{cluster_graph_method}.  If these functions do not utilize
 a \code{verbose} argument, this is silently ignored.}
 }
 \value{
 (factor) Factor vector containing the cluster assignment for each cell.
 }
 \description{
-Take in a cell embedding matrix, and sequentially convert it into a kNN object, then to
-a graph adjacency matrix.  Following, assign a label to every cell using a clustering algorithm.
+Take in a cell embedding matrix, then find k nearest neighbors (KNN) for each cell, convert the
+KNN into a graph (adjacency matrix), then run a graph-based clustering algorithm. Each of these
+steps can be customized by passing a function that performs the step (see details).
 }
 \details{
-\code{cluster_cells_graph()} acts as a helper function to wrap input creation and \code{kNN} graph adjacency-based clustering to be done together.  The user
-can also manually pass cell embeddings to their preferred knn/clustering functions of choices.
+\strong{Customizing clustering steps}
 
-\strong{Clustering customization through partialized parameters}
+All of the BPCells functions named like \verb{knn_*}, \verb{knn_to_graph_*}, and \verb{cluster_graph_*} support customizing parameters
+via partial function application. For example, look for 20 neighbors during the k nearest neighbors search, setting
+\code{knn_method=knn_hnsw(k=20)} is a convenient shortcut for \code{knn_method=function(x) knn_hnsw(x, k=20)}. Similarly, lowering the
+default clustering resolution can be done as \code{cluster_graph_method=cluster_graph_louvain(resolution=0.5)}. This works because
+all these functions are written to return a partially parameterized copy of themselves as a function object when their
+first argument is missing.
 
-Customization of clustering is possible through partialization of each parameter in \code{cluster_cells_graph()} that is a function.
-In detail, each parameter that requests a function
-may take in one with only some of the arguments provided.  If the first argument is not provided, a copy of a function is utilized that has its parameters
-changed with the arguments provided.
+For even more advanced customization, users can manually call the \code{knn}, \code{knn_to_graph}, and \code{cluster_graph} methods rather
+than using \code{cluster_cells_graph()} as a convenient wrapper.
 
-For instance, if the user desires for \code{cluster_cells_graph()} to instead use \code{cluster_graph_louvain()} with resolution different than the default,
-they can instead call \code{cluster_cells_graph()} like so:
-\code{cluster_cells_graph(mat, graph_to_cluster_method = cluter_graph_louvain(resolution = 0.5))}
+\strong{Implementing custom clustering steps}
+
+The required interfaces for each step are as follows:
+
+\strong{knn_method}: First argument is a matrix of cell embeddings, shape \verb{(cells x n_embeddings)}.
+Returns a named list of two matrices of dimension (cells x k):
+\itemize{
+\item \code{idx}: Neighbor indices, where \code{idx[c, n]} is the index of the
+nth nearest neighbor to cell \code{c}.
+\item \code{dist}: Neighbor distances, where \code{dist[c, n]} is the distance between
+cell \code{c} and its nth nearest neighbor.
+Self-neighbors are allowed, so with sufficient search effort \code{idx[c,1] == c} for nearly all cells.
+}
+
+\strong{knn_to_graph_method}: First argument is a KNN object as returned by \code{knn_method}.
+Returns a weighted similarity graph as a lower triangular sparse adjacency matrix (\code{dgCMatrix}).
+For cells \code{i} and \code{j}, their similarity score is in \code{adjacency_mat[max(i,j), min(i,j)]}.
+
+\strong{cluster_graph_method}: First argument is a weighted similarity graph as returned by \code{knn_to_graph_method}.
+Returns a factor vector of length \code{cells} with a cluster assignment for each cell.
 }
 \seealso{
-\code{knn_hnsw()} \code{knn_annoy()} \code{knn_to_graph()} \code{knn_to_snn_graph()} \code{knn_to_geodesic_graph()} \code{cluster_graph_leiden()} \code{knn_to_snn_graph()} \code{knn_to_geodesic_graph()}
+\code{knn_hnsw()} \code{knn_annoy()} \code{knn_to_graph()} \code{knn_to_snn_graph()} \code{knn_to_geodesic_graph()} \code{cluster_graph_leiden()} \code{cluster_graph_louvain()} \code{cluster_graph_seurat()}
 }

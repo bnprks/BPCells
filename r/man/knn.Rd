@@ -46,10 +46,16 @@ improved accuracy}
 \item{search_k}{Number of nodes to inspect during the query, or -1 for default value. Higher number gives higher accuracy}
 }
 \value{
-List of 2 matrices -- idx for cell x K neighbor indices,
-dist for cell x K neighbor distances.
-If no query is given, nearest neighbors are found mapping
-the data matrix to itself, prohibiting self-neighbors
+Named list of two matrices of dimension (cells x k):
+\itemize{
+\item \code{idx}: Neighbor indices, where \code{idx[c, n]} is the index of the
+nth nearest neighbor to cell \code{c}.
+\item \code{dist}: Neighbor distances, where \code{dist[c, n]} is the distance between
+cell \code{c} and its nth nearest neighbor.
+}
+
+If no query is given, nearest neighbors are found by mapping the data matrix to itself,
+likely including self-neighbors (i.e. \code{idx[c,1] == c} for most cells).
 }
 \description{
 Search for approximate nearest neighbors between cells in the reduced
