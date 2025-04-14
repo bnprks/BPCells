@@ -3001,6 +3001,7 @@ checksum <- function(matrix) {
 #' 
 #' #######################################################################
 #' ## apply_by_row() example
+#' #######################################################################
 #' ## Get mean of every row
 #' 
 #' ## expect an error in the case that col-major matrix is passed
@@ -3017,7 +3018,8 @@ checksum <- function(matrix) {
 #' 
 #' # Also analogous to running rowMeans() without names
 #' rowMeans(mat)
-#' #######################################################################
+#' 
+#' 
 #' @export
 apply_by_row <- function(mat, fun, ...) {
   assert_is(mat, "IterableMatrix")
@@ -3037,11 +3039,13 @@ apply_by_row <- function(mat, fun, ...) {
 #' @examples
 #' #######################################################################
 #' ## apply_by_col() example
+#' #######################################################################
 #' ## Get argmax of every col
 #' apply_by_col(mat, 
 #'  function(val, row, col) if (length(val) > 0) row[which.max(val)] else 1L
 #' ) %>% unlist()
-#' #######################################################################
+#' 
+#' 
 #' @export
 apply_by_col <- function(mat, fun, ...) {
   if (storage_order(mat) != "col") {

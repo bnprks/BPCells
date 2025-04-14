@@ -192,8 +192,10 @@ setMethod("short_description", "TransformMin", function(x) {
 #' 
 #' #######################################################################
 #' ## min_scalar() example
-#' min_scalar(mat, 4) %>% as("dgCMatrix")
 #' #######################################################################
+#' min_scalar(mat, 4) %>% as("dgCMatrix")
+#' 
+#' 
 #' @export
 min_scalar <- function(mat, val) {
   assert_is(mat, "IterableMatrix")
@@ -230,8 +232,10 @@ setMethod("short_description", "TransformMinByRow", function(x) {
 #' @examples
 #' #######################################################################
 #' ## min_by_row() example
-#' min_by_row(mat, 1:4) %>% as("dgCMatrix")
 #' #######################################################################
+#' min_by_row(mat, 1:4) %>% as("dgCMatrix")
+#' 
+#' 
 #' @export
 min_by_row <- function(mat, vals) {
   if (mat@transpose) {
@@ -268,8 +272,10 @@ setMethod("short_description", "TransformMinByCol", function(x) {
 #' @examples
 #' #######################################################################
 #' ## min_by_col() example
-#' min_by_col(mat, 1:10) %>% as("dgCMatrix")
 #' #######################################################################
+#' min_by_col(mat, 1:10) %>% as("dgCMatrix")
+#' 
+#' 
 #' @export
 min_by_col <- function(mat, vals) {
   if (mat@transpose) {
@@ -815,8 +821,10 @@ setMethod("+", signature(e1 = "numeric", e2 = "TransformScaleShift"), function(e
 #' 
 #' #######################################################################
 #' ## add_rows() example
-#' add_rows(mat, 1:4) %>% as("dgCMatrix")
 #' #######################################################################
+#' add_rows(mat, 1:4) %>% as("dgCMatrix")
+#' 
+#' 
 #' @export
 add_rows <- function(mat, vec) {
   assert_is(mat, c("dgCMatrix", "IterableMatrix", "matrix"))
@@ -828,8 +836,10 @@ add_rows <- function(mat, vec) {
 #' @examples
 #' #######################################################################
 #' ## add_cols() example
-#' add_cols(mat, 1:10) %>% as("dgCMatrix")
 #' #######################################################################
+#' add_cols(mat, 1:10) %>% as("dgCMatrix")
+#' 
+#' 
 #' @export
 add_cols <- function(mat, vec) {
   assert_is(mat, c("dgCMatrix", "IterableMatrix", "matrix"))
@@ -841,8 +851,10 @@ add_cols <- function(mat, vec) {
 #' @examples
 #' #######################################################################
 #' ## multiply_rows() example
-#' multiply_rows(mat, 1:4) %>% as("dgCMatrix")
 #' #######################################################################
+#' multiply_rows(mat, 1:4) %>% as("dgCMatrix")
+#' 
+#' 
 #' @export
 multiply_rows <- function(mat, vec) {
   assert_is(mat, c("dgCMatrix", "IterableMatrix", "matrix"))
@@ -854,8 +866,10 @@ multiply_rows <- function(mat, vec) {
 #' @examples
 #' #######################################################################
 #' ## multiply_cols() example
-#' multiply_cols(mat, 1:10) %>% as("dgCMatrix")
 #' #######################################################################
+#' multiply_cols(mat, 1:10) %>% as("dgCMatrix")
+#' 
+#' 
 #' @export
 multiply_cols <- function(mat, vec) {
   assert_is(mat, c("dgCMatrix", "IterableMatrix", "matrix"))
