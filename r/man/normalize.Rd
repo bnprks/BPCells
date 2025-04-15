@@ -10,9 +10,9 @@ normalize_log(mat, scale_factor = 10000, threads = 1L)
 normalize_tfidf(mat, feature_means = NULL, scale_factor = 10000, threads = 1L)
 }
 \arguments{
-\item{mat}{(IterableMatrix) Counts matrix with dimensions \verb{(features x cells)}.}
+\item{mat}{(Matrix-like) Counts matrix with dimensions \verb{(features x cells)}. Can be type \code{IterableMatrix}, \code{base::matrix}, or \code{Matrix::dgCMatrix}.}
 
-\item{scale_factor}{(numeric) Scaling factor to multiply matrix by prior to normalization (see formulas below).}
+\item{scale_factor}{(numeric) Scaling factor to multiply matrix by during normalization (see formulas below).}
 
 \item{threads}{(integer) Number of threads to use.}
 
@@ -36,10 +36,11 @@ normalized value \eqn{\tilde{x}_{ij}} is calculated as:
 Apply standard normalizations to a \verb{(features x cells)} counts matrix.
 }
 \details{
-\strong{Passing to \code{normalize} parameters with non-default arguments}
+\strong{Passing to \code{normalize_method} parameters with non-default arguments}
 
 If the \code{mat} argument is missing, returns a "partial" function: a copy of the original function but with most arguments pre-defined.
-This can be used to customize \code{normalize} parameters in other single cell functions in BPCells (e.g. \code{select_features_mean()}).
+For example, \code{normalize_log(scale_factor=1e5)} is roughly equivalent to \code{function(mat) normalize_log(mat, scale_factor=1e5)}.
+This can be used to customize \code{normalize_method} parameters in other single cell functions in BPCells (e.g. \code{select_features_mean()}).
 
 \strong{Related functions from other packages}
 \itemize{
@@ -52,16 +53,21 @@ This can be used to customize \code{normalize} parameters in other single cell f
 }
 \examples{
 set.seed(12345)
-mat <- matrix(rpois(4*5, lambda=1), nrow=4, ncol=5)
-mat
+base_r_mat <- matrix(rpois(4*5, lambda=1), nrow=4, ncol=5)
+base_r_mat
 
-mat <- as(mat, "IterableMatrix")
+mat <- as(base_r_mat, "IterableMatrix")
 
 
 #######################################################################
 ## normalize_log() examples
 #######################################################################
 normalize_log(mat)
+
+## normalizations work on dgCMatrix and base matrix objects also
+normalize_log(as(mat, "dgCMatrix"))
+
+normalize_log(base_r_mat)
 
 ## normalization functions can also be called with partial arguments 
 partial_log <- normalize_log(scale_factor = 1e5)

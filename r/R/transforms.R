@@ -943,8 +943,8 @@ regress_out <- function(mat, latent_data, prediction_axis = c("row", "col")) {
 #' Apply standard normalizations to a `(features x cells)` counts matrix.
 #' 
 #' @rdname normalize
-#' @param mat (IterableMatrix) Counts matrix with dimensions `(features x cells)`.
-#' @param scale_factor (numeric) Scaling factor to multiply matrix by prior to normalization (see formulas below).
+#' @param mat (Matrix-like) Counts matrix with dimensions `(features x cells)`. Can be type `IterableMatrix`, `base::matrix`, or `Matrix::dgCMatrix`.
+#' @param scale_factor (numeric) Scaling factor to multiply matrix by during normalization (see formulas below).
 #' @param threads (integer) Number of threads to use.
 #' @returns 
 #' Consider a matrix \eqn{X}, where the row index \eqn{i} refers to each feature
@@ -953,25 +953,31 @@ regress_out <- function(mat, latent_data, prediction_axis = c("row", "col")) {
 #'  
 #'   - `normalize_log`: \eqn{\tilde{x}_{ij} = \log(\frac{x_{ij} \cdot \text{scaleFactor}}{\text{colSum}_j} + 1)}
 #' @details 
-#' **Passing to `normalize` parameters with non-default arguments**
+#' **Passing to `normalize_method` parameters with non-default arguments**
 #' 
 #' If the `mat` argument is missing, returns a "partial" function: a copy of the original function but with most arguments pre-defined. 
-#' This can be used to customize `normalize` parameters in other single cell functions in BPCells (e.g. `select_features_mean()`).
+#' For example, `normalize_log(scale_factor=1e5)` is roughly equivalent to `function(mat) normalize_log(mat, scale_factor=1e5)`.
+#' This can be used to customize `normalize_method` parameters in other single cell functions in BPCells (e.g. `select_features_mean()`).
 #' 
 #' **Related functions from other packages**
 #' - `normalize_log`: Corresponds to `Seurat::NormalizeData()` with its default "LogNormalize" method.
 #' @examples
 #' set.seed(12345)
-#' mat <- matrix(rpois(4*5, lambda=1), nrow=4, ncol=5)
-#' mat
+#' base_r_mat <- matrix(rpois(4*5, lambda=1), nrow=4, ncol=5)
+#' base_r_mat
 #' 
-#' mat <- as(mat, "IterableMatrix")
+#' mat <- as(base_r_mat, "IterableMatrix")
 #' 
 #' 
 #' #######################################################################
 #' ## normalize_log() examples
 #' #######################################################################
 #' normalize_log(mat)
+#'
+#' ## normalizations work on dgCMatrix and base matrix objects also
+#' normalize_log(as(mat, "dgCMatrix"))
+#' 
+#' normalize_log(base_r_mat)
 #' 
 #' ## normalization functions can also be called with partial arguments 
 #' partial_log <- normalize_log(scale_factor = 1e5)
