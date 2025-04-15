@@ -115,8 +115,8 @@ but can be done as a preprocessing step.
 }
 \examples{
 ## Prep data
-nrows <- 500
-ncols <- 10000
+nrows <- 350
+ncols <- 2000
 mat <- matrix(1:(nrows*ncols), nrow = nrows) \%>\% as("IterableMatrix")
 rownames(mat) <- paste0("feat", seq(nrows))
 colnames(mat) <- paste0("cell", seq(ncols))
@@ -140,6 +140,7 @@ dim_reduction <- IterativeLSI(
     knn_to_graph_method = knn_to_snn_graph
   )
 )
+dim_reduction
 
 
 #######################################################################

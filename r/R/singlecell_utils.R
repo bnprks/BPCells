@@ -292,6 +292,28 @@ project.default <- function(x, mat, ...) {
   rlang::abort("project method not implemented for objects that are not a fitted DimReduction")
 }
 
+#' @export
+print.DimReduction <- function(x, ...) {
+  cat(sprintf("Fitted <%s> dimensionality reduction\n\n", class(x)[1]))
+  
+  # Print feature info
+  cat("Number of features:", length(x$feature_names), "\n") 
+  cat("Input feature names:", pretty_print_vector(x$feature_names), "\n")
+
+  # Print embedding info
+  dim_embeddings <- dim(x$cell_embeddings)
+  cat(sprintf("cell_embeddings: %d cells x %d embedding dimensions\n", dim_embeddings[1], dim_embeddings[2]))
+
+  # Print param info
+  # params_str <- paste(names(x$fitted_params), collapse = ", ")
+  # wrapped_params <- strwrap(params_str, width = getOption("width") - 6)
+  # cat("Fitted_params:\n")
+  # for (ln in wrapped_params) {
+  #   cat("  ", ln, "\n", sep = "")
+  # }
+  cat("fitted_params: ", stringr::str_wrap(paste(names(x$fitted_params), collapse = ", "), exdent = 2, width = 60), "\n")
+}
+
 #################
 # LSI Implementation
 #################
@@ -333,9 +355,10 @@ project.default <- function(x, mat, ...) {
 #' 
 #' 
 #' #######################################################################
-#' ## LSI() example
+#' ## LSI() example 
 #' #######################################################################
 #' lsi_result <- LSI(mat, n_dimensions = 10)
+#' lsi_result
 #' 
 #' 
 #' @export
@@ -406,7 +429,7 @@ LSI <- function(
 #' @inheritParams project
 #' @examples
 #' #######################################################################
-#' ## project(<LSI>) example
+#' ## project(<LSI>) example 
 #' #######################################################################
 #' dim(project(lsi_result, mat))
 #' 
@@ -436,6 +459,7 @@ project.LSI <- function(x, mat, threads = 1L, ...) {
   }
   return(res)
 }
+
 
 
 #' Run Iterative LSI on a matrix.
@@ -504,8 +528,8 @@ project.LSI <- function(x, mat, threads = 1L, ...) {
 #' @inheritParams LSI
 #' @examples
 #' ## Prep data
-#' nrows <- 500
-#' ncols <- 10000
+#' nrows <- 350
+#' ncols <- 2000
 #' mat <- matrix(1:(nrows*ncols), nrow = nrows) %>% as("IterableMatrix")
 #' rownames(mat) <- paste0("feat", seq(nrows))
 #' colnames(mat) <- paste0("cell", seq(ncols))
@@ -529,6 +553,7 @@ project.LSI <- function(x, mat, threads = 1L, ...) {
 #'     knn_to_graph_method = knn_to_snn_graph
 #'   )
 #' )
+#' dim_reduction
 #' 
 #' 
 #' @export
