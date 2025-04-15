@@ -10,9 +10,9 @@ normalize_log(mat, scale_factor = 10000, threads = 1L)
 normalize_tfidf(mat, feature_means = NULL, scale_factor = 10000, threads = 1L)
 }
 \arguments{
-\item{mat}{(IterableMatrix) Counts matrix with dimensions \verb{(features x cells)}.}
+\item{mat}{(Matrix-like) Counts matrix with dimensions \verb{(features x cells)}. Can be type \code{IterableMatrix}, \code{base::matrix}, or \code{Matrix::dgCMatrix}.}
 
-\item{scale_factor}{(numeric) Scaling factor to multiply matrix by prior to normalization (see formulas below).}
+\item{scale_factor}{(numeric) Scaling factor to multiply matrix by during normalization (see formulas below).}
 
 \item{threads}{(integer) Number of threads to use.}
 
@@ -21,9 +21,13 @@ If \code{feature_means} has names and \code{mat} has row names, match values by 
 Otherwise, assume \code{feature_means} has the same length and ordering as the matrix rows.}
 }
 \value{
-Consider a matrix \eqn{X}, where the row index \eqn{i} refers to each feature
-and the column index \eqn{j} refers to each cell. For each element \eqn{{x}_{ij} \in X}, the
-normalized value \eqn{\tilde{x}_{ij}} is calculated as:
+Normalized matrix with the same dimensions and type as the input matrix \code{mat}. If the input matrix \code{mat} is missing, returns
+a copy of the original function with the other arguments pre-defined (see Details).
+
+\strong{Normalization equations}
+
+Let \eqn{x_{ij}} be the value of \code{mat} in row (feature) \eqn{i} and column (cell) \eqn{j}.
+Then the corresponding normalized value of the output \eqn{\tilde{x}_{ij}} is calculated as:
 \itemize{
 \item \code{normalize_log}: \eqn{\tilde{x}_{ij} = \log(\frac{x_{ij} \cdot \text{scaleFactor}}{\text{colSum}_j} + 1)}
 }
@@ -36,10 +40,13 @@ normalized value \eqn{\tilde{x}_{ij}} is calculated as:
 Apply standard normalizations to a \verb{(features x cells)} counts matrix.
 }
 \details{
-\strong{Passing to \code{normalize} parameters with non-default arguments}
+\strong{Passing to \code{normalize_method} parameters with non-default arguments}
 
-If the \code{mat} argument is missing, returns a "partial" function: a copy of the original function but with most arguments pre-defined.
-This can be used to customize \code{normalize} parameters in other single cell functions in BPCells (e.g. \code{select_features_mean()}).
+Other BPCells functions like \code{select_features_variance()} take a \code{normalize_method} argument, which can be set to \code{normalize_log} to
+perform log-normalization with default arguments prior to feature selection. If non-default arguments are required, it is possible to
+omit the \code{mat} argument but set custom parameters as desired. For instance \code{normalize_log(scale_factor=1e5)} is roughly equivalent to
+\code{function(mat) normalize_log(mat, scale_factor=1e5)}. This works because when the \code{mat} argument is missing, the return value is a
+copy of the original function with all other arguments pre-defined (an example of partial function application in computer science terms).
 
 \strong{Related functions from other packages}
 \itemize{
@@ -52,16 +59,20 @@ This can be used to customize \code{normalize} parameters in other single cell f
 }
 \examples{
 set.seed(12345)
-mat <- matrix(rpois(4*5, lambda=1), nrow=4, ncol=5)
-mat
+base_r_mat <- matrix(rpois(4*5, lambda=1), nrow=4, ncol=5)
+base_r_mat
 
-mat <- as(mat, "IterableMatrix")
-
+mat <- as(base_r_mat, "IterableMatrix")
 
 #######################################################################
 ## normalize_log() examples
 #######################################################################
 normalize_log(mat)
+
+## normalizations work on dgCMatrix and base matrix objects also
+normalize_log(as(mat, "dgCMatrix"))
+
+normalize_log(base_r_mat)
 
 ## normalization functions can also be called with partial arguments 
 partial_log <- normalize_log(scale_factor = 1e5)
@@ -69,11 +80,9 @@ partial_log
 
 partial_log(mat)
 
-
 #######################################################################
 ## normalize_tfidf() example
 #######################################################################
 normalize_tfidf(mat)
-
 
 }
