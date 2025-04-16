@@ -69,3 +69,34 @@ provided for the relevant metadata parameters. Some of the
 metadata parameters are not read by default in BPCells, but
 it is possible to export them for use with other tools.
 }
+\examples{
+## Download example matrices from pbmc 500 dataset and save in temp directory
+data_dir <- file.path(tempdir(), "mat_10x")
+dir.create(data_dir, recursive = TRUE, showWarnings = FALSE)
+url_base <- "https://cf.10xgenomics.com/samples/cell-exp/6.1.0/500_PBMC_3p_LT_Chromium_X/"
+mat_file <- "500_PBMC_3p_LT_Chromium_X_filtered_feature_bc_matrix.h5"
+rna_url <- paste0(url_base, mat_file)
+if (!file.exists(file.path(data_dir, mat_file))) {
+ download.file(rna_url, file.path(data_dir, mat_file), mode="wb")
+}
+
+#######################################################################
+## open_matrix_10x_hdf5() example
+#######################################################################
+mat <- open_matrix_10x_hdf5(
+ file.path(data_dir, mat_file)
+)
+mat
+
+
+#######################################################################
+## write_matrix_10x_hdf5() example
+#######################################################################
+mat <- write_matrix_10x_hdf5(
+ mat,
+ file.path(data_dir, paste0("new", mat_file))
+)
+mat
+
+
+}

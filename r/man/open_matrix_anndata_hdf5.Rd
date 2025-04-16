@@ -68,3 +68,41 @@ See the \href{https://anndata.readthedocs.io/en/latest/fileformat-prose.html#den
 This helps to infer dimnames for \code{obsp},\code{ varm}, etc. If the number of \code{len(obs) == len(var)},
 dimname inference will be disabled.
 }
+\examples{
+## Create temporary directory to keep demo matrix
+data_dir <- file.path(tempdir(), "mat_anndata")
+if (dir.exists(data_dir)) unlink(data_dir, recursive = TRUE)
+dir.create(data_dir, recursive = TRUE, showWarnings = FALSE)
+mat <- get_demo_mat()
+
+
+#######################################################################
+## write_matrix_anndata_hdf5() example
+#######################################################################
+mat <- write_matrix_anndata_hdf5(
+ mat,
+ file.path(data_dir, paste0("new_demo_mat.h5"))
+)
+mat
+
+
+#######################################################################
+## open_matrix_anndata_hdf5() example
+#######################################################################
+mat <- open_matrix_anndata_hdf5(
+ file.path(data_dir, paste0("new_demo_mat.h5"))
+)
+mat
+
+
+#######################################################################
+## write_matrix_anndata_hdf5_dense() example
+#######################################################################
+mat <- write_matrix_anndata_hdf5_dense(
+ mat,
+ file.path(data_dir, paste0("new_demo_mat_dense.h5"))
+)
+mat
+
+
+}
