@@ -101,6 +101,7 @@ chrom_sizes$tile_width = 500
 
 #######################################################################
 ## gene_score_weights_archr() example
+#######################################################################
 ## Get gene score weight matrix (genes x tiles)
 gene_score_weights <- gene_score_weights_archr(
     genes, chrom_sizes, blacklist
@@ -111,11 +112,14 @@ tiles <- tile_matrix(frags, chrom_sizes, mode = "fragments")
 
 ## Get gene scores per cell 
 gene_score_weights \%*\% tiles
-#######################################################################
+
+
 #######################################################################
 ## gene_score_archr() example
+#######################################################################
 ## This is a wrapper that creates both the gene score weight 
 ## matrix and tile matrix together
 gene_score_archr(frags, genes, chrom_sizes, blacklist)
-#######################################################################
+
+
 }

@@ -53,15 +53,19 @@ When calculating the matrix directly from a fragments tsv, it's necessary to fir
 provide the ordering of chromosomes to expect while reading the tsv.
 }
 \examples{
-## Prep data
-reference_dir <- file.path(tempdir(), "references")
-frags <- get_demo_frags()
-blacklist <- read_encode_blacklist(reference_dir, genome="hg38")
-frags_filter_blacklist <- select_regions(frags, blacklist, invert_selection = TRUE)
-chrom_sizes <- read_ucsc_chrom_sizes(reference_dir, genome="hg38") \%>\% 
- dplyr::filter(chr \%in\% c("chr4", "chr11"))
+## Prep demo data
+frags <- get_demo_frags(subset = FALSE)
+chrom_sizes <- read_ucsc_chrom_sizes(file.path(tempdir(), "references"), genome="hg38")
+blacklist <- read_encode_blacklist(file.path(tempdir(), "references"), genome="hg38")
+frags_filter_blacklist <- frags \%>\% select_regions(blacklist, invert_selection = TRUE)
+peaks <- call_peaks_tile(
+  frags_filter_blacklist, 
+  chrom_sizes,
+  effective_genome_size = 2.8e9
+)
+top_peaks <- head(peaks, 5000)
+top_peaks <- top_peaks[order_ranges(top_peaks, chrNames(frags)),]
 
-
-## Call peaks
-peaks <- call_peaks_tile(frags_filter_blacklist, chrom_sizes, effective_genome_size = 2.8e9)
+## Get peak matrix
+peak_matrix(frags_filter_blacklist, top_peaks, mode="insertions")
 }

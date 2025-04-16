@@ -200,6 +200,7 @@ gene_score_tiles_archr <- function(genes, chromosome_sizes = NULL, tile_width = 
 #' 
 #' #######################################################################
 #' ## gene_score_weights_archr() example
+#' #######################################################################
 #' ## Get gene score weight matrix (genes x tiles)
 #' gene_score_weights <- gene_score_weights_archr(
 #'     genes, chrom_sizes, blacklist
@@ -210,7 +211,8 @@ gene_score_tiles_archr <- function(genes, chromosome_sizes = NULL, tile_width = 
 #' 
 #' ## Get gene scores per cell 
 #' gene_score_weights %*% tiles
-#' #######################################################################
+#' 
+#' 
 #' @export
 #' @rdname gene_scores
 gene_score_weights_archr <- function(genes, chromosome_sizes, blacklist = NULL, tile_width = 500, gene_name_column="gene_id", addArchRBug = FALSE) {
@@ -274,10 +276,12 @@ gene_score_weights_archr <- function(genes, chromosome_sizes, blacklist = NULL, 
 #' @examples
 #' #######################################################################
 #' ## gene_score_archr() example
+#' #######################################################################
 #' ## This is a wrapper that creates both the gene score weight 
 #' ## matrix and tile matrix together
 #' gene_score_archr(frags, genes, chrom_sizes, blacklist)
-#' #######################################################################
+#' 
+#' 
 #' @export
 #' @rdname gene_scores
 gene_score_archr <- function(fragments, genes, chromosome_sizes, blacklist=NULL, tile_width = 500, gene_name_column="gene_id", addArchRBug = FALSE,
