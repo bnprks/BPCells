@@ -3,8 +3,6 @@
 ## Features
 - Add `write_matrix_anndata_hdf5_dense()` which allows writing matrices in AnnData's dense format, most commonly used for `obsm` or `varm` matrices. (Thanks to @ycli1995 for pull request #166)
 - Add `get_demo_mat()`, `get_demo_frags()` and `remove_demo_data()` to retrieve a small test matrix/fragments object from the [PBMC 3k dataset from 10X Genomics](https://www.10xgenomics.com/datasets/pbmc-from-a-healthy-donor-granulocytes-removed-through-cell-sorting-3-k-1-standard-2-0-0). (pull request #193)
-<<<<<<< HEAD
-=======
 
 ## Improvements
 - Speed up taking large subsets of large concatenated matrices, e.g. selecting 9M cells from a 10M cell matrix composed of ~100 concatenated pieces. (pull request #179)
@@ -12,7 +10,6 @@
 - Fixed memory errors when running `writeInsertionBed()` and `writeInsertionBedGraph()` (pull request #{118, 134})
 - Export `merge_peaks_iterative()`, which helps create non-overlapping peak sets.  (pull request #216)
 
->>>>>>> upstream/main
 
 ## Bug-fixes
 - Fix error message printing when MACS crashes during `call_peaks_macs()` (pull request #175)
