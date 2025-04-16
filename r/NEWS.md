@@ -12,8 +12,16 @@ Contributions welcome :)
 - Add `write_matrix_anndata_hdf5_dense()` which allows writing matrices in AnnData's dense format, most commonly used for `obsm` or `varm` matrices. (Thanks to @ycli1995 for pull request #166)
 - Add `get_demo_mat()`, `get_demo_frags()` and `remove_demo_data()` to retrieve a small test matrix subsetted from the PBMC 3k dataset from 10X Genomics. (pull request #193)
 
+## Improvements
+- Speed up taking large subsets of large concatenated matrices, e.g. selecting 9M cells from a 10M cell matrix composed of ~100 concatenated pieces. (pull request #179)
+- `matrix_stats()` now also works with types `matrix` and `dgCMatrix`. (pull request #190)
+- Fixed memory errors when running `writeInsertionBed()` and `writeInsertionBedGraph()` (pull request #{118, 134})
+
 ## Bug-fixes
-- Fix error message printing when MACS crashes during `call_peaks_macs()` (pull request #175) 
+- Fix error message printing when MACS crashes during `call_peaks_macs()` (pull request #175)
+- Fix `gene_score_archr()` and `gene_score_weights_archr()` malfunctioning for non-default `tile_width` settings. (Thanks to @Baboon61 for reporting issue #185)
+- Fix `gene_score_archr()` when `chromosome_sizes` argument is not sorted. (Thanks to @Baboon61 for reporting issue #188)
+- Fix matrix transpose error when BPCells is loaded via `devtools::load_all()` and `BiocGenerics` has been imported previously. (pull request #191)
 
 # BPCells 0.3.0 (12/21/2024)
 
