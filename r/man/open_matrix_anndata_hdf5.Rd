@@ -75,27 +75,34 @@ if (dir.exists(data_dir)) unlink(data_dir, recursive = TRUE)
 dir.create(data_dir, recursive = TRUE, showWarnings = FALSE)
 mat <- get_demo_mat()
 
+
 #######################################################################
 ## write_matrix_anndata_hdf5() example
+#######################################################################
 mat <- write_matrix_anndata_hdf5(
  mat,
  file.path(data_dir, paste0("new_demo_mat.h5"))
 )
 mat
-#######################################################################
+
+
 #######################################################################
 ## open_matrix_anndata_hdf5() example
+#######################################################################
 mat <- open_matrix_anndata_hdf5(
  file.path(data_dir, paste0("new_demo_mat.h5"))
 )
 mat
-#######################################################################
+
+
 #######################################################################
 ## write_matrix_anndata_hdf5_dense() example
+#######################################################################
 mat <- write_matrix_anndata_hdf5_dense(
  mat,
  file.path(data_dir, paste0("new_demo_mat_dense.h5"))
 )
 mat
-#######################################################################
+
+
 }

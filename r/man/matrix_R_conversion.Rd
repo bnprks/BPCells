@@ -20,20 +20,24 @@ dense matrices (though this may result in high memory usage for large matrices)
 mat <- get_demo_mat()[1:2, 1:2]
 mat
 
+
 #######################################################################
 ## as(bpcells_mat, "dgCMatrix") example
+#######################################################################
 mat_dgc <- as(mat, "dgCMatrix")
 mat_dgc
-#######################################################################
-#######################################################################
+
+
 ## as.matrix(bpcells_mat) example
 as.matrix(mat)
 
 ## Alternatively, can also use function as()
 as(mat, "matrix")
-#######################################################################
+
 #######################################################################
 ## as(dgc_mat, "IterableMatrix") example
-as(mat_dgc, "IterableMatrix")
 #######################################################################
+as(mat_dgc, "IterableMatrix")
+
+
 }

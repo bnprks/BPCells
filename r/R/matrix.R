@@ -1598,9 +1598,11 @@ transpose_storage_order <- function(matrix, outdir = tempfile("transpose"), tmpd
 #' 
 #' #######################################################################
 #' ## write_matrix_memory() example
+#' #######################################################################
 #' mat_memory <- write_matrix_memory(mat)
 #' mat_memory
-#' #######################################################################
+#' 
+#' 
 #' @rdname matrix_io
 #' @export
 write_matrix_memory <- function(mat, compress = TRUE) {
@@ -1676,11 +1678,13 @@ setMethod("short_description", "MatrixDir", function(x) {
 #' @examples
 #' #######################################################################
 #' ## write_matrix_dir() example
+#' #######################################################################
 #' mat %>% write_matrix_dir(
 #'  file.path(data_dir, "demo_mat"),
 #'  overwrite = TRUE
 #' )
-#' #######################################################################
+#' 
+#' 
 #' @export
 write_matrix_dir <- function(mat, dir, compress = TRUE, buffer_size = 8192L, overwrite = FALSE) {
   assert_is(mat, c("IterableMatrix", "dgCMatrix"))
@@ -1730,11 +1734,13 @@ write_matrix_dir <- function(mat, dir, compress = TRUE, buffer_size = 8192L, ove
 #' @examples
 #' #######################################################################
 #' ## open_matrix_dir() example
+#' #######################################################################
 #' mat <- open_matrix_dir(
 #'  file.path(data_dir, "demo_mat")
 #' )
 #' mat
-#' #######################################################################
+#' 
+#' 
 #' @export
 open_matrix_dir <- function(dir, buffer_size = 8192L) {
   assert_is_file(dir)
@@ -1889,9 +1895,10 @@ setMethod("short_description", "MatrixH5", function(x) {
 #' @examples
 #' #######################################################################
 #' ## write_matrix_hdf5() example
-#' 
-#' mat %>% write_matrix_hdf5(path = file.path(data_dir, "demo_mat.h5"), group = "mat")
 #' #######################################################################
+#' mat %>% write_matrix_hdf5(path = file.path(data_dir, "demo_mat.h5"), group = "mat")
+#' 
+#' 
 #' @export
 write_matrix_hdf5 <- function(
     mat, 
@@ -1961,12 +1968,14 @@ write_matrix_hdf5 <- function(
 #' @examples
 #' #######################################################################
 #' ## open_matrix_hdf5() example
+#' #######################################################################
 #' mat_hdf5 <- open_matrix_hdf5(
 #'  file.path(data_dir, "demo_mat.h5"),
 #'  group = 'mat'
 #' )
 #' mat_hdf5
-#' #######################################################################
+#' 
+#' 
 #' @export
 open_matrix_hdf5 <- function(path, group, buffer_size = 16384L) {
   assert_is_file(path)
@@ -2031,11 +2040,13 @@ setMethod("short_description", "10xMatrixH5", function(x) {
 #' 
 #' #######################################################################
 #' ## open_matrix_10x_hdf5() example
+#' #######################################################################
 #' mat <- open_matrix_10x_hdf5(
 #'  file.path(data_dir, mat_file)
 #' )
 #' mat
-#' #######################################################################
+#' 
+#' 
 #' @export
 open_matrix_10x_hdf5 <- function(path, feature_type = NULL, buffer_size = 16384L) {
   assert_is_file(path)
@@ -2093,12 +2104,14 @@ open_matrix_10x_hdf5 <- function(path, feature_type = NULL, buffer_size = 16384L
 #' @examples
 #' #######################################################################
 #' ## write_matrix_10x_hdf5() example
+#' #######################################################################
 #' mat <- write_matrix_10x_hdf5(
 #'  mat,
 #'  file.path(data_dir, paste0("new", mat_file))
 #' )
 #' mat
-#' #######################################################################
+#' 
+#' 
 #' @export
 write_matrix_10x_hdf5 <- function(
     mat,
@@ -2240,21 +2253,26 @@ setMethod("short_description", "AnnDataMatrixH5", function(x) {
 #' dir.create(data_dir, recursive = TRUE, showWarnings = FALSE)
 #' mat <- get_demo_mat()
 #' 
+#' 
 #' #######################################################################
 #' ## write_matrix_anndata_hdf5() example
+#' #######################################################################
 #' mat <- write_matrix_anndata_hdf5(
 #'  mat,
 #'  file.path(data_dir, paste0("new_demo_mat.h5"))
 #' )
 #' mat
-#' #######################################################################
+#' 
+#' 
 #' #######################################################################
 #' ## open_matrix_anndata_hdf5() example
+#' #######################################################################
 #' mat <- open_matrix_anndata_hdf5(
 #'  file.path(data_dir, paste0("new_demo_mat.h5"))
 #' )
 #' mat
-#' #######################################################################
+#' 
+#' 
 #' @export
 open_matrix_anndata_hdf5 <- function(path, group = "X", buffer_size = 16384L) {
   assert_is_file(path)
@@ -2301,12 +2319,14 @@ write_matrix_anndata_hdf5 <- function(mat, path, group = "X", buffer_size = 1638
 #' @examples
 #' #######################################################################
 #' ## write_matrix_anndata_hdf5_dense() example
+#' #######################################################################
 #' mat <- write_matrix_anndata_hdf5_dense(
 #'  mat,
 #'  file.path(data_dir, paste0("new_demo_mat_dense.h5"))
 #' )
 #' mat
-#' #######################################################################
+#' 
+#' 
 #' @export
 write_matrix_anndata_hdf5_dense <- function(mat, path, dataset = "X", buffer_size = 16384L, chunk_size = 1024L, gzip_level = 0L) {
   assert_is(mat, "IterableMatrix")
@@ -2794,22 +2814,26 @@ convert_matrix_type <- function(matrix, type = c("uint32_t", "double", "float"))
 #' mat <- get_demo_mat()[1:2, 1:2]
 #' mat
 #' 
+#' 
 #' #######################################################################
 #' ## as(bpcells_mat, "dgCMatrix") example
+#' #######################################################################
 #' mat_dgc <- as(mat, "dgCMatrix")
 #' mat_dgc
-#' #######################################################################
-#' #######################################################################
+#' 
+#' 
 #' ## as.matrix(bpcells_mat) example
 #' as.matrix(mat)
 #' 
 #' ## Alternatively, can also use function as()
 #' as(mat, "matrix")
-#' #######################################################################
+#' 
 #' #######################################################################
 #' ## as(dgc_mat, "IterableMatrix") example
-#' as(mat_dgc, "IterableMatrix")
 #' #######################################################################
+#' as(mat_dgc, "IterableMatrix")
+#' 
+#' 
 #' @name matrix_R_conversion
 NULL
 
