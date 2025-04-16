@@ -198,6 +198,7 @@ qc_scATAC <- function(fragments, genes, blacklist) {
 #'  Must be ordered by priority and have columns chr, start, end.
 #' @return `tibble::tibble()` with a nonoverlapping subset of the rows in peaks. All metadata
 #'  columns are preserved
+#' @export
 merge_peaks_iterative <- function(peaks) {
   assert_is(peaks, c("data.frame", "list"))
   assert_has_names(peaks, c("chr", "start", "end"))
@@ -401,8 +402,8 @@ write_insertion_bedgraph <- function(fragments, path, cell_groups = rlang::rep_a
     assert_len(cell_groups, length(cellNames(fragments)))
     assert_has_names(path, levels(cell_groups))
     path <- path[levels(cell_groups)]
-    cell_groups <- as.integer(cell_groups) - 1L
   }
+  cell_groups <- as.integer(cell_groups) - 1L
   write_insertion_bedgraph_cpp(iterate_fragments(fragments), cell_groups, path, insertion_mode)
 }
 

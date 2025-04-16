@@ -27,6 +27,31 @@ test_that("range_overlaps works", {
   expect_identical(range_overlaps(a, b), expected)
 })
 
+test_that("range_distance_to_nearest works", {
+  frags <- tibble::tibble(
+    chr = "chr1",
+    start = seq(10, 410, 100),
+    end = start + 50,
+    strand = "+"
+  )
+  res <- tibble::tibble(
+    upstream = c(Inf, rep(51, 4)),
+    downstream = c(rep(51, 4), Inf)
+  )
+  expect_identical(
+    range_distance_to_nearest(frags),
+    res
+  )
+  frags_with_nested <- frags %>% 
+    tibble::add_row(chr = "chr1", start = 11, end = 20, strand = "+")
+  res_with_nested <- res %>%
+    tibble::add_row(upstream = 0, downstream = 0)
+  expect_identical(
+    range_distance_to_nearest(frags_with_nested),
+    res_with_nested
+  )
+})
+
 test_that("tile_ranges works", {
   frags <- convert_to_fragments(tibble::tibble(
     chr = paste0("chr", 1:10),
@@ -107,6 +132,11 @@ test_that("write_insertion_bedgraph works", {
   frag_table <- dplyr::bind_rows(chr1, chr2) %>%
     dplyr::mutate(cell_group = dplyr::if_else(cell_id %in% c("A", "E", "I", "O", "U"), "vowel", "consonant"))
 
+  coverage_start_single_group <- dplyr::bind_rows(chr1, chr2) %>%
+    dplyr::mutate(end=start+1L) %>%
+    dplyr::group_by(chr, start, end) %>%
+    dplyr::summarize(value = dplyr::n(), .groups="drop")
+
   coverage_start <- frag_table %>%
     dplyr::mutate(end=start+1L) %>%
     dplyr::group_by(chr, start, end, cell_group) %>%
@@ -151,6 +181,13 @@ test_that("write_insertion_bedgraph works", {
       data.frame(result_consonant)
     )
   }
+  # Test single group
+  write_insertion_bedgraph(frags, file.path(dir, "all.bg"), insertion_mode = "start")
+  expect_identical(
+    readr::read_tsv(file.path(dir, "all.bg"), col_names = c("chr", "start", "end", "value"), col_types = "ciii") %>% 
+      data.frame(),
+    coverage_start_single_group %>% data.frame()
+  )
 })
 
 test_that("write_insertion_bed works", {
@@ -372,4 +409,56 @@ test_that("macs errors print when running in parallel", {
       threads=2
     )
   }, "MACS calls encountered .* failures")
+})
+
+
+test_that("Regression test for gene_score_archr() Issues 185 + 188", {
+  # Test setup:
+  #  - Cell1 overlaps gene1 and gene3
+  #  - cell2 overlaps just gene1
+  #  - cell3 overlaps just gene3
+  #  - All fragments overlap gene body and gene lengths are the same, so 
+  #    we don't need to worry about distance parameters affecting things
+  fragments <- tibble::tibble(
+    chr = c("chr1", "chr1", "chr2", "chr2"),
+    start = 10,
+    end = start + 20,
+    cell_id = c("cell1", "cell2", "cell1", "cell3")
+  )
+  genes <- tibble::tibble(
+    chr = c("chr1", "chr1", "chr2"),
+    start = c(0, 10000, 15),
+    end = start + 500,
+    strand = "+",
+    gene_id = c("gene1", "gene2", "gene3")
+  )
+  chromosome_sizes <- tibble::tibble(
+    chr = c("chr1", "chr2"),
+    start = 0,
+    end = c(20000, 500)
+  )
+
+  bp_frags <- convert_to_fragments(fragments)
+
+  # Check that tile_width is getting handled properly in `gene_score_weights_archr`
+  expected_tiles <- as.integer(sum((chromosome_sizes$end + 99) %/% 100))
+  expect_identical(ncol(gene_score_weights_archr(genes, chromosome_sizes, tile_width=100)), expected_tiles)
+
+  ans <- matrix(c(
+    5000, 10000, 0,
+    0, 0, 0,
+    5000, 0, 10000
+  ), nrow=3, byrow=TRUE, dimnames=list(genes$gene_id, unique(fragments$cell_id))) %>%
+    as("dgCMatrix")
+  
+  bp_ans <- gene_score_archr(bp_frags, genes, chromosome_sizes)
+  expect_identical(as(bp_ans, "dgCMatrix"), ans)
+
+  # Try with out-of-order chromosome_sizes
+  bp_ans <- gene_score_archr(bp_frags, genes, chromosome_sizes[c(2,1),])
+  expect_identical(as(bp_ans, "dgCMatrix"), ans)
+
+  # Check that tile_width changing doesn't cause crashes in `gene_score_archr`
+  bp_ans <- gene_score_archr(bp_frags, genes, chromosome_sizes, tile_width=1000)
+  expect_identical(as(bp_ans, "dgCMatrix"), ans)
 })

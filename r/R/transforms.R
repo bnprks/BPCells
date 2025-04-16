@@ -144,10 +144,10 @@ setMethod("short_description", "TransformPow", function(x) {
   )
 })
 
-#' @describeIn IterableMatrix-methods Calculate x^y (elementwise)
+#' @describeIn IterableMatrix-methods Calculate x^y (elementwise; y > 0)
 setMethod("^", signature(e1 = "IterableMatrix", e2 = "numeric"), function(e1, e2) {
   assert_len(e2, 1)
-  assert_true(e2 != 0)
+  assert_true(e2 > 0)
   if (e2 == 2) {
     wrapMatrix("TransformSquare", convert_matrix_type(e1, "double"))
   } else {
