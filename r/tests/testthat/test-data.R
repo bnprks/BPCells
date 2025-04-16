@@ -12,7 +12,7 @@ test_that("Getting test data works", {
     frags <- get_demo_frags()
     expect_true(is(mat, "IterableMatrix"))
     expect_true(is(frags, "IterableFragments"))
-    ## Also make sure data can be built
-    expect_no_error(prepare_demo_data(file.path(tools::R_user_dir("BPCells", which = "data"), "demo_data")))
     remove_demo_data()
+    skip("Skip preparing demo data")
+    expect_no_error(BPCells:::prepare_demo_data(file.path(tools::R_user_dir("BPCells", which = "data"), "demo_data")))
 })

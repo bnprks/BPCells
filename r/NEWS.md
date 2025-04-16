@@ -1,19 +1,24 @@
-# BPCells 1.0 Roadmap
-- ~~Parallelization~~ (basic support complete. See below)
-- Native python library (re-using C++ backend; basic support started)
-- Peak-gene correlations
-- ~~MACS peak calling~~ (basic support complete. See below)
-
-Contributions welcome :)
-
 # BPCells 0.3.1 (in-progress main branch)
 
 ## Features
 - Add `write_matrix_anndata_hdf5_dense()` which allows writing matrices in AnnData's dense format, most commonly used for `obsm` or `varm` matrices. (Thanks to @ycli1995 for pull request #166)
-- Add `get_demo_mat()`, `get_demo_frags()` and `remove_demo_data()` to retrieve a small test matrix subsetted from the PBMC 3k dataset from 10X Genomics. (pull request #193)
+- Add `get_demo_mat()`, `get_demo_frags()` and `remove_demo_data()` to retrieve a small test matrix/fragments object from the [PBMC 3k dataset from 10X Genomics](https://www.10xgenomics.com/datasets/pbmc-from-a-healthy-donor-granulocytes-removed-through-cell-sorting-3-k-1-standard-2-0-0). (pull request #193)
+
+## Improvements
+- Speed up taking large subsets of large concatenated matrices, e.g. selecting 9M cells from a 10M cell matrix composed of ~100 concatenated pieces. (pull request #179)
+- `matrix_stats()` now also works with types `matrix` and `dgCMatrix`. (pull request #190)
+- Fixed memory errors when running `writeInsertionBed()` and `writeInsertionBedGraph()` (pull request #{118, 134})
+- Export `merge_peaks_iterative()`, which helps create non-overlapping peak sets.  (pull request #216)
+
 
 ## Bug-fixes
-- Fix error message printing when MACS crashes during `call_peaks_macs()` (pull request #175) 
+- Fix error message printing when MACS crashes during `call_peaks_macs()` (pull request #175)
+- Fix `gene_score_archr()` and `gene_score_weights_archr()` malfunctioning for non-default `tile_width` settings. (Thanks to @Baboon61 for reporting issue #185)
+- Fix `gene_score_archr()` when `chromosome_sizes` argument is not sorted. (Thanks to @Baboon61 for reporting issue #188)
+- Fix matrix transpose error when BPCells is loaded via `devtools::load_all()` and `BiocGenerics` has been imported previously. (pull request #191)
+- Fix error when using a single group in `write_insertion_bedgraph()` (pull request #214)
+- Fix GRanges conversion functions sometimes not being defined if BPCells is built as a binary package prior to GenomicRanges being installed. (pull request #231; thanks to @mfansler for reporting issue #229)
+- Fix error in `write_matrix_hdf5()` when overwriting to a `.h5` file that does not exist. (pull request #234)
 
 # BPCells 0.3.0 (12/21/2024)
 

@@ -1,5 +1,5 @@
-// Copyright 2022 BPCells contributors
-// 
+// Copyright 2024 BPCells contributors
+//
 // Licensed under the Apache License, Version 2.0 <LICENSE-APACHE or
 // https://www.apache.org/licenses/LICENSE-2.0> or the MIT license
 // <LICENSE-MIT or https://opensource.org/licenses/MIT>, at your
@@ -7,26 +7,13 @@
 // except according to those terms.
 
 #pragma once
-#include <cstring>
-#include <vector>
-#include <queue>
-#include <cstdint>
 #include "../fragmentIterators/FragmentIterator.h"
-#include "../utils/radix_sort.h"
 #include "../simd/math.h"
-
-struct Insertion {
-    uint32_t coord;
-    uint32_t cell;
-    bool is_start; // True if this is a start coordinate, false if it's an end coordinate
-    uint32_t chrom;
-    Insertion(uint32_t coord, uint32_t cell, bool is_start, uint32_t chrom) : coord(coord), cell(cell), is_start(is_start), chrom(chrom) {}
-};
-struct CompareInsertion {
-    bool operator()(const Insertion &a, const Insertion &b) {
-        return a.coord >= b.coord;
-    }
-};
+#include "../utils/radix_sort.h"
+#include <cstdint>
+#include <cstring>
+#include <limits>
+#include <vector>
 
 namespace BPCells {
 
@@ -37,8 +24,20 @@ namespace BPCells {
 class InsertionIterator {
   private:
     FragmentLoader &frags;
-    std::priority_queue<Insertion, std::vector<Insertion>, CompareInsertion> frag_queue;
-    uint32_t highest_start;
+
+    // Pointers for accessing sorted start coordinate data
+    uint32_t start_idx = 0;
+    std::vector<uint32_t> start_data;
+    std::vector<uint32_t> start_cell;
+
+    // Space for storing + sorting end coordinate data (shifted by 1)
+    size_t end_idx = 0;
+    // Current index of the already loaded data; set to max for no data loaded
+    size_t load_idx = std::numeric_limits<size_t>::max();
+    // Vectors for end cordinate data
+    std::vector<uint32_t> end_data, end_data_buf;
+    // Vectors for end cell data
+    std::vector<uint32_t> end_cell, end_cell_buf;
 
     uint32_t next_cell;
     uint32_t next_coord;
@@ -52,75 +51,132 @@ class InsertionIterator {
     // Post-condition:
     // - start_data + start_cell have new insertions, and end_data + end_cell have
     //   the corresponding end insertions added + sorted
-    inline bool loadFragments() {
-        if (!frags.load()) {
-            return false;
-        }
-        uint32_t* starts = frags.startData();
-        uint32_t* ends = frags.endData();
-        uint32_t* cells = frags.cellData();
+    // - Unless we have run out of insertions to load, end_data has been filled all
+    //   the way to end_data.capacity(), and same for end_cell
+    inline void loadFragments() {
+        uint32_t leftover_size = end_data.size() - end_idx;
 
-        // Insert start and end fragments into the priority queue
-        for (uint32_t i = 0; i < frags.capacity(); ++i) {
-            frag_queue.push(Insertion(starts[i], cells[i], true, current_chr));
-            highest_start = std::max(highest_start, starts[i]);
-            frag_queue.push(Insertion(ends[i] - 1, cells[i], false, current_chr));
+        // Increase buffer size if ends remaining is a large fraction of buffer size
+        // This avoids having to re-sort data too frequently
+        if (leftover_size * 2 > end_data.size()) {
+            // Increase capacity by at least 1.5x the current size (may be more depending on
+            // std::vector implementation)
+            uint32_t new_size = end_data.size() + 1 + end_data.size() / 2;
+            end_data.resize(new_size);
+            end_cell.resize(end_data.capacity());
+            end_data_buf.resize(end_data.capacity());
+            end_cell_buf.resize(end_cell.capacity());
         }
-        return true;
+
+        // Copy data to remove our used insertions the start of end_data
+        std::memmove(&end_data[0], &end_data[end_idx], sizeof(uint32_t) * leftover_size);
+        std::memmove(&end_cell[0], &end_cell[end_idx], sizeof(uint32_t) * leftover_size);
+
+        // Reset our vectors
+        end_idx = 0;
+        end_data.resize(leftover_size);
+        end_cell.resize(leftover_size);
+        start_idx = 0;
+        start_data.resize(0);
+        start_cell.resize(0);
+
+        bool chr_end = false;
+
+        // Copy any leftovers from the previous `frags.load()`
+        if (load_idx != std::numeric_limits<size_t>::max() && load_idx < frags.capacity()) {
+            uint32_t load_size =
+                std::min(end_data.capacity() - end_data.size(), frags.capacity() - load_idx);
+            uint32_t *starts = frags.startData() + load_idx;
+            uint32_t *cells = frags.cellData() + load_idx;
+            uint32_t *ends = frags.endData() + load_idx;
+            start_data.insert(start_data.end(), starts, starts + load_size);
+            start_cell.insert(start_cell.end(), cells, cells + load_size);
+            end_data.insert(end_data.end(), ends, ends + load_size);
+            end_cell.insert(end_cell.end(), cells, cells + load_size);
+            load_idx += load_size;
+        }
+
+        // Load data until we have exactly hit end_data.capacity()
+        while (end_data.size() < end_data.capacity()) {
+            if (!frags.load()) {
+                chr_end = true;
+                load_idx = std::numeric_limits<size_t>::max();
+                break;
+            }
+            load_idx = std::min((size_t)frags.capacity(), end_data.capacity() - end_data.size());
+            uint32_t *starts = frags.startData();
+            uint32_t *cells = frags.cellData();
+            uint32_t *ends = frags.endData();
+
+            // Subtract 1 form the end coordinates
+            simd::add(ends, -1, frags.capacity());
+
+            // Copy data into our vectors
+            start_data.insert(start_data.end(), starts, starts + load_idx);
+            start_cell.insert(start_cell.end(), cells, cells + load_idx);
+            end_data.insert(end_data.end(), ends, ends + load_idx);
+            end_cell.insert(end_cell.end(), cells, cells + load_idx);
+        }
+
+        // While start sites are guaranteed to be sorted, end sites are not, so sort with a buffer
+        lsdRadixSortArrays<uint32_t, uint32_t>(
+            end_data.size(), end_data, end_cell, end_data_buf, end_cell_buf
+        );
+
+        if (chr_end) {
+            // Use a sentinel value of UINT32_MAX for starts, so we just need to check
+            // if end_idx >= end_capacity
+            start_data.push_back(UINT32_MAX);
+            start_cell.push_back(UINT32_MAX);
+        }
     }
+
   public:
-
     InsertionIterator(FragmentLoader &loader);
-
 
     inline bool nextChr() {
         bool ret = frags.nextChr();
-        if (ret) {
-            current_chr = frags.currentChr();
-            std::priority_queue<Insertion, std::vector<Insertion>, CompareInsertion> emp;
-            std::swap(frag_queue, emp);
-            highest_start = 0;
-        }
+        if (ret) current_chr = frags.currentChr();
+        start_idx = 0;
+        end_idx = 0;
+        start_data.resize(0);
+        end_data.resize(0);
+        load_idx = std::numeric_limits<size_t>::max();
         return ret;
     }
 
     inline void restart() {
         frags.restart();
-        std::priority_queue<Insertion, std::vector<Insertion>, CompareInsertion> emp;
-        std::swap(frag_queue, emp);
+        start_idx = 0;
+        end_idx = 0;
+        start_data.resize(0);
+        end_data.resize(0);
+        load_idx = std::numeric_limits<size_t>::max();
     }
 
-    inline bool nextInsertion(bool rec = false) {
-        if (frag_queue.empty() && !rec) {
-            bool ret = loadFragments();
-            if (!ret) return false;
-        }
-        Insertion next_frag = frag_queue.top();
-        // Load fragments when at the start sites with the highest coord remaining in the queue
-        // This is to ensure that we don't miss any insertions that start before the largest end coord in
-        // the queue.
-        while ((next_frag.is_start) && (next_frag.coord >= highest_start)) {
-            bool ret = loadFragments();
-            if (ret) {
-                next_frag = frag_queue.top();
-            } else {
-                break;
-            }
-        }
-        next_frag = frag_queue.top();
-        frag_queue.pop();
-        next_cell = next_frag.cell;
-        next_coord = next_frag.coord;
-        use_start = next_frag.is_start;
+    inline bool nextInsertion() {
+        if (start_idx >= start_data.size()) loadFragments();
+        if (end_idx >= end_data.size()) return false;
+        // Prioritize clearing start data when end data is equal (pragmatically doesn't change
+        // bedgraph output)
+        use_start = end_data[end_idx] >= start_data[start_idx];
+        next_coord = use_start ? start_data[start_idx] : end_data[end_idx];
+        next_cell = use_start ? start_cell[start_idx] : end_cell[end_idx];
+        // advance to next start idx if we use a start coord, else advance next end idx
+        start_idx += use_start;
+        end_idx += !use_start;
+
         return true;
     }
 
     inline void seek(uint32_t chr_id, uint32_t base) {
         frags.seek(chr_id, base);
         current_chr = frags.currentChr();
-        highest_start = 0;
-        std::priority_queue<Insertion, std::vector<Insertion>, CompareInsertion> emp;
-        std::swap(frag_queue, emp);
+        start_idx = 0;
+        end_idx = 0;
+        start_data.resize(0);
+        end_data.resize(0);
+        load_idx = std::numeric_limits<size_t>::max();
     }
 
     inline uint32_t chr() const { return current_chr; };

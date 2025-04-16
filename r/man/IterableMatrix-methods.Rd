@@ -234,7 +234,7 @@ Generic methods and built-in functions for IterableMatrix objects
 
 \item \code{expm1_slow()}: Calculate exp(x) - 1 (non-SIMD version)
 
-\item \code{e1^e2}: Calculate x^y (elementwise)
+\item \code{e1^e2}: Calculate x^y (elementwise; y > 0)
 
 \item \code{e1 < e2}: Binarize matrix according to numeric < matrix comparison
 
