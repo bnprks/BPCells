@@ -53,6 +53,7 @@ ensure_downloaded <- function(path, backup_url, timeout) {
 #' @examples
 #' #######################################################################
 #' ## read_gtf() example
+#' #######################################################################
 #' species <- "Saccharomyces_cerevisiae"
 #' version <- "GCF_000146045.2_R64"
 #' head(read_gtf(
@@ -62,7 +63,8 @@ ensure_downloaded <- function(path, backup_url, timeout) {
 #'    species, version, version
 #'  )
 #' ))
-#' #######################################################################
+#' 
+#' 
 #' @seealso [read_bed()], [read_encode_blacklist()]
 #' @export
 read_gtf <- function(path, attributes = c("gene_id"), tags = character(0), features = c("gene"), keep_attribute_column = FALSE, backup_url = NULL, timeout = 300) {
@@ -104,8 +106,10 @@ read_gtf <- function(path, attributes = c("gene_id"), tags = character(0), featu
 #' @examples
 #' #######################################################################
 #' ## read_gencode_genes() example
-#' read_gencode_genes("./references", release = "42")
 #' #######################################################################
+#' read_gencode_genes("./references", release = "42")
+#' 
+#' 
 #' @export
 read_gencode_genes <- function(dir, release = "latest",
                                annotation_set = c("basic", "comprehensive"),
@@ -152,10 +156,12 @@ read_gencode_genes <- function(dir, release = "latest",
 #' @examples
 #' #######################################################################
 #' ## read_gencode_transcripts() example
+#' #######################################################################
 #' ## If read_gencode_genes() was already ran on the same release, 
 #' ## will reuse previously downloaded annotations
 #' read_gencode_transcripts("./references", release = "42")
-#' #######################################################################
+#' 
+#' 
 #' @export 
 read_gencode_transcripts <- function(dir, release = "latest", transcript_choice = c("MANE_Select", "Ensembl_Canonical", "all"),
                                      annotation_set = c("basic", "comprehensive"),
@@ -211,10 +217,13 @@ read_gencode_transcripts <- function(dir, release = "latest", transcript_choice 
 #'  end = seq(39, 140, 20)
 #' ) %>% write.table("./references/example.bed", row.names = FALSE, col.names = FALSE, sep = "\t")
 #' 
+#' 
 #' #######################################################################
 #' ## read_bed() example
-#' read_bed("./references/example.bed")
 #' #######################################################################
+#' read_bed("./references/example.bed")
+#' 
+#' 
 #' @seealso [read_gtf()], [read_gencode_genes()]
 #' @export
 read_bed <- function(path, additional_columns = character(0), backup_url = NULL, timeout = 300) {
@@ -235,8 +244,10 @@ read_bed <- function(path, additional_columns = character(0), backup_url = NULL,
 #' @examples 
 #' #######################################################################
 #' ## read_encode_blacklist() example
-#' read_encode_blacklist("./reference")
 #' #######################################################################
+#' read_encode_blacklist("./reference")
+#' 
+#' 
 #' @export
 read_encode_blacklist <- function(dir, genome = c("hg38", "mm10", "hg19", "dm6", "dm3", "ce11", "ce10"), timeout = 300) {
   genome <- match.arg(genome)
@@ -315,11 +326,13 @@ remove_ensembl_version <- function(vec) {
 #' @examples
 #' #######################################################################
 #' ## match_gene_symbol() example
+#' #######################################################################
 #' match_gene_symbol(
 #'  c("CD8", "CD4", "CD45"),
 #'  c("ENSG00000081237.19", "ENSG00000153563.15", "ENSG00000010610.9", "ENSG00000288825")
 #' )
-#' #######################################################################
+#' 
+#' 
 #' @export
 match_gene_symbol <- function(query, subject, gene_mapping = human_gene_mapping) {
   assert_is(query, "character")
@@ -355,8 +368,10 @@ match_gene_symbol <- function(query, subject, gene_mapping = human_gene_mapping)
 #' @examples
 #' #######################################################################
 #' ## canonical_gene_symbol() example
-#' canonical_gene_symbol(c("CD45", "CD8", "CD4"))
 #' #######################################################################
+#' canonical_gene_symbol(c("CD45", "CD8", "CD4"))
+#' 
+#' 
 #' @export
 canonical_gene_symbol <- function(query, gene_mapping = human_gene_mapping) {
   assert_is(query, "character")
