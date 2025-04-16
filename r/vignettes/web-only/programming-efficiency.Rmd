@@ -53,6 +53,9 @@ output:
   is a slower operation, that requires writing a new copy of the data to disk.
 
 ## Other tips
+- When running disk-backed analysis, always try to store your working copy of the data
+  on fast local SSDs. This is the default for laptops, but on servers you may want to 
+  copy data files from a networked file system to a physically attached SSD for best performance.
 - Use a single call to `matrix_stats()` to calculate mean + variance in a single
   pass through the matrix when possible. See the function reference for details.
 - For ATAC-seq data, you can calculate variable features on the tile matrix without
