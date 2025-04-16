@@ -45,8 +45,10 @@ setMethod("short_description", "IterableFragments", function(x) {
 #' 
 #' #######################################################################
 #' ## show(IterableFragments) example
-#' show(frags)
 #' #######################################################################
+#' show(frags)
+#' 
+#' 
 #' @param object IterableFragments object
 setMethod("show", "IterableFragments", function(object) {
   cat(sprintf("IterableFragments object of class \"%s\"\n", class(object)))
@@ -88,8 +90,10 @@ setMethod("show", "IterableFragments", function(object) {
 #' @examples
 #' #######################################################################
 #' ## cellNames(IterableFragments) example
-#' cellNames(frags)
 #' #######################################################################
+#' cellNames(frags)
+#' 
+#' 
 #' @export
 setGeneric("cellNames", function(x) standardGeneric("cellNames"))
 setMethod("cellNames", "IterableFragments", function(x) {
@@ -107,9 +111,11 @@ setMethod("cellNames", "IterableFragments", function(x) {
 #' @examples
 #' #######################################################################
 #' ## cellNames(IterableFragments)<- example
+#' #######################################################################
 #' cellNames(frags) <- paste0("cell", 5:7)
 #' cellNames(frags)
-#' #######################################################################
+#' 
+#' 
 #' @export
 setGeneric("cellNames<-", function(x, ..., value) standardGeneric("cellNames<-"))
 setMethod("cellNames<-", "IterableFragments", function(x, ..., value) {
@@ -128,8 +134,10 @@ setMethod("cellNames<-", "IterableFragments", function(x, ..., value) {
 #' @examples
 #' #######################################################################
 #' ## chrNames(IterableFragments) example
-#' chrNames(frags)
 #' #######################################################################
+#' chrNames(frags)
+#' 
+#' 
 #' @export
 setGeneric("chrNames", function(x) standardGeneric("chrNames"))
 setMethod("chrNames", "IterableFragments", function(x) {
@@ -147,9 +155,11 @@ setMethod("chrNames", "IterableFragments", function(x) {
 #' @examples
 #' #######################################################################
 #' ## chrNames(IterableFragments)<- example
+#' #######################################################################
 #' chrNames(frags) <- paste0("chr", 5:6)
 #' chrNames(frags)
-#' #######################################################################
+#' 
+#' 
 #' @export
 setGeneric("chrNames<-", function(x, ..., value) standardGeneric("chrNames<-"))
 setMethod("chrNames<-", "IterableFragments", function(x, ..., value) {
