@@ -1257,14 +1257,23 @@ setMethod("[", "RowBindMatrices", function(x, i, j, ...) {
 
   x <- selection_fix_dims(x, rlang::maybe_missing(i$subset), rlang::maybe_missing(j$subset))
 
-  last_row <- 0L
-  new_mats <- list()
-  for (mat in x@matrix_list) {
-    row_start <- last_row + 1L
-    row_end <- last_row + nrow(mat)
+  # Calculate helper variables to extract and transform the relevant parts of i$subset for each sub-matrix
+  if (!rlang::is_missing(i$subset)) {
+    rows <- vapply(x@matrix_list, nrow, integer(1))
+    local_i_offset <- cumsum(c(0, rows))
+    # Find the range of indices in i$subset that correspond to each matrix in x@matrix_list
+    local_i_range <- findInterval(local_i_offset, i$subset)
+  }
 
+  new_mats <- list()
+  for (k in seq_along(x@matrix_list)) {
+    mat <- x@matrix_list[[k]]
     if (!rlang::is_missing(i$subset)) {
-      local_i <- i$subset[i$subset >= row_start & i$subset <= row_end] - last_row
+      if (local_i_range[k] == local_i_range[k+1]) {
+        local_i <- integer(0)
+      } else {
+        local_i <- i$subset[(local_i_range[k]+1):(local_i_range[k+1])] - local_i_offset[k]
+      }
       mat <- mat[local_i,]
     }
     if (!rlang::is_missing(j$subset)) {
@@ -1274,8 +1283,6 @@ setMethod("[", "RowBindMatrices", function(x, i, j, ...) {
     if (nrow(mat) > 0) {
       new_mats <- c(new_mats, mat)
     }
-
-    last_row <- row_end
   }
   if (length(new_mats) > 1) {
     x@matrix_list <- new_mats
@@ -1320,14 +1327,23 @@ setMethod("[", "ColBindMatrices", function(x, i, j, ...) {
 
   x <- selection_fix_dims(x, rlang::maybe_missing(i$subset), rlang::maybe_missing(j$subset))
 
-  last_col <- 0L
-  new_mats <- list()
-  for (mat in x@matrix_list) {
-    col_start <- last_col + 1L
-    col_end <- last_col + ncol(mat)
+  # Calculate helper variables to extract and transform the relevant parts of j$subset for each sub-matrix
+  if (!rlang::is_missing(j$subset)) {
+    cols <- vapply(x@matrix_list, ncol, integer(1))
+    local_j_offset <- cumsum(c(0, cols))
+    # Find the range of indices in j$subset that correspond to each matrix in x@matrix_list
+    local_j_range <- findInterval(local_j_offset, j$subset)
+  }
 
+  new_mats <- list()
+  for (k in seq_along(x@matrix_list)) {
+    mat <- x@matrix_list[[k]]
     if (!rlang::is_missing(j$subset)) {
-      local_j <- j$subset[j$subset >= col_start & j$subset <= col_end] - last_col
+      if (local_j_range[k] == local_j_range[k+1]) {
+        local_j <- integer(0)
+      } else {
+        local_j <- j$subset[(local_j_range[k]+1):(local_j_range[k+1])] - local_j_offset[k]
+      }
       mat <- mat[,local_j]
     }
     if (!rlang::is_missing(i$subset)) {
@@ -1337,8 +1353,6 @@ setMethod("[", "ColBindMatrices", function(x, i, j, ...) {
     if (ncol(mat) > 0) {
       new_mats <- c(new_mats, mat)
     }
-
-    last_col <- col_end
   }
   if (length(new_mats) > 1) {
     x@matrix_list <- new_mats
@@ -2689,6 +2703,7 @@ convert_matrix_type <- function(matrix, type = c("uint32_t", "double", "float"))
 #' 
 #' # Convert to BPCells from R
 #' as(dgc_mat, "IterableMatrix")
+#' as(base_r_mat, "IterableMatrix")
 #' @name matrix_R_conversion
 NULL
 
@@ -2751,7 +2766,7 @@ setAs("IterableMatrix", "dgCMatrix", function(from) {
   }
 })
 
-# Add conversion to base R dense matrices
+# Add conversion to and from base R dense matrices
 setAs("IterableMatrix", "matrix", function(from) {
   rlang::inform(c(
       "Warning: Converting to a dense matrix may use excessive memory"
@@ -2764,6 +2779,8 @@ setAs("IterableMatrix", "matrix", function(from) {
   }
   mat
 })
+
+setAs("matrix", "IterableMatrix", function(from) mat <- as(as(from, "dgCMatrix"), "IterableMatrix"))
 
 matrix_to_integer <- function(matrix) { # a numeric matrix
     if (is.integer(matrix)) return(matrix) # styler: off
@@ -2803,7 +2820,13 @@ matrix_stats <- function(matrix,
                          col_stats = c("none", "nonzero", "mean", "variance"),
                          threads = 0L
                          ) {
-  assert_is(matrix, "IterableMatrix")
+  if (!is(matrix, "IterableMatrix")) {
+    if (canCoerce(matrix, "IterableMatrix")) {
+      matrix <- as(matrix, "IterableMatrix")
+    } else {
+      rlang::abort("Input matrix cannot be converted to an IterableMatrix object")
+    }
+  }
   assert_is_wholenumber(threads)
 
   stat_options <- c("none", "nonzero", "mean", "variance")

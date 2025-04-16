@@ -7,89 +7,118 @@ output:
     toc_float: true
     theme: simplex
 ---
-Note: these performance benchmarks are preliminary while our manuscript is in
-preparation, though every effort has been made to present a fair comparison with
-other tools. Fortunately, it is straightforward to install and test BPCells on
-your own dataset to replicate our claims.
+<!-- This is to make sure the logo file gets copied to output on a full website rebuild <img src="logo.png" style="visibility: hidden; width: 0px" /> -->
+These performance benchmarks are based on extensive benchmarks from the [BPCells
+manuscript](https://www.biorxiv.org/content/10.1101/2025.03.27.645853v1). 
+Full benchmarking/plotting code and data TSVs are available 
+[here](https://github.com/GreenleafLab/BPCells_paper).
+These numbers are just a snapshot of tool performance as of December 2024, so we encourage
+you to check performance on your own datasets with the latest versions of all software packages
+to get the most up-to-date results.
 
 ## RNA-seq normalization + PCA
+
 Because BPCells can perform all operations streaming from disk, it is able to
-use dramatically less memory for operations that read all matrix values. This
-chunking strategy is similar to tools like DelayedArray. We have extensively
-optimized the C++ code to avoid slowdowns commonly caused by using disk-backed
-computations.
+use dramatically less memory than traditional in-memory workflows. We have
+also extensively optimized the underlying C++ code to make BPCells much faster than traditional
+disk-backed tools like DelayedArray.
 
-In the benchmark below, we show the time and memory to perform a basic workflow
-of data import, normalization, variable gene selection, and PCA. We reproduce
-the PCA results of existing tools to within numerical precision, starting from
-raw counts[^2].
+In the benchmark below, we show the time and memory usage to perform a standardized workflow
+of data normalization, variable gene selection, and PCA. Note that we
+show Seurat's in-memory workflow, though Seurat v5 also offers a BPCells integration
+for disk-backed operations. All tools were given a 3 hour time limit and up to 256GB of RAM,
+but only BPCells was able to process the largest datasets within these resource limits.
 
-[^2]: In this case, our PCA embeddings have a mean relative difference of about
-0.02% compared to the original tool. In this benchmark we are matching the
-results of `scanpy.pp.recipe_zheng17`, though we can also match the results of
-Seurat's analysis to similar precision.
+<img src="benchmark-plots/pca_comparison.png" class="mx-auto d-block" style="max-height: 20rem" />
 
-![](benchmark-plots/rna_memory.png)
+Notice that execution speed tends to scale with the number of non-zero entries in a matrix, whereas memory usage
+for BPCells scales with the number of cells (i.e. space required to store the output PCA embeddings).
 
-Note that Seurat in this plot crashes on the 1.3M cell dataset due to R sparse
-matrices not supporting over roughly 2 billion non-zero entries in a matrix. By
-utilizing Seurat v5's BPCells integration, it is possible to perform analyses on
-million cell datasets without downsampling.
+### Multi-threading
+The above benchmark was run single-threaded since not all tools support
+multi-threading. However, BPCells can offer 5-10x speedups with multiple threads:
+
+<img src="benchmark-plots/pca_multithread.png" class="mx-auto d-block" style="max-height: 20rem" />
 
 ## Bitpacking compression
 
 ### Counts matrices (RNA or ATAC)
 
-Single cell counts matrices are stored as sparse matrices. With traditional
-formats like AnnData or 10x hdf5 feature matrices, there is an inherent tradeoff
-between storage size and speed of loading. Gzip-compressed files are small, but
-slow to read.
+BPCells uses bitpacking compression to help speed up disk-backed workflows. While
+general purpose compression algorithms shrink file sizes and reduce disk read bandwidth,
+they typically come at a high compute cost. BPCells is able to provide similar space
+savings to general-purpose compression algorithms like gzip (10x HDF5) and LZ4-Blosc (zarr),
+but with much lower compute cost. AnnData h5ad files default to not using compression due to the speed costs for read/write,
+but with BPCells bitpacking compression we can get faster read/write with 4-7x space savings.
 
-BPCells uses bitpacking compression to provide 4-6x smaller storage for counts
-matrices compared to an uncompressed binary format (e.g. AnnData's default h5ad
-settings[^3]). A single thread can load the matrix data faster than reading
-uncompressed data in many cases, due to the smaller data size and extremely fast
-decompression[^1].
+Here, we benchmark storing + loading a 1.3M cell RNA-seq experiment from 10x Genomics, using
+default compression settings for each storage format[^2]. Notice that only BPCells is the only compressed
+format fast enough to provide faster read and write speeds than an uncompressed h5ad[^1].
 
-[^1]: This holds true for file storage that loads at under ~2GB/s, which is ~8x 
-faster than a hard drive, and 16x faster than a gigabit ethernet connection.
+[^2]: 10x HDF5: gzip; h5ad: none, AnnData zarr: LZ4-Blosc, BPCells: bitpacking
+[^1]: These benchmarks were run single-threaded on local SSD storage, which is the hardest scenario to outperform uncompressed formats.
 
-[^3]: Note that AnnData supports a wide variety compression algorithms, though
-for counts matrices BPCells bitpacking is also faster than lz4 and zstd read/write.
+<img src="benchmark-plots/rna_storage.png" class="mx-auto d-block" />
 
-Benchmark storing + loading a 1.3M cell RNA-seq experiment from 10x Genomics.
-![](benchmark-plots/compression-1M-example.png)
+Note that we don't benchmark 10x HDF5 write, since 10x does not directly provide software to perform
+arbitrary matrix writes. It would likely be even slower than the 10x read speed.
 
 ### Fragment alignments (ATAC)
 
-Single cell ATAC-seq data is stored as lists of fragment alignments, including
-chromosome, start+end coordinates, and cell ID. The storage space for the
-BPCells bitpacked format is about 2x smaller than a 10x fragments.tsv.gz file.
-The storage format includes a lightweight genome-position index to enable fast
-loading of data from a selected genome location.
+In addition to RNA/ATAC counts matrices, BPCells also introduces compressed file formats
+for scATAC-seq fragments. We compared to 10x fragment files, ArchR, and SnapATAC2 for storage
+of a 1M cell dataset, and found that BPCells gave the smallest file sizes and fastest read/write speeds.
 
-BPCells can decompress about 70 million fragments per second with a single core,
-compared to about 5 million fragments per second with a 10x fragments.tsv.gz
-file (14x faster). Compared to ArchR arrow files, BPCells is also about 2x
-smaller with ~10x faster import times from fragments.tsv.gz files.
+By using bitpacking compression, BPCells can afford the storage space to keep fragments in fully genome-sorted order.
+This makes import from 10x fragment files dramatically faster compared to ArchR and SnapATAC2 which must re-sort
+fragments to be grouped by cell. We'll see later that it also speeds up genomic overlap calculations.
 
-![](benchmark-plots/fragment-storage.png)
+<img src="benchmark-plots/atac_storage.png" class="mx-auto d-block" style="max-height: 20rem" />
 
 ## ATAC-seq overlap calculations
-BPCells stores fragments in a genome-indexed format that also enables fast
-seeking by genome location. This helps for visualization of selected genomic
-loci, as well as fast calculations of cell x peak matrices. It is often
-necessary to re-quantify the cell x peak matrices from fragments when comparing
-datasets with different original peak calls. Our implementation is about 40x
-faster than ArchR when calculating overlaps at 100k peaks across the genome, and
-over 500x faster when calculating overlaps at just 10 peaks. This is due to the
-fact that BPCells has fragments sorted by genome coordinate, whereas arrow files
-sort by cell then genome coordinate.
 
-![](benchmark-plots/peak-matrix-wide.png)
+When working with large reference datasets, it's often helpful to be able to quickly 
+re-quantify cell x peak overlap matrices directly from fragments, as datasets all usually use
+different sets of peak coordinates depending on the biology of interest. BPCells stores fragments in
+genome-sorted order, so it's able to perform peak calculations much faster than ArchR or SnapATAC2.
 
-Our peak matrix overlap calculation runs at a rate of about 25 million
-overlapping fragments per second, which is fast enough that it would bottleneck
-on I/O speed rather than computation when reading from a 250MB/s hard drive if
-bitpacking compression were not available to reduce the I/O bandwidth.
+BPCells takes only seconds to find all overlaps with a small set of 10 peaks, which also means that it is
+very fast at calculating genomic coverage tracks for visualization of large datasets.
 
+<img src="benchmark-plots/peaks_comparison.png" class="mx-auto d-block" style="max-height: 20rem" />
+
+## 44M cell analysis of CELLxGENE census
+
+With the combination of fast storage and disk-backed compute, BPCells is able to handle all unique human cells from
+the CELLxGENE census on a laptop with 16 threads and 32GB of RAM. Compared to the TileDB matrix storage format, we found that the BPCells file formats offer
+much faster read/write times at similar space usage[^3]. Note that this dataset would take over 750GB to store the counts matrix without
+compression.
+
+[^3]: These plots show the BPCells feature-major layout compared to TileDB with raw counts. See the BPCells manuscript for timing
+information on servers and for additional matrix variants. Write time is time to subset the CELLxGENE census to remove duplicate cells,
+including the time to swap storage order from cell-major to feature-major for BPCells.
+
+<img src="benchmark-plots/cellxgene_file_handling.png" class="mx-auto d-block" style="max-height: 20rem" />
+
+Because of these much faster file read speeds, BPCells is able to do light compute tasks like computing per-gene mean and variance across 44M cells
+in <3 minutes. PCA is the most expensive operation BPCells performs, using 167 passes over the input matrix to calculate 32 PCs. Still, it completes
+in less than 1 hour on a server and 6.2 hours on a laptop. This makes atlas-scale analysis possible on a laptop while leaving headroom on a server for datasets
+up to an order of magnitude larger.
+
+<img src="benchmark-plots/cellxgene_compute_tasks.png" class="mx-auto d-block" style="max-height: 20rem" />
+
+Benchmark details: Mean and variance computed on a log-normalized matrix, unlike the plots in the BPCells manuscript which were just scaled by read counts
+to match the default normalization of the CELLxGENE census. Laptop has 32GB of RAM and 16 threads; server has 256GB of RAM and 32 threads. See [BPCells
+manuscript](https://www.biorxiv.org/content/10.1101/2025.03.27.645853v1) for further details.
+
+# Update log
+- March 29, 2025: Update benchmarks with numbers + performance from BPCells manuscript.
+  - Normalization & PCA: Add more comparison datasets, add DelayedArray results, and add multithreading plot
+  - RNA storage: Add comparisons with zarr and include write times.
+  - ATAC storage: Add 10x and SnapATAC2 results and include read times, and switch comparison to be on a larger dataset.
+  - Peak matrix: Update benchmarks to show cross-dataset results at 100k peaks, and peak subset results on 1M cells rather than 30k cells.
+    Add in comparisons to SnapATAC2.
+  - Add results for 44M cell analysis.
+- March 30, 2023: Added clarification that AnnData benchmarks referred to h5ad with
+  default compression settings (i.e. none).
+- March 29, 2023: Created benchmark page.
