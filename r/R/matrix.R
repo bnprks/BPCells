@@ -67,8 +67,10 @@ setGeneric("iterate_matrix", function(x) standardGeneric("iterate_matrix"))
 #' 
 #' #######################################################################
 #' ## matrix_type() example
-#' matrix_type(mat)
 #' #######################################################################
+#' matrix_type(mat)
+#' 
+#' 
 #' @export
 setGeneric("matrix_type", function(x) standardGeneric("matrix_type"))
 
@@ -76,8 +78,10 @@ setGeneric("matrix_type", function(x) standardGeneric("matrix_type"))
 #' @examples
 #' #######################################################################
 #' ## storage_order() example
-#' storage_order(mat)
 #' #######################################################################
+#' storage_order(mat)
+#' 
+#' 
 #' @export
 setGeneric("storage_order", function(x) standardGeneric("storage_order"))
 
@@ -184,8 +188,10 @@ setMethod("short_description", "IterableMatrix", function(x) {
 #' @examples
 #' #######################################################################
 #' ## show() example
-#' show(mat)
 #' #######################################################################
+#' show(mat)
+#' 
+#' 
 setMethod("show", "IterableMatrix", function(object) {
   cat(sprintf("%d x %d IterableMatrix object with class %s\n", nrow(object), ncol(object), class(object)))
 
@@ -218,8 +224,10 @@ setMethod("show", "IterableMatrix", function(object) {
 #' @examples
 #' #######################################################################
 #' ## t() example
-#' t(mat)
 #' #######################################################################
+#' t(mat)
+#' 
+#' 
 #' @export
 setMethod("t", signature(x = "IterableMatrix"), function(x) {
   x@transpose <- !x@transpose
@@ -240,8 +248,10 @@ setMethod("t", signature(x = "IterableMatrix"), function(x) {
 #' @examples
 #' #######################################################################
 #' ## `x %*% y` example
-#' mat %*% as(matrix(1:50, nrow = 5), "dgCMatrix")
 #' #######################################################################
+#' mat %*% as(matrix(1:50, nrow = 5), "dgCMatrix")
+#' 
+#' 
 setMethod("%*%", signature(x = "IterableMatrix", y = "matrix"), function(x, y) {
   iter <- iterate_matrix(convert_matrix_type(x, "double"))
   if (x@transpose) {
@@ -582,8 +592,10 @@ rank_transform <- function(mat, axis) {
 #' @examples
 #' #######################################################################
 #' ## rowSums() example
-#' rowSums(mat)
 #' #######################################################################
+#' rowSums(mat)
+#' 
+#' 
 setMethod("rowSums", signature(x = "IterableMatrix"), function(x) {
   iter <- iterate_matrix(convert_matrix_type(x, "double"))
   if (x@transpose) {
@@ -601,8 +613,10 @@ setMethod("rowSums", signature(x = "IterableMatrix"), function(x) {
 #' @examples
 #' #######################################################################
 #' ## colSums() example
-#' colSums(mat)
 #' #######################################################################
+#' colSums(mat)
+#' 
+#' 
 setMethod("colSums", signature(x = "IterableMatrix"), function(x) {
   iter <- iterate_matrix(convert_matrix_type(x, "double"))
   if (x@transpose) {
@@ -620,8 +634,10 @@ setMethod("colSums", signature(x = "IterableMatrix"), function(x) {
 #' @examples
 #' #######################################################################
 #' ## rowMeans() example
-#' rowMeans(mat)
 #' #######################################################################
+#' rowMeans(mat)
+#' 
+#' 
 setMethod("rowMeans", signature(x = "IterableMatrix"), function(x) rowSums(x) / ncol(x))
 
 #' @param x IterableMatrix object
@@ -630,8 +646,10 @@ setMethod("rowMeans", signature(x = "IterableMatrix"), function(x) rowSums(x) / 
 #' @examples
 #' #######################################################################
 #' ## colMeans() example
-#' colMeans(mat)
 #' #######################################################################
+#' colMeans(mat)
+#' 
+#' 
 setMethod("colMeans", signature(x = "IterableMatrix"), function(x) colSums(x) / nrow(x))
 
 
@@ -649,8 +667,10 @@ setMethod("colMeans", signature(x = "IterableMatrix"), function(x) colSums(x) / 
 #' @examples
 #' #######################################################################
 #' ## colVars() example
-#' colVars(mat)
 #' #######################################################################
+#' colVars(mat)
+#' 
+#' 
 #' @export
 colVars <- function(x, rows = NULL, cols = NULL, na.rm = FALSE, center = NULL, ..., useNames = TRUE) UseMethod("colVars")
 #' @export
@@ -710,8 +730,10 @@ rlang::on_load({
 #' @examples
 #' #######################################################################
 #' ## rowMaxs() example
-#' rowMaxs(mat)
 #' #######################################################################
+#' rowMaxs(mat)
+#' 
+#' 
 #' @export
 rowMaxs <- function(x, rows = NULL, cols = NULL, na.rm = FALSE, ...) UseMethod("rowMaxs")
 #' @export
@@ -752,8 +774,10 @@ rlang::on_load({
 #' @examples
 #' #######################################################################
 #' ## colMaxs() example
-#' colMaxs(mat)
 #' #######################################################################
+#' colMaxs(mat)
+#' 
+#' 
 #' @export
 colMaxs <- function(x, rows = NULL, cols = NULL, na.rm = FALSE, ...) UseMethod("colMaxs")
 #' @export

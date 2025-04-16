@@ -67,8 +67,10 @@ setMethod("short_description", "TransformLog1p", function(x) {
 #' @examples
 #' #######################################################################
 #' ## log1p() example
-#' log1p(mat)
 #' #######################################################################
+#' log1p(mat)
+#' 
+#' 
 setMethod("log1p", "IterableMatrix", function(x) {
   wrapMatrix("TransformLog1p", convert_matrix_type(x, "double"))
 })
@@ -88,8 +90,10 @@ setMethod("short_description", "TransformLog1pSlow", function(x) {
 #' @examples
 #' #######################################################################
 #' ## log1p_slow() example
-#' log1p_slow(mat)
 #' #######################################################################
+#' log1p_slow(mat)
+#' 
+#' 
 #' @export
 log1p_slow <- function(x) {
   wrapMatrix("TransformLog1pSlow", convert_matrix_type(x, "double"))
@@ -110,8 +114,10 @@ setMethod("short_description", "TransformExpm1", function(x) {
 #' @examples
 #' #######################################################################
 #' ## expm1() example
-#' expm1(mat)
 #' #######################################################################
+#' expm1(mat)
+#' 
+#' 
 setMethod("expm1", "IterableMatrix", function(x) {
   wrapMatrix("TransformExpm1", convert_matrix_type(x, "double"))
 })
@@ -130,8 +136,10 @@ setMethod("short_description", "TransformExpm1Slow", function(x) {
 #' @examples
 #' #######################################################################
 #' ## expm1_slow() example
-#' expm1_slow(mat)
 #' #######################################################################
+#' expm1_slow(mat)
+#' 
+#' 
 #' @export
 expm1_slow <- function(x) {
   wrapMatrix("TransformExpm1Slow", convert_matrix_type(x, "double"))
@@ -338,8 +346,10 @@ setMethod("<", signature(e1= "IterableMatrix", e2= "numeric"), function(e1, e2) 
 #' @examples
 #' #######################################################################
 #' ## `e1 < e2` example
-#' 5 < mat
 #' #######################################################################
+#' 5 < mat
+#' 
+#' 
 setMethod("<", signature(e1= "numeric", e2= "IterableMatrix"), function(e1, e2) {
   binarize(e2, threshold=e1, strict_inequality=TRUE)
 })
@@ -347,8 +357,10 @@ setMethod("<", signature(e1= "numeric", e2= "IterableMatrix"), function(e1, e2) 
 #' @examples
 #' #######################################################################
 #' ## `e1 > e2` example
-#' mat > 5
 #' #######################################################################
+#' mat > 5
+#' 
+#' 
 setMethod(">", signature(e1= "IterableMatrix", e2= "numeric"), function(e1, e2) {
   binarize(e1, threshold=e2, strict_inequality=TRUE)
 })
@@ -363,8 +375,10 @@ setMethod("<=", signature(e1= "IterableMatrix", e2= "numeric"), function(e1, e2)
 #' @examples
 #' #######################################################################
 #' ## `e1 <= e2` example
-#' 5 <= mat
 #' #######################################################################
+#' 5 <= mat
+#' 
+#' 
 setMethod("<=", signature(e1= "numeric", e2= "IterableMatrix"), function(e1, e2) {
   binarize(e2, threshold=e1, strict_inequality=FALSE)
 })
@@ -372,8 +386,10 @@ setMethod("<=", signature(e1= "numeric", e2= "IterableMatrix"), function(e1, e2)
 #' @examples
 #' #######################################################################
 #' ## `e1 >= e2` example
-#' mat >= 5
 #' #######################################################################
+#' mat >= 5
+#' 
+#' 
 setMethod(">=", signature(e1= "IterableMatrix", e2= "numeric"), function(e1, e2) {
   binarize(e1, threshold=e2, strict_inequality=FALSE)
 })
@@ -403,8 +419,10 @@ setMethod("short_description", "TransformRound", function(x) {
 #' @examples
 #' #######################################################################
 #' ## round() example
-#' round(mat)
 #' #######################################################################
+#' round(mat)
+#' 
+#' 
 setMethod("round", "IterableMatrix", function(x, digits=0) {
   assert_is(x, "IterableMatrix")
   assert_is(digits, "numeric")
@@ -664,12 +682,14 @@ setMethod("short_description", "TransformScaleShift", function(x) {
 #' @examples
 #' #######################################################################
 #' ## `e1 * e2` example
+#' #######################################################################
 #' ## Multiplying by a constant
 #' mat * 5
 #' 
 #' ## Multiplying by a vector of length `nrow(mat)`
 #' mat * 1:nrow(mat)
-#' #######################################################################
+#' 
+#' 
 setMethod("*", signature(e1 = "IterableMatrix", e2 = "numeric"), function(e1, e2) {
   e1 <- wrapMatrix("TransformScaleShift", convert_matrix_type(e1, "double"))
   e1 * e2
@@ -681,13 +701,15 @@ setMethod("*", signature(e1 = "numeric", e2 = "IterableMatrix"), function(e1, e2
 #' @describeIn IterableMatrix-methods Add a constant, or row-wise addition with a vector length nrow(mat)
 #' @examples
 #' #######################################################################
-#' ## e1 + e2 example
+#' ## `e1 + e2` example
+#' #######################################################################
 #' ## Add by a constant
 #' mat + 5
 #' 
 #' ## Adding row-wise by a vector of length `nrow(mat)`
 #' mat + 1:nrow(mat)
-#' #######################################################################
+#' 
+#' 
 setMethod("+", signature(e1 = "IterableMatrix", e2 = "numeric"), function(e1, e2) {
   if (all(e2 == 0)) return(e1)
   e1 <- wrapMatrix("TransformScaleShift", convert_matrix_type(e1, "double"))
@@ -703,12 +725,14 @@ setMethod("+", signature(e1 = "numeric", e2 = "IterableMatrix"), function(e1, e2
 #' @examples
 #' #######################################################################
 #' ## `e1 / e2` example
+#' #######################################################################
 #' ## Divide by a constant
 #' mat / 5
 #' 
 #' ## Divide by a vector of length `nrow(mat)`
 #' mat / 1:nrow(mat)
-#' #######################################################################
+#' 
+#' 
 setMethod("/", signature(e1 = "IterableMatrix", e2 = "numeric"), function(e1, e2) {
   e1 * (1 / e2)
 })
@@ -716,12 +740,14 @@ setMethod("/", signature(e1 = "IterableMatrix", e2 = "numeric"), function(e1, e2
 #' @examples
 #' #######################################################################
 #' ## `e1 - e2` example
+#' #######################################################################
 #' ## Subtracting by a constant
 #' mat - 5
 #' 
 #' ## Subtracting by a vector of length `nrow(mat)`
 #' mat - 1:nrow(mat)
-#' #######################################################################
+#' 
+#' 
 setMethod("-", signature(e1 = "IterableMatrix", e2 = "numeric"), function(e1, e2) {
   e1 + (-e2)
 })
