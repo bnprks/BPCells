@@ -9,6 +9,7 @@
 #' @useDynLib BPCells, .registration = TRUE
 #' @importFrom Rcpp sourceCpp
 #' @importClassesFrom Matrix dgCMatrix
+#' @importFrom Matrix t
 #' @importFrom methods .hasSlot Arith as callNextMethod cbind2 Compare is Math Math2 new rbind2 setAs setClass setGeneric setMethod show
 #' @importFrom magrittr %>%
 NULL

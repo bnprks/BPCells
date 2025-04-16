@@ -13,4 +13,6 @@ test_that("Getting test data works", {
     expect_true(is(mat, "IterableMatrix"))
     expect_true(is(frags, "IterableFragments"))
     remove_demo_data()
+    skip("Skip preparing demo data")
+    expect_no_error(BPCells:::prepare_demo_data(file.path(tools::R_user_dir("BPCells", which = "data"), "demo_data")))
 })

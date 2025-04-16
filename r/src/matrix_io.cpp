@@ -991,6 +991,10 @@ read_hdf5_string_cpp(std::string path, std::string group, uint32_t buffer_size) 
 
 // [[Rcpp::export]]
 bool hdf5_group_exists_cpp(std::string path, std::string group) {
+    // Only check for group if the path itself exists
+    if (!std::filesystem::exists(path)) {
+        return false;
+    }
     H5ReaderBuilder rb(path, "/", 1);
     return rb.getGroup().exist(group);
 }
