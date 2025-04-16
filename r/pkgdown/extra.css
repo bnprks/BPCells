@@ -15,3 +15,8 @@ details[open] summary {
 .nav-link .fa-arrow-up-right-from-square {
     font-size: 0.75em;
 }
+
+/* Make lines not go through the logo */
+.logo {
+    background: #fcfcfc;
+}

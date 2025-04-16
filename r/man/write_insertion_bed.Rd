@@ -8,7 +8,7 @@ write_insertion_bed(
   fragments,
   path,
   cell_groups = rlang::rep_along(cellNames(fragments), "all"),
-  insertion_mode = c("start_only", "both", "end_only"),
+  insertion_mode = c("both", "start_only", "end_only"),
   verbose = FALSE,
   threads = 1
 )
