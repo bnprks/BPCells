@@ -59,6 +59,7 @@ if (!file.exists(file.path(data_dir, frags_file))) {
 
 #######################################################################
 ## open_fragments_10x() example
+#######################################################################
 frags <- open_fragments_10x(
  file.path(data_dir, frags_file)
 )
@@ -70,13 +71,16 @@ frags \%>\% write_fragments_dir(
  file.path(data_dir, "demo_frags_from_h5"), 
  overwrite = TRUE
 )
-#######################################################################
+
+
 #######################################################################
 ## write_fragments_10x() example
+#######################################################################
 frags <- write_fragments_10x(
  frags,
  file.path(data_dir, paste0("new_", frags_file))
 )
 frags
-#######################################################################
+
+
 }

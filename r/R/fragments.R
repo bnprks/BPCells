@@ -172,6 +172,7 @@ setMethod("short_description", "FragmentsTsv", function(x) {
 #' 
 #' #######################################################################
 #' ## open_fragments_10x() example
+#' #######################################################################
 #' frags <- open_fragments_10x(
 #'  file.path(data_dir, frags_file)
 #' )
@@ -183,7 +184,8 @@ setMethod("short_description", "FragmentsTsv", function(x) {
 #'  file.path(data_dir, "demo_frags_from_h5"), 
 #'  overwrite = TRUE
 #' )
-#' #######################################################################
+#' 
+#' 
 #' @export
 open_fragments_10x <- function(path, comment = "#", end_inclusive = TRUE) {
   assert_is_file(path, extension = c(".tsv", ".tsv.gz"))
@@ -208,12 +210,14 @@ open_fragments_10x <- function(path, comment = "#", end_inclusive = TRUE) {
 #' @examples
 #' #######################################################################
 #' ## write_fragments_10x() example
+#' #######################################################################
 #' frags <- write_fragments_10x(
 #'  frags,
 #'  file.path(data_dir, paste0("new_", frags_file))
 #' )
 #' frags
-#' #######################################################################
+#' 
+#' 
 #' @export
 write_fragments_10x <- function(fragments, path, end_inclusive = TRUE, append_5th_column = FALSE) {
   assert_is_file(path, must_exist = FALSE, extension = c(".tsv", ".tsv.gz"))
@@ -335,9 +339,11 @@ setMethod("short_description", "PackedMemFragments", function(x) {
 #' 
 #' #######################################################################
 #' ## write_fragments_memory() example
+#' #######################################################################
 #' frags_memory <- write_fragments_memory(frags)
 #' frags_memory
-#' #######################################################################
+#' 
+#' 
 #' @export
 write_fragments_memory <- function(fragments, compress = TRUE) {
   assert_is(fragments, "IterableFragments")
@@ -397,13 +403,15 @@ setMethod("short_description", "FragmentsDir", function(x) {
 #' @examples
 #' #######################################################################
 #' ## write_fragments_dir() example
+#' #######################################################################
 #' frags <- write_fragments_dir(
 #'  frags_memory, 
 #'  file.path(data_dir, "demo_frags"),
 #'  overwrite = TRUE
 #' )
 #' frags
-#' #######################################################################
+#' 
+#' 
 #' @export
 write_fragments_dir <- function(fragments, dir, compress = TRUE, buffer_size = 1024L, overwrite = FALSE) {
   assert_is(fragments, "IterableFragments")
@@ -443,9 +451,11 @@ write_fragments_dir <- function(fragments, dir, compress = TRUE, buffer_size = 1
 #' @examples
 #' #######################################################################
 #' ## open_fragments_dir() example
+#' #######################################################################
 #' frags <- open_fragments_dir(file.path(data_dir, "demo_frags"))
 #' frags
-#' #######################################################################
+#' 
+#' 
 #' @export
 open_fragments_dir <- function(dir, buffer_size = 1024L) {
   assert_is_file(dir)
@@ -504,13 +514,15 @@ setMethod("short_description", "FragmentsHDF5", function(x) {
 #' @examples
 #' #######################################################################
 #' ## write_fragments_hdf5() example
+#' #######################################################################
 #' frags_hdf5 <- write_fragments_hdf5(
 #'  frags, 
 #'  file.path(data_dir, "demo_frags.h5"),
 #'  overwrite = TRUE
 #' )
 #' frags_hdf5
-#' #######################################################################
+#' 
+#' 
 #' @export
 write_fragments_hdf5 <- function(
     fragments, 
@@ -570,9 +582,11 @@ write_fragments_hdf5 <- function(
 #' @examples
 #' #######################################################################
 #' ## open_fragments_hdf5() example
+#' #######################################################################
 #' frags_hdf5 <- open_fragments_hdf5(file.path(data_dir, "demo_frags.h5"))
 #' frags_hdf5
-#' #######################################################################
+#' 
+#' 
 #' @export
 open_fragments_hdf5 <- function(path, group = "fragments", buffer_size = 16384L) {
   assert_is_file(path)
@@ -627,23 +641,31 @@ open_fragments_hdf5 <- function(path, group = "fragments", buffer_size = 16384L)
 #' 
 #' #######################################################################
 #' ## convert_to_fragments() example
+#' #######################################################################
 #' frags <- convert_to_fragments(frags_granges)
 #' frags
-#' #######################################################################
+#' 
+#' 
 #' #######################################################################
 #' ## as(x, "IterableFragments") example
+#' #######################################################################
 #' frags <- as(frags_table, "IterableFragments")
 #' frags
-#' #######################################################################
+#' 
+#' 
 #' #######################################################################
 #' ## as(bpcells_fragments, "data.frame") example
+#' #######################################################################
 #' frags_table <- as(frags, "data.frame")
 #' frags_table
+#' 
+#' 
 #' #######################################################################
 #' ## as(bpcells_fragments, "GRanges") example
+#' #######################################################################
 #' frags_granges <- as(frags, "GRanges")
 #' frags_granges
-#' #######################################################################
+#' 
 #' 
 #' @rdname fragment_R_conversion
 #' @export
