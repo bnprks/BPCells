@@ -48,6 +48,8 @@ The user can pass in partial parameters to the cluster method, such as by passin
 \code{IterativeLSI()} An object of class \code{c("IterativeLSI", "DimReduction")} with the following attributes:
 \itemize{
 \item \code{cell_embeddings}: The projected data as a matrix of shape \verb{(cells, n_dimensions)}
+\item \code{feature_names}: The names of features that \code{IterativeLSI()} was fit on.
+Note that projection only requires the features used in each specific iteration (as described in \code{iter_info})
 \item \code{fitted_params}: A list of the parameters used for iterative LSI.  Includes the following:
 \itemize{
 \item \code{lsi_method}: The method used for LSI

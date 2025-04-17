@@ -479,6 +479,8 @@ project.LSI <- function(x, mat, threads = 1L, ...) {
 #' @return 
 #' `IterativeLSI()` An object of class `c("IterativeLSI", "DimReduction")` with the following attributes:
 #' - `cell_embeddings`: The projected data as a matrix of shape `(cells, n_dimensions)`
+#' - `feature_names`: The names of features that `IterativeLSI()` was fit on.  
+#'   Note that projection only requires the features used in each specific iteration (as described in `iter_info`)
 #' - `fitted_params`: A list of the parameters used for iterative LSI.  Includes the following:
 #'    - `lsi_method`: The method used for LSI
 #'    - `feature_selection_method`: The method used for selecting features
