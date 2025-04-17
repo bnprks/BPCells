@@ -30,13 +30,6 @@
 
 #include "bpcells-cpp/matrixIterators/PeakMatrix.h"
 #include "bpcells-cpp/matrixIterators/TileMatrix.h"
-// #include "matrixIterators/PeakMatrix2.h"
-// #include "matrixIterators/PeakMatrix3.h"
-// #include "matrixIterators/PeakMatrix4.h"
-// #include "matrixIterators/PeakMatrix5.h"
-// #include "matrixIterators/PeakMatrix6.h"
-// #include "matrixIterators/TileMatrix.h"
-// #include "matrixIterators/TileMatrix2.h"
 
 using namespace Rcpp;
 using namespace BPCells;
@@ -51,6 +44,7 @@ NumericVector scan_fragments_cpp(SEXP fragments) {
 
     while (iter.nextChr()) {
         while (iter.nextFrag()) {
+            if (len % (1 << 14) == 0) Rcpp::checkUserInterrupt();
             len++;
             start_sum += iter.start();
             end_sum += iter.end();
@@ -219,8 +213,10 @@ std::vector<int> fragment_lengths_cpp(SEXP fragments) {
 
     std::vector<int> lengths(0);
 
+    uint32_t count = 0;
     while (iter.nextChr()) {
         while (iter.nextFrag()) {
+            if (count++ % (1 << 14) == 0) Rcpp::checkUserInterrupt();
             uint32_t width = iter.end() - iter.start();
             if (width >= lengths.size()) lengths.resize(width + 1);
             lengths[width] += 1;

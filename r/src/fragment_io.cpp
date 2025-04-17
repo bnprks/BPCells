@@ -299,7 +299,9 @@ bool fragments_identical_cpp(SEXP fragments1, SEXP fragments2) {
             Rcerr << "Different chromosome ID loaded" << std::endl;
             return false;
         }
+        uint32_t count = 0;
         while (true) {
+            if (count++ % (1 << 14) == 0) Rcpp::checkUserInterrupt();
             bool res1 = i1.nextFrag();
             bool res2 = i2.nextFrag();
             if (res1 != res2) {
