@@ -3,6 +3,7 @@
 ## Features
 - Add `write_matrix_anndata_hdf5_dense()` which allows writing matrices in AnnData's dense format, most commonly used for `obsm` or `varm` matrices. (Thanks to @ycli1995 for pull request #166)
 - Add `get_demo_mat()`, `get_demo_frags()` and `remove_demo_data()` to retrieve a small test matrix/fragments object from the [PBMC 3k dataset from 10X Genomics](https://www.10xgenomics.com/datasets/pbmc-from-a-healthy-donor-granulocytes-removed-through-cell-sorting-3-k-1-standard-2-0-0). (pull request #193)
+- Add `cor_dense()`, `cov_dense()`, `crossprod_dense()`, `tcrossprod_dense()` which can accelerate all-by-all feature correlation and related statistics. Recommended for up to 10k features. (pull request #243)
 
 ## Improvements
 - Speed up taking large subsets of large concatenated matrices, e.g. selecting 9M cells from a 10M cell matrix composed of ~100 concatenated pieces. (pull request #179)

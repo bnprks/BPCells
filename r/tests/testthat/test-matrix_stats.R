@@ -254,3 +254,39 @@ test_that("Matrix row quantiles works with transposed matrices", {
   m_quantiles_bpcells <- rowQuantiles(m1, probs = c(0.25, 0.75), type = 7)
   expect_equal(m_quantiles, m_quantiles_bpcells)
 })
+
+test_that("crossprod_dense family works", {
+  m <- generate_sparse_matrix(20, 10)
+  rownames(m) <- paste0("row", seq_len(nrow(m)))
+  colnames(m) <- paste0("col", seq_len(ncol(m)))
+  m_bp <- as(m, "IterableMatrix")
+  m <- as.matrix(m)
+
+  row_offset <- runif(nrow(m))
+  col_offset <- runif(ncol(m))
+
+  latent_data <- tibble::tibble(x=runif(ncol(m)), y=rep.int(1, ncol(m)))
+  m_regress <- regress_out(m_bp, latent_data)
+
+  matrix_cases <- tibble::tribble(
+    ~base, ~bpcells,
+    m, m_bp,
+    m+1, m_bp+1,
+    add_cols(m, col_offset), add_cols(m_bp, col_offset),
+    add_rows(m, row_offset), add_rows(m_bp, row_offset),
+    as.matrix(m_regress), m_regress
+  )
+  for (i in seq_len(nrow(matrix_cases))) {
+    for (threads in 1:2) {
+      m <- matrix_cases$base[[i]]
+      m_bp <- matrix_cases$bpcells[[i]]
+      expect_equal(tcrossprod(m), tcrossprod_dense(m_bp, threads=threads))
+      expect_equal(crossprod(t(m)), crossprod_dense(t(m_bp), threads=threads))
+      expect_equal(cor(t(m)), cor_dense(t(m_bp), threads=threads))
+      expect_equal(cov(t(m)), cov_dense(t(m_bp), threads=threads))
+      expect_equal
+    }
+  }
+  expect_error(crossprod_dense(m_bp))
+  expect_error(tcrossprod_dense(t(m_bp)))
+})
