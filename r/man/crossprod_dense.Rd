@@ -35,12 +35,12 @@ Symmetric, square dense matrix. Results should match the base R \code{crossprod(
 These functions provide optimized versions of \code{tcrossprod()}, \code{crossprod()}, \code{cov()}, and \code{cor()} that take
 BPCells matrices as inputs and produce dense matrix outputs. These functions will run more quickly than
 combining multiple BPCells operations to produce equivalent output.
-They are mainly recommended for sparse \verb{cell x feature} matrices with ~10k features or fewer,
+They are mainly recommended for sparse matrices with ~10k features or fewer,
 since compute and memory costs will rise with the square of the number of features (see details).
 
-Note that the input matrix orientation is \verb{cell x feature} rather than the standard R single cell convention
-of \verb{feature x cell} in order to provide consistency with the builtin \code{cor()} and \code{cov()} functions. It will
-be necessary to pass \code{t(mat)} as the first argument in many cases.
+Note that \code{cor_dense()} and \code{cov_dense()} calculate correlation/covariance of \emph{columns} to match \code{cov()} and \code{cor()}.
+To calculate feature correlations on a standard \verb{feature x cell} matrix, it will be necessary to pass \code{t(mat)} as the
+first argument.
 }
 \details{
 \strong{Input storage order}
