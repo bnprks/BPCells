@@ -717,6 +717,165 @@ rlang::on_load({
   }
 })
 
+#' Matrix correlation, covariance, or cross-product with dense output
+#' @rdname crossprod_dense
+#' 
+#' @description
+#' These functions provide optimized versions of `tcrossprod()`, `crossprod()`, `cov()`, and `cor()` that take
+#' BPCells matrices as inputs and produce dense matrix outputs. These functions will run more quickly than
+#' combining multiple BPCells operations to produce equivalent output.
+#' They are mainly recommended for sparse `cell x feature` matrices with ~10k features or fewer,
+#' since compute and memory costs will rise with the square of the number of features (see details).
+#' 
+#' Note that the input matrix orientation is `cell x feature` rather than the standard R single cell convention
+#' of `feature x cell` in order to provide consistency with the builtin `cor()` and `cov()` functions. It will
+#' be necessary to pass `t(mat)` as the first argument in many cases.
+#' 
+#' @param x (IterableMatrix) Input matrix. In general, disk-backed matrices should have cell-major storage ordering. (See details,
+#'   or `transpose_storage_order()`)
+#' @param buffer_bytes (integer) In-memory chunk size to use during computations. Performance is best when this is slightly below
+#'   the largest CPU cache size on the computer running BPCells.
+#' @param threads (integer) Number of threads to use during execution. Thread counts higher than 4-8 may see diminishing speedups
+#' @param method (character) Must be `"pearson"`. Provided for compatibility with `cov()` and `cor()` but otherwise ignored.
+#' @param ... Reserved for potential future argument additions
+#' 
+#' @return Symmetric, square dense matrix. Results should match the base R `crossprod()`, `tcrossprod()`, `cov()`, and `cor()`.
+#'
+#' @details
+#' 
+#' **Input storage order**
+#'
+#' The input matrix must be row-major for `crossprod_dense()`, `cor_dense()`, and `cov_dense()`.
+#' For `tcrossprod_dense()`, the input must be col-major. Stated another way: when these functions are used to calculate 
+#' feature correlations, the cell axis should always be the major axis. The functions will raise an error if
+#' the input requires running `transpose_storage_order()` to switch to the required storage order.
+#'
+#' **Efficiency considerations**
+#'
+#' These functions require only 1 or 2 matrix passes, so they will run much faster than using `%*%` to perform
+#' disk-backed sparse-sparse matrix multiplies.
+#' 
+#' The memory required for the output matrix scales with the square of the feature count and the computational
+#' work scales with the square of the number of non-zero entries per feature. So in typical cases running with
+#' 20k features will take 100x the time and memory compared to 2k features. Correlation of 2k features from 
+#' 1.3M cells should take under 1 minute single-threaded, and under 15 seconds with 8 threads.
+#'
+#' @examples
+#' set.seed(12345)
+#' base_r_mat <- matrix(rpois(3*5, lambda=1), nrow=3, ncol=5)
+#' rownames(base_r_mat) <- paste0("row", 1:3)
+#' base_r_mat
+#' 
+#' mat <- as(base_r_mat, "IterableMatrix")
+#' 
+#' tcrossprod_dense(mat)
+#' 
+#' all.equal(tcrossprod_dense(mat), tcrossprod(base_r_mat))
+#' all.equal(crossprod_dense(t(mat)), crossprod(t(base_r_mat)))
+#' all.equal(cov_dense(t(mat)), cov(t(base_r_mat)))
+#' all.equal(cor_dense(t(mat)), cor(t(base_r_mat)))
+#' @export
+tcrossprod_dense <- function(x, ..., buffer_bytes=5e6, threads=1L) {
+  assert_is(x, "IterableMatrix")
+  if (x@transpose) rlang::abort(c("Input matrix must have col-major storage order.", "Please use transpose_storage_order()."))
+  assert_is_wholenumber(buffer_bytes)
+  assert_is_wholenumber(threads)
+  assert_true(buffer_bytes >= 48*nrow(x))
+  rlang::check_dots_empty()
+
+  # Specializations to speed up linear algebra offset transformations
+  # Notice that if X = A + R*t(C):
+  # X*t(X) = A*t(A) + A*C*t(R) + t(A*C*t(R)) + R*t(C)*C*t(R)
+  # Requires 1 extra matrix pass, and 2-4x the output memory depending on how aggressive garbage collection is
+  if (is(x, "TransformLinearResidual") || (is(x, "TransformScaleShift") && any(x@active_transforms[,"shift"]))) {
+    if (is(x, "TransformScaleShift") && any(x@active_transforms[,"shift"])) {
+      col_shift <- rep.int(0, ncol(x))
+      row_shift <- rep.int(0, nrow(x))
+      if (x@active_transforms["row", "shift"]) row_shift <- x@row_params[2,]
+      if (x@active_transforms["col", "shift"]) col_shift <- x@col_params[2,]
+      if (x@active_transforms["global", "shift"]) row_shift <- row_shift + x@global_params[2]
+      x@active_transforms[,"shift"] <- FALSE
+
+      R <- cbind(1, row_shift)
+      C <- cbind(col_shift, 1)
+    }
+    if (is(x, "TransformLinearResidual")) {
+      R <- -t(x@row_params)
+      C <- t(x@col_params)
+      x <- x@matrix
+    }
+    res <- tcrossprod_dense(x, buffer_bytes=buffer_bytes, threads=threads)
+    if (threads > 1) x <- parallel_split(x, threads=threads, chunks=4*threads)
+    # Run frequent garbage collection on fast mode to hopefully avoid big matrix copies
+    # without slowing down execution too much
+    offset <- tcrossprod(x %*% C, R)
+    res <- res + offset
+    gc(verbose=FALSE, full=FALSE)
+    offset <- t(offset)
+    gc(verbose=FALSE, full=FALSE)
+    res <- res + offset
+    gc(verbose=FALSE, full=FALSE)
+    res <- res + R %*% crossprod(C) %*% t(R)
+    gc(verbose=FALSE, full=FALSE)
+    return(res)
+  }
+
+  buffer_bytes <- as.integer(buffer_bytes)
+  threads <- as.integer(threads)
+
+  res <- dense_transpose_multiply_cpp(iterate_matrix(x), buffer_bytes=buffer_bytes, threads=threads)
+  rownames(res) <- rownames(x)
+  colnames(res) <- rownames(x)
+  
+  return(res)
+}
+
+#' @rdname crossprod_dense
+#' @export
+crossprod_dense <- function(x, ..., buffer_bytes=5e6, threads=1L) {
+  assert_is(x, "IterableMatrix")
+  if (!x@transpose) rlang::abort(c("Input matrix must have row-major storage order.", "Please use transpose_storage_order()."))
+  assert_is_wholenumber(buffer_bytes)
+  assert_is_wholenumber(threads)
+  assert_true(buffer_bytes >= 48*ncol(x))
+  rlang::check_dots_empty()
+
+  return(tcrossprod_dense(t(x), buffer_bytes=buffer_bytes, threads=threads))
+}
+
+#' @rdname crossprod_dense
+#' @export
+cov_dense <- function(x, ..., method="pearson", buffer_bytes=5e6, threads=1L) {
+  assert_is(x, "IterableMatrix")
+  if (!x@transpose) rlang::abort(c("Input matrix must have row-major storage order.", "Please use transpose_storage_order()."))
+  assert_is_wholenumber(buffer_bytes)
+  assert_is_wholenumber(threads)
+  assert_true(buffer_bytes >= 48*ncol(x))
+  assert_true(method == "pearson")
+
+  col_means <- matrix_stats(x, threads=threads, col_stats="mean")$col_stats["mean",]
+  res <- crossprod_dense(add_cols(x, -col_means), buffer_bytes=buffer_bytes, threads=threads)
+  res <- res / (nrow(x) - 1)
+  return(res)
+}
+
+#' @rdname crossprod_dense
+#' @export
+cor_dense <- function(x, ..., method="pearson", buffer_bytes=5e6, threads=1L) {
+  assert_is(x, "IterableMatrix")
+  if (!x@transpose) rlang::abort(c("Input matrix must have row-major storage order.", "Please use transpose_storage_order()."))
+  assert_is_wholenumber(buffer_bytes)
+  assert_is_wholenumber(threads)
+  assert_true(buffer_bytes >= 48*ncol(x))
+  assert_true(method == "pearson")
+
+  res <- cov_dense(x, method=method, buffer_bytes=buffer_bytes, threads=threads)
+  std_dev_inv <- sqrt(1/diag(res))
+  res <- t(res * std_dev_inv) * std_dev_inv
+  return(res)
+}
+
+
 # Index subsetting
 setClass("MatrixSubset",
   contains = "IterableMatrix",
