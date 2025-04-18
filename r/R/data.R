@@ -268,6 +268,11 @@ remove_demo_data <- function() {
 #'
 #' <http://ftp.ebi.ac.uk/pub/databases/genenames/hgnc/tsv/non_alt_loci_set.txt>
 #'
+#' @examples
+#' #######################################################################
+#' ## human_gene_mapping
+#' head(human_gene_mapping)
+#' #######################################################################
 #' @rdname gene_mapping
 "human_gene_mapping"
 
@@ -281,6 +286,10 @@ remove_demo_data <- function() {
 #'
 #' <http://www.informatics.jax.org/downloads/reports/MGI_EntrezGene.rpt>
 #' <http://www.informatics.jax.org/downloads/reports/MRK_ENSEMBL.rpt>
+#' @examples
+#' #######################################################################
+#' ## mouse_gene_mapping
+#' head(mouse_gene_mapping)
 "mouse_gene_mapping"
 
 
