@@ -15,7 +15,41 @@
 #' Shorter than `nucleosome_width` is `subNucleosomal`,
 #' `nucleosome_width` to `2*nucleosome_width-1` is `monoNucleosomal`, and anything longer is `multiNucleosomal`.
 #' The sum of all fragments is given as `nFrags`
-#'         
+#' @examples
+#' ## Prep data
+#' frags_sub_nucleosomal <- tibble::tibble(
+#'   chr = 1,
+#'   start = seq(0, 3000, by = 1000),
+#'   end = start + 146,
+#'   cell_id = c(rep("cell1", 3), rep("cell2", 1))
+#' )
+#' frags_sub_nucleosomal
+#' 
+#' frags_nucleosomal <- tibble::tibble(
+#'   chr = 1,
+#'   start = seq(5000, 7000, by = 1000),
+#'   end = start + 147, # Value equal to nucleosome_width is inclusive
+#'   cell_id = c(rep("cell1", 1), rep("cell2", 2))
+#' )
+#' frags_nucleosomal
+#' 
+#' frags_multi_nucleosomal <- tibble::tibble(
+#'   chr = 1,
+#'   start = seq(12000, 15000, by = 1000),
+#'   end = start + 294,  # Value equal to 2x nucleosome_width
+#'   cell_id = c(rep("cell1", 2), rep("cell2", 2))
+#' )
+#' frags_multi_nucleosomal
+#' 
+#' frags <- dplyr::bind_rows(
+#'   frags_sub_nucleosomal, 
+#'   frags_nucleosomal, 
+#'   frags_multi_nucleosomal
+#' ) %>% convert_to_fragments()
+#'  
+#'  
+#' ## Get nucleosome counts
+#' head(nucleosome_counts(frags))
 #' @export
 nucleosome_counts <- function(fragments, nucleosome_width = 147) {
   assert_is(fragments, "IterableFragments")
@@ -46,6 +80,23 @@ nucleosome_counts <- function(fragments, nucleosome_width = 147) {
 #'   extremes to use for calculating enrichment
 #'
 #' @return `tibble::tibble()` with columns `group`, `position`, and `count`, `enrichment`
+#' @examples
+#' ## Prep data
+#' frags <- get_demo_frags()
+#' ## Motif positions taken from taking a subset of GATA1 motifs
+#' ## positions in peaks using motifmatchr
+#' ## See basic tutorial for description of generating 
+#' ## positions
+#' motif_positions <- tibble::tibble(
+#'  chr = rep("chr4", 3),
+#'  start = c(338237, 498344, 499851),
+#'  end = c(338247, 498354, 499861),
+#'  strand = c("-", "+", "+"),
+#'  score = c(8.1422, 8.1415, 9.59462)
+#' )
+#' 
+#' ## Run footprinting
+#' footprint(frags, motif_positions)
 #' @export
 footprint <- function(fragments, ranges, zero_based_coords = !is(ranges, "GRanges"),
                       cell_groups = rlang::rep_along(cellNames(fragments), "all"),
@@ -123,7 +174,22 @@ footprint <- function(fragments, ranges, zero_based_coords = !is(ranges, "GRange
 #' ArchR's `PromoterRatio` and `BlacklistRatio` are not included in the output, as they can be easily calculated
 #' from `ReadsInPromoter / nFrags` and  `ReadsInBlacklist / nFrags`. Similarly, ArchR's `NucleosomeRatio` can be calculated
 #' as `(monoNucleosomal + multiNucleosomal) / subNucleosomal`.
+#' @examples
+#' ## Prep data
+#' frags <- get_demo_frags()
+#' reference_dir <- file.path(tempdir(), "references")
+#' genes <- read_gencode_transcripts(
+#'   reference_dir, 
+#'   release="42", 
+#'   transcript_choice="MANE_Select",
+#'   annotation_set = "basic",
+#'   features="transcript"
+#' )
+#' blacklist <- read_encode_blacklist(reference_dir, genome = "hg38")
 #'
+#'
+#' ## Run qc
+#' head(qc_scATAC(frags, genes, blacklist))
 #' @export
 qc_scATAC <- function(fragments, genes, blacklist) {
   assert_is(fragments, "IterableFragments")
@@ -196,6 +262,17 @@ qc_scATAC <- function(fragments, genes, blacklist) {
 #' @param peaks `r document_granges("Peaks")`  
 #'
 #'  Must be ordered by priority and have columns chr, start, end.
+#' @examples
+#' ## Create example peaks
+#' peaks <- tibble::tibble(
+#'  chr = "chr1",
+#'  start = as.integer(1:10),
+#'  end = start + 2L
+#' )
+#' peaks
+#' 
+#' ## Merge peaks
+#' merge_peaks_iterative(peaks)
 #' @return `tibble::tibble()` with a nonoverlapping subset of the rows in peaks. All metadata
 #'  columns are preserved
 #' @export
@@ -279,6 +356,18 @@ merge_peaks_iterative <- function(peaks) {
 #' significant of the overlapping candidate peaks
 #' 7. If `merge_peaks` is "all", perform a final round of `merge_peaks_iterative()`,
 #' prioritizing each peak by its within-group significance rank
+#' @examples
+#' ## Prep data
+#' reference_dir <- file.path(tempdir(), "references")
+#' frags <- get_demo_frags() 
+#' ## Remove blacklist regions from fragments
+#' blacklist <- read_encode_blacklist(reference_dir, genome="hg38")
+#' frags_filter_blacklist <- select_regions(frags, blacklist, invert_selection = TRUE)
+#' chrom_sizes <- read_ucsc_chrom_sizes(reference_dir, genome="hg38") %>% dplyr::filter(chr %in% c("chr4", "chr11"))
+#' 
+#' 
+#' ## Call peaks
+#' call_peaks_tile(frags_filter_blacklist, chrom_sizes, effective_genome_size = 2.8e9)
 #' @export
 call_peaks_tile <- function(fragments, chromosome_sizes, cell_groups = rep.int("all", length(cellNames(fragments))),
                             effective_genome_size = NULL,
@@ -304,7 +393,6 @@ call_peaks_tile <- function(fragments, chromosome_sizes, cell_groups = rep.int("
   } else {
     assert_is_numeric(effective_genome_size)
   }
-
   group_counts <- peak_matrix(fragments, ranges) %>% colSums()
   background_rate <- group_counts / effective_genome_size * peak_width
   min_cutoffs <- qpois(1 - fdr_cutoff, background_rate)
@@ -383,6 +471,15 @@ call_peaks_tile <- function(fragments, chromosome_sizes, cell_groups = rep.int("
 #' @param path (character vector) Path(s) to save bedgraph to, optionally ending in ".gz" to add gzip compression. If `cell_groups` is provided,
 #'   `path` must be a named character vector, with one name for each level in `cell_groups`
 #' @param insertion_mode (string) Which fragment ends to use for coverage calculation. One of "both", "start_only", or "end_only"
+#' @examples
+#' ## Prep data
+#' frags <- get_demo_frags()
+#' bedgraph_outputs <- file.path(tempdir(), "bedgraph_outputs", "all.tar.gz")
+#' 
+#' 
+#' ## Write insertions
+#' write_insertion_bedgraph(frags, file.path(bedgraph_outputs, "all.tar.gz"))
+#' list.files(bedgraph_outputs)
 #' @inheritParams footprint
 #' @export
 write_insertion_bedgraph <- function(fragments, path, cell_groups = rlang::rep_along(cellNames(fragments), "all"), insertion_mode=c("both", "start_only", "end_only")) {
@@ -514,6 +611,22 @@ write_insertion_bed <- function(fragments, path,
 #' To run MACS manually, you will first run `call_peaks_macs()` with `step="prep-inputs`. Then, manually run all of the
 #' shell scripts generated at `<path>/input/<group>.sh`. Finally, run `call_peaks_macs()` again with the same original arguments, but
 #' setting `step="read-outputs"`.
+#' @examples
+#' macs_files <- file.path(tempdir(), "peaks")
+#' frags <- get_demo_frags()
+#' 
+#' head(call_peaks_macs(frags, macs_files))
+#' 
+#' ## Can also just run the input prep, then run macs manually
+#' ## by setting step to 'prep_inputs'
+#' macs_script <- call_peaks_macs(frags, macs_files, step = "prep-inputs")
+#' system2("bash", macs_script[1], stdout = FALSE, stderr = FALSE)
+#' 
+#' ## Then read the narrow peaks files
+#' list.files(file.path(macs_files, "output", "all"))
+#' 
+#' ## call_peaks_macs() can also solely perform the output reading step
+#' head(call_peaks_macs(frags, macs_files, step = "read-outputs"))
 #' @inheritParams call_peaks_tile
 #' @export
 call_peaks_macs <- function(fragments, path,

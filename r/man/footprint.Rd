@@ -46,3 +46,21 @@ extremes to use for calculating enrichment}
 \description{
 Get footprints around a set of genomic coordinates
 }
+\examples{
+## Prep data
+frags <- get_demo_frags()
+## Motif positions taken from taking a subset of GATA1 motifs
+## positions in peaks using motifmatchr
+## See basic tutorial for description of generating 
+## positions
+motif_positions <- tibble::tibble(
+ chr = rep("chr4", 3),
+ start = c(338237, 498344, 499851),
+ end = c(338247, 498354, 499861),
+ strand = c("-", "+", "+"),
+ score = c(8.1422, 8.1415, 9.59462)
+)
+
+## Run footprinting
+footprint(frags, motif_positions)
+}
