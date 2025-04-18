@@ -74,3 +74,55 @@ allows saving within existing hdf5 files to group data together, and the in
 memory format provides the fastest performance in the event memory usage is
 unimportant.
 }
+\examples{
+## Create temporary directory to keep demo fragments
+data_dir <- file.path(tempdir(), "frags")
+dir.create(data_dir, recursive = TRUE, showWarnings = FALSE)
+## Get demo frags loaded from disk
+frags <- get_demo_frags()
+frags
+
+#######################################################################
+## write_fragments_memory() example
+#######################################################################
+frags_memory <- write_fragments_memory(frags)
+frags_memory
+
+
+#######################################################################
+## write_fragments_dir() example
+#######################################################################
+frags <- write_fragments_dir(
+ frags_memory, 
+ file.path(data_dir, "demo_frags"),
+ overwrite = TRUE
+)
+frags
+
+
+#######################################################################
+## open_fragments_dir() example
+#######################################################################
+frags <- open_fragments_dir(file.path(data_dir, "demo_frags"))
+frags
+
+
+#######################################################################
+## write_fragments_hdf5() example
+#######################################################################
+frags_hdf5 <- write_fragments_hdf5(
+ frags, 
+ file.path(data_dir, "demo_frags.h5"),
+ overwrite = TRUE
+)
+frags_hdf5
+
+
+#######################################################################
+## open_fragments_hdf5() example
+#######################################################################
+frags_hdf5 <- open_fragments_hdf5(file.path(data_dir, "demo_frags.h5"))
+frags_hdf5
+
+
+}
