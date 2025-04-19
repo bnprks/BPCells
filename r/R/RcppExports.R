@@ -561,6 +561,18 @@ iterate_csparse_matrix_cpp <- function(matrix, row_names, col_names) {
     .Call(`_BPCells_iterate_csparse_matrix_cpp`, matrix, row_names, col_names)
 }
 
+convert_matrix_uint16_t_double_cpp <- function(matrix) {
+    .Call(`_BPCells_convert_matrix_uint16_t_double_cpp`, matrix)
+}
+
+convert_matrix_uint16_t_float_cpp <- function(matrix) {
+    .Call(`_BPCells_convert_matrix_uint16_t_float_cpp`, matrix)
+}
+
+convert_matrix_uint16_t_uint32_t_cpp <- function(matrix) {
+    .Call(`_BPCells_convert_matrix_uint16_t_uint32_t_cpp`, matrix)
+}
+
 convert_matrix_uint32_t_double_cpp <- function(matrix) {
     .Call(`_BPCells_convert_matrix_uint32_t_double_cpp`, matrix)
 }

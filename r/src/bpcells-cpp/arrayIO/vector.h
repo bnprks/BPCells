@@ -77,7 +77,6 @@ template <class T> class VecNumReader : public BulkNumReader<T> {
         return load_size;
     }
 };
-
 using VecUIntReader = VecNumReader<uint32_t>;
 
 class VecStringWriter : public StringWriter {

@@ -36,6 +36,7 @@ class S4ReaderBuilder : public BPCells::ReaderBuilder {
 
   public:
     S4ReaderBuilder(Rcpp::S4 s4, uint32_t load_size = 1024);
+    BPCells::UShortReader openUShortReader(std::string name);
     BPCells::UIntReader openUIntReader(std::string name) override;
     BPCells::ULongReader openULongReader(std::string name) override;
     BPCells::FloatReader openFloatReader(std::string name) override;

@@ -1906,6 +1906,39 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// convert_matrix_uint16_t_double_cpp
+SEXP convert_matrix_uint16_t_double_cpp(SEXP matrix);
+RcppExport SEXP _BPCells_convert_matrix_uint16_t_double_cpp(SEXP matrixSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type matrix(matrixSEXP);
+    rcpp_result_gen = Rcpp::wrap(convert_matrix_uint16_t_double_cpp(matrix));
+    return rcpp_result_gen;
+END_RCPP
+}
+// convert_matrix_uint16_t_float_cpp
+SEXP convert_matrix_uint16_t_float_cpp(SEXP matrix);
+RcppExport SEXP _BPCells_convert_matrix_uint16_t_float_cpp(SEXP matrixSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type matrix(matrixSEXP);
+    rcpp_result_gen = Rcpp::wrap(convert_matrix_uint16_t_float_cpp(matrix));
+    return rcpp_result_gen;
+END_RCPP
+}
+// convert_matrix_uint16_t_uint32_t_cpp
+SEXP convert_matrix_uint16_t_uint32_t_cpp(SEXP matrix);
+RcppExport SEXP _BPCells_convert_matrix_uint16_t_uint32_t_cpp(SEXP matrixSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type matrix(matrixSEXP);
+    rcpp_result_gen = Rcpp::wrap(convert_matrix_uint16_t_uint32_t_cpp(matrix));
+    return rcpp_result_gen;
+END_RCPP
+}
 // convert_matrix_uint32_t_double_cpp
 SEXP convert_matrix_uint32_t_double_cpp(SEXP matrix);
 RcppExport SEXP _BPCells_convert_matrix_uint32_t_double_cpp(SEXP matrixSEXP) {
@@ -2692,6 +2725,9 @@ static const R_CallMethodDef CallEntries[] = {
     {"_BPCells_iterate_matrix_row_shift_cpp", (DL_FUNC) &_BPCells_iterate_matrix_row_shift_cpp, 2},
     {"_BPCells_iterate_matrix_col_shift_cpp", (DL_FUNC) &_BPCells_iterate_matrix_col_shift_cpp, 2},
     {"_BPCells_iterate_csparse_matrix_cpp", (DL_FUNC) &_BPCells_iterate_csparse_matrix_cpp, 3},
+    {"_BPCells_convert_matrix_uint16_t_double_cpp", (DL_FUNC) &_BPCells_convert_matrix_uint16_t_double_cpp, 1},
+    {"_BPCells_convert_matrix_uint16_t_float_cpp", (DL_FUNC) &_BPCells_convert_matrix_uint16_t_float_cpp, 1},
+    {"_BPCells_convert_matrix_uint16_t_uint32_t_cpp", (DL_FUNC) &_BPCells_convert_matrix_uint16_t_uint32_t_cpp, 1},
     {"_BPCells_convert_matrix_uint32_t_double_cpp", (DL_FUNC) &_BPCells_convert_matrix_uint32_t_double_cpp, 1},
     {"_BPCells_convert_matrix_uint32_t_float_cpp", (DL_FUNC) &_BPCells_convert_matrix_uint32_t_float_cpp, 1},
     {"_BPCells_convert_matrix_double_uint32_t_cpp", (DL_FUNC) &_BPCells_convert_matrix_double_uint32_t_cpp, 1},

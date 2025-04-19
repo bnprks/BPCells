@@ -449,6 +449,14 @@ void createAnnDataObsVarIfMissing(
 }
 
 // Explicit template instantiations
+template std::unique_ptr<MatrixLoader<uint16_t>> openAnnDataMatrix<uint16_t>(
+    std::string file,
+    std::string group,
+    uint32_t buffer_size,
+    std::unique_ptr<StringReader> &&row_names,
+    std::unique_ptr<StringReader> &&col_names,
+    uint32_t read_size
+);
 template std::unique_ptr<MatrixLoader<uint32_t>> openAnnDataMatrix<uint32_t>(
     std::string file,
     std::string group,
@@ -482,6 +490,9 @@ template std::unique_ptr<MatrixLoader<double>> openAnnDataMatrix<double>(
     uint32_t read_size
 );
 
+template std::unique_ptr<MatrixLoader<uint16_t>> openAnnDataMatrix<uint16_t>(
+    std::string file, std::string group, uint32_t buffer_size, uint32_t read_size
+);
 template std::unique_ptr<MatrixLoader<uint32_t>> openAnnDataMatrix<uint32_t>(
     std::string file, std::string group, uint32_t buffer_size, uint32_t read_size
 );
@@ -556,6 +567,8 @@ std::string getAnnDataMatrixType(std::string file, std::string group) {
 
     if (t == HighFive::AtomicType<int>()) {
         return "uint32_t";
+    } else if (t == HighFive::AtomicType<uint16_t>()) {
+        return "uint16_t";
     } else if (t == HighFive::AtomicType<uint32_t>()) {
         return "uint32_t";
     } else if (t == HighFive::AtomicType<uint64_t>()) {

@@ -256,6 +256,7 @@ template <class T> class NumReader {
 
 using IntReader = NumReader<int32_t>;
 using LongReader = NumReader<int64_t>;
+using UShortReader = NumReader<uint16_t>;
 using UIntReader = NumReader<uint32_t>;
 using ULongReader = NumReader<uint64_t>;
 using FloatReader = NumReader<float>;

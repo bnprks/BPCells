@@ -828,7 +828,9 @@ List dims_matrix_anndata_hdf5_cpp(std::string file, std::string group, uint32_t 
     bool transpose = isRowOrientedAnnDataMatrix(file, group);
     std::string type = getAnnDataMatrixType(file, group);
     List l;
-    if (type == "uint32_t") {
+    if (type == "uint16_t") {
+        l = dims_matrix(*openAnnDataMatrix<uint16_t>(file, group, buffer_size), transpose);
+    } else if (type == "uint32_t") {
         l = dims_matrix(*openAnnDataMatrix<uint32_t>(file, group, buffer_size), transpose);
     } else if (type == "float") {
         l = dims_matrix(*openAnnDataMatrix<float>(file, group, buffer_size), transpose);
@@ -857,7 +859,15 @@ SEXP iterate_matrix_anndata_hdf5_cpp(
            << "'";
         throw std::runtime_error(ss.str());
     }
-    if (type == "uint32_t") {
+    if (type == "uint16_t") {
+        return unique_xptr<MatrixLoader<uint16_t>>(openAnnDataMatrix<uint16_t>(
+            file,
+            group,
+            buffer_size,
+            std::make_unique<RcppStringReader>(row_names),
+            std::make_unique<RcppStringReader>(col_names)
+        ));
+    } else if (type == "uint32_t") {
         return unique_xptr<MatrixLoader<uint32_t>>(openAnnDataMatrix<uint32_t>(
             file,
             group,

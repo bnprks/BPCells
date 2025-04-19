@@ -187,6 +187,7 @@ class FileReaderBuilder final : public ReaderBuilder {
     FileReaderBuilder() = default;
     FileReaderBuilder(std::string dir, uint64_t buffer_size = 8192, uint64_t read_size = 1024);
     FileReaderBuilder &operator=(FileReaderBuilder &&other) = default;
+    UShortReader openUShortReader(std::string name);
     UIntReader openUIntReader(std::string name) override;
     ULongReader openULongReader(std::string name) override;
     FloatReader openFloatReader(std::string name) override;

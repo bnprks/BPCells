@@ -255,7 +255,7 @@ test_that("AnnData read backwards compatibility", {
   varm_ans <- t(ans[,1:2])
   rownames(varm_ans) <- NULL 
 
-  test_files <- c("mini_mat.anndata-v0.6.22.h5ad", "mini_mat.anndata-v0.7.h5ad", "mini_mat.anndata-v0.10.9.h5ad")
+  test_files <- c("mini_mat.anndata-v0.6.22.h5ad", "mini_mat.anndata-v0.7.h5ad", "mini_mat.anndata-v0.10.9.h5ad", "mini_mat_uint_16.anndata-v0.10.9.h5ad")
   for (f in test_files) {
     file.copy(file.path("../data", f), file.path(dir, f))
     open_matrix_anndata_hdf5(file.path(dir, f)) %>%

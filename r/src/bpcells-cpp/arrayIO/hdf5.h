@@ -185,6 +185,7 @@ class H5ReaderBuilder final : public ReaderBuilder {
     );
     IntReader openIntReader(std::string name);
     LongReader openLongReader(std::string name);
+    UShortReader openUShortReader(std::string name);
     UIntReader openUIntReader(std::string name) override;
     ULongReader openULongReader(std::string name) override;
     FloatReader openFloatReader(std::string name) override;
@@ -195,6 +196,9 @@ class H5ReaderBuilder final : public ReaderBuilder {
         }
         if constexpr (std::is_same_v<T, int64_t>) {
             return openLongReader(name);
+        }
+        if constexpr (std::is_same_v<T, uint16_t>) {
+            return openUShortReader(name);
         }
         if constexpr (std::is_same_v<T, uint32_t>) {
             return openUIntReader(name);

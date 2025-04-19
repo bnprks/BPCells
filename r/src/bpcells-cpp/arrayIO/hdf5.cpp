@@ -194,7 +194,9 @@ LongReader H5ReaderBuilder::openLongReader(std::string name) {
         std::make_unique<H5NumReader<int64_t>>(group, name), buffer_size, read_size
     );
 }
-
+UShortReader H5ReaderBuilder::openUShortReader(std::string name) {
+    return UShortReader(std::make_unique<H5NumReader<uint16_t>>(group, name), buffer_size, read_size);
+}
 UIntReader H5ReaderBuilder::openUIntReader(std::string name) {
     return UIntReader(std::make_unique<H5NumReader<uint32_t>>(group, name), buffer_size, read_size);
 }

@@ -66,6 +66,19 @@ template <typename From, typename To> SEXP convert_matrix_cpp(SEXP matrix) {
         take_unique_xptr<MatrixLoader<From>>(matrix)
     );
 }
+
+// [[Rcpp::export]]
+SEXP convert_matrix_uint16_t_double_cpp(SEXP matrix) {
+    return convert_matrix_cpp<uint16_t, double>(matrix);
+}
+// [[Rcpp::export]]
+SEXP convert_matrix_uint16_t_float_cpp(SEXP matrix) {
+    return convert_matrix_cpp<uint16_t, float>(matrix);
+}
+// [[Rcpp::export]]
+SEXP convert_matrix_uint16_t_uint32_t_cpp(SEXP matrix) {
+    return convert_matrix_cpp<uint16_t, uint32_t>(matrix);
+}
 // [[Rcpp::export]]
 SEXP convert_matrix_uint32_t_double_cpp(SEXP matrix) {
     return convert_matrix_cpp<uint32_t, double>(matrix);

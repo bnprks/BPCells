@@ -97,7 +97,13 @@ FileReaderBuilder::FileReaderBuilder(std::string _dir, uint64_t buffer_size, uin
         throw std::invalid_argument(std::string("Missing directory: ") + _dir);
     }
 }
-
+UShortReader FileReaderBuilder::openUShortReader(std::string name) {
+    return UShortReader(
+        std::make_unique<FileNumReader<uint16_t>>((dir / name).string().c_str()),
+        buffer_size,
+        read_size
+    );
+}
 UIntReader FileReaderBuilder::openUIntReader(std::string name) {
     return UIntReader(
         std::make_unique<FileNumReader<uint32_t>>((dir / name).string().c_str()),
