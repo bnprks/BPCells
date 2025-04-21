@@ -305,12 +305,6 @@ print.DimReduction <- function(x, ...) {
   cat(sprintf("cell_embeddings: %d cells x %d embedding dimensions\n", dim_embeddings[1], dim_embeddings[2]))
 
   # Print param info
-  # params_str <- paste(names(x$fitted_params), collapse = ", ")
-  # wrapped_params <- strwrap(params_str, width = getOption("width") - 6)
-  # cat("Fitted_params:\n")
-  # for (ln in wrapped_params) {
-  #   cat("  ", ln, "\n", sep = "")
-  # }
   cat("fitted_params: ", stringr::str_wrap(paste(names(x$fitted_params), collapse = ", "), exdent = 2, width = 60), "\n")
 }
 
