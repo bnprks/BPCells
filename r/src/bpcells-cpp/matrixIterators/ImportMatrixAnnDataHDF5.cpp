@@ -35,7 +35,7 @@ template <class T> class H5AnnDataDenseValReader : public BulkNumReader<T> {
   public:
     H5AnnDataDenseValReader(HighFive::DataSet &&d)
         : d_(std::move(d))
-        , type_(d_.getDataType())
+        , type_(HighFive::create_datatype<T>())
         , rows_(d_.getDimensions()[0])
         , cols_(d_.getDimensions()[1]) {}
 
@@ -555,6 +555,8 @@ std::string getAnnDataMatrixType(std::string file, std::string group) {
     }
 
     if (t == HighFive::AtomicType<int>()) {
+        return "uint32_t";
+    } else if (t == HighFive::AtomicType<uint16_t>()) {
         return "uint32_t";
     } else if (t == HighFive::AtomicType<uint32_t>()) {
         return "uint32_t";
