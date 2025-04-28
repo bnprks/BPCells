@@ -33,14 +33,18 @@ We recommend installing BPCells directly from github:
 remotes::install_github("bnprks/BPCells/r")
 ```
 Before installing, you must have the HDF5 library installed and accessible on your system.
-HDF5 can be installed from your choice of package manager. 
+HDF5 can be installed from your choice of package manager. See operating system specific instructions below.
 
 
 For Mac and Windows users having trouble installing from github, check our [R-universe](https://bnprks.r-universe.dev/BPCells)
 page for instructions to install pre-built binary packages. These binary packages automatically track the latest github main branch.
 
+BPCells is available via conda thanks to [@mfansler](https://github.com/mfansler) from the Conda Forge R team (see [issue #241](https://github.com/bnprks/BPCells/issues/241) for details).
+Any issues with the bioconda package should be reported at [bioconda-recipes](https://github.com/bioconda/bioconda-recipes/). Version updates are managed by the bioconda team.
+
 <details>
 <summary>Click here for operating system specific installation information for github-based installs</summary>
+<div>
 
 ### Linux
 Obtaining the HDF5 dependency is usually pretty straightforward on Linux
@@ -76,6 +80,11 @@ gcc >=9.1, or clang >= 9.0.
 This corresponds to versions from late-2018 and newer. 
 Older versions may work in some cases so long as they
 have basic C++17 support, but they are not officially supported.
+
+</div>
+</details>
+<details>
+<summary>Click here for troubleshooting information for github-based installs</summary>
 
 ### General Installation troubleshooting
 BPCells tries to print informative error messages during compilation to help diagnose the problem. For a more
