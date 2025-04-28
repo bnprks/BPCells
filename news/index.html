@@ -68,6 +68,7 @@
 <li>Fix error when using a single group in <code><a href="../reference/write_insertion_bedgraph.html">write_insertion_bedgraph()</a></code> (pull request <a href="https://github.com/bnprks/BPCells/issues/214" class="external-link">#214</a>)</li>
 <li>Fix GRanges conversion functions sometimes not being defined if BPCells is built as a binary package prior to GenomicRanges being installed. (pull request <a href="https://github.com/bnprks/BPCells/issues/231" class="external-link">#231</a>; thanks to <a href="https://github.com/mfansler" class="external-link">@mfansler</a> for reporting issue <a href="https://github.com/bnprks/BPCells/issues/229" class="external-link">#229</a>)</li>
 <li>Fix error in <code><a href="../reference/matrix_io.html">write_matrix_hdf5()</a></code> when overwriting to a <code>.h5</code> file that does not exist. (pull request <a href="https://github.com/bnprks/BPCells/issues/234" class="external-link">#234</a>)</li>
+<li>Fix <code>configure</code> script to use a pre-installed <code>libhwy</code> if available during installation time. (Thanks to <a href="https://github.com/mfansler" class="external-link">@mfansler</a> for submitting PR <a href="https://github.com/bnprks/BPCells/issues/228" class="external-link">#228</a>)</li>
 </ul></div>
 </div>
     <div class="section level2">
@@ -280,7 +281,7 @@
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.1.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.2.</p>
 </div>
 
     </footer></div>

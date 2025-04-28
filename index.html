@@ -95,11 +95,13 @@
 <p>We recommend installing BPCells directly from github:</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">remotes</span><span class="fu">::</span><span class="fu"><a href="https://remotes.r-lib.org/reference/install_github.html" class="external-link">install_github</a></span><span class="op">(</span><span class="st">"bnprks/BPCells/r"</span><span class="op">)</span></span></code></pre></div>
-<p>Before installing, you must have the HDF5 library installed and accessible on your system. HDF5 can be installed from your choice of package manager.</p>
+<p>Before installing, you must have the HDF5 library installed and accessible on your system. HDF5 can be installed from your choice of package manager. See operating system specific instructions below.</p>
 <p>For Mac and Windows users having trouble installing from github, check our <a href="https://bnprks.r-universe.dev/BPCells" class="external-link">R-universe</a> page for instructions to install pre-built binary packages. These binary packages automatically track the latest github main branch.</p>
+<p>BPCells is available via conda thanks to <a href="https://github.com/mfansler" class="external-link">@mfansler</a> from the Conda Forge R team (see <a href="https://github.com/bnprks/BPCells/issues/241" class="external-link">issue #241</a> for details). Any issues with the bioconda package should be reported at <a href="https://github.com/bioconda/bioconda-recipes/" class="external-link">bioconda-recipes</a>. Version updates are managed by the bioconda team.</p>
 <details><summary>
 Click here for operating system specific installation information for github-based installs
-</summary><div class="section level3">
+</summary><div>
+<div class="section level3">
 <h3 id="linux">Linux<a class="anchor" aria-label="anchor" href="#linux"></a>
 </h3>
 <p>Obtaining the HDF5 dependency is usually pretty straightforward on Linux</p>
@@ -143,7 +145,10 @@ Click here for operating system specific installation information for github-bas
 </h3>
 <p>In most cases, you will already have an appropriate compiler. BPCells recommends gcc &gt;=9.1, or clang &gt;= 9.0. This corresponds to versions from late-2018 and newer. Older versions may work in some cases so long as they have basic C++17 support, but they are not officially supported.</p>
 </div>
-<div class="section level3">
+</div>
+</details><details><summary>
+Click here for troubleshooting information for github-based installs
+</summary><div class="section level3">
 <h3 id="general-installation-troubleshooting">General Installation troubleshooting<a class="anchor" aria-label="anchor" href="#general-installation-troubleshooting"></a>
 </h3>
 <p>BPCells tries to print informative error messages during compilation to help diagnose the problem. For a more verbose set of information, run <code>Sys.setenv(BPCELLS_DEBUG_INSTALL="true")</code> prior to <code>remotes::install_github("bnprks/BPCells/r")</code>. If you still can’t solve the issue with that additional information, feel free to file a Github issue, being sure to use a <a href="https://docs.github.com/en/get-started/writing-on-github/working-with-advanced-formatting/organizing-information-with-collapsed-sections" class="external-link">collapsible section</a> for the verbose installation log.</p>
@@ -192,10 +197,10 @@ Click here for operating system specific installation information for github-bas
 <div class="developers">
 <h2 data-toc-skip>Developers</h2>
 <ul class="list-unstyled">
-<li>Benjamin Parks <br><small class="roles"> Author, maintainer, copyright holder </small> <a href="https://orcid.org/0000-0002-0261-7472" target="orcid.widget" aria-label="ORCID" class="external-link"><span class="fab fa-orcid orcid" aria-hidden="true"></span></a> </li>
-<li>Immanuel Abdi <br><small class="roles"> Author </small>  </li>
-<li>Stanford University <br><small class="roles"> Copyright holder, funder </small>  </li>
-<li>Genentech, Inc. <br><small class="roles"> Copyright holder, funder </small>  </li>
+<li>Benjamin Parks <br><small class="roles"> Author, maintainer, copyright holder </small> <a href="https://orcid.org/0000-0002-0261-7472" target="orcid.widget" aria-label="ORCID" class="external-link"><span class="fab fa-orcid orcid" aria-hidden="true"></span></a>  </li>
+<li>Immanuel Abdi <br><small class="roles"> Author </small>   </li>
+<li>Stanford University <br><small class="roles"> Copyright holder, funder </small>   </li>
+<li>Genentech, Inc. <br><small class="roles"> Copyright holder, funder </small>   </li>
 </ul>
 </div>
 
@@ -210,7 +215,7 @@ Click here for operating system specific installation information for github-bas
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.1.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.2.</p>
 </div>
 
     </footer>
