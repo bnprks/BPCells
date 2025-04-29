@@ -40,16 +40,24 @@ HWY_DLLEXPORT void TypeName(const TypeInfo& info, size_t N, char* string100) {
 HWY_DLLEXPORT void ToString(const TypeInfo& info, const void* ptr,
                             char* string100) {
   if (info.sizeof_t == 1) {
-    uint8_t byte;
-    CopyBytes<1>(ptr, &byte);  // endian-safe: we ensured sizeof(T)=1.
-    snprintf(string100, 100, "0x%02X", byte);  // NOLINT
+    if (info.is_signed) {
+      int8_t byte;
+      CopyBytes<1>(ptr, &byte);  // endian-safe: we ensured sizeof(T)=1.
+      snprintf(string100, 100, "%d", byte);  // NOLINT
+    } else {
+      uint8_t byte;
+      CopyBytes<1>(ptr, &byte);  // endian-safe: we ensured sizeof(T)=1.
+      snprintf(string100, 100, "0x%02X", byte);  // NOLINT
+    }
   } else if (info.sizeof_t == 2) {
     if (info.is_bf16) {
       const double value = static_cast<double>(F32FromBF16Mem(ptr));
-      snprintf(string100, 100, "%.3f", value);  // NOLINT
+      const char* fmt = hwy::ScalarAbs(value) < 1E-3 ? "%.3E" : "%.3f";
+      snprintf(string100, 100, fmt, value);  // NOLINT
     } else if (info.is_float) {
       const double value = static_cast<double>(F32FromF16Mem(ptr));
-      snprintf(string100, 100, "%.4f", value);  // NOLINT
+      const char* fmt = hwy::ScalarAbs(value) < 1E-4 ? "%.4E" : "%.4f";
+      snprintf(string100, 100, fmt, value);  // NOLINT
     } else {
       uint16_t bits;
       CopyBytes<2>(ptr, &bits);
@@ -59,7 +67,8 @@ HWY_DLLEXPORT void ToString(const TypeInfo& info, const void* ptr,
     if (info.is_float) {
       float value;
       CopyBytes<4>(ptr, &value);
-      snprintf(string100, 100, "%.9f", static_cast<double>(value));  // NOLINT
+      const char* fmt = hwy::ScalarAbs(value) < 1E-6 ? "%.9E" : "%.9f";
+      snprintf(string100, 100, fmt, static_cast<double>(value));  // NOLINT
     } else if (info.is_signed) {
       int32_t value;
       CopyBytes<4>(ptr, &value);
@@ -69,12 +78,12 @@ HWY_DLLEXPORT void ToString(const TypeInfo& info, const void* ptr,
       CopyBytes<4>(ptr, &value);
       snprintf(string100, 100, "%u", value);  // NOLINT
     }
-  } else {
-    HWY_ASSERT(info.sizeof_t == 8);
+  } else if (info.sizeof_t == 8) {
     if (info.is_float) {
       double value;
       CopyBytes<8>(ptr, &value);
-      snprintf(string100, 100, "%.18f", value);  // NOLINT
+      const char* fmt = hwy::ScalarAbs(value) < 1E-9 ? "%.18E" : "%.18f";
+      snprintf(string100, 100, fmt, value);  // NOLINT
     } else {
       const uint8_t* ptr8 = reinterpret_cast<const uint8_t*>(ptr);
       uint32_t lo, hi;
@@ -82,6 +91,17 @@ HWY_DLLEXPORT void ToString(const TypeInfo& info, const void* ptr,
       CopyBytes<4>(ptr8 + (HWY_IS_LITTLE_ENDIAN ? 4 : 0), &hi);
       snprintf(string100, 100, "0x%08x%08x", hi, lo);  // NOLINT
     }
+  } else if (info.sizeof_t == 16) {
+    HWY_ASSERT(!info.is_float && !info.is_signed && !info.is_bf16);
+    const uint8_t* ptr8 = reinterpret_cast<const uint8_t*>(ptr);
+    uint32_t words[4];
+    CopyBytes<4>(ptr8 + (HWY_IS_LITTLE_ENDIAN ? 0 : 12), &words[0]);
+    CopyBytes<4>(ptr8 + (HWY_IS_LITTLE_ENDIAN ? 4 : 8), &words[1]);
+    CopyBytes<4>(ptr8 + (HWY_IS_LITTLE_ENDIAN ? 8 : 4), &words[2]);
+    CopyBytes<4>(ptr8 + (HWY_IS_LITTLE_ENDIAN ? 12 : 0), &words[3]);
+    // NOLINTNEXTLINE
+    snprintf(string100, 100, "0x%08x%08x_%08x%08x", words[3], words[2],
+             words[1], words[0]);
   }
 }
 
