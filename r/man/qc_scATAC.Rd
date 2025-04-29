@@ -52,3 +52,20 @@ ArchR's \code{PromoterRatio} and \code{BlacklistRatio} are not included in the o
 from \code{ReadsInPromoter / nFrags} and  \code{ReadsInBlacklist / nFrags}. Similarly, ArchR's \code{NucleosomeRatio} can be calculated
 as \code{(monoNucleosomal + multiNucleosomal) / subNucleosomal}.
 }
+\examples{
+## Prep data
+frags <- get_demo_frags()
+reference_dir <- file.path(tempdir(), "references")
+genes <- read_gencode_transcripts(
+  reference_dir, 
+  release="42", 
+  transcript_choice="MANE_Select",
+  annotation_set = "basic",
+  features="transcript"
+)
+blacklist <- read_encode_blacklist(reference_dir, genome = "hg38")
+
+
+## Run qc
+head(qc_scATAC(frags, genes, blacklist))
+}

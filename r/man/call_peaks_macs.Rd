@@ -88,3 +88,20 @@ To run MACS manually, you will first run \code{call_peaks_macs()} with \verb{ste
 shell scripts generated at \verb{<path>/input/<group>.sh}. Finally, run \code{call_peaks_macs()} again with the same original arguments, but
 setting \code{step="read-outputs"}.
 }
+\examples{
+macs_files <- file.path(tempdir(), "peaks")
+frags <- get_demo_frags()
+
+head(call_peaks_macs(frags, macs_files))
+
+## Can also just run the input prep, then run macs manually
+## by setting step to 'prep_inputs'
+macs_script <- call_peaks_macs(frags, macs_files, step = "prep-inputs")
+system2("bash", macs_script[1], stdout = FALSE, stderr = FALSE)
+
+## Then read the narrow peaks files
+list.files(file.path(macs_files, "output", "all"))
+
+## call_peaks_macs() can also solely perform the output reading step
+head(call_peaks_macs(frags, macs_files, step = "read-outputs"))
+}
