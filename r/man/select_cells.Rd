@@ -18,3 +18,20 @@ Subset, translate, or reorder cell IDs
 Numeric cell IDs will be re-assigned in the order of \code{cell_selection}.
 The output cell ID \code{n} will be taken from the input cell with ID/name \code{cell_selection[n]}.
 }
+\examples{
+## Prep data
+frags <- tibble::tibble(
+  chr = "chr1",
+  start = seq(10, 260, 50),
+  end = start + 30,
+  cell_id = paste0("cell", c(rep(1, 2), rep(2,2), rep(3,2)))
+) \%>\% convert_to_fragments()
+frags
+
+
+## Select cells by name
+select_cells(frags, "cell1")
+
+## Select cells by index
+select_cells(frags, c(1,3))
+}
