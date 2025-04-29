@@ -107,6 +107,36 @@ additional transcript variants annotated.
 
 Read transcript models from GENCODE, for use with trackplot_gene()
 }
+\examples{
+#######################################################################
+## read_gtf() example
+#######################################################################
+species <- "Saccharomyces_cerevisiae"
+version <- "GCF_000146045.2_R64"
+head(read_gtf(
+ path = sprintf("./reference/\%s_genomic.gtf.gz", version),
+ backup_url = sprintf(
+   "https://ftp.ncbi.nlm.nih.gov/genomes/refseq/fungi/\%s/reference/\%s/\%s_genomic.gtf.gz",
+   species, version, version
+ )
+))
+
+
+#######################################################################
+## read_gencode_genes() example
+#######################################################################
+read_gencode_genes("./references", release = "42")
+
+
+#######################################################################
+## read_gencode_transcripts() example
+#######################################################################
+## If read_gencode_genes() was already ran on the same release, 
+## will reuse previously downloaded annotations
+read_gencode_transcripts("./references", release = "42")
+
+
+}
 \seealso{
 \code{\link[=read_bed]{read_bed()}}, \code{\link[=read_encode_blacklist]{read_encode_blacklist()}}
 }
