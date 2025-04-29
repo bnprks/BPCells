@@ -32,3 +32,31 @@ Take the minimum value of a matrix with a per-row, per-col, or global
 constant. This constant must be >0 to preserve sparsity of the matrix.
 This has the effect of capping the maximum value in the matrix.
 }
+\examples{
+set.seed(12345)
+mat <- matrix(rpois(40, lambda = 5), nrow = 4)
+rownames(mat) <- paste0("gene", 1:4)
+
+mat <- mat \%>\% as("dgCMatrix")
+mat
+mat <- mat \%>\% as("IterableMatrix")
+
+#######################################################################
+## min_scalar() example
+#######################################################################
+min_scalar(mat, 4) \%>\% as("dgCMatrix")
+
+
+#######################################################################
+## min_by_row() example
+#######################################################################
+min_by_row(mat, 1:4) \%>\% as("dgCMatrix")
+
+
+#######################################################################
+## min_by_col() example
+#######################################################################
+min_by_col(mat, 1:10) \%>\% as("dgCMatrix")
+
+
+}
