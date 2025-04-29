@@ -96,3 +96,45 @@ are repeatedly multiplied by the smoothing matrix and re-scaled so the average
 value stays the same.
 }
 }
+\examples{
+set.seed(123)
+mat <- get_demo_mat()
+## Normalize matrix
+mat_norm <- log1p(multiply_cols(mat, 1/colSums(mat)) * 10000) \%>\% write_matrix_memory(compress = FALSE)
+## Get variable genes
+stats <- matrix_stats(mat, row_stats = "variance")
+variable_genes <- order(stats$row_stats["variance",], decreasing=TRUE) \%>\% 
+  head(1000) \%>\% 
+  sort()
+# Z score normalize genes
+mat_norm <- mat[variable_genes, ]
+gene_means <- stats$row_stats['mean', variable_genes]
+gene_vars <- stats$row_stats['variance', variable_genes]
+mat_norm <- (mat_norm - gene_means) / gene_vars
+## Save matrix to memory
+mat_norm <- mat_norm \%>\% write_matrix_memory(compress = FALSE)
+## Run SVD
+svd <- BPCells::svds(mat_norm, k = 10)
+pca <- multiply_cols(svd$v, svd$d)
+## Get UMAP
+umap <- uwot::umap(pca)
+## Get clusters
+clusts <- knn_hnsw(pca, ef = 500) \%>\%
+  knn_to_snn_graph() \%>\%
+  cluster_graph_louvain()
+
+
+## Plot embedding
+print(length(clusts))
+
+plot_embedding(clusts, umap)
+
+
+### Can also plot by features
+#plot_embedding(
+#  source = mat,
+#  umap,
+#  features = c("MS4A1", "CD3E"),
+#)
+
+}
