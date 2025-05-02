@@ -2510,6 +2510,19 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// dense_transpose_multiply_cpp
+Eigen::MatrixXd dense_transpose_multiply_cpp(SEXP matrix, size_t buffer_bytes, size_t threads);
+RcppExport SEXP _BPCells_dense_transpose_multiply_cpp(SEXP matrixSEXP, SEXP buffer_bytesSEXP, SEXP threadsSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type matrix(matrixSEXP);
+    Rcpp::traits::input_parameter< size_t >::type buffer_bytes(buffer_bytesSEXP);
+    Rcpp::traits::input_parameter< size_t >::type threads(threadsSEXP);
+    rcpp_result_gen = Rcpp::wrap(dense_transpose_multiply_cpp(matrix, buffer_bytes, threads));
+    return rcpp_result_gen;
+END_RCPP
+}
 // pseudobulk_matrix_cpp
 List pseudobulk_matrix_cpp(SEXP mat, std::vector<uint32_t> cell_groups, std::vector<std::string> method, bool transpose);
 RcppExport SEXP _BPCells_pseudobulk_matrix_cpp(SEXP matSEXP, SEXP cell_groupsSEXP, SEXP methodSEXP, SEXP transposeSEXP) {
@@ -2742,6 +2755,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_BPCells_apply_matrix_double_cpp", (DL_FUNC) &_BPCells_apply_matrix_double_cpp, 3},
     {"_BPCells_matrix_max_per_row_cpp", (DL_FUNC) &_BPCells_matrix_max_per_row_cpp, 1},
     {"_BPCells_matrix_max_per_col_cpp", (DL_FUNC) &_BPCells_matrix_max_per_col_cpp, 1},
+    {"_BPCells_dense_transpose_multiply_cpp", (DL_FUNC) &_BPCells_dense_transpose_multiply_cpp, 3},
     {"_BPCells_pseudobulk_matrix_cpp", (DL_FUNC) &_BPCells_pseudobulk_matrix_cpp, 4},
     {"_BPCells_matrix_quantile_per_col_cpp", (DL_FUNC) &_BPCells_matrix_quantile_per_col_cpp, 4},
     {"_BPCells_matrix_identical_uint32_t_cpp", (DL_FUNC) &_BPCells_matrix_identical_uint32_t_cpp, 2},
