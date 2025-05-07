@@ -13,26 +13,39 @@
 
 #' Feature selection functions
 #' 
-#' Apply a feature selection method to a non-normalized `(features x cells)` matrix.  We recommend using counts matrices as input and to
-#' apply any normalizations prior to feature selection via the normalize argument (if available).  
-#' Instead of directly subsetting the input matrix,
-#' an output dataframe is returned, indicating which features are highly variable, and the scoring of each feature.
+#' @description
+#' TODO: Show/describe partial function application options
+#' Run feature selection on a `(features x cells)` matrix.  We recommend using counts matrices as input and using the
+#' `normalize_method` if available to apply any desired normalizations prior to feature selection.
+#' 
+#' These methods return a data frame indicating which features are highly variable along with per-feature statistics
+#' depending on the feature selection method.
+#' 
 #' @rdname feature_selection
-#' @param mat (IterableMatrix) Counts matrix with dimensions `(features x cells)`.
+#' @param mat (Matrix-like) Counts matrix with dimensions `(features x cells)`. Can be type `IterableMatrix`, `base::matrix`, or `Matrix::dgCMatrix`.
 #' @param num_feats (float) Number of features to mark as highly_variable. If 0 < `num_feats` < 1, then interpret as a fraction of features.
-#' @param normalize_method (function) Used to normalize the matrix prior to feature selection by calling `normalize_method(mat)` if it is not `NULL`. 
+#' @param normalize_method (function) If not `NULL`, the input matrix will be normalized by calling `normalize_method(mat)` prior to feature selection. 
 #' For example, pass `normalize_log()` or `normalize_tfidf()`. 
-#' @param threads (integer) Number of threads to use. Also overrides the threads argument in `normalize_method`
+#' @param threads (integer) Number of threads to use. Also overrides the threads argument in `normalize_method` if present.
 #' @returns
-#' Return a dataframe with the following columns:
-#' - `feature`: Feature name.
-#' - `score`: Scoring of the feature, depending on the method used.  
-#' - `highly_variable`: Logical vector of whether the feature is highly variable.
+#' Return a data frame with at least the following columns:
+#' - `feature`: Feature name (present if `rownames(mat) != NULL`)
+#' - `highly_variable`: Logical vector of whether the feature is highly variable
+#' The row ordering will match the row order of `mat`.
 #'
-#' Each different feature selection method will have a different scoring method.
-#' Consider a matrix \eqn{X}, where the row index \eqn{i} refers to each feature
-#' and the column index \eqn{j} refers to each cell. For each feature \eqn{x_{i} \in X}, we define the following feature-selection scores:
-#' - `select_features_variance`: \eqn{\mathrm{Score}(x_i) = \frac{1}{n - 1} \sum_{j=1}^{n} \bigl(x_{ij} - \bar{x}_i\bigr)^2}
+#' Each different feature selection method will include additional statistics related to how it identifies variable features, described
+#' below.
+#' 
+#' **Feature selection statistics**
+#' 
+#' Let \eqn{x_{ij}} be the value of the `mat` in row (feature) \eqn{i} and column (cell) \eqn{j}, and let \eqn{n} be the total number
+#' of cells. We use \eqn{x_i} to refer to the vector of per-cell values for feature \eqn{i}, and use \eqn{\bar{x}_i} to notate the 
+#' average value for feature \eqn{i}. Each method calculates the following feature selection statistics included as columns in the output
+#' data frame:
+#'
+#' `select_features_variance`: Select features with highest variance 
+#'   - `variance`\eqn{_i = \mathrm{Var}(x_i) = \frac{1}{n - 1} \sum_{j=1}^{n} \bigl(x_{ij} - \bar{x}_i\bigr)^2} 
+#' 
 #' @examples
 #' ## Prep data
 #' set.seed(12345)
@@ -76,24 +89,41 @@ select_features_variance <- function(
   if (rlang::is_missing(mat)) return(create_partial())
   assert_is_mat(mat)
   
+  if (!is.null(normalize_method)) mat <- partial_apply(normalize_method, threads = threads, .missing_args_error = FALSE)(mat)
+
+  variable_feature_table(
+    mat,
+    num_feats,
+    tibble::tibble(variance=matrix_stats(mat, row_stats = "variance", threads = threads)$row_stats["variance",])
+  )
+}
+
+#' Helper function to construct a variable feature table
+#' @param mat The input matrix
+#' @param num_feats Number of features to mark as highly_variable. If 0 < `num_feats` < 1, then interpret as a fraction of features.
+#' @param statistics tibble of statistics to output. First column is assumed to be used to rank features (higher is better).
+#'       Row ordering should match the row ordering of the input matrix.
+#' @return The statistics tibble with feature and highly_variable columns added at the start.
+#' @keywords internal
+variable_feature_table <- function(mat, num_feats, statistics) {
   if (num_feats < 1 && num_feats > 0) num_feats <- floor(nrow(mat) * num_feats)
   if (min(max(num_feats, 0), nrow(mat)) != num_feats) {
     rlang::warn(add_timestamp(sprintf("Number of features asked for (%s) is greater than the number of features in the matrix (%s).", num_feats, nrow(mat))))
   }
   num_feats <- min(max(num_feats, 0), nrow(mat))
-  if (!is.null(normalize_method)) mat <- partial_apply(normalize_method, threads = threads, .missing_args_error = FALSE)(mat)
-  features_df <- tibble::tibble(
+
+  tibble::tibble(
     feature = rownames(mat),
-    score = matrix_stats(mat, row_stats = "variance", threads = threads)$row_stats["variance",]
-  ) %>% 
-    dplyr::mutate(highly_variable = dplyr::row_number(dplyr::desc(score)) <= num_feats)
-  return(features_df)
+    highly_variable = rank(statistics[[1]], ties.method="first") <= num_feats
+  ) %>%
+    dplyr::bind_cols(statistics)
 }
 
 
 #' @rdname feature_selection
 #' @returns
-#' - `select_features_dispersion`: \eqn{\mathrm{Score}(x_i) = \frac{\frac{1}{n - 1} \sum_{j=1}^{n} \bigl(x_{ij} - \bar{x}_i\bigr)^2}{\bar{x}_i}}
+#' `select_features_dispersion`: Select features with highest dispersion
+#'   - `dispersion`\eqn{_i = \frac{\mathrm{Var}(x_i)}{\bar{x}_i} = \frac{\frac{1}{n - 1} \sum_{j=1}^{n} \bigl(x_{ij} - \bar{x}_i\bigr)^2}{\bar{x}_i}}
 #' @examples
 #' #######################################################################
 #' ## select_features_dispersion() example
@@ -115,26 +145,22 @@ select_features_dispersion <- function(
   assert_len(num_feats, 1)
   assert_is_wholenumber(threads)
   if (rlang::is_missing(mat)) return(create_partial())
-  if (num_feats < 1 && num_feats > 0) num_feats <- floor(nrow(mat) * num_feats)
-  if (min(max(num_feats, 0), nrow(mat)) != num_feats) {
-    rlang::warn(add_timestamp(sprintf("Number of features asked for (%s) is greater than the number of features in the matrix (%s).", num_feats, nrow(mat))))
-  }
-  num_feats <- min(max(num_feats, 0), nrow(mat))
-  if (!is(mat, "IterableMatrix") && canCoerce(mat, "IterableMatrix")) mat <- as(mat, "IterableMatrix")
-  assert_is(mat, "IterableMatrix")
+  assert_is_mat(mat)
+
   if (!is.null(normalize_method)) mat <- partial_apply(normalize_method, threads = threads, .missing_args_error = FALSE)(mat)
+
   mat_stats <- matrix_stats(mat, row_stats = "variance", threads = threads)
-  features_df <- tibble::tibble(
-    feature = rownames(mat),
-    score = mat_stats$row_stats["variance", ] / mat_stats$row_stats["mean", ]
-  ) %>% 
-    dplyr::mutate(highly_variable = dplyr::row_number(dplyr::desc(score)) <= num_feats)
-  return(features_df)
+  variable_feature_table(
+    mat,
+    num_feats,
+    tibble::tibble(dispersion=mat_stats$row_stats["variance", ] / mat_stats$row_stats["mean", ])
+  )
 }
 
 #' @rdname feature_selection
 #' @returns
-#' - `select_features_mean`: \eqn{\mathrm{Score}(x_i) = \frac{\sum_{j=1}^{n}\bigl(x_{ij}\bigr)}{n}}
+#' `select_features_mean`: Select features with highest mean
+#'  - `mean`\eqn{_i = \frac{1}{n}\sum_{j=1}^{n}\bigl(x_{ij}\bigr)}
 #' @examples
 #' #######################################################################
 #' ## select_features_mean() example
@@ -152,35 +178,26 @@ select_features_mean <- function(mat, num_feats = 0.05, normalize_method = NULL,
   assert_is_wholenumber(threads)
   if (rlang::is_missing(mat)) return(create_partial())
   assert_is_mat(mat)
-  if (num_feats < 1 && num_feats > 0) num_feats <- floor(nrow(mat) * num_feats)
-  if (min(max(num_feats, 0), nrow(mat)) != num_feats) {
-    rlang::warn(add_timestamp(sprintf("Number of features asked for (%s) is greater than the number of features in the matrix (%s).", num_feats, nrow(mat))))
-  }
-  num_feats <- min(max(num_feats, 0), nrow(mat))
+
   if (!is.null(normalize_method)) mat <- partial_apply(normalize_method, threads = threads, .missing_args_error = FALSE)(mat)
-  # get the sum of each feature, binarized
-  features_df <- tibble::tibble(
-    feature = rownames(mat),
-    score = matrix_stats(mat, row_stats = "mean", threads = threads)$row_stats["mean", ]
-  ) %>%
-    dplyr::mutate(highly_variable = dplyr::row_number(dplyr::desc(score)) <= num_feats)
-  return(features_df)
+  
+  variable_feature_table(
+    mat,
+    num_feats,
+    tibble::tibble(mean = matrix_stats(mat, row_stats = "mean", threads = threads)$row_stats["mean", ])
+  )
 }
 
 #' @rdname feature_selection
 #' @param n_bins (integer) Number of bins to split features into in order to control for the relationship between mean expression and dispersion (see details).
 #' @returns
-#'  - `select_features_binned_dispersion`: Process described in `details`.
-#' @details 
-#' `select_features_binned_dispersion` implements the approach from Satija et al. 2015:
-#'  1. Bin features into equal-width bins by `log1p(mean)`
-#'  2. Calculate dispersion of each feature as `log(variance / mean)`
-#'  3. Z-score normalize dispersion within each bin, and select highest normalized dispersion across all bins
+#' `select_features_binned_dispersion`: Select features by highest log dispersion, normalized per-bin of log feature means (see Satija et al. 2015)
+#'   - `normalized_dispersion`: Z-score normalization of `log_dispersion` within each `bin` (or 1 for bins with only 1 feature).
+#'   - `log_dispersion`\eqn{_i = \log(\frac{\mathrm{Var(x_i)}}{\bar{x}_i})}
+#'   - `bin`: Feature bin number, calculated as `n_bins` equal-width bins over \eqn{\log(\bar{x}_i + 1)}
 #' 
-#' If the number of features within a bin is equal to 1, then the mean dispersion for that bin is set to 1.
-#' 
-#' This should be equivalent to `Seurat::FindVariableFeatures()` with `selection.method="mean.var.plot"`
-#'  and `scanpy.pp.highly_variable_genes()` with `flavor="seurat"`.
+#' This method is equivalent to `Seurat::FindVariableFeatures()` with `selection.method="mean.var.plot"`
+#' and `scanpy.pp.highly_variable_genes()` with `flavor="seurat"`.
 #' @examples
 #' #######################################################################
 #' ## select_features_binned_dispersion() example
@@ -205,40 +222,34 @@ select_features_binned_dispersion <- function(
   assert_is_wholenumber(threads)
   if (rlang::is_missing(mat)) return(create_partial())
   assert_is_mat(mat)
-  if (num_feats < 1 && num_feats > 0) num_feats <- floor(nrow(mat) * num_feats)
-  if (min(max(num_feats, 0), nrow(mat)) != num_feats) {
-    rlang::warn(add_timestamp(sprintf("Number of features asked for (%s) is greater than the number of features in the matrix (%s).", num_feats, nrow(mat))))
-  }
-  num_feats <- min(max(num_feats, 0), nrow(mat))
+
   # Calculate row information for dispersion
   mat_stats <- matrix_stats(mat, row_stats = c("variance"), threads = threads)
   feature_means <- mat_stats$row_stats["mean", ]
   feature_vars <- mat_stats$row_stats["variance", ]
   # Calculate dispersion, and log normalize
   feature_dispersion <- feature_vars / feature_means
-  feature_dispersion[feature_dispersion == 0] <- NA
   feature_dispersion <- log(feature_dispersion)
-  feature_dispersion[feature_means == 0] <- 0
+  feature_dispersion[feature_means == 0 | feature_vars == 0] <- 0
   feature_means <- log1p(feature_means)
+
   features_df <- tibble::tibble(
-    feature = names(feature_means),
-    var = feature_vars,
-    mean = feature_means,
-    dispersion = feature_dispersion
-  )
-  # Bin by mean, and normalize dispersion with each bin
-  features_df <- features_df %>%
+      var = feature_vars,
+      mean = feature_means,
+      log_dispersion = feature_dispersion
+    ) %>%
+    # Bin by mean, and normalize dispersion with each bin
     dplyr::mutate(bin = cut(mean, n_bins, labels = FALSE)) %>% 
     dplyr::group_by(bin) %>%
     dplyr::mutate(
-      score = (dispersion - mean(dispersion)) / sd(dispersion),
-      score = if (dplyr::n() == 1) {1} else {score} # Set feats that are in bins with only one feat to have a norm dispersion of 1  
+      normalized_dispersion = (log_dispersion - mean(log_dispersion)) / sd(log_dispersion),
+      # Set feats that are in bins with only one feat to have a norm dispersion of 1  
+      normalized_dispersion = if (dplyr::n() == 1) {1} else {normalized_dispersion} 
     ) %>%
     dplyr::ungroup() %>%
-    dplyr::mutate(highly_variable = dplyr::row_number(dplyr::desc(score)) <= num_feats) %>% 
-    dplyr::select(c("feature", "score", "highly_variable", "dispersion", "bin")) %>%
-    dplyr::rename("raw_log_dispersion" = "dispersion")
-  return(features_df)
+    dplyr::select(c("normalized_dispersion", "log_dispersion", "bin"))
+  
+  variable_feature_table(mat, num_feats, features_df)
 }
 
 
