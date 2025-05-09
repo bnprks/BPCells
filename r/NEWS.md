@@ -10,7 +10,8 @@
 - Fixed memory errors when running `writeInsertionBed()` and `writeInsertionBedGraph()` (pull request #{118, 134})
 - Export `merge_peaks_iterative()`, which helps create non-overlapping peak sets.  (pull request #216)
 - Add support for `uint16_t` when reading in anndata matrices using `open_matrix_anndata_hdf5()`. (pull request #248)
-
+- Switch `write_matrix_10x_hdf5()` to use signed rather than unsigned integers for `indices`, `indptr`, and `shape` to improve
+  compatibility with 10x-produced files. (Thanks to @ycli1995 for pull request #256)
 
 ## Bug-fixes
 - Fix error message printing when MACS crashes during `call_peaks_macs()` (pull request #175)
