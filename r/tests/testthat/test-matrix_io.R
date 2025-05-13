@@ -687,3 +687,8 @@ test_that("Regression test for Rcpp out-of-bounds warning", {
   })
   expect_identical(m, m2)
 })
+
+test_that("Matrix reads work from Windows with CRLF/LF", {
+  expect_no_error(open_matrix_dir("../data/windows_lf_mat"))
+  expect_no_error(open_matrix_dir("../data/windows_crlf_mat"))
+})
