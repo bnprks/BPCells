@@ -147,17 +147,12 @@ std::vector<std::string> readLines(std_fs::path path) {
     std::vector<std::string> ret;
 
     in.open(path.c_str());
-    
     if (!in) {
         throw std::runtime_error(
             std::string("Could not open file: ") + strerror(errno) + ": " + path.string()
         );
     }
 
-    while (std::getline(in, line)) {
-        ret.push_back(line);
-    }
-    // Handle the carriage return character 
     while (std::getline(in, line)) {
         if (!line.empty() && line.back() == '\r') line.pop_back();
         ret.emplace_back(std::move(line)); 
