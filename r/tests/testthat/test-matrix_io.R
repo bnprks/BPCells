@@ -38,6 +38,18 @@ test_that("Write 10x matrix to HDF5", {
   }
 })
 
+test_that("Write 10x matrix uses correct HDF5 data types", {
+  dir <- withr::local_tempdir()
+  mat_path <- file.path(dir, "10x.h5")
+  m <- generate_sparse_matrix(10, 9, fraction_nonzero=0.2) %>%
+    as("IterableMatrix") %>%
+    convert_matrix_type("uint32_t")
+  write_matrix_10x_hdf5(m, mat_path)
+  expect_identical(hdf5_storage_type_cpp(mat_path, "matrix/indices"), "int64_t")
+  expect_identical(hdf5_storage_type_cpp(mat_path, "matrix/indptr"), "int64_t")
+  expect_identical(hdf5_storage_type_cpp(mat_path, "matrix/shape"), "int32_t")
+})
+
 test_that("Memory Matrix round-trips", {
   dir <- withr::local_tempdir()
   args <- list(
