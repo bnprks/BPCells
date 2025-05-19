@@ -687,3 +687,25 @@ test_that("Regression test for Rcpp out-of-bounds warning", {
   })
   expect_identical(m, m2)
 })
+
+test_that("Matrix reads work from Windows with CRLF/LF", {
+  # This is a regression test for issue #253, making sure that
+  # matrices with crlf line endings for string arrays open without issues
+
+  # Confirm that we actually have lf and crlf files as expected
+  expect_false(any(charToRaw("\r") == readBin("../data/mini_mat_lf/version", "raw", 1000)))
+  expect_true(any(charToRaw("\r") == readBin("../data/mini_mat_crlf/version", "raw", 1000)))
+
+  # We should be able to read crlf-containing files without complaint
+  expect_no_error(open_matrix_dir("../data/mini_mat_lf"))
+  expect_no_error(open_matrix_dir("../data/mini_mat_crlf"))
+
+  # We should output only lf moving forward
+  dir <- withr::local_tempdir()
+  path <- file.path(dir, "test_mat")
+  x <- open_matrix_dir("../data/mini_mat_lf") %>%
+    write_matrix_dir(path)
+  expect_false(any(charToRaw("\r") == readBin(file.path(path, "version"), "raw", 1000)))
+  expect_false(any(charToRaw("\r") == readBin(file.path(path, "row_names"), "raw", 1000)))
+  expect_false(any(charToRaw("\r") == readBin(file.path(path, "col_names"), "raw", 1000)))
+})

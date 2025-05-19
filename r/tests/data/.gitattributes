@@ -1,0 +1,3 @@
+# Force files in these directories to 
+mini_mat_crlf/*  eol=crlf
+mini_mat_lf/*    eol=lf

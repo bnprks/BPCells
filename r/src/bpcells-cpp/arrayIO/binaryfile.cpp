@@ -31,7 +31,7 @@ uint64_t FileStringReader::size() {
 
 FileStringWriter::FileStringWriter(std_fs::path path) : path(path) {}
 void FileStringWriter::write(StringReader &reader) {
-    std::ofstream f(path.c_str());
+    std::ofstream f(path.c_str(), std::ios_base::binary);
     uint64_t i = 0;
     while (true) {
         const char *s = reader.get(i);
@@ -82,7 +82,7 @@ std::unique_ptr<StringWriter> FileWriterBuilder::createStringWriter(std::string 
 }
 
 void FileWriterBuilder::writeVersion(std::string version) {
-    std::ofstream f((dir / "version").c_str());
+    std::ofstream f((dir / "version").c_str(), std::ios_base::binary);
     f << version << std::endl;
 }
 
@@ -154,7 +154,9 @@ std::vector<std::string> readLines(std_fs::path path) {
     }
 
     while (std::getline(in, line)) {
-        ret.push_back(line);
+        if (!line.empty() && line.back() == '\r') line.pop_back();
+        ret.emplace_back(std::move(line)); 
+
     }
     return ret;
 }
