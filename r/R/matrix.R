@@ -2369,6 +2369,22 @@ setMethod("matrix_inputs", "PeakMatrix", function(x) list())
 #'    to each peak, even if both the start and end coordinates overlap
 #' - `"overlaps"`: Like `"fragments"`, but an overlap is also counted if the fragment fully
 #'    spans the peak even if neither the start or end falls within the peak
+#' @examples
+#' ## Prep demo data
+#' frags <- get_demo_frags(subset = FALSE)
+#' chrom_sizes <- read_ucsc_chrom_sizes(file.path(tempdir(), "references"), genome="hg38")
+#' blacklist <- read_encode_blacklist(file.path(tempdir(), "references"), genome="hg38")
+#' frags_filter_blacklist <- frags %>% select_regions(blacklist, invert_selection = TRUE)
+#' peaks <- call_peaks_tile(
+#'   frags_filter_blacklist, 
+#'   chrom_sizes,
+#'   effective_genome_size = 2.8e9
+#' )
+#' top_peaks <- head(peaks, 5000)
+#' top_peaks <- top_peaks[order_ranges(top_peaks, chrNames(frags)),]
+#' 
+#' ## Get peak matrix
+#' peak_matrix(frags_filter_blacklist, top_peaks, mode="insertions")
 #' @export
 peak_matrix <- function(fragments, ranges, mode = c("insertions", "fragments", "overlaps"), zero_based_coords = !is(ranges, "GRanges"), explicit_peak_names = TRUE) {
   assert_is(fragments, "IterableFragments")
@@ -2498,6 +2514,22 @@ setMethod("matrix_inputs", "TileMatrix", function(x) list())
 #' - `"insertions"`: Start and end coordinates are separately overlapped with each tile
 #' - `"fragments"`: Like `"insertions"`, but each fragment can contribute at most 1 count
 #'    to each tile, even if both the start and end coordinates overlap
+#' @examples
+#' ## Prep demo data
+#' frags <- get_demo_frags(subset = FALSE)
+#' chrom_sizes <- read_ucsc_chrom_sizes(file.path(tempdir(), "references"), genome="hg38")
+#' blacklist <- read_encode_blacklist(file.path(tempdir(), "references"), genome="hg38")
+#' frags_filter_blacklist <- frags %>% select_regions(blacklist, invert_selection = TRUE)
+#' ranges <- tibble::tibble(
+#'   chr = "chr4",
+#'   start = 0,
+#'   end = "190214555", 
+#'   tile_width = 200
+#' )
+#' 
+#' 
+#' ## Get tile matrix
+#' tile_matrix(frags_filter_blacklist, ranges)
 #' @export
 tile_matrix <- function(fragments, ranges, mode = c("insertions", "fragments"), zero_based_coords = !is(ranges, "GRanges"), explicit_tile_names = FALSE) {
   assert_is(fragments, "IterableFragments")
