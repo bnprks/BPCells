@@ -32,12 +32,17 @@ template <class T> class H5AnnDataDenseValReader : public BulkNumReader<T> {
     const uint64_t cols_;
     uint64_t cur_row_ = 0, cur_col_ = 0;
 
+    static std::vector<size_t> getH5DimensionSafe(const HighFive::DataSet &d) {
+        H5_LOCK_SCOPE;
+        return d.getDimensions();
+    }
+
   public:
     H5AnnDataDenseValReader(HighFive::DataSet &&d)
         : d_(std::move(d))
-        , type_(HighFive::create_datatype<T>())
-        , rows_(d_.getDimensions()[0])
-        , cols_(d_.getDimensions()[1]) {}
+        , type_(createH5DataTypeSafe<T>())
+        , rows_(getH5DimensionSafe(d_)[0])
+        , cols_(getH5DimensionSafe(d_)[1]) {}
 
     // Return total number of integers in the reader
     uint64_t size() const override { return rows_ * cols_; }
@@ -53,6 +58,7 @@ template <class T> class H5AnnDataDenseValReader : public BulkNumReader<T> {
     // Note: It is the caller's responsibility to ensure there is no data overflow, i.e.
     // that a load does not try to read past size() total elements
     uint64_t load(T *out, uint64_t count) override {
+        H5_LOCK_SCOPE;
         if (cur_row_ >= rows_) return 0;
         count = std::min(count, cols_ - cur_col_);
         d_.select({cur_row_, cur_col_}, {1, count}).read_raw(out, type_);
@@ -135,6 +141,7 @@ class H5AnnDataDenseColPtrReader : public BulkNumReader<uint64_t> {
 };
 
 void assertAnnDataSparse(std::string file, std::string group) {
+    H5_LOCK_SCOPE;
     // Check for a dense matrix where we expect a sparse matrix
     HighFive::File f = openH5ForReading(file);
     auto node_type = f.getObjectType(group);
@@ -152,6 +159,7 @@ void assertAnnDataSparse(std::string file, std::string group) {
 //   root: Root group object of file
 //   axis: Name of axis to read (either "obs" or "var")
 std::unique_ptr<StringReader> readAnnDataDimname(HighFive::Group &root, std::string axis) {
+    H5_LOCK_SCOPE;
     if (root.getObjectType(axis) == HighFive::ObjectType::Dataset) {
         // Support for legacy format
         std::vector<std::string> name_data;
@@ -170,6 +178,7 @@ std::unique_ptr<StringReader> readAnnDataDimname(HighFive::Group &root, std::str
 //   root: Root group object of file
 //   axis: Name of axis to read (either "obs" or "var")
 size_t readAnnDataDimnameLength(HighFive::Group &root, std::string axis) {
+    H5_LOCK_SCOPE;
     std::vector<size_t> dims;
     if (root.getObjectType(axis) == HighFive::ObjectType::Dataset) {
         // Support for legacy format
@@ -198,6 +207,7 @@ AnnDataDimInfo readAnnDataDims(
     HighFive::File &file,
     std::string group
 ) {
+    H5_LOCK_SCOPE;
     AnnDataDimInfo ret;
 
     auto node_type = file.getObjectType(group);
@@ -266,6 +276,7 @@ std::unique_ptr<MatrixLoader<T>> openAnnDataMatrix(
     std::unique_ptr<StringReader> &&col_names,
     uint32_t read_size
 ) {
+    H5_LOCK_SCOPE;
     AnnDataDimInfo info;
     HighFive::SilenceHDF5 s;
 
@@ -348,8 +359,8 @@ template <class T> class H5AttributeNumWriter : public BulkNumWriter<T> {
     std::vector<T> data;
 
   public:
-    H5AttributeNumWriter(HighFive::Group g, std::string attribute_name)
-        : g(g)
+    H5AttributeNumWriter(HighFive::Group &g, std::string attribute_name)
+        : g(copyH5GroupSafe(g))
         , attribute_name(attribute_name) {}
 
     uint64_t write(T *in, uint64_t count) override {
@@ -357,7 +368,10 @@ template <class T> class H5AttributeNumWriter : public BulkNumWriter<T> {
         return count;
     }
 
-    void finalize() override { g.createAttribute(attribute_name, data); }
+    void finalize() override {
+        H5AttributeNumWriter;
+        g.createAttribute(attribute_name, data);
+    }
 };
 
 template <typename T>
@@ -369,6 +383,7 @@ StoredMatrixWriter<T> createAnnDataMatrix(
     uint32_t chunk_size,
     uint32_t gzip_level
 ) {
+    H5_LOCK_SCOPE;
     H5WriterBuilder wb(file, group, buffer_size, chunk_size, false, gzip_level);
     HighFive::Group &g = wb.getGroup();
 
@@ -396,6 +411,7 @@ template <typename T>
 void createAnnDataObsVarIfMissing(
     MatrixLoader<T> &mat, std::string file, bool row_major, uint32_t gzip_level
 ) {
+    H5_LOCK_SCOPE;
     HighFive::SilenceHDF5 s;
     H5WriterBuilder wb(file, "/", 8192, 1024, true, gzip_level);
     HighFive::Group &g = wb.getGroup();
@@ -543,6 +559,7 @@ template void createAnnDataObsVarIfMissing<double>(
 // End explicit template instantiations
 
 std::string getAnnDataMatrixType(std::string file, std::string group) {
+    H5_LOCK_SCOPE;
     HighFive::SilenceHDF5 s;
     HighFive::File h5file = openH5ForReading(file);
     if (group == "") group = "/";
@@ -573,6 +590,7 @@ std::string getAnnDataMatrixType(std::string file, std::string group) {
 }
 
 bool isRowOrientedAnnDataMatrix(std::string file, std::string group) {
+    H5_LOCK_SCOPE;
     HighFive::SilenceHDF5 s;
     HighFive::File h5file = openH5ForReading(file);
     return readAnnDataDims(h5file, group).row_major;
@@ -580,6 +598,7 @@ bool isRowOrientedAnnDataMatrix(std::string file, std::string group) {
 
 template <typename T>
 void readMember(HighFive::DataSet &&dataset, std::string name, std::vector<T> &out) {
+    H5_LOCK_SCOPE;
     auto dims = dataset.getDimensions();
     if (dims.size() != 1) {
         std::ostringstream ss;

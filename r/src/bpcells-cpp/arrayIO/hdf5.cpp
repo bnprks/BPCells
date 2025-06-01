@@ -8,31 +8,21 @@
 
 #include "hdf5.h"
 #include "../utils/filesystem_compat.h"
+#include <mutex>
 
 namespace BPCells {
 
-H5StringReader::H5StringReader(const HighFive::Group &group, std::string path) : dataset(group.getDataSet(path)) {}
+std::recursive_mutex &bpcells_hdf5_global_lock() {
+    static std::recursive_mutex mut;
+    return mut;
+}
+
+H5StringReader::H5StringReader(H5Group &group, const std::string &path)
+    : dataset(group.openDataSet1D(path)) {}
 
 inline void H5StringReader::ensureDataReady() {
     if (data_ready) return;
-    HighFive::DataType type = dataset.getDataType();
-    if (type.isVariableStr()) {
-        // Workaround for HighFive bug: don't try reading an empty string vector
-        if (dataset.getDimensions()[0] > 0) {
-            dataset.read(data);
-        } else {
-            data.resize(0);
-        }
-    } else {
-        uint64_t bytes = type.getSize();
-        uint64_t elements = dataset.getDimensions()[0];
-        std::vector<char> char_data(bytes * elements);
-        dataset.read_raw(char_data.data(), type);
-        data.resize(elements);
-        for (uint64_t i = 0; i < elements; i++) {
-            data[i] = std::string(char_data.data() + bytes * i, char_data.data() + bytes * (i + 1));
-        }
-    }
+    dataset.load(0, data, dataset.getDimension());
     data_ready = true;
 }
 const char *H5StringReader::get(uint64_t idx) {
@@ -40,11 +30,11 @@ const char *H5StringReader::get(uint64_t idx) {
     if (idx < data.size()) return data[idx].c_str();
     return NULL;
 }
-uint64_t H5StringReader::size() { 
-    return dataset.getDimensions()[0]; 
+uint64_t H5StringReader::size() {
+    return dataset.getDimension();
 }
 
-H5StringWriter::H5StringWriter(const HighFive::Group &group, std::string path, uint32_t gzip_level)
+H5StringWriter::H5StringWriter(const H5Group &group, const std::string &path, uint32_t gzip_level)
     : group(group)
     , path(path)
     , gzip_level(gzip_level) {}
@@ -58,43 +48,8 @@ void H5StringWriter::write(StringReader &reader) {
         data.push_back(s);
         i++;
     }
-    HighFive::SilenceHDF5 s;
 
-    HighFive::DataSetCreateProps props;
-    if (gzip_level > 0) {
-        props.add(HighFive::Deflate(gzip_level));
-    }
-
-    if (group.exist(path)) {
-        group.unlink(path);
-    }
-    HighFive::DataSet ds =
-        group.createDataSet<std::string>(path, HighFive::DataSpace::From(data), props);
-    // Safety check to avoid an ASan complaint in the R test "AnnData and 10x row/col rename works"
-    if (data.size() > 0) {
-        ds.write(data);
-    }
-}
-
-HighFive::Group createH5Group(std::string file_path, std::string group_path, bool allow_exists) {
-    HighFive::SilenceHDF5 s;
-    if (group_path == "") group_path = "/";
-
-    std_fs::path path(file_path);
-    if (path.has_parent_path() && !std_fs::exists(path.parent_path())) {
-        std_fs::create_directories(path.parent_path());
-    }
-
-    HighFive::File file(file_path, HighFive::File::OpenOrCreate);
-    try {
-        HighFive::Group ret(file.getGroup(group_path));
-        if (!allow_exists && ret.getNumberObjects() != 0) {
-            throw std::runtime_error("Requested hdf5 group is not empty");
-        }
-        return ret;
-    } catch (const HighFive::GroupException &e) {
-        return file.createGroup(group_path);
-    }
+    group.createDataSet1D<std::string>(path, data.size(), 0, gzip_level).write(data);
 }
 
 H5WriterBuilder::H5WriterBuilder(
@@ -105,7 +60,7 @@ H5WriterBuilder::H5WriterBuilder(
     bool allow_exists,
     uint32_t gzip_level
 )
-    : group(createH5Group(file, group, allow_exists))
+    : group(file, group, allow_exists ? H5Group::OpenMode::WriteOrCreate : H5Group::OpenMode::Create)
     , buffer_size(buffer_size)
     , chunk_size(chunk_size)
     , gzip_level(gzip_level) {}
@@ -151,37 +106,20 @@ std::unique_ptr<StringWriter> H5WriterBuilder::createStringWriter(std::string na
 }
 
 void H5WriterBuilder::writeVersion(std::string version) {
-    if (group.hasAttribute("version")) {
-        group.getAttribute("version").write(version);
-    } else {
-        group.createAttribute<std::string>("version", HighFive::DataSpace::From(version))
-            .write(version);
-    }
+    group.setAttribute("version", version);
 }
 
 void H5WriterBuilder::deleteWriter(std::string name) {
     throw std::logic_error("deleteWriter: HDF5 files don't support deletion");
 }
 
-HighFive::Group &H5WriterBuilder::getGroup() { return group; }
+H5Group &H5WriterBuilder::getGroup() { return group; }
 
-// Try to open a file for read-write, then fall back to read only if needed.
-// If we first open a file ReadOnly, it prevents future opening with ReadWrite
-// (bad if we want to read + write the same file).
-// This retry makes it possible to still open a file if it's read-only though.
-HighFive::File openH5ForReading(const std::string &path) {
-    try {
-        HighFive::SilenceHDF5 s;
-        return HighFive::File(path, HighFive::File::ReadWrite);
-    } catch (const HighFive::FileException &f) {
-        return HighFive::File(path, HighFive::File::ReadOnly);
-    }
-}
 
 H5ReaderBuilder::H5ReaderBuilder(
     std::string file, std::string group, uint64_t buffer_size, uint64_t read_size
 )
-    : group(openH5ForReading(file).getGroup(group == "" ? std::string("/") : group))
+    : group(file, group, H5Group::OpenMode::Read)
     , buffer_size(buffer_size)
     , read_size(read_size) {}
 
@@ -218,11 +156,9 @@ std::unique_ptr<StringReader> H5ReaderBuilder::openStringReader(std::string name
 }
 
 std::string H5ReaderBuilder::readVersion() {
-    std::string version;
-    group.getAttribute("version").read(version);
-    return version;
+    return group.getAttribute("version");
 }
 
-HighFive::Group &H5ReaderBuilder::getGroup() { return group; }
+H5Group &H5ReaderBuilder::getGroup() { return group; }
 
 } // end namespace BPCells

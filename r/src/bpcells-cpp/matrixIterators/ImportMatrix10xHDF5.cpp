@@ -22,6 +22,7 @@ std::unique_ptr<MatrixLoader<T>> open10xFeatureMatrix(
     std::unique_ptr<StringReader> &&col_names,
     uint32_t read_size
 ) {
+    H5_LOCK_SCOPE;
     H5ReaderBuilder rb(file, group, buffer_size, read_size);
     if (rb.getGroup().exist("features/id")) {
         // Most up-to-date matrix format (cellranger V3+)
@@ -86,6 +87,7 @@ StoredMatrixWriter<T> create10xFeatureMatrix(
     uint32_t chunk_size,
     uint32_t gzip_level
 ) {
+    H5_LOCK_SCOPE;
     H5WriterBuilder wb(file_path, "matrix", buffer_size, chunk_size, false, gzip_level);
 
     wb.createStringWriter("barcodes")->write(barcodes);

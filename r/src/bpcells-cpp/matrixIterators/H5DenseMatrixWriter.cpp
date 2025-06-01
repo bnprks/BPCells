@@ -6,8 +6,8 @@
 // option. This file may not be copied, modified, or distributed
 // except according to those terms.
 
-#include "../arrayIO/hdf5.h"
 #include "../utils/filesystem_compat.h"
+#include "../arrayIO/hdf5_threadsafe.h"
 
 #include "H5DenseMatrixWriter.h"
 
@@ -15,21 +15,20 @@ namespace BPCells {
 
 template <typename T> class H5DenseMatrixWriter : public MatrixWriter<T> {
   private:
-    HighFive::File h5file;
+    std::string file_path;
     std::string dataset_path;
     uint64_t chunk_size;
     uint32_t gzip_level;
 
-    HighFive::DataType datatype = HighFive::create_datatype<T>();
     bool row_major;
 
-    HighFive::DataSet createH5Matrix(uint64_t nrow,  uint64_t ncol) {
-      HighFive::SilenceHDF5 s;
-      
+    H5DataSet2D<T> createH5Matrix(uint64_t nrow,  uint64_t ncol) {
+        H5Group group {H5Group::create(file_path, dataset_path)}
       // Create a dataspace with initial shape and max shape
       uint64_t nrow_h5 = nrow;
       uint64_t ncol_h5 = ncol;
       if (row_major) {
+          return 
           nrow_h5 = ncol;
           ncol_h5 = nrow;
       }
@@ -48,21 +47,27 @@ template <typename T> class H5DenseMatrixWriter : public MatrixWriter<T> {
 
   public:
     H5DenseMatrixWriter(
-        HighFive::File h5file,
-        std::string dataset,
+        const std::string &file_path,
+        const std::string &dataset,
         bool row_major,
         uint64_t chunk_size = 1024,
         uint32_t gzip_level = 0
     )
-        : h5file(h5file)
+        : file_path(file_path)
         , dataset_path(dataset)
         , chunk_size(chunk_size)
         , gzip_level(gzip_level)
         , row_major(row_major) {}
 
     void write(MatrixLoader<T> &mat_in, std::atomic<bool> *user_interrupt = NULL) override {
+        H5Group group(file_path, "/", BPCells::H5Group::OpenMode::WriteOrCreate);
+        
+        size_t nrow = mat_in.rows();
+        size_t ncol = mat_in.cols();
+        if (row_major) std::swap(nrow, ncol);
+        
 
-        HighFive::DataSet h5dataset = createH5Matrix(mat_in.rows(), mat_in.cols());
+        H5DataSet2D<T> dataset = group.createDataSet2D(dataset_path, nrow, ncol, chunk_size, gzip_level);
 
         bool loaded = false; // Any non-zero values has been loaded.
         std::vector<T> val_buf(mat_in.rows());  // buffer for each column
@@ -80,9 +85,9 @@ template <typename T> class H5DenseMatrixWriter : public MatrixWriter<T> {
             }
             if (loaded) {
                 if (row_major) {
-                    h5dataset.select({(uint64_t)mat_in.currentCol(), 0}, {1, val_buf.size()}).write_raw(val_buf.data(), datatype);
+                    dataset.write_row(mat_in.currentCol(), val_buf);
                 } else {
-                    h5dataset.select({0, (uint64_t)mat_in.currentCol()}, {val_buf.size(), 1}).write_raw(val_buf.data(), datatype);
+                    dataset.write_col(mat_in.currentCol(), val_buf);
                 }
             }
             for (auto &x : val_buf) {
@@ -90,8 +95,9 @@ template <typename T> class H5DenseMatrixWriter : public MatrixWriter<T> {
             }
             loaded = false;
         }
-        h5dataset.createAttribute("encoding-type", std::string("array"));
-        h5dataset.createAttribute("encoding-version", std::string("0.2.0"));
+        
+        dataset.setAttribute("encoding-type", "array");
+        dataset.setAttribute("encoding-version", "0.2.0");
     }
 };
 
@@ -104,16 +110,13 @@ std::unique_ptr<MatrixWriter<T>> createAnnDataDenseMatrix(
     uint32_t chunk_size,
     uint32_t gzip_level
 ) {
-    HighFive::SilenceHDF5 s;
-
     // Create the HDF5 file
     std_fs::path path(file);
     if (path.has_parent_path() && !std_fs::exists(path.parent_path())) {
       std_fs::create_directories(path.parent_path());
     }
-    HighFive::File h5file(file, HighFive::File::OpenOrCreate);
     
-    return std::make_unique<H5DenseMatrixWriter<T>>(h5file, dataset, row_major, chunk_size, gzip_level);
+    return std::make_unique<H5DenseMatrixWriter<T>>(file, dataset, row_major, chunk_size, gzip_level);
 }
 
 // Explicit template instantiations
