@@ -37,3 +37,17 @@ Extend genome ranges in a strand-aware fashion.
 Note that ranges will be blocked from extending past the beginning of the chromosome (base 0),
 and if \code{chromosome_sizes} is given then they will also be blocked from extending past the end of the chromosome
 }
+\examples{
+## Prep data
+ranges <- tibble::tibble(
+ chr = "chr1",
+ start = seq(50, 4050, 1000),
+ end = start + 50,
+ strand = "+"
+)
+ranges
+
+
+## Extend ranges 1 bp upstream, 1 bp downstream
+extend_ranges(ranges, upstream = 1, downstream = 1)
+}
