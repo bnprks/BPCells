@@ -19,7 +19,7 @@ Encoding: UTF-8
 LazyData: true
 RoxygenNote: 7.3.2
 Roxygen: list(markdown = TRUE)
-URL: https://bnprks.github.io/BPCells, https://github.com/bnprks/BPCells
+URL: https://bpcells.github.io/r, https://github.com/bpcells/BPCells
 LinkingTo: 
     Rcpp,
     RcppEigen

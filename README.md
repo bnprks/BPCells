@@ -2,7 +2,7 @@
 
 BPCells is a package for high performance single cell analysis of large RNA-seq and ATAC-seq datasets. 
 It can run normalization and PCA of a 1.3M cell dataset in 4 minutes with 2GB of RAM, or create scATAC-seq peak matrices from fragment coordinates with 50x less CPU time than ArchR or SnapATAC2. 
-BPCells can even handle the full CELLxGENE census human dataset, running full precision PCA on a 44M cell x 60k gene matrix in 6 hours on a laptop or <1 hour on a server. See our [benchmarks page](https://bnprks.github.io/BPCells/articles/web-only/benchmarks.html) for details.
+BPCells can even handle the full CELLxGENE census human dataset, running full precision PCA on a 44M cell x 60k gene matrix in 6 hours on a laptop or <1 hour on a server. See our [benchmarks page](https://bpcells.github.io/r/articles/web-only/benchmarks.html) for details.
 
 BPCells provides:
 
@@ -14,22 +14,22 @@ BPCells provides:
 
 Additionally, BPCells exposes its optimized data processing infrastructure for use in scaling 3rd party single cell tools (e.g. Seurat)
 
-## [Learn more at our website](https://bnprks.github.io/BPCells/)
+## [Learn more at our website](https://bpcells.github.io/r/)
 
 - [BioRxiv preprint](https://www.biorxiv.org/content/10.1101/2025.03.27.645853v1)
-- [Python docs](https://bnprks.github.io/BPCells/python/index.html)
-- [Benchmarks](https://bnprks.github.io/BPCells/articles/web-only/benchmarks.html)
-- [Multiomic analysis example](https://bnprks.github.io/BPCells/articles/pbmc3k.html)
-- [How BPCells works](https://bnprks.github.io/BPCells/articles/web-only/how-it-works.html)
-- [Additional articles](https://bnprks.github.io/BPCells/articles/index.html)
-- [Function documentation](https://bnprks.github.io/BPCells/reference/index.html)
-- [News](https://bnprks.github.io/BPCells/news/index.html)
+- [Python docs](https://bpcells.github.io/python/index.html)
+- [Benchmarks](https://bpcells.github.io/r/articles/web-only/benchmarks.html)
+- [Multiomic analysis example](https://bpcells.github.io/r/articles/pbmc3k.html)
+- [How BPCells works](https://bpcells.github.io/r/articles/web-only/how-it-works.html)
+- [Additional articles](https://bpcells.github.io/r/articles/index.html)
+- [Function documentation](https://bpcells.github.io/r/reference/index.html)
+- [News](https://bpcells.github.io/r/news/index.html)
 
 ## R Installation
 We recommend installing BPCells directly from github:
 
 ```R
-remotes::install_github("bnprks/BPCells/r")
+remotes::install_github("bpcells/BPCells/r")
 ```
 Before installing, you must have the HDF5 library installed and accessible on your system.
 HDF5 can be installed from your choice of package manager. See operating system specific instructions below.
@@ -38,7 +38,7 @@ HDF5 can be installed from your choice of package manager. See operating system 
 For Mac and Windows users having trouble installing from github, check our [R-universe](https://bnprks.r-universe.dev/BPCells)
 page for instructions to install pre-built binary packages. These binary packages automatically track the latest github main branch.
 
-BPCells is available via conda thanks to [@mfansler](https://github.com/mfansler) from the Conda Forge R team (see [issue #241](https://github.com/bnprks/BPCells/issues/241) for details).
+BPCells is available via conda thanks to [@mfansler](https://github.com/mfansler) from the Conda Forge R team (see [issue #241](https://github.com/bpcells/BPCells/issues/241) for details).
 Any issues with the bioconda package should be reported at [bioconda-recipes](https://github.com/bioconda/bioconda-recipes/). Version updates are managed by the bioconda team.
 
 <details>
@@ -55,7 +55,7 @@ Obtaining the HDF5 dependency is usually pretty straightforward on Linux
     as it appears to give a slightly more reliable installation experience.
 
 ### Windows
-Compiling R packages from source on Windows requires installing [R tools for Windows](https://cran.r-project.org/bin/windows/Rtools/). See [Issue #9](https://github.com/bnprks/BPCells/issues/9) for more discussion.
+Compiling R packages from source on Windows requires installing [R tools for Windows](https://cran.r-project.org/bin/windows/Rtools/). See [Issue #9](https://github.com/bpcells/BPCells/issues/9) for more discussion.
 
 ### MacOS
 For MacOS, installing HDF5 through homebrew seems to be most reliable: `brew install hdf5`.
@@ -70,7 +70,7 @@ For MacOS, installing HDF5 through homebrew seems to be most reliable: `brew ins
   ARM R because homebrew will default to an ARM hdf5 installation
     - It is [possible](https://codetinkering.com/switch-homebrew-arm-x86/) (though tricky) to install an x86 copy of homebrew in order to access an x86 version of hdf5
 - **Older Macs (10.14 Mojave or older)**: The default compiler on old Macs does not support needed
-  C++17 filesystem features. See [issue #3](https://github.com/bnprks/BPCells/issues/3#issuecomment-1375238635) for
+  C++17 filesystem features. See [issue #3](https://github.com/bpcells/BPCells/issues/3#issuecomment-1375238635) for
   tips getting a newer compiler set up via homebrew.
 
 ### Supported compilers
@@ -87,7 +87,7 @@ have basic C++17 support, but they are not officially supported.
 
 ### General Installation troubleshooting
 BPCells tries to print informative error messages during compilation to help diagnose the problem. For a more
-verbose set of information, run `Sys.setenv(BPCELLS_DEBUG_INSTALL="true")` prior to `remotes::install_github("bnprks/BPCells/r")`. If you still can't solve the issue with that additional information, feel free to file a Github issue, being
+verbose set of information, run `Sys.setenv(BPCELLS_DEBUG_INSTALL="true")` prior to `remotes::install_github("bpcells/BPCells/r")`. If you still can't solve the issue with that additional information, feel free to file a Github issue, being
 sure to use a [collapsible section](https://docs.github.com/en/get-started/writing-on-github/working-with-advanced-formatting/organizing-information-with-collapsed-sections) for the verbose installation log.
 
 </details>

@@ -56,9 +56,9 @@ html_sidebars = {
 # -- Options for PyData Theme -------------------------------------------------
 # https://pydata-sphinx-theme.readthedocs.io/en/stable/user_guide/layout.html#references
 html_theme_options = {
-    "github_url": "https://github.com/bnprks/BPCells",
+    "github_url": "https://github.com/bpcells/BPCells",
     # "switcher": {
-    #     # "json_url": "https://bnprks.github.io/BPCells/python/_static/switcher.json",
+    #     # "json_url": "https://bpcells.github.io/BPCells/python/_static/switcher.json",
     #     "json_url": "_static/switcher.json",
     #     "version_match": version,
     # },
@@ -141,7 +141,7 @@ def linkcode_resolve(domain, info):
 
     fn = os.path.relpath(fn, start=os.path.dirname(bpcells.__file__))
 
-    return f"https://github.com/bnprks/bpcells/blob/main/python/src/bpcells/{fn}{linespec}"
+    return f"https://github.com/bpcells/bpcells/blob/main/python/src/bpcells/{fn}{linespec}"
 
 # See: https://www.sphinx-doc.org/en/master/development/html_themes/index.html#defining-custom-template-functions
 # To Do: Might be able to get the top header section nav working better  

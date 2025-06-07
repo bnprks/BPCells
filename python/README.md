@@ -23,4 +23,4 @@ mainly focuses on integer matrix slicing / import, and pseudobulk fragment inser
 The API is subject to change somewhat once a full-featured port of the BPCells R 
 functionality is completed.
 
-For more information, see our [github](https://github.com/bnprks/BPCells), [python docs](https://bnprks.github.io/BPCells/python), and [R docs](https://bnprks.github.io/BPCells/).
+For more information, see our [github](https://github.com/bpcells/BPCells), [python docs](https://bpcells.github.io/python), and [R docs](https://bpcells.github.io/r/).

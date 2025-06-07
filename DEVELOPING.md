@@ -27,7 +27,7 @@ Warning: Docs setup may change as python and C++ docs get created
  - Documentation uses `pkgdown`
  - Tests use `testthat`
 
-**Installation**: `remotes::install_github("bnprks/BPCells/r")`
+**Installation**: `remotes::install_github("bpcells/BPCells/r")`
 
 ## Python
 
@@ -37,7 +37,7 @@ Warning: Docs setup may change as python and C++ docs get created
  - Includes a helper file with the overal project home page, linking to C++, R, and Python docs.
  - `tox` handles virtualenv setup for tests + documentation
 
-**Installation**: `pip install "git+https://github.com/bnprks/BPCells#subdirectory=python"`
+**Installation**: `pip install "git+https://github.com/bpcells/BPCells#subdirectory=python"`
 
 ## C++
 

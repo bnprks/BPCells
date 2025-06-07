@@ -44,5 +44,5 @@ can convert the list output.
 \seealso{
 For an interface more similar to \code{base::apply}, see the \href{https://github.com/Yunuuuu/BPCellsArray/}{BPCellsArray}
 project. For calculating colMeans on a sparse single cell RNA matrix it is about 8x slower than \code{apply_by_col}, due to the
-\code{base::apply} interface not being sparsity-aware. (See \href{https://github.com/bnprks/BPCells/pull/104}{pull request #104} for benchmarking.)
+\code{base::apply} interface not being sparsity-aware. (See \href{https://github.com/bpcells/BPCells/pull/104}{pull request #104} for benchmarking.)
 }

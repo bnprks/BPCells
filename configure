@@ -23,7 +23,7 @@ echo "Error: BPCells installation location has moved."
 echo ""
 echo 'To install from the new location, please run:'
 echo ""
-echo '    remotes::install_github("bnprks/BPCells/r")'
+echo '    remotes::install_github("bpcells/BPCells/r")'
 echo ""
 echo "################################################"
 echo ""

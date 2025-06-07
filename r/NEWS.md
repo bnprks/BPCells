@@ -28,7 +28,7 @@
 
 The BPCells 0.3.0 release covers 6 months of changes and 45 commits from 5 contributors. Notable improvements
 this release include support for peak calling with MACS and the addition of pseudobulk matrix and stats calculations.
-We also released an initial prototype of a BPCells Python library (more details [here](https://bnprks.github.io/BPCells/python/index.html)).
+We also released an initial prototype of a BPCells Python library (more details [here](https://bpcells.github.io/python/index.html)).
 Full details of changes below.
 
 Thanks to @ycli1995, @Yunuuuu, and @douglasgscofield for pull requests that contributed to this release, as well as to users who
@@ -90,7 +90,7 @@ well as all users who submitted github issues to help identify and fix bugs.
 
 ## Breaking changes
 - Installation location has changed, to make room for a future python package release. New
-  installs will have to use `remotes::install_github("bnprks/BPCells/r")` (note the additional `/r`)
+  installs will have to use `remotes::install_github("bpcells/BPCells/r")` (note the additional `/r`)
   - r-universe mirrors will have to add `"subdir": "r"` to their `packages.json` config.
 - New slots have been added to 10x matrix objects, so any saved RDS files may need to have
   their 10x matrix inputs re-opened and replaced by calling `all_matrix_inputs()`. Outside of

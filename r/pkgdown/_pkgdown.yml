@@ -1,4 +1,4 @@
-url: https://bnprks.github.io/BPCells
+url: https://bpcells.github.io/r
 template:
   bootstrap: 5
   bootswatch: simplex
@@ -24,9 +24,9 @@ authors:
 
 repo:
   url:
-    home: https://github.com/bnprks/BPCells
-    source: https://github.com/bnprks/BPCells/tree/main/r/
-    issue: https://github.com/bnprks/BPCells/issues/
+    home: https://github.com/bpcells/BPCells
+    source: https://github.com/bpcells/BPCells/tree/main/r/
+    issue: https://github.com/bpcells/BPCells/issues/
     user: https://github.com/
 
 home:

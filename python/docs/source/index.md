@@ -39,5 +39,5 @@ python -m pip install bpcells
 :maxdepth: 2
 
 python
-R Docs <https://bnprks.github.io/BPCells>
+R Docs <https://bpcells.github.io/r>
 :::

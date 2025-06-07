@@ -101,7 +101,7 @@ The main gotchas to be aware of:
   the deploy.
 - Because BPCells uses `setuptools_scm` to detect version number from git tag, PyPI will reject changes that
   don't come from a nice tagged version (and end up with a version like `bpcells-0.1.dev1+gf9636f4`). An example
-  failed run is [here](https://github.com/bnprks/BPCells/actions/runs/10544359618). You can
+  failed run is [here](https://github.com/bpcells/BPCells/actions/runs/10544359618). You can
   double-check the active version number from the `sdist` job progress, which takes around 10 seconds to run
   and displays the full version number at the end of its "Build a source tarball" log.
 - There is some caching used to try to avoid re-compiling dependencies repeatedly. If a dependency upgrade

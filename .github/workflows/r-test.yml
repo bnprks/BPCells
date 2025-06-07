@@ -29,7 +29,7 @@ jobs:
       - name: Set R compilation options
         run: bash -c 'echo -e "MAKEFLAGS=--jobs=3\nCXXFLAGS += -O1 -UNDEBUG" > "$GITHUB_WORKSPACE/Makevars.user" && echo "R_MAKEVARS_USER=$GITHUB_WORKSPACE/Makevars.user" >> "$GITHUB_ENV"'
       # This is to fix assembler errors like 'file too big' or 'too many sections' on Windows
-      # See: https://github.com/bnprks/BPCells/actions/runs/11412970445/job/31759842649?pr=141
+      # See: https://github.com/bpcells/BPCells/actions/runs/11412970445/job/31759842649?pr=141
       # Solution from: https://digitalkarabela.com/mingw-w64-how-to-fix-file-too-big-too-many-sections/ and https://github.com/apache/arrow/issues/24442
       - name: Handle Windows big object files
         if: ${{ matrix.os == 'windows-latest' }}
