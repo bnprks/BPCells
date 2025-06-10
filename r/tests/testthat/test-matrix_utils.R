@@ -553,7 +553,7 @@ test_that("LinearResidual matrix-vector multiply works", {
 })
 
 # Test rows/col sum/mean given dgCMatrix m1 and equivalent iterable matrix i1
-test_rowsum_colsum_rowmean_colmean_rowvar_colvar <- function(m1, i1) {
+test_rowsum_colsum_rowmean_colmean <- function(m1, i1) {
   expect_s4_class(m1, "dgCMatrix")
   expect_s4_class(i1, "IterableMatrix")
   m2 <- t(m1)
@@ -569,11 +569,6 @@ test_rowsum_colsum_rowmean_colmean_rowvar_colvar <- function(m1, i1) {
   expect_identical(colMeans(i1), colMeans(m1))
   expect_identical(colMeans(i2), colMeans(m2))
 
-  expect_equal(BPCells::rowVars(i1), BPCells::rowVars(as.matrix(m1)))
-  expect_equal(BPCells::rowVars(i2), BPCells::rowVars(as.matrix(m2)))
-  expect_equal(BPCells::colVars(i1), BPCells::colVars(as.matrix(m1)))
-  expect_equal(BPCells::colVars(i2), BPCells::colVars(as.matrix(m2)))
-
   # Check that everything works fine with integers
   i3 <- convert_matrix_type(i1, "uint32_t")
   i4 <- convert_matrix_type(i2, "uint32_t")
@@ -587,6 +582,20 @@ test_rowsum_colsum_rowmean_colmean_rowvar_colvar <- function(m1, i1) {
   expect_identical(rowMeans(i4), rowMeans(m2))
   expect_identical(colMeans(i3), colMeans(m1))
   expect_identical(colMeans(i4), colMeans(m2))
+}
+
+test_rowvar_colvar <- function(m1, i1) {
+  skip_if_not_installed("matrixStats")
+
+  expect_s4_class(m1, "dgCMatrix")
+  expect_s4_class(i1, "IterableMatrix")
+  m2 <- t(m1)
+  i2 <- t(i1)
+
+  expect_equal(BPCells::rowVars(i1), BPCells::rowVars(as.matrix(m1)))
+  expect_equal(BPCells::rowVars(i2), BPCells::rowVars(as.matrix(m2)))
+  expect_equal(BPCells::colVars(i1), BPCells::colVars(as.matrix(m1)))
+  expect_equal(BPCells::colVars(i2), BPCells::colVars(as.matrix(m2)))
 
   expect_equal(BPCells::rowVars(i3), BPCells::rowVars(as.matrix(m1)))
   expect_equal(BPCells::rowVars(i4), BPCells::rowVars(as.matrix(m2)))
@@ -597,7 +606,8 @@ test_rowsum_colsum_rowmean_colmean_rowvar_colvar <- function(m1, i1) {
 test_that("Row/Col sum/mean/var works", { #nolint
   m1 <- generate_sparse_matrix(5, 1000)
   i1 <- as(m1, "IterableMatrix")
-  test_rowsum_colsum_rowmean_colmean_rowvar_colvar(m1, i1)
+  test_rowsum_colsum_rowmean_colmean(m1, i1)
+  test_rowvar_colvar(m1, i1)
 })
 
 test_that("rbind Math works", {
@@ -609,40 +619,49 @@ test_that("rbind Math works", {
 
   i1 <- do.call(rbind, mat_list)
   test_dense_multiply_ops(m1, i1)
-  test_rowsum_colsum_rowmean_colmean_rowvar_colvar(m1, i1)
-
+  test_rowsum_colsum_rowmean_colmean(m1, i1)
 
   # Test for the specialized multiply ops with MatrixSubset of RowBind/ColBind
   row_permute <- sample.int(nrow(m1))
   col_permute <- sample.int(ncol(m1))
   test_dense_multiply_ops(m1[row_permute, col_permute], i1[row_permute, col_permute])
-  test_rowsum_colsum_rowmean_colmean_rowvar_colvar(m1[row_permute, col_permute], i1[row_permute, col_permute])
+  test_rowsum_colsum_rowmean_colmean(m1[row_permute, col_permute], i1[row_permute, col_permute])
 
-  i1 <- set_threads(i1, 3)
-  test_dense_multiply_ops(m1, i1)
-  test_rowsum_colsum_rowmean_colmean_rowvar_colvar(m1, i1)
+  i2 <- set_threads(i1, 3)
+  test_dense_multiply_ops(m1, i2)
+  test_rowsum_colsum_rowmean_colmean(m1, i2)
+
+  # Test variance at end as it causes the rest to be skiped if matrixStats is not installed
+  test_rowvar_colvar(m1, i1)
+  test_rowvar_colvar(m1[row_permute, col_permute], i1[row_permute, col_permute])
+  test_rowvar_colvar(m1, i2)
 })
 
 test_that("cbind Math works", {
   m1 <- generate_sparse_matrix(10, 1000)
 
   mat_list <- lapply(1:10, function(i) {
-    as(m1, "IterableMatrix")[,(i-1)*100 + 1:100]
+    as(m1, "IterableMatrix")[, (i - 1) * 100 + 1:100]
   })
 
   i1 <- do.call(cbind, mat_list)
   test_dense_multiply_ops(m1, i1)
-  test_rowsum_colsum_rowmean_colmean_rowvar_colvar(m1, i1)
+  test_rowsum_colsum_rowmean_colmean(m1, i1)
 
   # Test for the specialized multiply ops with MatrixSubset of RowBind/ColBind
   row_permute <- sample.int(nrow(m1))
   col_permute <- sample.int(ncol(m1))
   test_dense_multiply_ops(m1[row_permute, col_permute], i1[row_permute, col_permute])
-  test_rowsum_colsum_rowmean_colmean_rowvar_colvar(m1[row_permute, col_permute], i1[row_permute, col_permute])
+  test_rowsum_colsum_rowmean_colmean(m1[row_permute, col_permute], i1[row_permute, col_permute])
 
-  i1 <- set_threads(i1, 3)
-  test_dense_multiply_ops(m1, i1)
-  test_rowsum_colsum_rowmean_colmean_rowvar_colvar(m1, i1)
+  i2 <- set_threads(i1, 3)
+  test_dense_multiply_ops(m1, i2)
+  test_rowsum_colsum_rowmean_colmean(m1, i2)
+
+  # Test variance at end as it causes the rest to be skiped if matrixStats is not installed
+  test_rowvar_colvar(m1, i1)
+  test_rowvar_colvar(m1[row_permute, col_permute], i1[row_permute, col_permute])
+  test_rowvar_colvar(m1, i2)
 })
 
 test_that("LinearOperator works", {
