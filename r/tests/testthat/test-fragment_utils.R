@@ -129,8 +129,8 @@ test_that("Cell name/index select works", { #nolint
     frags_tibble %>%
       dplyr::filter(cell_id %in% cell_selection) %>%
       dplyr::mutate(cell_id = match(cell_id, cell_selection)),
-    frags@chr_names,
-    frags@cell_names[cell_selection]
+    chrNames(frags),
+    cellNames(frags)[cell_selection]
   ) %>%
     write_fragments_memory() %>%
     as("data.frame")
@@ -149,8 +149,8 @@ test_that("Cell name/index select works", { #nolint
     frags_tibble %>%
       dplyr::filter(cell_id %in% cell_selection_sequential) %>%
       dplyr::mutate(cell_id = match(cell_id, cell_selection_sequential)),
-    frags@chr_names,
-    frags@cell_names[cell_selection_sequential]
+    chrNames(frags),
+    cellNames(frags)[cell_selection_sequential]
   ) %>%
     write_fragments_memory() %>%
     as("data.frame")
@@ -460,7 +460,9 @@ test_that("Generic methods work", {
     # Delete any trailing XPtr references from R
     gc()
     # Check that the C++ iterator still works
-    res <- do.call(new, c("PackedMemFragments", write_packed_fragments_cpp(it)))
-    expect_identical(res, frags)
+    expect_true(fragments_identical(
+      frags,
+      do.call(new, c("PackedMemFragments", write_packed_fragments_cpp(it)))
+    ))
   }
 })
