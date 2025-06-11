@@ -107,7 +107,7 @@ pseudobulk_matrix <- function(mat, cell_groups, method = "sum", threads = 0L) {
     parallel_split(threads, threads*4) %>%
     iterate_matrix()
   
-  res <- pseudobulk_matrix_cpp(it, cell_groups = as.integer(cell_groups) - 1, method = method, transpose = mat@transpose)
+  res <- pseudobulk_matrix_cpp(it, cell_groups = as.integer(cell_groups) - 1, method = method, transpose = is_row_major(mat))
   # if res is a single matrix, return with colnames and rownames
   if (length(method) == 1) {
     colnames(res[[method]]) <- levels(cell_groups)

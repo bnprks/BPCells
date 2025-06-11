@@ -66,6 +66,8 @@ setGeneric("storage_order", function(x) standardGeneric("storage_order"))
 
 setMethod("storage_order", "IterableMatrix", function(x) if(x@transpose) "row" else "col")
 
+is_row_major <- function(x) storage_order(x) == "row"
+
 #' Return a list of input matrices to the current matrix (experimental)
 #'
 #' File objects have 0 inputs. Most transforms have 1 input. Some transforms
@@ -179,7 +181,7 @@ setMethod("show", "IterableMatrix", function(object) {
 
   cat("\n")
   cat(sprintf("Data type: %s\n", matrix_type(object)))
-  cat(sprintf("Storage order: %s major\n", ifelse(object@transpose, "row", "column")))
+  cat(sprintf("Storage order: %s major\n", ifelse(is_row_major(object), "row", "column")))
 
   cat("\n")
   description <- short_description(object)
@@ -212,7 +214,7 @@ setMethod("t", signature(x = "IterableMatrix"), function(x) {
 #' @return * `x %*% y`: dense matrix result
 setMethod("%*%", signature(x = "IterableMatrix", y = "matrix"), function(x, y) {
   iter <- iterate_matrix(convert_matrix_type(x, "double"))
-  if (x@transpose) {
+  if (is_row_major(x)) {
     res <- (t(dense_multiply_left_cpp(iter, t(y))))
   } else {
     res <- (dense_multiply_right_cpp(iter, y))
@@ -224,7 +226,7 @@ setMethod("%*%", signature(x = "IterableMatrix", y = "matrix"), function(x, y) {
 
 setMethod("%*%", signature(x = "matrix", y = "IterableMatrix"), function(x, y) {
   iter <- iterate_matrix(convert_matrix_type(y, "double"))
-  if (y@transpose) {
+  if (is_row_major(y)) {
     res <- (t(dense_multiply_right_cpp(iter, t(x))))
   } else {
     res <- (dense_multiply_left_cpp(iter, x))
@@ -236,7 +238,7 @@ setMethod("%*%", signature(x = "matrix", y = "IterableMatrix"), function(x, y) {
 
 setMethod("%*%", signature(x = "IterableMatrix", y = "numeric"), function(x, y) {
   iter <- iterate_matrix(convert_matrix_type(x, "double"))
-  if (x@transpose) {
+  if (is_row_major(x)) {
     res <- (vec_multiply_left_cpp(iter, y))
   } else {
     res <- (vec_multiply_right_cpp(iter, y))
@@ -248,7 +250,7 @@ setMethod("%*%", signature(x = "IterableMatrix", y = "numeric"), function(x, y) 
 
 setMethod("%*%", signature(x = "numeric", y = "IterableMatrix"), function(x, y) {
   iter <- iterate_matrix(convert_matrix_type(y, "double"))
-  if (y@transpose) {
+  if (is_row_major(y)) {
     res <- (vec_multiply_right_cpp(iter, x))
   } else {
     res <- (vec_multiply_left_cpp(iter, x))
@@ -275,6 +277,7 @@ setClass("LinearOperator",
     transpose = FALSE
   )
 )
+setMethod("storage_order", "LinearOperator", function(x) if(x@transpose) "row" else "col")
 
 #' Construct a LinearOperator object
 #'
@@ -283,11 +286,11 @@ setClass("LinearOperator",
 #' @keywords internal
 linear_operator <- function(mat) {
   assert_is(mat, "IterableMatrix")
-  new("LinearOperator", dim = dim(mat), xptr = iterate_matrix(convert_matrix_type(mat, "double")), transpose = mat@transpose)
+  new("LinearOperator", dim = dim(mat), xptr = iterate_matrix(convert_matrix_type(mat, "double")), transpose = is_row_major(mat))
 }
 
 setMethod("%*%", signature(x = "LinearOperator", y = "matrix"), function(x, y) {
-  if (x@transpose) {
+  if (is_row_major(x)) {
     return(t(dense_multiply_left_preserve_loader_cpp(x@xptr, t(y))))
   } else {
     return(dense_multiply_right_preserve_loader_cpp(x@xptr, y))
@@ -295,7 +298,7 @@ setMethod("%*%", signature(x = "LinearOperator", y = "matrix"), function(x, y) {
 })
 
 setMethod("%*%", signature(x = "matrix", y = "LinearOperator"), function(x, y) {
-  if (y@transpose) {
+  if (is_row_major(y)) {
     return(t(dense_multiply_right_preserve_loader_cpp(y@xptr, t(x))))
   } else {
     return(dense_multiply_left_preserve_loader_cpp(y@xptr, x))
@@ -303,7 +306,7 @@ setMethod("%*%", signature(x = "matrix", y = "LinearOperator"), function(x, y) {
 })
 
 setMethod("%*%", signature(x = "LinearOperator", y = "numeric"), function(x, y) {
-  if (x@transpose) {
+  if (is_row_major(x)) {
     return(vec_multiply_left_preserve_loader_cpp(x@xptr, y))
   } else {
     return(vec_multiply_right_preserve_loader_cpp(x@xptr, y))
@@ -311,7 +314,7 @@ setMethod("%*%", signature(x = "LinearOperator", y = "numeric"), function(x, y) 
 })
 
 setMethod("%*%", signature(x = "numeric", y = "LinearOperator"), function(x, y) {
-  if (y@transpose) {
+  if (is_row_major(y)) {
     return(vec_multiply_right_preserve_loader_cpp(y@xptr, x))
   } else {
     return(vec_multiply_left_preserve_loader_cpp(y@xptr, x))
@@ -348,7 +351,7 @@ setMethod("iterate_matrix", "MatrixMultiply", function(x) {
 })
 
 setMethod("short_description", "MatrixMultiply", function(x) {
-  if (x@transpose) {
+  if (is_row_major(x)) {
     # Flip the display order for transposed case
     sprintf(
       "Multiply sparse matrices: %s (%dx%d) * %s (%dx%d)",
@@ -365,8 +368,8 @@ setMethod("short_description", "MatrixMultiply", function(x) {
 })
 
 setMethod("%*%", signature(x = "IterableMatrix", y = "IterableMatrix"), function(x, y) {
-  if (x@transpose != y@transpose) stop("Cannot multiply matrices with different internal transpose states.\nPlease use transpose_storage_order().")
-  if (x@transpose) {
+  if (storage_order(x) != storage_order(y)) stop("Cannot multiply matrices with different internal transpose states.\nPlease use transpose_storage_order().")
+  if (is_row_major(x)) {
     return(t(t(y) %*% t(x)))
   }
 
@@ -384,7 +387,7 @@ setMethod("%*%", signature(x = "IterableMatrix", y = "IterableMatrix"), function
 })
 
 setMethod("%*%", signature(x = "IterableMatrix", y = "dgCMatrix"), function(x, y) {
-  if (x@transpose) {
+  if (is_row_major(x)) {
     t(as(t(y), "IterableMatrix") %*% t(x))
   } else {
     x %*% as(y, "IterableMatrix")
@@ -392,7 +395,7 @@ setMethod("%*%", signature(x = "IterableMatrix", y = "dgCMatrix"), function(x, y
 })
 
 setMethod("%*%", signature(x = "dgCMatrix", y = "IterableMatrix"), function(x, y) {
-  if (y@transpose) {
+  if (is_row_major(y)) {
     t(t(y) %*% as(t(x), "IterableMatrix"))
   } else {
     as(x, "IterableMatrix") %*% y
@@ -404,7 +407,7 @@ setMethod("%*%", signature(x = "dgCMatrix", y = "IterableMatrix"), function(x, y
 setMethod("[", "MatrixMultiply", function(x, i, j, ...) {
   if (missing(x)) stop("x is missing in matrix selection")
   # Handle transpose via recursive call
-  if (x@transpose) {
+  if (is_row_major(x)) {
     return(t(t(x)[rlang::maybe_missing(j), rlang::maybe_missing(i)]))
   }
 
@@ -477,13 +480,13 @@ mask_matrix <- function(mat, mask, invert=FALSE) {
   assert_is(mask, c("IterableMatrix", "dgCMatrix"))
   assert_true(nrow(mat) == nrow(mask) && ncol(mat) == ncol(mask))
   if (is(mask, "dgCMatrix")) {
-    if (mat@transpose)
+    if (is_row_major(mat))
       mask <- t(as(t(mask), "IterableMatrix"))
     else
       mask <- as(mask, "IterableMatrix")
   }
   
-  if (mat@transpose != mask@transpose) stop("Cannot mask matrices with different internal transpose states.\nPlease use transpose_storage_order().")
+  if (storage_order(mat) != storage_order(mask)) stop("Cannot mask matrices with different internal transpose states.\nPlease use transpose_storage_order().")
   mask <- convert_matrix_type(mask, "uint32_t")
 
   wrapMatrix("MatrixMask",
@@ -513,7 +516,7 @@ setMethod("short_description", "MatrixRankTransform", function(x) {
     short_description(x@matrix),
     sprintf(
       "Rank transform each matrix %s",
-      ifelse(x@transpose, "row", "col")
+      storage_order(x)
     )
   )
 })
@@ -549,7 +552,7 @@ rank_transform <- function(mat, axis) {
 #' @return * `rowSums()`: vector of row sums
 setMethod("rowSums", signature(x = "IterableMatrix"), function(x) {
   iter <- iterate_matrix(convert_matrix_type(x, "double"))
-  if (x@transpose) {
+  if (is_row_major(x)) {
     res <- col_sums_double_cpp(iter)
   } else {
     res <- row_sums_double_cpp(iter)
@@ -563,7 +566,7 @@ setMethod("rowSums", signature(x = "IterableMatrix"), function(x) {
 #' @return * `colSums()`: vector of col sums
 setMethod("colSums", signature(x = "IterableMatrix"), function(x) {
   iter <- iterate_matrix(convert_matrix_type(x, "double"))
-  if (x@transpose) {
+  if (is_row_major(x)) {
     res <- row_sums_double_cpp(iter)
   } else {
     res <- col_sums_double_cpp(iter)
@@ -669,7 +672,7 @@ rowMaxs.IterableMatrix <- function(x, rows = NULL, cols = NULL, na.rm = FALSE, .
     stop("rowMaxs(IterableMatrix) doesn't support extra arguments rows, cols, or na.rm")
   }
   iter <- iterate_matrix(convert_matrix_type(x, "double"))
-  if(x@transpose == TRUE) {
+  if (is_row_major(x)) {
     res <- matrix_max_per_col_cpp(iter)
   } else {
     res <- matrix_max_per_row_cpp(iter)
@@ -703,7 +706,7 @@ colMaxs.default <- function(x, rows = NULL, cols = NULL, na.rm = FALSE, ...) {
 #' @export
 colMaxs.IterableMatrix <- function(x, rows = NULL, cols = NULL, na.rm = FALSE, ...) {
   iter <- iterate_matrix(convert_matrix_type(x, "double"))
-  if(x@transpose == TRUE) {
+  if (is_row_major(x)) {
     res <- matrix_max_per_row_cpp(iter)
   } else {
     res <- matrix_max_per_col_cpp(iter)
@@ -802,7 +805,7 @@ setMethod("[", "IterableMatrix", function(x, i, j, ...) {
   }
   ret <- selection_fix_dims(ret, rlang::maybe_missing(i), rlang::maybe_missing(j))
 
-  if (x@transpose) {
+  if (is_row_major(x)) {
     tmp <- rlang::maybe_missing(i)
     i <- rlang::maybe_missing(j)
     j <- rlang::maybe_missing(tmp)
@@ -825,7 +828,7 @@ setMethod("[<-", "IterableMatrix", function(x, i, j, ..., value) {
   # Do type conversions if needed
   if (is.matrix(value)) value <- as(value, "dgCMatrix")
   if (is(value, "dgCMatrix")) {
-    if (x@transpose) {
+    if (is_row_major(x)) {
       value <- t(as(t(value), "IterableMatrix"))
     } else {
       value <- as(value, "IterableMatrix")
@@ -885,7 +888,7 @@ setMethod("[<-", "IterableMatrix", function(x, i, j, ..., value) {
 setMethod("[", "MatrixSubset", function(x, i, j, ...) {
   if (missing(x)) stop("x is missing in matrix selection")
   
-  if (x@transpose) {
+  if (is_row_major(x)) {
     return(t(t(x)[rlang::maybe_missing(j), rlang::maybe_missing(i)]))
   }
 
@@ -939,7 +942,7 @@ setMethod("iterate_matrix", "MatrixSubset", function(x) {
 })
 
 setMethod("short_description", "MatrixSubset", function(x) {
-  if (x@transpose) {
+  if (is_row_major(x)) {
     rows <- if (x@zero_dims[2]) "none" else x@col_selection
     cols <- if (x@zero_dims[1]) "none" else x@row_selection
   } else {
@@ -965,7 +968,7 @@ setClass("RenameDims",
 )
 setMethod("matrix_type", "RenameDims", function(x) matrix_type(x@matrix))
 setMethod("iterate_matrix", "RenameDims", function(x) {
-  if (x@transpose) {
+  if (is_row_major(x)) {
     return(iterate_matrix(t(x)))
   }
   assert_true(matrix_type(x) %in% c("uint32_t", "float", "double"))
@@ -986,7 +989,7 @@ setMethod("[", "RenameDims", function(x, i, j, ...) {
 
   x@matrix <- x@matrix[rlang::maybe_missing(i), rlang::maybe_missing(j)]
 
-  if (x@transpose) {
+  if (is_row_major(x)) {
     tmp <- rlang::maybe_missing(i)
     i <- rlang::maybe_missing(j)
     j <- rlang::maybe_missing(tmp)
@@ -1098,7 +1101,7 @@ setMethod("matrix_inputs<-", "RowBindMatrices", function(x, ..., value) {
 setMethod("short_description", "RowBindMatrices", function(x) {
   sprintf(
     "Concatenate %s of %d matrix objects with classes%s (threads=%d)",
-    ifelse(x@transpose, "cols", "rows"),
+    ifelse(is_row_major(x), "cols", "rows"),
     length(x@matrix_list),
     pretty_print_vector(vapply(x@matrix_list, class, character(1)), prefix = ": ", max_len = 3),
     x@threads
@@ -1106,9 +1109,9 @@ setMethod("short_description", "RowBindMatrices", function(x) {
 })
 
 setMethod("rbind2", signature(x = "IterableMatrix", y = "IterableMatrix"), function(x, y, ...) {
-  if (x@transpose != y@transpose) stop("Cannot merge matrices with different internal transpose states.\nPlease use transpose_storage_order().")
+  if (storage_order(x) != storage_order(y)) stop("Cannot merge matrices with different internal transpose states.\nPlease use transpose_storage_order().")
   if (matrix_type(x) != matrix_type(y)) stop("Cannot merge matrices with different data type.\nPlease use convert_matrix_type().")
-  if (x@transpose) {
+  if (is_row_major(x)) {
     return(t(cbind2(t(x), t(y))))
   }
 
@@ -1190,7 +1193,7 @@ setMethod("matrix_inputs<-", "ColBindMatrices", function(x, ..., value) {
 setMethod("short_description", "ColBindMatrices", function(x) {
   sprintf(
     "Concatenate %s of %d matrix objects with classes%s (threads=%d)",
-    ifelse(x@transpose, "rows", "cols"),
+    ifelse(is_row_major(x), "rows", "cols"),
     length(x@matrix_list),
     pretty_print_vector(vapply(x@matrix_list, class, character(1)), prefix = ": ", max_len = 3),
     x@threads
@@ -1198,9 +1201,9 @@ setMethod("short_description", "ColBindMatrices", function(x) {
 })
 
 setMethod("cbind2", signature(x = "IterableMatrix", y = "IterableMatrix"), function(x, y, ...) {
-  if (x@transpose != y@transpose) stop("Cannot merge matrices with different internal transpose states.\nPlease use transpose_storage_order().")
+  if (storage_order(x) != storage_order(y)) stop("Cannot merge matrices with different internal transpose states.\nPlease use transpose_storage_order().")
   if (matrix_type(x) != matrix_type(y)) stop("Cannot merge matrices with different data type.\nPlease use convert_matrix_type().")
-  if (x@transpose) {
+  if (is_row_major(x)) {
     return(t(rbind2(t(x), t(y))))
   }
 
@@ -1237,7 +1240,7 @@ setMethod("cbind2", signature(x = "dgCMatrix", y = "IterableMatrix"), function(x
 setMethod("[", "RowBindMatrices", function(x, i, j, ...) {
   if (missing(x)) stop("x is missing in matrix selection")
   # Handle transpose via recursive call
-  if (x@transpose) {
+  if (is_row_major(x)) {
     return(t(t(x)[rlang::maybe_missing(j), rlang::maybe_missing(i)]))
   }
 
@@ -1307,7 +1310,7 @@ setMethod("[", "RowBindMatrices", function(x, i, j, ...) {
 setMethod("[", "ColBindMatrices", function(x, i, j, ...) {
   if (missing(x)) stop("x is missing in matrix selection")
   # Handle transpose via recursive call
-  if (x@transpose) {
+  if (is_row_major(x)) {
     return(t(t(x)[rlang::maybe_missing(j), rlang::maybe_missing(i)]))
   }
 
@@ -1396,7 +1399,7 @@ parallel_split <- function(mat, threads, chunks=threads) {
     return(mat)
   }
 
-  if (mat@transpose) {
+  if (is_row_major(mat)) {
     return(t(parallel_split(t(mat), threads, chunks)))
   }
 
@@ -1456,7 +1459,7 @@ setClass("PackedMatrixMem_uint32_t",
 )
 setMethod("matrix_type", "PackedMatrixMem_uint32_t", function(x) "uint32_t")
 setMethod("iterate_matrix", "PackedMatrixMem_uint32_t", function(x) {
-  if (x@transpose) x <- t(x)
+  if (is_row_major(x)) x <- t(x)
   x@dimnames <- denormalize_dimnames(x@dimnames)
   iterate_packed_matrix_mem_uint32_t_cpp(x, x@dimnames[[1]], x@dimnames[[2]], nrow(x))
 })
@@ -1468,7 +1471,7 @@ setClass("PackedMatrixMem_float",
 )
 setMethod("matrix_type", "PackedMatrixMem_float", function(x) "float")
 setMethod("iterate_matrix", "PackedMatrixMem_float", function(x) {
-  if (x@transpose) x <- t(x)
+  if (is_row_major(x)) x <- t(x)
   x@dimnames <- denormalize_dimnames(x@dimnames)
   iterate_packed_matrix_mem_float_cpp(x, x@dimnames[[1]], x@dimnames[[2]], nrow(x))
 })
@@ -1480,7 +1483,7 @@ setClass("PackedMatrixMem_double",
 )
 setMethod("matrix_type", "PackedMatrixMem_double", function(x) "double")
 setMethod("iterate_matrix", "PackedMatrixMem_double", function(x) {
-  if (x@transpose) x <- t(x)
+  if (is_row_major(x)) x <- t(x)
   x@dimnames <- denormalize_dimnames(x@dimnames)
   iterate_packed_matrix_mem_double_cpp(x, x@dimnames[[1]], x@dimnames[[2]], nrow(x))
 })
@@ -1511,7 +1514,7 @@ setClass("UnpackedMatrixMem_uint32_t",
 )
 setMethod("matrix_type", "UnpackedMatrixMem_uint32_t", function(x) "uint32_t")
 setMethod("iterate_matrix", "UnpackedMatrixMem_uint32_t", function(x) {
-  if (x@transpose) x <- t(x)
+  if (is_row_major(x)) x <- t(x)
   x@dimnames <- denormalize_dimnames(x@dimnames)
   iterate_unpacked_matrix_mem_uint32_t_cpp(x, x@dimnames[[1]], x@dimnames[[2]], nrow(x))
 })
@@ -1523,7 +1526,7 @@ setClass("UnpackedMatrixMem_float",
 )
 setMethod("matrix_type", "UnpackedMatrixMem_float", function(x) "float")
 setMethod("iterate_matrix", "UnpackedMatrixMem_float", function(x) {
-  if (x@transpose) x <- t(x)
+  if (is_row_major(x)) x <- t(x)
   x@dimnames <- denormalize_dimnames(x@dimnames)
   iterate_unpacked_matrix_mem_float_cpp(x, x@dimnames[[1]], x@dimnames[[2]], nrow(x))
 })
@@ -1535,7 +1538,7 @@ setClass("UnpackedMatrixMem_double",
 )
 setMethod("matrix_type", "UnpackedMatrixMem_double", function(x) "double")
 setMethod("iterate_matrix", "UnpackedMatrixMem_double", function(x) {
-  if (x@transpose) x <- t(x)
+  if (is_row_major(x)) x <- t(x)
   x@dimnames <- denormalize_dimnames(x@dimnames)
   iterate_unpacked_matrix_mem_double_cpp(x, x@dimnames[[1]], x@dimnames[[2]], nrow(x))
 })
@@ -1566,7 +1569,7 @@ transpose_storage_order <- function(matrix, outdir = tempfile("transpose"), tmpd
   on.exit(unlink(tmpdir, recursive = TRUE, expand = FALSE))
 
   it <- iterate_matrix(matrix)
-  write_function(it, outdir, tmpdir, load_bytes, sort_bytes, !matrix@transpose)
+  write_function(it, outdir, tmpdir, load_bytes, sort_bytes, !is_row_major(matrix))
 
   open_matrix_dir(outdir)
 }
@@ -1619,7 +1622,7 @@ write_matrix_memory <- function(mat, compress = TRUE) {
   class <- sprintf("%sMatrixMem_%s", ifelse(compress, "Packed", "Unpacked"), matrix_type(mat))
 
   it <- iterate_matrix(mat)
-  m <- write_function(it, mat@transpose)
+  m <- write_function(it, is_row_major(mat))
   m[["dimnames"]] <- normalized_dimnames(m$row_names, m$col_names)
   m$dim <- m$shape
   m$transpose <- m$storage_order == "row"
@@ -1650,7 +1653,7 @@ setMethod("matrix_type", "MatrixDir", function(x) x@type)
 setMethod("matrix_inputs", "MatrixDir", function(x) list())
 
 setMethod("iterate_matrix", "MatrixDir", function(x) {
-  if (x@transpose) x <- t(x)
+  if (is_row_major(x)) x <- t(x)
   x@dimnames <- denormalize_dimnames(x@dimnames)
 
   iter_function <- get(sprintf("iterate_%s_matrix_file_%s_cpp", ifelse(x@compressed, "packed", "unpacked"), matrix_type(x)))
@@ -1710,7 +1713,7 @@ write_matrix_dir <- function(mat, dir, compress = TRUE, buffer_size = 8192L, ove
   it <- iterate_matrix(mat)
 
   write_function <- get(sprintf("write_%s_matrix_file_%s_cpp", ifelse(compress, "packed", "unpacked"), matrix_type(mat)))
-  write_function(it, dir, buffer_size, overwrite, mat@transpose)
+  write_function(it, dir, buffer_size, overwrite, is_row_major(mat))
 
   if (did_tmp_copy) {
     unlink(overwrite_path, recursive=TRUE)
@@ -1748,7 +1751,7 @@ setMethod("matrix_type", "EXPERIMENTAL_MatrixDirCompressedCol", function(x) "uin
 setMethod("matrix_inputs", "EXPERIMENTAL_MatrixDirCompressedCol", function(x) list())
 
 setMethod("iterate_matrix", "EXPERIMENTAL_MatrixDirCompressedCol", function(x) {
-  if (x@transpose) x <- t(x)
+  if (is_row_major(x)) x <- t(x)
 
   EXPERIMENTAL_iterate_packed_sparse_column_matrix_file_uint32_t_cpp(
     x@dir, x@buffer_size
@@ -1800,7 +1803,7 @@ EXPERIMENTAL_write_matrix_dir <- function(mat, dir, buffer_size = 8192L, overwri
   it <- iterate_matrix(mat)
 
   EXPERIMENTAL_write_packed_sparse_column_matrix_file_uint32_t_cpp(
-    it, dir, buffer_size, overwrite, mat@transpose
+    it, dir, buffer_size, overwrite, is_row_major(mat)
   )
 
   if (did_tmp_copy) {
@@ -1851,7 +1854,7 @@ setMethod("matrix_type", "MatrixH5", function(x) x@type)
 setMethod("matrix_inputs", "MatrixH5", function(x) list())
 
 setMethod("iterate_matrix", "MatrixH5", function(x) {
-  if (x@transpose) x <- t(x)
+  if (is_row_major(x)) x <- t(x)
   x@dimnames <- denormalize_dimnames(x@dimnames)
 
   iter_function <- get(sprintf("iterate_%s_matrix_hdf5_%s_cpp", ifelse(x@compressed, "packed", "unpacked"), matrix_type(x)))
@@ -1926,7 +1929,7 @@ write_matrix_hdf5 <- function(
   it <- iterate_matrix(mat)
 
   write_function <- get(sprintf("write_%s_matrix_hdf5_%s_cpp", ifelse(compress, "packed", "unpacked"), matrix_type(mat)))
-  write_function(it, path, group, buffer_size, chunk_size, overwrite, mat@transpose, gzip_level)
+  write_function(it, path, group, buffer_size, chunk_size, overwrite, is_row_major(mat), gzip_level)
 
   if (did_tmp_copy) {
     unlink(overwrite_path, recursive=TRUE)
@@ -1969,7 +1972,7 @@ setClass("10xMatrixH5",
 setMethod("matrix_type", "10xMatrixH5", function(x) x@type)
 setMethod("matrix_inputs", "10xMatrixH5", function(x) list())
 setMethod("iterate_matrix", "10xMatrixH5", function(x) {
-  if (x@transpose) x <- t(x)
+  if (is_row_major(x)) x <- t(x)
   x@dimnames <- denormalize_dimnames(x@dimnames)
   iterate_matrix_10x_hdf5_cpp(x@path, x@group, x@buffer_size, x@dimnames[[1]], x@dimnames[[2]])
 })
@@ -2058,9 +2061,9 @@ write_matrix_10x_hdf5 <- function(
   type <- match.arg(type)
   assert_is(mat, "IterableMatrix")
   assert_is(path, "character")
-  if (mat@transpose) {
+  if (is_row_major(mat)) {
     stop(
-      "Matrix must have column-major storage order.\n", 
+      "Matrix must have column-major storage order.\n",
       "Call t() or transpose_storage_order() first."
     )
   }
@@ -2137,7 +2140,7 @@ setClass("AnnDataMatrixH5",
 setMethod("matrix_type", "AnnDataMatrixH5", function(x) x@type)
 setMethod("matrix_inputs", "AnnDataMatrixH5", function(x) list())
 setMethod("iterate_matrix", "AnnDataMatrixH5", function(x) {
-  if (x@transpose) x <- t(x)
+  if (is_row_major(x)) x <- t(x)
   x@dimnames <- denormalize_dimnames(x@dimnames)
   iterate_matrix_anndata_hdf5_cpp(x@path, x@group, x@type, x@buffer_size, x@dimnames[[1]], x@dimnames[[2]])
 })
@@ -2207,7 +2210,7 @@ write_matrix_anndata_hdf5 <- function(mat, path, group = "X", buffer_size = 1638
     path,
     group,
     matrix_type(mat),
-    mat@transpose,
+    is_row_major(mat),
     buffer_size,
     chunk_size,
     gzip_level
@@ -2230,7 +2233,7 @@ write_matrix_anndata_hdf5_dense <- function(mat, path, dataset = "X", buffer_siz
     path,
     dataset,
     matrix_type(mat),
-    mat@transpose,
+    is_row_major(mat),
     chunk_size,
     gzip_level
   )
@@ -2423,7 +2426,7 @@ setMethod("short_description", "PeakMatrix", function(x) {
 setMethod("[", "PeakMatrix", function(x, i, j, ...) {
     if (missing(x)) stop("x is missing in matrix selection")
   # Handle transpose via recursive call
-  if (x@transpose) {
+  if (is_row_major(x)) {
     return(t(t(x)[rlang::maybe_missing(j), rlang::maybe_missing(i)]))
   }
 
@@ -2549,7 +2552,7 @@ tile_matrix <- function(fragments, ranges, mode = c("insertions", "fragments"), 
 #' @keywords internal
 tile_ranges <- function(tile_matrix, selection) {
   # Handle manually transposed tile_matrix objects
-  if (!tile_matrix@transpose) {
+  if (!is_row_major(tile_matrix)) {
     tile_matrix <- t(tile_matrix)
   }
   indices <- seq_len(nrow(tile_matrix))
@@ -2586,7 +2589,7 @@ setMethod("[", "TileMatrix", function(x, i, j, ...) {
   if (missing(x)) stop("x is missing in matrix selection")
 
   # Handle transpose via recursive call
-  if (x@transpose) {
+  if (is_row_major(x)) {
     return(t(t(x)[rlang::maybe_missing(j), rlang::maybe_missing(i)]))
   }
   
@@ -2676,13 +2679,13 @@ convert_matrix_type <- function(matrix, type = c("uint32_t", "double", "float"))
     if (matrix_type(matrix@matrix) == type) {
       ret <- matrix@matrix
       # Restore dimnames that would have been cleared with wrapMatrix
-      dimnames(ret) <- dimnames(matrix) 
+      dimnames(ret) <- dimnames(matrix)
       return(ret)
     } else {
       matrix@type <- type
       return(matrix)
     }
-  } else if (matrix@transpose) {
+  } else if (is_row_major(matrix)) {
     return(t(convert_matrix_type(t(matrix), type)))
   }
   wrapMatrix("ConvertMatrixType", matrix, type = type)
@@ -2723,7 +2726,7 @@ setAs("dgCMatrix", "IterableMatrix", function(from) {
   new("Iterable_dgCMatrix_wrapper", dim = dim(from), dimnames = dimnames(from), transpose = FALSE, mat = from)
 })
 setMethod("iterate_matrix", "Iterable_dgCMatrix_wrapper", function(x) {
-  if (x@transpose) x <- t(x)
+  if (is_row_major(x)) x <- t(x)
   x@dimnames <- denormalize_dimnames(x@dimnames)
   iterate_csparse_matrix_cpp(x@mat, x@dimnames[[1]], x@dimnames[[2]])
 })
@@ -2744,7 +2747,7 @@ setAs("IterableMatrix", "dgCMatrix", function(from) {
       sprintf("Input matrix has %0.f entries", length(res@index))
     ))
   }
-  if (from@transpose) {
+  if (is_row_major(from)) {
     res <- Matrix::sparseMatrix(
       j = res@index,
       p = res@idxptr,
@@ -2833,7 +2836,7 @@ matrix_stats <- function(matrix,
   row_stats <- match.arg(row_stats)
   col_stats <- match.arg(col_stats)
 
-  if (matrix@transpose) {
+  if (is_row_major(matrix)) {
     tmp <- row_stats
     row_stats <- col_stats
     col_stats <- tmp
@@ -2849,7 +2852,7 @@ matrix_stats <- function(matrix,
   res <- matrix_stats_cpp(it, row_stats_number, col_stats_number)
   rownames(res$row_stats) <- stat_options[seq_len(row_stats_number) + 1]
   rownames(res$col_stats) <- stat_options[seq_len(col_stats_number) + 1]
-  if (matrix@transpose) {
+  if (is_row_major(matrix)) {
     tmp <- res$row_stats
     res$row_stats <- res$col_stats
     res$col_stats <- tmp
@@ -2908,12 +2911,12 @@ svds.IterableMatrix <- function(A, k, nu = k, nv = k, opts = list(), threads=0, 
     iterate_matrix()
   
   svds_cpp(
-    it, 
-    k, 
+    it,
+    k,
     solver_params[["ncv"]],
     solver_params[["maxitr"]],
     solver_params[["tol"]],
-    A@transpose
+    is_row_major(A)
   )
 }
 

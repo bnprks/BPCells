@@ -26,7 +26,7 @@ setMethod("matrix_type", "TransformedMatrix", function(x) "double")
 setMethod("[", "TransformedMatrix", function(x, i, j, ...) {
   if (missing(x)) stop("x is missing in matrix selection")
   # Handle transpose via recursive call
-  if (x@transpose) {
+  if (is_row_major(x)) {
     return(t(t(x)[rlang::maybe_missing(j), rlang::maybe_missing(i)]))
   }
 
@@ -205,7 +205,7 @@ setMethod("short_description", "TransformMinByRow", function(x) {
     x@row_params <- x@row_params[,c(1:print_entries, ncol(x@row_params)),drop=FALSE]
   }
   
-  label <- if (x@transpose) "col" else "row"
+  label <- if (is_row_major(x)) "col" else "row"
   c(
     short_description(x@matrix),
     sprintf("Transform min by %s: %s", label, pretty_print_vector(sprintf("%.3g", x@row_params[1, ]), max_len = 3))
@@ -216,7 +216,7 @@ setMethod("short_description", "TransformMinByRow", function(x) {
 #' @description **min_by_row**: Take the minimum with a per-row constant
 #' @export
 min_by_row <- function(mat, vals) {
-  if (mat@transpose) {
+  if (is_row_major(mat)) {
     return(t(min_by_col(t(mat), vals)))
   }
   assert_is(mat, "IterableMatrix")
@@ -238,7 +238,7 @@ setMethod("short_description", "TransformMinByCol", function(x) {
   if (ncol(x@col_params) > print_entries + 1) {
     x@col_params <- x@col_params[,c(1:print_entries, ncol(x@col_params)), drop=FALSE]
   }
-  label <- if (x@transpose) "row" else "col"
+  label <- if (is_row_major(x)) "row" else "col"
   c(
     short_description(x@matrix),
     sprintf("Transform min by %s: %s", label, pretty_print_vector(sprintf("%.3g", x@col_params[1, ]), max_len = 3))
@@ -249,7 +249,7 @@ setMethod("short_description", "TransformMinByCol", function(x) {
 #' @description **min_by_col**: Take the minimum with a per-col constant
 #' @export
 min_by_col <- function(mat, vals) {
-  if (mat@transpose) {
+  if (is_row_major(mat)) {
     return(t(min_by_row(t(mat), vals)))
   }
   assert_is(mat, "IterableMatrix")
@@ -476,15 +476,15 @@ sctransform_pearson <- function(mat, gene_theta, gene_beta, cell_read_counts, mi
 
   # Determine which implementation to use in the backend
   matrix_class <- sprintf(
-    "SCTransformPearson%s%s", 
-    ifelse(mat@transpose == columns_are_cells, "Transpose", ""), 
+    "SCTransformPearson%s%s",
+    ifelse(is_row_major(mat) == columns_are_cells, "Transpose", ""),
     ifelse(slow, "Slow", "")
   )
   
   col_params <- matrix(cell_read_counts, nrow=1)
   row_params <- rbind(1/gene_theta, t(gene_beta))
 
-  if (mat@transpose == columns_are_cells) {
+  if (is_row_major(mat) == columns_are_cells) {
     # Transposed orientation
     tmp <- row_params
     row_params <- col_params
@@ -536,7 +536,7 @@ setMethod("iterate_matrix", "TransformScaleShift", function(x) {
       } else if (x@active_transforms["col", "scale"]) {
         scale_col <- scale_col * x@global_params[1]
       } else {
-        scale_row <- matrix(x@global_params[1], nrow = 1, ncol = ifelse(x@transpose, ncol(x), nrow(x)))
+        scale_row <- matrix(x@global_params[1], nrow = 1, ncol = ifelse(is_row_major(x), ncol(x), nrow(x)))
       }
     }
     res <- iterate_matrix_scale_cpp(res, scale_row, scale_col)
@@ -552,7 +552,7 @@ setMethod("iterate_matrix", "TransformScaleShift", function(x) {
       } else if (x@active_transforms["col", "shift"]) {
         shift_col <- shift_col + x@global_params[2]
       } else {
-        shift_row <- matrix(x@global_params[2], nrow = 1, ncol = ifelse(x@transpose, ncol(x), nrow(x)))
+        shift_row <- matrix(x@global_params[2], nrow = 1, ncol = ifelse(is_row_major(x), ncol(x), nrow(x)))
       }
     }
     if (nrow(shift_row) != 0) res <- iterate_matrix_row_shift_cpp(res, shift_row)
@@ -581,14 +581,14 @@ setMethod("short_description", "TransformScaleShift", function(x) {
   if (x@active_transforms["row", "scale"]) {
     res <- c(res, sprintf(
       "Scale %s by %s",
-      if (x@transpose) "columns" else "rows",
+      if (is_row_major(x)) "columns" else "rows",
       pretty_print_vector(sprintf("%.3g", x@row_params[1, ]), max_len = 3)
     ))
   }
   if (x@active_transforms["col", "scale"]) {
     res <- c(res, sprintf(
       "Scale %s by %s",
-      if (x@transpose) "rows" else "columns",
+      if (is_row_major(x)) "rows" else "columns",
       pretty_print_vector(sprintf("%.3g", x@col_params[1, ]), max_len = 3)
     ))
   }
@@ -600,14 +600,14 @@ setMethod("short_description", "TransformScaleShift", function(x) {
   if (x@active_transforms["row", "shift"]) {
     res <- c(res, sprintf(
       "Shift %s by %s",
-      if (x@transpose) "columns" else "rows",
+      if (is_row_major(x)) "columns" else "rows",
       pretty_print_vector(sprintf("%.3g", x@row_params[2, ]), max_len = 3)
     ))
   }
   if (x@active_transforms["col", "shift"]) {
     res <- c(res, sprintf(
       "Shift %s by %s",
-      if (x@transpose) "rows" else "columns",
+      if (is_row_major(x)) "rows" else "columns",
       pretty_print_vector(sprintf("%.3g", x@col_params[2, ]), max_len = 3)
     ))
   }
@@ -655,7 +655,7 @@ setMethod("*", signature(e1 = "TransformScaleShift", e2 = "numeric"), function(e
   y <- e2
   # 1. Error checking - dimensions match
   # Note that since x@dim is swapped upon transpose, the relevant dimension is
-  # always nrow(x) regardless of whether x@transpose is true
+  # always nrow(x) regardless of whether is_row_major(x) is true
   assert_true(length(y) == 1 || length(y) == nrow(x))
 
   # 2. Handle multiplying by a scalar
@@ -670,14 +670,14 @@ setMethod("*", signature(e1 = "TransformScaleShift", e2 = "numeric"), function(e
     return(x)
   }
   # 3. Check the transform: if we're trying to scale row/col after having set a shift on col/row, then make new layer
-  if (x@transpose && x@active_transforms["row", "shift"]) {
+  if (is_row_major(x) && x@active_transforms["row", "shift"]) {
     res <- wrapMatrix("TransformScaleShift", x)
     res@active_transforms["col", "scale"] <- TRUE
     res@col_params <- matrix(c(1, 0), nrow = 2, ncol = nrow(x)) # Note since x is transposed ncol has the underlying row count
     res@col_params[1, ] <- y
     return(res)
   }
-  if (!x@transpose && x@active_transforms["col", "shift"]) {
+  if (!is_row_major(x) && x@active_transforms["col", "shift"]) {
     res <- wrapMatrix("TransformScaleShift", x)
     res@active_transforms["row", "scale"] <- TRUE
     res@row_params <- matrix(c(1, 0), nrow = 2, ncol = nrow(x))
@@ -685,7 +685,7 @@ setMethod("*", signature(e1 = "TransformScaleShift", e2 = "numeric"), function(e
     return(res)
   }
   # 4. Otherwise, update existing parameters (multiply the shift+scale appropriately)
-  if (x@transpose) {
+  if (is_row_major(x)) {
     # Initialize col_params if necessary
     if (!any(x@active_transforms["col", ])) x@col_params <- matrix(c(1, 0), nrow = 2, ncol = nrow(x))
 
@@ -727,7 +727,7 @@ setMethod("+", signature(e1 = "TransformScaleShift", e2 = "numeric"), function(e
   y <- e2
   # 1. Error checking - dimensions match
   # Note that since x@dim is swapped upon transpose, the relevant dimension is
-  # always nrow(x) regardless of whether x@transpose is true
+  # always nrow(x) regardless of whether is_row_major(x) is true
   assert_true(length(y) == 1 || length(y) == nrow(x))
 
   # 2. Handle shifting by a scalar
@@ -740,7 +740,7 @@ setMethod("+", signature(e1 = "TransformScaleShift", e2 = "numeric"), function(e
   }
 
   # 3. Otherwise, update existing parameters
-  if (x@transpose) {
+  if (is_row_major(x)) {
     # Initialize col_params if necessary
     if (!any(x@active_transforms["col", ])) x@col_params <- matrix(c(1, 0), nrow = 2, ncol = nrow(x))
 

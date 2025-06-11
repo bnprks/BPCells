@@ -120,7 +120,7 @@ test_that("Pseudobulk aggregation works", {
       if (length(unique(cell_group)) < ncol(m)) {
         m_var <- create_pseudobulk_r(m, cell_group, "var")
         m_bpcells_var <- pseudobulk_matrix(m_bpcells, cell_group, method = "variance")
-        expect_equal(m_var, m_bpcells_var, info = paste("Transposed:", m_bpcells@transpose))
+        expect_equal(m_var, m_bpcells_var, info = paste("Transposed:", is_row_major(m_bpcells)))
       }
     }
   }

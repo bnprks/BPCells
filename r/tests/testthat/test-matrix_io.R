@@ -236,8 +236,8 @@ test_that("Transpose storage order works", {
       out <- transpose_storage_order(m2)
       out_t <- transpose_storage_order(t(m2))
 
-      expect_identical(out@transpose, TRUE)
-      expect_identical(out_t@transpose, FALSE)
+      expect_identical(storage_order(out), "row")
+      expect_identical(storage_order(out_t), "col")
       expect_identical(m, as(out, "dgCMatrix"))
       expect_identical(t(m), as(out_t, "dgCMatrix"))
     }

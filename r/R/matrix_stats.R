@@ -53,7 +53,7 @@ rowQuantiles.IterableMatrix <- function(x, rows = NULL, cols = NULL,
   if (!is.null(rows) || !is.null(cols) || isTRUE(na.rm) || isFALSE(useNames) || isFALSE(drop)) {
     rlang::abort("rowQuantiles(IterableMatrix) doesn't support extra arguments rows, cols, na.rm, useNames, or drop.")
   }
-  if (!x@transpose) {
+  if (!is_row_major(x)) {
     rlang::abort("rowQuantiles(IterableMatrix) only supports row-major matrices. Please call transpose_storage_order() first, then run rowQuantiles.")
   }
   assert_is(x, "IterableMatrix")
@@ -130,7 +130,7 @@ colQuantiles.IterableMatrix <- function(x, rows = NULL, cols = NULL,
     rlang::abort("colQuantiles(IterableMatrix) doesn't support extra arguments rows, cols, na.rm, useNames, or drop.")
   }
   assert_is(x, "IterableMatrix")
-  if (x@transpose) {
+  if (is_row_major(x)) {
     rlang::abort("colQuantiles(IterableMatrix) does not support row-major matrices.\nPlease call transpose_storage_order() first.")
   }
   assert_is(probs, "numeric")
