@@ -16,10 +16,20 @@ NULL
 
 setClass("IterableFragments")
 
+setClass(
+  "WrapperFragments",
+  slots = c(
+    old = "IterableFragments",
+    new = "IterableFragments"
+  ),
+  contains = "IterableFragments"
+)
 
 # Get an external pointer to a C++ FragmentsLoader object. This is only called
 # when an operation is actively ready to run
 setGeneric("iterate_fragments", function(x) standardGeneric("iterate_fragments"))
+
+setMethod("iterate_fragments", "WrapperFragments", function(x) iterate_fragments(x@new))
 
 # Provide a short description of the IterableFragments, used for
 # pretty-printing pipelines.
@@ -28,6 +38,10 @@ setGeneric("iterate_fragments", function(x) standardGeneric("iterate_fragments")
 setGeneric("short_description", function(x) standardGeneric("short_description"))
 setMethod("short_description", "IterableFragments", function(x) {
   character(0)
+})
+setMethod("short_description", "WrapperFragments", function(x) {
+  stopifnot(all.equal(short_description(x@old), short_description(x@new)))
+  short_description(x@new)
 })
 
 #' @describeIn IterableFragments-methods Print IterableFragments
@@ -62,6 +76,10 @@ setMethod("show", "IterableFragments", function(object) {
     cat(sprintf("%d. %s\n", i, description[i]))
   }
 })
+setMethod("show", "WrapperFragments", function(object) {
+  stopifnot(all.equal(capture.output(show(object@new)), capture.output(show(object@old))))
+  show(object@new)
+})
 
 # Generic setters/getters for cell and chromosome names
 
@@ -76,6 +94,10 @@ setMethod("cellNames", "IterableFragments", function(x) {
     return(cellNames(x@fragments))
   }
   stop(sprintf("Error: cellNames not implemented on object of class %s", class(x)))
+})
+setMethod("cellNames", "WrapperFragments", function(x) {
+  stopifnot(all.equal(cellNames(x@new), cellNames(x@old)))
+  cellNames(x@new)
 })
 
 #' Set cell names
@@ -93,6 +115,11 @@ setMethod("cellNames<-", "IterableFragments", function(x, ..., value) {
   assert_len(value, length(cellNames(x)))
   new("CellRename", fragments = x, cell_names = value)
 })
+setMethod("cellNames<-", "WrapperFragments", function(x, ..., value) {
+  cellNames(x@new, ...) <- value
+  cellNames(x@old, ...) <- value
+  x
+})
 
 #' Get chromosome names
 #' @param x an IterableFragments object
@@ -105,6 +132,10 @@ setMethod("chrNames", "IterableFragments", function(x) {
     return(chrNames(x@fragments))
   }
   stop(sprintf("Error: chrNames not implemented on object of class %s", class(x)))
+})
+setMethod("chrNames", "WrapperFragments", function(x) {
+  stopifnot(all.equal(chrNames(x@new), chrNames(x@old)))
+  chrNames(x@new)
 })
 
 #' Set chromosome names
@@ -121,6 +152,11 @@ setMethod("chrNames<-", "IterableFragments", function(x, ..., value) {
   assert_is_character(value)
   assert_len(value, length(chrNames(x)))
   new("ChrRename", fragments = x, chr_names = value)
+})
+setMethod("chrNames<-", "WrapperFragments", function(x, ..., value) {
+  chrNames(x@new, ...) <- value
+  chrNames(x@old, ...) <- value
+  x
 })
 
 # Read/write from 10x fragment files
@@ -169,7 +205,7 @@ open_fragments_10x <- function(path, comment = "#", end_inclusive = TRUE) {
   if (end_inclusive) {
     res <- shift_fragments(res, shift_end = 1)
   }
-  res
+  new("WrapperFragments", old = res, new = res)
 }
 
 
@@ -298,11 +334,12 @@ write_fragments_memory <- function(fragments, compress = TRUE) {
   it <- iterate_fragments(fragments)
   if (compress) {
     res <- write_packed_fragments_cpp(it)
-    do.call(new, c("PackedMemFragments", res))
+    res <- do.call(new, c("PackedMemFragments", res))
   } else {
     res <- write_unpacked_fragments_cpp(it)
-    do.call(new, c("UnpackedMemFragments", res))
+    res <- do.call(new, c("UnpackedMemFragments", res))
   }
+  new("WrapperFragments", old = res, new = res)
 }
 
 setClass("FragmentsDir",
@@ -390,7 +427,8 @@ open_fragments_dir <- function(dir, buffer_size = 1024L) {
 
   dir <-normalizePath(dir, mustWork=FALSE)
   info <- info_fragments_file_cpp(dir, buffer_size)
-  new("FragmentsDir", dir = dir, compressed = info$compressed, buffer_size = buffer_size, cell_names = info$cell_names, chr_names = info$chr_names)
+  res <- new("FragmentsDir", dir = dir, compressed = info$compressed, buffer_size = buffer_size, cell_names = info$cell_names, chr_names = info$chr_names)
+  new("WrapperFragments", old = res, new = res)
 }
 
 setClass("FragmentsHDF5",
@@ -502,7 +540,8 @@ open_fragments_hdf5 <- function(path, group = "fragments", buffer_size = 16384L)
 
   path <- normalizePath(path, mustWork=FALSE)
   info <- info_fragments_hdf5_cpp(path, group, buffer_size)
-  new("FragmentsHDF5", path = path, group = group, compressed = info$compressed, buffer_size = buffer_size, cell_names = info$cell_names, chr_names = info$chr_names)
+  res <- new("FragmentsHDF5", path = path, group = group, compressed = info$compressed, buffer_size = buffer_size, cell_names = info$cell_names, chr_names = info$chr_names)
+  new("WrapperFragments", old = res, new = res)
 }
 
 
@@ -548,7 +587,7 @@ convert_to_fragments <- function(x, zero_based_coords = !is(x, "GRanges")) {
   names(chr_ptr) <- NULL
 
   end_max <- calculate_end_max_cpp(as.integer(x$end), chr_ptr)
-  new("UnpackedMemFragments",
+  res <- new("UnpackedMemFragments",
     cell = as.integer(x$cell_id) - 1L,
     start = as.integer(x$start),
     end = as.integer(x$end),
@@ -558,6 +597,7 @@ convert_to_fragments <- function(x, zero_based_coords = !is(x, "GRanges")) {
     chr_names = levels(x$chr),
     version = "unpacked-fragments-v2"
   )
+  new("WrapperFragments", old = res, new = res)
 }
 
 
@@ -568,7 +608,7 @@ rlang::on_load({
       if (is(from, "UnpackedMemFragments")) {
         frags <- from
       } else {
-        frags <- write_fragments_memory(from, compress = FALSE)
+        frags <- write_fragments_memory(from, compress = FALSE)@old
       }
       # Get the differences between adjacent elements on the chr_ptr list
       # to calculate how many values are in each chromosome
@@ -595,7 +635,7 @@ setAs("IterableFragments", "data.frame", function(from) {
   if (is(from, "UnpackedMemFragments")) {
     frags <- from
   } else {
-    frags <- write_fragments_memory(from, compress = FALSE)
+    frags <- write_fragments_memory(from, compress = FALSE)@old
   }
   # Get the differences between adjacent elements on the chr_ptr list
   # to calculate how many values are in each chromosome
@@ -656,6 +696,11 @@ setMethod("short_description", "ShiftFragments", function(x) {
 #' @return Shifted fragments object
 #' @export
 shift_fragments <- function(fragments, shift_start = 0L, shift_end = 0L) {
+  if (is(fragments, "WrapperFragments")) {
+    fragments@old <- shift_fragments(fragments@old, shift_start, shift_end)
+    fragments@new <- shift_fragments(fragments@new, shift_start, shift_end)
+    return(fragments)
+  }
   assert_is_wholenumber(shift_start)
   assert_is_wholenumber(shift_end)
   assert_len(shift_start, 1)
@@ -697,6 +742,11 @@ setMethod("short_description", "SelectLength", function(x) {
 #' @details Fragment length is calculated as `end-start`
 #' @export
 subset_lengths <- function(fragments, min_len = 0L, max_len = NA_integer_) {
+  if (is(fragments, "WrapperFragments")) {
+    fragments@old <- subset_lengths(fragments@old, min_len, max_len)
+    fragments@new <- subset_lengths(fragments@new, min_len, max_len)
+    return(fragments)
+  }
   assert_is_wholenumber(min_len)
   if (!is.na(max_len)) assert_is_wholenumber(max_len)
   assert_len(min_len, 1)
@@ -767,6 +817,11 @@ setMethod("short_description", "ChrSelectIndex", function(x) {
 #' 
 #' @export
 select_chromosomes <- function(fragments, chromosome_selection) {
+  if (is(fragments, "WrapperFragments")) {
+    fragments@old <- select_chromosomes(fragments@old, chromosome_selection)
+    fragments@new <- select_chromosomes(fragments@new, chromosome_selection)
+    return(fragments)
+  }
   assert_is(fragments, "IterableFragments")
   assert_is(chromosome_selection, c("character", "numeric", "logical"))
   if (is.logical(chromosome_selection)) {
@@ -851,6 +906,11 @@ setMethod("short_description", "CellSelectIndex", function(x) {
 #' 
 #' @export
 select_cells <- function(fragments, cell_selection) {
+  if (is(fragments, "WrapperFragments")) {
+    fragments@old <- select_cells(fragments@old, cell_selection)
+    fragments@new <- select_cells(fragments@new, cell_selection)
+    return(fragments)
+  }
   assert_is(fragments, "IterableFragments")
   assert_is(cell_selection, c("character", "numeric", "logical"))
   if (is.logical(cell_selection)) {
@@ -912,6 +972,11 @@ setMethod("short_description", "CellMerge", function(x) {
 #' Ordering is the same as `cellNames(fragments)`
 #' @export
 merge_cells <- function(fragments, cell_groups) {
+  if (is(fragments, "WrapperFragments")) {
+    fragments@old <- merge_cells(fragments@old, cell_groups)
+    fragments@new <- merge_cells(fragments@new, cell_groups)
+    return(fragments)
+  }
   assert_is(fragments, "IterableFragments")
   assert_not_null(cellNames(fragments))
   assert_is(cell_groups, c("character", "factor"))
@@ -1003,6 +1068,11 @@ setMethod("short_description", "CellPrefix", function(x) {
 #' @return Fragments object with prefixed names
 #' @export
 prefix_cell_names <- function(fragments, prefix) {
+  if (is(fragments, "WrapperFragments")) {
+    fragments@old <- prefix_cell_names(fragments@old, prefix)
+    fragments@new <- prefix_cell_names(fragments@new, prefix)
+    return(fragments)
+  }
   assert_is(fragments, "IterableFragments")
   assert_is(prefix, "character")
   assert_len(prefix, 1)
@@ -1058,6 +1128,11 @@ setMethod("short_description", "RegionSelect", function(x) {
 #' @return Fragments object filtered according to the selected regions
 #' @export
 select_regions <- function(fragments, ranges, invert_selection = FALSE, zero_based_coords = !is(ranges, "GRanges")) {
+  if (is(fragments, "WrapperFragments")) {
+    fragments@old <- select_regions(fragments@old, ranges, invert_selection, zero_based_coords)
+    fragments@new <- select_regions(fragments@new, ranges, invert_selection, zero_based_coords)
+    return(fragments)
+  }
   assert_is(fragments, "IterableFragments")
   ranges <- normalize_ranges(ranges, zero_based_coords = zero_based_coords)
 
@@ -1104,6 +1179,11 @@ setMethod("c", "IterableFragments", function(x, ...) {
     args <- list(x)
   } else {
     args <- c(list(x), list(...))
+  }
+  if (is(x, "WrapperFragments")) {
+    x@old <- do.call(c, lapply(args, function(x) x@old))
+    x@new <- do.call(c, lapply(args, function(x) x@new))
+    return(x)
   }
   chr_names <- chrNames(x)
   assert_not_null(chr_names)

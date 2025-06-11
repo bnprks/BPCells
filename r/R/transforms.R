@@ -65,6 +65,11 @@ setMethod("short_description", "TransformLog1p", function(x) {
 })
 #' @describeIn IterableMatrix-methods Calculate log(x + 1)
 setMethod("log1p", "IterableMatrix", function(x) {
+  if (is(x, "WrapperMatrix")) {
+    x@old <- log1p(x@old)
+    x@new <- log1p(x@new)
+    return(x)
+  }
   wrapMatrix("TransformLog1p", convert_matrix_type(x, "double"))
 })
 
@@ -82,6 +87,11 @@ setMethod("short_description", "TransformLog1pSlow", function(x) {
 #' @describeIn IterableMatrix-methods Calculate log(x + 1) (non-SIMD version)
 #' @export
 log1p_slow <- function(x) {
+  if (is(x, "WrapperMatrix")) {
+    x@old <- log1p_slow(x@old)
+    x@new <- log1p_slow(x@new)
+    return(x)
+  }
   wrapMatrix("TransformLog1pSlow", convert_matrix_type(x, "double"))
 }
 
@@ -98,6 +108,11 @@ setMethod("short_description", "TransformExpm1", function(x) {
 })
 #' @describeIn IterableMatrix-methods Calculate exp(x) - 1
 setMethod("expm1", "IterableMatrix", function(x) {
+  if (is(x, "WrapperMatrix")) {
+    x@old <- expm1(x@old)
+    x@new <- expm1(x@new)
+    return(x)
+  }
   wrapMatrix("TransformExpm1", convert_matrix_type(x, "double"))
 })
 
@@ -114,6 +129,11 @@ setMethod("short_description", "TransformExpm1Slow", function(x) {
 #' @describeIn IterableMatrix-methods Calculate exp(x) - 1 (non-SIMD version)
 #' @export
 expm1_slow <- function(x) {
+  if (is(x, "WrapperMatrix")) {
+    x@old <- exmp1_slow(x@old)
+    x@new <- exmp1_slow(x@new)
+    return(x)
+  }
   wrapMatrix("TransformExpm1Slow", convert_matrix_type(x, "double"))
 }
 
@@ -146,6 +166,11 @@ setMethod("short_description", "TransformPow", function(x) {
 
 #' @describeIn IterableMatrix-methods Calculate x^y (elementwise; y > 0)
 setMethod("^", signature(e1 = "IterableMatrix", e2 = "numeric"), function(e1, e2) {
+  if (is(e1, "WrapperMatrix")) {
+    e1@old <- e1@old^e2
+    e1@new <- e1@new^e2
+    return(e1)
+  }
   assert_len(e2, 1)
   assert_true(e2 > 0)
   if (e2 == 2) {
@@ -183,6 +208,11 @@ setMethod("short_description", "TransformMin", function(x) {
 #' @rdname min_elementwise
 #' @export
 min_scalar <- function(mat, val) {
+  if (is(mat, "WrapperMatrix")) {
+    mat@old <- min_scalar(mat@old, val)
+    mat@new <- min_scalar(mat@new, val)
+    return(mat)
+  }
   assert_is(mat, "IterableMatrix")
   assert_is(val, "numeric")
   assert_greater_than_zero(val)
@@ -216,6 +246,11 @@ setMethod("short_description", "TransformMinByRow", function(x) {
 #' @description **min_by_row**: Take the minimum with a per-row constant
 #' @export
 min_by_row <- function(mat, vals) {
+  if (is(mat, "WrapperMatrix")) {
+    mat@old <- min_by_row(mat@old, vals)
+    mat@new <- min_by_row(mat@new, vals)
+    return(mat)
+  }
   if (is_row_major(mat)) {
     return(t(min_by_col(t(mat), vals)))
   }
@@ -249,6 +284,11 @@ setMethod("short_description", "TransformMinByCol", function(x) {
 #' @description **min_by_col**: Take the minimum with a per-col constant
 #' @export
 min_by_col <- function(mat, vals) {
+  if (is(mat, "WrapperMatrix")) {
+    mat@old <- min_by_col(mat@old, vals)
+    mat@new <- min_by_col(mat@new, vals)
+    return(mat)
+  }
   if (is_row_major(mat)) {
     return(t(min_by_row(t(mat), vals)))
   }
@@ -296,6 +336,11 @@ setMethod("short_description", "TransformBinarize", function(x) {
 #' @return binarized IterableMatrix object
 #' @export
 binarize <- function(mat, threshold=0, strict_inequality=TRUE) {
+  if (is(mat, "WrapperMatrix")) {
+    mat@old <- binarize(mat@old, threshold, strict_inequality)
+    mat@new <- binarize(mat@new, threshold, strict_inequality)
+    return(mat)
+  }
   assert_is(mat, "IterableMatrix")
   assert_is(threshold, "numeric")
   assert_len(threshold, 1)
@@ -361,6 +406,11 @@ setMethod("short_description", "TransformRound", function(x) {
 # Initially, allow only digits=0.
 #' @describeIn IterableMatrix-methods round to nearest integer (digits must be 0)
 setMethod("round", "IterableMatrix", function(x, digits=0) {
+  if (is(x, "WrapperMatrix")) {
+    x@old <- round(x@old, digits)
+    x@new <- round(x@new, digits)
+    return(x)
+  }
   assert_is(x, "IterableMatrix")
   assert_is(digits, "numeric")
 
@@ -440,6 +490,12 @@ setMethod("short_description", "SCTransformPearsonTransposeSlow", function(x) {
 #' @return IterableMatrix
 #' @export
 sctransform_pearson <- function(mat, gene_theta, gene_beta, cell_read_counts, min_var = -Inf, clip_range = c(-10, 10), columns_are_cells=TRUE, slow=FALSE) {
+  if (is(mat, "WrapperMatrix")) {
+    mat@old <- sctransform_pearson(mat@old, gene_theta, gene_beta, cell_read_counts, min_var, clip_range, columns_are_cells, slow)
+    mat@new <- sctransform_pearson(mat@new, gene_theta, gene_beta, cell_read_counts, min_var, clip_range, columns_are_cells, slow)
+    return(mat)
+  }
+
   assert_is(mat, "IterableMatrix")
   assert_is_numeric(gene_theta)
   assert_is_numeric(gene_beta)
@@ -766,6 +822,26 @@ setMethod("+", signature(e1 = "numeric", e2 = "TransformScaleShift"), function(e
 })
 
 
+setMethod("*", signature(e1 = "WrapperMatrix", e2 = "numeric"), function(e1, e2) {
+  e1@old <- e1@old * e2
+  e1@new <- e1@new * e2
+  e1
+})
+setMethod("*", signature(e1 = "numeric", e2 = "WrapperMatrix"), function(e1, e2) {
+  e2@old <- e2@old * e1
+  e2@new <- e2@new * e1
+  e2
+})
+setMethod("+", signature(e1 = "WrapperMatrix", e2 = "numeric"), function(e1, e2) {
+  e1@old <- e1@old + e2
+  e1@new <- e1@new + e2
+  e1
+})
+setMethod("+", signature(e1 = "numeric", e2 = "WrapperMatrix"), function(e1, e2) {
+  e2@old <- e2@old + e1
+  e2@new <- e2@new + e1
+  e2
+})
 
 #################
 # Arithmetic helpers
@@ -878,9 +954,15 @@ setMethod("short_description", "TransformLinearResidual", function(x) {
 #' @param prediction_axis Which axis corresponds to prediction outputs from the linear models 
 #' (e.g. the gene axis in typical single cell analysis). Options include "row" (default) and "col". 
 #'
-#' @return IterableMatrix 
+#' @return IterableMatrix
 #' @export
 regress_out <- function(mat, latent_data, prediction_axis = c("row", "col")) {
+  if (is(mat, "WrapperMatrix")) {
+    mat@old <- regress_out(mat@old, latent_data, prediction_axis)
+    mat@new <- regress_out(mat@new, latent_data, prediction_axis)
+    return(mat)
+  }
+
   prediction_axis <- match.arg(prediction_axis)
   assert_is(mat, "IterableMatrix")
   assert_is(latent_data, "data.frame")

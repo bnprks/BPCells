@@ -27,6 +27,22 @@ setClass("IterableMatrix",
   )
 )
 
+setClass("WrapperMatrix",
+  slots = c(
+    old = "IterableMatrix",
+    new = "IterableMatrix"
+  ),
+  contains="IterableMatrix"
+)
+setMethod("dimnames", "WrapperMatrix", function(x) {
+  stopifnot(all.equal(dimnames(x@old), dimnames(x@new)))
+  dimnames(x@new)
+})
+setMethod("dim", "WrapperMatrix", function(x) {
+  stopifnot(all.equal(dim(x@old), dim(x@new)))
+  dim(x@new)
+})
+
 #' Construct an S4 matrix object wrapping another matrix object
 #'
 #' Helps to avoid duplicate storage of dimnames
@@ -56,15 +72,25 @@ denormalize_dimnames <- function(dimnames) {
 #' @keywords internal
 setGeneric("iterate_matrix", function(x) standardGeneric("iterate_matrix"))
 
+setMethod("iterate_matrix", "WrapperMatrix", function(x) iterate_matrix(x@new))
+
 #' @describeIn IterableMatrix-methods Get the matrix data type (mat_uint32_t, mat_float, or mat_double for now)
 #' @export
 setGeneric("matrix_type", function(x) standardGeneric("matrix_type"))
+setMethod("matrix_type", "WrapperMatrix", function(x) {
+  stopifnot(matrix_type(x@old) == matrix_type(x@new))
+  matrix_type(x@new)
+})
 
 #' @describeIn IterableMatrix-methods Get the matrix storage order ("row" or "col")
 #' @export
 setGeneric("storage_order", function(x) standardGeneric("storage_order"))
 
 setMethod("storage_order", "IterableMatrix", function(x) if(x@transpose) "row" else "col")
+setMethod("storage_order", "WrapperMatrix", function(x) {
+  stopifnot(storage_order(x@old) == storage_order(x@new))
+  storage_order(x@new)
+})
 
 is_row_major <- function(x) storage_order(x) == "row"
 
@@ -85,6 +111,15 @@ setMethod("matrix_inputs", "IterableMatrix", function(x) {
   }
   rlang::abort(sprintf("matrix_inputs not defined for inputs of type %s", class(x)))
 })
+setMethod("matrix_inputs", "WrapperMatrix", function(x) {
+  old <- matrix_inputs(x@old)
+  new <- matrix_inputs(x@new)
+  stopifnot(length(old) == length(new))
+  # Return a list of WrapperMatrix objects
+  lapply(seq_along(old), function(i) {
+      new("WrapperMatrix", old = old[[i]], new = new[[i]], transpose = old[[i]]@transpose, dim = old[[i]]@dim, dimnames = old[[i]]@dimnames)
+  })
+})
 
 setGeneric("matrix_inputs<-", function(x, ..., value) standardGeneric("matrix_inputs<-"))
 setMethod("matrix_inputs<-", "IterableMatrix", function(x, ..., value) {
@@ -96,6 +131,12 @@ setMethod("matrix_inputs<-", "IterableMatrix", function(x, ..., value) {
     return(x)
   }
   rlang::abort(sprintf("matrix_inputs not defined for inputs of type %s", class(x)))
+})
+setMethod("matrix_inputs<-", "WrapperMatrix", function(x, ..., value) {
+  # Assume the inputs are all "WrapperMatrix" objects then split up appropriately
+  matrix_inputs(x@old, ...) <- lapply(value, function(x) x@old)
+  matrix_inputs(x@new, ...) <- lapply(value, function(x) x@new)
+  x
 })
 
 #' Get/set inputs to a matrix transform
@@ -162,6 +203,10 @@ all_matrix_inputs <- function(x) {
 setMethod("short_description", "IterableMatrix", function(x) {
   character(0)
 })
+setMethod("short_description", "WrapperMatrix", function(x) {
+  stopifnot(all.equal(short_description(x@old), short_description(x@new)))
+  short_description(x@new)
+})
 
 
 #' @describeIn IterableMatrix-methods Display an IterableMatrix
@@ -190,6 +235,10 @@ setMethod("show", "IterableMatrix", function(object) {
     cat(sprintf("%d. %s\n", i, description[i]))
   }
 })
+setMethod("show", "WrapperMatrix", function(object) {
+  stopifnot(all.equal(capture.output(show(object@new)), capture.output(show(object@old))))
+  show(object@new)
+})
 
 
 #' @describeIn IterableMatrix-methods Transpose an IterableMatrix
@@ -204,6 +253,11 @@ setMethod("t", signature(x = "IterableMatrix"), function(x) {
     matrix_inputs(x) <- lapply(matrix_inputs(x), t)
   }
   return(x)
+})
+setMethod("t", "WrapperMatrix", function(x) {
+  x@old <- t(x@old)
+  x@new <- t(x@new)
+  x
 })
 
 # Dense multiply operators (sparse*dense_mat and sparse*dense_vec)
@@ -223,6 +277,12 @@ setMethod("%*%", signature(x = "IterableMatrix", y = "matrix"), function(x, y) {
   colnames(res) <- colnames(y)
   res
 })
+setMethod("%*%", signature(x = "WrapperMatrix", y = "matrix"), function(x, y) {
+  old <- x@old %*% y
+  new <- x@new %*% y
+  stopifnot(all.equal(old, new))
+  return(new)
+})
 
 setMethod("%*%", signature(x = "matrix", y = "IterableMatrix"), function(x, y) {
   iter <- iterate_matrix(convert_matrix_type(y, "double"))
@@ -234,6 +294,12 @@ setMethod("%*%", signature(x = "matrix", y = "IterableMatrix"), function(x, y) {
   rownames(res) <- rownames(x)
   colnames(res) <- colnames(y)
   res
+})
+setMethod("%*%", signature(x = "matrix", y = "WrapperMatrix"), function(x, y) {
+  old <- x %*% y@old
+  new <- x %*% y@new
+  stopifnot(all.equal(old, new))
+  return(new)
 })
 
 setMethod("%*%", signature(x = "IterableMatrix", y = "numeric"), function(x, y) {
@@ -247,6 +313,12 @@ setMethod("%*%", signature(x = "IterableMatrix", y = "numeric"), function(x, y) 
   rownames(res) <- rownames(x)
   res
 })
+setMethod("%*%", signature(x = "WrapperMatrix", y = "numeric"), function(x, y) {
+  old <- x@old %*% y
+  new <- x@new %*% y
+  stopifnot(all.equal(old, new))
+  return(new)
+})
 
 setMethod("%*%", signature(x = "numeric", y = "IterableMatrix"), function(x, y) {
   iter <- iterate_matrix(convert_matrix_type(y, "double"))
@@ -258,6 +330,12 @@ setMethod("%*%", signature(x = "numeric", y = "IterableMatrix"), function(x, y) 
   res <- matrix(res, nrow=1)
   colnames(res) <- colnames(y)
   res
+})
+setMethod("%*%", signature(x = "numeric", y = "WrapperMatrix"), function(x, y) {
+  old <- x %*% y@old
+  new <- x %*% y@new
+  stopifnot(all.equal(old, new))
+  return(new)
 })
 
 #' Represent a sparse matrix-vector product operation
@@ -385,6 +463,11 @@ setMethod("%*%", signature(x = "IterableMatrix", y = "IterableMatrix"), function
   dimnames <- list(rownames(x), colnames(y))
   new("MatrixMultiply", left = x, right = y, transpose = FALSE, dim = dim, dimnames = dimnames)
 })
+setMethod("%*%", signature(x = "WrapperMatrix", y = "WrapperMatrix"), function(x, y) {
+  x@old <- x@old %*% y@old
+  x@new <- x@new %*% y@new
+  x
+})
 
 setMethod("%*%", signature(x = "IterableMatrix", y = "dgCMatrix"), function(x, y) {
   if (is_row_major(x)) {
@@ -393,6 +476,11 @@ setMethod("%*%", signature(x = "IterableMatrix", y = "dgCMatrix"), function(x, y
     x %*% as(y, "IterableMatrix")
   }
 })
+setMethod("%*%", signature(x = "WrapperMatrix", y = "dgCMatrix"), function(x, y) {
+  x@old <- x@old %*% y
+  x@new <- x@new %*% y
+  x
+})
 
 setMethod("%*%", signature(x = "dgCMatrix", y = "IterableMatrix"), function(x, y) {
   if (is_row_major(y)) {
@@ -400,6 +488,11 @@ setMethod("%*%", signature(x = "dgCMatrix", y = "IterableMatrix"), function(x, y
   } else {
     as(x, "IterableMatrix") %*% y
   }
+})
+setMethod("%*%", signature(x = "dgCMatrix", y = "WrapperMatrix"), function(x, y) {
+  y@old <- x %*% y@old
+  y@new <- x %*% y@new
+  y
 })
 
 
@@ -475,6 +568,11 @@ setMethod("short_description", "MatrixMask", function(x) {
 #' @param mask Mask matrix (IterableMatrix or dgCMatrix)
 #' @keywords internal
 mask_matrix <- function(mat, mask, invert=FALSE) {
+  if (is(mat, "WrapperMatrix")) {
+    mat@old <- mask_matrix(mat@old, mask, invert)
+    mat@new <- mask_matrix(mat@new, mask, invert)
+    return(mat)
+  }
   assert_is(mat, "IterableMatrix")
   assert_is(invert, "logical")
   assert_is(mask, c("IterableMatrix", "dgCMatrix"))
@@ -560,6 +658,10 @@ setMethod("rowSums", signature(x = "IterableMatrix"), function(x) {
   names(res) <- rownames(x)
   res
 })
+setMethod("rowSums", signature(x = "WrapperMatrix"), function(x) {
+  stopifnot(all.equal(rowSums(x@old), rowSums(x@new)))
+  rowSums(x@new)
+})
 
 #' @param x IterableMatrix object
 #' @describeIn IterableMatrix-methods Calculate colSums
@@ -574,16 +676,28 @@ setMethod("colSums", signature(x = "IterableMatrix"), function(x) {
   names(res) <- colnames(x)
   res
 })
+setMethod("colSums", signature(x = "WrapperMatrix"), function(x) {
+  stopifnot(all.equal(colSums(x@old), colSums(x@new)))
+  colSums(x@new)
+})
 
 #' @param x IterableMatrix object
 #' @describeIn IterableMatrix-methods Calculate rowMeans
 #' @return * `rowMeans()`: vector of row means
 setMethod("rowMeans", signature(x = "IterableMatrix"), function(x) rowSums(x) / ncol(x))
+setMethod("rowMeans", signature(x = "WrapperMatrix"), function(x) {
+  stopifnot(all.equal(rowMeans(x@old), rowMeans(x@new)))
+  rowMeans(x@new)
+})
 
 #' @param x IterableMatrix object
 #' @describeIn IterableMatrix-methods Calculate colMeans
 #' @return * `colMeans()`: vector of col means
 setMethod("colMeans", signature(x = "IterableMatrix"), function(x) colSums(x) / nrow(x))
+setMethod("colMeans", signature(x = "WrapperMatrix"), function(x) {
+  stopifnot(all.equal(colMeans(x@old), colMeans(x@new)))
+  colMeans(x@new)
+})
 
 
 # Strategy for rowVars and colVars:
@@ -616,6 +730,11 @@ colVars.IterableMatrix <- function(x, rows = NULL, cols = NULL, na.rm = FALSE, c
   }
   matrix_stats(x, col_stats="variance")$col_stats["variance",]
 }
+#' @export
+colVars.WrapperMatrix <- function(x, rows = NULL, cols = NULL, na.rm = FALSE, center = NULL, ..., useNames = TRUE) {
+  stopifnot(all.equal(colVars(x@old), colVars(x@new)))
+  colVars(x@new)
+}
 rlang::on_load({
   if (requireNamespace("MatrixGenerics", quietly=TRUE)) {
     setMethod(MatrixGenerics::colVars, "IterableMatrix", colVars.IterableMatrix)
@@ -642,6 +761,11 @@ rowVars.IterableMatrix <- function(x, rows = NULL, cols = NULL, na.rm = FALSE, c
     stop("rowVars(IterableMatrix) doesn't support extra arguments rows, cols, na.rm, center, or useNames")
   }
   matrix_stats(x, row_stats="variance")$row_stats["variance",]
+}
+#' @export
+rowVars.WrapperMatrix <- function(x, rows = NULL, cols = NULL, na.rm = FALSE, center = NULL, ..., useNames = TRUE) {
+  stopifnot(all.equal(rowVars(x@old), rowVars(x@new)))
+  rowVars(x@new)
 }
 rlang::on_load({
   if (requireNamespace("MatrixGenerics", quietly=TRUE)) {
@@ -680,6 +804,11 @@ rowMaxs.IterableMatrix <- function(x, rows = NULL, cols = NULL, na.rm = FALSE, .
   names(res) <- rownames(x)
   return(res)
 }
+#' @export
+rowMaxs.WrapperMatrix <- function(x, rows = NULL, cols = NULL, na.rm = FALSE, ...) {
+  stopifnot(all.equal(rowMaxs(x@old), rowMaxs(x@new)))
+  rowMaxs(x@new)
+}
 rlang::on_load({
   if (requireNamespace("MatrixGenerics", quietly=TRUE)) {
     setMethod(MatrixGenerics::rowMaxs, "IterableMatrix", rowMaxs.IterableMatrix)
@@ -713,6 +842,11 @@ colMaxs.IterableMatrix <- function(x, rows = NULL, cols = NULL, na.rm = FALSE, .
   }
   names(res) <- colnames(x)
   return(res)
+}
+#' @export
+colMaxs.WrapperMatrix <- function(x, rows = NULL, cols = NULL, na.rm = FALSE, ...) {
+  stopifnot(all.equal(colMaxs(x@old), colMaxs(x@new)))
+  colMaxs(x@new)
 }
 rlang::on_load({
   if (requireNamespace("MatrixGenerics", quietly=TRUE)) {
@@ -884,6 +1018,11 @@ setMethod("[<-", "IterableMatrix", function(x, i, j, ..., value) {
   
   return(x)
 })
+setMethod("[<-", "WrapperMatrix", function(x, i, j, ..., value) {
+  x@old[rlang::maybe_missing(i), rlang::maybe_missing(j), ...] <- value
+  x@new[rlang::maybe_missing(i), rlang::maybe_missing(j), ...] <- value
+  x
+})
 
 setMethod("[", "MatrixSubset", function(x, i, j, ...) {
   if (missing(x)) stop("x is missing in matrix selection")
@@ -925,7 +1064,11 @@ setMethod("[", "MatrixSubset", function(x, i, j, ...) {
   if (!is.null(colnames(x))) colnames(res) <- colnames(x)
   res
 })
-
+setMethod("[", "WrapperMatrix", function(x, i, j, ...) {
+  x@old <- x@old[rlang::maybe_missing(i), rlang::maybe_missing(j), ...]
+  x@new <- x@new[rlang::maybe_missing(i), rlang::maybe_missing(j), ...]
+  x
+})
 
 setMethod("iterate_matrix", "MatrixSubset", function(x) {
   assert_true(matrix_type(x) %in% c("uint32_t", "float", "double"))
@@ -1032,6 +1175,16 @@ setMethod("dimnames<-", signature(x = "IterableMatrix", value = "NULL"), functio
     x <- wrapMatrix("RenameDims", x)
   }
   x@dimnames <- list(NULL, NULL)
+  x
+})
+setMethod("dimnames<-", signature(x = "WrapperMatrix", value = "list"), function(x, value) {
+  dimnames(x@old) <- value
+  dimnames(x@new) <- value
+  x
+})
+setMethod("dimnames<-", signature(x = "WrapperMatrix", value = "NULL"), function(x, value) {
+  dimnames(x@old) <- value
+  dimnames(x@new) <- value
   x
 })
 
@@ -1145,6 +1298,16 @@ setMethod("rbind2", signature(x = "IterableMatrix", y = "missing"), function(x, 
 setMethod("rbind2", signature(x = "IterableMatrix", y = "dgCMatrix"), function(x, y, ...) rbind2(x, as(y, "IterableMatrix")))
 setMethod("rbind2", signature(x = "dgCMatrix", y = "IterableMatrix"), function(x, y, ...) rbind2(as(x, "IterableMatrix"), y))
 
+setMethod("rbind2", signature(x = "WrapperMatrix", y = "WrapperMatrix"), function(x, y, ...) {
+  x@old <- rbind2(x@old, y@old)
+  x@new <- rbind2(x@new, y@new)
+  x
+})
+setMethod("rbind2", signature(x = "WrapperMatrix", y = "missing"), function(x, y, ...) x)
+setMethod("rbind2", signature(x = "WrapperMatrix", y = "dgCMatrix"), function(x, y, ...) rbind2(x, as(y, "IterableMatrix")))
+setMethod("rbind2", signature(x = "dgCMatrix", y = "WrapperMatrix"), function(x, y, ...) rbind2(as(x, "IterableMatrix"), y))
+
+
 #' Set matrix op thread count
 #'
 #' Set number of threads to use for sparse-dense multiply and matrix_stats.
@@ -1154,6 +1317,11 @@ setMethod("rbind2", signature(x = "dgCMatrix", y = "IterableMatrix"), function(x
 #' @param threads Number of threads to use for execution
 #' @keywords internal
 set_threads <- function(mat, threads=0L) {
+  if (is(mat, "WrapperMatrix")) {
+    mat@old <- set_threads(mat@old, threads)
+    mat@new <- set_threads(mat@new, threads)
+    return(mat)
+  }
   assert_is(mat, c("RowBindMatrices", "ColBindMatrices"))
   assert_is_wholenumber(threads)
   assert_true(threads >= 0)
@@ -1235,6 +1403,16 @@ setMethod("cbind2", signature(x = "IterableMatrix", y = "IterableMatrix"), funct
 setMethod("cbind2", signature(x = "IterableMatrix", y = "missing"), function(x, y, ...) x)
 setMethod("cbind2", signature(x = "IterableMatrix", y = "dgCMatrix"), function(x, y, ...) cbind2(x, as(y, "IterableMatrix")))
 setMethod("cbind2", signature(x = "dgCMatrix", y = "IterableMatrix"), function(x, y, ...) cbind2(as(x, "IterableMatrix"), y))
+
+setMethod("cbind2", signature(x = "WrapperMatrix", y = "WrapperMatrix"), function(x, y, ...) {
+  x@old <- cbind2(x@old, y@old)
+  x@new <- cbind2(x@new, y@new)
+  x
+})
+setMethod("cbind2", signature(x = "WrapperMatrix", y = "missing"), function(x, y, ...) x)
+setMethod("cbind2", signature(x = "WrapperMatrix", y = "dgCMatrix"), function(x, y, ...) cbind2(x, as(y, "IterableMatrix")))
+setMethod("cbind2", signature(x = "dgCMatrix", y = "WrapperMatrix"), function(x, y, ...) cbind2(as(x, "IterableMatrix"), y))
+
 
 # Row bind needs specialization because there's not a default row-seek operation
 setMethod("[", "RowBindMatrices", function(x, i, j, ...) {
@@ -1631,7 +1809,7 @@ write_matrix_memory <- function(mat, compress = TRUE) {
   m$shape <- NULL
   m$storage_order <- NULL
   res <- do.call(new, c(class, m))
-  res
+  new("WrapperMatrix", old = res, new = res, transpose = res@transpose, dim = res@dim, dimnames = res@dimnames)
 }
 
 setClass("MatrixDir",
@@ -1729,11 +1907,12 @@ open_matrix_dir <- function(dir, buffer_size = 8192L) {
 
   dir <- normalizePath(dir, mustWork = FALSE)
   info <- dims_matrix_file_cpp(dir, buffer_size)
-  new("MatrixDir",
+  res <- new("MatrixDir",
     dir = dir, dim = info$dims, compressed = info$compressed, buffer_size = buffer_size,
     dimnames = normalized_dimnames(info$row_names, info$col_names), type = info$type,
     transpose = info$transpose
   )
+  new("WrapperMatrix", old = res, new = res, transpose = res@transpose, dim = res@dim, dimnames = res@dimnames)
 }
 
 setClass("EXPERIMENTAL_MatrixDirCompressedCol",
@@ -1826,11 +2005,12 @@ EXPERIMENTAL_open_matrix_dir <- function(dir, buffer_size = 8192L) {
 
   dir <- normalizePath(dir, mustWork = FALSE)
   info <- EXPERIMENTAL_dims_packed_sparse_column_matrix_file_cpp(dir, buffer_size)
-  new("EXPERIMENTAL_MatrixDirCompressedCol",
+  res <- new("EXPERIMENTAL_MatrixDirCompressedCol",
     dir = dir, dim = info$dims, buffer_size = buffer_size,
     dimnames = normalized_dimnames(info$row_names, info$col_names),
     transpose = info$transpose
   )
+  new("WrapperMatrix", old = res, new = res, transpose = res@transpose, dim = res@dim, dimnames = res@dimnames)
 }
 
 setClass("MatrixH5",
@@ -1947,11 +2127,12 @@ open_matrix_hdf5 <- function(path, group, buffer_size = 16384L) {
 
   path <- normalizePath(path, mustWork = FALSE)
   info <- dims_matrix_hdf5_cpp(path, group, buffer_size)
-  new("MatrixH5",
+  res <- new("MatrixH5",
     path = path, group = group, dim = info$dims, compressed = info$compressed, buffer_size = buffer_size,
     dimnames = normalized_dimnames(info$row_names, info$col_names), type = info$type,
     transpose = info$transpose
   )
+  new("WrapperMatrix", old = res, new = res, transpose = res@transpose, dim = res@dim, dimnames = res@dimnames)
 }
 
 setClass("10xMatrixH5",
@@ -2012,6 +2193,7 @@ open_matrix_10x_hdf5 <- function(path, feature_type = NULL, buffer_size = 16384L
                path = path, group = group, type = info$type, dim = info$dims, buffer_size = buffer_size,
                dimnames = normalized_dimnames(info$row_names, info$col_names)
     )
+    res <- new("WrapperMatrix", old = res, new = res, transpose = res@transpose, dim = res@dim, dimnames = res@dimnames)
     if (!is.null(feature_type)) {
       valid_features <- read_hdf5_string_cpp(path, file.path(group, "features/feature_type"), buffer_size) %in% feature_type # nolint
       res <- res[valid_features, ]
@@ -2192,6 +2374,7 @@ open_matrix_anndata_hdf5 <- function(path, group = "X", buffer_size = 16384L) {
     transpose = info$transpose,
     type = info$type
   )
+  new("WrapperMatrix", old = res, new = res, transpose = res@transpose, dim = res@dim, dimnames = res@dimnames)
 
   return(t(res))
 }
@@ -2403,6 +2586,8 @@ peak_matrix <- function(fragments, ranges, mode = c("insertions", "fragments", "
   if (explicit_peak_names) {
     res@dimnames[[2]] <- stringr::str_c(res@chr_levels[chr_id + 1], ":", ranges$start, "-", ranges$end)
   }
+  res <- new("WrapperMatrix", old = res, new = res, transpose = res@transpose, dim = res@dim, dimnames = res@dimnames)
+
   return(t(res))
 }
 
@@ -2545,12 +2730,16 @@ tile_matrix <- function(fragments, ranges, mode = c("insertions", "fragments"), 
   if (explicit_tile_names) {
     res@dimnames[[2]] <- get_tile_names_cpp(chr_id, ranges$start, ranges$end, ranges$tile_width, res@chr_levels)
   }
-  return(t(res))
+  res <- t(res)
+  new("WrapperMatrix", old = res, new = res, transpose = res@transpose, dim = res@dim, dimnames = res@dimnames)
 }
 
 #' Get ranges corresponding to selected tiles of a tile matrix
 #' @keywords internal
 tile_ranges <- function(tile_matrix, selection) {
+  if (is(tile_matrix, "WrapperMatrix")) {
+    tile_matrix <- tile_matrix@old
+  }
   # Handle manually transposed tile_matrix objects
   if (!is_row_major(tile_matrix)) {
     tile_matrix <- t(tile_matrix)
@@ -2668,6 +2857,11 @@ setMethod("[", "ConvertMatrixType", function(x, i, j, ...) {
 #' @return IterableMatrix object
 #' @export
 convert_matrix_type <- function(matrix, type = c("uint32_t", "double", "float")) {
+  if (is(matrix, "WrapperMatrix")) {
+    matrix@old <- convert_matrix_type(matrix@old, type)
+    matrix@new <- convert_matrix_type(matrix@new, type)
+    return(matrix)
+  }
   assert_is(matrix, c("dgCMatrix", "IterableMatrix"))
   type <- match.arg(type)
   if (is(matrix, "dgCMatrix")) {
@@ -2723,7 +2917,8 @@ setMethod("matrix_type", signature(x = "Iterable_dgCMatrix_wrapper"), function(x
 setMethod("matrix_inputs", "Iterable_dgCMatrix_wrapper", function(x) list())
 
 setAs("dgCMatrix", "IterableMatrix", function(from) {
-  new("Iterable_dgCMatrix_wrapper", dim = dim(from), dimnames = dimnames(from), transpose = FALSE, mat = from)
+  res <- new("Iterable_dgCMatrix_wrapper", dim = dim(from), dimnames = dimnames(from), transpose = FALSE, mat = from)
+  new("WrapperMatrix", old = res, new = res, transpose = res@transpose, dim = res@dim, dimnames = res@dimnames)
 })
 setMethod("iterate_matrix", "Iterable_dgCMatrix_wrapper", function(x) {
   if (is_row_major(x)) x <- t(x)
@@ -2739,7 +2934,7 @@ setMethod("iterate_matrix", "dgCMatrix", function(x) {
 })
 
 setAs("IterableMatrix", "dgCMatrix", function(from) {
-  res <- write_matrix_memory(convert_matrix_type(from, "double"), compress=FALSE)
+  res <- write_matrix_memory(convert_matrix_type(from, "double"), compress = FALSE)@old
   if (length(res@index) >= 2^31-1) {
     rlang::abort(c(
       "Error converting IterableMatrix to dgCMatrix",
@@ -2767,6 +2962,12 @@ setAs("IterableMatrix", "dgCMatrix", function(from) {
       dimnames = dimnames(res)
     ))
   }
+})
+setAs("WrapperMatrix", "dgCMatrix", function(from) {
+  old <- as(from@old, "dgCMatrix")
+  new <- as(from@new, "dgCMatrix")
+  stopifnot(all.equal(old, new))
+  new
 })
 
 # Add conversion to and from base R dense matrices
@@ -2823,6 +3024,12 @@ matrix_stats <- function(matrix,
                          col_stats = c("none", "nonzero", "mean", "variance"),
                          threads = 0L
                          ) {
+  if (is(matrix, "WrapperMatrix")) {
+    old <- matrix_stats(matrix@old, row_stats, col_stats, threads)
+    new <- matrix_stats(matrix@new, row_stats, col_stats, threads)
+    stopifnot(all.equal(old, new))
+    return(new)
+  }
   if (!is(matrix, "IterableMatrix")) {
     if (canCoerce(matrix, "IterableMatrix")) {
       matrix <- as(matrix, "IterableMatrix")
@@ -2920,6 +3127,12 @@ svds.IterableMatrix <- function(A, k, nu = k, nv = k, opts = list(), threads=0, 
   )
 }
 
+svds.WrapperMatrix <- function(A, k, nu = k, nv = k, opts = list(), threads = 0, ...) {
+  old <- svds(A@old, k, nu, nv, opts, threads, ...)
+  new <- svds(A@new, k, nu, nv, opts, threads, ...)
+  stopifnot(all.equal(old, new))
+  return(new)
+}
 
 #' Calculate the MD5 checksum of an IterableMatrix
 #'
