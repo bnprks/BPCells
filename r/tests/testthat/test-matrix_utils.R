@@ -597,6 +597,10 @@ test_rowvar_colvar <- function(m1, i1) {
   expect_equal(BPCells::colVars(i1), BPCells::colVars(as.matrix(m1)))
   expect_equal(BPCells::colVars(i2), BPCells::colVars(as.matrix(m2)))
 
+  # Check that everything works fine with integers
+  i3 <- convert_matrix_type(i1, "uint32_t")
+  i4 <- convert_matrix_type(i2, "uint32_t")
+
   expect_equal(BPCells::rowVars(i3), BPCells::rowVars(as.matrix(m1)))
   expect_equal(BPCells::rowVars(i4), BPCells::rowVars(as.matrix(m2)))
   expect_equal(BPCells::colVars(i3), BPCells::colVars(as.matrix(m1)))
