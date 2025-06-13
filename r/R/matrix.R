@@ -1107,7 +1107,18 @@ setMethod("short_description", "RowBindMatrices", function(x) {
 
 setMethod("rbind2", signature(x = "IterableMatrix", y = "IterableMatrix"), function(x, y, ...) {
   if (x@transpose != y@transpose) stop("Cannot merge matrices with different internal transpose states.\nPlease use transpose_storage_order().")
-  if (matrix_type(x) != matrix_type(y)) stop("Cannot merge matrices with different data type.\nPlease use convert_matrix_type().")
+  if (matrix_type(x) != matrix_type(y)) {
+    # upcast if mismatching types
+    type_order <- c("uint32_t", "float", "double")
+    new_type <- type_order[max(match(matrix_type(x), type_order), match(matrix_type(y), type_order))]
+    rlang::warn(
+      sprintf("First matrix type: %s, second matrix type: %s.\nUpcasting to %s to match matrix types", 
+        matrix_type(x), matrix_type(y), new_type
+      )
+    )
+    x <- convert_matrix_type(x, new_type)
+    y <- convert_matrix_type(y, new_type)
+  }
   if (x@transpose) {
     return(t(cbind2(t(x), t(y))))
   }
@@ -1199,7 +1210,18 @@ setMethod("short_description", "ColBindMatrices", function(x) {
 
 setMethod("cbind2", signature(x = "IterableMatrix", y = "IterableMatrix"), function(x, y, ...) {
   if (x@transpose != y@transpose) stop("Cannot merge matrices with different internal transpose states.\nPlease use transpose_storage_order().")
-  if (matrix_type(x) != matrix_type(y)) stop("Cannot merge matrices with different data type.\nPlease use convert_matrix_type().")
+  if (matrix_type(x) != matrix_type(y)) {
+    # upcast if mismatching types
+    type_order <- c("uint32_t", "float", "double")
+    new_type <- type_order[max(match(matrix_type(x), type_order), match(matrix_type(y), type_order))]
+    rlang::warn(
+      sprintf("First matrix type: %s, second matrix type: %s.\nUpcasting to %s to match matrix types", 
+        matrix_type(x), matrix_type(y), new_type
+      )
+    )
+    x <- convert_matrix_type(x, new_type)
+    y <- convert_matrix_type(y, new_type)
+  }
   if (x@transpose) {
     return(t(rbind2(t(x), t(y))))
   }

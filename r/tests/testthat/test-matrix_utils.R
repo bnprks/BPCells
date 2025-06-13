@@ -277,10 +277,10 @@ test_that("Subset dimnames are preserved randomized testing", {
 test_that("rbind and cbind check types (#68 regression)", {
   m <- generate_dense_matrix(10, 5) %>% as("dgCMatrix") %>% as("IterableMatrix")
 
-  expect_error(
+  expect_warning(
     rbind(m, convert_matrix_type(m, "uint32_t")), "type"
   )
-  expect_error(
+  expect_warning(
     cbind(m, convert_matrix_type(m, "uint32_t")), "type"
   )
 })
@@ -300,6 +300,20 @@ test_that("rbind and cbind work with unusual arguments", {
 
   expect_identical(rbind(m_bp, m) |> as("dgCMatrix"), rbind(m, m))
   expect_identical(rbind(m, m_bp) |> as("dgCMatrix"), rbind(m, m))
+})
+
+test_that("rbind and cbind work with mismatching data types", {
+  m <- generate_sparse_matrix(5, 10) %>% as("IterableMatrix")
+  res_cbind <- cbind(m, m) %>% as("dgCMatrix")
+  res_rbind <- rbind(m, m) %>% as("dgCMatrix")
+  for (m_type_1 in c("uint32_t", "float", "double")) {
+    for (m_type_2 in c("uint32_t", "float", "double")) {
+      m1 <- convert_matrix_type(m, m_type_1)
+      m2 <- convert_matrix_type(m, m_type_2)
+      expect_identical(suppressWarnings(cbind(m1, m2)) %>% as("dgCMatrix"), res_cbind)
+      expect_identical(suppressWarnings(rbind(m1, m2)) %>% as("dgCMatrix"), res_rbind)
+    }
+  }
 })
 
 test_that("Subsetting to 0 dimensions works", {
