@@ -1107,7 +1107,18 @@ setMethod("short_description", "RowBindMatrices", function(x) {
 
 setMethod("rbind2", signature(x = "IterableMatrix", y = "IterableMatrix"), function(x, y, ...) {
   if (x@transpose != y@transpose) stop("Cannot merge matrices with different internal transpose states.\nPlease use transpose_storage_order().")
-  if (matrix_type(x) != matrix_type(y)) stop("Cannot merge matrices with different data type.\nPlease use convert_matrix_type().")
+  if (matrix_type(x) != matrix_type(y)) {
+    # upcast if mismatching types
+    rlang::warn(
+      sprintf(
+        paste0("Mismatching matrix types when calling %sbind().\n",
+        "First matrix type: %s, second matrix type: %s.\nUpcasting to double to match matrix types"), 
+        ifelse(x@transpose, "c", "r"), matrix_type(x), matrix_type(y)
+      )
+    )
+    if (matrix_type(x) != "double") x <- convert_matrix_type(x, "double")
+    if (matrix_type(y) != "double") y <- convert_matrix_type(y, "double")
+  }
   if (x@transpose) {
     return(t(cbind2(t(x), t(y))))
   }
@@ -1199,7 +1210,18 @@ setMethod("short_description", "ColBindMatrices", function(x) {
 
 setMethod("cbind2", signature(x = "IterableMatrix", y = "IterableMatrix"), function(x, y, ...) {
   if (x@transpose != y@transpose) stop("Cannot merge matrices with different internal transpose states.\nPlease use transpose_storage_order().")
-  if (matrix_type(x) != matrix_type(y)) stop("Cannot merge matrices with different data type.\nPlease use convert_matrix_type().")
+  if (matrix_type(x) != matrix_type(y)) {
+    # upcast if mismatching types
+    rlang::warn(
+      sprintf(
+        paste0("Mismatching matrix types when calling %sbind().\n",
+        "First matrix type: %s, second matrix type: %s.\nUpcasting to double to match matrix types"), 
+        ifelse(x@transpose, "r", "c"), matrix_type(x), matrix_type(y)
+      )
+    )
+    if (matrix_type(x) != "double") x <- convert_matrix_type(x, "double")
+    if (matrix_type(y) != "double") y <- convert_matrix_type(y, "double")
+  }
   if (x@transpose) {
     return(t(rbind2(t(x), t(y))))
   }
