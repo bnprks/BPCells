@@ -278,10 +278,10 @@ test_that("rbind and cbind check types (#68 regression)", {
   m <- generate_dense_matrix(10, 5) %>% as("dgCMatrix") %>% as("IterableMatrix")
 
   expect_warning(
-    rbind(m, convert_matrix_type(m, "uint32_t")), "type"
+    rbind(m, convert_matrix_type(m, "uint32_t")), "types when calling rbind"
   )
   expect_warning(
-    cbind(m, convert_matrix_type(m, "uint32_t")), "type"
+    cbind(m, convert_matrix_type(m, "uint32_t")), "types when calling cbind"
   )
 })
 
