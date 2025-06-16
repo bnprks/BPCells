@@ -278,10 +278,16 @@ test_that("rbind and cbind check types (#68 regression)", {
   m <- generate_dense_matrix(10, 5) %>% as("dgCMatrix") %>% as("IterableMatrix")
 
   expect_warning(
-    rbind(m, convert_matrix_type(m, "uint32_t")), "types when calling rbind"
+    rbind(m, convert_matrix_type(m, "uint32_t")), "rbind2\\(\\): Mismatching matrix types"
   )
   expect_warning(
-    cbind(m, convert_matrix_type(m, "uint32_t")), "types when calling cbind"
+    rbind(t(m), t(convert_matrix_type(m, "uint32_t"))), "rbind2\\(\\): Mismatching matrix types"
+  )
+  expect_warning(
+    cbind(m, convert_matrix_type(m, "uint32_t")), "cbind2\\(\\): Mismatching matrix types"
+  )
+  expect_warning(
+    cbind(t(m), t(convert_matrix_type(m, "uint32_t"))), "cbind2\\(\\): Mismatching matrix types"
   )
 })
 
