@@ -12,6 +12,7 @@
 - Add support for `uint16_t` when reading in anndata matrices using `open_matrix_anndata_hdf5()`. (pull request #248)
 - Switch `write_matrix_10x_hdf5()` to use signed rather than unsigned integers for `indices`, `indptr`, and `shape` to improve
   compatibility with 10x-produced files. (Thanks to @ycli1995 for pull request #256)
+- Change behaviour during `cbind()` and `rbind()` when matrices are of different types, to upcast instead of erroring out. (pull request #265)
 
 ## Bug-fixes
 - Fix error message printing when MACS crashes during `call_peaks_macs()` (pull request #175)
