@@ -60,3 +60,48 @@ Methods for IterableFragments objects
 \item \code{chrNames(x, ...) <- value}: Set chromosome names
 
 }}
+\examples{
+## Prep data
+frags <- tibble::tibble(
+  chr = paste0("chr", c(rep(1,3), rep(2,3))),
+  start = seq(10, 260, 50),
+  end = start + 30,
+  cell_id = paste0("cell", c(rep(1, 2), rep(2,2), rep(3,2)))
+) 
+frags
+frags <- frags \%>\% convert_to_fragments()
+
+
+#######################################################################
+## show(IterableFragments) example
+#######################################################################
+show(frags)
+
+
+#######################################################################
+## cellNames(IterableFragments) example
+#######################################################################
+cellNames(frags)
+
+
+#######################################################################
+## cellNames(IterableFragments)<- example
+#######################################################################
+cellNames(frags) <- paste0("cell", 5:7)
+cellNames(frags)
+
+
+#######################################################################
+## chrNames(IterableFragments) example
+#######################################################################
+chrNames(frags)
+
+
+#######################################################################
+## chrNames(IterableFragments)<- example
+#######################################################################
+chrNames(frags) <- paste0("chr", 5:6)
+chrNames(frags)
+
+
+}
