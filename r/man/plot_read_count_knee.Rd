@@ -29,3 +29,11 @@ Plots read count rank vs. number of reads on a log-log scale.
 \details{
 Performs logarithmic downsampling to reduce the number of points plotted
 }
+\examples{
+## Prep data
+mat <- get_demo_mat(filter_qc = FALSE, subset = FALSE)
+reads_per_cell <- colSums(mat)
+
+# Render knee plot
+plot_read_count_knee(reads_per_cell, cutoff = 1e3)
+}
