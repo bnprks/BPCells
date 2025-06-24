@@ -36,6 +36,7 @@ prepare_demo_data <- function(directory = NULL, filter_qc = TRUE, subset = TRUE,
 
     mat_name <- "demo_mat"
     frags_name <- "demo_frags"
+
     # Download matrix/frags if not done previously, and open
     url_base <- "https://cf.10xgenomics.com/samples/cell-arc/2.0.0/pbmc_granulocyte_sorted_3k/"
     # Recreate mat if mat is malformed
@@ -92,6 +93,7 @@ prepare_demo_data <- function(directory = NULL, filter_qc = TRUE, subset = TRUE,
         mat <- mat[which(rownames(mat) %in% filtered_genes), ]
         frags <- frags %>% select_chromosomes(c("chr4", "chr11"))
     }
+
     # Rename mat and frags depending on state of filtering and subsetting
     if (filter_qc) {
         mat_name <- paste0(mat_name, "_filtered")
