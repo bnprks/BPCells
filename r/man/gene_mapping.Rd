@@ -39,4 +39,13 @@ unambiguous alias, previous symbol, ensembl ID, or entrez ID.
 See the source code in \code{data-raw/human_gene_mapping.R} and
 \code{data-raw/mouse_gene_mapping.R} for exactly how these mappings were made.
 }
+\examples{
+#######################################################################
+## human_gene_mapping
+head(human_gene_mapping)
+#######################################################################
+#######################################################################
+## mouse_gene_mapping
+head(mouse_gene_mapping)
+}
 \keyword{datasets}

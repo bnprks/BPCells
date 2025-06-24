@@ -9,6 +9,11 @@ template:
   includes:
     in_header: |
        <script defer data-domain="benparks.net" src="https://plausible.benparks.net/js/visit-counts.js"></script>
+       <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.15/dist/katex.min.css" integrity="sha384-Htz9HMhiwV8GuQ28Xr9pEs1B4qJiYu/nYLLwlDklR53QibDfmQzi7rYxXhMH/5/u" crossorigin="anonymous">
+       <!-- The loading of KaTeX is deferred to speed up page rendering -->
+       <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.15/dist/katex.min.js" integrity="sha384-bxmi2jLGCvnsEqMuYLKE/KsVCxV3PqmKeK6Y6+lmNXBry6+luFkEOsmp5vD9I/7+" crossorigin="anonymous"></script>
+       <!-- To automatically render math in text elements, include the auto-render extension: -->
+       <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.15/dist/contrib/auto-render.min.js" integrity="sha384-hCXGrW6PitJEwbkoStFjeJxv+fSOOQKOPbJxSfM6G5sWZjAyWhXiTIIAmQqnlLlh" crossorigin="anonymous" onload="renderMathInElement(document.body);"></script>
     after_body: |
        <img src="https://plausible.benparks.net/flask-plausible/bpcells-docs.png" style="position:absolute;" />
 
@@ -24,6 +29,15 @@ repo:
     issue: https://github.com/bnprks/BPCells/issues/
     user: https://github.com/
 
+home:
+  sidebar:
+    structure: [logo, links, license, community, citation, authors, dev]
+    components:
+      logo:
+        # To get logo.png copied into the built website, it is "included" in
+        # a commented out image tag in vignettes/web-only/benchmarks.Rmd
+        title: ""
+        text: '<img src="vignettes/web-only/logo.png" width=150px />'
 
 navbar:
   structure:
@@ -48,13 +62,11 @@ articles:
   - "pbmc3k"
   - "web-only/benchmarks"
   - "web-only/how-it-works"
+  - "web-only/programming-efficiency"
 - title: "Additional articles"
   contents:
   - "web-only/bitpacking-format"
-  - "web-only/programming-efficiency"
   - "web-only/programming-philosophy"
-  - "web-only/developer-notes"
-  - "web-only/manuscript-draft"
 
 # cosmo, flatly, united, sandstone all look reasonable
 # pulse, lumen, zephyr

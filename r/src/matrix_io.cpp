@@ -991,6 +991,10 @@ read_hdf5_string_cpp(std::string path, std::string group, uint32_t buffer_size) 
 
 // [[Rcpp::export]]
 bool hdf5_group_exists_cpp(std::string path, std::string group) {
+    // Only check for group if the path itself exists
+    if (!std::filesystem::exists(path)) {
+        return false;
+    }
     H5ReaderBuilder rb(path, "/", 1);
     return rb.getGroup().exist(group);
 }
@@ -999,6 +1003,21 @@ bool hdf5_group_exists_cpp(std::string path, std::string group) {
 std::vector<std::string> hdf5_group_objnames_cpp(std::string path, std::string group) {
     H5ReaderBuilder rb(path, group, 1);
     return rb.getGroup().listObjectNames();
+}
+
+// [[Rcpp::export]]
+std::string hdf5_storage_type_cpp(std::string path, std::string group) {
+    HighFive::SilenceHDF5 s;
+    H5ReaderBuilder rb(path, "/", 1);
+    HighFive::DataType type = rb.getGroup().getDataSet(group).getDataType();
+    if (type == HighFive::AtomicType<int32_t>()) return "int32_t";
+    else if (type == HighFive::AtomicType<int64_t>()) return "int64_t";
+    else if (type == HighFive::AtomicType<uint32_t>()) return "uint32_t";
+    else if (type == HighFive::AtomicType<uint64_t>()) return "uint64_t";
+    else if (type == HighFive::AtomicType<float>()) return "float";
+    else if (type == HighFive::AtomicType<double>()) return "double";
+    throw std::runtime_error("hdf5_group_type_cpp: Unrecongnized group type: " + type.string());
+    return type.string();
 }
 
 // MTX format

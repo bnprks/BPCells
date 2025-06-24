@@ -1631,6 +1631,18 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// hdf5_storage_type_cpp
+std::string hdf5_storage_type_cpp(std::string path, std::string group);
+RcppExport SEXP _BPCells_hdf5_storage_type_cpp(SEXP pathSEXP, SEXP groupSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< std::string >::type path(pathSEXP);
+    Rcpp::traits::input_parameter< std::string >::type group(groupSEXP);
+    rcpp_result_gen = Rcpp::wrap(hdf5_storage_type_cpp(path, group));
+    return rcpp_result_gen;
+END_RCPP
+}
 // import_matrix_market_cpp
 void import_matrix_market_cpp(std::string mtx_path, std::vector<std::string> row_names, std::vector<std::string> col_names, std::string outdir, std::string tmpdir, uint64_t load_bytes, uint64_t sort_buffer_bytes, bool row_major);
 RcppExport SEXP _BPCells_import_matrix_market_cpp(SEXP mtx_pathSEXP, SEXP row_namesSEXP, SEXP col_namesSEXP, SEXP outdirSEXP, SEXP tmpdirSEXP, SEXP load_bytesSEXP, SEXP sort_buffer_bytesSEXP, SEXP row_majorSEXP) {
@@ -2670,6 +2682,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_BPCells_read_hdf5_string_cpp", (DL_FUNC) &_BPCells_read_hdf5_string_cpp, 3},
     {"_BPCells_hdf5_group_exists_cpp", (DL_FUNC) &_BPCells_hdf5_group_exists_cpp, 2},
     {"_BPCells_hdf5_group_objnames_cpp", (DL_FUNC) &_BPCells_hdf5_group_objnames_cpp, 2},
+    {"_BPCells_hdf5_storage_type_cpp", (DL_FUNC) &_BPCells_hdf5_storage_type_cpp, 2},
     {"_BPCells_import_matrix_market_cpp", (DL_FUNC) &_BPCells_import_matrix_market_cpp, 8},
     {"_BPCells_iterate_matrix_log1p_cpp", (DL_FUNC) &_BPCells_iterate_matrix_log1p_cpp, 1},
     {"_BPCells_iterate_matrix_log1psimd_cpp", (DL_FUNC) &_BPCells_iterate_matrix_log1psimd_cpp, 1},

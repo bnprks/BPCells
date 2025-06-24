@@ -8,7 +8,6 @@ output:
     theme: simplex
 ---
 
-# Programming philosopy
 BPCells operates according to a somewhat different programming philosophy from
 other tools. In particular:
 

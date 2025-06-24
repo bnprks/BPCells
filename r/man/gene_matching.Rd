@@ -32,3 +32,20 @@ Correct alias gene symbols, Ensembl IDs, and Entrez IDs to canonical gene
 symbols. This is useful for matching gene names between different datasets
 which might not always use the same gene naming conventions.
 }
+\examples{
+#######################################################################
+## match_gene_symbol() example
+#######################################################################
+match_gene_symbol(
+ c("CD8", "CD4", "CD45"),
+ c("ENSG00000081237.19", "ENSG00000153563.15", "ENSG00000010610.9", "ENSG00000288825")
+)
+
+
+#######################################################################
+## canonical_gene_symbol() example
+#######################################################################
+canonical_gene_symbol(c("CD45", "CD8", "CD4"))
+
+
+}

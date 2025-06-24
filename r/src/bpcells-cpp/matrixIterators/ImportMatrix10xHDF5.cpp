@@ -100,10 +100,10 @@ StoredMatrixWriter<T> create10xFeatureMatrix(
     wb.createStringWriter("features/_all_tag_keys")->write(VecStringReader(tag_keys));
 
     return StoredMatrixWriter(
-        wb.createULongWriter("indices").convert<uint32_t>(),
+        wb.create<int64_t>("indices").convert<uint32_t>(),
         wb.create<T>("data"),
-        wb.createULongWriter("indptr"),
-        wb.createUIntWriter("shape"),
+        wb.create<int64_t>("indptr").convert<uint64_t>(),
+        wb.create<int32_t>("shape").convert<uint32_t>(),
         std::make_unique<NullStringWriter>(),
         std::make_unique<NullStringWriter>(),
         std::make_unique<NullStringWriter>()

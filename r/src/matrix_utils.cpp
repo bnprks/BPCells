@@ -458,6 +458,7 @@ NumericVector matrix_value_histogram_cpp(SEXP matrix, uint32_t max_value) {
     MatrixIterator<uint32_t> it(take_unique_xptr<MatrixLoader<uint32_t>>(matrix));
     std::vector<double> result(max_value + 1, 0.0);
     while (it.nextCol()) {
+        Rcpp::checkUserInterrupt();
         while (it.nextValue()) {
             if (it.val() == 0) continue;
             result[std::min(it.val(), max_value + 1) - 1]++;
@@ -634,10 +635,12 @@ NumericVector matrix_max_per_row_cpp(SEXP matrix) {
     std::fill(result.begin(), result.end(), -INFINITY);
     // keep track of the number of times we've seen each row
     while (it.nextCol()) {
+        Rcpp::checkUserInterrupt();
         while (it.nextValue()) {
             result[it.row()] = std::max(result[it.row()], it.val());
             row_count[it.row()]++;
-    }}
+        }
+    }
     // If we've seen a row less than the num of cols, we know there's at least one 0
     for (size_t i = 0; i < it.rows(); i++) {
         if (row_count[i] < it.cols()) {
@@ -657,10 +660,12 @@ NumericVector matrix_max_per_col_cpp(SEXP matrix) {
     // keep track of the number of times we've seen each col
     std::vector<uint32_t> col_count(it.cols(), 0);
     while (it.nextCol()) {
+        Rcpp::checkUserInterrupt();
         while (it.nextValue()) {
             result[it.col()] = std::max(result[it.col()], it.val());
             col_count[it.col()]++;
-    }}
+        }
+    }
     // If we've seen a col less than the num of rows, we know there's at least one 0
     for (size_t i = 0; i < it.cols(); i++) {
         if (col_count[i] < it.rows()) {
@@ -735,7 +740,9 @@ bool matrix_identical_uint32_t_cpp(SEXP mat1, SEXP mat2) {
             Rcerr << "Different column loaded" << std::endl;
             return false;
         }
+        uint32_t count = 0;
         while (true) {
+            if (count++ % (1 << 14) == 0) Rcpp::checkUserInterrupt();
             bool res1 = i1.nextValue();
             bool res2 = i2.nextValue();
             if (res1 != res2) {

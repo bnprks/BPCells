@@ -36,33 +36,28 @@ prepare_demo_data <- function(directory = NULL, filter_qc = TRUE, subset = TRUE,
 
     mat_name <- "demo_mat"
     frags_name <- "demo_frags"
-    if (filter_qc) {
-        mat_name <- paste0(mat_name, "_filtered")
-        frags_name <- paste0(frags_name, "_filtered")
-    }
-    if (subset) {
-        mat_name <- paste0(mat_name, "_subsetted")
-        frags_name <- paste0(frags_name, "_subsetted")
-    }
+
     # Download matrix/frags if not done previously, and open
     url_base <- "https://cf.10xgenomics.com/samples/cell-arc/2.0.0/pbmc_granulocyte_sorted_3k/"
     # Recreate mat if mat is malformed
+    mat <- NULL
+    frags <- NULL
     tryCatch({
-        mat <- open_matrix_dir(file.path(directory, "pbmc_3k_rna_raw"))
+        mat <- open_matrix_dir(file.path(directory, mat_name))
     }, error = function(e) {
         rna_raw_url <- paste0(url_base, "pbmc_granulocyte_sorted_3k_raw_feature_bc_matrix.h5")
         ensure_downloaded(file.path(intermediate_dir, "pbmc_3k_10x.h5"), rna_raw_url, timeout = timeout)
-        mat <- open_matrix_10x_hdf5(file.path(intermediate_dir, "pbmc_3k_10x.h5"), feature_type="Gene Expression") %>% 
-            write_matrix_dir(file.path(directory, "pbmc_3k_rna_raw"), overwrite = TRUE)
+        mat <<- open_matrix_10x_hdf5(file.path(intermediate_dir, "pbmc_3k_10x.h5"), feature_type="Gene Expression") %>% 
+            write_matrix_dir(file.path(directory, mat_name), overwrite = TRUE)
     })
     # Recreate frags if frags are malformed
     tryCatch({
-        frags <- open_fragments_dir(file.path(directory, "pbmc_3k_frags"))
+        frags <- open_fragments_dir(file.path(directory, frags_name))
     }, error = function(e) {
         atac_raw_url <- paste0(url_base, "pbmc_granulocyte_sorted_3k_atac_fragments.tsv.gz")
         ensure_downloaded(file.path(intermediate_dir, "pbmc_3k_10x.fragments.tsv.gz"), atac_raw_url, timeout = timeout)
-        frags <- open_fragments_10x(file.path(intermediate_dir, "pbmc_3k_10x.fragments.tsv.gz")) %>%
-            write_fragments_dir(file.path(directory, "pbmc_3k_frags"), overwrite = TRUE)
+        frags <<- open_fragments_10x(file.path(intermediate_dir, "pbmc_3k_10x.fragments.tsv.gz")) %>%
+            write_fragments_dir(file.path(directory, frags_name), overwrite = TRUE)
     })
     if (filter_qc) {
         # Download annotations for transcripts
@@ -98,9 +93,21 @@ prepare_demo_data <- function(directory = NULL, filter_qc = TRUE, subset = TRUE,
         mat <- mat[which(rownames(mat) %in% filtered_genes), ]
         frags <- frags %>% select_chromosomes(c("chr4", "chr11"))
     }
-    dir.create(file.path(directory, frags_name), recursive = TRUE, showWarnings = FALSE)
-    mat <- write_matrix_dir(mat, file.path(directory, mat_name), overwrite = TRUE)
-    frags <- write_fragments_dir(frags, file.path(directory, frags_name), overwrite = TRUE)
+
+    # Rename mat and frags depending on state of filtering and subsetting
+    if (filter_qc) {
+        mat_name <- paste0(mat_name, "_filtered")
+        frags_name <- paste0(frags_name, "_filtered")
+    }
+    if (subset) {
+        mat_name <- paste0(mat_name, "_subsetted")
+        frags_name <- paste0(frags_name, "_subsetted")
+    }
+    # Write changes to directory
+    if (filter_qc || subset) {
+        mat <- write_matrix_dir(mat, file.path(directory, mat_name), overwrite = TRUE)
+        frags <- write_fragments_dir(frags, file.path(directory, frags_name), overwrite = TRUE)
+    }
     return(list(mat = mat, frags = frags))
 }
 
@@ -120,10 +127,12 @@ prepare_demo_data <- function(directory = NULL, filter_qc = TRUE, subset = TRUE,
 #' 
 #' **Data Processing**:
 #' 
-#' The first time either `get_demo_mat()` are ran `get_demo_frags()`,
+#' The first time either `get_demo_mat()`, or `get_demo_frags()`, are ran 
 #' demo data is downloaded and stored in the BPCells data directory  (under `file.path(tools::R_user_dir("BPcells", which="data"), "demo_data")`).
+#' 
 #' Subsequent calls to this function will use the previously downloaded matrix/fragments, given that the same combination of filtering and 
 #' subsetting has been performed previously.
+#' 
 #' The preparation of this matrix can be reproduced by running the internal function `prepare_demo_data()` with `directory` set to the BPCells data directory.
 #' 
 #' In the case that demo data is not pre-downloaded and demo data download fails, `prepare_demo_data()` will act
@@ -261,6 +270,11 @@ remove_demo_data <- function() {
 #'
 #' <http://ftp.ebi.ac.uk/pub/databases/genenames/hgnc/tsv/non_alt_loci_set.txt>
 #'
+#' @examples
+#' #######################################################################
+#' ## human_gene_mapping
+#' head(human_gene_mapping)
+#' #######################################################################
 #' @rdname gene_mapping
 "human_gene_mapping"
 
@@ -274,6 +288,10 @@ remove_demo_data <- function() {
 #'
 #' <http://www.informatics.jax.org/downloads/reports/MGI_EntrezGene.rpt>
 #' <http://www.informatics.jax.org/downloads/reports/MRK_ENSEMBL.rpt>
+#' @examples
+#' #######################################################################
+#' ## mouse_gene_mapping
+#' head(mouse_gene_mapping)
 "mouse_gene_mapping"
 
 

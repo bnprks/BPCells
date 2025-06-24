@@ -38,6 +38,18 @@ test_that("Write 10x matrix to HDF5", {
   }
 })
 
+test_that("Write 10x matrix uses correct HDF5 data types", {
+  dir <- withr::local_tempdir()
+  mat_path <- file.path(dir, "10x.h5")
+  m <- generate_sparse_matrix(10, 9, fraction_nonzero=0.2) %>%
+    as("IterableMatrix") %>%
+    convert_matrix_type("uint32_t")
+  write_matrix_10x_hdf5(m, mat_path)
+  expect_identical(hdf5_storage_type_cpp(mat_path, "matrix/indices"), "int64_t")
+  expect_identical(hdf5_storage_type_cpp(mat_path, "matrix/indptr"), "int64_t")
+  expect_identical(hdf5_storage_type_cpp(mat_path, "matrix/shape"), "int32_t")
+})
+
 test_that("Memory Matrix round-trips", {
   dir <- withr::local_tempdir()
   args <- list(
@@ -255,7 +267,7 @@ test_that("AnnData read backwards compatibility", {
   varm_ans <- t(ans[,1:2])
   rownames(varm_ans) <- NULL 
 
-  test_files <- c("mini_mat.anndata-v0.6.22.h5ad", "mini_mat.anndata-v0.7.h5ad", "mini_mat.anndata-v0.10.9.h5ad")
+  test_files <- c("mini_mat.anndata-v0.6.22.h5ad", "mini_mat.anndata-v0.7.h5ad", "mini_mat.anndata-v0.10.9.h5ad", "mini_mat_uint_16.anndata-v0.10.9.h5ad")
   for (f in test_files) {
     file.copy(file.path("../data", f), file.path(dir, f))
     open_matrix_anndata_hdf5(file.path(dir, f)) %>%
@@ -550,6 +562,14 @@ test_that("H5 overwrite works", {
     open_matrix_hdf5(file.path(dir, "overwrite.h5"), "mat") %>%
       as("dgCMatrix")
   )
+  # Should work even when the overwritten h5 doesn't exist
+  expect_identical(
+    as(m2, "dgCMatrix"),
+    m2 %>% 
+      as("IterableMatrix") %>%
+      write_matrix_hdf5(file.path(dir, "overwrite_new.h5"), "mat", overwrite = TRUE) %>%
+      as("dgCMatrix")
+  )
   # It should be okay even if we overwrite the same source we're loading from
   expect_identical(
     as(m2, "dgCMatrix")[c(1,3),],
@@ -558,6 +578,8 @@ test_that("H5 overwrite works", {
       write_matrix_hdf5(file.path(dir, "overwrite.h5"), "mat", overwrite=TRUE) %>%
       as("dgCMatrix")
   )
+
+  
 })
 
 test_that("Dir overwrite works", {
@@ -664,4 +686,26 @@ test_that("Regression test for Rcpp out-of-bounds warning", {
       as("dgCMatrix")
   })
   expect_identical(m, m2)
+})
+
+test_that("Matrix reads work from Windows with CRLF/LF", {
+  # This is a regression test for issue #253, making sure that
+  # matrices with crlf line endings for string arrays open without issues
+
+  # Confirm that we actually have lf and crlf files as expected
+  expect_false(any(charToRaw("\r") == readBin("../data/mini_mat_lf/version", "raw", 1000)))
+  expect_true(any(charToRaw("\r") == readBin("../data/mini_mat_crlf/version", "raw", 1000)))
+
+  # We should be able to read crlf-containing files without complaint
+  expect_no_error(open_matrix_dir("../data/mini_mat_lf"))
+  expect_no_error(open_matrix_dir("../data/mini_mat_crlf"))
+
+  # We should output only lf moving forward
+  dir <- withr::local_tempdir()
+  path <- file.path(dir, "test_mat")
+  x <- open_matrix_dir("../data/mini_mat_lf") %>%
+    write_matrix_dir(path)
+  expect_false(any(charToRaw("\r") == readBin(file.path(path, "version"), "raw", 1000)))
+  expect_false(any(charToRaw("\r") == readBin(file.path(path, "row_names"), "raw", 1000)))
+  expect_false(any(charToRaw("\r") == readBin(file.path(path, "col_names"), "raw", 1000)))
 })

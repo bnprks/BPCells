@@ -562,32 +562,34 @@ convert_to_fragments <- function(x, zero_based_coords = !is(x, "GRanges")) {
 
 
 # Define converters with GRanges if we have the GenomicRanges package available
-if (requireNamespace("GenomicRanges", quietly = TRUE)) {
-  setAs("IterableFragments", "GRanges", function(from) {
-    if (is(from, "UnpackedMemFragments")) {
-      frags <- from
-    } else {
-      frags <- write_fragments_memory(from, compress = FALSE)
-    }
-    # Get the differences between adjacent elements on the chr_ptr list
-    # to calculate how many values are in each chromosome
-    chr_counts <- frags@chr_ptr[c(FALSE, TRUE)] - frags@chr_ptr[c(TRUE, FALSE)]
-    # order by where this chromosome range starts
-    chr_order <- order(frags@chr_ptr[c(TRUE, FALSE)])
+rlang::on_load({
+  if (requireNamespace("GenomicRanges", quietly = TRUE)) {
+    setAs("IterableFragments", "GRanges", function(from) {
+      if (is(from, "UnpackedMemFragments")) {
+        frags <- from
+      } else {
+        frags <- write_fragments_memory(from, compress = FALSE)
+      }
+      # Get the differences between adjacent elements on the chr_ptr list
+      # to calculate how many values are in each chromosome
+      chr_counts <- frags@chr_ptr[c(FALSE, TRUE)] - frags@chr_ptr[c(TRUE, FALSE)]
+      # order by where this chromosome range starts
+      chr_order <- order(frags@chr_ptr[c(TRUE, FALSE)])
 
-    GenomicRanges::GRanges(
-      seqnames = S4Vectors::Rle(values = factor(chrNames(frags)[chr_order], chrNames(frags)), lengths = chr_counts[chr_order]),
-      ranges = IRanges::IRanges(
-        start = frags@start + 1,
-        end = frags@end
-      ),
-      cell_id = factor(frags@cell_names[frags@cell + 1], frags@cell_names)
-    )
-  })
-  setAs("GRanges", "IterableFragments", function(from) {
-    convert_to_fragments(from)
-  })
-}
+      GenomicRanges::GRanges(
+        seqnames = S4Vectors::Rle(values = factor(chrNames(frags)[chr_order], chrNames(frags)), lengths = chr_counts[chr_order]),
+        ranges = IRanges::IRanges(
+          start = frags@start + 1,
+          end = frags@end
+        ),
+        cell_id = factor(frags@cell_names[frags@cell + 1], frags@cell_names)
+      )
+    })
+    setAs("GRanges", "IterableFragments", function(from) {
+      convert_to_fragments(from)
+    })
+  }
+})
 
 setAs("IterableFragments", "data.frame", function(from) {
   if (is(from, "UnpackedMemFragments")) {
