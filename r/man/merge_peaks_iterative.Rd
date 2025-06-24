@@ -31,3 +31,15 @@ Properties of merged peaks:
 changed
 }
 }
+\examples{
+## Create example peaks
+peaks <- tibble::tibble(
+ chr = "chr1",
+ start = as.integer(1:10),
+ end = start + 2L
+)
+peaks
+
+## Merge peaks
+merge_peaks_iterative(peaks)
+}
