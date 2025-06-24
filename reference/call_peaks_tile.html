@@ -140,6 +140,23 @@ significant of the overlapping candidate peaks</p></li>
 prioritizing each peak by its within-group significance rank</p></li>
 </ol></div>
 
+    <div class="section level2">
+    <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co">## Prep data</span></span></span>
+<span class="r-in"><span><span class="va">reference_dir</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempdir</a></span><span class="op">(</span><span class="op">)</span>, <span class="st">"references"</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">frags</span> <span class="op">&lt;-</span> <span class="fu"><a href="demo_data.html">get_demo_frags</a></span><span class="op">(</span><span class="op">)</span> </span></span>
+<span class="r-in"><span><span class="co">## Remove blacklist regions from fragments</span></span></span>
+<span class="r-in"><span><span class="va">blacklist</span> <span class="op">&lt;-</span> <span class="fu"><a href="read_bed.html">read_encode_blacklist</a></span><span class="op">(</span><span class="va">reference_dir</span>, genome<span class="op">=</span><span class="st">"hg38"</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">frags_filter_blacklist</span> <span class="op">&lt;-</span> <span class="fu"><a href="select_regions.html">select_regions</a></span><span class="op">(</span><span class="va">frags</span>, <span class="va">blacklist</span>, invert_selection <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">chrom_sizes</span> <span class="op">&lt;-</span> <span class="fu"><a href="read_ucsc_chrom_sizes.html">read_ucsc_chrom_sizes</a></span><span class="op">(</span><span class="va">reference_dir</span>, genome<span class="op">=</span><span class="st">"hg38"</span><span class="op">)</span> <span class="op">%&gt;%</span> <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="va">chr</span> <span class="op"><a href="https://rdrr.io/r/base/match.html" class="external-link">%in%</a></span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"chr4"</span>, <span class="st">"chr11"</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error in read_ucsc_chrom_sizes(reference_dir, genome = "hg38") %&gt;% dplyr::filter(chr %in%     c("chr4", "chr11")):</span> could not find function "%&gt;%"</span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co">## Call peaks</span></span></span>
+<span class="r-in"><span><span class="fu">call_peaks_tile</span><span class="op">(</span><span class="va">frags_filter_blacklist</span>, <span class="va">chrom_sizes</span>, effective_genome_size <span class="op">=</span> <span class="fl">2.8e9</span><span class="op">)</span></span></span>
+<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error:</span> object 'chrom_sizes' not found</span>
+</code></pre></div>
+    </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside></div>
 
@@ -149,7 +166,7 @@ prioritizing each peak by its within-group significance rank</p></li>
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.1.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.3.</p>
 </div>
 
     </footer></div>

@@ -175,6 +175,77 @@ additional transcript variants annotated.</p>
     <div class="dont-index"><p><code><a href="read_bed.html">read_bed()</a></code>, <code><a href="read_bed.html">read_encode_blacklist()</a></code></p></div>
     </div>
 
+    <div class="section level2">
+    <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co">#######################################################################</span></span></span>
+<span class="r-in"><span><span class="co">## read_gtf() example</span></span></span>
+<span class="r-in"><span><span class="co">#######################################################################</span></span></span>
+<span class="r-in"><span><span class="va">species</span> <span class="op">&lt;-</span> <span class="st">"Saccharomyces_cerevisiae"</span></span></span>
+<span class="r-in"><span><span class="va">version</span> <span class="op">&lt;-</span> <span class="st">"GCF_000146045.2_R64"</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="fu">read_gtf</span><span class="op">(</span></span></span>
+<span class="r-in"><span> path <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/sprintf.html" class="external-link">sprintf</a></span><span class="op">(</span><span class="st">"./reference/%s_genomic.gtf.gz"</span>, <span class="va">version</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span> backup_url <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/sprintf.html" class="external-link">sprintf</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>   <span class="st">"https://ftp.ncbi.nlm.nih.gov/genomes/refseq/fungi/%s/reference/%s/%s_genomic.gtf.gz"</span>,</span></span>
+<span class="r-in"><span>   <span class="va">species</span>, <span class="va">version</span>, <span class="va">version</span></span></span>
+<span class="r-in"><span> <span class="op">)</span></span></span>
+<span class="r-in"><span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># A tibble: 6 × 9</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   chr         source feature start   end score strand frame gene_id  </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>       <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>    </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">1</span> NC_001133.9 RefSeq gene     <span style="text-decoration: underline;">1</span>806  <span style="text-decoration: underline;">2</span>169 .     -      .     YAL068C  </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">2</span> NC_001133.9 RefSeq gene     <span style="text-decoration: underline;">2</span>479  <span style="text-decoration: underline;">2</span>707 .     +      .     YAL067W-A</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">3</span> NC_001133.9 RefSeq gene     <span style="text-decoration: underline;">7</span>234  <span style="text-decoration: underline;">9</span>016 .     -      .     YAL067C  </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">4</span> NC_001133.9 RefSeq gene    <span style="text-decoration: underline;">11</span>564 <span style="text-decoration: underline;">11</span>951 .     -      .     YAL065C  </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">5</span> NC_001133.9 RefSeq gene    <span style="text-decoration: underline;">12</span>045 <span style="text-decoration: underline;">12</span>426 .     +      .     YAL064W-B</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">6</span> NC_001133.9 RefSeq gene    <span style="text-decoration: underline;">13</span>362 <span style="text-decoration: underline;">13</span>743 .     -      .     YAL064C-A</span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co">#######################################################################</span></span></span>
+<span class="r-in"><span><span class="co">## read_gencode_genes() example</span></span></span>
+<span class="r-in"><span><span class="co">#######################################################################</span></span></span>
+<span class="r-in"><span><span class="fu">read_gencode_genes</span><span class="op">(</span><span class="st">"./references"</span>, release <span class="op">=</span> <span class="st">"42"</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># A tibble: 39,319 × 11</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    chr   source feature  start    end score strand frame gene_id       gene_type</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>         <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>    </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 1</span> chr1  HAVANA gene     <span style="text-decoration: underline;">11</span>868  <span style="text-decoration: underline;">14</span>409 .     +      .     ENSG00000290… lncRNA   </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 2</span> chr1  HAVANA gene     <span style="text-decoration: underline;">29</span>553  <span style="text-decoration: underline;">31</span>109 .     +      .     ENSG00000243… lncRNA   </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 3</span> chr1  HAVANA gene     <span style="text-decoration: underline;">34</span>553  <span style="text-decoration: underline;">36</span>081 .     -      .     ENSG00000237… lncRNA   </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 4</span> chr1  HAVANA gene     <span style="text-decoration: underline;">57</span>597  <span style="text-decoration: underline;">64</span>116 .     +      .     ENSG00000290… lncRNA   </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 5</span> chr1  HAVANA gene     <span style="text-decoration: underline;">65</span>418  <span style="text-decoration: underline;">71</span>585 .     +      .     ENSG00000186… protein_…</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 6</span> chr1  HAVANA gene     <span style="text-decoration: underline;">89</span>294 <span style="text-decoration: underline;">133</span>723 .     -      .     ENSG00000238… lncRNA   </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 7</span> chr1  HAVANA gene     <span style="text-decoration: underline;">89</span>550  <span style="text-decoration: underline;">91</span>105 .     -      .     ENSG00000239… lncRNA   </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 8</span> chr1  HAVANA gene    <span style="text-decoration: underline;">139</span>789 <span style="text-decoration: underline;">140</span>339 .     -      .     ENSG00000239… lncRNA   </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 9</span> chr1  HAVANA gene    <span style="text-decoration: underline;">141</span>473 <span style="text-decoration: underline;">173</span>862 .     -      .     ENSG00000241… lncRNA   </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">10</span> chr1  HAVANA gene    <span style="text-decoration: underline;">160</span>445 <span style="text-decoration: underline;">161</span>525 .     +      .     ENSG00000241… lncRNA   </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># ℹ 39,309 more rows</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># ℹ 1 more variable: gene_name &lt;chr&gt;</span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co">#######################################################################</span></span></span>
+<span class="r-in"><span><span class="co">## read_gencode_transcripts() example</span></span></span>
+<span class="r-in"><span><span class="co">#######################################################################</span></span></span>
+<span class="r-in"><span><span class="co">## If read_gencode_genes() was already ran on the same release, </span></span></span>
+<span class="r-in"><span><span class="co">## will reuse previously downloaded annotations</span></span></span>
+<span class="r-in"><span><span class="fu">read_gencode_transcripts</span><span class="op">(</span><span class="st">"./references"</span>, release <span class="op">=</span> <span class="st">"42"</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># A tibble: 220,296 × 13</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    chr   source feature     start    end score strand frame gene_id    gene_type</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>       <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>      <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>    </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 1</span> chr1  HAVANA transcript  <span style="text-decoration: underline;">65</span>418  <span style="text-decoration: underline;">71</span>585 .     +      .     ENSG00000… protein_…</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 2</span> chr1  HAVANA exon        <span style="text-decoration: underline;">65</span>418  <span style="text-decoration: underline;">65</span>433 .     +      .     ENSG00000… protein_…</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 3</span> chr1  HAVANA exon        <span style="text-decoration: underline;">65</span>519  <span style="text-decoration: underline;">65</span>573 .     +      .     ENSG00000… protein_…</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 4</span> chr1  HAVANA exon        <span style="text-decoration: underline;">69</span>036  <span style="text-decoration: underline;">71</span>585 .     +      .     ENSG00000… protein_…</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 5</span> chr1  HAVANA transcript <span style="text-decoration: underline;">450</span>739 <span style="text-decoration: underline;">451</span>678 .     -      .     ENSG00000… protein_…</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 6</span> chr1  HAVANA exon       <span style="text-decoration: underline;">450</span>739 <span style="text-decoration: underline;">451</span>678 .     -      .     ENSG00000… protein_…</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 7</span> chr1  HAVANA transcript <span style="text-decoration: underline;">685</span>715 <span style="text-decoration: underline;">686</span>654 .     -      .     ENSG00000… protein_…</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 8</span> chr1  HAVANA exon       <span style="text-decoration: underline;">685</span>715 <span style="text-decoration: underline;">686</span>654 .     -      .     ENSG00000… protein_…</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 9</span> chr1  HAVANA transcript <span style="text-decoration: underline;">923</span>922 <span style="text-decoration: underline;">944</span>574 .     +      .     ENSG00000… protein_…</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">10</span> chr1  HAVANA exon       <span style="text-decoration: underline;">923</span>922 <span style="text-decoration: underline;">924</span>948 .     +      .     ENSG00000… protein_…</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># ℹ 220,286 more rows</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># ℹ 3 more variables: gene_name &lt;chr&gt;, transcript_id &lt;chr&gt;, MANE_Select &lt;lgl&gt;</span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span></span></span>
+</code></pre></div>
+    </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside></div>
 
@@ -184,7 +255,7 @@ additional transcript variants annotated.</p>
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.1.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.3.</p>
 </div>
 
     </footer></div>

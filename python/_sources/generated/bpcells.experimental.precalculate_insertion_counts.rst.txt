@@ -1,6 +1,0 @@
-﻿bpcells.experimental.precalculate\_insertion\_counts
-====================================================
-
-.. currentmodule:: bpcells.experimental
-
-.. autofunction:: precalculate_insertion_counts

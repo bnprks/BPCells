@@ -1,6 +1,0 @@
-﻿bpcells.experimental.build\_cell\_groups
-========================================
-
-.. currentmodule:: bpcells.experimental
-
-.. autofunction:: build_cell_groups

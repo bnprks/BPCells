@@ -94,6 +94,119 @@ for GRanges and false for other formats
     <p><strong>convert_to_fragments()</strong>: IterableFragments object</p>
     </div>
 
+    <div class="section level2">
+    <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="va">frags_table</span> <span class="op">&lt;-</span> <span class="fu">tibble</span><span class="fu">::</span><span class="fu"><a href="https://tibble.tidyverse.org/reference/tibble.html" class="external-link">tibble</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>  chr <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="st">"chr"</span>, <span class="fl">1</span><span class="op">:</span><span class="fl">10</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>  start <span class="op">=</span> <span class="fl">0</span>,</span></span>
+<span class="r-in"><span>  end <span class="op">=</span> <span class="fl">5</span>,</span></span>
+<span class="r-in"><span>  cell_id <span class="op">=</span> <span class="st">"cell1"</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">frags_table</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># A tibble: 10 × 4</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    chr   start   end cell_id</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>  </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 1</span> chr1      0     5 cell1  </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 2</span> chr2      0     5 cell1  </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 3</span> chr3      0     5 cell1  </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 4</span> chr4      0     5 cell1  </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 5</span> chr5      0     5 cell1  </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 6</span> chr6      0     5 cell1  </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 7</span> chr7      0     5 cell1  </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 8</span> chr8      0     5 cell1  </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 9</span> chr9      0     5 cell1  </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">10</span> chr10     0     5 cell1  </span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="va">frags_granges</span> <span class="op">&lt;-</span> <span class="fu">GenomicRanges</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/GenomicRanges/man/makeGRangesFromDataFrame.html" class="external-link">makeGRangesFromDataFrame</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span> <span class="va">frags_table</span>, keep.extra.columns <span class="op">=</span> <span class="cn">TRUE</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">frags_granges</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> GRanges object with 10 ranges and 1 metadata column:</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>        seqnames    ranges strand |     cell_id</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>           &lt;Rle&gt; &lt;IRanges&gt;  &lt;Rle&gt; | &lt;character&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    [1]     chr1       0-5      * |       cell1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    [2]     chr2       0-5      * |       cell1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    [3]     chr3       0-5      * |       cell1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    [4]     chr4       0-5      * |       cell1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    [5]     chr5       0-5      * |       cell1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    [6]     chr6       0-5      * |       cell1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    [7]     chr7       0-5      * |       cell1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    [8]     chr8       0-5      * |       cell1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    [9]     chr9       0-5      * |       cell1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   [10]    chr10       0-5      * |       cell1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   -------</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   seqinfo: 10 sequences from an unspecified genome; no seqlengths</span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co">#######################################################################</span></span></span>
+<span class="r-in"><span><span class="co">## convert_to_fragments() example</span></span></span>
+<span class="r-in"><span><span class="co">#######################################################################</span></span></span>
+<span class="r-in"><span><span class="va">frags</span> <span class="op">&lt;-</span> <span class="fu">convert_to_fragments</span><span class="op">(</span><span class="va">frags_granges</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">frags</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> IterableFragments object of class "UnpackedMemFragments"</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Cells: 1 cells with names cell1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Chromosomes: 10 chromosomes with names chr1, chr2 ... chr10</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Queued Operations:</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1. Read uncompressed fragments from memory</span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co">#######################################################################</span></span></span>
+<span class="r-in"><span><span class="co">## as(x, "IterableFragments") example</span></span></span>
+<span class="r-in"><span><span class="co">#######################################################################</span></span></span>
+<span class="r-in"><span><span class="va">frags</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/methods/as.html" class="external-link">as</a></span><span class="op">(</span><span class="va">frags_table</span>, <span class="st">"IterableFragments"</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">frags</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> IterableFragments object of class "UnpackedMemFragments"</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Cells: 1 cells with names cell1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Chromosomes: 10 chromosomes with names chr1, chr10 ... chr9</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Queued Operations:</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1. Read uncompressed fragments from memory</span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co">#######################################################################</span></span></span>
+<span class="r-in"><span><span class="co">## as(bpcells_fragments, "data.frame") example</span></span></span>
+<span class="r-in"><span><span class="co">#######################################################################</span></span></span>
+<span class="r-in"><span><span class="va">frags_table</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/methods/as.html" class="external-link">as</a></span><span class="op">(</span><span class="va">frags</span>, <span class="st">"data.frame"</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">frags_table</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>      chr start end cell_id</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1   chr1     0   5   cell1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2  chr10     0   5   cell1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 3   chr2     0   5   cell1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 4   chr3     0   5   cell1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 5   chr4     0   5   cell1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 6   chr5     0   5   cell1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 7   chr6     0   5   cell1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 8   chr7     0   5   cell1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 9   chr8     0   5   cell1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 10  chr9     0   5   cell1</span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co">#######################################################################</span></span></span>
+<span class="r-in"><span><span class="co">## as(bpcells_fragments, "GRanges") example</span></span></span>
+<span class="r-in"><span><span class="co">#######################################################################</span></span></span>
+<span class="r-in"><span><span class="va">frags_granges</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/methods/as.html" class="external-link">as</a></span><span class="op">(</span><span class="va">frags</span>, <span class="st">"GRanges"</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">frags_granges</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> GRanges object with 10 ranges and 1 metadata column:</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>        seqnames    ranges strand |  cell_id</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>           &lt;Rle&gt; &lt;IRanges&gt;  &lt;Rle&gt; | &lt;factor&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    [1]     chr1       1-5      * |    cell1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    [2]    chr10       1-5      * |    cell1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    [3]     chr2       1-5      * |    cell1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    [4]     chr3       1-5      * |    cell1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    [5]     chr4       1-5      * |    cell1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    [6]     chr5       1-5      * |    cell1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    [7]     chr6       1-5      * |    cell1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    [8]     chr7       1-5      * |    cell1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    [9]     chr8       1-5      * |    cell1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   [10]     chr9       1-5      * |    cell1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   -------</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   seqinfo: 10 sequences from an unspecified genome; no seqlengths</span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span></span></span>
+</code></pre></div>
+    </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside></div>
 
@@ -103,7 +216,7 @@ for GRanges and false for other formats
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.1.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.3.</p>
 </div>
 
     </footer></div>

@@ -99,6 +99,36 @@ from <code>ReadsInPromoter / nFrags</code> and  <code>ReadsInBlacklist / nFrags<
 as <code>(monoNucleosomal + multiNucleosomal) / subNucleosomal</code>.</p>
     </div>
 
+    <div class="section level2">
+    <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co">## Prep data</span></span></span>
+<span class="r-in"><span><span class="va">frags</span> <span class="op">&lt;-</span> <span class="fu"><a href="demo_data.html">get_demo_frags</a></span><span class="op">(</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">reference_dir</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempdir</a></span><span class="op">(</span><span class="op">)</span>, <span class="st">"references"</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">genes</span> <span class="op">&lt;-</span> <span class="fu"><a href="read_gtf.html">read_gencode_transcripts</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>  <span class="va">reference_dir</span>, </span></span>
+<span class="r-in"><span>  release<span class="op">=</span><span class="st">"42"</span>, </span></span>
+<span class="r-in"><span>  transcript_choice<span class="op">=</span><span class="st">"MANE_Select"</span>,</span></span>
+<span class="r-in"><span>  annotation_set <span class="op">=</span> <span class="st">"basic"</span>,</span></span>
+<span class="r-in"><span>  features<span class="op">=</span><span class="st">"transcript"</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">blacklist</span> <span class="op">&lt;-</span> <span class="fu"><a href="read_bed.html">read_encode_blacklist</a></span><span class="op">(</span><span class="va">reference_dir</span>, genome <span class="op">=</span> <span class="st">"hg38"</span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co">## Run qc</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="fu">qc_scATAC</span><span class="op">(</span><span class="va">frags</span>, <span class="va">genes</span>, <span class="va">blacklist</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># A tibble: 6 × 10</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   cellName  TSSEnrichment nFrags subNucleosomal monoNucleosomal multiNucleosomal</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>             <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>          <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>           <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>            <span style="color: #949494; font-style: italic;">&lt;int&gt;</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">1</span> TTTAGCAA…          25.8   <span style="text-decoration: underline;">1</span>387            704             476              207</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">2</span> AGCCGGTT…          24.5   <span style="text-decoration: underline;">2</span>983           <span style="text-decoration: underline;">1</span>430            <span style="text-decoration: underline;">1</span>040              513</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">3</span> TGATTAGT…          18.5   <span style="text-decoration: underline;">1</span>093            542             367              184</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">4</span> ATTGACTC…          23.0   <span style="text-decoration: underline;">1</span>204            654             355              195</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">5</span> CGTTAGGT…          21.5   <span style="text-decoration: underline;">1</span>387            610             520              257</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">6</span> AAACCGCG…          42.9   <span style="text-decoration: underline;">2</span>650           <span style="text-decoration: underline;">1</span>279             925              446</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># ℹ 4 more variables: ReadsInTSS &lt;dbl&gt;, ReadsFlankingTSS &lt;dbl&gt;,</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;">#   ReadsInPromoter &lt;dbl&gt;, ReadsInBlacklist &lt;dbl&gt;</span></span>
+</code></pre></div>
+    </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside></div>
 
@@ -108,7 +138,7 @@ as <code>(monoNucleosomal + multiNucleosomal) / subNucleosomal</code>.</p>
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.1.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.3.</p>
 </div>
 
     </footer></div>

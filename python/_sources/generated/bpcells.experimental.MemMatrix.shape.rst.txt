@@ -1,6 +1,0 @@
-bpcells.experimental.MemMatrix.shape
-====================================
-
-.. currentmodule:: bpcells.experimental
-
-.. autoattribute:: MemMatrix.shape

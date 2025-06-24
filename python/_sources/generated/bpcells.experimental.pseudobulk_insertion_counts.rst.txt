@@ -1,6 +1,0 @@
-﻿bpcells.experimental.pseudobulk\_insertion\_counts
-==================================================
-
-.. currentmodule:: bpcells.experimental
-
-.. autofunction:: pseudobulk_insertion_counts
