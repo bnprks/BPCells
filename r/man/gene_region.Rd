@@ -35,3 +35,14 @@ Conveniently look up the region of a gene by gene symbol. The value returned by 
 can be used as the \code{region} argument for trackplot functions such as
 \code{trackplot_coverage()} or \code{trackplot_gene()}
 }
+\examples{
+## Prep data
+genes <- read_gencode_transcripts(
+  file.path(tempdir(), "references"), release = "42",
+  annotation_set = "basic",
+  features = "transcript"
+)
+
+## Get gene region
+gene_region(genes, "CD19", extend_bp = 1e5)
+}

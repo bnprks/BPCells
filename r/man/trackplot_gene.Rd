@@ -47,6 +47,19 @@ Plot of gene locations
 \description{
 Plot transcript models
 }
+\examples{
+## Prep data
+transcripts <- read_gencode_transcripts(
+  file.path(tempdir(), "references"), release = "42",
+  annotation_set = "basic", features = "transcript"
+)
+region <- "chr4:3034877-4034877"
+
+
+## Plot gene trackplot
+plot <- trackplot_gene(transcripts, region)
+BPCells:::render_plot_from_storage(plot, width = 6, height = 1)
+}
 \seealso{
 \code{trackplot_combine()}, \code{trackplot_coverage()}, \code{trackplot_loop()}, \code{trackplot_scalebar()}
 }

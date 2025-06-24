@@ -108,6 +108,13 @@ continuous_palette <- function(name) {
 #' @param return_data If true, return data from just before plotting rather than a plot.
 #' @param apply_styling If false, return a plot without pretty styling applied
 #' @return ggplot2 plot object
+#' @examples
+#' ## Prep data
+#' mat <- get_demo_mat(filter_qc = FALSE, subset = FALSE)
+#' reads_per_cell <- colSums(mat)
+#' 
+#' # Render knee plot
+#' plot_read_count_knee(reads_per_cell, cutoff = 1e3)
 #' @export
 plot_read_count_knee <- function(read_counts, cutoff = NULL, return_data = FALSE, apply_styling = TRUE) {
   # Keep ~1k cells per order of magnitude to speed up plotting
@@ -178,6 +185,20 @@ plot_read_count_knee <- function(read_counts, cutoff = NULL, return_data = FALSE
 #' @param min_tss Minimum TSS Enrichment cutoff
 #' @param bins Number of bins for density calculation
 #' @inheritParams plot_embedding
+#' @examples
+#' ## Prep data
+#' frags <- get_demo_frags(filter_qc = FALSE, subset = FALSE)
+#' genes <- read_gencode_transcripts(
+#'   file.path(tempdir(), "references"), release = "42",
+#'   annotation_set = "basic",
+#'   features = "transcript"
+#' )
+#' blacklist <- read_encode_blacklist(file.path(tempdir(), "references"), genome="hg38")
+#' atac_qc <- qc_scATAC(frags, genes, blacklist)
+#' 
+#' 
+#' ## Render tss enrichment vs fragment plot
+#' plot_tss_scatter(atac_qc, min_frags = 1000, min_tss = 10)
 #' @export
 plot_tss_scatter <- function(atac_qc, min_frags = NULL, min_tss = NULL, bins = 100, apply_styling = TRUE) {
   assert_is(atac_qc, "data.frame")
@@ -255,6 +276,9 @@ plot_tss_scatter <- function(atac_qc, min_frags = NULL, min_tss = NULL, bins = 1
 #' @param max_length Maximum length to show on the plot
 #' @inheritParams plot_embedding
 #' @return Numeric vector where index i contans the number of length-i fragments
+#' @examples
+#' frags <- get_demo_frags(filter_qc = FALSE, subset = FALSE)
+#' plot_fragment_length(frags)
 #' @export
 plot_fragment_length <- function(fragments, max_length = 500, return_data = FALSE, apply_styling = TRUE) {
   assert_is(fragments, "IterableFragments")
@@ -297,6 +321,17 @@ plot_fragment_length <- function(fragments, max_length = 500, return_data = FALS
 #' @param genes Coordinate ranges for genes (must include strand)
 #' @param smooth Number of bases to smooth over (rolling average)
 #' @seealso `footprint()`, `plot_tf_footprint()`
+#' @examples
+#' ## Prep data
+#' frags <- get_demo_frags(filter_qc = FALSE, subset = FALSE)
+#' genes <- read_gencode_transcripts(
+#'   file.path(tempdir(), "references"), release = "42",
+#'   annotation_set = "basic",
+#'   features = "transcript"
+#' )
+#' 
+#' ## Plot tss profile
+#' plot_tss_profile(frags, genes)
 #' @export
 plot_tss_profile <- function(fragments, genes, cell_groups = rlang::rep_along(cellNames(fragments), "all"),
                              flank = 2000L, smooth = 0L, zero_based_coords = !is(genes, "GRanges"),
@@ -485,6 +520,48 @@ collect_features <- function(source, features = NULL, gene_mapping = human_gene_
 #' @return By default, returns a ggplot2 object with all the requested features plotted
 #' in a grid. If `return_data` or `return_plot_list` is called, the return value will
 #' match that argument.
+#' @examples
+## Prep data
+#' set.seed(123)
+#' mat <- get_demo_mat()
+#' ## Normalize matrix
+#' mat_norm <- log1p(multiply_cols(mat, 1/colSums(mat)) * 10000) %>% write_matrix_memory(compress = FALSE)
+#' ## Get variable genes
+#' stats <- matrix_stats(mat, row_stats = "variance")
+#' variable_genes <- order(stats$row_stats["variance",], decreasing=TRUE) %>% 
+#'   head(1000) %>% 
+#'   sort()
+#' # Z score normalize genes
+#' mat_norm <- mat[variable_genes, ]
+#' gene_means <- stats$row_stats['mean', variable_genes]
+#' gene_vars <- stats$row_stats['variance', variable_genes]
+#' mat_norm <- (mat_norm - gene_means) / gene_vars
+#' ## Save matrix to memory
+#' mat_norm <- mat_norm %>% write_matrix_memory(compress = FALSE)
+#' ## Run SVD
+#' svd <- BPCells::svds(mat_norm, k = 10)
+#' pca <- multiply_cols(svd$v, svd$d)
+#' ## Get UMAP
+#' umap <- uwot::umap(pca)
+#' ## Get clusters
+#' clusts <- knn_hnsw(pca, ef = 500) %>%
+#'   knn_to_snn_graph() %>%
+#'   cluster_graph_louvain()
+#' 
+#' 
+#' ## Plot embedding
+#' print(length(clusts))
+#' 
+#' plot_embedding(clusts, umap)
+#' 
+#' 
+#' ### Can also plot by features
+#' #plot_embedding(
+#' #  source = mat,
+#' #  umap,
+#' #  features = c("MS4A1", "CD3E"),
+#' #)
+#' 
 #' @export
 plot_embedding <- function(source, embedding, features = NULL,
                            quantile_range = c(0.01, 0.99),
@@ -741,6 +818,17 @@ rotate_x_labels <- function(degrees = 45) {
 #' @inheritParams plot_embedding
 #' @param gene_mapping An optional vector for gene name matching with match_gene_symbol().
 #' @param colors Color scale for plot
+#' @examples
+#' ## Prep data
+#' mat <- get_demo_mat()
+#' cell_types <- paste("Group", rep(1:3, length.out = length(colnames(mat))))
+#' 
+#' ## Plot dot
+#' plot <- plot_dot(mat, c("MS4A1", "CD3E"), cell_types)
+#' 
+#' BPCells:::render_plot_from_storage(
+#'   plot, width = 4, height = 5
+#' )
 #' @export
 plot_dot <- function(source, features, groups, group_order = NULL, gene_mapping = human_gene_mapping,
                      colors = c("lightgrey", "#4682B4"),
