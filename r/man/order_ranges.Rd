@@ -23,3 +23,18 @@ selection that will reorder the input ranges to be sorted by chr, end, start
 \description{
 Use this function to order regioins prior to calling \code{peak_matrix()} or \code{tile_matrix()}.
 }
+\examples{
+## Prep data
+ranges <- tibble::tibble(
+  chr = "chr1",
+  start = seq(10, 260, 50),
+  end = start + seq(310, 0, -60),
+  cell_id = paste0("cell1")
+) \%>\% as("GRanges")
+ranges
+
+
+## Get end-sorted ordering
+order_ranges(ranges, levels(GenomicRanges::seqnames(ranges)))
+
+}
