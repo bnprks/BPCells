@@ -1,6 +1,0 @@
-bpcells.experimental.DirMatrix.from\_scipy\_sparse
-==================================================
-
-.. currentmodule:: bpcells.experimental
-
-.. automethod:: DirMatrix.from_scipy_sparse

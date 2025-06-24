@@ -75,7 +75,7 @@
 
     
     
-<!-- This is to make sure the logo file gets copied to output on a full website rebuild <img src="/home/bparks/dev/github/bnprks/BPCells/r/vignettes/web-only/logo.png" style="visibility: hidden; width: 0px" /> -->
+<!-- This is to make sure the logo file gets copied to output on a full website rebuild <img src="/home/runner/work/BPCells/BPCells/r/vignettes/web-only/logo.png" style="visibility: hidden; width: 0px" /> -->
 <p>These performance benchmarks are based on extensive benchmarks from
 the <a href="https://www.biorxiv.org/content/10.1101/2025.03.27.645853v1" class="external-link">BPCells
 manuscript</a>. Full benchmarking/plotting code and data TSVs are
@@ -99,7 +99,7 @@ also offers a BPCells integration for disk-backed operations. All tools
 were given a 3 hour time limit and up to 256GB of RAM, but only BPCells
 was able to process the largest datasets within these resource
 limits.</p>
-<p><img src="benchmark-plots%2Fpca_comparison.png" class="mx-auto d-block" style="max-height: 20rem"></p>
+<p><img src="benchmark-plots/pca_comparison.png" class="mx-auto d-block" style="max-height: 20rem"></p>
 <p>Notice that execution speed tends to scale with the number of
 non-zero entries in a matrix, whereas memory usage for BPCells scales
 with the number of cells (i.e. space required to store the output PCA
@@ -110,7 +110,7 @@ embeddings).</p>
 <p>The above benchmark was run single-threaded since not all tools
 support multi-threading. However, BPCells can offer 5-10x speedups with
 multiple threads:</p>
-<p><img src="benchmark-plots%2Fpca_multithread.png" class="mx-auto d-block" style="max-height: 20rem"></p>
+<p><img src="benchmark-plots/pca_multithread.png" class="mx-auto d-block" style="max-height: 20rem"></p>
 </div>
 </div>
 <div class="section level3">
@@ -136,7 +136,7 @@ Notice that only BPCells is the only compressed format fast enough to
 provide faster read and write speeds than an uncompressed h5ad<a class="footnote-ref" tabindex="0" data-bs-toggle="popover" data-bs-content="&lt;p&gt;These benchmarks were run single-threaded on local SSD
 storage, which is the hardest scenario to outperform uncompressed
 formats.&lt;/p&gt;"><sup>2</sup></a>.</p>
-<p><img src="benchmark-plots%2Frna_storage.png" class="mx-auto d-block"></p>
+<p><img src="benchmark-plots/rna_storage.png" class="mx-auto d-block"></p>
 <p>Note that we don’t benchmark 10x HDF5 write, since 10x does not
 directly provide software to perform arbitrary matrix writes. It would
 likely be even slower than the 10x read speed.</p>
@@ -154,7 +154,7 @@ to keep fragments in fully genome-sorted order. This makes import from
 10x fragment files dramatically faster compared to ArchR and SnapATAC2
 which must re-sort fragments to be grouped by cell. We’ll see later that
 it also speeds up genomic overlap calculations.</p>
-<p><img src="benchmark-plots%2Fatac_storage.png" class="mx-auto d-block" style="max-height: 20rem"></p>
+<p><img src="benchmark-plots/atac_storage.png" class="mx-auto d-block" style="max-height: 20rem"></p>
 </div>
 </div>
 <div class="section level3">
@@ -169,7 +169,7 @@ calculations much faster than ArchR or SnapATAC2.</p>
 <p>BPCells takes only seconds to find all overlaps with a small set of
 10 peaks, which also means that it is very fast at calculating genomic
 coverage tracks for visualization of large datasets.</p>
-<p><img src="benchmark-plots%2Fpeaks_comparison.png" class="mx-auto d-block" style="max-height: 20rem"></p>
+<p><img src="benchmark-plots/peaks_comparison.png" class="mx-auto d-block" style="max-height: 20rem"></p>
 </div>
 <div class="section level3">
 <h3 id="m-cell-analysis-of-cellxgene-census">44M cell analysis of CELLxGENE census<a class="anchor" aria-label="anchor" href="#m-cell-analysis-of-cellxgene-census"></a>
@@ -186,7 +186,7 @@ including the time to swap storage order from cell-major to
 feature-major for BPCells.&lt;/p&gt;"><sup>3</sup></a>. Note that this
 dataset would take over 750GB to store the counts matrix without
 compression.</p>
-<p><img src="benchmark-plots%2Fcellxgene_file_handling.png" class="mx-auto d-block" style="max-height: 20rem"></p>
+<p><img src="benchmark-plots/cellxgene_file_handling.png" class="mx-auto d-block" style="max-height: 20rem"></p>
 <p>Because of these much faster file read speeds, BPCells is able to do
 light compute tasks like computing per-gene mean and variance across 44M
 cells in &lt;3 minutes. PCA is the most expensive operation BPCells
@@ -195,7 +195,7 @@ Still, it completes in less than 1 hour on a server and 6.2 hours on a
 laptop. This makes atlas-scale analysis possible on a laptop while
 leaving headroom on a server for datasets up to an order of magnitude
 larger.</p>
-<p><img src="benchmark-plots%2Fcellxgene_compute_tasks.png" class="mx-auto d-block" style="max-height: 20rem"></p>
+<p><img src="benchmark-plots/cellxgene_compute_tasks.png" class="mx-auto d-block" style="max-height: 20rem"></p>
 <p>Benchmark details: Mean and variance computed on a log-normalized
 matrix, unlike the plots in the BPCells manuscript which were just
 scaled by read counts to match the default normalization of the
@@ -238,7 +238,7 @@ to h5ad with default compression settings (i.e. none).</li>
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.1.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.3.</p>
 </div>
 
     </footer>

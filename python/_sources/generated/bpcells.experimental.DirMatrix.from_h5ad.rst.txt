@@ -1,6 +1,0 @@
-bpcells.experimental.DirMatrix.from\_h5ad
-=========================================
-
-.. currentmodule:: bpcells.experimental
-
-.. automethod:: DirMatrix.from_h5ad

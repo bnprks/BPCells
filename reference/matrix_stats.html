@@ -94,6 +94,65 @@ So to calculate mean and variance simultaneously, just ask for variance,
 which will compute mean and nonzero counts as a side-effect</p>
     </div>
 
+    <div class="section level2">
+    <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="va">mat</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">matrix</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/Poisson.html" class="external-link">rpois</a></span><span class="op">(</span><span class="fl">100</span>, lambda <span class="op">=</span> <span class="fl">5</span><span class="op">)</span>, nrow <span class="op">=</span> <span class="fl">10</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">rownames</a></span><span class="op">(</span><span class="va">mat</span><span class="op">)</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="st">"gene"</span>, <span class="fl">1</span><span class="op">:</span><span class="fl">10</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">colnames</a></span><span class="op">(</span><span class="va">mat</span><span class="op">)</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="st">"cell"</span>, <span class="fl">1</span><span class="op">:</span><span class="fl">10</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">mat</span> <span class="op">&lt;-</span> <span class="va">mat</span> <span class="op">%&gt;%</span> <span class="fu"><a href="https://rdrr.io/r/methods/as.html" class="external-link">as</a></span><span class="op">(</span><span class="st">"dgCMatrix"</span><span class="op">)</span> <span class="op">%&gt;%</span> <span class="fu"><a href="https://rdrr.io/r/methods/as.html" class="external-link">as</a></span><span class="op">(</span><span class="st">"IterableMatrix"</span><span class="op">)</span></span></span>
+<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error in mat %&gt;% as("dgCMatrix") %&gt;% as("IterableMatrix"):</span> could not find function "%&gt;%"</span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co">## By default, no row or column stats are calculated</span></span></span>
+<span class="r-in"><span><span class="va">res_none</span> <span class="op">&lt;-</span> <span class="fu">matrix_stats</span><span class="op">(</span><span class="va">mat</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">res_none</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> $row_stats</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>      gene1 gene2 gene3 gene4 gene5 gene6 gene7 gene8 gene9 gene10</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> $col_stats</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>      cell1 cell2 cell3 cell4 cell5 cell6 cell7 cell8 cell9 cell10</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co">## Request row variance (automatically computes mean and nonzero too)</span></span></span>
+<span class="r-in"><span><span class="va">res_row_var</span> <span class="op">&lt;-</span> <span class="fu">matrix_stats</span><span class="op">(</span><span class="va">mat</span>, row_stats <span class="op">=</span> <span class="st">"variance"</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">res_row_var</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> $row_stats</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>              gene1     gene2     gene3     gene4     gene5 gene6    gene7 gene8</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> nonzero  10.000000 10.000000 10.000000 10.000000 10.000000  10.0 10.00000  10.0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> mean      7.000000  4.200000  3.500000  4.800000  5.800000   5.4  4.90000   4.7</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> variance  5.555556  3.288889  3.388889  5.288889  5.511111   1.6 10.54444   2.9</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>              gene9    gene10</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> nonzero  10.000000 10.000000</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> mean      5.700000  6.300000</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> variance  6.677778  4.011111</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> $col_stats</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>      cell1 cell2 cell3 cell4 cell5 cell6 cell7 cell8 cell9 cell10</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co">## Request both row variance and column variance</span></span></span>
+<span class="r-in"><span><span class="va">res_both_var</span> <span class="op">&lt;-</span> <span class="fu">matrix_stats</span><span class="op">(</span></span></span>
+<span class="r-in"><span>  mat <span class="op">=</span> <span class="va">mat</span>,</span></span>
+<span class="r-in"><span>  row_stats <span class="op">=</span> <span class="st">"variance"</span>,</span></span>
+<span class="r-in"><span>  col_stats <span class="op">=</span> <span class="st">"mean"</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">res_both_var</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> $row_stats</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>              gene1     gene2     gene3     gene4     gene5 gene6    gene7 gene8</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> nonzero  10.000000 10.000000 10.000000 10.000000 10.000000  10.0 10.00000  10.0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> mean      7.000000  4.200000  3.500000  4.800000  5.800000   5.4  4.90000   4.7</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> variance  5.555556  3.288889  3.388889  5.288889  5.511111   1.6 10.54444   2.9</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>              gene9    gene10</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> nonzero  10.000000 10.000000</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> mean      5.700000  6.300000</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> variance  6.677778  4.011111</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> $col_stats</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>         cell1 cell2 cell3 cell4 cell5 cell6 cell7 cell8 cell9 cell10</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> nonzero  10.0  10.0  10.0  10.0  10.0  10.0  10.0  10.0    10     10</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> mean      4.6   5.4   5.3   4.5   5.4   5.7   5.3   5.1     6      5</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+</code></pre></div>
+    </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside></div>
 
@@ -103,7 +162,7 @@ which will compute mean and nonzero counts as a side-effect</p>
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.1.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.3.</p>
 </div>
 
     </footer></div>

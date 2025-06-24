@@ -1,6 +1,0 @@
-bpcells.experimental.DirMatrix.transpose
-========================================
-
-.. currentmodule:: bpcells.experimental
-
-.. automethod:: DirMatrix.transpose

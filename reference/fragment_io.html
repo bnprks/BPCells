@@ -144,6 +144,102 @@ memory format provides the fastest performance in the event memory usage is
 unimportant.</p>
     </div>
 
+    <div class="section level2">
+    <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co">## Create temporary directory to keep demo fragments</span></span></span>
+<span class="r-in"><span><span class="va">data_dir</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempdir</a></span><span class="op">(</span><span class="op">)</span>, <span class="st">"frags"</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/files2.html" class="external-link">dir.create</a></span><span class="op">(</span><span class="va">data_dir</span>, recursive <span class="op">=</span> <span class="cn">TRUE</span>, showWarnings <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="co">## Get demo frags loaded from disk</span></span></span>
+<span class="r-in"><span><span class="va">frags</span> <span class="op">&lt;-</span> <span class="fu"><a href="demo_data.html">get_demo_frags</a></span><span class="op">(</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">frags</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> IterableFragments object of class "FragmentsDir"</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Cells: 2600 cells with names TTTAGCAAGGTAGCTT-1, AGCCGGTTCCGGAACC-1 ... TACTAAGTCCAATAGC-1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Chromosomes: 2 chromosomes with names chr4, chr11</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Queued Operations:</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1. Read compressed fragments from directory /home/runner/.local/share/R/BPCells/demo_data/demo_frags_filtered_subsetted</span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co">#######################################################################</span></span></span>
+<span class="r-in"><span><span class="co">## write_fragments_memory() example</span></span></span>
+<span class="r-in"><span><span class="co">#######################################################################</span></span></span>
+<span class="r-in"><span><span class="va">frags_memory</span> <span class="op">&lt;-</span> <span class="fu">write_fragments_memory</span><span class="op">(</span><span class="va">frags</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">frags_memory</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> IterableFragments object of class "PackedMemFragments"</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Cells: 2600 cells with names TTTAGCAAGGTAGCTT-1, AGCCGGTTCCGGAACC-1 ... TACTAAGTCCAATAGC-1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Chromosomes: 2 chromosomes with names chr4, chr11</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Queued Operations:</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1. Read compressed fragments from memory</span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co">#######################################################################</span></span></span>
+<span class="r-in"><span><span class="co">## write_fragments_dir() example</span></span></span>
+<span class="r-in"><span><span class="co">#######################################################################</span></span></span>
+<span class="r-in"><span><span class="va">frags</span> <span class="op">&lt;-</span> <span class="fu">write_fragments_dir</span><span class="op">(</span></span></span>
+<span class="r-in"><span> <span class="va">frags_memory</span>, </span></span>
+<span class="r-in"><span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">data_dir</span>, <span class="st">"demo_frags"</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span> overwrite <span class="op">=</span> <span class="cn">TRUE</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">frags</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> IterableFragments object of class "FragmentsDir"</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Cells: 2600 cells with names TTTAGCAAGGTAGCTT-1, AGCCGGTTCCGGAACC-1 ... TACTAAGTCCAATAGC-1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Chromosomes: 2 chromosomes with names chr4, chr11</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Queued Operations:</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1. Read compressed fragments from directory /tmp/RtmplCtqYe/frags/demo_frags</span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co">#######################################################################</span></span></span>
+<span class="r-in"><span><span class="co">## open_fragments_dir() example</span></span></span>
+<span class="r-in"><span><span class="co">#######################################################################</span></span></span>
+<span class="r-in"><span><span class="va">frags</span> <span class="op">&lt;-</span> <span class="fu">open_fragments_dir</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">data_dir</span>, <span class="st">"demo_frags"</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">frags</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> IterableFragments object of class "FragmentsDir"</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Cells: 2600 cells with names TTTAGCAAGGTAGCTT-1, AGCCGGTTCCGGAACC-1 ... TACTAAGTCCAATAGC-1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Chromosomes: 2 chromosomes with names chr4, chr11</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Queued Operations:</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1. Read compressed fragments from directory /tmp/RtmplCtqYe/frags/demo_frags</span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co">#######################################################################</span></span></span>
+<span class="r-in"><span><span class="co">## write_fragments_hdf5() example</span></span></span>
+<span class="r-in"><span><span class="co">#######################################################################</span></span></span>
+<span class="r-in"><span><span class="va">frags_hdf5</span> <span class="op">&lt;-</span> <span class="fu">write_fragments_hdf5</span><span class="op">(</span></span></span>
+<span class="r-in"><span> <span class="va">frags</span>, </span></span>
+<span class="r-in"><span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">data_dir</span>, <span class="st">"demo_frags.h5"</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span> overwrite <span class="op">=</span> <span class="cn">TRUE</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">frags_hdf5</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> IterableFragments object of class "FragmentsHDF5"</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Cells: 2600 cells with names TTTAGCAAGGTAGCTT-1, AGCCGGTTCCGGAACC-1 ... TACTAAGTCCAATAGC-1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Chromosomes: 2 chromosomes with names chr4, chr11</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Queued Operations:</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1. Read compressed fragments from /tmp/RtmplCtqYe/frags/demo_frags.h5, group fragments</span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co">#######################################################################</span></span></span>
+<span class="r-in"><span><span class="co">## open_fragments_hdf5() example</span></span></span>
+<span class="r-in"><span><span class="co">#######################################################################</span></span></span>
+<span class="r-in"><span><span class="va">frags_hdf5</span> <span class="op">&lt;-</span> <span class="fu">open_fragments_hdf5</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">data_dir</span>, <span class="st">"demo_frags.h5"</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">frags_hdf5</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> IterableFragments object of class "FragmentsHDF5"</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Cells: 2600 cells with names TTTAGCAAGGTAGCTT-1, AGCCGGTTCCGGAACC-1 ... TACTAAGTCCAATAGC-1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Chromosomes: 2 chromosomes with names chr4, chr11</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Queued Operations:</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1. Read compressed fragments from /tmp/RtmplCtqYe/frags/demo_frags.h5, group fragments</span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span></span></span>
+</code></pre></div>
+    </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside></div>
 
@@ -153,7 +249,7 @@ unimportant.</p>
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.1.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.3.</p>
 </div>
 
     </footer></div>
