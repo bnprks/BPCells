@@ -16,3 +16,6 @@ Read chromosome sizes from UCSC and return as a tibble with one row per
 chromosome.
 The underlying data is pulled from here: \url{https://hgdownload.soe.ucsc.edu/downloads.html}
 }
+\examples{
+read_ucsc_chrom_sizes("./reference")
+}
