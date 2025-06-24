@@ -26,3 +26,19 @@ are offset by 9bp. However, +4/-5 bp is often applied to bed-format files,
 since the end coordinate in bed files is 1 past the last basepair of the sequenced
 DNA fragment. This results in a bed-like format except with inclusive end coordinates.
 }
+\examples{
+## Prep data
+frags <- tibble::tibble(
+  chr = "chr1",
+  start = seq(10, 260, 50),
+  end = start + 30,
+  cell_id = paste0("cell1")
+) \%>\% as("GRanges")
+frags
+
+frags <- frags \%>\% convert_to_fragments()
+
+
+## Shift fragments
+shift_fragments(frags, shift_start = 4, shift_end = -4) \%>\% as("GRanges")
+}
