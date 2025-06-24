@@ -59,6 +59,7 @@
 <li>Export <code><a href="../reference/merge_peaks_iterative.html">merge_peaks_iterative()</a></code>, which helps create non-overlapping peak sets. (pull request <a href="https://github.com/bnprks/BPCells/issues/216" class="external-link">#216</a>)</li>
 <li>Add support for <code>uint16_t</code> when reading in anndata matrices using <code><a href="../reference/open_matrix_anndata_hdf5.html">open_matrix_anndata_hdf5()</a></code>. (pull request <a href="https://github.com/bnprks/BPCells/issues/248" class="external-link">#248</a>)</li>
 <li>Switch <code><a href="../reference/open_matrix_10x_hdf5.html">write_matrix_10x_hdf5()</a></code> to use signed rather than unsigned integers for <code>indices</code>, <code>indptr</code>, and <code>shape</code> to improve compatibility with 10x-produced files. (Thanks to <a href="https://github.com/ycli1995" class="external-link">@ycli1995</a> for pull request <a href="https://github.com/bnprks/BPCells/issues/256" class="external-link">#256</a>)</li>
+<li>Change behaviour during <code><a href="https://rdrr.io/r/base/cbind.html" class="external-link">cbind()</a></code> and <code><a href="https://rdrr.io/r/base/cbind.html" class="external-link">rbind()</a></code> when matrices are of different types, to upcast instead of erroring out. (pull request <a href="https://github.com/bnprks/BPCells/issues/265" class="external-link">#265</a>)</li>
 </ul></div>
 <div class="section level3">
 <h3 id="bug-fixes-0-3-1">Bug-fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-0-3-1"></a></h3>
@@ -283,7 +284,7 @@
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.2.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.3.</p>
 </div>
 
     </footer></div>
