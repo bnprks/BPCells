@@ -102,58 +102,6 @@ project. For calculating colMeans on a sparse single cell RNA matrix it is about
 <code><a href="https://rdrr.io/r/base/apply.html" class="external-link">base::apply</a></code> interface not being sparsity-aware. (See <a href="https://github.com/bnprks/BPCells/pull/104" class="external-link">pull request #104</a> for benchmarking.)</p></div>
     </div>
 
-    <div class="section level2">
-    <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="va">mat</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">matrix</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/Binomial.html" class="external-link">rbinom</a></span><span class="op">(</span><span class="fl">40</span>, <span class="fl">1</span>, <span class="fl">0.5</span><span class="op">)</span> <span class="op">*</span> <span class="fu"><a href="https://rdrr.io/r/base/sample.html" class="external-link">sample.int</a></span><span class="op">(</span><span class="fl">5</span>, <span class="fl">40</span>, replace <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>, nrow <span class="op">=</span> <span class="fl">4</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">rownames</a></span><span class="op">(</span><span class="va">mat</span><span class="op">)</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="st">"gene"</span>, <span class="fl">1</span><span class="op">:</span><span class="fl">4</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="va">mat</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>       [,1] [,2] [,3] [,4] [,5] [,6] [,7] [,8] [,9] [,10]</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> gene1    0    4    0    0    4    0    0    0    0     4</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> gene2    0    0    0    4    0    2    0    0    0     2</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> gene3    2    0    0    0    2    3    0    4    2     0</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> gene4    1    0    0    4    3    4    1    1    0     5</span>
-<span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="va">mat</span> <span class="op">&lt;-</span> <span class="va">mat</span> <span class="op">%&gt;%</span> <span class="fu">as</span><span class="op">(</span><span class="st">"dgCMatrix"</span><span class="op">)</span> <span class="op">%&gt;%</span> <span class="fu">as</span><span class="op">(</span><span class="st">"IterableMatrix"</span><span class="op">)</span></span></span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error in mat %&gt;% as("dgCMatrix") %&gt;% as("IterableMatrix"):</span> could not find function "%&gt;%"</span>
-<span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="co">#######################################################################</span></span></span>
-<span class="r-in"><span><span class="co">## apply_by_row() example</span></span></span>
-<span class="r-in"><span><span class="co">#######################################################################</span></span></span>
-<span class="r-in"><span><span class="co">## Get mean of every row</span></span></span>
-<span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="co">## expect an error in the case that col-major matrix is passed</span></span></span>
-<span class="r-in"><span><span class="fu">apply_by_row</span><span class="op">(</span><span class="va">mat</span>, <span class="kw">function</span><span class="op">(</span><span class="va">val</span>, <span class="va">row</span>, <span class="va">col</span><span class="op">)</span> <span class="op">{</span><span class="fu"><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum</a></span><span class="op">(</span><span class="va">val</span><span class="op">)</span> <span class="op">/</span> <span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">mat</span><span class="op">)</span><span class="op">}</span><span class="op">)</span> <span class="op">%&gt;%</span> </span></span>
-<span class="r-in"><span> <span class="fu"><a href="https://rdrr.io/r/base/unlist.html" class="external-link">unlist</a></span><span class="op">(</span><span class="op">)</span></span></span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error in apply_by_row(mat, function(val, row, col) {    sum(val)/nrow(mat)}) %&gt;% unlist():</span> could not find function "%&gt;%"</span>
-<span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="co">## Need to transpose matrix to make sure it is in row-order</span></span></span>
-<span class="r-in"><span><span class="va">mat_row_order</span> <span class="op">&lt;-</span> <span class="fu"><a href="transpose_storage_order.html">transpose_storage_order</a></span><span class="op">(</span><span class="va">mat</span><span class="op">)</span></span></span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error:</span> unable to find an inherited method for function ‘matrix_type’ for signature ‘x = "matrix"’</span>
-<span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="co">## works as expected for row major</span></span></span>
-<span class="r-in"><span><span class="fu">apply_by_row</span><span class="op">(</span><span class="va">mat_row_order</span>, </span></span>
-<span class="r-in"><span> <span class="kw">function</span><span class="op">(</span><span class="va">val</span>, <span class="va">row</span>, <span class="va">col</span><span class="op">)</span> <span class="fu"><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum</a></span><span class="op">(</span><span class="va">val</span><span class="op">)</span> <span class="op">/</span> <span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">ncol</a></span><span class="op">(</span><span class="va">mat_row_order</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="op">)</span> <span class="op">%&gt;%</span> <span class="fu"><a href="https://rdrr.io/r/base/unlist.html" class="external-link">unlist</a></span><span class="op">(</span><span class="op">)</span></span></span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error in apply_by_row(mat_row_order, function(val, row, col) sum(val)/ncol(mat_row_order)) %&gt;%     unlist():</span> could not find function "%&gt;%"</span>
-<span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="co"># Also analogous to running rowMeans() without names</span></span></span>
-<span class="r-in"><span><span class="fu">rowMeans</span><span class="op">(</span><span class="va">mat</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> gene1 gene2 gene3 gene4 </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   1.2   0.8   1.3   1.9 </span>
-<span class="r-in"><span></span></span>
-<span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="co">#######################################################################</span></span></span>
-<span class="r-in"><span><span class="co">## apply_by_col() example</span></span></span>
-<span class="r-in"><span><span class="co">#######################################################################</span></span></span>
-<span class="r-in"><span><span class="co">## Get argmax of every col</span></span></span>
-<span class="r-in"><span><span class="fu">apply_by_col</span><span class="op">(</span><span class="va">mat</span>, </span></span>
-<span class="r-in"><span> <span class="kw">function</span><span class="op">(</span><span class="va">val</span>, <span class="va">row</span>, <span class="va">col</span><span class="op">)</span> <span class="kw">if</span> <span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="va">val</span><span class="op">)</span> <span class="op">&gt;</span> <span class="fl">0</span><span class="op">)</span> <span class="va">row</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/which.min.html" class="external-link">which.max</a></span><span class="op">(</span><span class="va">val</span><span class="op">)</span><span class="op">]</span> <span class="kw">else</span> <span class="fl">1L</span></span></span>
-<span class="r-in"><span><span class="op">)</span> <span class="op">%&gt;%</span> <span class="fu"><a href="https://rdrr.io/r/base/unlist.html" class="external-link">unlist</a></span><span class="op">(</span><span class="op">)</span></span></span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error in apply_by_col(mat, function(val, row, col) if (length(val) &gt; 0) row[which.max(val)] else 1L) %&gt;%     unlist():</span> could not find function "%&gt;%"</span>
-<span class="r-in"><span></span></span>
-<span class="r-in"><span></span></span>
-</code></pre></div>
-    </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside></div>
 
@@ -163,7 +111,7 @@ project. For calculating colMeans on a sparse single cell RNA matrix it is about
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.3.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.1.</p>
 </div>
 
     </footer></div>

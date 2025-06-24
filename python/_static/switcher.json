@@ -1,0 +1,12 @@
+[
+    {
+      "version": "dev",
+      "url": "/",
+      "preferred": true
+    },
+    {
+      "name": "0.15.4 (stable)",
+      "version": "v0.15.4",
+      "url": "/"
+    }
+]

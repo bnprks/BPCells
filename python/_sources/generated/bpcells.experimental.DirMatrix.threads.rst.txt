@@ -1,0 +1,6 @@
+bpcells.experimental.DirMatrix.threads
+======================================
+
+.. currentmodule:: bpcells.experimental
+
+.. autoattribute:: DirMatrix.threads

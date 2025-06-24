@@ -137,76 +137,6 @@ This helps to infer dimnames for <code>obsp</code>,<code> varm</code>, etc. If t
 dimname inference will be disabled.</p>
     </div>
 
-    <div class="section level2">
-    <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co">## Create temporary directory to keep demo matrix</span></span></span>
-<span class="r-in"><span><span class="va">data_dir</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempdir</a></span><span class="op">(</span><span class="op">)</span>, <span class="st">"mat_anndata"</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="kw">if</span> <span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/files2.html" class="external-link">dir.exists</a></span><span class="op">(</span><span class="va">data_dir</span><span class="op">)</span><span class="op">)</span> <span class="fu"><a href="https://rdrr.io/r/base/unlink.html" class="external-link">unlink</a></span><span class="op">(</span><span class="va">data_dir</span>, recursive <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/files2.html" class="external-link">dir.create</a></span><span class="op">(</span><span class="va">data_dir</span>, recursive <span class="op">=</span> <span class="cn">TRUE</span>, showWarnings <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="va">mat</span> <span class="op">&lt;-</span> <span class="fu"><a href="demo_data.html">get_demo_mat</a></span><span class="op">(</span><span class="op">)</span></span></span>
-<span class="r-in"><span></span></span>
-<span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="co">#######################################################################</span></span></span>
-<span class="r-in"><span><span class="co">## write_matrix_anndata_hdf5() example</span></span></span>
-<span class="r-in"><span><span class="co">#######################################################################</span></span></span>
-<span class="r-in"><span><span class="va">mat</span> <span class="op">&lt;-</span> <span class="fu">write_matrix_anndata_hdf5</span><span class="op">(</span></span></span>
-<span class="r-in"><span> <span class="va">mat</span>,</span></span>
-<span class="r-in"><span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">data_dir</span>, <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="st">"new_demo_mat.h5"</span><span class="op">)</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="va">mat</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 3582 x 2600 IterableMatrix object with class AnnDataMatrixH5</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Row names: ENSG00000272602, ENSG00000250312 ... ENSG00000255512</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Col names: TTTAGCAAGGTAGCTT-1, AGCCGGTTCCGGAACC-1 ... TACTAAGTCCAATAGC-1</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Data type: uint32_t</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Storage order: column major</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Queued Operations:</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1. AnnData HDF5 matrix in file /tmp/RtmplCtqYe/mat_anndata/new_demo_mat.h5, group X</span>
-<span class="r-in"><span></span></span>
-<span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="co">#######################################################################</span></span></span>
-<span class="r-in"><span><span class="co">## open_matrix_anndata_hdf5() example</span></span></span>
-<span class="r-in"><span><span class="co">#######################################################################</span></span></span>
-<span class="r-in"><span><span class="va">mat</span> <span class="op">&lt;-</span> <span class="fu">open_matrix_anndata_hdf5</span><span class="op">(</span></span></span>
-<span class="r-in"><span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">data_dir</span>, <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="st">"new_demo_mat.h5"</span><span class="op">)</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="va">mat</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 3582 x 2600 IterableMatrix object with class AnnDataMatrixH5</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Row names: ENSG00000272602, ENSG00000250312 ... ENSG00000255512</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Col names: TTTAGCAAGGTAGCTT-1, AGCCGGTTCCGGAACC-1 ... TACTAAGTCCAATAGC-1</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Data type: uint32_t</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Storage order: column major</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Queued Operations:</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1. AnnData HDF5 matrix in file /tmp/RtmplCtqYe/mat_anndata/new_demo_mat.h5, group X</span>
-<span class="r-in"><span></span></span>
-<span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="co">#######################################################################</span></span></span>
-<span class="r-in"><span><span class="co">## write_matrix_anndata_hdf5_dense() example</span></span></span>
-<span class="r-in"><span><span class="co">#######################################################################</span></span></span>
-<span class="r-in"><span><span class="va">mat</span> <span class="op">&lt;-</span> <span class="fu">write_matrix_anndata_hdf5_dense</span><span class="op">(</span></span></span>
-<span class="r-in"><span> <span class="va">mat</span>,</span></span>
-<span class="r-in"><span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">data_dir</span>, <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="st">"new_demo_mat_dense.h5"</span><span class="op">)</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="va">mat</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 3582 x 2600 IterableMatrix object with class AnnDataMatrixH5</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Row names: ENSG00000272602, ENSG00000250312 ... ENSG00000255512</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Col names: TTTAGCAAGGTAGCTT-1, AGCCGGTTCCGGAACC-1 ... TACTAAGTCCAATAGC-1</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Data type: uint32_t</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Storage order: column major</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Queued Operations:</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1. AnnData HDF5 matrix in file /tmp/RtmplCtqYe/mat_anndata/new_demo_mat_dense.h5, group X</span>
-<span class="r-in"><span></span></span>
-<span class="r-in"><span></span></span>
-</code></pre></div>
-    </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside></div>
 
@@ -216,7 +146,7 @@ dimname inference will be disabled.</p>
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.3.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.1.</p>
 </div>
 
     </footer></div>

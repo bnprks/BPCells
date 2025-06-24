@@ -190,63 +190,6 @@ value stays the same.</p>
 
     </div>
 
-    <div class="section level2">
-    <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">123</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="va">mat</span> <span class="op">&lt;-</span> <span class="fu"><a href="demo_data.html">get_demo_mat</a></span><span class="op">(</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="co">## Normalize matrix</span></span></span>
-<span class="r-in"><span><span class="va">mat_norm</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/Log.html" class="external-link">log1p</a></span><span class="op">(</span><span class="fu"><a href="mat_norm.html">multiply_cols</a></span><span class="op">(</span><span class="va">mat</span>, <span class="fl">1</span><span class="op">/</span><span class="fu">colSums</span><span class="op">(</span><span class="va">mat</span><span class="op">)</span><span class="op">)</span> <span class="op">*</span> <span class="fl">10000</span><span class="op">)</span> <span class="op">%&gt;%</span> <span class="fu"><a href="matrix_io.html">write_matrix_memory</a></span><span class="op">(</span>compress <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error in log1p(multiply_cols(mat, 1/colSums(mat)) * 10000) %&gt;% write_matrix_memory(compress = FALSE):</span> could not find function "%&gt;%"</span>
-<span class="r-in"><span><span class="co">## Get variable genes</span></span></span>
-<span class="r-in"><span><span class="va">stats</span> <span class="op">&lt;-</span> <span class="fu"><a href="matrix_stats.html">matrix_stats</a></span><span class="op">(</span><span class="va">mat</span>, row_stats <span class="op">=</span> <span class="st">"variance"</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="va">variable_genes</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/order.html" class="external-link">order</a></span><span class="op">(</span><span class="va">stats</span><span class="op">$</span><span class="va">row_stats</span><span class="op">[</span><span class="st">"variance"</span>,<span class="op">]</span>, decreasing<span class="op">=</span><span class="cn">TRUE</span><span class="op">)</span> <span class="op">%&gt;%</span> </span></span>
-<span class="r-in"><span>  <span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="fl">1000</span><span class="op">)</span> <span class="op">%&gt;%</span> </span></span>
-<span class="r-in"><span>  <span class="fu"><a href="https://rdrr.io/r/base/sort.html" class="external-link">sort</a></span><span class="op">(</span><span class="op">)</span></span></span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error in order(stats$row_stats["variance", ], decreasing = TRUE) %&gt;% head(1000) %&gt;%     sort():</span> could not find function "%&gt;%"</span>
-<span class="r-in"><span><span class="co"># Z score normalize genes</span></span></span>
-<span class="r-in"><span><span class="va">mat_norm</span> <span class="op">&lt;-</span> <span class="va">mat</span><span class="op">[</span><span class="va">variable_genes</span>, <span class="op">]</span></span></span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error in h(simpleError(msg, call)):</span> error in evaluating the argument 'i' in selecting a method for function '[': object 'variable_genes' not found</span>
-<span class="r-in"><span><span class="va">gene_means</span> <span class="op">&lt;-</span> <span class="va">stats</span><span class="op">$</span><span class="va">row_stats</span><span class="op">[</span><span class="st">'mean'</span>, <span class="va">variable_genes</span><span class="op">]</span></span></span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error:</span> object 'variable_genes' not found</span>
-<span class="r-in"><span><span class="va">gene_vars</span> <span class="op">&lt;-</span> <span class="va">stats</span><span class="op">$</span><span class="va">row_stats</span><span class="op">[</span><span class="st">'variance'</span>, <span class="va">variable_genes</span><span class="op">]</span></span></span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error:</span> object 'variable_genes' not found</span>
-<span class="r-in"><span><span class="va">mat_norm</span> <span class="op">&lt;-</span> <span class="op">(</span><span class="va">mat_norm</span> <span class="op">-</span> <span class="va">gene_means</span><span class="op">)</span> <span class="op">/</span> <span class="va">gene_vars</span></span></span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error:</span> object 'mat_norm' not found</span>
-<span class="r-in"><span><span class="co">## Save matrix to memory</span></span></span>
-<span class="r-in"><span><span class="va">mat_norm</span> <span class="op">&lt;-</span> <span class="va">mat_norm</span> <span class="op">%&gt;%</span> <span class="fu"><a href="matrix_io.html">write_matrix_memory</a></span><span class="op">(</span>compress <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error in mat_norm %&gt;% write_matrix_memory(compress = FALSE):</span> could not find function "%&gt;%"</span>
-<span class="r-in"><span><span class="co">## Run SVD</span></span></span>
-<span class="r-in"><span><span class="va">svd</span> <span class="op">&lt;-</span> <span class="fu">BPCells</span><span class="fu">::</span><span class="fu"><a href="svds.html">svds</a></span><span class="op">(</span><span class="va">mat_norm</span>, k <span class="op">=</span> <span class="fl">10</span><span class="op">)</span></span></span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error:</span> object 'mat_norm' not found</span>
-<span class="r-in"><span><span class="va">pca</span> <span class="op">&lt;-</span> <span class="fu"><a href="mat_norm.html">multiply_cols</a></span><span class="op">(</span><span class="va">svd</span><span class="op">$</span><span class="va">v</span>, <span class="va">svd</span><span class="op">$</span><span class="va">d</span><span class="op">)</span></span></span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error in svd$v:</span> object of type 'closure' is not subsettable</span>
-<span class="r-in"><span><span class="co">## Get UMAP</span></span></span>
-<span class="r-in"><span><span class="va">umap</span> <span class="op">&lt;-</span> <span class="fu">uwot</span><span class="fu">::</span><span class="fu"><a href="https://jlmelville.github.io/uwot/reference/umap.html" class="external-link">umap</a></span><span class="op">(</span><span class="va">pca</span><span class="op">)</span></span></span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error:</span> object 'pca' not found</span>
-<span class="r-in"><span><span class="co">## Get clusters</span></span></span>
-<span class="r-in"><span><span class="va">clusts</span> <span class="op">&lt;-</span> <span class="fu"><a href="knn.html">knn_hnsw</a></span><span class="op">(</span><span class="va">pca</span>, ef <span class="op">=</span> <span class="fl">500</span><span class="op">)</span> <span class="op">%&gt;%</span></span></span>
-<span class="r-in"><span>  <span class="fu"><a href="knn_graph.html">knn_to_snn_graph</a></span><span class="op">(</span><span class="op">)</span> <span class="op">%&gt;%</span></span></span>
-<span class="r-in"><span>  <span class="fu"><a href="cluster.html">cluster_graph_louvain</a></span><span class="op">(</span><span class="op">)</span></span></span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error in knn_hnsw(pca, ef = 500) %&gt;% knn_to_snn_graph() %&gt;% cluster_graph_louvain():</span> could not find function "%&gt;%"</span>
-<span class="r-in"><span></span></span>
-<span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="co">## Plot embedding</span></span></span>
-<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="va">clusts</span><span class="op">)</span><span class="op">)</span></span></span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error in h(simpleError(msg, call)):</span> error in evaluating the argument 'x' in selecting a method for function 'print': object 'clusts' not found</span>
-<span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="fu">plot_embedding</span><span class="op">(</span><span class="va">clusts</span>, <span class="va">umap</span><span class="op">)</span></span></span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error:</span> object 'umap' not found</span>
-<span class="r-in"><span></span></span>
-<span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="co">### Can also plot by features</span></span></span>
-<span class="r-in"><span><span class="co">#plot_embedding(</span></span></span>
-<span class="r-in"><span><span class="co">#  source = mat,</span></span></span>
-<span class="r-in"><span><span class="co">#  umap,</span></span></span>
-<span class="r-in"><span><span class="co">#  features = c("MS4A1", "CD3E"),</span></span></span>
-<span class="r-in"><span><span class="co">#)</span></span></span>
-<span class="r-in"><span></span></span>
-</code></pre></div>
-    </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside></div>
 
@@ -256,7 +199,7 @@ value stays the same.</p>
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.3.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.1.</p>
 </div>
 
     </footer></div>

@@ -106,23 +106,6 @@ otherwise it is interpreted as a discrete color palette in <code><a href="https:
     <div class="dont-index"><p><code><a href="trackplot_combine.html">trackplot_combine()</a></code>, <code><a href="trackplot_coverage.html">trackplot_coverage()</a></code>, <code><a href="trackplot_gene.html">trackplot_gene()</a></code>, <code><a href="trackplot_scalebar.html">trackplot_scalebar()</a></code>, <code><a href="trackplot_genome_annotation.html">trackplot_genome_annotation()</a></code></p></div>
     </div>
 
-    <div class="section level2">
-    <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="va">peaks</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">3054877</span>, <span class="fl">3334877</span>, <span class="fl">3534877</span>, <span class="fl">3634877</span>, <span class="fl">3734877</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="va">loops</span> <span class="op">&lt;-</span> <span class="fu">tibble</span><span class="fu">::</span><span class="fu"><a href="https://tibble.tidyverse.org/reference/tibble.html" class="external-link">tibble</a></span><span class="op">(</span></span></span>
-<span class="r-in"><span>  chr <span class="op">=</span> <span class="st">"chr4"</span>,</span></span>
-<span class="r-in"><span>  start <span class="op">=</span> <span class="va">peaks</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>,<span class="fl">1</span>,<span class="fl">2</span>,<span class="fl">3</span><span class="op">)</span><span class="op">]</span>,</span></span>
-<span class="r-in"><span>  end <span class="op">=</span> <span class="va">peaks</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">2</span>,<span class="fl">3</span>,<span class="fl">4</span>,<span class="fl">5</span><span class="op">)</span><span class="op">]</span>,</span></span>
-<span class="r-in"><span>  score <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">4</span>,<span class="fl">1</span>,<span class="fl">3</span>,<span class="fl">2</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="va">region</span> <span class="op">&lt;-</span> <span class="st">"chr4:3034877-4034877"</span></span></span>
-<span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="co">## Plot loops</span></span></span>
-<span class="r-in"><span><span class="va">plot</span> <span class="op">&lt;-</span> <span class="fu">trackplot_loop</span><span class="op">(</span><span class="va">loops</span>, <span class="va">region</span>, color_by <span class="op">=</span> <span class="st">"score"</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="fu">BPCells</span><span class="fu">:::</span><span class="fu"><a href="render_plot_from_storage.html">render_plot_from_storage</a></span><span class="op">(</span><span class="va">plot</span>, width <span class="op">=</span> <span class="fl">6</span>, height <span class="op">=</span> <span class="fl">1.5</span><span class="op">)</span></span></span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error in loadNamespace(x):</span> there is no package called ‘png’</span>
-</code></pre></div>
-    </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside></div>
 
@@ -132,7 +115,7 @@ otherwise it is interpreted as a discrete color palette in <code><a href="https:
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.3.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.1.</p>
 </div>
 
     </footer></div>
