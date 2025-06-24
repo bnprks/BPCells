@@ -10,7 +10,6 @@ as.matrix(bpcells_mat) # Dense matrix conversion
 
 # Convert to BPCells from R
 as(dgc_mat, "IterableMatrix")
-as(base_r_mat, "IterableMatrix")
 }
 \description{
 BPCells matrices can be interconverted with Matrix package
