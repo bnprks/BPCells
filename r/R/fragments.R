@@ -159,6 +159,33 @@ setMethod("short_description", "FragmentsTsv", function(x) {
 #'     insertion at the end coordinate rather than the base before the end coordinate. This is the
 #'     10x default, though it's not quite standard for the bed file format.
 #' @return 10x fragments file object
+#' @examples
+#' ## Download example fragments from pbmc 500 dataset and save in temp directory
+#' data_dir <- file.path(tempdir(), "frags_10x")
+#' dir.create(data_dir, recursive = TRUE, showWarnings = FALSE)
+#' url_base <- "https://cf.10xgenomics.com/samples/cell-atac/2.0.0/atac_pbmc_500_nextgem/"
+#' frags_file <- "atac_pbmc_500_nextgem_fragments.tsv.gz"
+#' atac_raw_url <- paste0(url_base, frags_file)
+#' if (!file.exists(file.path(data_dir, frags_file))) {
+#'  download.file(atac_raw_url, file.path(data_dir, frags_file), mode="wb")
+#' }
+#' 
+#' #######################################################################
+#' ## open_fragments_10x() example
+#' #######################################################################
+#' frags <- open_fragments_10x(
+#'  file.path(data_dir, frags_file)
+#' )
+#' ## A Fragments object imported from 10x will not have cell/chromosome 
+#' ## information directly known unless written as a BPCells fragment object
+#' frags
+#' 
+#' frags %>% write_fragments_dir(
+#'  file.path(data_dir, "demo_frags_from_h5"), 
+#'  overwrite = TRUE
+#' )
+#' 
+#' 
 #' @export
 open_fragments_10x <- function(path, comment = "#", end_inclusive = TRUE) {
   assert_is_file(path, extension = c(".tsv", ".tsv.gz"))
@@ -180,6 +207,17 @@ open_fragments_10x <- function(path, comment = "#", end_inclusive = TRUE) {
 #' @details **write_fragments_10x**
 #'
 #' Fragments will be written to disk immediately, then returned in a readable object.
+#' @examples
+#' #######################################################################
+#' ## write_fragments_10x() example
+#' #######################################################################
+#' frags <- write_fragments_10x(
+#'  frags,
+#'  file.path(data_dir, paste0("new_", frags_file))
+#' )
+#' frags
+#' 
+#' 
 #' @export
 write_fragments_10x <- function(fragments, path, end_inclusive = TRUE, append_5th_column = FALSE) {
   assert_is_file(path, must_exist = FALSE, extension = c(".tsv", ".tsv.gz"))
@@ -291,6 +329,21 @@ setMethod("short_description", "PackedMemFragments", function(x) {
 #' @param compress Whether or not to compress the data. With compression, storage size is
 #' be about half the size of a gzip-compressed 10x fragments file.
 #' @rdname fragment_io
+#' @examples
+#' ## Create temporary directory to keep demo fragments
+#' data_dir <- file.path(tempdir(), "frags")
+#' dir.create(data_dir, recursive = TRUE, showWarnings = FALSE)
+#' ## Get demo frags loaded from disk
+#' frags <- get_demo_frags()
+#' frags
+#' 
+#' #######################################################################
+#' ## write_fragments_memory() example
+#' #######################################################################
+#' frags_memory <- write_fragments_memory(frags)
+#' frags_memory
+#' 
+#' 
 #' @export
 write_fragments_memory <- function(fragments, compress = TRUE) {
   assert_is(fragments, "IterableFragments")
@@ -347,6 +400,18 @@ setMethod("short_description", "FragmentsDir", function(x) {
 #'   pass a temp path as a string to customize the temp dir location.
 #' @return Fragment object
 #' @rdname fragment_io
+#' @examples
+#' #######################################################################
+#' ## write_fragments_dir() example
+#' #######################################################################
+#' frags <- write_fragments_dir(
+#'  frags_memory, 
+#'  file.path(data_dir, "demo_frags"),
+#'  overwrite = TRUE
+#' )
+#' frags
+#' 
+#' 
 #' @export
 write_fragments_dir <- function(fragments, dir, compress = TRUE, buffer_size = 1024L, overwrite = FALSE) {
   assert_is(fragments, "IterableFragments")
@@ -383,6 +448,14 @@ write_fragments_dir <- function(fragments, dir, compress = TRUE, buffer_size = 1
 }
 
 #' @rdname fragment_io
+#' @examples
+#' #######################################################################
+#' ## open_fragments_dir() example
+#' #######################################################################
+#' frags <- open_fragments_dir(file.path(data_dir, "demo_frags"))
+#' frags
+#' 
+#' 
 #' @export
 open_fragments_dir <- function(dir, buffer_size = 1024L) {
   assert_is_file(dir)
@@ -438,6 +511,18 @@ setMethod("short_description", "FragmentsHDF5", function(x) {
 #' @param gzip_level Gzip compression level. Default is 0 (no compression). This is recommended when both compression and
 #'     compatibility with outside programs is required. Otherwise, using compress=TRUE is recommended
 #'     as it is >10x faster with often similar compression levels. 
+#' @examples
+#' #######################################################################
+#' ## write_fragments_hdf5() example
+#' #######################################################################
+#' frags_hdf5 <- write_fragments_hdf5(
+#'  frags, 
+#'  file.path(data_dir, "demo_frags.h5"),
+#'  overwrite = TRUE
+#' )
+#' frags_hdf5
+#' 
+#' 
 #' @export
 write_fragments_hdf5 <- function(
     fragments, 
@@ -494,6 +579,14 @@ write_fragments_hdf5 <- function(
 }
 
 #' @rdname fragment_io
+#' @examples
+#' #######################################################################
+#' ## open_fragments_hdf5() example
+#' #######################################################################
+#' frags_hdf5 <- open_fragments_hdf5(file.path(data_dir, "demo_frags.h5"))
+#' frags_hdf5
+#' 
+#' 
 #' @export
 open_fragments_hdf5 <- function(path, group = "fragments", buffer_size = 16384L) {
   assert_is_file(path)
@@ -532,6 +625,48 @@ open_fragments_hdf5 <- function(path, group = "fragments", buffer_size = 16384L)
 #'    for GRanges and false for other formats
 #'    (see this [archived UCSC blogpost](https://web.archive.org/web/20210920203703/http://genome.ucsc.edu/blog/the-ucsc-genome-browser-coordinate-counting-systems/))
 #' @return **convert_to_fragments()**: IterableFragments object
+#' @examples
+#' frags_table <- tibble::tibble(
+#'   chr = paste0("chr", 1:10),
+#'   start = 0,
+#'   end = 5,
+#'   cell_id = "cell1"
+#' )
+#' frags_table
+#' 
+#' frags_granges <- GenomicRanges::makeGRangesFromDataFrame(
+#'  frags_table, keep.extra.columns = TRUE
+#' )
+#' frags_granges
+#' 
+#' #######################################################################
+#' ## convert_to_fragments() example
+#' #######################################################################
+#' frags <- convert_to_fragments(frags_granges)
+#' frags
+#' 
+#' 
+#' #######################################################################
+#' ## as(x, "IterableFragments") example
+#' #######################################################################
+#' frags <- as(frags_table, "IterableFragments")
+#' frags
+#' 
+#' 
+#' #######################################################################
+#' ## as(bpcells_fragments, "data.frame") example
+#' #######################################################################
+#' frags_table <- as(frags, "data.frame")
+#' frags_table
+#' 
+#' 
+#' #######################################################################
+#' ## as(bpcells_fragments, "GRanges") example
+#' #######################################################################
+#' frags_granges <- as(frags, "GRanges")
+#' frags_granges
+#' 
+#' 
 #' @rdname fragment_R_conversion
 #' @export
 convert_to_fragments <- function(x, zero_based_coords = !is(x, "GRanges")) {
