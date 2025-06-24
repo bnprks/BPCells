@@ -71,64 +71,6 @@ or double (64-bit real number)</p></dd>
     <p>IterableMatrix object</p>
     </div>
 
-    <div class="section level2">
-    <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="va">mat</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">matrix</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">50</span><span class="op">)</span>, nrow <span class="op">=</span> <span class="fl">10</span>, ncol <span class="op">=</span> <span class="fl">5</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">rownames</a></span><span class="op">(</span><span class="va">mat</span><span class="op">)</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="st">"gene"</span>, <span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq_len</a></span><span class="op">(</span><span class="fl">10</span><span class="op">)</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">colnames</a></span><span class="op">(</span><span class="va">mat</span><span class="op">)</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="st">"cell"</span>, <span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq_len</a></span><span class="op">(</span><span class="fl">5</span><span class="op">)</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="va">mat</span> <span class="op">&lt;-</span> <span class="va">mat</span> <span class="op">%&gt;%</span> <span class="fu"><a href="https://rdrr.io/r/methods/as.html" class="external-link">as</a></span><span class="op">(</span><span class="st">"dgCMatrix"</span><span class="op">)</span> <span class="op">%&gt;%</span> <span class="fu"><a href="https://rdrr.io/r/methods/as.html" class="external-link">as</a></span><span class="op">(</span><span class="st">"IterableMatrix"</span><span class="op">)</span></span></span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error in mat %&gt;% as("dgCMatrix") %&gt;% as("IterableMatrix"):</span> could not find function "%&gt;%"</span>
-<span class="r-in"><span><span class="va">mat</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>             cell1      cell2      cell3      cell4      cell5</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> gene1   0.7551251 -0.6912054 -0.6675648 -0.2327618  0.7478688</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> gene2   0.3424035  1.3398599  1.3895059  0.6374729  3.3915088</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> gene3   0.1684728  2.7361084  0.9118739 -1.3707612  1.6193896</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> gene4   1.3970665 -0.9441017  0.2053894 -1.4256595 -1.8508898</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> gene5  -0.6790954 -1.7810619  2.5844322 -1.2461920  1.0554223</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> gene6   0.7376294 -0.7160587 -0.7893881 -0.6832669 -0.8053435</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> gene7  -0.8607243  0.9110785  0.5880771 -0.9796754  1.5961720</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> gene8   0.4212304 -0.7721921 -0.7112873 -0.4625191  0.7759900</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> gene9   1.4505432 -0.7820777  1.5849968  1.2145097  1.1520898</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> gene10  0.1943924 -0.4321952  0.6763896 -1.2778199  2.1327019</span>
-<span class="r-in"><span><span class="fu">convert_matrix_type</span><span class="op">(</span><span class="va">mat</span>, <span class="st">"float"</span><span class="op">)</span></span></span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error:</span> In function convert_matrix_type: "matrix" must have class dgCMatrix, or IterableMatrix</span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> <span style="color: #555555;">     </span>▆</span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> <span style="color: #555555;">  1. </span>└─<span style="font-weight: bold;">pkgdown</span>::build_site_github_pages("r")</span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> <span style="color: #555555;">  2. </span>  └─pkgdown::build_site(...)</span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> <span style="color: #555555;">  3. </span>    └─pkgdown:::build_site_local(...)</span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> <span style="color: #555555;">  4. </span>      └─pkgdown::build_reference(...)</span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> <span style="color: #555555;">  5. </span>        ├─pkgdown:::unwrap_purrr_error(...)</span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> <span style="color: #555555;">  6. </span>        │ └─<span style="font-weight: bold;">base</span>::withCallingHandlers(...)</span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> <span style="color: #555555;">  7. </span>        └─<span style="font-weight: bold;">purrr</span>::map(...)</span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> <span style="color: #555555;">  8. </span>          └─purrr:::map_("list", .x, .f, ..., .progress = .progress)</span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> <span style="color: #555555;">  9. </span>            ├─purrr:::with_indexed_errors(...)</span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> <span style="color: #555555;"> 10. </span>            │ └─<span style="font-weight: bold;">base</span>::withCallingHandlers(...)</span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> <span style="color: #555555;"> 11. </span>            ├─<span style="font-weight: bold;">purrr</span>:::call_with_cleanup(...)</span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> <span style="color: #555555;"> 12. </span>            └─<span style="font-weight: bold;">pkgdown</span> (local) .f(.x[[i]], ...)</span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> <span style="color: #555555;"> 13. </span>              ├─<span style="font-weight: bold;">base</span>::withCallingHandlers(...)</span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> <span style="color: #555555;"> 14. </span>              └─<span style="font-weight: bold;">pkgdown</span>:::data_reference_topic(...)</span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> <span style="color: #555555;"> 15. </span>                └─pkgdown:::run_examples(...)</span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> <span style="color: #555555;"> 16. </span>                  └─pkgdown:::highlight_examples(code, topic, env = env)</span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> <span style="color: #555555;"> 17. </span>                    └─<span style="font-weight: bold;">downlit</span>::evaluate_and_highlight(...)</span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> <span style="color: #555555;"> 18. </span>                      └─<span style="font-weight: bold;">evaluate</span>::evaluate(code, child_env(env), new_device = TRUE, output_handler = output_handler)</span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> <span style="color: #555555;"> 19. </span>                        ├─<span style="font-weight: bold;">base</span>::withRestarts(...)</span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> <span style="color: #555555;"> 20. </span>                        │ └─base (local) withRestartList(expr, restarts)</span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> <span style="color: #555555;"> 21. </span>                        │   ├─base (local) withOneRestart(withRestartList(expr, restarts[-nr]), restarts[[nr]])</span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> <span style="color: #555555;"> 22. </span>                        │   │ └─base (local) doWithOneRestart(return(expr), restart)</span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> <span style="color: #555555;"> 23. </span>                        │   └─base (local) withRestartList(expr, restarts[-nr])</span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> <span style="color: #555555;"> 24. </span>                        │     └─base (local) withOneRestart(expr, restarts[[1L]])</span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> <span style="color: #555555;"> 25. </span>                        │       └─base (local) doWithOneRestart(return(expr), restart)</span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> <span style="color: #555555;"> 26. </span>                        ├─<span style="font-weight: bold;">evaluate</span>:::with_handlers(...)</span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> <span style="color: #555555;"> 27. </span>                        │ ├─<span style="font-weight: bold;">base</span>::eval(call)</span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> <span style="color: #555555;"> 28. </span>                        │ │ └─base::eval(call)</span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> <span style="color: #555555;"> 29. </span>                        │ └─base::withCallingHandlers(...)</span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> <span style="color: #555555;"> 30. </span>                        ├─base::withVisible(eval(expr, envir))</span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> <span style="color: #555555;"> 31. </span>                        └─base::eval(expr, envir)</span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> <span style="color: #555555;"> 32. </span>                          └─base::eval(expr, envir)</span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> <span style="color: #555555;"> 33. </span>                            └─<span style="font-weight: bold;">BPCells</span>::convert_matrix_type(mat, "float")</span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> <span style="color: #555555;"> 34. </span>                              └─BPCells:::assert_is(matrix, c("dgCMatrix", "IterableMatrix"))</span>
-</code></pre></div>
-    </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside></div>
 
@@ -138,7 +80,7 @@ or double (64-bit real number)</p></dd>
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.3.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.1.</p>
 </div>
 
     </footer></div>

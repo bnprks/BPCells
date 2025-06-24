@@ -97,47 +97,6 @@ passes through the data, and ~7.3TB of data to be sorted in three passes
 through the data.</p>
     </div>
 
-    <div class="section level2">
-    <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="va">mat</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">matrix</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">50</span><span class="op">)</span>, nrow <span class="op">=</span> <span class="fl">10</span>, ncol <span class="op">=</span> <span class="fl">5</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">rownames</a></span><span class="op">(</span><span class="va">mat</span><span class="op">)</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="st">"gene"</span>, <span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq_len</a></span><span class="op">(</span><span class="fl">10</span><span class="op">)</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">colnames</a></span><span class="op">(</span><span class="va">mat</span><span class="op">)</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="st">"cell"</span>, <span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq_len</a></span><span class="op">(</span><span class="fl">5</span><span class="op">)</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="va">mat</span> <span class="op">&lt;-</span> <span class="va">mat</span> <span class="op">%&gt;%</span> <span class="fu"><a href="https://rdrr.io/r/methods/as.html" class="external-link">as</a></span><span class="op">(</span><span class="st">"dgCMatrix"</span><span class="op">)</span> <span class="op">%&gt;%</span> <span class="fu"><a href="https://rdrr.io/r/methods/as.html" class="external-link">as</a></span><span class="op">(</span><span class="st">"IterableMatrix"</span><span class="op">)</span></span></span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error in mat %&gt;% as("dgCMatrix") %&gt;% as("IterableMatrix"):</span> could not find function "%&gt;%"</span>
-<span class="r-in"><span><span class="va">mat</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>             cell1       cell2      cell3       cell4       cell5</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> gene1  -0.3298963 -1.35020157 -1.3128589  0.21156259  0.22886214</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> gene2   0.5348023  0.24510244  0.8008613 -0.46483173 -1.39640763</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> gene3  -1.2072532 -0.30734854  0.7131008 -0.66235721  0.92429420</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> gene4   0.6287673  0.73136457  1.0319149 -0.13295360  0.06621604</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> gene5   0.5761647  0.20138181  1.6818085 -1.32170171  0.80289084</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> gene6   1.2362239 -1.57546283 -0.2263104  0.07669278 -0.06052526</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> gene7   0.4755396  0.02353878 -0.1979290 -0.38499088  0.08932862</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> gene8  -1.5471475  0.80164111  1.0437023  0.94730644  0.40131138</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> gene9   0.0554688 -2.55562737 -0.4417373  0.02168627 -0.88856060</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> gene10  0.6800621 -0.52691068 -1.6366291 -0.45829401  1.44916943</span>
-<span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="co">## A regular transpose operation switches a user's rows and cols </span></span></span>
-<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/t.html" class="external-link">t</a></span><span class="op">(</span><span class="va">mat</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>            gene1      gene2      gene3       gene4      gene5       gene6</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> cell1 -0.3298963  0.5348023 -1.2072532  0.62876732  0.5761647  1.23622388</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> cell2 -1.3502016  0.2451024 -0.3073485  0.73136457  0.2013818 -1.57546283</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> cell3 -1.3128589  0.8008613  0.7131008  1.03191486  1.6818085 -0.22631040</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> cell4  0.2115626 -0.4648317 -0.6623572 -0.13295360 -1.3217017  0.07669278</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> cell5  0.2288621 -1.3964076  0.9242942  0.06621604  0.8028908 -0.06052526</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>             gene7      gene8       gene9     gene10</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> cell1  0.47553964 -1.5471475  0.05546880  0.6800621</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> cell2  0.02353878  0.8016411 -2.55562737 -0.5269107</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> cell3 -0.19792903  1.0437023 -0.44173735 -1.6366291</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> cell4 -0.38499088  0.9473064  0.02168627 -0.4582940</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> cell5  0.08932862  0.4013114 -0.88856060  1.4491694</span>
-<span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="co">## Running `transpose_storage_order()` instead changes whether the storage is in row-major or col-major,</span></span></span>
-<span class="r-in"><span><span class="co">## but does not switch the rows and cols</span></span></span>
-<span class="r-in"><span><span class="fu">transpose_storage_order</span><span class="op">(</span><span class="va">mat</span><span class="op">)</span></span></span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error:</span> unable to find an inherited method for function ‘matrix_type’ for signature ‘x = "matrix"’</span>
-</code></pre></div>
-    </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside></div>
 
@@ -147,7 +106,7 @@ through the data.</p>
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.3.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.1.</p>
 </div>
 
     </footer></div>
