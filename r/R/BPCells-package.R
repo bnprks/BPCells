@@ -11,8 +11,11 @@
 #' @importClassesFrom Matrix dgCMatrix
 #' @importFrom Matrix t
 #' @importFrom methods .hasSlot Arith as callNextMethod cbind2 Compare is Math Math2 new rbind2 setAs setClass setGeneric setMethod show
-#' @importFrom magrittr %>%
 NULL
+
+#' @importFrom magrittr %>%
+#' @export
+magrittr::`%>%`
 
 #' @importMethodsFrom Matrix rowSums
 #' @export
