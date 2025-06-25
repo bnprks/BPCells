@@ -230,7 +230,7 @@ Else, return a Matrix of quantile values, with cols representing each quantile, 
 <li><p><code>log1p_slow()</code>: Calculate log(x + 1) (non-SIMD version)</p></li>
 <li><p><code>expm1(IterableMatrix)</code>: Calculate exp(x) - 1</p></li>
 <li><p><code>expm1_slow()</code>: Calculate exp(x) - 1 (non-SIMD version)</p></li>
-<li><p><code>e1^e2</code>: Calculate x^y (elementwise)</p></li>
+<li><p><code>e1^e2</code>: Calculate x^y (elementwise; y &gt; 0)</p></li>
 <li><p><code>e1 &lt; e2</code>: Binarize matrix according to numeric &lt; matrix comparison</p></li>
 <li><p><code>e1 &gt; e2</code>: Binarize matrix according to matrix &gt; numeric comparison</p></li>
 <li><p><code>e1 &lt;= e2</code>: Binarize matrix according to numeric &lt;= matrix comparison</p></li>
@@ -242,6 +242,454 @@ Else, return a Matrix of quantile values, with cols representing each quantile, 
 <li><p><code>e1 - e2</code>: Subtract a constant, or row-wise subtraction with a vector length nrow(mat)</p></li>
 </ul></div>
 
+    <div class="section level2">
+    <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co">## Prep data</span></span></span>
+<span class="r-in"><span><span class="va">mat</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">matrix</a></span><span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="fl">25</span>, nrow <span class="op">=</span> <span class="fl">5</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> <span class="fu">as</span><span class="op">(</span><span class="st">"dgCMatrix"</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">mat</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 5 x 5 sparse Matrix of class "dgCMatrix"</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                   </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1,] 1  6 11 16 21</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [2,] 2  7 12 17 22</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [3,] 3  8 13 18 23</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [4,] 4  9 14 19 24</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [5,] 5 10 15 20 25</span>
+<span class="r-in"><span><span class="va">mat</span> <span class="op">&lt;-</span> <span class="fu">as</span><span class="op">(</span><span class="va">mat</span>, <span class="st">"IterableMatrix"</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">mat</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 5 x 5 IterableMatrix object with class Iterable_dgCMatrix_wrapper</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Row names: unknown names</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Col names: unknown names</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Data type: double</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Storage order: column major</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Queued Operations:</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1. Load dgCMatrix from memory</span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co">#######################################################################</span></span></span>
+<span class="r-in"><span><span class="co">## matrix_type() example</span></span></span>
+<span class="r-in"><span><span class="co">#######################################################################</span></span></span>
+<span class="r-in"><span><span class="fu">matrix_type</span><span class="op">(</span><span class="va">mat</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "double"</span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co">#######################################################################</span></span></span>
+<span class="r-in"><span><span class="co">## storage_order() example</span></span></span>
+<span class="r-in"><span><span class="co">#######################################################################</span></span></span>
+<span class="r-in"><span><span class="fu">storage_order</span><span class="op">(</span><span class="va">mat</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "col"</span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co">#######################################################################</span></span></span>
+<span class="r-in"><span><span class="co">## show() example</span></span></span>
+<span class="r-in"><span><span class="co">#######################################################################</span></span></span>
+<span class="r-in"><span><span class="fu">show</span><span class="op">(</span><span class="va">mat</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 5 x 5 IterableMatrix object with class Iterable_dgCMatrix_wrapper</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Row names: unknown names</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Col names: unknown names</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Data type: double</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Storage order: column major</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Queued Operations:</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1. Load dgCMatrix from memory</span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co">#######################################################################</span></span></span>
+<span class="r-in"><span><span class="co">## t() example</span></span></span>
+<span class="r-in"><span><span class="co">#######################################################################</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/t.html" class="external-link">t</a></span><span class="op">(</span><span class="va">mat</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 5 x 5 IterableMatrix object with class Iterable_dgCMatrix_wrapper</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Row names: unknown names</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Col names: unknown names</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Data type: double</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Storage order: row major</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Queued Operations:</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1. Load dgCMatrix from memory</span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co">#######################################################################</span></span></span>
+<span class="r-in"><span><span class="co">## `x %*% y` example</span></span></span>
+<span class="r-in"><span><span class="co">#######################################################################</span></span></span>
+<span class="r-in"><span><span class="va">mat</span> <span class="op"><a href="https://rdrr.io/r/base/matmult.html" class="external-link">%*%</a></span> <span class="fu">as</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">matrix</a></span><span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="fl">50</span>, nrow <span class="op">=</span> <span class="fl">5</span><span class="op">)</span>, <span class="st">"dgCMatrix"</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 5 x 10 IterableMatrix object with class MatrixMultiply</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Row names: unknown names</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Col names: unknown names</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Data type: double</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Storage order: column major</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Queued Operations:</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1. Multiply sparse matrices: Iterable_dgCMatrix_wrapper (5x5) * Iterable_dgCMatrix_wrapper (5x10)</span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co">#######################################################################</span></span></span>
+<span class="r-in"><span><span class="co">## rowSums() example</span></span></span>
+<span class="r-in"><span><span class="co">#######################################################################</span></span></span>
+<span class="r-in"><span><span class="fu">rowSums</span><span class="op">(</span><span class="va">mat</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 55 60 65 70 75</span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co">#######################################################################</span></span></span>
+<span class="r-in"><span><span class="co">## colSums() example</span></span></span>
+<span class="r-in"><span><span class="co">#######################################################################</span></span></span>
+<span class="r-in"><span><span class="fu">colSums</span><span class="op">(</span><span class="va">mat</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1]  15  40  65  90 115</span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co">#######################################################################</span></span></span>
+<span class="r-in"><span><span class="co">## rowMeans() example</span></span></span>
+<span class="r-in"><span><span class="co">#######################################################################</span></span></span>
+<span class="r-in"><span><span class="fu">rowMeans</span><span class="op">(</span><span class="va">mat</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 11 12 13 14 15</span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co">#######################################################################</span></span></span>
+<span class="r-in"><span><span class="co">## colMeans() example</span></span></span>
+<span class="r-in"><span><span class="co">#######################################################################</span></span></span>
+<span class="r-in"><span><span class="fu">colMeans</span><span class="op">(</span><span class="va">mat</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1]  3  8 13 18 23</span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co">#######################################################################</span></span></span>
+<span class="r-in"><span><span class="co">## colVars() example</span></span></span>
+<span class="r-in"><span><span class="co">#######################################################################</span></span></span>
+<span class="r-in"><span><span class="fu">colVars</span><span class="op">(</span><span class="va">mat</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 2.5 2.5 2.5 2.5 2.5</span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co">#######################################################################</span></span></span>
+<span class="r-in"><span><span class="co">## rowMaxs() example</span></span></span>
+<span class="r-in"><span><span class="co">#######################################################################</span></span></span>
+<span class="r-in"><span><span class="fu">rowMaxs</span><span class="op">(</span><span class="va">mat</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 21 22 23 24 25</span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co">#######################################################################</span></span></span>
+<span class="r-in"><span><span class="co">## colMaxs() example</span></span></span>
+<span class="r-in"><span><span class="co">#######################################################################</span></span></span>
+<span class="r-in"><span><span class="fu">colMaxs</span><span class="op">(</span><span class="va">mat</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1]  5 10 15 20 25</span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co">#######################################################################</span></span></span>
+<span class="r-in"><span><span class="co">## rowQuantiles() example</span></span></span>
+<span class="r-in"><span><span class="co">#######################################################################</span></span></span>
+<span class="r-in"><span><span class="fu">rowQuantiles</span><span class="op">(</span><span class="fu"><a href="transpose_storage_order.html">transpose_storage_order</a></span><span class="op">(</span><span class="va">mat</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>      0% 25% 50% 75% 100%</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1,]  1   6  11  16   21</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [2,]  2   7  12  17   22</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [3,]  3   8  13  18   23</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [4,]  4   9  14  19   24</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [5,]  5  10  15  20   25</span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co">#######################################################################</span></span></span>
+<span class="r-in"><span><span class="co">## colQuantiles() example</span></span></span>
+<span class="r-in"><span><span class="co">#######################################################################</span></span></span>
+<span class="r-in"><span><span class="fu">colQuantiles</span><span class="op">(</span><span class="va">mat</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>      0% 25% 50% 75% 100%</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1,]  1   2   3   4    5</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [2,]  6   7   8   9   10</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [3,] 11  12  13  14   15</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [4,] 16  17  18  19   20</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [5,] 21  22  23  24   25</span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co">#######################################################################</span></span></span>
+<span class="r-in"><span><span class="co">## log1p() example</span></span></span>
+<span class="r-in"><span><span class="co">#######################################################################</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/Log.html" class="external-link">log1p</a></span><span class="op">(</span><span class="va">mat</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 5 x 5 IterableMatrix object with class TransformLog1p</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Row names: unknown names</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Col names: unknown names</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Data type: double</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Storage order: column major</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Queued Operations:</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1. Load dgCMatrix from memory</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2. Transform log1p</span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co">#######################################################################</span></span></span>
+<span class="r-in"><span><span class="co">## log1p_slow() example</span></span></span>
+<span class="r-in"><span><span class="co">#######################################################################</span></span></span>
+<span class="r-in"><span><span class="fu">log1p_slow</span><span class="op">(</span><span class="va">mat</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 5 x 5 IterableMatrix object with class TransformLog1pSlow</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Row names: unknown names</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Col names: unknown names</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Data type: double</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Storage order: column major</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Queued Operations:</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1. Load dgCMatrix from memory</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2. Transform log1p (non-SIMD implementation)</span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co">#######################################################################</span></span></span>
+<span class="r-in"><span><span class="co">## expm1() example</span></span></span>
+<span class="r-in"><span><span class="co">#######################################################################</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/Log.html" class="external-link">expm1</a></span><span class="op">(</span><span class="va">mat</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 5 x 5 IterableMatrix object with class TransformExpm1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Row names: unknown names</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Col names: unknown names</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Data type: double</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Storage order: column major</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Queued Operations:</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1. Load dgCMatrix from memory</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2. Transform expm1</span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co">#######################################################################</span></span></span>
+<span class="r-in"><span><span class="co">## expm1_slow() example</span></span></span>
+<span class="r-in"><span><span class="co">#######################################################################</span></span></span>
+<span class="r-in"><span><span class="fu">expm1_slow</span><span class="op">(</span><span class="va">mat</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 5 x 5 IterableMatrix object with class TransformExpm1Slow</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Row names: unknown names</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Col names: unknown names</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Data type: double</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Storage order: column major</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Queued Operations:</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1. Load dgCMatrix from memory</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2. Transform expm1 (non-SIMD implementation)</span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co">#######################################################################</span></span></span>
+<span class="r-in"><span><span class="co">## `e1 &lt; e2` example</span></span></span>
+<span class="r-in"><span><span class="co">#######################################################################</span></span></span>
+<span class="r-in"><span><span class="fl">5</span> <span class="op">&lt;</span> <span class="va">mat</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 5 x 5 IterableMatrix object with class ConvertMatrixType</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Row names: unknown names</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Col names: unknown names</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Data type: uint32_t</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Storage order: column major</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Queued Operations:</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1. Load dgCMatrix from memory</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2. Binarize according to formula: x &lt; 5</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 3. Convert type from double to uint32_t</span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co">#######################################################################</span></span></span>
+<span class="r-in"><span><span class="co">## `e1 &gt; e2` example</span></span></span>
+<span class="r-in"><span><span class="co">#######################################################################</span></span></span>
+<span class="r-in"><span><span class="va">mat</span> <span class="op">&gt;</span> <span class="fl">5</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 5 x 5 IterableMatrix object with class ConvertMatrixType</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Row names: unknown names</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Col names: unknown names</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Data type: uint32_t</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Storage order: column major</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Queued Operations:</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1. Load dgCMatrix from memory</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2. Binarize according to formula: x &lt; 5</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 3. Convert type from double to uint32_t</span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co">#######################################################################</span></span></span>
+<span class="r-in"><span><span class="co">## `e1 &lt;= e2` example</span></span></span>
+<span class="r-in"><span><span class="co">#######################################################################</span></span></span>
+<span class="r-in"><span><span class="fl">5</span> <span class="op">&lt;=</span> <span class="va">mat</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 5 x 5 IterableMatrix object with class ConvertMatrixType</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Row names: unknown names</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Col names: unknown names</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Data type: uint32_t</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Storage order: column major</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Queued Operations:</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1. Load dgCMatrix from memory</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2. Binarize according to formula: x &lt;= 5</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 3. Convert type from double to uint32_t</span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co">#######################################################################</span></span></span>
+<span class="r-in"><span><span class="co">## `e1 &gt;= e2` example</span></span></span>
+<span class="r-in"><span><span class="co">#######################################################################</span></span></span>
+<span class="r-in"><span><span class="va">mat</span> <span class="op">&gt;=</span> <span class="fl">5</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 5 x 5 IterableMatrix object with class ConvertMatrixType</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Row names: unknown names</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Col names: unknown names</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Data type: uint32_t</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Storage order: column major</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Queued Operations:</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1. Load dgCMatrix from memory</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2. Binarize according to formula: x &lt;= 5</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 3. Convert type from double to uint32_t</span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co">#######################################################################</span></span></span>
+<span class="r-in"><span><span class="co">## round() example</span></span></span>
+<span class="r-in"><span><span class="co">#######################################################################</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="va">mat</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 5 x 5 IterableMatrix object with class TransformRound</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Row names: unknown names</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Col names: unknown names</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Data type: double</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Storage order: column major</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Queued Operations:</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1. Load dgCMatrix from memory</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2. Transform round to 0 decimal places</span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co">#######################################################################</span></span></span>
+<span class="r-in"><span><span class="co">## `e1 * e2` example</span></span></span>
+<span class="r-in"><span><span class="co">#######################################################################</span></span></span>
+<span class="r-in"><span><span class="co">## Multiplying by a constant</span></span></span>
+<span class="r-in"><span><span class="va">mat</span> <span class="op">*</span> <span class="fl">5</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 5 x 5 IterableMatrix object with class TransformScaleShift</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Row names: unknown names</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Col names: unknown names</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Data type: double</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Storage order: column major</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Queued Operations:</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1. Load dgCMatrix from memory</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2. Scale by 5</span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co">## Multiplying by a vector of length `nrow(mat)`</span></span></span>
+<span class="r-in"><span><span class="va">mat</span> <span class="op">*</span> <span class="fl">1</span><span class="op">:</span><span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">mat</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 5 x 5 IterableMatrix object with class TransformScaleShift</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Row names: unknown names</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Col names: unknown names</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Data type: double</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Storage order: column major</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Queued Operations:</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1. Load dgCMatrix from memory</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2. Scale rows by 1, 2 ... 5</span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co">#######################################################################</span></span></span>
+<span class="r-in"><span><span class="co">## `e1 + e2` example</span></span></span>
+<span class="r-in"><span><span class="co">#######################################################################</span></span></span>
+<span class="r-in"><span><span class="co">## Add by a constant</span></span></span>
+<span class="r-in"><span><span class="va">mat</span> <span class="op">+</span> <span class="fl">5</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 5 x 5 IterableMatrix object with class TransformScaleShift</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Row names: unknown names</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Col names: unknown names</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Data type: double</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Storage order: column major</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Queued Operations:</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1. Load dgCMatrix from memory</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2. Shift by 5</span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co">## Adding row-wise by a vector of length `nrow(mat)`</span></span></span>
+<span class="r-in"><span><span class="va">mat</span> <span class="op">+</span> <span class="fl">1</span><span class="op">:</span><span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">mat</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 5 x 5 IterableMatrix object with class TransformScaleShift</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Row names: unknown names</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Col names: unknown names</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Data type: double</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Storage order: column major</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Queued Operations:</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1. Load dgCMatrix from memory</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2. Shift rows by 1, 2 ... 5</span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co">#######################################################################</span></span></span>
+<span class="r-in"><span><span class="co">## `e1 / e2` example</span></span></span>
+<span class="r-in"><span><span class="co">#######################################################################</span></span></span>
+<span class="r-in"><span><span class="co">## Divide by a constant</span></span></span>
+<span class="r-in"><span><span class="va">mat</span> <span class="op">/</span> <span class="fl">5</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 5 x 5 IterableMatrix object with class TransformScaleShift</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Row names: unknown names</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Col names: unknown names</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Data type: double</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Storage order: column major</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Queued Operations:</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1. Load dgCMatrix from memory</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2. Scale by 0.2</span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co">## Divide by a vector of length `nrow(mat)`</span></span></span>
+<span class="r-in"><span><span class="va">mat</span> <span class="op">/</span> <span class="fl">1</span><span class="op">:</span><span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">mat</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 5 x 5 IterableMatrix object with class TransformScaleShift</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Row names: unknown names</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Col names: unknown names</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Data type: double</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Storage order: column major</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Queued Operations:</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1. Load dgCMatrix from memory</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2. Scale rows by 1, 0.5 ... 0.2</span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co">#######################################################################</span></span></span>
+<span class="r-in"><span><span class="co">## `e1 - e2` example</span></span></span>
+<span class="r-in"><span><span class="co">#######################################################################</span></span></span>
+<span class="r-in"><span><span class="co">## Subtracting by a constant</span></span></span>
+<span class="r-in"><span><span class="va">mat</span> <span class="op">-</span> <span class="fl">5</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 5 x 5 IterableMatrix object with class TransformScaleShift</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Row names: unknown names</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Col names: unknown names</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Data type: double</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Storage order: column major</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Queued Operations:</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1. Load dgCMatrix from memory</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2. Shift by -5</span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co">## Subtracting by a vector of length `nrow(mat)`</span></span></span>
+<span class="r-in"><span><span class="va">mat</span> <span class="op">-</span> <span class="fl">1</span><span class="op">:</span><span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">mat</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 5 x 5 IterableMatrix object with class TransformScaleShift</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Row names: unknown names</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Col names: unknown names</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Data type: double</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Storage order: column major</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Queued Operations:</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1. Load dgCMatrix from memory</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2. Shift rows by -1, -2 ... -5</span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span></span></span>
+</code></pre></div>
+    </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside></div>
 
@@ -251,7 +699,7 @@ Else, return a Matrix of quantile values, with cols representing each quantile, 
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.1.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.0.</p>
 </div>
 
     </footer></div>

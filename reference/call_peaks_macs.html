@@ -149,6 +149,47 @@ shell scripts generated at <code>&lt;path&gt;/input/&lt;group&gt;.sh</code>. Fin
 setting <code>step="read-outputs"</code>.</p>
     </div>
 
+    <div class="section level2">
+    <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="va">macs_files</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempdir</a></span><span class="op">(</span><span class="op">)</span>, <span class="st">"peaks"</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">frags</span> <span class="op">&lt;-</span> <span class="fu"><a href="demo_data.html">get_demo_frags</a></span><span class="op">(</span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="fu">call_peaks_macs</span><span class="op">(</span><span class="va">frags</span>, <span class="va">macs_files</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># A tibble: 6 × 11</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   chr    start    end group name       score strand fold_enrichment log10_pvalue</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>      <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>            <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>        <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">1</span> chr11 <span style="text-decoration: underline;">175</span>907 <span style="text-decoration: underline;">176</span>057 all   all_peak_1    22 .                 2.95         3.29</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">2</span> chr11 <span style="text-decoration: underline;">179</span>864 <span style="text-decoration: underline;">180</span>015 all   all_peak_2    33 .                 3.68         4.44</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">3</span> chr11 <span style="text-decoration: underline;">180</span>095 <span style="text-decoration: underline;">180</span>352 all   all_peak_3    13 .                 2.21         2.23</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">4</span> chr11 <span style="text-decoration: underline;">184</span>430 <span style="text-decoration: underline;">184</span>599 all   all_peak_4    33 .                 3.68         4.44</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">5</span> chr11 <span style="text-decoration: underline;">188</span>061 <span style="text-decoration: underline;">188</span>273 all   all_peak_5    56 .                 5.16         6.97</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">6</span> chr11 <span style="text-decoration: underline;">189</span>522 <span style="text-decoration: underline;">189</span>672 all   all_peak_6    33 .                 3.68         4.44</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># ℹ 2 more variables: log10_qvalue &lt;dbl&gt;, summit_offset &lt;dbl&gt;</span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co">## Can also just run the input prep, then run macs manually</span></span></span>
+<span class="r-in"><span><span class="co">## by setting step to 'prep_inputs'</span></span></span>
+<span class="r-in"><span><span class="va">macs_script</span> <span class="op">&lt;-</span> <span class="fu">call_peaks_macs</span><span class="op">(</span><span class="va">frags</span>, <span class="va">macs_files</span>, step <span class="op">=</span> <span class="st">"prep-inputs"</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/system2.html" class="external-link">system2</a></span><span class="op">(</span><span class="st">"bash"</span>, <span class="va">macs_script</span><span class="op">[</span><span class="fl">1</span><span class="op">]</span>, stdout <span class="op">=</span> <span class="cn">FALSE</span>, stderr <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co">## Then read the narrow peaks files</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/list.files.html" class="external-link">list.files</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">macs_files</span>, <span class="st">"output"</span>, <span class="st">"all"</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "all_peaks.narrowPeak" "all_peaks.xls"        "all_summits.bed"     </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [4] "log.txt"             </span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co">## call_peaks_macs() can also solely perform the output reading step</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="fu">call_peaks_macs</span><span class="op">(</span><span class="va">frags</span>, <span class="va">macs_files</span>, step <span class="op">=</span> <span class="st">"read-outputs"</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># A tibble: 6 × 11</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   chr    start    end group name       score strand fold_enrichment log10_pvalue</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>      <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>            <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>        <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">1</span> chr11 <span style="text-decoration: underline;">175</span>907 <span style="text-decoration: underline;">176</span>057 all   all_peak_1    22 .                 2.95         3.29</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">2</span> chr11 <span style="text-decoration: underline;">179</span>864 <span style="text-decoration: underline;">180</span>015 all   all_peak_2    33 .                 3.68         4.44</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">3</span> chr11 <span style="text-decoration: underline;">180</span>095 <span style="text-decoration: underline;">180</span>352 all   all_peak_3    13 .                 2.21         2.23</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">4</span> chr11 <span style="text-decoration: underline;">184</span>430 <span style="text-decoration: underline;">184</span>599 all   all_peak_4    33 .                 3.68         4.44</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">5</span> chr11 <span style="text-decoration: underline;">188</span>061 <span style="text-decoration: underline;">188</span>273 all   all_peak_5    56 .                 5.16         6.97</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">6</span> chr11 <span style="text-decoration: underline;">189</span>522 <span style="text-decoration: underline;">189</span>672 all   all_peak_6    33 .                 3.68         4.44</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># ℹ 2 more variables: log10_qvalue &lt;dbl&gt;, summit_offset &lt;dbl&gt;</span></span>
+</code></pre></div>
+    </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside></div>
 
@@ -158,7 +199,7 @@ setting <code>step="read-outputs"</code>.</p>
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.1.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.0.</p>
 </div>
 
     </footer></div>

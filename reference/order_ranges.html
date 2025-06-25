@@ -76,6 +76,35 @@
 selection that will reorder the input ranges to be sorted by chr, end, start</p>
     </div>
 
+    <div class="section level2">
+    <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co">## Prep data</span></span></span>
+<span class="r-in"><span><span class="va">ranges</span> <span class="op">&lt;-</span> <span class="fu">tibble</span><span class="fu">::</span><span class="fu"><a href="https://tibble.tidyverse.org/reference/tibble.html" class="external-link">tibble</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>  chr <span class="op">=</span> <span class="st">"chr1"</span>,</span></span>
+<span class="r-in"><span>  start <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq</a></span><span class="op">(</span><span class="fl">10</span>, <span class="fl">260</span>, <span class="fl">50</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>  end <span class="op">=</span> <span class="va">start</span> <span class="op">+</span> <span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq</a></span><span class="op">(</span><span class="fl">310</span>, <span class="fl">0</span>, <span class="op">-</span><span class="fl">60</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>  cell_id <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="st">"cell1"</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> <span class="fu"><a href="https://rdrr.io/r/methods/as.html" class="external-link">as</a></span><span class="op">(</span><span class="st">"GRanges"</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">ranges</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> GRanges object with 6 ranges and 1 metadata column:</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>       seqnames    ranges strand |     cell_id</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>          &lt;Rle&gt; &lt;IRanges&gt;  &lt;Rle&gt; | &lt;character&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   [1]     chr1    10-320      * |       cell1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   [2]     chr1    60-310      * |       cell1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   [3]     chr1   110-300      * |       cell1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   [4]     chr1   160-290      * |       cell1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   [5]     chr1   210-280      * |       cell1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   [6]     chr1   260-270      * |       cell1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   -------</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   seqinfo: 1 sequence from an unspecified genome; no seqlengths</span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co">## Get end-sorted ordering</span></span></span>
+<span class="r-in"><span><span class="fu">order_ranges</span><span class="op">(</span><span class="va">ranges</span>, <span class="fu"><a href="https://rdrr.io/r/base/levels.html" class="external-link">levels</a></span><span class="op">(</span><span class="fu">GenomicRanges</span><span class="fu">::</span><span class="fu">seqnames</span><span class="op">(</span><span class="va">ranges</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 6 5 4 3 2 1</span>
+<span class="r-in"><span></span></span>
+</code></pre></div>
+    </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside></div>
 
@@ -85,7 +114,7 @@ selection that will reorder the input ranges to be sorted by chr, end, start</p>
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.1.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.0.</p>
 </div>
 
     </footer></div>

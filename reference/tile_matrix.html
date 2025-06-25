@@ -107,6 +107,37 @@ to each tile, even if both the start and end coordinates overlap</p></li>
 provide the ordering of chromosomes to expect while reading the tsv.</p>
     </div>
 
+    <div class="section level2">
+    <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co">## Prep demo data</span></span></span>
+<span class="r-in"><span><span class="va">frags</span> <span class="op">&lt;-</span> <span class="fu"><a href="demo_data.html">get_demo_frags</a></span><span class="op">(</span>subset <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">chrom_sizes</span> <span class="op">&lt;-</span> <span class="fu"><a href="read_ucsc_chrom_sizes.html">read_ucsc_chrom_sizes</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempdir</a></span><span class="op">(</span><span class="op">)</span>, <span class="st">"references"</span><span class="op">)</span>, genome<span class="op">=</span><span class="st">"hg38"</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">blacklist</span> <span class="op">&lt;-</span> <span class="fu"><a href="read_bed.html">read_encode_blacklist</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempdir</a></span><span class="op">(</span><span class="op">)</span>, <span class="st">"references"</span><span class="op">)</span>, genome<span class="op">=</span><span class="st">"hg38"</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">frags_filter_blacklist</span> <span class="op">&lt;-</span> <span class="va">frags</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> <span class="fu"><a href="select_regions.html">select_regions</a></span><span class="op">(</span><span class="va">blacklist</span>, invert_selection <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">ranges</span> <span class="op">&lt;-</span> <span class="fu">tibble</span><span class="fu">::</span><span class="fu"><a href="https://tibble.tidyverse.org/reference/tibble.html" class="external-link">tibble</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>  chr <span class="op">=</span> <span class="st">"chr4"</span>,</span></span>
+<span class="r-in"><span>  start <span class="op">=</span> <span class="fl">0</span>,</span></span>
+<span class="r-in"><span>  end <span class="op">=</span> <span class="st">"190214555"</span>, </span></span>
+<span class="r-in"><span>  tile_width <span class="op">=</span> <span class="fl">200</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co">## Get tile matrix</span></span></span>
+<span class="r-in"><span><span class="fu">tile_matrix</span><span class="op">(</span><span class="va">frags_filter_blacklist</span>, <span class="va">ranges</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 951073 x 2600 IterableMatrix object with class TileMatrix</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Row names: unknown names</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Col names: TTTAGCAAGGTAGCTT-1, AGCCGGTTCCGGAACC-1 ... TACTAAGTCCAATAGC-1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Data type: uint32_t</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Storage order: row major</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Queued Operations:</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1. Read compressed fragments from directory /home/imman/.local/share/R/BPCells/demo_data/demo_frags_filtered</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2. Subset to fragments not overlapping 636 ranges: chr10:1-45700 ... chrY:26637301-57227400</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 3. Calculate 951073 tiles over 1 ranges: chr4:1-190214555 (200bp), chr4:1-190214555 (200bp)</span>
+</code></pre></div>
+    </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside></div>
 
@@ -116,7 +147,7 @@ provide the ordering of chromosomes to expect while reading the tsv.</p>
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.1.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.0.</p>
 </div>
 
     </footer></div>
