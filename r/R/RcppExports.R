@@ -769,6 +769,10 @@ pseudobulk_matrix_cpp <- function(mat, cell_groups, method, transpose) {
     .Call(`_BPCells_pseudobulk_matrix_cpp`, mat, cell_groups, method, transpose)
 }
 
+pseudobulk_matrix_sparse_cpp <- function(mat, cell_groups, method, transpose) {
+    .Call(`_BPCells_pseudobulk_matrix_sparse_cpp`, mat, cell_groups, method, transpose)
+}
+
 matrix_quantile_per_col_cpp <- function(mat, quantile, alpha, beta) {
     .Call(`_BPCells_matrix_quantile_per_col_cpp`, mat, quantile, alpha, beta)
 }
