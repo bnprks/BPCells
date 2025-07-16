@@ -1,0 +1,31 @@
+#include <hwy/highway.h>
+#include <hwy/aligned_allocator.h>
+#include <iostream>
+
+#define STR_HELPER(x) #x
+#define STR(x) STR_HELPER(x)
+
+#ifndef HWY_MAJOR
+#error "Missing HWY_MAJOR"
+#endif
+#ifndef HWY_MINOR
+#error "Missing HWY_MINOR"
+#endif
+#ifndef HWY_PATCH
+#error "Missing HWY_PATCH"
+#endif
+
+#if (HWY_MAJOR < @HWY_MIN_MAJOR@) || \
+    (HWY_MAJOR == @HWY_MIN_MAJOR@ && HWY_MINOR < @HWY_MIN_MINOR@) || \
+    (HWY_MAJOR == @HWY_MIN_MAJOR@ && HWY_MINOR == @HWY_MIN_MINOR@ && HWY_PATCH < @HWY_MIN_PATCH@)
+#pragma message("Highway too old: need >=@HWY_MIN_VERSION@ for BPCells (found " STR(HWY_MAJOR) "." STR(HWY_MINOR) "." STR(HWY_PATCH) ")")
+#error "Highway too old"
+#endif
+
+int main() {
+    auto ptr = hwy::AllocateAligned<float>(1024);
+    ptr[0] = 1.0f;
+    std::cout << "Highway version: "
+              << HWY_MAJOR << "." << HWY_MINOR << "." << HWY_PATCH << std::endl;
+    return 0;
+}
