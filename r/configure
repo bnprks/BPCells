@@ -154,7 +154,7 @@ fi
 ############################
 # Build Highway SIMD library
 ############################
-printf "\nTesting availability of highway SIMD library\n"
+printf "\nTesting availability of highway SIMD library...\n"
 HWY_OK=""
 # Minimum required version (may override via env var HWY_MIN_VERSION=X.Y.Z)
 HWY_MIN_VERSION=${HWY_MIN_VERSION:-1.0.5}
