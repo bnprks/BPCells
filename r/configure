@@ -187,19 +187,17 @@ else
         HWY_LIBS=""
     fi
     # Only attempt second compile if pkg-config succeeded
-    if [ -n "$HWY_LIBS" ]; then
-        if $CXX tools/hwy-test.cpp -o tools/hwy-test $CXXFLAGS $LDFLAGS $HWY_CFLAGS $HWY_LIBS > /dev/null 2> "$HWY_COMPILE_LOG"; then
-            HWY_VERSION_OUTPUT=$(tools/hwy-test)
-            printf "$HWY_VERSION_OUTPUT"
-            HWY_OK="yes"
-        elif grep -q "Highway too old" "$HWY_COMPILE_LOG"; then
+    if [ -n "$HWY_LIBS" ] && $CXX tools/hwy-test.cpp -o tools/hwy-test $CXXFLAGS $LDFLAGS $HWY_CFLAGS $HWY_LIBS > /dev/null 2> "$HWY_COMPILE_LOG"; then
+        HWY_VERSION_OUTPUT=$(tools/hwy-test)
+        printf "$HWY_VERSION_OUTPUT"
+        HWY_OK="yes"
+    elif grep -q "Highway too old" "$HWY_COMPILE_LOG"; then
             printf "\nHighway is installed but too old: %s\n" "$(sed -n 's/.*#pragma message: //p' "$HWY_COMPILE_LOG")"
-        else
+    else
             printf "Highway not found or unusable\n"
-        fi
     fi
 fi
-rm -f tools/hwy-test "$HWY_COMPILE_LOG"
+rm -f tools/hwy-test "$HWY_COMPILE_LOG" tools/hwy-test.cpp
 
 if [ -z $HWY_OK ]; then
     if [ ! -f tools/highway/lib/libhwy.a ]; then
