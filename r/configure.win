@@ -137,7 +137,7 @@ else
         HWY_LIBS=""
     fi
     # Only attempt second compile if pkg-config succeeded
-    if [ -n "$HWY_LIBS" ] && if "$CXX" tools/hwy-test.cpp -o tools/hwy-test $CXXFLAGS $LDFLAGS $HWY_CFLAGS $HWY_LIBS > NUL 2> "$HWY_COMPILE_LOG"; then
+    if [ -n "$HWY_LIBS" ] && $CXX tools/hwy-test.cpp -o tools/hwy-test $CXXFLAGS $LDFLAGS $HWY_CFLAGS $HWY_LIBS > NUL 2> "$HWY_COMPILE_LOG"; then
         HWY_VERSION_OUTPUT=$(tools/hwy-test.exe)
         echo "$HWY_VERSION_OUTPUT"
         HWY_OK="yes"
