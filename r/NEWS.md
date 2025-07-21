@@ -1,4 +1,12 @@
-# BPCells 0.3.1 (in-progress main branch)
+# BPCells 0.3.1 (7/21/2025)
+
+The BPCells 0.3.1 release covers 7 months of changes and 40 commits from 5 contributors. Notable changes include writing matrices in AnnData's dense format, 
+and methods for retrieving demo data for testing and examples.
+Full details of changes below.
+
+Thanks to @ycli1995 and @mfansler for pull requests that contributed to this release, as well as to users who
+submitted github issues to help identify and fix bugs.
+
 
 ## Features
 - Add `write_matrix_anndata_hdf5_dense()` which allows writing matrices in AnnData's dense format, most commonly used for `obsm` or `varm` matrices. (Thanks to @ycli1995 for pull request #166)
