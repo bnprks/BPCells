@@ -34,10 +34,11 @@ Normalize an object representing genomic ranges
 }
 \examples{
 ## Prep data
+library(S4Vectors)
 ranges <- GenomicRanges::GRanges(
-  seqnames = S4Vectors::Rle(c("chr1", "chr2", "chr3"), c(1, 2, 2)),
+  seqnames = Rle(c("chr1", "chr2", "chr3"), c(1, 2, 2)),
   ranges = IRanges::IRanges(101:105, end = 111:115, names = head(letters, 5)),
-  strand = S4Vectors::Rle(GenomicRanges::strand(c("-", "+", "*")), c(1, 2, 2)),
+  strand = Rle(GenomicRanges::strand(c("-", "+", "*")), c(1, 2, 2)),
   score = 1:5,
   GC = seq(1, 0, length=5))
 ranges

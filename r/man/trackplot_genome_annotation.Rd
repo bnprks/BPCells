@@ -65,10 +65,12 @@ peaks <- tibble::tibble(
 region <- "chr4:3034877-3044877"
 
 ## Plot peaks
-BPCells:::render_plot_from_storage(
-  trackplot_genome_annotation(peaks, region, color_by = "enrichment"),
-  width = 6, height = 1
-)
+\dontrun{
+ BPCells:::render_plot_from_storage(
+   trackplot_genome_annotation(peaks, region, color_by = "enrichment"),
+   width = 6, height = 1
+ )
+}
 }
 \seealso{
 \code{trackplot_combine()}, \code{trackplot_coverage()}, \code{trackplot_loop()}, \code{trackplot_scalebar()}, \code{trackplot_gene()}

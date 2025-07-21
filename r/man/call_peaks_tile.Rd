@@ -87,7 +87,8 @@ frags <- get_demo_frags()
 ## Remove blacklist regions from fragments
 blacklist <- read_encode_blacklist(reference_dir, genome="hg38")
 frags_filter_blacklist <- select_regions(frags, blacklist, invert_selection = TRUE)
-chrom_sizes <- read_ucsc_chrom_sizes(reference_dir, genome="hg38") \%>\% dplyr::filter(chr \%in\% c("chr4", "chr11"))
+chrom_sizes <- read_ucsc_chrom_sizes(reference_dir, genome="hg38") \%>\% 
+  dplyr::filter(chr \%in\% c("chr4", "chr11"))
 
 
 ## Call peaks

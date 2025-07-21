@@ -36,7 +36,6 @@ Imports:
     stringr,
     tibble,
     dplyr (>= 1.0.0),
-    tidyr,
     readr,
     ggplot2 (>= 3.4.0),
     scales,
@@ -44,12 +43,26 @@ Imports:
     scattermore,
     ggrepel,
     RColorBrewer,
-    hexbin
 Suggests:
     IRanges,
+    hexbin,
+    tidyr,
     GenomicRanges,
     matrixStats,
-    igraph
+    igraph,
+    pkgdown, 
+    devtools, 
+    uwot, 
+    irlba, 
+    RcppHNSW,
+    BiocManager, 
+    BSgenome.Hsapiens.UCSC.hg38,
+    motifmatchr, 
+    chromVARmotifs, 
+    png
+Additional_repositories: 
+    https://bioconductor.org/packages/release/data/annotation,
+    https://immanuelazn.github.io/drat
 Depends: 
     R (>= 4.0.0)
-Config/Needs/website: pkgdown, devtools, uwot, irlba, RcppHNSW, igraph, BiocManager, bioc::BSgenome.Hsapiens.UCSC.hg38, github::GreenleafLab/motifmatchr, github::GreenleafLab/chromVARmotifs, png, magrittr
+Config/Needs/website: pkgdown, devtools, uwot, irlba, RcppHNSW, igraph, BiocManager, bioc::BSgenome.Hsapiens.UCSC.hg38, github::GreenleafLab/motifmatchr, github::GreenleafLab/chromVARmotifs, png

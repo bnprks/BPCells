@@ -94,8 +94,10 @@ genes <- read_gencode_genes(
   release="42", 
   annotation_set = "basic", 
 ) \%>\% dplyr::filter(chr \%in\% c("chr4", "chr11"))
-blacklist <- read_encode_blacklist(reference_dir, genome="hg38") \%>\% dplyr::filter(chr \%in\% c("chr4", "chr11"))
-chrom_sizes <- read_ucsc_chrom_sizes(reference_dir, genome="hg38") \%>\% dplyr::filter(chr \%in\% c("chr4", "chr11"))
+blacklist <- read_encode_blacklist(reference_dir, genome="hg38") \%>\% 
+  dplyr::filter(chr \%in\% c("chr4", "chr11"))
+chrom_sizes <- read_ucsc_chrom_sizes(reference_dir, genome="hg38") \%>\% 
+  dplyr::filter(chr \%in\% c("chr4", "chr11"))
 chrom_sizes$tile_width = 500
 
 

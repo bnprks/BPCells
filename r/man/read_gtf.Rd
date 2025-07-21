@@ -125,7 +125,7 @@ head(read_gtf(
 #######################################################################
 ## read_gencode_genes() example
 #######################################################################
-read_gencode_genes("./references", release = "42")
+read_gencode_genes("./references", release = "42", timeout = 3000)
 
 
 #######################################################################
@@ -133,7 +133,7 @@ read_gencode_genes("./references", release = "42")
 #######################################################################
 ## If read_gencode_genes() was already ran on the same release, 
 ## will reuse previously downloaded annotations
-read_gencode_transcripts("./references", release = "42")
+read_gencode_transcripts("./references", release = "42", timeout = 3000)
 
 
 }

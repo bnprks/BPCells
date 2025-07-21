@@ -150,6 +150,7 @@ if [ -z $CXX17_OK ]; then
     printf "\n\nUnable to compile program with C++17 std::filesystem.\nPlease install a newer compiler version and set CC and CXX in ~/.R/Makevars\n"
     exit 1
 fi
+rm -f tools/cxx17_filesystem
 
 ############################
 # Build Highway SIMD library

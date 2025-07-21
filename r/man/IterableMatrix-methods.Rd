@@ -16,7 +16,7 @@
 \alias{rowMaxs}
 \alias{colMaxs}
 \alias{rowQuantiles}
-\alias{colQuantiles}
+\alias{colQuantiles.IterableMatrix}
 \alias{log1p,IterableMatrix-method}
 \alias{log1p_slow}
 \alias{expm1,IterableMatrix-method}
@@ -185,11 +185,6 @@ expm1_slow(x)
 \item \verb{rowQuantiles():} If \code{length(probs) == 1}, return a numeric with number of entries equal to the number of rows in the matrix.
 Else, return a Matrix of quantile values, with cols representing each quantile, and each row representing a row in the input matrix.
 }
-
-\itemize{
-\item \verb{colQuantiles():} If \code{length(probs) == 1}, return a numeric with number of entries equal to the number of columns in the matrix.
-Else, return a Matrix of quantile values, with cols representing each quantile, and each row representing a col in the input matrix.
-}
 }
 \description{
 Generic methods and built-in functions for IterableMatrix objects
@@ -224,7 +219,7 @@ Generic methods and built-in functions for IterableMatrix objects
 
 \item \code{rowQuantiles()}: Calculate rowQuantiles (replacement for \code{matrixStats::rowQuantiles})
 
-\item \code{colQuantiles()}: Calculate colQuantiles (replacement for \code{matrixStats::colQuantiles})
+\item \code{colQuantiles(IterableMatrix)}: Calculate colQuantiles (replacement for \code{matrixStats::colQuantiles})
 
 \item \code{log1p(IterableMatrix)}: Calculate log(x + 1)
 
@@ -345,7 +340,6 @@ rowQuantiles(transpose_storage_order(mat))
 ## colQuantiles() example
 #######################################################################
 colQuantiles(mat)
-
 
 #######################################################################
 ## log1p() example

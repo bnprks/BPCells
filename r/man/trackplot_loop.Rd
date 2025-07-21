@@ -53,7 +53,9 @@ region <- "chr4:3034877-4034877"
 
 ## Plot loops
 plot <- trackplot_loop(loops, region, color_by = "score")
-BPCells:::render_plot_from_storage(plot, width = 6, height = 1.5)
+\dontrun{
+ BPCells:::render_plot_from_storage(plot, width = 6, height = 1.5)
+}
 }
 \seealso{
 \code{trackplot_combine()}, \code{trackplot_coverage()}, \code{trackplot_gene()}, \code{trackplot_scalebar()}, \code{trackplot_genome_annotation()}

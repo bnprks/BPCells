@@ -40,6 +40,7 @@ rowQuantiles <- function(x, rows = NULL, cols = NULL,
   UseMethod("rowQuantiles")
 }
 #' @export
+#' @method rowQuantiles default
 rowQuantiles.default <- function(x, rows = NULL, cols = NULL,
                                  probs = seq(from = 0, to = 1, by = 0.25),
                                  na.rm = FALSE, type = 7L, digits = 7L, ...,
@@ -53,6 +54,7 @@ rowQuantiles.default <- function(x, rows = NULL, cols = NULL,
   }
 }
 #' @export
+#' @method rowQuantiles IterableMatrix
 rowQuantiles.IterableMatrix <- function(x, rows = NULL, cols = NULL,
                                         probs = seq(from = 0, to = 1, by = 0.25),
                                         na.rm = FALSE, type = 7L, digits = 7L, ...,
@@ -94,27 +96,7 @@ rowQuantiles.IterableMatrix <- function(x, rows = NULL, cols = NULL,
 #' Find the nth quantile value(s) of each column in a matrix. Only supports non-transposed matrices.
 #' @return - `colQuantiles():` If `length(probs) == 1`, return a numeric with number of entries equal to the number of columns in the matrix. 
 #' Else, return a Matrix of quantile values, with cols representing each quantile, and each row representing a col in the input matrix.
-#' @describeIn IterableMatrix-methods Calculate colQuantiles (replacement for `matrixStats::colQuantiles`)
 #' @inheritParams rowQuantiles
-#' @usage colQuantiles(
-#'   x,
-#'   rows = NULL,
-#'   cols = NULL,
-#'   probs = seq(from = 0, to = 1, by = 0.25),
-#'   na.rm = FALSE,
-#'   type = 7L,
-#'   digits = 7L,
-#'   ...,
-#'   useNames = TRUE,
-#'   drop = TRUE
-#' )
-#' @examples
-#' #######################################################################
-#' ## colQuantiles() example
-#' #######################################################################
-#' colQuantiles(mat)
-#' 
-#' 
 #' @export
 colQuantiles <- function(x, rows = NULL, cols = NULL,
                          probs = seq(from = 0, to = 1, by = 0.25),
@@ -123,6 +105,7 @@ colQuantiles <- function(x, rows = NULL, cols = NULL,
   UseMethod("colQuantiles")
 }
 #' @export
+#' @method colQuantiles default
 colQuantiles.default <- function(x, rows = NULL, cols = NULL, 
                                  probs = seq(from = 0, to = 1, by = 0.25),
                                  na.rm = FALSE, type = 7L, digits = 7L, ...,
@@ -136,6 +119,27 @@ colQuantiles.default <- function(x, rows = NULL, cols = NULL,
   }
 }
 #' @export
+#' @inheritParams colQuantiles
+#' @usage colQuantiles(
+#'   x,
+#'   rows = NULL,
+#'   cols = NULL,
+#'   probs = seq(from = 0, to = 1, by = 0.25),
+#'   na.rm = FALSE,
+#'   type = 7L,
+#'   digits = 7L,
+#'   ...,
+#'   useNames = TRUE,
+#'   drop = TRUE
+#' )
+#' @describeIn IterableMatrix-methods Calculate colQuantiles (replacement for `matrixStats::colQuantiles`)
+#' @examples
+#' #######################################################################
+#' ## colQuantiles() example
+#' #######################################################################
+#' colQuantiles(mat)
+#' 
+#' @method colQuantiles IterableMatrix
 colQuantiles.IterableMatrix <- function(x, rows = NULL, cols = NULL, 
                                         probs = seq(from = 0, to = 1, by = 0.25), 
                                         na.rm = FALSE, type = 7L, digits = 7L, ...,

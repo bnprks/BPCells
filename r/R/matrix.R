@@ -674,6 +674,7 @@ setMethod("colMeans", signature(x = "IterableMatrix"), function(x) colSums(x) / 
 #' @export
 colVars <- function(x, rows = NULL, cols = NULL, na.rm = FALSE, center = NULL, ..., useNames = TRUE) UseMethod("colVars")
 #' @export
+#' @method colVars default
 colVars.default <- function(x, rows = NULL, cols = NULL, na.rm = FALSE, center = NULL, ..., useNames = TRUE) {
   if (requireNamespace("MatrixGenerics", quietly = TRUE)) {
     MatrixGenerics::colVars(x, rows=rows, cols=cols, na.rm=na.rm, center=center, ..., useNames=useNames)
@@ -684,6 +685,7 @@ colVars.default <- function(x, rows = NULL, cols = NULL, na.rm = FALSE, center =
   }
 }
 #' @export
+#' @method colVars IterableMatrix
 colVars.IterableMatrix <- function(x, rows = NULL, cols = NULL, na.rm = FALSE, center = NULL, ..., useNames = TRUE) {
   if (!is.null(rows) || !is.null(cols) || !isFALSE(na.rm) || !is.null(center) || !isTRUE(useNames)) {
     stop("colVars(IterableMatrix) doesn't support extra arguments rows, cols, na.rm, center, or useNames")
@@ -701,6 +703,7 @@ rlang::on_load({
 #' @export
 rowVars <- function(x, rows = NULL, cols = NULL, na.rm = FALSE, center = NULL, ..., useNames = TRUE) UseMethod("rowVars")
 #' @export
+#' @method rowVars default
 rowVars.default <- function(x, rows = NULL, cols = NULL, na.rm = FALSE, center = NULL, ..., useNames = TRUE) {
   if (requireNamespace("MatrixGenerics", quietly = TRUE)) {
     MatrixGenerics::rowVars(x, rows=rows, cols=cols, na.rm=na.rm, center=center, ..., useNames=useNames)
@@ -711,6 +714,7 @@ rowVars.default <- function(x, rows = NULL, cols = NULL, na.rm = FALSE, center =
   }
 }
 #' @export
+#' @method rowVars IterableMatrix
 rowVars.IterableMatrix <- function(x, rows = NULL, cols = NULL, na.rm = FALSE, center = NULL, ..., useNames = TRUE) {
   if (!is.null(rows) || !is.null(cols) || !isFALSE(na.rm) || !is.null(center) || !isTRUE(useNames)) {
     stop("rowVars(IterableMatrix) doesn't support extra arguments rows, cols, na.rm, center, or useNames")
@@ -737,6 +741,7 @@ rlang::on_load({
 #' @export
 rowMaxs <- function(x, rows = NULL, cols = NULL, na.rm = FALSE, ...) UseMethod("rowMaxs")
 #' @export
+#' @method rowMaxs default
 rowMaxs.default <- function(x, rows = NULL, cols = NULL, na.rm = FALSE, ...) {
   if (requireNamespace("MatrixGenerics", quietly = TRUE)) {
     MatrixGenerics::rowMaxs(x, rows = rows, cols = cols, na.rm = na.rm, ...)
@@ -748,6 +753,7 @@ rowMaxs.default <- function(x, rows = NULL, cols = NULL, na.rm = FALSE, ...) {
   }
 }
 #' @export
+#' @method rowMaxs IterableMatrix
 rowMaxs.IterableMatrix <- function(x, rows = NULL, cols = NULL, na.rm = FALSE, ...) {
   if(!is.null(rows) || !is.null(cols) || !isFALSE(na.rm)) {
     stop("rowMaxs(IterableMatrix) doesn't support extra arguments rows, cols, or na.rm")
@@ -781,6 +787,7 @@ rlang::on_load({
 #' @export
 colMaxs <- function(x, rows = NULL, cols = NULL, na.rm = FALSE, ...) UseMethod("colMaxs")
 #' @export
+#' @method colMaxs default
 colMaxs.default <- function(x, rows = NULL, cols = NULL, na.rm = FALSE, ...) {
   if (requireNamespace("MatrixGenerics", quietly = TRUE)) {
     MatrixGenerics::colMaxs(x, rows = rows, cols = cols, na.rm = na.rm, ...)
@@ -792,6 +799,7 @@ colMaxs.default <- function(x, rows = NULL, cols = NULL, na.rm = FALSE, ...) {
   }
 }
 #' @export
+#' @method colMaxs IterableMatrix
 colMaxs.IterableMatrix <- function(x, rows = NULL, cols = NULL, na.rm = FALSE, ...) {
   iter <- iterate_matrix(convert_matrix_type(x, "double"))
   if(x@transpose == TRUE) {
@@ -1689,7 +1697,8 @@ setMethod("iterate_matrix", "UnpackedMatrixMem_double", function(x) {
 #' ## A regular transpose operation switches a user's rows and cols 
 #' t(mat)
 #' 
-#' ## Running `transpose_storage_order()` instead changes whether the storage is in row-major or col-major,
+#' ## Running `transpose_storage_order()` instead changes whether 
+#' ## the storage is in row-major or col-major,
 #' ## but does not switch the rows and cols
 #' transpose_storage_order(mat)
 #' @export
@@ -3277,8 +3286,6 @@ svds.IterableMatrix <- function(A, k, nu = k, nv = k, opts = list(), threads=0, 
 #' @param matrix IterableMatrix object
 #' @return MD5 checksum string in hexidecimal format.
 #' @examples
-#' library(Matrix)
-#' library(BPCells)
 #' m1 <- matrix(seq(1,12), nrow=3)
 #' m2 <- as(m1, 'dgCMatrix')
 #' m3 <- as(m2, 'IterableMatrix')
@@ -3287,7 +3294,7 @@ svds.IterableMatrix <- function(A, k, nu = k, nv = k, opts = list(), threads=0, 
 checksum <- function(matrix) {
     assert_is(matrix, "IterableMatrix")
 
-    iter <- iterate_matrix(BPCells:::convert_matrix_type(matrix, "double"))
+    iter <- iterate_matrix(convert_matrix_type(matrix, "double"))
     checksum_double_cpp(iter)
 }
 
@@ -3329,10 +3336,12 @@ checksum <- function(matrix) {
 #' ## Get mean of every row
 #' 
 #' ## expect an error in the case that col-major matrix is passed
-#' apply_by_row(mat, function(val, row, col) {sum(val) / nrow(mat)}) %>% 
-#'  unlist()
-#' 
+#' try(
+#'  apply_by_row(mat, function(val, row, col) {sum(val) / nrow(mat)}) %>% 
+#'   unlist()
+#' )
 #' ## Need to transpose matrix to make sure it is in row-order
+#' 
 #' mat_row_order <- transpose_storage_order(mat)
 #' 
 #' ## works as expected for row major

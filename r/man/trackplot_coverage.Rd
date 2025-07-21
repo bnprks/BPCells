@@ -65,18 +65,22 @@ frags <- get_demo_frags()
 genes <- read_gencode_transcripts(
   file.path(tempdir(), "references"), release = "42",
   annotation_set = "basic",
-  features = "transcript"
+  features = "transcript", timeout = 3000
 )
 blacklist <- read_encode_blacklist(file.path(tempdir(), "references"), genome="hg38")
 read_counts <- qc_scATAC(frags, genes, blacklist)$nFrags
 region <- "chr4:3034877-4034877"
 cell_types <- paste("Group", rep(1:3, length.out = length(cellNames(frags))))
 
-
-BPCells:::render_plot_from_storage(
-  trackplot_coverage(frags, region, groups = cell_types, cell_read_counts = read_counts),
-  width = 6, height = 3
-)
+\dontrun{
+ BPCells:::render_plot_from_storage(
+   trackplot_coverage(
+     frags, region, groups = cell_types, 
+     cell_read_counts = read_counts
+   ),
+   width = 6, height = 3
+ )
+}
 }
 \seealso{
 \code{trackplot_combine()}, \code{trackplot_gene()}, \code{trackplot_loop()}, \code{trackplot_scalebar()}

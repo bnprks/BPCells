@@ -292,7 +292,7 @@ render_plot_from_storage <- function(plot, width, height) {
 #' genes <- read_gencode_transcripts(
 #'   file.path(tempdir(), "references"), release = "42",
 #'   annotation_set = "basic",
-#'   features = "transcript"
+#'   features = "transcript", timeout = 3000
 #' )
 #' blacklist <- read_encode_blacklist(file.path(tempdir(), "references"), genome="hg38")
 #' read_counts <- qc_scATAC(frags, genes, blacklist)$nFrags
@@ -300,23 +300,30 @@ render_plot_from_storage <- function(plot, width, height) {
 #' cell_types <- paste("Group", rep(1:3, length.out = length(cellNames(frags))))
 #' transcripts <- read_gencode_transcripts(
 #'   file.path(tempdir(), "references"), release = "42",
-#'   annotation_set = "basic"
+#'   annotation_set = "basic", timeout = 3000
 #' )
 #' region <- "chr4:3034877-4034877"
 #' 
-#' 
+#'
 #' ## Get all trackplots and scalebars to combine
 #' plot_scalebar <- trackplot_scalebar(region)
 #' plot_gene <- trackplot_gene(transcripts, region)
-#' plot_coverage <- trackplot_coverage(frags, region, groups = cell_types, cell_read_counts = read_counts)
-#' 
-#' 
+#' plot_coverage <- trackplot_coverage(
+#'   frags,
+#'   region,
+#'   groups = cell_types,
+#'   cell_read_counts = read_counts
+#' )
+#'
 #' ## Combine trackplots and render
 #' ## Also remove colors from gene track
 #' plot <- trackplot_combine(
 #'     list(plot_scalebar, plot_coverage, plot_gene + ggplot2::guides(color = "none"))
 #' )
-#' BPCells:::render_plot_from_storage(plot, width = 6, height = 4)
+#' \dontrun{
+#'  BPCells:::render_plot_from_storage(
+#'    plot, width = 6, height = 4)
+#' }
 #' @export
 trackplot_combine <- function(tracks, side_plot = NULL, title = NULL, side_plot_width = 0.3) {
   for (plot in tracks) {
@@ -464,18 +471,22 @@ trackplot_combine <- function(tracks, side_plot = NULL, title = NULL, side_plot_
 #' genes <- read_gencode_transcripts(
 #'   file.path(tempdir(), "references"), release = "42",
 #'   annotation_set = "basic",
-#'   features = "transcript"
+#'   features = "transcript", timeout = 3000
 #' )
 #' blacklist <- read_encode_blacklist(file.path(tempdir(), "references"), genome="hg38")
 #' read_counts <- qc_scATAC(frags, genes, blacklist)$nFrags
 #' region <- "chr4:3034877-4034877"
 #' cell_types <- paste("Group", rep(1:3, length.out = length(cellNames(frags))))
 #' 
-#' 
-#' BPCells:::render_plot_from_storage(
-#'   trackplot_coverage(frags, region, groups = cell_types, cell_read_counts = read_counts),
-#'   width = 6, height = 3
-#' )
+#' \dontrun{
+#'  BPCells:::render_plot_from_storage(
+#'    trackplot_coverage(
+#'      frags, region, groups = cell_types, 
+#'      cell_read_counts = read_counts
+#'    ),
+#'    width = 6, height = 3
+#'  )
+#' }
 #' @export
 trackplot_coverage <- function(fragments, region, groups,
                            cell_read_counts,
@@ -583,14 +594,16 @@ trackplot_coverage <- function(fragments, region, groups,
 #' ## Prep data
 #' transcripts <- read_gencode_transcripts(
 #'   file.path(tempdir(), "references"), release = "42",
-#'   annotation_set = "basic", features = "transcript"
+#'   annotation_set = "basic", features = "transcript", timeout = 3000
 #' )
 #' region <- "chr4:3034877-4034877"
 #' 
 #' 
 #' ## Plot gene trackplot
 #' plot <- trackplot_gene(transcripts, region)
-#' BPCells:::render_plot_from_storage(plot, width = 6, height = 1)
+#' \dontrun{
+#'  BPCells:::render_plot_from_storage(plot, width = 6, height = 1)
+#' }
 #' @export
 trackplot_gene <- function(transcripts, region, exon_size = 2.5, gene_size = 0.5, label_size = 11*.8/ggplot2::.pt, track_label="Genes", return_data = FALSE) {
   region <- normalize_ranges(region)
@@ -706,10 +719,12 @@ trackplot_gene <- function(transcripts, region, exon_size = 2.5, gene_size = 0.5
 #' region <- "chr4:3034877-3044877"
 #' 
 #' ## Plot peaks
-#' BPCells:::render_plot_from_storage(
-#'   trackplot_genome_annotation(peaks, region, color_by = "enrichment"),
-#'   width = 6, height = 1
-#' )
+#' \dontrun{
+#'  BPCells:::render_plot_from_storage(
+#'    trackplot_genome_annotation(peaks, region, color_by = "enrichment"),
+#'    width = 6, height = 1
+#'  )
+#' }
 #' @export
 trackplot_genome_annotation <- function(loci, region, color_by = NULL, colors = NULL, label_by = NULL, label_size = 11*.8/ggplot2::.pt, show_strand=FALSE,
                                         annotation_size = 2.5, track_label="Peaks", return_data = FALSE) {
@@ -844,7 +859,9 @@ trackplot_genome_annotation <- function(loci, region, color_by = NULL, colors = 
 #' 
 #' ## Plot loops
 #' plot <- trackplot_loop(loops, region, color_by = "score")
-#' BPCells:::render_plot_from_storage(plot, width = 6, height = 1.5)
+#' \dontrun{
+#'  BPCells:::render_plot_from_storage(plot, width = 6, height = 1.5)
+#' }
 #' @export
 trackplot_loop <- function(loops, region, color_by=NULL, colors=NULL, allow_truncated=TRUE, curvature=0.75, track_label="Links", return_data = FALSE) {
   region <- normalize_ranges(region)
@@ -944,9 +961,11 @@ trackplot_loop <- function(loops, region, color_by=NULL, colors=NULL, allow_trun
 #' @seealso `trackplot_combine()`, `trackplot_coverage()`, `trackplot_gene()`, `trackplot_loop()`
 #' @examples
 #' region <- "chr4:3034877-3044877"
-#' BPCells:::render_plot_from_storage(
-#'   trackplot_scalebar(region), width = 6, height = 1
-#' )
+#' \dontrun{
+#'  BPCells:::render_plot_from_storage(
+#'    trackplot_scalebar(region), width = 6, height = 1
+#'  )
+#' }
 #' @export
 trackplot_scalebar <- function(region, font_pt=11) {
   region <- normalize_ranges(region)

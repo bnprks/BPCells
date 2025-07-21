@@ -46,7 +46,7 @@ frags <- get_demo_frags(filter_qc = FALSE, subset = FALSE)
 genes <- read_gencode_transcripts(
   file.path(tempdir(), "references"), release = "42",
   annotation_set = "basic",
-  features = "transcript"
+  features = "transcript", timeout = 3000
 )
 
 ## Plot tss profile

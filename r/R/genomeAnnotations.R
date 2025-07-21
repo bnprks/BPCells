@@ -107,7 +107,7 @@ read_gtf <- function(path, attributes = c("gene_id"), tags = character(0), featu
 #' #######################################################################
 #' ## read_gencode_genes() example
 #' #######################################################################
-#' read_gencode_genes("./references", release = "42")
+#' read_gencode_genes("./references", release = "42", timeout = 3000)
 #' 
 #' 
 #' @export
@@ -159,7 +159,7 @@ read_gencode_genes <- function(dir, release = "latest",
 #' #######################################################################
 #' ## If read_gencode_genes() was already ran on the same release, 
 #' ## will reuse previously downloaded annotations
-#' read_gencode_transcripts("./references", release = "42")
+#' read_gencode_transcripts("./references", release = "42", timeout = 3000)
 #' 
 #' 
 #' @export 
@@ -211,17 +211,18 @@ read_gencode_transcripts <- function(dir, release = "latest", transcript_choice 
 #' @return Data frame with coordinates using the 0-based convention.
 #' @examples
 #' ## Dummy bed file creation
+#' file_name <- tempfile(fileext = ".bed")
 #' data.frame(
 #'  chrom = rep("chr1", 6),
 #'  start = seq(20, 121, 20),
 #'  end = seq(39, 140, 20)
-#' ) %>% write.table("./references/example.bed", row.names = FALSE, col.names = FALSE, sep = "\t")
+#' ) %>% write.table(file_name, row.names = FALSE, col.names = FALSE, sep = "\t")
 #' 
 #' 
 #' #######################################################################
 #' ## read_bed() example
 #' #######################################################################
-#' read_bed("./references/example.bed")
+#' read_bed(file_name)
 #' 
 #' 
 #' @seealso [read_gtf()], [read_gencode_genes()]
@@ -420,7 +421,7 @@ canonical_gene_symbol <- function(query, gene_mapping = human_gene_mapping) {
 #' genes <- read_gencode_transcripts(
 #'   file.path(tempdir(), "references"), release = "42",
 #'   annotation_set = "basic",
-#'   features = "transcript"
+#'   features = "transcript", timeout = 3000
 #' )
 #' 
 #' ## Get gene region
@@ -430,7 +431,7 @@ gene_region <- function(genes, gene_symbol, extend_bp = c(1e4, 1e4), gene_mappin
   genes <- normalize_ranges(genes, metadata_cols = c("strand", "gene_name"))
   idx <- match_gene_symbol(gene_symbol, genes$gene_name)
   if (is.na(idx)) {
-    rlang::stop("Could not locate gene")
+    rlang::abort("Could not locate gene")
   }
   if (length(extend_bp) == 1) {
     extend_bp <- c(extend_bp, extend_bp)
