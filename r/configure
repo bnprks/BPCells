@@ -154,11 +154,51 @@ fi
 ############################
 # Build Highway SIMD library
 ############################
-printf "\nTesting availability of highway SIMD library..."
+printf "\nTesting availability of highway SIMD library...\n"
 HWY_OK=""
+# Minimum required version (may override via env var HWY_MIN_VERSION=X.Y.Z)
+HWY_MIN_VERSION=${HWY_MIN_VERSION:-1.0.5}
+IFS=. read -r HWY_MIN_MAJOR HWY_MIN_MINOR HWY_MIN_PATCH <<< "$HWY_MIN_VERSION"
+sed \
+  -e "s/@HWY_MIN_MAJOR@/$HWY_MIN_MAJOR/g" \
+  -e "s/@HWY_MIN_MINOR@/$HWY_MIN_MINOR/g" \
+  -e "s/@HWY_MIN_PATCH@/$HWY_MIN_PATCH/g" \
+  -e "s/@HWY_MIN_VERSION@/$HWY_MIN_VERSION/g" \
+  tools/hwy-test.cpp.in > tools/hwy-test.cpp
+
 HWY_CFLAGS="-Ibpcells-cpp"
 HWY_LIBS="-lhwy"
-$CXX tools/hwy-test.cpp $CXXFLAGS $LDFLAGS $HWY_CFLAGS $HWY_LIBS 2>&3 && HWY_OK="yes";
+# Use a compile log to keep error/pragma messages
+HWY_COMPILE_LOG=$(mktemp)
+# Try to compile with hardcoded flags first
+if $CXX tools/hwy-test.cpp -o tools/hwy-test $CXXFLAGS $LDFLAGS $HWY_CFLAGS $HWY_LIBS > /dev/null 2> "$HWY_COMPILE_LOG"; then
+    HWY_VERSION_OUTPUT=$(tools/hwy-test)
+    printf "$HWY_VERSION_OUTPUT"
+    HWY_OK="yes"
+else
+    # Fallback to pkg-config if available
+    if pkg-config --exists libhwy 2>/dev/null; then
+        HWY_CFLAGS="$(pkg-config --cflags libhwy 2>&3) $HWY_CFLAGS"
+        HWY_LIBS="$(pkg-config --libs libhwy 2>&3)"
+    elif pkg-config --exists hwy 2>/dev/null; then
+        HWY_CFLAGS="$(pkg-config --cflags hwy 2>&3) $HWY_CFLAGS"
+        HWY_LIBS="$(pkg-config --libs hwy 2>&3)"
+    else
+        HWY_LIBS=""
+    fi
+    # Only attempt second compile if pkg-config succeeded
+    if [ -n "$HWY_LIBS" ] && $CXX tools/hwy-test.cpp -o tools/hwy-test $CXXFLAGS $LDFLAGS $HWY_CFLAGS $HWY_LIBS > /dev/null 2> "$HWY_COMPILE_LOG"; then
+        HWY_VERSION_OUTPUT=$(tools/hwy-test)
+        printf "$HWY_VERSION_OUTPUT"
+        HWY_OK="yes"
+    elif grep -q "Highway too old" "$HWY_COMPILE_LOG"; then
+            printf "\nHighway is installed but too old: %s\n" "$(sed -n 's/.*#pragma message: //p' "$HWY_COMPILE_LOG")"
+    else
+            printf "Highway not found or unusable\n"
+    fi
+fi
+rm -f tools/hwy-test "$HWY_COMPILE_LOG" tools/hwy-test.cpp
+
 if [ -z $HWY_OK ]; then
     if [ ! -f tools/highway/lib/libhwy.a ]; then
         printf "\nBuilding highway SIMD library from source\n"
