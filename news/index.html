@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">BPCells</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -44,7 +44,9 @@
     </div>
 
     <div class="section level2">
-<h2 class="pkg-version" data-toc-text="0.3.1" id="bpcells-031-in-progress-main-branch">BPCells 0.3.1 (in-progress main branch)<a class="anchor" aria-label="anchor" href="#bpcells-031-in-progress-main-branch"></a></h2>
+<h2 class="pkg-version" data-toc-text="0.3.1" id="bpcells-031-7212025">BPCells 0.3.1 (7/21/2025)<a class="anchor" aria-label="anchor" href="#bpcells-031-7212025"></a></h2>
+<p>The BPCells 0.3.1 release covers 7 months of changes and 40 commits from 5 contributors. Notable changes include writing matrices in AnnData’s dense format, and methods for retrieving demo data for testing and examples. Full details of changes below.</p>
+<p>Thanks to <a href="https://github.com/ycli1995" class="external-link">@ycli1995</a> and <a href="https://github.com/mfansler" class="external-link">@mfansler</a> for pull requests that contributed to this release, as well as to users who submitted github issues to help identify and fix bugs.</p>
 <div class="section level3">
 <h3 id="features-0-3-1">Features<a class="anchor" aria-label="anchor" href="#features-0-3-1"></a></h3>
 <ul><li>Add <code><a href="../reference/open_matrix_anndata_hdf5.html">write_matrix_anndata_hdf5_dense()</a></code> which allows writing matrices in AnnData’s dense format, most commonly used for <code>obsm</code> or <code>varm</code> matrices. (Thanks to <a href="https://github.com/ycli1995" class="external-link">@ycli1995</a> for pull request <a href="https://github.com/bnprks/BPCells/issues/166" class="external-link">#166</a>)</li>
@@ -72,6 +74,7 @@
 <li>Fix error in <code><a href="../reference/matrix_io.html">write_matrix_hdf5()</a></code> when overwriting to a <code>.h5</code> file that does not exist. (pull request <a href="https://github.com/bnprks/BPCells/issues/234" class="external-link">#234</a>)</li>
 <li>Fix <code>configure</code> script to use a pre-installed <code>libhwy</code> if available during installation time. (Thanks to <a href="https://github.com/mfansler" class="external-link">@mfansler</a> for submitting PR <a href="https://github.com/bnprks/BPCells/issues/228" class="external-link">#228</a>)</li>
 <li>Fix line-ending issue that caused windows-created matrices to not be readable on other platforms. (pull request <a href="https://github.com/bnprks/BPCells/issues/257" class="external-link">#257</a>; thanks to <a href="https://github.com/pavsol" class="external-link">@pavsol</a> for reporting issue <a href="https://github.com/bnprks/BPCells/issues/253" class="external-link">#253</a>)</li>
+<li>Fix compilation when there exists a system-installed <code>libhwy</code> that is too old. (pull request <a href="https://github.com/bnprks/BPCells/issues/288" class="external-link">#288</a>, thanks to <a href="https://github.com/GerardoZA" class="external-link">@GerardoZA</a> for reporting issue <a href="https://github.com/bnprks/BPCells/issues/285" class="external-link">#285</a>)</li>
 </ul></div>
 </div>
     <div class="section level2">
@@ -284,7 +287,7 @@
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.3.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.1.</p>
 </div>
 
     </footer></div>

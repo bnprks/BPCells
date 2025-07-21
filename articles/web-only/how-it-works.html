@@ -23,7 +23,7 @@
 
     <a class="navbar-brand me-2" href="../../index.html">BPCells</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -118,7 +118,7 @@ cell x peak matrix.</p>
 <span></span>
 <span><span class="co"># Here is where the peak matrix calculation happens. Runs over 10-times</span></span>
 <span><span class="co"># faster than ArchR, which utilizes IRanges to perform overlap calculations.</span></span>
-<span><span class="va">R_matrix</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/methods/as.html" class="external-link">as</a></span><span class="op">(</span><span class="va">peak_matrix</span>, <span class="st">"dgCMatrix"</span><span class="op">)</span></span></code></pre></div>
+<span><span class="va">R_matrix</span> <span class="op">&lt;-</span> <span class="fu">as</span><span class="op">(</span><span class="va">peak_matrix</span>, <span class="st">"dgCMatrix"</span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level3">
 <h3 id="streaming-operations">Streaming operations<a class="anchor" aria-label="anchor" href="#streaming-operations"></a>
