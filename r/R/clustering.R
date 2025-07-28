@@ -6,6 +6,103 @@
 # option. This file may not be copied, modified, or distributed
 # except according to those terms.
 
+
+#' Check if an input is a kNN object
+#'
+#' knn object functions `knn_hnsw()` and `knn_annoy()` return a list of two matrices, `idx` and `dist`.
+#' These are used as inputs to create graph adjacency matrices for clustering.
+#' Assume any list with at least both `idx` and `dist` items is a kNN object.
+#' @return TRUE if the mat is a knn object, FALSE otherwise
+#' @keywords internal
+is_knn_object <- function(mat) {
+  return(is(mat, "list") && all(c("idx", "dist") %in% names(mat)))
+}
+
+#' Check if an input is a graph adjacency matrix.
+#'
+#' Clustering functions like `cluster_graph_leiden()` and `cluster_graph_louvain()` require a graph adjacency matrix as input.
+#' We assume that any square `dgCMatrix` is a graph adjacency matrix.
+#' @return TRUE if the mat is a graph adjacency matrix, FALSE otherwise
+#' @keywords internal
+is_adjacency_matrix <- function(mat) {
+  return(is(mat, "dgCMatrix") && nrow(mat) == ncol(mat))
+}
+
+#' Cluster cell embeddings using a KNN graph-based algorithm
+#' 
+#' Take in a cell embedding matrix, then find k nearest neighbors (KNN) for each cell, convert the
+#' KNN into a graph (adjacency matrix), then run a graph-based clustering algorithm. Each of these
+#' steps can be customized by passing a function that performs the step (see details).
+#' 
+#' @param mat (matrix) Cell embeddings matrix of shape `(cells x n_embeddings)`
+#' @param knn_method (function) Function to that takes an embedding matrix as the first argument and returns a k nearest neighbors (KNN) object.
+#'   For example, `knn_hnsw()`, `knn_annoy()`, or a parameterized version (see Details).
+#' @param knn_to_graph_method (function) Function that takes a KNN object and returns a graph as an undirected graph (lower-triangular dgCMatrix adjacency matrix).
+#'   For example, `knn_to_graph()`, `knn_to_snn_graph()`, `knn_to_geodesic_graph()`, or a parameterized version (see Details).
+#' @param cluster_graph_method (function) Function that takes an undirected graph of cell similarity and returns a factor with cluster assignments for each cell.
+#'   For example, `cluster_graph_leiden()`, `cluster_graph_louvain()`, `cluster_graph_seurat()`, or a parameterized version (see Details).
+#' @param threads (integer) Number of threads to use in `knn_method`, `knn_to_graph_method` and `cluster_graph_method`.  If these functions do not utilize
+#' a `threads` argument, this is silently ignored.
+#' @param verbose (logical) Whether to print progress information in `knn_method`, `knn_to_graph_method` and `cluster_graph_method`.  If these functions do not utilize 
+#' a `verbose` argument, this is silently ignored.
+#' @returns (factor) Factor vector containing the cluster assignment for each cell.
+#' @details 
+#' 
+#' **Customizing clustering steps**
+#' 
+#' All of the BPCells functions named like `knn_*`, `knn_to_graph_*`, and `cluster_graph_*` support customizing parameters
+#' via partial function application. For example, look for 20 neighbors during the k nearest neighbors search, setting
+#' `knn_method=knn_hnsw(k=20)` is a convenient shortcut for `knn_method=function(x) knn_hnsw(x, k=20)`. Similarly, lowering the 
+#'  default clustering resolution can be done as `cluster_graph_method=cluster_graph_louvain(resolution=0.5)`. This works because
+#' all these functions are written to return a partially parameterized copy of themselves as a function object when their
+#' first argument is missing.
+#'
+#' For even more advanced customization, users can manually call the `knn`, `knn_to_graph`, and `cluster_graph` methods rather
+#' than using `cluster_cells_graph()` as a convenient wrapper.
+#'
+#' **Implementing custom clustering steps**
+#' 
+#' The required interfaces for each step are as follows:
+#'
+#' **knn_method**: First argument is a matrix of cell embeddings, shape `(cells x n_embeddings)`.
+#'  Returns a named list of two matrices of dimension (cells x k):
+#'  - `idx`: Neighbor indices, where `idx[c, n]` is the index of the
+#'    nth nearest neighbor to cell `c`.
+#'  - `dist`: Neighbor distances, where `dist[c, n]` is the distance between
+#'    cell `c` and its nth nearest neighbor.
+#'  Self-neighbors are allowed, so with sufficient search effort `idx[c,1] == c` for nearly all cells.
+#' 
+#' **knn_to_graph_method**: First argument is a KNN object as returned by `knn_method`.
+#'  Returns a weighted similarity graph as a lower triangular sparse adjacency matrix (`dgCMatrix`). 
+#'  For cells `i` and `j`, their similarity score is in `adjacency_mat[max(i,j), min(i,j)]`.
+#'
+#' **cluster_graph_method**: First argument is a weighted similarity graph as returned by `knn_to_graph_method`.
+#'  Returns a factor vector of length `cells` with a cluster assignment for each cell.
+#'
+#' @seealso `knn_hnsw()` `knn_annoy()` `knn_to_graph()` `knn_to_snn_graph()` `knn_to_geodesic_graph()` `cluster_graph_leiden()` `cluster_graph_louvain()` `cluster_graph_seurat()` 
+#' @export
+cluster_cells_graph <- function(
+  mat, knn_method = knn_hnsw, 
+  knn_to_graph_method = knn_to_geodesic_graph, 
+  cluster_graph_method = cluster_graph_leiden, 
+  threads = 0L, verbose = FALSE
+) {
+  assert_is_wholenumber(threads)
+  assert_is(verbose, "logical")
+  if (rlang::is_missing(mat)) return(create_partial())
+  assert_is(mat, "matrix")
+  # There currently aren't any `knn_to_graph` functions that utilize a verbose argument.  
+  # However, we still pass `verbose` in case future functions do provide this functionality.
+  mat <- partial_apply(knn_method, threads = threads, verbose = verbose, .missing_args_error = FALSE)(mat)
+  if (!is_knn_object(mat)) pretty_error(mat, "`knn_method` was unable to convert `mat` into a knn object", 1)
+  # Return type has to be constrained to "matrix", so this is silently provided.
+  mat <- partial_apply(knn_to_graph_method, threads = threads, verbose = verbose, return_type = "matrix", .missing_args_error = FALSE)(mat)
+  if (!is_adjacency_matrix(mat)) pretty_error(mat, "`knn_to_graph_method` was unable to convert `mat` from a knn object to a graph adjacency matrix", 1)
+  # Also pass verbose and threads to clustering functions in case they are given these params in the future
+  mat <- partial_apply(cluster_graph_method, threads = threads, verbose = verbose, .missing_args_error = FALSE)(mat)
+  return(mat)
+}
+
 #' K Nearest Neighbor (KNN) Graph
 #'
 #' Convert a KNN object (e.g. returned by `knn_hnsw()` or `knn_annoy()`) into
@@ -22,6 +119,11 @@
 #'   Sparse matrix (dgCMatrix) where `mat[i,j]` = distance from cell `i` to
 #'   cell `j`, or 0 if cell `j` is not in the K nearest neighbors of `i`
 knn_to_graph <- function(knn, use_weights = FALSE, self_loops = TRUE) {
+  assert_is(use_weights, "logical")
+  assert_is(self_loops, "logical")
+
+  if (rlang::is_missing(knn)) return(create_partial())
+  assert_true(is_knn_object(knn))
   if (use_weights) {
     weights <- knn$dist
   } else {
@@ -40,7 +142,6 @@ knn_to_graph <- function(knn, use_weights = FALSE, self_loops = TRUE) {
   colnames(mat) <- rownames(knn$idx)
   mat
 }
-
 
 #' @rdname knn_graph
 #' @details **knn_to_snn_graph**
@@ -63,6 +164,9 @@ knn_to_graph <- function(knn, use_weights = FALSE, self_loops = TRUE) {
 #' @export
 knn_to_snn_graph <- function(knn, min_val = 1 / 15, self_loops = FALSE, return_type=c("matrix", "list")) {
   return_type <- match.arg(return_type)
+  assert_is(self_loops, "logical")
+  if (rlang::is_missing(knn)) return(create_partial())
+  assert_true(is_knn_object(knn))
   # Solve x / (2*K - x) >= min_val --> x >= 2*K*min_val / (1 + min_val)
   min_int <- ceiling(2*min_val*ncol(knn$idx) / (1 + min_val))
   snn <- build_snn_graph_cpp(knn$idx, min_neighbors = min_int)
@@ -83,13 +187,15 @@ knn_to_snn_graph <- function(knn, min_val = 1 / 15, self_loops = FALSE, return_t
   }
   
   # Return as a sparse matrix
-  Matrix::sparseMatrix(
+  res <- Matrix::sparseMatrix(
     i = snn$i + 1L, j = snn$j + 1L, x = snn$weight,
     dims = c(snn$dim, snn$dim)
   )
+  return(res)
 }
 
 #' @rdname knn_graph
+#' @param threads Number of threads to use during calculations
 #' @details **knn_to_geodesic_graph**
 #'  Convert a knn object into an undirected weighted graph, using the same 
 #'  geodesic distance estimation method as the UMAP package. 
@@ -101,7 +207,6 @@ knn_to_snn_graph <- function(knn, min_val = 1 / 15, self_loops = FALSE, return_t
 #'  neighbor, results may differ slightly from `umap._umap.fuzzy_simplicial_set`, which
 #'  assumes self is always successfully found in the approximate nearest neighbor search.
 #'  
-#' @param threads Number of threads to use during calculations
 #' @return **knn_to_geodesic_graph**
 #' - `return_type == "matrix"`:
 #'      Sparse matrix (dgCMatrix) where `mat[i,j]` = normalized similarity between cell `i` and cell `j`.
@@ -111,29 +216,31 @@ knn_to_snn_graph <- function(knn, min_val = 1 / 15, self_loops = FALSE, return_t
 #'      These correspond to the rows, cols, and values of non-zero entries in the lower triangle
 #'      adjacency matrix. `dim` is the total number of vertices (cells) in the graph 
 #' @export
-knn_to_geodesic_graph <- function(knn, return_type=c("matrix", "list"), threads=0L) {
+knn_to_geodesic_graph <- function(knn, return_type = c("matrix", "list"), threads = 0L) {
   return_type <- match.arg(return_type)
+  assert_is_wholenumber(threads)
+  if (rlang::is_missing(knn)) return(create_partial())
+  assert_true(is_knn_object(knn))
   graph <- build_umap_graph_cpp(knn$dist, knn$idx, threads=threads)
   
   graph$dim <- nrow(knn$idx)
-  if (return_type == "list") {
-    return(graph)
-  }
+  if (return_type == "list") return(graph)
   
   # Return as a sparse matrix
-  Matrix::sparseMatrix(
+  res <- Matrix::sparseMatrix(
     i = graph$i + 1L, j = graph$j + 1L, x = graph$weight,
     dims = c(graph$dim, graph$dim)
   )
+  return(res)
 }
 
 #' Cluster an adjacency matrix
-#' @rdname cluster
+#' @rdname cluster_graph
 #' @details **cluster_graph_leiden**: Leiden clustering algorithm `igraph::cluster_leiden()`. 
 #'    Note that when using `objective_function = "CPM"` the number of clusters empirically scales with `cells * resolution`,
 #'    so 1e-3 is a good resolution for 10k cells, but 1M cells is better with a 1e-5 resolution. A resolution of 1 is a 
 #'    good default when `objective_function = "modularity"` per the default.
-#' @param snn Symmetric adjacency matrix (dgCMatrix) output from e.g. `knn_to_snn_graph()` or `knn_to_geodesic_graph()`. Only the lower triangle is used
+#' @param mat Symmetric adjacency matrix (dgCMatrix) output from e.g. `knn_to_snn_graph()` or `knn_to_geodesic_graph()`. Only the lower triangle is used.
 #' @param resolution Resolution parameter. Higher values result in more clusters
 #' @param objective_function Graph statistic to optimize during clustering. Modularity is the default as it keeps resolution independent of dataset size (see details below). 
 #'    For the meaning of each option, see `igraph::cluster_leiden()`.
@@ -141,44 +248,55 @@ knn_to_geodesic_graph <- function(knn, return_type=c("matrix", "list"), threads=
 #' @param ... Additional arguments to underlying clustering function
 #' @return Factor vector containing the cluster assignment for each cell.
 #' @export
-cluster_graph_leiden <- function(snn, resolution = 1, objective_function = c("modularity", "CPM"), seed = 12531, ...) {
+cluster_graph_leiden <- function(
+  mat, resolution = 1, objective_function = c("modularity", "CPM"),
+  seed = 12531, ...
+) {
   assert_has_package("igraph")
   # Set seed without permanently changing seed state
+  if (rlang::is_missing(mat)) return(create_partial())
   prev_seed <- get_seed()
   on.exit(restore_seed(prev_seed), add = TRUE)
   set.seed(seed)
 
   objective_function <- match.arg(objective_function)
 
-  igraph::graph_from_adjacency_matrix(snn, weighted = TRUE, diag = FALSE, mode = "lower") %>%
+  igraph::graph_from_adjacency_matrix(mat, weighted = TRUE, diag = FALSE, mode = "lower") %>%
     igraph::cluster_leiden(resolution_parameter = resolution, objective_function=objective_function, ...) %>%
     igraph::membership() %>%
     as.factor()
 }
 
 
-#' @rdname cluster
+#' @rdname cluster_graph
 #' @details **cluster_graph_louvain**: Louvain graph clustering algorithm `igraph::cluster_louvain()`
 #' @export
-cluster_graph_louvain <- function(snn, resolution = 1, seed = 12531) {
+cluster_graph_louvain <- function(
+  mat, resolution = 1, seed = 12531
+) {
   assert_has_package("igraph")
   # Set seed without permanently changing seed state
+  if (rlang::is_missing(mat)) return(create_partial())
+
   prev_seed <- get_seed()
   on.exit(restore_seed(prev_seed), add = TRUE)
   set.seed(seed)
 
-  igraph::graph_from_adjacency_matrix(snn, weighted = TRUE, diag = FALSE, mode = "lower") %>%
+  igraph::graph_from_adjacency_matrix(mat, weighted = TRUE, diag = FALSE, mode = "lower") %>%
     igraph::cluster_louvain(resolution = resolution) %>%
     igraph::membership() %>%
     as.factor()
 }
 
-#' @rdname cluster
+#' @rdname cluster_graph
 #' @details **cluster_graph_seurat**: Seurat's clustering algorithm `Seurat::FindClusters()`
 #' @export
-cluster_graph_seurat <- function(snn, resolution = 0.8, ...) {
+cluster_graph_seurat <- function(
+  mat, resolution = 0.8, ...
+) {
   assert_has_package("Seurat")
-  Seurat::as.Graph(snn) %>%
+  if (rlang::is_missing(mat)) return(create_partial())
+  Seurat::as.Graph(mat) %>%
     Seurat::FindClusters(resolution = resolution, ...) %>%
     .[[1]]
 }
@@ -213,7 +331,7 @@ cluster_membership_matrix <- function(groups, group_order = NULL) {
 }
 
 
-#' Get a knn matrix from reduced dimensions
+#' Get a knn object from reduced dimensions
 #'
 #' Search for approximate nearest neighbors between cells in the reduced
 #' dimensions (e.g. PCA), and return the k nearest neighbors (knn) for each
@@ -228,16 +346,24 @@ cluster_membership_matrix <- function(groups, group_order = NULL) {
 #' @param metric distance metric to use
 #' @param threads Number of threads to use. Note that result is non-deterministic
 #'          if threads > 1
-#' @param ef ef parameter for RccppHNSW::hnsw_search. Increase for slower search but
+#' @param ef ef parameter for `RcppHNSW::hnsw_search()`. Increase for slower search but
 #'          improved accuracy
 #' @param verbose whether to print progress information during search
-#' @return List of 2 matrices -- idx for cell x K neighbor indices,
-#'         dist for cell x K neighbor distances.
-#'         If no query is given, nearest neighbors are found mapping
-#'         the data matrix to itself, prohibiting self-neighbors
+#' @return Named list of two matrices of dimension (cells x k):
+#'  - `idx`: Neighbor indices, where `idx[c, n]` is the index of the
+#'    nth nearest neighbor to cell `c`.
+#'  - `dist`: Neighbor distances, where `dist[c, n]` is the distance between
+#'    cell `c` and its nth nearest neighbor.
+#'
+#'  If no query is given, nearest neighbors are found by mapping the data matrix to itself, 
+#'  likely including self-neighbors (i.e. `idx[c,1] == c` for most cells).
 #' @export
 knn_hnsw <- function(data, query = NULL, k = 10, metric = c("euclidean", "cosine"), verbose = TRUE, threads = 1, ef = 100) {
   metric <- match.arg(metric)
+  assert_is(verbose, "logical")
+  assert_is_wholenumber(threads)
+  assert_has_package("RcppHNSW")
+  if (rlang::is_missing(data)) return(create_partial())
   index <- RcppHNSW::hnsw_build(
     data,
     distance = metric,
@@ -271,8 +397,11 @@ knn_hnsw <- function(data, query = NULL, k = 10, metric = c("euclidean", "cosine
 #' @param n_trees Number of trees during index build time. More trees gives higher accuracy
 #' @param search_k Number of nodes to inspect during the query, or -1 for default value. Higher number gives higher accuracy
 #' @export
-knn_annoy <- function(data, query = data, k = 10, metric = c("euclidean", "cosine", "manhattan", "hamming"), n_trees = 50, search_k = -1) {
+knn_annoy <- function(data, query = NULL, k = 10, metric = c("euclidean", "cosine", "manhattan", "hamming"), n_trees = 50, search_k = -1) {
   metric <- match.arg(metric)
+  assert_has_package("RcppAnnoy")
+  if (rlang::is_missing(data)) return(create_partial())
+  if (is.null(query)) query <- data
   annoy <- switch(metric,
     "euclidean" = new(RcppAnnoy::AnnoyEuclidean, ncol(data)),
     "cosine" = new(RcppAnnoy::AnnoyAngular, ncol(data)),
@@ -294,5 +423,6 @@ knn_annoy <- function(data, query = data, k = 10, metric = c("euclidean", "cosin
     dist[i, ] <- res$dist
   }
   if (metric == "cosine") dist <- 0.5 * (dist * dist)
-  list(idx = idx, dist = dist)
+  res <- list(idx = idx, dist = dist)
+  return(res)
 }

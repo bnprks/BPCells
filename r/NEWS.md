@@ -1,3 +1,9 @@
+# BPCells 0.4.0 (in-progress main branch)
+
+## Breaking changes
+- Change first parameter name of `cluster_graph_leiden()`, `cluster_graph_louvain()` and `cluster_graph_seurat()` from `snn` to `mat` to more accurately reflect the input type.  (pull request #189)
+
+
 # BPCells 0.3.1 (7/21/2025)
 
 The BPCells 0.3.1 release covers 7 months of changes and 40 commits from 5 contributors. Notable changes include writing matrices in AnnData's dense format, 
