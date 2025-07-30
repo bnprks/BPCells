@@ -114,6 +114,13 @@ assert_is <- function(object, class, n = 1) {
   }
 }
 
+assert_is_mat <- function(object, n = 1) {
+  # matrices have length set to row*col instead of being 1, so we need to check dim as well
+  if (!canCoerce(object, "IterableMatrix")) {
+    pretty_error(object, "must either be an IterableMatrix or coercible to an IterableMatrix", n)
+  }
+}
+
 assert_true <- function(expr, n = 1) {
   if (!expr) pretty_error(expr, "is not true", n)
 }
