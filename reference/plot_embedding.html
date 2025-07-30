@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">BPCells</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -216,11 +216,11 @@ value stays the same.</p>
 <span class="r-in"><span><span class="co">## Get clusters</span></span></span>
 <span class="r-in"><span><span class="va">clusts</span> <span class="op">&lt;-</span> <span class="fu"><a href="knn.html">knn_hnsw</a></span><span class="op">(</span><span class="va">pca</span>, ef <span class="op">=</span> <span class="fl">500</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span></span>
 <span class="r-in"><span>  <span class="fu"><a href="knn_graph.html">knn_to_snn_graph</a></span><span class="op">(</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span></span>
-<span class="r-in"><span>  <span class="fu"><a href="cluster.html">cluster_graph_louvain</a></span><span class="op">(</span><span class="op">)</span></span></span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> 17:37:39 Building HNSW index with metric 'euclidean' ef = 200 M = 16 using 1 threads</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> 17:37:39 Finished building index</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> 17:37:39 Searching HNSW index with ef = 500 and 1 threads</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> 17:37:39 Finished searching</span>
+<span class="r-in"><span>  <span class="fu"><a href="cluster_graph.html">cluster_graph_louvain</a></span><span class="op">(</span><span class="op">)</span></span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> 14:20:50 Building HNSW index with metric 'euclidean' ef = 200 M = 16 using 1 threads</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> 14:20:50 Finished building index</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> 14:20:50 Searching HNSW index with ef = 500 and 1 threads</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> 14:20:50 Finished searching</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co">## Plot embedding</span></span></span>
@@ -249,7 +249,7 @@ value stays the same.</p>
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.0.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.1.</p>
 </div>
 
     </footer></div>

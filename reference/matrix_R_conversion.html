@@ -11,7 +11,7 @@ dense matrices (though this may result in high memory usage for large matrices)"
 
     <a class="navbar-brand me-2" href="../index.html">BPCells</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -57,11 +57,11 @@ dense matrices (though this may result in high memory usage for large matrices)<
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="co"># Convert to R from BPCells</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/methods/as.html" class="external-link">as</a></span><span class="op">(</span><span class="va">bpcells_mat</span>, <span class="st">"dgCMatrix"</span><span class="op">)</span> <span class="co"># Sparse matrix conversion</span></span>
+<span><span class="fu">as</span><span class="op">(</span><span class="va">bpcells_mat</span>, <span class="st">"dgCMatrix"</span><span class="op">)</span> <span class="co"># Sparse matrix conversion</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">as.matrix</a></span><span class="op">(</span><span class="va">bpcells_mat</span><span class="op">)</span> <span class="co"># Dense matrix conversion</span></span>
 <span></span>
 <span><span class="co"># Convert to BPCells from R</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/methods/as.html" class="external-link">as</a></span><span class="op">(</span><span class="va">dgc_mat</span>, <span class="st">"IterableMatrix"</span><span class="op">)</span></span></code></pre></div>
+<span><span class="fu">as</span><span class="op">(</span><span class="va">dgc_mat</span>, <span class="st">"IterableMatrix"</span><span class="op">)</span></span></code></pre></div>
     </div>
 
 
@@ -78,14 +78,14 @@ dense matrices (though this may result in high memory usage for large matrices)<
 <span class="r-out co"><span class="r-pr">#&gt;</span> Storage order: column major</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Queued Operations:</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1. Load compressed matrix from directory /home/imman/.local/share/R/BPCells/demo_data/demo_mat_filtered_subsetted</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1. Load compressed matrix from directory /home/immanuelazn/.local/share/R/BPCells/demo_data/demo_mat_filtered_subsetted</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 2. Select rows: 1, 2 and cols: 1, 2</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co">#######################################################################</span></span></span>
 <span class="r-in"><span><span class="co">## as(bpcells_mat, "dgCMatrix") example</span></span></span>
 <span class="r-in"><span><span class="co">#######################################################################</span></span></span>
-<span class="r-in"><span><span class="va">mat_dgc</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/methods/as.html" class="external-link">as</a></span><span class="op">(</span><span class="va">mat</span>, <span class="st">"dgCMatrix"</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">mat_dgc</span> <span class="op">&lt;-</span> <span class="fu">as</span><span class="op">(</span><span class="va">mat</span>, <span class="st">"dgCMatrix"</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">mat_dgc</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 2 x 2 sparse Matrix of class "dgCMatrix"</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>                 TTTAGCAAGGTAGCTT-1 AGCCGGTTCCGGAACC-1</span>
@@ -95,12 +95,14 @@ dense matrices (though this may result in high memory usage for large matrices)<
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co">## as.matrix(bpcells_mat) example</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">as.matrix</a></span><span class="op">(</span><span class="va">mat</span><span class="op">)</span></span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Warning: Converting to a dense matrix may use excessive memory</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #555555;">This message is displayed once every 8 hours.</span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>                 TTTAGCAAGGTAGCTT-1 AGCCGGTTCCGGAACC-1</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> ENSG00000272602                  1                  0</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> ENSG00000250312                  0                  0</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co">## Alternatively, can also use function as()</span></span></span>
-<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/methods/as.html" class="external-link">as</a></span><span class="op">(</span><span class="va">mat</span>, <span class="st">"matrix"</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu">as</span><span class="op">(</span><span class="va">mat</span>, <span class="st">"matrix"</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>                 TTTAGCAAGGTAGCTT-1 AGCCGGTTCCGGAACC-1</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> ENSG00000272602                  1                  0</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> ENSG00000250312                  0                  0</span>
@@ -108,7 +110,7 @@ dense matrices (though this may result in high memory usage for large matrices)<
 <span class="r-in"><span><span class="co">#######################################################################</span></span></span>
 <span class="r-in"><span><span class="co">## as(dgc_mat, "IterableMatrix") example</span></span></span>
 <span class="r-in"><span><span class="co">#######################################################################</span></span></span>
-<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/methods/as.html" class="external-link">as</a></span><span class="op">(</span><span class="va">mat_dgc</span>, <span class="st">"IterableMatrix"</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu">as</span><span class="op">(</span><span class="va">mat_dgc</span>, <span class="st">"IterableMatrix"</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 2 x 2 IterableMatrix object with class Iterable_dgCMatrix_wrapper</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Row names: ENSG00000272602, ENSG00000250312</span>
@@ -132,7 +134,7 @@ dense matrices (though this may result in high memory usage for large matrices)<
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.0.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.1.</p>
 </div>
 
     </footer></div>

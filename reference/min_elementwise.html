@@ -11,7 +11,7 @@ min_by_col: Take the minimum with a per-col constant"><script defer data-domain=
 
     <a class="navbar-brand me-2" href="../index.html">BPCells</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -92,7 +92,7 @@ This has the effect of capping the maximum value in the matrix.</p>
 <span class="r-in"><span><span class="va">mat</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">matrix</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/Poisson.html" class="external-link">rpois</a></span><span class="op">(</span><span class="fl">40</span>, lambda <span class="op">=</span> <span class="fl">5</span><span class="op">)</span>, nrow <span class="op">=</span> <span class="fl">4</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">rownames</a></span><span class="op">(</span><span class="va">mat</span><span class="op">)</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="st">"gene"</span>, <span class="fl">1</span><span class="op">:</span><span class="fl">4</span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="va">mat</span> <span class="op">&lt;-</span> <span class="va">mat</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> <span class="fu"><a href="https://rdrr.io/r/methods/as.html" class="external-link">as</a></span><span class="op">(</span><span class="st">"dgCMatrix"</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">mat</span> <span class="op">&lt;-</span> <span class="va">mat</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> <span class="fu">as</span><span class="op">(</span><span class="st">"dgCMatrix"</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">mat</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 4 x 10 sparse Matrix of class "dgCMatrix"</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>                           </span>
@@ -100,12 +100,12 @@ This has the effect of capping the maximum value in the matrix.</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span> gene2 8 3 11 . 4 4 4 5 6 8</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> gene3 6 4  1 4 3 9 6 7 4 6</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> gene4 8 5  3 5 9 6 5 . 4 3</span>
-<span class="r-in"><span><span class="va">mat</span> <span class="op">&lt;-</span> <span class="va">mat</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> <span class="fu"><a href="https://rdrr.io/r/methods/as.html" class="external-link">as</a></span><span class="op">(</span><span class="st">"IterableMatrix"</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">mat</span> <span class="op">&lt;-</span> <span class="va">mat</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> <span class="fu">as</span><span class="op">(</span><span class="st">"IterableMatrix"</span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co">#######################################################################</span></span></span>
 <span class="r-in"><span><span class="co">## min_scalar() example</span></span></span>
 <span class="r-in"><span><span class="co">#######################################################################</span></span></span>
-<span class="r-in"><span><span class="fu">min_scalar</span><span class="op">(</span><span class="va">mat</span>, <span class="fl">4</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> <span class="fu"><a href="https://rdrr.io/r/methods/as.html" class="external-link">as</a></span><span class="op">(</span><span class="st">"dgCMatrix"</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu">min_scalar</span><span class="op">(</span><span class="va">mat</span>, <span class="fl">4</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> <span class="fu">as</span><span class="op">(</span><span class="st">"dgCMatrix"</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 4 x 10 sparse Matrix of class "dgCMatrix"</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>                          </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> gene1 4 4 4 4 4 4 4 3 3 4</span>
@@ -117,7 +117,7 @@ This has the effect of capping the maximum value in the matrix.</p>
 <span class="r-in"><span><span class="co">#######################################################################</span></span></span>
 <span class="r-in"><span><span class="co">## min_by_row() example</span></span></span>
 <span class="r-in"><span><span class="co">#######################################################################</span></span></span>
-<span class="r-in"><span><span class="fu">min_by_row</span><span class="op">(</span><span class="va">mat</span>, <span class="fl">1</span><span class="op">:</span><span class="fl">4</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> <span class="fu"><a href="https://rdrr.io/r/methods/as.html" class="external-link">as</a></span><span class="op">(</span><span class="st">"dgCMatrix"</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu">min_by_row</span><span class="op">(</span><span class="va">mat</span>, <span class="fl">1</span><span class="op">:</span><span class="fl">4</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> <span class="fu">as</span><span class="op">(</span><span class="st">"dgCMatrix"</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 4 x 10 sparse Matrix of class "dgCMatrix"</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>                          </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> gene1 1 1 1 1 1 1 1 1 1 1</span>
@@ -129,7 +129,7 @@ This has the effect of capping the maximum value in the matrix.</p>
 <span class="r-in"><span><span class="co">#######################################################################</span></span></span>
 <span class="r-in"><span><span class="co">## min_by_col() example</span></span></span>
 <span class="r-in"><span><span class="co">#######################################################################</span></span></span>
-<span class="r-in"><span><span class="fu">min_by_col</span><span class="op">(</span><span class="va">mat</span>, <span class="fl">1</span><span class="op">:</span><span class="fl">10</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> <span class="fu"><a href="https://rdrr.io/r/methods/as.html" class="external-link">as</a></span><span class="op">(</span><span class="st">"dgCMatrix"</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu">min_by_col</span><span class="op">(</span><span class="va">mat</span>, <span class="fl">1</span><span class="op">:</span><span class="fl">10</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> <span class="fu">as</span><span class="op">(</span><span class="st">"dgCMatrix"</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 4 x 10 sparse Matrix of class "dgCMatrix"</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>                          </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> gene1 1 2 3 4 4 5 6 3 3 8</span>
@@ -149,7 +149,7 @@ This has the effect of capping the maximum value in the matrix.</p>
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.0.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.1.</p>
 </div>
 
     </footer></div>

@@ -44,6 +44,17 @@
     </div>
 
     <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.4.0" id="bpcells-040-in-progress-main-branch">BPCells 0.4.0 (in-progress main branch)<a class="anchor" aria-label="anchor" href="#bpcells-040-in-progress-main-branch"></a></h2>
+<div class="section level3">
+<h3 id="breaking-changes-0-4-0">Breaking changes<a class="anchor" aria-label="anchor" href="#breaking-changes-0-4-0"></a></h3>
+<ul><li>Change first parameter name of <code><a href="../reference/cluster_graph.html">cluster_graph_leiden()</a></code>, <code><a href="../reference/cluster_graph.html">cluster_graph_louvain()</a></code> and <code><a href="../reference/cluster_graph.html">cluster_graph_seurat()</a></code> from <code>snn</code> to <code>mat</code> to more accurately reflect the input type. (pull request <a href="https://github.com/bnprks/BPCells/issues/292" class="external-link">#292</a>)</li>
+</ul></div>
+<div class="section level3">
+<h3 id="features-0-4-0">Features<a class="anchor" aria-label="anchor" href="#features-0-4-0"></a></h3>
+<ul><li>Create a wrapper function <code><a href="../reference/cluster_cells_graph.html">cluster_cells_graph()</a></code> that wraps the steps of knn object creation, graph adjacency creation, and clustering all within a single function (pull request <a href="https://github.com/bnprks/BPCells/issues/292" class="external-link">#292</a>)</li>
+</ul></div>
+</div>
+    <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.3.1" id="bpcells-031-7212025">BPCells 0.3.1 (7/21/2025)<a class="anchor" aria-label="anchor" href="#bpcells-031-7212025"></a></h2>
 <p>The BPCells 0.3.1 release covers 7 months of changes and 40 commits from 5 contributors. Notable changes include writing matrices in AnnData’s dense format, and methods for retrieving demo data for testing and examples. Full details of changes below.</p>
 <p>Thanks to <a href="https://github.com/ycli1995" class="external-link">@ycli1995</a> and <a href="https://github.com/mfansler" class="external-link">@mfansler</a> for pull requests that contributed to this release, as well as to users who submitted github issues to help identify and fix bugs.</p>
@@ -104,7 +115,7 @@
 <li>
 <code><a href="../reference/open_matrix_anndata_hdf5.html">open_matrix_anndata_hdf5()</a></code> now supports reading AnnData matrices in the dense format. (pull request <a href="https://github.com/bnprks/BPCells/issues/146" class="external-link">#146</a>)</li>
 <li>
-<code><a href="../reference/cluster.html">cluster_graph_leiden()</a></code> now has better defaults that produce reasonable cluster counts regardless of dataset size. (pull request <a href="https://github.com/bnprks/BPCells/issues/147" class="external-link">#147</a>)</li>
+<code><a href="../reference/cluster_graph.html">cluster_graph_leiden()</a></code> now has better defaults that produce reasonable cluster counts regardless of dataset size. (pull request <a href="https://github.com/bnprks/BPCells/issues/147" class="external-link">#147</a>)</li>
 </ul></div>
 <div class="section level3">
 <h3 id="bug-fixes-0-3-0">Bug-fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-0-3-0"></a></h3>
