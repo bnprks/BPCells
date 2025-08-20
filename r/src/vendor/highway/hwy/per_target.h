@@ -17,6 +17,7 @@
 #define HIGHWAY_HWY_PER_TARGET_H_
 
 #include <stddef.h>
+#include <stdint.h>
 
 #include "hwy/highway_export.h"
 
@@ -24,6 +25,9 @@
 // HWY_DYNAMIC_DISPATCH, which is not necessarily the current target.
 
 namespace hwy {
+
+// Returns the HWY_TARGET which HWY_DYNAMIC_DISPATCH selected.
+HWY_DLLEXPORT int64_t DispatchedTarget();
 
 // Returns size in bytes of a vector, i.e. `Lanes(ScalableTag<uint8_t>())`.
 //
@@ -35,7 +39,8 @@ namespace hwy {
 // unnecessarily.
 HWY_DLLEXPORT size_t VectorBytes();
 
-// Returns whether 16/64-bit floats are a supported lane type.
+// Returns whether 64-bit integers, 16/64-bit floats are a supported lane type.
+HWY_DLLEXPORT bool HaveInteger64();
 HWY_DLLEXPORT bool HaveFloat16();
 HWY_DLLEXPORT bool HaveFloat64();
 
