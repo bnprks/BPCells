@@ -114,6 +114,13 @@ assert_is <- function(object, class, n = 1) {
   }
 }
 
+assert_is_mat <- function(object, n = 1) {
+  # matrices have length set to row*col instead of being 1, so we need to check dim as well
+  if (!canCoerce(object, "IterableMatrix")) {
+    pretty_error(object, "must either be an IterableMatrix or coercible to an IterableMatrix", n)
+  }
+}
+
 assert_true <- function(expr, n = 1) {
   if (!expr) pretty_error(expr, "is not true", n)
 }
@@ -193,6 +200,24 @@ normalize_unique_file_names <- function(names, replacement="_") {
 #'
 #' If strand is in metadata_cols, then the output strand element will be TRUE for positive strand,
 #' and FALSE for negative strand. (Converted from a character vector of "+"/"-" if necessary)
+#' @examples
+#' ## Prep data
+#' ranges <- GenomicRanges::GRanges(
+#'   seqnames = S4Vectors::Rle(c("chr1", "chr2", "chr3"), c(1, 2, 2)),
+#'   ranges = IRanges::IRanges(101:105, end = 111:115, names = head(letters, 5)),
+#'   strand = S4Vectors::Rle(GenomicRanges::strand(c("-", "+", "*")), c(1, 2, 2)),
+#'   score = 1:5,
+#'   GC = seq(1, 0, length=5))
+#' ranges
+#' 
+#' 
+#' ## Normalize ranges
+#' normalize_ranges(ranges)
+#' 
+#' 
+#' ## With metadata information
+#' normalize_ranges(ranges, metadata_cols = c("strand", "score", "GC"))
+#' @export
 normalize_ranges <- function(ranges, metadata_cols = character(0), zero_based_coords = !is(ranges, "GRanges"), n = 1) {
   assert_is(ranges, c("GRanges", "list", "data.frame", "character"), n = n + 1)
   assert_is(metadata_cols, "character", n = n + 1)

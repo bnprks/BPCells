@@ -26,3 +26,13 @@ write_insertion_bedgraph(
 Write insertion counts data for one or more pseudobulks to bedgraph format. This reports the total
 number insertions at each basepair for each group listed in \code{cell_groups}.
 }
+\examples{
+## Prep data
+frags <- get_demo_frags()
+bedgraph_outputs <- file.path(tempdir(), "bedgraph_outputs", "all.tar.gz")
+
+
+## Write insertions
+write_insertion_bedgraph(frags, file.path(bedgraph_outputs, "all.tar.gz"))
+list.files(bedgraph_outputs)
+}

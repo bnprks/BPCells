@@ -106,9 +106,9 @@ bool RegionSelect::load() {
             // Check if we've gotten to a region beyond the current chromosome
             if (r.chr != current_chr_id) {
                 if (invert_selection) {
-                    std::memmove(&cell[loaded], &cell[i], sizeof(uint32_t) * (capacity - i));
-                    std::memmove(&end[loaded], &end[i], sizeof(uint32_t) * (capacity - i));
-                    std::memmove(&start[loaded], &start[i], sizeof(uint32_t) * (capacity - i));
+                    std::memmove(cell + loaded, cell + i, sizeof(uint32_t) * (capacity - i));
+                    std::memmove(end + loaded, end + i, sizeof(uint32_t) * (capacity - i));
+                    std::memmove(start + loaded, start + i, sizeof(uint32_t) * (capacity - i));
                     loaded += capacity - i;
                     return true;
                 } else {
@@ -130,9 +130,9 @@ bool RegionSelect::load() {
             // 2. Binary search for frag.start >= region.end to find all the remaining overlaps
             auto easy_overlaps = std::lower_bound(&start[i], &start[capacity], r.end) - &start[i];
             if (!invert_selection) {
-                std::memmove(&cell[loaded], &cell[i], sizeof(uint32_t) * easy_overlaps);
-                std::memmove(&end[loaded], &end[i], sizeof(uint32_t) * easy_overlaps);
-                std::memmove(&start[loaded], &start[i], sizeof(uint32_t) * easy_overlaps);
+                std::memmove(cell + loaded, cell + i, sizeof(uint32_t) * easy_overlaps);
+                std::memmove(end + loaded, end + i, sizeof(uint32_t) * easy_overlaps);
+                std::memmove(start + loaded, start + i, sizeof(uint32_t) * easy_overlaps);
                 loaded += easy_overlaps;
             }
             i += easy_overlaps;

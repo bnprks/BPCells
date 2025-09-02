@@ -40,3 +40,19 @@ a distance of 1 rather than 0.
 Given a set of genomic ranges, find the distance to the nearest neighbors both
 upstream and downstream.
 }
+\examples{
+## Prep data
+ranges <- tibble::tibble(
+ chr = "chr1",
+ start = seq(10, 410, 100),
+ end = start + 50,
+ strand = "+"
+)
+## Add one range that is completely nested in the other ranges
+ranges_with_nesting <- ranges \%>\% 
+ tibble::add_row(chr = "chr1", start = 11, end = 20, strand = "+")
+
+
+## Get range distance to nearest
+range_distance_to_nearest(ranges_with_nesting)
+}

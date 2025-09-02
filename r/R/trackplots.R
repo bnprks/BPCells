@@ -252,6 +252,22 @@ trackplot_normalize_ranges_with_metadata <- function(data, metadata) {
   return(data)
 }
 
+#' Render a plot with intermediate disk storage step
+#' 
+#' Take a plotting object and save in temp storage, so it can be outputted with exact dimensions.
+#' Primarily used to allow for adjusting plot dimensions within function reference examples.
+#' @param plot (ggplot) ggplot output from a plotting function
+#' @param width (numeric) width of rendered plot
+#' @param height (numeric) height of rendered plot
+#' @keywords internal
+render_plot_from_storage <- function(plot, width, height) {
+  assert_is(plot, "ggplot")
+  image_path <- tempfile(fileext = ".png")
+  ggplot2::ggsave(image_path, plot, width = width, height = height)
+  img <- png::readPNG(image_path)
+  grid::grid.raster(img)
+}
+
 #' Combine track plots
 #' 
 #' Combines multiple track plots of the same region into a single grid.
@@ -268,6 +284,39 @@ trackplot_normalize_ranges_with_metadata <- function(data, metadata) {
 #'    the text label, y-axis, and plot body. The relative height of each row is given
 #'    by heights. A shared title and x-axis are put at the top.
 #' @seealso `trackplot_coverage()`, `trackplot_gene()`, `trackplot_loop()`, `trackplot_scalebar()`
+#' @examples
+#' ## Prep data
+#' frags <- get_demo_frags()
+#' 
+#' ## Use genes and blacklist to determine proper number of reads per cell
+#' genes <- read_gencode_transcripts(
+#'   file.path(tempdir(), "references"), release = "42",
+#'   annotation_set = "basic",
+#'   features = "transcript"
+#' )
+#' blacklist <- read_encode_blacklist(file.path(tempdir(), "references"), genome="hg38")
+#' read_counts <- qc_scATAC(frags, genes, blacklist)$nFrags
+#' region <- "chr4:3034877-4034877"
+#' cell_types <- paste("Group", rep(1:3, length.out = length(cellNames(frags))))
+#' transcripts <- read_gencode_transcripts(
+#'   file.path(tempdir(), "references"), release = "42",
+#'   annotation_set = "basic"
+#' )
+#' region <- "chr4:3034877-4034877"
+#' 
+#' 
+#' ## Get all trackplots and scalebars to combine
+#' plot_scalebar <- trackplot_scalebar(region)
+#' plot_gene <- trackplot_gene(transcripts, region)
+#' plot_coverage <- trackplot_coverage(frags, region, groups = cell_types, cell_read_counts = read_counts)
+#' 
+#' 
+#' ## Combine trackplots and render
+#' ## Also remove colors from gene track
+#' plot <- trackplot_combine(
+#'     list(plot_scalebar, plot_coverage, plot_gene + ggplot2::guides(color = "none"))
+#' )
+#' BPCells:::render_plot_from_storage(plot, width = 6, height = 4)
 #' @export
 trackplot_combine <- function(tracks, side_plot = NULL, title = NULL, side_plot_width = 0.3) {
   for (plot in tracks) {
@@ -407,6 +456,26 @@ trackplot_combine <- function(tracks, side_plot = NULL, title = NULL, side_plot_
 #' specify the labels for each track. If `return_data` or `return_plot_list` is
 #' `TRUE`, the return value will be modified accordingly.
 #' @seealso `trackplot_combine()`, `trackplot_gene()`, `trackplot_loop()`, `trackplot_scalebar()`
+#' @examples
+## Prep data
+#' frags <- get_demo_frags()
+#' 
+#' ## Use genes and blacklist to determine proper number of reads per cell
+#' genes <- read_gencode_transcripts(
+#'   file.path(tempdir(), "references"), release = "42",
+#'   annotation_set = "basic",
+#'   features = "transcript"
+#' )
+#' blacklist <- read_encode_blacklist(file.path(tempdir(), "references"), genome="hg38")
+#' read_counts <- qc_scATAC(frags, genes, blacklist)$nFrags
+#' region <- "chr4:3034877-4034877"
+#' cell_types <- paste("Group", rep(1:3, length.out = length(cellNames(frags))))
+#' 
+#' 
+#' BPCells:::render_plot_from_storage(
+#'   trackplot_coverage(frags, region, groups = cell_types, cell_read_counts = read_counts),
+#'   width = 6, height = 3
+#' )
 #' @export
 trackplot_coverage <- function(fragments, region, groups,
                            cell_read_counts,
@@ -510,6 +579,18 @@ trackplot_coverage <- function(fragments, region, groups,
 #' @param label_size size for transcript labels in units of mm
 #' @return Plot of gene locations
 #' @seealso `trackplot_combine()`, `trackplot_coverage()`, `trackplot_loop()`, `trackplot_scalebar()`
+#' @examples
+#' ## Prep data
+#' transcripts <- read_gencode_transcripts(
+#'   file.path(tempdir(), "references"), release = "42",
+#'   annotation_set = "basic", features = "transcript"
+#' )
+#' region <- "chr4:3034877-4034877"
+#' 
+#' 
+#' ## Plot gene trackplot
+#' plot <- trackplot_gene(transcripts, region)
+#' BPCells:::render_plot_from_storage(plot, width = 6, height = 1)
 #' @export
 trackplot_gene <- function(transcripts, region, exon_size = 2.5, gene_size = 0.5, label_size = 11*.8/ggplot2::.pt, track_label="Genes", return_data = FALSE) {
   region <- normalize_ranges(region)
@@ -607,6 +688,28 @@ trackplot_gene <- function(transcripts, region, exon_size = 2.5, gene_size = 0.5
 #' @param show_strand If TRUE, show strand direction as arrows
 #' @return Plot of genomic loci if return_data is FALSE, otherwise returns the data frame used to generate the plot
 #' @seealso `trackplot_combine()`, `trackplot_coverage()`, `trackplot_loop()`, `trackplot_scalebar()`, `trackplot_gene()`
+#' @examples
+#' ## Prep data
+#' ## Peaks generated from demo frags, as input into `call_peaks_tile()`
+#' peaks <- tibble::tibble(
+#'   chr = factor(rep("chr4", 16)),
+#'   start = c(3041400, 3041733, 3037400, 3041933, 3040466, 3041200, 
+#'             3038200, 3038000, 3040266, 3037733, 3040800, 3042133, 
+#'             3038466, 3037200, 3043333, 3040066),
+#'   end = c(3041600, 3041933, 3037600, 3042133, 3040666, 3041400, 
+#'           3038400, 3038200, 3040466, 3037933, 3041000, 3042333, 
+#'           3038666, 3037400, 3043533, 3040266),
+#'   enrichment = c(46.4, 43.5, 28.4, 27.3, 17.3, 11.7, 
+#'                  10.5, 7.95, 7.22, 6.86, 6.32, 6.14, 
+#'                  5.96, 5.06, 4.51, 3.43)
+#' )
+#' region <- "chr4:3034877-3044877"
+#' 
+#' ## Plot peaks
+#' BPCells:::render_plot_from_storage(
+#'   trackplot_genome_annotation(peaks, region, color_by = "enrichment"),
+#'   width = 6, height = 1
+#' )
 #' @export
 trackplot_genome_annotation <- function(loci, region, color_by = NULL, colors = NULL, label_by = NULL, label_size = 11*.8/ggplot2::.pt, show_strand=FALSE,
                                         annotation_size = 2.5, track_label="Peaks", return_data = FALSE) {
@@ -729,6 +832,19 @@ trackplot_genome_annotation <- function(loci, region, color_by = NULL, colors = 
 #' 
 #' @return Plot of loops connecting genomic coordinates
 #' @seealso `trackplot_combine()`, `trackplot_coverage()`, `trackplot_gene()`, `trackplot_scalebar()`, `trackplot_genome_annotation()`
+#' @examples
+#' peaks <- c(3054877, 3334877, 3534877, 3634877, 3734877)
+#' loops <- tibble::tibble(
+#'   chr = "chr4",
+#'   start = peaks[c(1,1,2,3)],
+#'   end = peaks[c(2,3,4,5)],
+#'   score = c(4,1,3,2)
+#' )
+#' region <- "chr4:3034877-4034877"
+#' 
+#' ## Plot loops
+#' plot <- trackplot_loop(loops, region, color_by = "score")
+#' BPCells:::render_plot_from_storage(plot, width = 6, height = 1.5)
 #' @export
 trackplot_loop <- function(loops, region, color_by=NULL, colors=NULL, allow_truncated=TRUE, curvature=0.75, track_label="Links", return_data = FALSE) {
   region <- normalize_ranges(region)
@@ -826,6 +942,11 @@ trackplot_loop <- function(loops, region, color_by=NULL, colors=NULL, allow_trun
 #' 
 #' @return Plot with coordinates and scalebar for plotted genomic region
 #' @seealso `trackplot_combine()`, `trackplot_coverage()`, `trackplot_gene()`, `trackplot_loop()`
+#' @examples
+#' region <- "chr4:3034877-3044877"
+#' BPCells:::render_plot_from_storage(
+#'   trackplot_scalebar(region), width = 6, height = 1
+#' )
 #' @export
 trackplot_scalebar <- function(region, font_pt=11) {
   region <- normalize_ranges(region)

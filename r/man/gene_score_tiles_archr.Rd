@@ -47,3 +47,18 @@ ArchR's tile distance algorithm works as follows
 beyond a neighboring gene are not considered
 }
 }
+\examples{
+## Prep data
+directory  <- file.path(tempdir(), "references")
+genes <- read_gencode_genes(
+    directory,
+    release = "42",
+    annotation_set = "basic",    
+)
+
+
+## Get gene scores by tile
+gene_score_tiles_archr(
+    genes
+)
+}

@@ -18,3 +18,21 @@ Subset, translate, or reorder chromosome IDs
 Numeric chromosome IDs will be re-assigned in the order of \code{chromosome_selection}.
 The output chromosome ID \code{n} will be taken from the input chromosome with ID/name \code{chromosome_selection[n]}.
 }
+\examples{
+## Prep data
+frags <- tibble::tibble(
+  chr = c(rep("chr1", 2), rep("chrX", 2), rep("chr3", 2)),
+  start = seq(10, 260, 50),
+  end = start + 30,
+  cell_id = paste0("cell1")
+) \%>\% as("GRanges")
+frags <- frags \%>\% convert_to_fragments()
+frags
+
+## Selecting by chromosome IDs
+select_chromosomes(frags, c(1, 3))
+
+## Selecting by name
+select_chromosomes(frags, c("chrX"))
+
+}

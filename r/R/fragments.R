@@ -31,6 +31,24 @@ setMethod("short_description", "IterableFragments", function(x) {
 })
 
 #' @describeIn IterableFragments-methods Print IterableFragments
+#' @examples
+#' ## Prep data
+#' frags <- tibble::tibble(
+#'   chr = paste0("chr", c(rep(1,3), rep(2,3))),
+#'   start = seq(10, 260, 50),
+#'   end = start + 30,
+#'   cell_id = paste0("cell", c(rep(1, 2), rep(2,2), rep(3,2)))
+#' ) 
+#' frags
+#' frags <- frags %>% convert_to_fragments()
+#' 
+#' 
+#' #######################################################################
+#' ## show(IterableFragments) example
+#' #######################################################################
+#' show(frags)
+#' 
+#' 
 #' @param object IterableFragments object
 setMethod("show", "IterableFragments", function(object) {
   cat(sprintf("IterableFragments object of class \"%s\"\n", class(object)))
@@ -69,6 +87,13 @@ setMethod("show", "IterableFragments", function(object) {
 #' @param x an IterableFragments object
 #' @return * `cellNames()` Character vector of cell names, or NULL if none are known
 #' @describeIn IterableFragments-methods Get cell names
+#' @examples
+#' #######################################################################
+#' ## cellNames(IterableFragments) example
+#' #######################################################################
+#' cellNames(frags)
+#' 
+#' 
 #' @export
 setGeneric("cellNames", function(x) standardGeneric("cellNames"))
 setMethod("cellNames", "IterableFragments", function(x) {
@@ -83,6 +108,14 @@ setMethod("cellNames", "IterableFragments", function(x) {
 #' @param value Character vector of new names
 #' @details * `cellNames<-` It is only possible to replace names, not add new names.
 #' @describeIn IterableFragments-methods Set cell names
+#' @examples
+#' #######################################################################
+#' ## cellNames(IterableFragments)<- example
+#' #######################################################################
+#' cellNames(frags) <- paste0("cell", 5:7)
+#' cellNames(frags)
+#' 
+#' 
 #' @export
 setGeneric("cellNames<-", function(x, ..., value) standardGeneric("cellNames<-"))
 setMethod("cellNames<-", "IterableFragments", function(x, ..., value) {
@@ -98,6 +131,13 @@ setMethod("cellNames<-", "IterableFragments", function(x, ..., value) {
 #' @param x an IterableFragments object
 #' @return * `chrNames()`: Character vector of chromosome names, or NULL if none are known
 #' @describeIn IterableFragments-methods Set chromosome names
+#' @examples
+#' #######################################################################
+#' ## chrNames(IterableFragments) example
+#' #######################################################################
+#' chrNames(frags)
+#' 
+#' 
 #' @export
 setGeneric("chrNames", function(x) standardGeneric("chrNames"))
 setMethod("chrNames", "IterableFragments", function(x) {
@@ -112,6 +152,14 @@ setMethod("chrNames", "IterableFragments", function(x) {
 #' @param value Character vector of new names
 #' @details * `chrNames<-` It is only possible to replace names, not add new names.
 #' @describeIn IterableFragments-methods Set chromosome names
+#' @examples
+#' #######################################################################
+#' ## chrNames(IterableFragments)<- example
+#' #######################################################################
+#' chrNames(frags) <- paste0("chr", 5:6)
+#' chrNames(frags)
+#' 
+#' 
 #' @export
 setGeneric("chrNames<-", function(x, ..., value) standardGeneric("chrNames<-"))
 setMethod("chrNames<-", "IterableFragments", function(x, ..., value) {
@@ -159,6 +207,33 @@ setMethod("short_description", "FragmentsTsv", function(x) {
 #'     insertion at the end coordinate rather than the base before the end coordinate. This is the
 #'     10x default, though it's not quite standard for the bed file format.
 #' @return 10x fragments file object
+#' @examples
+#' ## Download example fragments from pbmc 500 dataset and save in temp directory
+#' data_dir <- file.path(tempdir(), "frags_10x")
+#' dir.create(data_dir, recursive = TRUE, showWarnings = FALSE)
+#' url_base <- "https://cf.10xgenomics.com/samples/cell-atac/2.0.0/atac_pbmc_500_nextgem/"
+#' frags_file <- "atac_pbmc_500_nextgem_fragments.tsv.gz"
+#' atac_raw_url <- paste0(url_base, frags_file)
+#' if (!file.exists(file.path(data_dir, frags_file))) {
+#'  download.file(atac_raw_url, file.path(data_dir, frags_file), mode="wb")
+#' }
+#' 
+#' #######################################################################
+#' ## open_fragments_10x() example
+#' #######################################################################
+#' frags <- open_fragments_10x(
+#'  file.path(data_dir, frags_file)
+#' )
+#' ## A Fragments object imported from 10x will not have cell/chromosome 
+#' ## information directly known unless written as a BPCells fragment object
+#' frags
+#' 
+#' frags %>% write_fragments_dir(
+#'  file.path(data_dir, "demo_frags_from_h5"), 
+#'  overwrite = TRUE
+#' )
+#' 
+#' 
 #' @export
 open_fragments_10x <- function(path, comment = "#", end_inclusive = TRUE) {
   assert_is_file(path, extension = c(".tsv", ".tsv.gz"))
@@ -180,6 +255,17 @@ open_fragments_10x <- function(path, comment = "#", end_inclusive = TRUE) {
 #' @details **write_fragments_10x**
 #'
 #' Fragments will be written to disk immediately, then returned in a readable object.
+#' @examples
+#' #######################################################################
+#' ## write_fragments_10x() example
+#' #######################################################################
+#' frags <- write_fragments_10x(
+#'  frags,
+#'  file.path(data_dir, paste0("new_", frags_file))
+#' )
+#' frags
+#' 
+#' 
 #' @export
 write_fragments_10x <- function(fragments, path, end_inclusive = TRUE, append_5th_column = FALSE) {
   assert_is_file(path, must_exist = FALSE, extension = c(".tsv", ".tsv.gz"))
@@ -291,6 +377,21 @@ setMethod("short_description", "PackedMemFragments", function(x) {
 #' @param compress Whether or not to compress the data. With compression, storage size is
 #' be about half the size of a gzip-compressed 10x fragments file.
 #' @rdname fragment_io
+#' @examples
+#' ## Create temporary directory to keep demo fragments
+#' data_dir <- file.path(tempdir(), "frags")
+#' dir.create(data_dir, recursive = TRUE, showWarnings = FALSE)
+#' ## Get demo frags loaded from disk
+#' frags <- get_demo_frags()
+#' frags
+#' 
+#' #######################################################################
+#' ## write_fragments_memory() example
+#' #######################################################################
+#' frags_memory <- write_fragments_memory(frags)
+#' frags_memory
+#' 
+#' 
 #' @export
 write_fragments_memory <- function(fragments, compress = TRUE) {
   assert_is(fragments, "IterableFragments")
@@ -347,6 +448,18 @@ setMethod("short_description", "FragmentsDir", function(x) {
 #'   pass a temp path as a string to customize the temp dir location.
 #' @return Fragment object
 #' @rdname fragment_io
+#' @examples
+#' #######################################################################
+#' ## write_fragments_dir() example
+#' #######################################################################
+#' frags <- write_fragments_dir(
+#'  frags_memory, 
+#'  file.path(data_dir, "demo_frags"),
+#'  overwrite = TRUE
+#' )
+#' frags
+#' 
+#' 
 #' @export
 write_fragments_dir <- function(fragments, dir, compress = TRUE, buffer_size = 1024L, overwrite = FALSE) {
   assert_is(fragments, "IterableFragments")
@@ -383,6 +496,14 @@ write_fragments_dir <- function(fragments, dir, compress = TRUE, buffer_size = 1
 }
 
 #' @rdname fragment_io
+#' @examples
+#' #######################################################################
+#' ## open_fragments_dir() example
+#' #######################################################################
+#' frags <- open_fragments_dir(file.path(data_dir, "demo_frags"))
+#' frags
+#' 
+#' 
 #' @export
 open_fragments_dir <- function(dir, buffer_size = 1024L) {
   assert_is_file(dir)
@@ -438,6 +559,18 @@ setMethod("short_description", "FragmentsHDF5", function(x) {
 #' @param gzip_level Gzip compression level. Default is 0 (no compression). This is recommended when both compression and
 #'     compatibility with outside programs is required. Otherwise, using compress=TRUE is recommended
 #'     as it is >10x faster with often similar compression levels. 
+#' @examples
+#' #######################################################################
+#' ## write_fragments_hdf5() example
+#' #######################################################################
+#' frags_hdf5 <- write_fragments_hdf5(
+#'  frags, 
+#'  file.path(data_dir, "demo_frags.h5"),
+#'  overwrite = TRUE
+#' )
+#' frags_hdf5
+#' 
+#' 
 #' @export
 write_fragments_hdf5 <- function(
     fragments, 
@@ -494,6 +627,14 @@ write_fragments_hdf5 <- function(
 }
 
 #' @rdname fragment_io
+#' @examples
+#' #######################################################################
+#' ## open_fragments_hdf5() example
+#' #######################################################################
+#' frags_hdf5 <- open_fragments_hdf5(file.path(data_dir, "demo_frags.h5"))
+#' frags_hdf5
+#' 
+#' 
 #' @export
 open_fragments_hdf5 <- function(path, group = "fragments", buffer_size = 16384L) {
   assert_is_file(path)
@@ -532,6 +673,48 @@ open_fragments_hdf5 <- function(path, group = "fragments", buffer_size = 16384L)
 #'    for GRanges and false for other formats
 #'    (see this [archived UCSC blogpost](https://web.archive.org/web/20210920203703/http://genome.ucsc.edu/blog/the-ucsc-genome-browser-coordinate-counting-systems/))
 #' @return **convert_to_fragments()**: IterableFragments object
+#' @examples
+#' frags_table <- tibble::tibble(
+#'   chr = paste0("chr", 1:10),
+#'   start = 0,
+#'   end = 5,
+#'   cell_id = "cell1"
+#' )
+#' frags_table
+#' 
+#' frags_granges <- GenomicRanges::makeGRangesFromDataFrame(
+#'  frags_table, keep.extra.columns = TRUE
+#' )
+#' frags_granges
+#' 
+#' #######################################################################
+#' ## convert_to_fragments() example
+#' #######################################################################
+#' frags <- convert_to_fragments(frags_granges)
+#' frags
+#' 
+#' 
+#' #######################################################################
+#' ## as(x, "IterableFragments") example
+#' #######################################################################
+#' frags <- as(frags_table, "IterableFragments")
+#' frags
+#' 
+#' 
+#' #######################################################################
+#' ## as(bpcells_fragments, "data.frame") example
+#' #######################################################################
+#' frags_table <- as(frags, "data.frame")
+#' frags_table
+#' 
+#' 
+#' #######################################################################
+#' ## as(bpcells_fragments, "GRanges") example
+#' #######################################################################
+#' frags_granges <- as(frags, "GRanges")
+#' frags_granges
+#' 
+#' 
 #' @rdname fragment_R_conversion
 #' @export
 convert_to_fragments <- function(x, zero_based_coords = !is(x, "GRanges")) {
@@ -654,6 +837,21 @@ setMethod("short_description", "ShiftFragments", function(x) {
 #' @param shift_start How many basepairs to shift the start coords
 #' @param shift_end How many basepairs to shift the end coords
 #' @return Shifted fragments object
+#' @examples
+#' ## Prep data
+#' frags <- tibble::tibble(
+#'   chr = "chr1",
+#'   start = seq(10, 260, 50),
+#'   end = start + 30,
+#'   cell_id = paste0("cell1")
+#' ) %>% as("GRanges")
+#' frags
+#' 
+#' frags <- frags %>% convert_to_fragments()
+#' 
+#' 
+#' ## Shift fragments
+#' shift_fragments(frags, shift_start = 4, shift_end = -4) %>% as("GRanges")
 #' @export
 shift_fragments <- function(fragments, shift_start = 0L, shift_end = 0L) {
   assert_is_wholenumber(shift_start)
@@ -695,6 +893,19 @@ setMethod("short_description", "SelectLength", function(x) {
 #' @param max_len Maximum bases in fragment (inclusive)
 #' @return Fragments object
 #' @details Fragment length is calculated as `end-start`
+#' @examples
+#' ## Prep data
+#' frags <- tibble::tibble(
+#'   chr = "chr1",
+#'   start = seq(10, 260, 50),
+#'   end = start + seq(5, 30, 5),
+#'   cell_id = paste0("cell", c(rep(1, 2), rep(2,2), rep(3,2)))
+#' ) 
+#' frags
+#' frags <- frags %>% convert_to_fragments()
+#' 
+#' ## Subset lengths
+#' subset_lengths(frags, min_len = 10, max_len = 20) %>% as("GRanges")
 #' @export
 subset_lengths <- function(fragments, min_len = 0L, max_len = NA_integer_) {
   assert_is_wholenumber(min_len)
@@ -764,6 +975,23 @@ setMethod("short_description", "ChrSelectIndex", function(x) {
 #'
 #' @details Numeric chromosome IDs will be re-assigned in the order of `chromosome_selection`.
 #' The output chromosome ID `n` will be taken from the input chromosome with ID/name `chromosome_selection[n]`.
+#' 
+#' @examples
+#' ## Prep data
+#' frags <- tibble::tibble(
+#'   chr = c(rep("chr1", 2), rep("chrX", 2), rep("chr3", 2)),
+#'   start = seq(10, 260, 50),
+#'   end = start + 30,
+#'   cell_id = paste0("cell1")
+#' ) %>% as("GRanges")
+#' frags <- frags %>% convert_to_fragments()
+#' frags
+#' 
+#' ## Selecting by chromosome IDs
+#' select_chromosomes(frags, c(1, 3))
+#' 
+#' ## Selecting by name
+#' select_chromosomes(frags, c("chrX"))
 #' 
 #' @export
 select_chromosomes <- function(fragments, chromosome_selection) {
@@ -849,6 +1077,22 @@ setMethod("short_description", "CellSelectIndex", function(x) {
 #' @details Numeric cell IDs will be re-assigned in the order of `cell_selection`.
 #' The output cell ID `n` will be taken from the input cell with ID/name `cell_selection[n]`.
 #' 
+#' @examples
+#' ## Prep data
+#' frags <- tibble::tibble(
+#'   chr = "chr1",
+#'   start = seq(10, 260, 50),
+#'   end = start + 30,
+#'   cell_id = paste0("cell", c(rep(1, 2), rep(2,2), rep(3,2)))
+#' ) %>% convert_to_fragments()
+#' frags
+#' 
+#' 
+#' ## Select cells by name
+#' select_cells(frags, "cell1")
+#' 
+#' ## Select cells by index
+#' select_cells(frags, c(1,3))
 #' @export
 select_cells <- function(fragments, cell_selection) {
   assert_is(fragments, "IterableFragments")
@@ -910,6 +1154,19 @@ setMethod("short_description", "CellMerge", function(x) {
 #' @param fragments Input fragments object
 #' @param cell_groups Character or factor vector providing a group for each cell.
 #' Ordering is the same as `cellNames(fragments)`
+#' @examples
+## Prep data
+#' frags <- tibble::tibble(
+#'   chr = "chr1",
+#'   start = seq(10, 260, 50),
+#'   end = start + 30,
+#'   cell_id = paste0("cell", c(rep(1, 2), rep(2,2), rep(3,2)))
+#' ) %>% convert_to_fragments()
+#' frags
+#' 
+#' 
+#' ## Pseudobulk into two groups
+#' merge_cells(frags, as.factor(c(rep(1,3), rep(2,3))))
 #' @export
 merge_cells <- function(fragments, cell_groups) {
   assert_is(fragments, "IterableFragments")
@@ -1001,6 +1258,19 @@ setMethod("short_description", "CellPrefix", function(x) {
 #' @param fragments Input fragments object.
 #' @param prefix String to add as the prefix
 #' @return Fragments object with prefixed names
+#' @examples
+#' ## Prep data
+#' frags <- tibble::tibble(
+#'   chr = "chr1",
+#'   start = seq(10, 260, 50),
+#'   end = start + 30,
+#'   cell_id = paste0("cell", c(rep(1, 2), rep(2,2), rep(3,2)))
+#' ) %>% convert_to_fragments()
+#' frags
+#' 
+#' 
+#' ## Prefix cells with foo
+#' prefix_cell_names(frags, "foo_") %>% as("GRanges")
 #' @export
 prefix_cell_names <- function(fragments, prefix) {
   assert_is(fragments, "IterableFragments")
@@ -1056,6 +1326,27 @@ setMethod("short_description", "RegionSelect", function(x) {
 #'  instead of only fragments overlapping the selected regions.
 #' @inheritParams peak_matrix
 #' @return Fragments object filtered according to the selected regions
+#' @examples
+#' frags <- tibble::tibble(
+#'   chr = "chr1",
+#'   start = seq(10, 260, 50),
+#'   end = start + seq(5, 30, 5),
+#'   cell_id = "cell1"
+#' ) 
+#' frags
+#' frags <- frags %>% convert_to_fragments()
+#' 
+#' region <- tibble::tibble(
+#'   chr = "chr1",
+#'   start = 60,
+#'   end = 130
+#' ) %>% as("GRanges")
+#' 
+#' ## Select ranges overlapping with region
+#' select_regions(frags, region) %>% as("GRanges")
+#' 
+#' ## Select ranges not overlapping with region
+#' select_regions(frags, region, invert_selection = TRUE) %>% as("GRanges")
 #' @export
 select_regions <- function(fragments, ranges, invert_selection = FALSE, zero_based_coords = !is(ranges, "GRanges")) {
   assert_is(fragments, "IterableFragments")
@@ -1132,6 +1423,38 @@ setMethod("c", "IterableFragments", function(x, ...) {
 #' @param fragments1 First IterableFragments to compare
 #' @param fragments2 Second IterableFragments to compare
 #' @return boolean for whether the fragments objects are identical
+#' @examples
+#' ## Prep data
+#' frags_1 <- tibble::tibble(
+#'   chr = "chr1",
+#'   start = seq(10, 260, 50),
+#'   end = start + seq(5, 30, 5),
+#'   cell_id = paste0("cell", c(rep(1, 2), rep(2,2), rep(3,2)))
+#' ) %>% convert_to_fragments()
+#' frags_1
+#' 
+#' frags_2_identical <- tibble::tibble(
+#'   chr = "chr1",
+#'   start = seq(10, 260, 50),
+#'   end = start + seq(5, 30, 5),
+#'   cell_id = paste0("cell", c(rep(1, 2), rep(2,2), rep(3,2)))
+#' ) %>% convert_to_fragments()
+#' 
+#' frags_3_different <- tibble::tibble(
+#'   chr = "chr1",
+#'   start = seq(10, 260, 50),
+#'   end = start + seq(5, 30, 5),
+#'   cell_id = paste0("cell", c(rep(1, 2), rep(2,2), rep(4,2)))
+#' ) %>% convert_to_fragments()
+#' 
+#' 
+#' ## In the case of mismatching cell ids
+#' fragments_identical(frags_1, frags_3_different)
+#' 
+#' 
+#' ## In the case of two identical frag objects
+#' fragments_identical(frags_1, frags_2_identical)
+#' @export
 fragments_identical <- function(fragments1, fragments2) {
   assert_is(fragments1, "IterableFragments")
   assert_is(fragments2, "IterableFragments")

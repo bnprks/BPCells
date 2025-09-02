@@ -37,3 +37,17 @@ and sort_bytes (1GiB) parameters allow ~85GB of data to be sorted with two
 passes through the data, and ~7.3TB of data to be sorted in three passes
 through the data.
 }
+\examples{
+mat <- matrix(rnorm(50), nrow = 10, ncol = 5)
+rownames(mat) <- paste0("gene", seq_len(10))
+colnames(mat) <- paste0("cell", seq_len(5))
+mat <- mat \%>\% as("dgCMatrix") \%>\% as("IterableMatrix")
+mat
+
+## A regular transpose operation switches a user's rows and cols 
+t(mat)
+
+## Running `transpose_storage_order()` instead changes whether the storage is in row-major or col-major,
+## but does not switch the rows and cols
+transpose_storage_order(mat)
+}

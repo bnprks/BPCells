@@ -64,6 +64,13 @@ setMethod("short_description", "TransformLog1p", function(x) {
   )
 })
 #' @describeIn IterableMatrix-methods Calculate log(x + 1)
+#' @examples
+#' #######################################################################
+#' ## log1p() example
+#' #######################################################################
+#' log1p(mat)
+#' 
+#' 
 setMethod("log1p", "IterableMatrix", function(x) {
   wrapMatrix("TransformLog1p", convert_matrix_type(x, "double"))
 })
@@ -80,6 +87,13 @@ setMethod("short_description", "TransformLog1pSlow", function(x) {
 })
 
 #' @describeIn IterableMatrix-methods Calculate log(x + 1) (non-SIMD version)
+#' @examples
+#' #######################################################################
+#' ## log1p_slow() example
+#' #######################################################################
+#' log1p_slow(mat)
+#' 
+#' 
 #' @export
 log1p_slow <- function(x) {
   wrapMatrix("TransformLog1pSlow", convert_matrix_type(x, "double"))
@@ -97,6 +111,13 @@ setMethod("short_description", "TransformExpm1", function(x) {
   )
 })
 #' @describeIn IterableMatrix-methods Calculate exp(x) - 1
+#' @examples
+#' #######################################################################
+#' ## expm1() example
+#' #######################################################################
+#' expm1(mat)
+#' 
+#' 
 setMethod("expm1", "IterableMatrix", function(x) {
   wrapMatrix("TransformExpm1", convert_matrix_type(x, "double"))
 })
@@ -112,6 +133,13 @@ setMethod("short_description", "TransformExpm1Slow", function(x) {
   )
 })
 #' @describeIn IterableMatrix-methods Calculate exp(x) - 1 (non-SIMD version)
+#' @examples
+#' #######################################################################
+#' ## expm1_slow() example
+#' #######################################################################
+#' expm1_slow(mat)
+#' 
+#' 
 #' @export
 expm1_slow <- function(x) {
   wrapMatrix("TransformExpm1Slow", convert_matrix_type(x, "double"))
@@ -181,6 +209,21 @@ setMethod("short_description", "TransformMin", function(x) {
 #' @return IterableMatrix
 #' @description **min_scalar**: Take minumum with a global constant
 #' @rdname min_elementwise
+#' @examples
+#' set.seed(12345)
+#' mat <- matrix(rpois(40, lambda = 5), nrow = 4)
+#' rownames(mat) <- paste0("gene", 1:4)
+#' 
+#' mat <- mat %>% as("dgCMatrix")
+#' mat
+#' mat <- mat %>% as("IterableMatrix")
+#' 
+#' #######################################################################
+#' ## min_scalar() example
+#' #######################################################################
+#' min_scalar(mat, 4) %>% as("dgCMatrix")
+#' 
+#' 
 #' @export
 min_scalar <- function(mat, val) {
   assert_is(mat, "IterableMatrix")
@@ -214,6 +257,13 @@ setMethod("short_description", "TransformMinByRow", function(x) {
 
 #' @rdname min_elementwise
 #' @description **min_by_row**: Take the minimum with a per-row constant
+#' @examples
+#' #######################################################################
+#' ## min_by_row() example
+#' #######################################################################
+#' min_by_row(mat, 1:4) %>% as("dgCMatrix")
+#' 
+#' 
 #' @export
 min_by_row <- function(mat, vals) {
   if (mat@transpose) {
@@ -247,6 +297,13 @@ setMethod("short_description", "TransformMinByCol", function(x) {
 
 #' @rdname min_elementwise
 #' @description **min_by_col**: Take the minimum with a per-col constant
+#' @examples
+#' #######################################################################
+#' ## min_by_col() example
+#' #######################################################################
+#' min_by_col(mat, 1:10) %>% as("dgCMatrix")
+#' 
+#' 
 #' @export
 min_by_col <- function(mat, vals) {
   if (mat@transpose) {
@@ -315,10 +372,24 @@ setMethod("<", signature(e1= "IterableMatrix", e2= "numeric"), function(e1, e2) 
   stop("matrix < numeric not supported for IterableMatrix objects")
 })
 #' @describeIn IterableMatrix-methods Binarize matrix according to numeric < matrix comparison
+#' @examples
+#' #######################################################################
+#' ## `e1 < e2` example
+#' #######################################################################
+#' 5 < mat
+#' 
+#' 
 setMethod("<", signature(e1= "numeric", e2= "IterableMatrix"), function(e1, e2) {
   binarize(e2, threshold=e1, strict_inequality=TRUE)
 })
 #' @describeIn IterableMatrix-methods Binarize matrix according to matrix > numeric comparison
+#' @examples
+#' #######################################################################
+#' ## `e1 > e2` example
+#' #######################################################################
+#' mat > 5
+#' 
+#' 
 setMethod(">", signature(e1= "IterableMatrix", e2= "numeric"), function(e1, e2) {
   binarize(e1, threshold=e2, strict_inequality=TRUE)
 })
@@ -330,10 +401,24 @@ setMethod("<=", signature(e1= "IterableMatrix", e2= "numeric"), function(e1, e2)
   stop("matrix <= numeric not supported for IterableMatrix objects")
 })
 #' @describeIn IterableMatrix-methods Binarize matrix according to numeric <= matrix comparison
+#' @examples
+#' #######################################################################
+#' ## `e1 <= e2` example
+#' #######################################################################
+#' 5 <= mat
+#' 
+#' 
 setMethod("<=", signature(e1= "numeric", e2= "IterableMatrix"), function(e1, e2) {
   binarize(e2, threshold=e1, strict_inequality=FALSE)
 })
 #' @describeIn IterableMatrix-methods Binarize matrix according to matrix >= numeric comparison
+#' @examples
+#' #######################################################################
+#' ## `e1 >= e2` example
+#' #######################################################################
+#' mat >= 5
+#' 
+#' 
 setMethod(">=", signature(e1= "IterableMatrix", e2= "numeric"), function(e1, e2) {
   binarize(e1, threshold=e2, strict_inequality=FALSE)
 })
@@ -360,6 +445,13 @@ setMethod("short_description", "TransformRound", function(x) {
 
 # Initially, allow only digits=0.
 #' @describeIn IterableMatrix-methods round to nearest integer (digits must be 0)
+#' @examples
+#' #######################################################################
+#' ## round() example
+#' #######################################################################
+#' round(mat)
+#' 
+#' 
 setMethod("round", "IterableMatrix", function(x, digits=0) {
   assert_is(x, "IterableMatrix")
   assert_is(digits, "numeric")
@@ -616,6 +708,17 @@ setMethod("short_description", "TransformScaleShift", function(x) {
 
 # Basic dispatch for scaling/shifting (Create TransformScaleShift and then apply function to it)
 #' @describeIn IterableMatrix-methods Multiply by a constant, or multiply rows by a vector length nrow(mat)
+#' @examples
+#' #######################################################################
+#' ## `e1 * e2` example
+#' #######################################################################
+#' ## Multiplying by a constant
+#' mat * 5
+#' 
+#' ## Multiplying by a vector of length `nrow(mat)`
+#' mat * 1:nrow(mat)
+#' 
+#' 
 setMethod("*", signature(e1 = "IterableMatrix", e2 = "numeric"), function(e1, e2) {
   e1 <- wrapMatrix("TransformScaleShift", convert_matrix_type(e1, "double"))
   e1 * e2
@@ -625,6 +728,17 @@ setMethod("*", signature(e1 = "numeric", e2 = "IterableMatrix"), function(e1, e2
   e2 * e1
 })
 #' @describeIn IterableMatrix-methods Add a constant, or row-wise addition with a vector length nrow(mat)
+#' @examples
+#' #######################################################################
+#' ## `e1 + e2` example
+#' #######################################################################
+#' ## Add by a constant
+#' mat + 5
+#' 
+#' ## Adding row-wise by a vector of length `nrow(mat)`
+#' mat + 1:nrow(mat)
+#' 
+#' 
 setMethod("+", signature(e1 = "IterableMatrix", e2 = "numeric"), function(e1, e2) {
   if (all(e2 == 0)) return(e1)
   e1 <- wrapMatrix("TransformScaleShift", convert_matrix_type(e1, "double"))
@@ -637,10 +751,32 @@ setMethod("+", signature(e1 = "numeric", e2 = "IterableMatrix"), function(e1, e2
 })
 # Note: we skip numeric / IterableMatrix as it would result in a lot of infinities for dividing by 0.
 #' @describeIn IterableMatrix-methods Divide by a constant, or divide rows by a vector length nrow(mat)
+#' @examples
+#' #######################################################################
+#' ## `e1 / e2` example
+#' #######################################################################
+#' ## Divide by a constant
+#' mat / 5
+#' 
+#' ## Divide by a vector of length `nrow(mat)`
+#' mat / 1:nrow(mat)
+#' 
+#' 
 setMethod("/", signature(e1 = "IterableMatrix", e2 = "numeric"), function(e1, e2) {
   e1 * (1 / e2)
 })
 #' @describeIn IterableMatrix-methods Subtract a constant, or row-wise subtraction with a vector length nrow(mat)
+#' @examples
+#' #######################################################################
+#' ## `e1 - e2` example
+#' #######################################################################
+#' ## Subtracting by a constant
+#' mat - 5
+#' 
+#' ## Subtracting by a vector of length `nrow(mat)`
+#' mat - 1:nrow(mat)
+#' 
+#' 
 setMethod("-", signature(e1 = "IterableMatrix", e2 = "numeric"), function(e1, e2) {
   e1 + (-e2)
 })
@@ -781,6 +917,21 @@ setMethod("+", signature(e1 = "numeric", e2 = "TransformScaleShift"), function(e
 #' @param mat Matrix-like object
 #' @param vec Numeric vector
 #' @return Matrix-like object
+#' @examples
+#' set.seed(12345)
+#' mat <- matrix(rpois(40, lambda = 5), nrow = 4)
+#' rownames(mat) <- paste0("gene", 1:4)
+#' 
+#' mat <- mat %>% as("dgCMatrix")
+#' mat
+#' mat <- mat %>% as("IterableMatrix")
+#' 
+#' #######################################################################
+#' ## add_rows() example
+#' #######################################################################
+#' add_rows(mat, 1:4) %>% as("dgCMatrix")
+#' 
+#' 
 #' @export
 add_rows <- function(mat, vec) {
   assert_is(mat, c("dgCMatrix", "IterableMatrix", "matrix"))
@@ -789,6 +940,13 @@ add_rows <- function(mat, vec) {
   mat + vec
 }
 #' @rdname mat_norm
+#' @examples
+#' #######################################################################
+#' ## add_cols() example
+#' #######################################################################
+#' add_cols(mat, 1:10) %>% as("dgCMatrix")
+#' 
+#' 
 #' @export
 add_cols <- function(mat, vec) {
   assert_is(mat, c("dgCMatrix", "IterableMatrix", "matrix"))
@@ -797,6 +955,13 @@ add_cols <- function(mat, vec) {
   t(t(mat) + vec)
 }
 #' @rdname mat_norm
+#' @examples
+#' #######################################################################
+#' ## multiply_rows() example
+#' #######################################################################
+#' multiply_rows(mat, 1:4) %>% as("dgCMatrix")
+#' 
+#' 
 #' @export
 multiply_rows <- function(mat, vec) {
   assert_is(mat, c("dgCMatrix", "IterableMatrix", "matrix"))
@@ -805,6 +970,13 @@ multiply_rows <- function(mat, vec) {
   mat * vec
 }
 #' @rdname mat_norm
+#' @examples
+#' #######################################################################
+#' ## multiply_cols() example
+#' #######################################################################
+#' multiply_cols(mat, 1:10) %>% as("dgCMatrix")
+#' 
+#' 
 #' @export
 multiply_cols <- function(mat, vec) {
   assert_is(mat, c("dgCMatrix", "IterableMatrix", "matrix"))

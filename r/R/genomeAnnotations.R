@@ -50,6 +50,21 @@ ensure_downloaded <- function(path, backup_url, timeout) {
 #' - frame
 #' - attributes (optional; named according to listed attributes)
 #' - tags (named according to listed tags)
+#' @examples
+#' #######################################################################
+#' ## read_gtf() example
+#' #######################################################################
+#' species <- "Saccharomyces_cerevisiae"
+#' version <- "GCF_000146045.2_R64"
+#' head(read_gtf(
+#'  path = sprintf("./reference/%s_genomic.gtf.gz", version),
+#'  backup_url = sprintf(
+#'    "https://ftp.ncbi.nlm.nih.gov/genomes/refseq/fungi/%s/reference/%s/%s_genomic.gtf.gz",
+#'    species, version, version
+#'  )
+#' ))
+#' 
+#' 
 #' @seealso [read_bed()], [read_encode_blacklist()]
 #' @export
 read_gtf <- function(path, attributes = c("gene_id"), tags = character(0), features = c("gene"), keep_attribute_column = FALSE, backup_url = NULL, timeout = 300) {
@@ -88,6 +103,13 @@ read_gtf <- function(path, attributes = c("gene_id"), tags = character(0), featu
 #' @param annotation_set Either "basic" or "comprehensive" annotation sets (see details section).
 #' @param gene_type Regular expression with which gene types to keep.
 #' Defaults to protein_coding, lncRNA, and IG/TR genes
+#' @examples
+#' #######################################################################
+#' ## read_gencode_genes() example
+#' #######################################################################
+#' read_gencode_genes("./references", release = "42")
+#' 
+#' 
 #' @export
 read_gencode_genes <- function(dir, release = "latest",
                                annotation_set = c("basic", "comprehensive"),
@@ -131,6 +153,15 @@ read_gencode_genes <- function(dir, release = "latest",
 #' @details **read_gencode_transcripts**
 #'
 #' Read transcript models from GENCODE, for use with trackplot_gene()
+#' @examples
+#' #######################################################################
+#' ## read_gencode_transcripts() example
+#' #######################################################################
+#' ## If read_gencode_genes() was already ran on the same release, 
+#' ## will reuse previously downloaded annotations
+#' read_gencode_transcripts("./references", release = "42")
+#' 
+#' 
 #' @export 
 read_gencode_transcripts <- function(dir, release = "latest", transcript_choice = c("MANE_Select", "Ensembl_Canonical", "all"),
                                      annotation_set = c("basic", "comprehensive"),
@@ -178,6 +209,21 @@ read_gencode_transcripts <- function(dir, release = "latest", transcript_choice 
 #' @inheritParams read_gtf
 #' @param additional_columns Names for additional columns in the bed file
 #' @return Data frame with coordinates using the 0-based convention.
+#' @examples
+#' ## Dummy bed file creation
+#' data.frame(
+#'  chrom = rep("chr1", 6),
+#'  start = seq(20, 121, 20),
+#'  end = seq(39, 140, 20)
+#' ) %>% write.table("./references/example.bed", row.names = FALSE, col.names = FALSE, sep = "\t")
+#' 
+#' 
+#' #######################################################################
+#' ## read_bed() example
+#' #######################################################################
+#' read_bed("./references/example.bed")
+#' 
+#' 
 #' @seealso [read_gtf()], [read_gencode_genes()]
 #' @export
 read_bed <- function(path, additional_columns = character(0), backup_url = NULL, timeout = 300) {
@@ -195,6 +241,13 @@ read_bed <- function(path, additional_columns = character(0), backup_url = NULL,
 #'
 #' Downloads the Boyle Lab blacklist, as described in <https://doi.org/10.1038/s41598-019-45839-z>
 #' @param genome genome name
+#' @examples 
+#' #######################################################################
+#' ## read_encode_blacklist() example
+#' #######################################################################
+#' read_encode_blacklist("./reference")
+#' 
+#' 
 #' @export
 read_encode_blacklist <- function(dir, genome = c("hg38", "mm10", "hg19", "dm6", "dm3", "ce11", "ce10"), timeout = 300) {
   genome <- match.arg(genome)
@@ -209,6 +262,9 @@ read_encode_blacklist <- function(dir, genome = c("hg38", "mm10", "hg19", "dm6",
 #' chromosome.
 #' The underlying data is pulled from here: <https://hgdownload.soe.ucsc.edu/downloads.html>
 #'
+#' @examples
+#' read_ucsc_chrom_sizes("./reference")
+
 #' @export
 read_ucsc_chrom_sizes <- function(dir, genome = c("hg38", "mm39", "mm10", "mm9", "hg19"),
                                   keep_chromosomes = "chr[0-9]+|chrX|chrY", timeout = 300) {
@@ -235,6 +291,20 @@ read_ucsc_chrom_sizes <- function(dir, genome = c("hg38", "mm39", "mm10", "mm9",
 #' @param sort_by_end If TRUE (defualt), sort by (chr, end, start). Else sort by (chr, start, end)
 #' @return Numeric vector analagous to the `order` function. Provides an index
 #' selection that will reorder the input ranges to be sorted by chr, end, start
+#' @examples
+#' ## Prep data
+#' ranges <- tibble::tibble(
+#'   chr = "chr1",
+#'   start = seq(10, 260, 50),
+#'   end = start + seq(310, 0, -60),
+#'   cell_id = paste0("cell1")
+#' ) %>% as("GRanges")
+#' ranges
+#' 
+#' 
+#' ## Get end-sorted ordering
+#' order_ranges(ranges, levels(GenomicRanges::seqnames(ranges)))
+#' 
 #' @export
 order_ranges <- function(ranges, chr_levels, sort_by_end = TRUE) {
   ranges <- normalize_ranges(ranges)
@@ -267,6 +337,16 @@ remove_ensembl_version <- function(vec) {
 #'
 #' Integer vector of indices `v` such that `subject[v]` corresponds to the gene
 #' symbols in `query`
+#' @examples
+#' #######################################################################
+#' ## match_gene_symbol() example
+#' #######################################################################
+#' match_gene_symbol(
+#'  c("CD8", "CD4", "CD45"),
+#'  c("ENSG00000081237.19", "ENSG00000153563.15", "ENSG00000010610.9", "ENSG00000288825")
+#' )
+#' 
+#' 
 #' @export
 match_gene_symbol <- function(query, subject, gene_mapping = human_gene_mapping) {
   assert_is(query, "character")
@@ -283,7 +363,7 @@ match_gene_symbol <- function(query, subject, gene_mapping = human_gene_mapping)
   corrected_match <- match(query, subject, incomparables = NA)
 
   res[is.na(res)] <- corrected_match[is.na(res)]
-
+  
   corrected_missing <- sum(is.na(res))
   if (corrected_missing > 0) {
     rlang::warn(sprintf(
@@ -299,6 +379,13 @@ match_gene_symbol <- function(query, subject, gene_mapping = human_gene_mapping)
 #' @return **canonical_gene_symbol**
 #'
 #' Character vector of canonical gene symbols for each symbol in `query`
+#' @examples
+#' #######################################################################
+#' ## canonical_gene_symbol() example
+#' #######################################################################
+#' canonical_gene_symbol(c("CD45", "CD8", "CD4"))
+#' 
+#' 
 #' @export
 canonical_gene_symbol <- function(query, gene_mapping = human_gene_mapping) {
   assert_is(query, "character")
@@ -328,6 +415,16 @@ canonical_gene_symbol <- function(query, gene_mapping = human_gene_mapping) {
 #' @param extend_bp Bases to extend region upstream and downstream of gene. If length 1, extension is 
 #'     symmetric. If length 2, provide upstream extension then downstream extension as positive distances.
 #' @return List of chr, start, end positions for use with trackplot functions.
+#' @examples
+#' ## Prep data
+#' genes <- read_gencode_transcripts(
+#'   file.path(tempdir(), "references"), release = "42",
+#'   annotation_set = "basic",
+#'   features = "transcript"
+#' )
+#' 
+#' ## Get gene region
+#' gene_region(genes, "CD19", extend_bp = 1e5)
 #' @export
 gene_region <- function(genes, gene_symbol, extend_bp = c(1e4, 1e4), gene_mapping = human_gene_mapping) {
   genes <- normalize_ranges(genes, metadata_cols = c("strand", "gene_name"))

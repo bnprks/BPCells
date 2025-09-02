@@ -35,3 +35,46 @@ The main conversion method is R's builtin \code{as()} function, though the
 GRanges, BPCells assumes a 0-based, end-exclusive coordinate system. (See
 \link{genomic-ranges-like} reference for details)
 }
+\examples{
+frags_table <- tibble::tibble(
+  chr = paste0("chr", 1:10),
+  start = 0,
+  end = 5,
+  cell_id = "cell1"
+)
+frags_table
+
+frags_granges <- GenomicRanges::makeGRangesFromDataFrame(
+ frags_table, keep.extra.columns = TRUE
+)
+frags_granges
+
+#######################################################################
+## convert_to_fragments() example
+#######################################################################
+frags <- convert_to_fragments(frags_granges)
+frags
+
+
+#######################################################################
+## as(x, "IterableFragments") example
+#######################################################################
+frags <- as(frags_table, "IterableFragments")
+frags
+
+
+#######################################################################
+## as(bpcells_fragments, "data.frame") example
+#######################################################################
+frags_table <- as(frags, "data.frame")
+frags_table
+
+
+#######################################################################
+## as(bpcells_fragments, "GRanges") example
+#######################################################################
+frags_granges <- as(frags, "GRanges")
+frags_granges
+
+
+}

@@ -10,10 +10,34 @@ as.matrix(bpcells_mat) # Dense matrix conversion
 
 # Convert to BPCells from R
 as(dgc_mat, "IterableMatrix")
-as(base_r_mat, "IterableMatrix")
 }
 \description{
 BPCells matrices can be interconverted with Matrix package
 dgCMatrix sparse matrices, as well as base R
 dense matrices (though this may result in high memory usage for large matrices)
+}
+\examples{
+mat <- get_demo_mat()[1:2, 1:2]
+mat
+
+
+#######################################################################
+## as(bpcells_mat, "dgCMatrix") example
+#######################################################################
+mat_dgc <- as(mat, "dgCMatrix")
+mat_dgc
+
+
+## as.matrix(bpcells_mat) example
+as.matrix(mat)
+
+## Alternatively, can also use function as()
+as(mat, "matrix")
+
+#######################################################################
+## as(dgc_mat, "IterableMatrix") example
+#######################################################################
+as(mat_dgc, "IterableMatrix")
+
+
 }

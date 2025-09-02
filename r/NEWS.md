@@ -1,4 +1,20 @@
-# BPCells 0.3.1 (in-progress main branch)
+# BPCells 0.4.0 (in-progress main branch)
+
+## Breaking changes
+- Change first parameter name of `cluster_graph_leiden()`, `cluster_graph_louvain()` and `cluster_graph_seurat()` from `snn` to `mat` to more accurately reflect the input type.  (pull request #292)
+
+## Features
+- Create a wrapper function `cluster_cells_graph()` that wraps the steps of knn object creation, graph adjacency creation, and clustering all within a single function (pull request #292)
+
+# BPCells 0.3.1 (7/21/2025)
+
+The BPCells 0.3.1 release covers 7 months of changes and 40 commits from 5 contributors. Notable changes include writing matrices in AnnData's dense format, 
+and methods for retrieving demo data for testing and examples.
+Full details of changes below.
+
+Thanks to @ycli1995 and @mfansler for pull requests that contributed to this release, as well as to users who
+submitted github issues to help identify and fix bugs.
+
 
 ## Features
 - Add `write_matrix_anndata_hdf5_dense()` which allows writing matrices in AnnData's dense format, most commonly used for `obsm` or `varm` matrices. (Thanks to @ycli1995 for pull request #166)
@@ -12,6 +28,7 @@
 - Add support for `uint16_t` when reading in anndata matrices using `open_matrix_anndata_hdf5()`. (pull request #248)
 - Switch `write_matrix_10x_hdf5()` to use signed rather than unsigned integers for `indices`, `indptr`, and `shape` to improve
   compatibility with 10x-produced files. (Thanks to @ycli1995 for pull request #256)
+- Change behaviour during `cbind()` and `rbind()` when matrices are of different types, to upcast instead of erroring out. (pull request #265)
 
 ## Bug-fixes
 - Fix error message printing when MACS crashes during `call_peaks_macs()` (pull request #175)
@@ -23,6 +40,7 @@
 - Fix error in `write_matrix_hdf5()` when overwriting to a `.h5` file that does not exist. (pull request #234)
 - Fix `configure` script to use a pre-installed `libhwy` if available during installation time. (Thanks to @mfansler for submitting PR #228)
 - Fix line-ending issue that caused windows-created matrices to not be readable on other platforms. (pull request #257; thanks to @pavsol for reporting issue #253)
+- Fix compilation when there exists a system-installed `libhwy` that is too old. (pull request #288, thanks to @GerardoZA for reporting issue #285)
 
 # BPCells 0.3.0 (12/21/2024)
 

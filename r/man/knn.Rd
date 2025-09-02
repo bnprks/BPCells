@@ -3,7 +3,7 @@
 \name{knn_hnsw}
 \alias{knn_hnsw}
 \alias{knn_annoy}
-\title{Get a knn matrix from reduced dimensions}
+\title{Get a knn object from reduced dimensions}
 \usage{
 knn_hnsw(
   data,
@@ -17,7 +17,7 @@ knn_hnsw(
 
 knn_annoy(
   data,
-  query = data,
+  query = NULL,
   k = 10,
   metric = c("euclidean", "cosine", "manhattan", "hamming"),
   n_trees = 50,
@@ -38,7 +38,7 @@ knn_annoy(
 \item{threads}{Number of threads to use. Note that result is non-deterministic
 if threads > 1}
 
-\item{ef}{ef parameter for RccppHNSW::hnsw_search. Increase for slower search but
+\item{ef}{ef parameter for \code{RcppHNSW::hnsw_search()}. Increase for slower search but
 improved accuracy}
 
 \item{n_trees}{Number of trees during index build time. More trees gives higher accuracy}
@@ -46,10 +46,16 @@ improved accuracy}
 \item{search_k}{Number of nodes to inspect during the query, or -1 for default value. Higher number gives higher accuracy}
 }
 \value{
-List of 2 matrices -- idx for cell x K neighbor indices,
-dist for cell x K neighbor distances.
-If no query is given, nearest neighbors are found mapping
-the data matrix to itself, prohibiting self-neighbors
+Named list of two matrices of dimension (cells x k):
+\itemize{
+\item \code{idx}: Neighbor indices, where \code{idx[c, n]} is the index of the
+nth nearest neighbor to cell \code{c}.
+\item \code{dist}: Neighbor distances, where \code{dist[c, n]} is the distance between
+cell \code{c} and its nth nearest neighbor.
+}
+
+If no query is given, nearest neighbors are found by mapping the data matrix to itself,
+likely including self-neighbors (i.e. \code{idx[c,1] == c} for most cells).
 }
 \description{
 Search for approximate nearest neighbors between cells in the reduced

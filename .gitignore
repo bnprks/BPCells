@@ -21,6 +21,7 @@ rsync.sh
 src/Makevars
 tools/h5write
 tools/cxx17_filesystem
+r/tools/hwy-test.cpp
 tools/*.exe
 vignettes/*.html
 vignettes/pbmc-3k-data
@@ -29,7 +30,7 @@ cpp-tests
 venv
 wheelhouse
 
-# A few convenience igores for my development cruft
+# A few convenience ignores for my development cruft
 failing_test.R
 mytest*.R
 .clang-format

@@ -91,3 +91,54 @@ as it can only be applied to the indexes of each entry but not the values.
 There will still be some space savings, but far less than for counts matrices.
 }
 }
+\examples{
+## Create temporary directory to keep demo matrix
+data_dir <- file.path(tempdir(), "mat")
+if (dir.exists(data_dir)) unlink(data_dir, recursive = TRUE)
+dir.create(data_dir, recursive = TRUE, showWarnings = FALSE)
+
+mat <- get_demo_mat()
+mat
+
+#######################################################################
+## write_matrix_memory() example
+#######################################################################
+mat_memory <- write_matrix_memory(mat)
+mat_memory
+
+
+#######################################################################
+## write_matrix_dir() example
+#######################################################################
+mat \%>\% write_matrix_dir(
+ file.path(data_dir, "demo_mat"),
+ overwrite = TRUE
+)
+
+
+#######################################################################
+## open_matrix_dir() example
+#######################################################################
+mat <- open_matrix_dir(
+ file.path(data_dir, "demo_mat")
+)
+mat
+
+
+#######################################################################
+## write_matrix_hdf5() example
+#######################################################################
+mat \%>\% write_matrix_hdf5(path = file.path(data_dir, "demo_mat.h5"), group = "mat")
+
+
+#######################################################################
+## open_matrix_hdf5() example
+#######################################################################
+mat_hdf5 <- open_matrix_hdf5(
+ file.path(data_dir, "demo_mat.h5"),
+ group = 'mat'
+)
+mat_hdf5
+
+
+}

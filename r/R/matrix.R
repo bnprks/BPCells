@@ -57,10 +57,31 @@ denormalize_dimnames <- function(dimnames) {
 setGeneric("iterate_matrix", function(x) standardGeneric("iterate_matrix"))
 
 #' @describeIn IterableMatrix-methods Get the matrix data type (mat_uint32_t, mat_float, or mat_double for now)
+#' @examples
+#' ## Prep data
+#' mat <- matrix(1:25, nrow = 5) %>% as("dgCMatrix")
+#' mat
+#' mat <- as(mat, "IterableMatrix")
+#' mat
+#' 
+#' 
+#' #######################################################################
+#' ## matrix_type() example
+#' #######################################################################
+#' matrix_type(mat)
+#' 
+#' 
 #' @export
 setGeneric("matrix_type", function(x) standardGeneric("matrix_type"))
 
 #' @describeIn IterableMatrix-methods Get the matrix storage order ("row" or "col")
+#' @examples
+#' #######################################################################
+#' ## storage_order() example
+#' #######################################################################
+#' storage_order(mat)
+#' 
+#' 
 #' @export
 setGeneric("storage_order", function(x) standardGeneric("storage_order"))
 
@@ -164,6 +185,13 @@ setMethod("short_description", "IterableMatrix", function(x) {
 
 #' @describeIn IterableMatrix-methods Display an IterableMatrix
 #' @param object IterableMatrix object
+#' @examples
+#' #######################################################################
+#' ## show() example
+#' #######################################################################
+#' show(mat)
+#' 
+#' 
 setMethod("show", "IterableMatrix", function(object) {
   cat(sprintf("%d x %d IterableMatrix object with class %s\n", nrow(object), ncol(object), class(object)))
 
@@ -193,6 +221,13 @@ setMethod("show", "IterableMatrix", function(object) {
 #' @describeIn IterableMatrix-methods Transpose an IterableMatrix
 #' @param x IterableMatrix object
 #' @return * `t()` Transposed object
+#' @examples
+#' #######################################################################
+#' ## t() example
+#' #######################################################################
+#' t(mat)
+#' 
+#' 
 #' @export
 setMethod("t", signature(x = "IterableMatrix"), function(x) {
   x@transpose <- !x@transpose
@@ -210,6 +245,13 @@ setMethod("t", signature(x = "IterableMatrix"), function(x) {
 #' @param y matrix
 #' @describeIn IterableMatrix-methods Multiply by a dense matrix
 #' @return * `x %*% y`: dense matrix result
+#' @examples
+#' #######################################################################
+#' ## `x %*% y` example
+#' #######################################################################
+#' mat %*% as(matrix(1:50, nrow = 5), "dgCMatrix")
+#' 
+#' 
 setMethod("%*%", signature(x = "IterableMatrix", y = "matrix"), function(x, y) {
   iter <- iterate_matrix(convert_matrix_type(x, "double"))
   if (x@transpose) {
@@ -547,6 +589,13 @@ rank_transform <- function(mat, axis) {
 #' @param x IterableMatrix object
 #' @describeIn IterableMatrix-methods Calculate rowSums
 #' @return * `rowSums()`: vector of row sums
+#' @examples
+#' #######################################################################
+#' ## rowSums() example
+#' #######################################################################
+#' rowSums(mat)
+#' 
+#' 
 setMethod("rowSums", signature(x = "IterableMatrix"), function(x) {
   iter <- iterate_matrix(convert_matrix_type(x, "double"))
   if (x@transpose) {
@@ -561,6 +610,13 @@ setMethod("rowSums", signature(x = "IterableMatrix"), function(x) {
 #' @param x IterableMatrix object
 #' @describeIn IterableMatrix-methods Calculate colSums
 #' @return * `colSums()`: vector of col sums
+#' @examples
+#' #######################################################################
+#' ## colSums() example
+#' #######################################################################
+#' colSums(mat)
+#' 
+#' 
 setMethod("colSums", signature(x = "IterableMatrix"), function(x) {
   iter <- iterate_matrix(convert_matrix_type(x, "double"))
   if (x@transpose) {
@@ -575,11 +631,25 @@ setMethod("colSums", signature(x = "IterableMatrix"), function(x) {
 #' @param x IterableMatrix object
 #' @describeIn IterableMatrix-methods Calculate rowMeans
 #' @return * `rowMeans()`: vector of row means
+#' @examples
+#' #######################################################################
+#' ## rowMeans() example
+#' #######################################################################
+#' rowMeans(mat)
+#' 
+#' 
 setMethod("rowMeans", signature(x = "IterableMatrix"), function(x) rowSums(x) / ncol(x))
 
 #' @param x IterableMatrix object
 #' @describeIn IterableMatrix-methods Calculate colMeans
 #' @return * `colMeans()`: vector of col means
+#' @examples
+#' #######################################################################
+#' ## colMeans() example
+#' #######################################################################
+#' colMeans(mat)
+#' 
+#' 
 setMethod("colMeans", signature(x = "IterableMatrix"), function(x) colSums(x) / nrow(x))
 
 
@@ -594,6 +664,13 @@ setMethod("colMeans", signature(x = "IterableMatrix"), function(x) colSums(x) / 
 
 #' @describeIn IterableMatrix-methods Calculate colVars (replacement for `matrixStats::colVars()`)
 #' @return * `colVars()`: vector of col variance
+#' @examples
+#' #######################################################################
+#' ## colVars() example
+#' #######################################################################
+#' colVars(mat)
+#' 
+#' 
 #' @export
 colVars <- function(x, rows = NULL, cols = NULL, na.rm = FALSE, center = NULL, ..., useNames = TRUE) UseMethod("colVars")
 #' @export
@@ -650,6 +727,13 @@ rlang::on_load({
 #' @param x IterableMatrix object/dgCMatrix object
 #' @return * `rowMaxs()`: vector of maxes for every row
 #' @describeIn IterableMatrix-methods Calculate rowMaxs (replacement for `matrixStats::rowMaxs()`)
+#' @examples
+#' #######################################################################
+#' ## rowMaxs() example
+#' #######################################################################
+#' rowMaxs(mat)
+#' 
+#' 
 #' @export
 rowMaxs <- function(x, rows = NULL, cols = NULL, na.rm = FALSE, ...) UseMethod("rowMaxs")
 #' @export
@@ -687,6 +771,13 @@ rlang::on_load({
 #' @param x IterableMatrix/dgCMatrix object
 #' @return * `colMaxs()`: vector of column maxes
 #' @describeIn IterableMatrix-methods Calculate colMax (replacement for `matrixStats::colMax()`)
+#' @examples
+#' #######################################################################
+#' ## colMaxs() example
+#' #######################################################################
+#' colMaxs(mat)
+#' 
+#' 
 #' @export
 colMaxs <- function(x, rows = NULL, cols = NULL, na.rm = FALSE, ...) UseMethod("colMaxs")
 #' @export
@@ -1107,7 +1198,24 @@ setMethod("short_description", "RowBindMatrices", function(x) {
 
 setMethod("rbind2", signature(x = "IterableMatrix", y = "IterableMatrix"), function(x, y, ...) {
   if (x@transpose != y@transpose) stop("Cannot merge matrices with different internal transpose states.\nPlease use transpose_storage_order().")
-  if (matrix_type(x) != matrix_type(y)) stop("Cannot merge matrices with different data type.\nPlease use convert_matrix_type().")
+  if (matrix_type(x) != matrix_type(y)) {
+    # error out if matrix type x or y are not "double", "float", or "uint32_t"
+    if(!(matrix_type(x) %in% c("uint32_t", "float", "double"))) {
+      stop("rbind2(): Cannot merge matrices with different unspported data types. Please use convert_matrix_type().")
+    }
+    if(!(matrix_type(y) %in% c("uint32_t", "float", "double"))) {
+      stop("rbind2(): Cannot merge matrices with different unspported data types. Please use convert_matrix_type().")
+    }
+    # upcast if mismatching types
+    rlang::warn(
+      sprintf(
+        paste0("rbind2(): Mismatching matrix types (%s vs. %s). Upcasting to double"),
+        matrix_type(x), matrix_type(y)
+      )
+    )
+    x <- convert_matrix_type(x, "double")
+    y <- convert_matrix_type(y, "double")
+  }
   if (x@transpose) {
     return(t(cbind2(t(x), t(y))))
   }
@@ -1199,7 +1307,24 @@ setMethod("short_description", "ColBindMatrices", function(x) {
 
 setMethod("cbind2", signature(x = "IterableMatrix", y = "IterableMatrix"), function(x, y, ...) {
   if (x@transpose != y@transpose) stop("Cannot merge matrices with different internal transpose states.\nPlease use transpose_storage_order().")
-  if (matrix_type(x) != matrix_type(y)) stop("Cannot merge matrices with different data type.\nPlease use convert_matrix_type().")
+  if (matrix_type(x) != matrix_type(y)) {
+    # error out if matrix type x or y are not "double", "float", or "uint32_t"
+    if(!(matrix_type(x) %in% c("uint32_t", "float", "double"))) {
+      stop("cbind2(): Cannot merge matrices with different unsupported data types. Please use convert_matrix_type().")
+    }
+    if(!(matrix_type(y) %in% c("uint32_t", "float", "double"))) {
+      stop("cbind2(): Cannot merge matrices with different unsupported data types. Please use convert_matrix_type().")
+    }
+    # upcast if mismatching types
+    rlang::warn(
+      sprintf(
+        paste0("cbind2(): Mismatching matrix types (%s vs. %s). Upcasting to double"),
+        matrix_type(x), matrix_type(y)
+      )
+    )
+    x <- convert_matrix_type(x, "double")
+    y <- convert_matrix_type(y, "double")
+  }
   if (x@transpose) {
     return(t(rbind2(t(x), t(y))))
   }
@@ -1554,6 +1679,19 @@ setMethod("iterate_matrix", "UnpackedMatrixMem_double", function(x) {
 #' passes through the data, and ~7.3TB of data to be sorted in three passes
 #' through the data.
 #' @return MatrixDir object with a copy of the input matrix, but the storage order flipped
+#' @examples
+#' mat <- matrix(rnorm(50), nrow = 10, ncol = 5)
+#' rownames(mat) <- paste0("gene", seq_len(10))
+#' colnames(mat) <- paste0("cell", seq_len(5))
+#' mat <- mat %>% as("dgCMatrix") %>% as("IterableMatrix")
+#' mat
+#' 
+#' ## A regular transpose operation switches a user's rows and cols 
+#' t(mat)
+#' 
+#' ## Running `transpose_storage_order()` instead changes whether the storage is in row-major or col-major,
+#' ## but does not switch the rows and cols
+#' transpose_storage_order(mat)
 #' @export
 transpose_storage_order <- function(matrix, outdir = tempfile("transpose"), tmpdir = tempdir(), load_bytes = 4194304L, sort_bytes = 1073741824L) {
   assert_true(matrix_type(matrix) %in% c("uint32_t", "float", "double"))
@@ -1601,6 +1739,22 @@ transpose_storage_order <- function(matrix, outdir = tempfile("transpose"), tmpd
 #' @param matrix Input matrix, either IterableMatrix or dgCMatrix
 #' @param compress Whether or not to compress the data.
 #' @return BPCells matrix object
+#' @examples
+#' ## Create temporary directory to keep demo matrix
+#' data_dir <- file.path(tempdir(), "mat")
+#' if (dir.exists(data_dir)) unlink(data_dir, recursive = TRUE)
+#' dir.create(data_dir, recursive = TRUE, showWarnings = FALSE)
+#' 
+#' mat <- get_demo_mat()
+#' mat
+#' 
+#' #######################################################################
+#' ## write_matrix_memory() example
+#' #######################################################################
+#' mat_memory <- write_matrix_memory(mat)
+#' mat_memory
+#' 
+#' 
 #' @rdname matrix_io
 #' @export
 write_matrix_memory <- function(mat, compress = TRUE) {
@@ -1673,6 +1827,16 @@ setMethod("short_description", "MatrixDir", function(x) {
 #' in memory before calling writes to disk.
 #' @param overwrite If `TRUE`, write to a temp dir then overwrite existing data. Alternatively,
 #'   pass a temp path as a string to customize the temp dir location.
+#' @examples
+#' #######################################################################
+#' ## write_matrix_dir() example
+#' #######################################################################
+#' mat %>% write_matrix_dir(
+#'  file.path(data_dir, "demo_mat"),
+#'  overwrite = TRUE
+#' )
+#' 
+#' 
 #' @export
 write_matrix_dir <- function(mat, dir, compress = TRUE, buffer_size = 8192L, overwrite = FALSE) {
   assert_is(mat, c("IterableMatrix", "dgCMatrix"))
@@ -1719,6 +1883,16 @@ write_matrix_dir <- function(mat, dir, compress = TRUE, buffer_size = 8192L, ove
 }
 
 #' @rdname matrix_io
+#' @examples
+#' #######################################################################
+#' ## open_matrix_dir() example
+#' #######################################################################
+#' mat <- open_matrix_dir(
+#'  file.path(data_dir, "demo_mat")
+#' )
+#' mat
+#' 
+#' 
 #' @export
 open_matrix_dir <- function(dir, buffer_size = 8192L) {
   assert_is_file(dir)
@@ -1870,6 +2044,13 @@ setMethod("short_description", "MatrixH5", function(x) {
 
 #' @rdname matrix_io
 #' @inheritParams write_fragments_hdf5
+#' @examples
+#' #######################################################################
+#' ## write_matrix_hdf5() example
+#' #######################################################################
+#' mat %>% write_matrix_hdf5(path = file.path(data_dir, "demo_mat.h5"), group = "mat")
+#' 
+#' 
 #' @export
 write_matrix_hdf5 <- function(
     mat, 
@@ -1936,6 +2117,17 @@ write_matrix_hdf5 <- function(
 
 #' @rdname matrix_io
 #' @inheritParams open_fragments_hdf5
+#' @examples
+#' #######################################################################
+#' ## open_matrix_hdf5() example
+#' #######################################################################
+#' mat_hdf5 <- open_matrix_hdf5(
+#'  file.path(data_dir, "demo_mat.h5"),
+#'  group = 'mat'
+#' )
+#' mat_hdf5
+#' 
+#' 
 #' @export
 open_matrix_hdf5 <- function(path, group, buffer_size = 16384L) {
   assert_is_file(path)
@@ -1987,6 +2179,26 @@ setMethod("short_description", "10xMatrixH5", function(x) {
 #' @details The 10x format makes use of gzip compression for the matrix data,
 #' which can slow down read performance. Consider writing into another format
 #' if the read performance is important to you.
+#' @examples
+#' ## Download example matrices from pbmc 500 dataset and save in temp directory
+#' data_dir <- file.path(tempdir(), "mat_10x")
+#' dir.create(data_dir, recursive = TRUE, showWarnings = FALSE)
+#' url_base <- "https://cf.10xgenomics.com/samples/cell-exp/6.1.0/500_PBMC_3p_LT_Chromium_X/"
+#' mat_file <- "500_PBMC_3p_LT_Chromium_X_filtered_feature_bc_matrix.h5"
+#' rna_url <- paste0(url_base, mat_file)
+#' if (!file.exists(file.path(data_dir, mat_file))) {
+#'  download.file(rna_url, file.path(data_dir, mat_file), mode="wb")
+#' }
+#' 
+#' #######################################################################
+#' ## open_matrix_10x_hdf5() example
+#' #######################################################################
+#' mat <- open_matrix_10x_hdf5(
+#'  file.path(data_dir, mat_file)
+#' )
+#' mat
+#' 
+#' 
 #' @export
 open_matrix_10x_hdf5 <- function(path, feature_type = NULL, buffer_size = 16384L) {
   assert_is_file(path)
@@ -2041,6 +2253,17 @@ open_matrix_10x_hdf5 <- function(path, feature_type = NULL, buffer_size = 16384L
 #' provided for the relevant metadata parameters. Some of the
 #' metadata parameters are not read by default in BPCells, but
 #' it is possible to export them for use with other tools.
+#' @examples
+#' #######################################################################
+#' ## write_matrix_10x_hdf5() example
+#' #######################################################################
+#' mat <- write_matrix_10x_hdf5(
+#'  mat,
+#'  file.path(data_dir, paste0("new", mat_file))
+#' )
+#' mat
+#' 
+#' 
 #' @export
 write_matrix_10x_hdf5 <- function(
     mat,
@@ -2175,7 +2398,33 @@ setMethod("short_description", "AnnDataMatrixH5", function(x) {
 #'   **Dimension names:** Dimnames are inferred from `obs/_index` or `var/_index` based on length matching.
 #'   This helps to infer dimnames for `obsp`,` varm`, etc. If the number of `len(obs) == len(var)`,
 #'   dimname inference will be disabled.
-#'
+#' @examples
+#' ## Create temporary directory to keep demo matrix
+#' data_dir <- file.path(tempdir(), "mat_anndata")
+#' if (dir.exists(data_dir)) unlink(data_dir, recursive = TRUE)
+#' dir.create(data_dir, recursive = TRUE, showWarnings = FALSE)
+#' mat <- get_demo_mat()
+#' 
+#' 
+#' #######################################################################
+#' ## write_matrix_anndata_hdf5() example
+#' #######################################################################
+#' mat <- write_matrix_anndata_hdf5(
+#'  mat,
+#'  file.path(data_dir, paste0("new_demo_mat.h5"))
+#' )
+#' mat
+#' 
+#' 
+#' #######################################################################
+#' ## open_matrix_anndata_hdf5() example
+#' #######################################################################
+#' mat <- open_matrix_anndata_hdf5(
+#'  file.path(data_dir, paste0("new_demo_mat.h5"))
+#' )
+#' mat
+#' 
+#' 
 #' @export
 open_matrix_anndata_hdf5 <- function(path, group = "X", buffer_size = 16384L) {
   assert_is_file(path)
@@ -2219,6 +2468,16 @@ write_matrix_anndata_hdf5 <- function(mat, path, group = "X", buffer_size = 1638
 #' @inheritParams write_matrix_anndata_hdf5
 #' 
 #' @param dataset The dataset within the hdf5 file to write the matrix to. Used for `write_matrix_anndata_hdf5_dense`
+#' @examples
+#' #######################################################################
+#' ## write_matrix_anndata_hdf5_dense() example
+#' #######################################################################
+#' mat <- write_matrix_anndata_hdf5_dense(
+#'  mat,
+#'  file.path(data_dir, paste0("new_demo_mat_dense.h5"))
+#' )
+#' mat
+#' 
 #' 
 #' @export
 write_matrix_anndata_hdf5_dense <- function(mat, path, dataset = "X", buffer_size = 16384L, chunk_size = 1024L, gzip_level = 0L) {
@@ -2369,6 +2628,22 @@ setMethod("matrix_inputs", "PeakMatrix", function(x) list())
 #'    to each peak, even if both the start and end coordinates overlap
 #' - `"overlaps"`: Like `"fragments"`, but an overlap is also counted if the fragment fully
 #'    spans the peak even if neither the start or end falls within the peak
+#' @examples
+#' ## Prep demo data
+#' frags <- get_demo_frags(subset = FALSE)
+#' chrom_sizes <- read_ucsc_chrom_sizes(file.path(tempdir(), "references"), genome="hg38")
+#' blacklist <- read_encode_blacklist(file.path(tempdir(), "references"), genome="hg38")
+#' frags_filter_blacklist <- frags %>% select_regions(blacklist, invert_selection = TRUE)
+#' peaks <- call_peaks_tile(
+#'   frags_filter_blacklist, 
+#'   chrom_sizes,
+#'   effective_genome_size = 2.8e9
+#' )
+#' top_peaks <- head(peaks, 5000)
+#' top_peaks <- top_peaks[order_ranges(top_peaks, chrNames(frags)),]
+#' 
+#' ## Get peak matrix
+#' peak_matrix(frags_filter_blacklist, top_peaks, mode="insertions")
 #' @export
 peak_matrix <- function(fragments, ranges, mode = c("insertions", "fragments", "overlaps"), zero_based_coords = !is(ranges, "GRanges"), explicit_peak_names = TRUE) {
   assert_is(fragments, "IterableFragments")
@@ -2498,6 +2773,22 @@ setMethod("matrix_inputs", "TileMatrix", function(x) list())
 #' - `"insertions"`: Start and end coordinates are separately overlapped with each tile
 #' - `"fragments"`: Like `"insertions"`, but each fragment can contribute at most 1 count
 #'    to each tile, even if both the start and end coordinates overlap
+#' @examples
+#' ## Prep demo data
+#' frags <- get_demo_frags(subset = FALSE)
+#' chrom_sizes <- read_ucsc_chrom_sizes(file.path(tempdir(), "references"), genome="hg38")
+#' blacklist <- read_encode_blacklist(file.path(tempdir(), "references"), genome="hg38")
+#' frags_filter_blacklist <- frags %>% select_regions(blacklist, invert_selection = TRUE)
+#' ranges <- tibble::tibble(
+#'   chr = "chr4",
+#'   start = 0,
+#'   end = "190214555", 
+#'   tile_width = 200
+#' )
+#' 
+#' 
+#' ## Get tile matrix
+#' tile_matrix(frags_filter_blacklist, ranges)
 #' @export
 tile_matrix <- function(fragments, ranges, mode = c("insertions", "fragments"), zero_based_coords = !is(ranges, "GRanges"), explicit_tile_names = FALSE) {
   assert_is(fragments, "IterableFragments")
@@ -2663,6 +2954,13 @@ setMethod("[", "ConvertMatrixType", function(x, i, j, ...) {
 #' @param type One of uint32_t (unsigned 32-bit integer), float (32-bit real number),
 #'   or double (64-bit real number)
 #' @return IterableMatrix object
+#' @examples
+#' mat <- matrix(rnorm(50), nrow = 10, ncol = 5)
+#' rownames(mat) <- paste0("gene", seq_len(10))
+#' colnames(mat) <- paste0("cell", seq_len(5))
+#' mat <- mat %>% as("dgCMatrix") %>% as("IterableMatrix")
+#' mat
+#' convert_matrix_type(mat, "float")
 #' @export
 convert_matrix_type <- function(matrix, type = c("uint32_t", "double", "float")) {
   assert_is(matrix, c("dgCMatrix", "IterableMatrix"))
@@ -2703,7 +3001,30 @@ convert_matrix_type <- function(matrix, type = c("uint32_t", "double", "float"))
 #' 
 #' # Convert to BPCells from R
 #' as(dgc_mat, "IterableMatrix")
-#' as(base_r_mat, "IterableMatrix")
+#' @examples
+#' mat <- get_demo_mat()[1:2, 1:2]
+#' mat
+#' 
+#' 
+#' #######################################################################
+#' ## as(bpcells_mat, "dgCMatrix") example
+#' #######################################################################
+#' mat_dgc <- as(mat, "dgCMatrix")
+#' mat_dgc
+#' 
+#' 
+#' ## as.matrix(bpcells_mat) example
+#' as.matrix(mat)
+#' 
+#' ## Alternatively, can also use function as()
+#' as(mat, "matrix")
+#' 
+#' #######################################################################
+#' ## as(dgc_mat, "IterableMatrix") example
+#' #######################################################################
+#' as(mat_dgc, "IterableMatrix")
+#' 
+#' 
 #' @name matrix_R_conversion
 NULL
 
@@ -2814,6 +3135,27 @@ setMethod("as.matrix", signature(x = "IterableMatrix"), function(x, ...) as(x, "
 #' less complex stats are calculated in the process of calculating a more complicated stat.
 #' So to calculate mean and variance simultaneously, just ask for variance,
 #' which will compute mean and nonzero counts as a side-effect
+#' @examples
+#' mat <- matrix(rpois(100, lambda = 5), nrow = 10)
+#' rownames(mat) <- paste0("gene", 1:10)
+#' colnames(mat) <- paste0("cell", 1:10)
+#' mat <- mat %>% as("dgCMatrix") %>% as("IterableMatrix")
+#' 
+#' ## By default, no row or column stats are calculated
+#' res_none <- matrix_stats(mat)
+#' res_none
+#' 
+#' ## Request row variance (automatically computes mean and nonzero too)
+#' res_row_var <- matrix_stats(mat, row_stats = "variance")
+#' res_row_var
+#' 
+#' ## Request both row variance and column variance
+#' res_both_var <- matrix_stats(
+#'   mat = mat,
+#'   row_stats = "variance",
+#'   col_stats = "mean"
+#' )
+#' res_both_var
 #' @export
 matrix_stats <- function(matrix,
                          row_stats = c("none", "nonzero", "mean", "variance"),
@@ -2974,6 +3316,34 @@ checksum <- function(matrix) {
 #' @seealso For an interface more similar to `base::apply`, see the [BPCellsArray](https://github.com/Yunuuuu/BPCellsArray/)
 #' project. For calculating colMeans on a sparse single cell RNA matrix it is about 8x slower than `apply_by_col`, due to the
 #' `base::apply` interface not being sparsity-aware. (See [pull request #104](https://github.com/bnprks/BPCells/pull/104) for benchmarking.)
+#' @examples
+#' mat <- matrix(rbinom(40, 1, 0.5) * sample.int(5, 40, replace = TRUE), nrow = 4)
+#' rownames(mat) <- paste0("gene", 1:4)
+#' mat
+#' 
+#' mat <- mat %>% as("dgCMatrix") %>% as("IterableMatrix")
+#' 
+#' #######################################################################
+#' ## apply_by_row() example
+#' #######################################################################
+#' ## Get mean of every row
+#' 
+#' ## expect an error in the case that col-major matrix is passed
+#' apply_by_row(mat, function(val, row, col) {sum(val) / nrow(mat)}) %>% 
+#'  unlist()
+#' 
+#' ## Need to transpose matrix to make sure it is in row-order
+#' mat_row_order <- transpose_storage_order(mat)
+#' 
+#' ## works as expected for row major
+#' apply_by_row(mat_row_order, 
+#'  function(val, row, col) sum(val) / ncol(mat_row_order)
+#' ) %>% unlist()
+#' 
+#' # Also analogous to running rowMeans() without names
+#' rowMeans(mat)
+#' 
+#' 
 #' @export
 apply_by_row <- function(mat, fun, ...) {
   assert_is(mat, "IterableMatrix")
@@ -2990,6 +3360,16 @@ apply_by_row <- function(mat, fun, ...) {
 
 #' @return **apply_by_col** - A list of length `ncol(matrix)` with the results returned by `fun()` on each row
 #' @rdname apply_by_row
+#' @examples
+#' #######################################################################
+#' ## apply_by_col() example
+#' #######################################################################
+#' ## Get argmax of every col
+#' apply_by_col(mat, 
+#'  function(val, row, col) if (length(val) > 0) row[which.max(val)] else 1L
+#' ) %>% unlist()
+#' 
+#' 
 #' @export
 apply_by_col <- function(mat, fun, ...) {
   if (storage_order(mat) != "col") {

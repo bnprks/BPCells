@@ -69,8 +69,8 @@ class InsertionIterator {
         }
 
         // Copy data to remove our used insertions the start of end_data
-        std::memmove(&end_data[0], &end_data[end_idx], sizeof(uint32_t) * leftover_size);
-        std::memmove(&end_cell[0], &end_cell[end_idx], sizeof(uint32_t) * leftover_size);
+        std::memmove(end_data.data(), end_data.data() + end_idx, sizeof(uint32_t) * leftover_size);
+        std::memmove(end_cell.data(), end_cell.data() + end_idx, sizeof(uint32_t) * leftover_size);
 
         // Reset our vectors
         end_idx = 0;

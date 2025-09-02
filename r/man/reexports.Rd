@@ -3,6 +3,7 @@
 \docType{import}
 \name{reexports}
 \alias{reexports}
+\alias{\%>\%}
 \alias{rowSums}
 \alias{colSums}
 \alias{rowMeans}
@@ -14,6 +15,8 @@ These objects are imported from other packages. Follow the links
 below to see their documentation.
 
 \describe{
+  \item{magrittr}{\code{\link[magrittr:pipe]{\%>\%}}}
+
   \item{Matrix}{\code{\link[Matrix:colSums-methods]{colMeans}}, \code{\link[Matrix:colSums-methods]{colSums}}, \code{\link[Matrix:colSums-methods]{rowMeans}}, \code{\link[Matrix:colSums-methods]{rowSums}}}
 }}
 
