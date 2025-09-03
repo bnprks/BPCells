@@ -22,6 +22,14 @@ enum class BedgraphInsertionMode {
     EndOnly
 };
 
+// Normalization method on insertions for bedgraph coverage values
+// NFrags = scale by total #insertions considered (CPM-like)
+// NCells = scale by # cells in group
+enum class PseudobulkNormalizationMethod {
+  None,
+  NFrags,
+  NCells
+};
 
 // Write bedgraph files including chr, start, end with only 1bp insertions,
 // only considering a subset of cells given by the cells vector. Leave duplicates in the bedfile.
@@ -43,13 +51,34 @@ void writeInsertionBed(
 // - cell_groups: For each cell in fragments, the index of the pseudobulk to assign it to
 // - output_paths: The file path to save the bedgraph for each pseudobulk
 // - mode: Which combination of start/end coordinates to include
-
 void writeInsertionBedgraph(
     FragmentLoader &fragments,
     const std::vector<uint32_t> &cell_groups,
     const std::vector<std::string> &output_paths,
     const BedgraphInsertionMode mode = BedgraphInsertionMode::Both,
     std::atomic<bool> *user_interrupt = NULL
+);
+
+// Write bedgraph coverage files for insertions computed from fragment pseudobulks with tiling.
+// Conceptually similar to writeInsertionBedgrpah, but insertions are binned into tiles of fixed width rather 
+// than each base pair being its own entry.
+// Args:
+// - fragments: source of fragments to convert to insertions & calculate coverage
+// - cell_groups: For each cell in fragments, the index of the pseudobulk to assign it to
+// - tile_width: Width of each tile in the bedgraph
+// - chrom_sizes: Total size of each chromosome, used to determine when to the final size of the last tile.
+// - output_paths: The file path to save the bedgraph for each pseudobulk
+// - mode: 0 = include start + end coords, 1 = include just start coords, 2 = include just end coords
+// - normalization_method:  Normalization method for coverage values.   One of "None", "NFrags" (CPM-like), or "NCells".
+void writeTiledInsertionBedgraph(
+    FragmentLoader &fragments,
+    const std::vector<uint32_t> &cell_groups,
+    const uint32_t& tile_width,
+    const std::vector<std::string> &output_paths,
+    const BedgraphInsertionMode mode,
+    const PseudobulkNormalizationMethod normalization_method,
+    const std::vector<uint32_t>* chrom_sizes,
+    std::atomic<bool> *user_interrupt
 );
 
 } // end namespace BPCells
