@@ -23,12 +23,13 @@ enum class BedgraphInsertionMode {
 };
 
 // Normalization method on insertions for bedgraph coverage values
-// NFrags = scale by total #insertions considered (CPM-like)
-// NCells = scale by # cells in group
+// NFrags = Total # insertions in a pseudobulk, scaled by 1e6
+// NCells = Total # cells in a pseudobulk
+// None = No normalization
 enum class PseudobulkNormalizationMethod {
-  None,
-  NFrags,
-  NCells
+  CPM,
+  NCells,
+  None
 };
 
 // Write bedgraph files including chr, start, end with only 1bp insertions,
@@ -44,40 +45,23 @@ void writeInsertionBed(
     std::atomic<bool> *user_interrupt
 );
 
-// Write bedgraph coverage files for insertions computed from fragment pseudobulks.
-// Note that
-// Args:
-// - fragments: source of fragments to convert to insertions & calculate coverage
-// - cell_groups: For each cell in fragments, the index of the pseudobulk to assign it to
-// - output_paths: The file path to save the bedgraph for each pseudobulk
-// - mode: Which combination of start/end coordinates to include
-void writeInsertionBedgraph(
-    FragmentLoader &fragments,
-    const std::vector<uint32_t> &cell_groups,
-    const std::vector<std::string> &output_paths,
-    const BedgraphInsertionMode mode = BedgraphInsertionMode::Both,
-    std::atomic<bool> *user_interrupt = NULL
-);
-
-// Write bedgraph coverage files for insertions computed from fragment pseudobulks with tiling.
-// Conceptually similar to writeInsertionBedgrpah, but insertions are binned into tiles of fixed width rather 
-// than each base pair being its own entry.
+// Write bedgraph coverage files for insertions computed from fragment pseudobulks with possible tiling.
 // Args:
 // - fragments: source of fragments to convert to insertions & calculate coverage
 // - cell_groups: For each cell in fragments, the index of the pseudobulk to assign it to
 // - tile_width: Width of each tile in the bedgraph
-// - chrom_sizes: Total size of each chromosome, used to determine when to the final size of the last tile.
 // - output_paths: The file path to save the bedgraph for each pseudobulk
 // - mode: 0 = include start + end coords, 1 = include just start coords, 2 = include just end coords
 // - normalization_method:  Normalization method for coverage values.   One of "None", "NFrags" (CPM-like), or "NCells".
-void writeTiledInsertionBedgraph(
+// - chrom_sizes: Total size of each chromosome, used to determine when to the final size of the last tile.
+void writeInsertionBedgraph(
     FragmentLoader &fragments,
     const std::vector<uint32_t> &cell_groups,
     const uint32_t& tile_width,
     const std::vector<std::string> &output_paths,
     const BedgraphInsertionMode mode,
     const PseudobulkNormalizationMethod normalization_method,
-    const std::vector<uint32_t>* chrom_sizes,
+    const std::vector<uint32_t> *chrom_sizes,
     std::atomic<bool> *user_interrupt
 );
 

@@ -168,25 +168,116 @@ test_that("write_insertion_bedgraph works", {
     # Check for gzip encoding
     expect_false(readBin(file.path(dir, "vowel.bg"), "integer", size=2, endian="big") == 0x1f8b)
     expect_true(readBin(file.path(dir, "consonant.bg.gz"), "integer", size=2, endian="big") == 0x1f8b)
+    result_vowel <- readr::read_tsv(file.path(dir, "vowel.bg"), col_names=c("chr", "start", "end", "value"), col_types="ciid")
+    result_consonant <- readr::read_tsv(file.path(dir, "consonant.bg.gz"), col_names=c("chr", "start", "end", "value"), col_types="ciid")
 
-    result_vowel <- readr::read_tsv(file.path(dir, "vowel.bg"), col_names=c("chr", "start", "end", "value"), col_types="ciii")
-    result_consonant <- readr::read_tsv(file.path(dir, "consonant.bg.gz"), col_names=c("chr", "start", "end", "value"), col_types="ciii")
-
-    expect_identical(
+    expect_equal(
       dplyr::filter(answers[[mode]], cell_group == "vowel") %>% dplyr::select(-c(cell_group)) %>% data.frame(), 
       data.frame(result_vowel)
     )
-    expect_identical(
+    expect_equal(
       dplyr::filter(answers[[mode]], cell_group == "consonant") %>% dplyr::select(-c(cell_group)) %>% data.frame(), 
       data.frame(result_consonant)
     )
   }
   # Test single group
   write_insertion_bedgraph(frags, file.path(dir, "all.bg"), insertion_mode = "start")
-  expect_identical(
-    readr::read_tsv(file.path(dir, "all.bg"), col_names = c("chr", "start", "end", "value"), col_types = "ciii") %>% 
+  expect_equal(
+    readr::read_tsv(file.path(dir, "all.bg"), col_names = c("chr", "start", "end", "value"), col_types = "ciid") %>% 
       data.frame(),
     coverage_start_single_group %>% data.frame()
+  )
+  # Define chromosome sizes for tiling
+  chrom_sizes <- tibble::tibble(
+    chr = c("chr1", "chr2"),
+    start = c(0, 0),
+    end = c(400, 400)
+  )
+  
+  # Test basic functionality with tile_width = 100
+  tile_width <- 100
+  write_insertion_bedgraph(
+    frags,
+    c("vowel" = file.path(dir, "vowel_tiled.bg"), "consonant" = file.path(dir, "consonant_tiled.bg.gz")),
+    cell_groups,
+    insertion_mode = "both",
+    tile_width = tile_width,
+    normalization_method = "none",
+    chrom_sizes = chrom_sizes
+  )
+  
+  # Check files were created
+  expect_true(file.exists(file.path(dir, "vowel_tiled.bg")))
+  expect_true(file.exists(file.path(dir, "consonant_tiled.bg.gz")))
+  
+  # Read and validate basic output format - appears to use bedgraph format (chr, start, end, value)
+  result_vowel <- readr::read_tsv(file.path(dir, "vowel_tiled.bg"), col_names=c("chr", "start", "end", "value"), col_types="ciid", show_col_types=FALSE)
+  result_consonant <- readr::read_tsv(file.path(dir, "consonant_tiled.bg.gz"), col_names=c("chr", "start", "end", "value"), col_types="ciid", show_col_types=FALSE)
+  
+  # Check basic properties (files should have content and valid numeric values)
+  expect_true(nrow(result_vowel) > 0)
+  expect_true(nrow(result_consonant) > 0)
+  expect_true(all(is.finite(result_vowel$value)))
+  expect_true(all(is.finite(result_consonant$value)))
+  
+  # Test different insertion modes
+  
+  for (mode in c("start_only", "end_only", "both")) {
+    vowel_cells <- which(cell_groups == "vowel")
+    frags_vowel <- select_cells(frags, vowel_cells)
+    write_insertion_bedgraph(
+      frags_vowel,
+      file.path(dir, paste0("vowel_", mode, ".bg")),
+      insertion_mode = mode,
+      tile_width = tile_width,
+      normalization_method = "none",
+      chrom_sizes = chrom_sizes
+    )
+    
+    result <- readr::read_tsv(file.path(dir, paste0("vowel_", mode, ".bg")), col_names=c("chr", "start", "end", "value"), col_types="ciid", show_col_types=FALSE)
+    expect_true(nrow(result) > 0)
+    expect_true(all(is.finite(result$value)))
+  }
+  
+  # Test different normalization methods
+  for (norm_method in c("none", "n_cells", "cpm")) {
+    write_insertion_bedgraph(
+      frags,
+      file.path(dir, paste0("norm_", norm_method, ".bg")),
+      normalization_method = norm_method,
+      tile_width = tile_width,
+      chrom_sizes = chrom_sizes
+    )
+    
+    result <- readr::read_tsv(file.path(dir, paste0("norm_", norm_method, ".bg")), col_names=c("chr", "start", "end", "value"), col_types="ciid", show_col_types=FALSE)
+    expect_true(nrow(result) > 0) 
+    expect_true(all(is.finite(result$value)))
+  }
+  
+  # Test single group (no cell_groups specified)
+  write_insertion_bedgraph(
+    frags, 
+    file.path(dir, "single_group.bg"),
+    tile_width = tile_width,
+    chrom_sizes = chrom_sizes
+  )
+  
+  result_single <- readr::read_tsv(file.path(dir, "single_group.bg"), col_names=c("chr", "start", "end", "value"), col_types="ciid", show_col_types=FALSE)
+  expect_true(nrow(result_single) > 0)
+  expect_true(all(is.finite(result_single$value)))
+  
+  # Test error when chrom_sizes is NULL and tile_width != 1
+  expect_error(
+    write_insertion_bedgraph(frags, file.path(dir, "error_test.bg"), tile_width = 100, chrom_sizes = NULL),
+    "If chrom_sizes is NULL, then tile_width must be 1"
+  )
+  
+  # Test with tile_width = 1 and NULL chrom_sizes  
+  write_insertion_bedgraph(
+    frags,
+    file.path(dir, "tile_width_1.bg"),
+    tile_width = 1,
+    chrom_sizes = NULL
   )
 })
 
@@ -281,129 +372,6 @@ test_that("write_insertion_bed works", {
       )
     }
   }
-})
-
-test_that("write_tiled_insertion_bedgraph works", {
-  dir <- withr::local_tempdir()
-  
-  # Create simple test data 
-  chr1 <- tibble::tibble(
-    chr = "chr1",
-    start = c(50, 150, 250),
-    end = c(100, 200, 300),
-    cell_id = c("A", "B", "A")
-  )
-  frags <- convert_to_fragments(chr1)
-  
-  # cell_groups must match cellNames(frags) length
-  cell_groups <- dplyr::if_else(cellNames(frags) == "A", "vowel", "consonant")
-  
-  # Define chromosome sizes for tiling
-  chrom_sizes <- tibble::tibble(
-    chr = "chr1",
-    start = 0,
-    end = 400
-  )
-  
-  # Test basic functionality with tile_width = 100
-  tile_width <- 100
-  write_tiled_insertion_bedgraph(
-    frags,
-    c("vowel" = file.path(dir, "vowel_tiled.bg"), "consonant" = file.path(dir, "consonant_tiled.bg.gz")),
-    cell_groups,
-    insertion_mode = "both",
-    tile_width = tile_width,
-    normalization_method = "none",
-    chrom_sizes = chrom_sizes
-  )
-  
-  # Check files were created
-  expect_true(file.exists(file.path(dir, "vowel_tiled.bg")))
-  expect_true(file.exists(file.path(dir, "consonant_tiled.bg.gz")))
-  
-  # Check for gzip encoding
-  expect_false(readBin(file.path(dir, "vowel_tiled.bg"), "integer", size=2, endian="big") == 0x1f8b)
-  expect_true(readBin(file.path(dir, "consonant_tiled.bg.gz"), "integer", size=2, endian="big") == 0x1f8b)
-  
-  # Read and validate basic output format - appears to use bedgraph format (chr, start, end, value)
-  result_vowel <- readr::read_tsv(file.path(dir, "vowel_tiled.bg"), col_names=c("chr", "start", "end", "value"), col_types="ciid", show_col_types=FALSE)
-  result_consonant <- readr::read_tsv(file.path(dir, "consonant_tiled.bg.gz"), col_names=c("chr", "start", "end", "value"), col_types="ciid", show_col_types=FALSE)
-  
-  # Check basic properties (files should have content and valid numeric values)
-  expect_true(nrow(result_vowel) > 0)
-  expect_true(nrow(result_consonant) > 0)
-  expect_true(all(is.finite(result_vowel$value)))
-  expect_true(all(is.finite(result_consonant$value)))
-  
-  # Test different insertion modes
-  for (mode in c("start_only", "end_only", "both")) {
-    vowel_cells <- which(cell_groups == "vowel")
-    frags_vowel <- select_cells(frags, vowel_cells)
-    write_tiled_insertion_bedgraph(
-      frags_vowel,
-      file.path(dir, paste0("vowel_", mode, ".bg")),
-      insertion_mode = mode,
-      tile_width = tile_width,
-      normalization_method = "none",
-      chrom_sizes = chrom_sizes
-    )
-    
-    result <- readr::read_tsv(file.path(dir, paste0("vowel_", mode, ".bg")), col_names=c("chr", "start", "end", "value"), col_types="ciid", show_col_types=FALSE)
-    expect_true(nrow(result) > 0)
-    expect_true(all(is.finite(result$value)))
-  }
-  
-  # Test different normalization methods
-  for (norm_method in c("none", "n_frags", "n_cells")) {
-    write_tiled_insertion_bedgraph(
-      frags,
-      file.path(dir, paste0("norm_", norm_method, ".bg")),
-      normalization_method = norm_method,
-      tile_width = tile_width,
-      chrom_sizes = chrom_sizes
-    )
-    
-    result <- readr::read_tsv(file.path(dir, paste0("norm_", norm_method, ".bg")), col_names=c("chr", "start", "end", "value"), col_types="ciid", show_col_types=FALSE)
-    expect_true(nrow(result) > 0) 
-    expect_true(all(is.finite(result$value)))
-  }
-  
-  # Test single group (no cell_groups specified)
-  write_tiled_insertion_bedgraph(
-    frags, 
-    file.path(dir, "single_group.bg"),
-    tile_width = tile_width,
-    chrom_sizes = chrom_sizes
-  )
-  
-  result_single <- readr::read_tsv(file.path(dir, "single_group.bg"), col_names=c("chr", "start", "end", "value"), col_types="ciid", show_col_types=FALSE)
-  expect_true(nrow(result_single) > 0)
-  expect_true(all(is.finite(result_single$value)))
-  
-  # Test error when chrom_sizes is NULL and tile_width != 1
-  expect_error(
-    write_tiled_insertion_bedgraph(frags, file.path(dir, "error_test.bg"), tile_width = 100, chrom_sizes = NULL),
-    "If chrom_sizes is NULL, then tile_width must be 1"
-  )
-  
-  # Test with tile_width = 1 and NULL chrom_sizes  
-  write_tiled_insertion_bedgraph(
-    frags,
-    file.path(dir, "tile_width_1.bg"),
-    tile_width = 1,
-    chrom_sizes = NULL
-  )
-  # Compare results against write_insertion_bedgraph with same params
-  write_insertion_bedgraph(
-    frags,
-    file.path(dir, "tile_width_1_compare.bg"),
-    insertion_mode = "both"
-  )
-  result_compare <- readr::read_tsv(file.path(dir, "tile_width_1_compare.bg"), col_names=c("chr", "start", "end", "value"), col_types="ciid", show_col_types=FALSE)
-  
-  result_tw1 <- readr::read_tsv(file.path(dir, "tile_width_1.bg"), col_names=c("chr", "start", "end", "value"), col_types="ciid", show_col_types=FALSE)
-  expect_equal(result_compare, result_tw1)
-  expect_true(nrow(result_tw1) > 0)
 })
 
 test_that("macs_e2e_works", {

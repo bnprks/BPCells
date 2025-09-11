@@ -2,23 +2,15 @@
 % Please edit documentation in R/atac_utils.R
 \name{write_insertion_bedgraph}
 \alias{write_insertion_bedgraph}
-\alias{write_tiled_insertion_bedgraph}
 \title{Write insertion counts to bedgraph file}
 \usage{
 write_insertion_bedgraph(
   fragments,
   path,
   cell_groups = rlang::rep_along(cellNames(fragments), "all"),
-  insertion_mode = c("both", "start_only", "end_only")
-)
-
-write_tiled_insertion_bedgraph(
-  fragments,
-  path,
-  cell_groups = rlang::rep_along(cellNames(fragments), "all"),
   insertion_mode = c("both", "start_only", "end_only"),
-  tile_width = 100,
-  normalization_method = c("none", "n_frags", "n_cells"),
+  tile_width = 1,
+  normalization_method = c("none", "cpm", "n_cells"),
   chrom_sizes = NULL
 )
 }
@@ -67,12 +59,10 @@ bedgraph_outputs <- file.path(tempdir(), "bedgraph_outputs")
 write_insertion_bedgraph(frags, file.path(bedgraph_outputs, "all.tar.gz"))
 list.files(bedgraph_outputs)
 
-######################################################
-## `write_insertion_bedgraph()` examples
-######################################################
+# With tiling
 chrom_sizes <- read_ucsc_chrom_sizes("./reference", genome="hg38") \%>\% 
   dplyr::filter(chr \%in\% c("chr4", "chr11"))
-write_tiled_insertion_bedgraph(frags, file.path(bedgraph_outputs, "all_tiled.bedGraph"), 
+write_insertion_bedgraph(frags, file.path(bedgraph_outputs, "all_tiled.bedGraph"), 
   chrom_sizes = chrom_sizes, normalization_method = "n_frags")
 reads <- readr::read_tsv(file.path(bedgraph_outputs, "all_tiled.bedGraph"), 
   col_names = c("chr", "start", "end", "score"), 

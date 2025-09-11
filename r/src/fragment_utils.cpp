@@ -277,39 +277,11 @@ void write_insertion_bed_cpp(
     );
 }
 
-// [[Rcpp::export]]
-void write_insertion_bedgraph_cpp(
-    SEXP fragments,
-    std::vector<uint32_t> cell_groups,
-    std::vector<std::string> output_paths,
-    std::string mode_string
-) {
-    BedgraphInsertionMode mode;
-    if (mode_string == "both") {
-        mode = BedgraphInsertionMode::Both;
-    } else if (mode_string == "start_only") {
-        mode = BedgraphInsertionMode::StartOnly;
-    } else if (mode_string == "end_only") {
-        mode = BedgraphInsertionMode::EndOnly;
-    } else {
-        throw std::runtime_error("write_bedgraph_cpp: invalid mode found: " + mode_string);
-    }
-
-    auto frags = take_unique_xptr<FragmentLoader>(fragments);
-    
-    run_with_R_interrupt_check(
-        &writeInsertionBedgraph,
-        std::ref(*frags),
-        std::cref(cell_groups),
-        std::cref(output_paths),
-        mode
-    );
-}
 
 // Write tiled insertion bedgraph.  
 // Assumes that chrom_sizes is null if chrom_sizes is empty.
 // [[Rcpp::export]]
-void write_tiled_insertion_bedgraph_cpp(
+void write_insertion_bedgraph_cpp(
     SEXP fragments,
     std::vector<uint32_t> cell_groups,
     std::vector<std::string> output_paths,
@@ -332,8 +304,8 @@ void write_tiled_insertion_bedgraph_cpp(
     PseudobulkNormalizationMethod normalization_method;
     if (normalization_method_string == "none") {
         normalization_method = PseudobulkNormalizationMethod::None;
-    } else if (normalization_method_string == "n_frags") {
-        normalization_method = PseudobulkNormalizationMethod::NFrags;
+    } else if (normalization_method_string == "cpm") {
+        normalization_method = PseudobulkNormalizationMethod::CPM;
     } else if (normalization_method_string == "n_cells") {
         normalization_method = PseudobulkNormalizationMethod::NCells;
     } else {
@@ -351,7 +323,7 @@ void write_tiled_insertion_bedgraph_cpp(
     auto frags = take_unique_xptr<FragmentLoader>(fragments);
 
     run_with_R_interrupt_check(
-        &writeTiledInsertionBedgraph,
+        &writeInsertionBedgraph,
         std::ref(*frags),
         std::cref(cell_groups),
         std::cref(tile_width),

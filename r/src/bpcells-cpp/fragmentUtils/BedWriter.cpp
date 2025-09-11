@@ -55,118 +55,17 @@ void writeInsertionBed(
     }
 }
 
-// Write bedgraph coverage files for insertions computed from fragment pseudobulks.
-// Args:
-// - fragments: source of fragments to convert to insertions & calculate coverage
-// - cell_groups: For each cell in fragments, the index of the pseudobulk to assign it to
-// - output_paths: The file path to save the bedgraph for each pseudobulk
-// - mode: 0 = include start + end coords, 1 = include just start coords, 2 = include just end coords
-void writeInsertionBedgraph(
-    FragmentLoader &fragments,
-    const std::vector<uint32_t> &cell_groups,
-    const std::vector<std::string> &output_paths,
-    const BedgraphInsertionMode mode,
-    std::atomic<bool> *user_interrupt
-) {
-    for (const auto &x : cell_groups) {
-        if (x >= output_paths.size()) {
-            throw std::runtime_error("writeBedgraph: found cell_group larger than number of output paths: " + std::to_string(x));
-        }
-    }
 
-    InsertionIterator it(fragments);
-
-    std::vector<gzFileWrapper> files;
-    const uint32_t buffer_size = 1 << 20;
-    for (const auto &path : output_paths) {
-        files.push_back(gzFileWrapper(path, "w", buffer_size));
-    }
-        
-    // Last bp observed from each group
-    std::vector<uint32_t> last_base(output_paths.size(), UINT32_MAX);
-    
-    // Running insertion tally for each group
-    std::vector<uint32_t> tally(output_paths.size(), 0);
-    
-    while (it.nextChr()) {
-        if (fragments.chrNames(it.chr()) == NULL) {
-            throw std::runtime_error("writeBedgraph: No chromosome name found for ID: " + std::to_string(it.chr()));
-        }
-        std::string chr_name(fragments.chrNames(it.chr()));
-        uint32_t count = 0;
-
-        for (size_t i = 0; i < output_paths.size(); i++) {
-            last_base[i] = UINT32_MAX;
-            tally[i] = 0;
-        }
-
-        while (it.nextInsertion()) {
-            if (mode == BedgraphInsertionMode::StartOnly && !it.isStart()) continue;
-            if (mode == BedgraphInsertionMode::EndOnly && it.isStart()) continue;
-
-            int cell_group = cell_groups[it.cell()];
-            
-            if (last_base[cell_group] == it.coord()) {
-                tally[cell_group] += 1;
-                continue;
-            }
-        
-            // Handle the case where this is not the same basepair we saw last
-            if (last_base[cell_group] != UINT32_MAX) {
-                uint32_t bytes_written = gzprintf(
-                    *files[cell_group],
-                    "%s\t%d\t%d\t%d\n",
-                    chr_name.c_str(),
-                    last_base[cell_group],
-                    last_base[cell_group] + 1,
-                    tally[cell_group]
-                );
-
-                if (bytes_written <= 0) {
-                    throw std::runtime_error("writeBedgraph: Failed to write data");
-                }
-            }
-
-            tally[cell_group] = 1;
-            last_base[cell_group] = it.coord();
-            if (user_interrupt != nullptr && count++ % 65536 == 0 && *user_interrupt) return;
-        }
-        // Cleanup at the end of the chromosome
-        for (size_t i = 0; i < files.size(); i++) {
-            if (last_base[i] == UINT32_MAX) continue;
-            uint32_t bytes_written = gzprintf(
-                *files[i],
-                "%s\t%d\t%d\t%d\n",
-                chr_name.c_str(),
-                last_base[i],
-                last_base[i] + 1,
-                tally[i]
-            );
-            if (bytes_written <= 0) {
-                throw std::runtime_error("writeBedgraph: Failed to write data");
-            }
-
-            last_base[i] = 0;
-            tally[i] = 0;
-        }
-    }
-}
-
-// 
-
-
-// Write bedgraph coverage files for insertions computed from fragment pseudobulks with tiling.
-// Conceptually similar to writeInsertionBedgrpah, but insertions are binned into tiles of fixed width rather 
-// than each base pair being its own entry.
+// Write bedgraph coverage files for insertions computed from fragment pseudobulks with possible tiling.
 // Args:
 // - fragments: source of fragments to convert to insertions & calculate coverage
 // - cell_groups: For each cell in fragments, the index of the pseudobulk to assign it to
 // - tile_width: Width of each tile in the bedgraph
-// - chrom_sizes: Total size of each chromosome, used to determine when to the final size of the last tile.
 // - output_paths: The file path to save the bedgraph for each pseudobulk
 // - mode: 0 = include start + end coords, 1 = include just start coords, 2 = include just end coords
 // - normalization_method:  Normalization method for coverage values.   One of "None", "NFrags" (CPM-like), or "NCells".
-void writeTiledInsertionBedgraph(
+// - chrom_sizes: Total size of each chromosome, used to determine when to the final size of the last tile.
+void writeInsertionBedgraph(
     FragmentLoader &fragments,
     const std::vector<uint32_t> &cell_groups,
     const uint32_t& tile_width,
@@ -204,7 +103,7 @@ void writeTiledInsertionBedgraph(
         }
         return 0;
     };
-    if (normalization_method == PseudobulkNormalizationMethod::NFrags) {
+    if (normalization_method == PseudobulkNormalizationMethod::CPM) {
         // First pass to count total insertions per group
         while (it.nextChr()) {
             while (it.nextInsertion()) {
@@ -221,7 +120,7 @@ void writeTiledInsertionBedgraph(
     // Write insertions to tiled bedgraph
     while (it.nextChr()) {
         if (fragments.chrNames(it.chr()) == NULL) {
-            throw std::runtime_error("writeInsertionBedgraphTiled: No chromosome name found for ID: " + std::to_string(it.chr()));
+            throw std::runtime_error("writeInsertionBedgraph: No chromosome name found for ID: " + std::to_string(it.chr()));
         }
         uint32_t chrom_end = chrom_sizes != nullptr ? (*chrom_sizes)[it.chr()] : UINT32_MAX;
         std::string chr_name(fragments.chrNames(it.chr()));
@@ -248,7 +147,7 @@ void writeTiledInsertionBedgraph(
             if (last_tile_start[cell_group] != UINT32_MAX) {
                 // not sure what type for val
                 double val = tally[cell_group];
-                if (normalization_method == PseudobulkNormalizationMethod::NFrags) {
+                if (normalization_method == PseudobulkNormalizationMethod::CPM) {
                     val = (double)val * 1e6 / (double)total_insertions[cell_group];
                 } else if (normalization_method == PseudobulkNormalizationMethod::NCells) {
                     val = (double)val / (double)cell_counter[cell_group];
@@ -263,7 +162,7 @@ void writeTiledInsertionBedgraph(
                 );
 
                 if (bytes_written <= 0) {
-                    throw std::runtime_error("writeBedgraph: Failed to write data");
+                    throw std::runtime_error("writeInsertionBedgraph: Failed to write data");
                 }
             }
 
@@ -277,7 +176,7 @@ void writeTiledInsertionBedgraph(
         for (size_t i = 0; i < files.size(); i++) {
             if (last_tile_start[i] == UINT32_MAX) continue;
             double val = tally[i];
-            if (normalization_method == PseudobulkNormalizationMethod::NFrags) {
+            if (normalization_method == PseudobulkNormalizationMethod::CPM) {
                 val = (double)val * 1e6 / (double)total_insertions[i];
             } else if (normalization_method == PseudobulkNormalizationMethod::NCells) {
                 val = (double)val / (double)cell_counter[i];
@@ -291,7 +190,7 @@ void writeTiledInsertionBedgraph(
                 val
             );
             if (bytes_written <= 0) {
-                throw std::runtime_error("writeBedgraph: Failed to write data");
+                throw std::runtime_error("writeInsertionBedgraph: Failed to write data");
             }
         }
     }
