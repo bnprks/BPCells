@@ -5,6 +5,7 @@
 
 ## Features
 - Create a wrapper function `cluster_cells_graph()` that wraps the steps of knn object creation, graph adjacency creation, and clustering all within a single function (pull request #292)
+- Add `tile_width` and `normalization` arguments to `write_insertion_bedgraph()` to allow for more flexible bedgraph creation (pull request #299)
 
 # BPCells 0.3.1 (7/21/2025)
 
