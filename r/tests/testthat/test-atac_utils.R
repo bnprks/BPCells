@@ -234,7 +234,11 @@ test_that("write_insertion_bedgraph works", {
       chrom_sizes = chrom_sizes
     )
     
-    result <- readr::read_tsv(file.path(dir, paste0("vowel_", mode, ".bg")), col_names=c("chr", "start", "end", "value"), col_types="ciid", show_col_types=FALSE)
+    result <- readr::read_tsv(
+      file.path(dir, paste0("vowel_", mode, ".bg")), 
+      col_names=c("chr", "start", "end", "value"), 
+      col_types="ciid", show_col_types=FALSE
+    )
     expect_true(nrow(result) > 0)
     expect_true(all(is.finite(result$value)))
   }
@@ -249,7 +253,12 @@ test_that("write_insertion_bedgraph works", {
       chrom_sizes = chrom_sizes
     )
     
-    result <- readr::read_tsv(file.path(dir, paste0("norm_", norm_method, ".bg")), col_names=c("chr", "start", "end", "value"), col_types="ciid", show_col_types=FALSE)
+    result <- readr::read_tsv(
+      file.path(dir, paste0("norm_", norm_method, ".bg")), 
+      col_names=c("chr", "start", "end", "value"), 
+      col_types="ciid", 
+      show_col_types=FALSE
+    )
     expect_true(nrow(result) > 0) 
     expect_true(all(is.finite(result$value)))
   }
@@ -262,7 +271,11 @@ test_that("write_insertion_bedgraph works", {
     chrom_sizes = chrom_sizes
   )
   
-  result_single <- readr::read_tsv(file.path(dir, "single_group.bg"), col_names=c("chr", "start", "end", "value"), col_types="ciid", show_col_types=FALSE)
+  result_single <- readr::read_tsv(
+    file.path(dir, "single_group.bg"), 
+    col_names=c("chr", "start", "end", "value"), 
+    col_types="ciid", show_col_types=FALSE
+    )
   expect_true(nrow(result_single) > 0)
   expect_true(all(is.finite(result_single$value)))
   
@@ -363,15 +376,164 @@ test_that("write_insertion_bed works", {
         "consonant" = readr::read_tsv(file.path(dir, "consonant.bed.gz"), col_names = c("chr", "start", "end"), col_types="cii")
       )
       expect_identical(
-        dplyr::filter(answers[[mode]], cell_group == "vowel") %>% tidyr::uncount(value) %>% dplyr::select(-c(cell_group)) %>% data.frame(), 
+        dplyr::filter(answers[[mode]], cell_group == "vowel") %>% tidyr::uncount(value) %>% 
+          dplyr::select(-c(cell_group)) %>% data.frame(), 
         data.frame(result[["vowel"]])
       )
       expect_identical(
-        dplyr::filter(answers[[mode]], cell_group == "consonant") %>% tidyr::uncount(value) %>% dplyr::select(-c(cell_group)) %>% data.frame(), 
+        dplyr::filter(answers[[mode]], cell_group == "consonant") %>% tidyr::uncount(value) %>% 
+          dplyr::select(-c(cell_group)) %>% data.frame(), 
         data.frame(result[["consonant"]])
       )
     }
   }
+})
+
+
+test_that("CPM normalization scales each value by 1e6 / total_fragments_in_group", {
+  dir <- withr::local_tempdir()
+  frag_tbl <- tibble::tibble(
+    chr     = "chr1",
+    start   = c(0L, 1L, 0L, 2L, 2L),   # three frags in grpA, two in grpB
+    end     = start + 1L,
+    cell_id = c("A",  "A",  "A", "B", "B")
+  )
+  frags <- convert_to_fragments(frag_tbl)
+
+  cell_groups <- dplyr::if_else(cellNames(frags) == "A", "grpA", "grpB")
+
+  # Write CPM-normalised bedGraphs
+  write_insertion_bedgraph(
+    frags,
+    c("grpA" = file.path(dir, "grpA.bg"),
+      "grpB" = file.path(dir, "grpB.bg")),
+    cell_groups       = cell_groups,
+    insertion_mode    = "start_only",
+    normalization_method = "cpm",
+    tile_width        = 1,
+    chrom_sizes       = NULL
+  )
+
+  # Expected values
+  counts <- frag_tbl %>%
+    dplyr::mutate(group = dplyr::if_else(cell_id == "A", "grpA", "grpB"),
+                  end   = start + 1L) %>%
+    dplyr::group_by(chr, start, end, group) %>%
+    dplyr::summarise(n = dplyr::n(), .groups = "drop")
+
+  totals <- counts %>% dplyr::count(group, wt = n, name = "tot")
+
+  exp_tbl <- counts %>%
+    dplyr::left_join(totals, by = "group") %>%
+    dplyr::mutate(value = n * 1e6 / tot) %>%
+    dplyr::select(chr, start, end, value, group) %>%
+    dplyr::arrange(group, start)
+
+  res_tbl <- dplyr::bind_rows(
+    readr::read_tsv(file.path(dir, "grpA.bg"),
+      col_names = c("chr", "start", "end", "value"), col_types = "ciid") %>%
+      dplyr::mutate(group = "grpA"),
+    readr::read_tsv(file.path(dir, "grpB.bg"),
+      col_names = c("chr", "start", "end", "value"), col_types = "ciid") %>%
+      dplyr::mutate(group = "grpB")
+  ) %>% dplyr::arrange(group, start)
+
+  expect_equal(res_tbl, exp_tbl, tolerance = 1e-6)
+})
+
+test_that("NCells normalization divides by number of cells in each group", {
+  dir <- withr::local_tempdir()
+  frag_tbl <- tibble::tibble(
+    chr     = "chr1",
+    start   = c(0L, 0L, 1L, 2L, 2L),
+    end     = start + 1L,
+    cell_id = c("A1", "A2", "A1", "B1", "B2")
+  )
+  frags <- convert_to_fragments(frag_tbl)
+
+  cell_groups <- dplyr::case_when(
+    grepl("^A", cellNames(frags)) ~ "grpA",
+    TRUE                          ~ "grpB"
+  )
+
+  write_insertion_bedgraph(
+    frags,
+    c("grpA" = file.path(dir, "grpA.bg"),
+      "grpB" = file.path(dir, "grpB.bg")),
+    cell_groups = cell_groups,
+    insertion_mode = "start_only",
+    normalization_method = "n_cells",
+    tile_width = 1,
+    chrom_sizes = NULL
+  )
+
+  # Expected values
+  cell_map <- tibble::tibble(cell_id = cellNames(frags),
+                             n_cells = dplyr::n_distinct(cellNames(frags)),
+                             group   = cell_groups) %>%
+    dplyr::group_by(group) %>%
+    dplyr::summarise(n_cells = dplyr::n(), .groups = "drop")
+
+  counts <- frag_tbl %>%
+    dplyr::mutate(group = dplyr::if_else(grepl("^A", cell_id), "grpA", "grpB"),
+                  end   = start + 1L) %>%
+    dplyr::group_by(chr, start, end, group) %>%
+    dplyr::summarise(n = dplyr::n(), .groups = "drop") %>%
+    dplyr::left_join(cell_map, by = "group") %>%
+    dplyr::mutate(value = n / n_cells) %>%
+    dplyr::select(chr, start, end, value, group) %>%
+    dplyr::arrange(group, start)
+
+  res_tbl <- dplyr::bind_rows(
+    readr::read_tsv(file.path(dir, "grpA.bg"),
+      col_names = c("chr", "start", "end", "value"), col_types = "ciid") %>%
+      dplyr::mutate(group = "grpA"),
+    readr::read_tsv(file.path(dir, "grpB.bg"),
+      col_names = c("chr", "start", "end", "value"), col_types = "ciid") %>%
+      dplyr::mutate(group = "grpB")
+  ) %>% dplyr::arrange(group, start)
+
+  expect_equal(res_tbl, counts, tolerance = 1e-6)
+})
+
+test_that("Tiles are clipped to chromosome end when chrom_sizes < tile_width * n_tiles", {
+  dir <- withr::local_tempdir()
+
+  frag_tbl <- tibble::tibble(
+    chr     = "chr1",
+    start   = c(0L, 4L),
+    end     = start + 1L,
+    cell_id = "A"
+  )
+  frags <- convert_to_fragments(frag_tbl)
+
+  chrom_sizes <- tibble::tibble(chr = "chr1", start = 0L, end = 5L)
+  tile_width  <- 3 
+
+  write_insertion_bedgraph(
+    frags,
+    file.path(dir, "out.bg"),
+    insertion_mode    = "start_only",
+    tile_width        = tile_width,
+    normalization_method = "none",
+    chrom_sizes       = chrom_sizes
+  )
+
+  res <- readr::read_tsv(
+    file.path(dir, "out.bg"),
+    col_names = c("chr", "start", "end", "value"),
+    col_types = "ciid",
+    show_col_types = FALSE
+  ) %>% dplyr::arrange(start)
+
+  exp <- tibble::tibble(
+    chr   = "chr1",
+    start = c(0L, 3L),
+    end   = c(3L, 5L),
+    value = c(1L, 1L)
+  )
+
+  expect_equal(as.data.frame(res), as.data.frame(exp))
 })
 
 test_that("macs_e2e_works", {
