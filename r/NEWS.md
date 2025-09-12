@@ -7,6 +7,14 @@
 - Create a wrapper function `cluster_cells_graph()` that wraps the steps of knn object creation, graph adjacency creation, and clustering all within a single function (pull request #292)
 - Add `tile_width` and `normalization` arguments to `write_insertion_bedgraph()` to allow for more flexible bedgraph creation (pull request #299)
 
+## To-dos
+- Add support for sparse pseudobulking in `pseudobulk_matrix()`.  Currently in progress in #268.
+- Add support for duplicate rows/cols in subsetting operations.
+- Add support for matrix matrix addition.
+- Maybe add CCA support? 
+- Refactor C++ backend to take in the logic in R S4 methods.  This would allow for a cleaner seperation of R and C++ code, and would allow for much quicker porting
+  to Python in the future.
+
 # BPCells 0.3.1 (7/21/2025)
 
 The BPCells 0.3.1 release covers 7 months of changes and 40 commits from 5 contributors. Notable changes include writing matrices in AnnData's dense format, 
