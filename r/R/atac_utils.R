@@ -471,18 +471,48 @@ call_peaks_tile <- function(fragments, chromosome_sizes, cell_groups = rep.int("
 #' @param path (character vector) Path(s) to save bedgraph to, optionally ending in ".gz" to add gzip compression. If `cell_groups` is provided,
 #'   `path` must be a named character vector, with one name for each level in `cell_groups`
 #' @param insertion_mode (string) Which fragment ends to use for coverage calculation. One of "both", "start_only", or "end_only"
+#' @param tile_width (integer) Width of tiles to use for binning insertions.  All insertions in a single bin are summed.
+#' If `tile_width` is 1, then this is functionally equivalent to `write_insertion_bedgraph()`.
+#' @param normalization_method (character) Normalization method to use.  One of:
+#'  - "none": No normalization
+#' - "n_frags": Normalize by total number of fragments in each group, scaling to 1 million fragments (i.e. CPM).
+#' - "n_cells": Normalize by total number of cells in each group.
+#' @param chrom_sizes (GRanges, data.frame, list, numeric, or NULL) Chromosome sizes to clip tiles when at the end of a chromosome.
+#' If `NULL`, then tile_width is required to be 1. 
+#' If a data.frame or list, must contain columns `chr` and `end` (See `help("genomic-ranges-like")`).  
+#' If a numeric vector, then it is assumed to be the chromosome sizes in the order of `chrNames(fragments)`.
 #' @examples
 #' ## Prep data
 #' frags <- get_demo_frags()
-#' bedgraph_outputs <- file.path(tempdir(), "bedgraph_outputs", "all.tar.gz")
+#' bedgraph_outputs <- file.path(tempdir(), "bedgraph_outputs")
 #' 
-#' 
+#' ######################################################
+#' ## `write_insertion_bedgraph()` examples
+#' ######################################################
 #' ## Write insertions
 #' write_insertion_bedgraph(frags, file.path(bedgraph_outputs, "all.tar.gz"))
 #' list.files(bedgraph_outputs)
+#' 
+#' # With tiling
+#' chrom_sizes <- read_ucsc_chrom_sizes("./reference", genome="hg38") %>% 
+#'   dplyr::filter(chr %in% c("chr4", "chr11"))
+#' write_insertion_bedgraph(frags, file.path(bedgraph_outputs, "all_tiled.bedGraph"), 
+#'   chrom_sizes = chrom_sizes, normalization_method = "n_frags")
+#' reads <- readr::read_tsv(file.path(bedgraph_outputs, "all_tiled.bedGraph"), 
+#'   col_names = c("chr", "start", "end", "score"), 
+#'   show_col_types = FALSE)
+#' head(reads)
+#' @return `NULL`
 #' @inheritParams footprint
 #' @export
-write_insertion_bedgraph <- function(fragments, path, cell_groups = rlang::rep_along(cellNames(fragments), "all"), insertion_mode=c("both", "start_only", "end_only")) {
+write_insertion_bedgraph <- function(
+  fragments, path, 
+  cell_groups = rlang::rep_along(cellNames(fragments), "all"), 
+  insertion_mode=c("both", "start_only", "end_only"),
+  tile_width = 1,
+  normalization_method = c("none", "cpm", "n_cells"),
+  chrom_sizes = NULL
+) {
   assert_is(fragments, "IterableFragments")
   assert_is_character(path)
   assert_is(cell_groups, c("character", "factor"))
@@ -492,7 +522,24 @@ write_insertion_bedgraph <- function(fragments, path, cell_groups = rlang::rep_a
   names(path) <- path_names
   cell_groups <- as.factor(cell_groups)
   assert_len(path, length(levels(cell_groups)))
-  
+  assert_is_wholenumber(tile_width)
+  assert_is(chrom_sizes, c("NULL", "data.frame", "list"))
+  normalization_method <- match.arg(normalization_method)
+  if (is.null(chrom_sizes) && tile_width != 1L) {
+    rlang::abort("If chrom_sizes is NULL, then tile_width must be 1")
+  }
+  if (is.data.frame(chrom_sizes) || is.list(chrom_sizes) || is(chrom_sizes, "GRanges")) {
+    chrom_sizes <- normalize_ranges(chrom_sizes)
+    chrom_sizes <- chrom_sizes[which(chrNames(fragments) %in% chrom_sizes$chr), ]
+    chrom_sizes <- chrom_sizes$end
+  } 
+  if (is.numeric(chrom_sizes)) {
+    assert_len(chrom_sizes, length(chrNames(fragments)))
+  } else if (is.null(chrom_sizes)) {
+    chrom_sizes <- integer(0)
+  } else {
+    rlang::abort("chrom_sizes must be NULL, a data.frame, list, GRanges, or numeric vector")
+  }
   if (length(levels(cell_groups)) == 1) {
     names(path) <- "all"
   } else {
@@ -501,8 +548,18 @@ write_insertion_bedgraph <- function(fragments, path, cell_groups = rlang::rep_a
     path <- path[levels(cell_groups)]
   }
   cell_groups <- as.integer(cell_groups) - 1L
-  write_insertion_bedgraph_cpp(iterate_fragments(fragments), cell_groups, path, insertion_mode)
+  
+  write_insertion_bedgraph_cpp(
+    iterate_fragments(fragments), 
+    cell_groups, 
+    path, 
+    insertion_mode, 
+    tile_width, 
+    normalization_method,
+    chrom_sizes
+  )
 }
+
 
 #' Create bed files from fragments split by cell group.
 #' @param path (character vector) Path to save bed files. If `cell_groups` is provided, this must be a character vector with one name for each level in `cell_groups` 

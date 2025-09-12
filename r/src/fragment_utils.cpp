@@ -277,12 +277,18 @@ void write_insertion_bed_cpp(
     );
 }
 
+
+// Write tiled insertion bedgraph.  
+// Assumes that chrom_sizes is null if chrom_sizes is empty.
 // [[Rcpp::export]]
 void write_insertion_bedgraph_cpp(
     SEXP fragments,
     std::vector<uint32_t> cell_groups,
     std::vector<std::string> output_paths,
-    std::string mode_string
+    std::string mode_string,
+    uint32_t tile_width,
+    std::string normalization_method_string,
+    std::vector<uint32_t> chrom_sizes
 ) {
     BedgraphInsertionMode mode;
     if (mode_string == "both") {
@@ -295,14 +301,36 @@ void write_insertion_bedgraph_cpp(
         throw std::runtime_error("write_bedgraph_cpp: invalid mode found: " + mode_string);
     }
 
+    PseudobulkNormalizationMethod normalization_method;
+    if (normalization_method_string == "none") {
+        normalization_method = PseudobulkNormalizationMethod::None;
+    } else if (normalization_method_string == "cpm") {
+        normalization_method = PseudobulkNormalizationMethod::CPM;
+    } else if (normalization_method_string == "n_cells") {
+        normalization_method = PseudobulkNormalizationMethod::NCells;
+    } else {
+        throw std::runtime_error("write_bedgraph_cpp: invalid normalization method found: " + normalization_method_string);
+    }
+    // Convert chrom_sizes to pointer, checking for empty vector
+    std::vector<uint32_t>* chrom_sizes_vec = &chrom_sizes;
+    if (chrom_sizes == std::vector<uint32_t>{}) {
+        if (tile_width != 1) {
+            throw std::runtime_error("write_bedgraph_cpp: if chrom_sizes is NULL, tile_width must be 1");
+        }
+        chrom_sizes_vec = nullptr;
+    }
+
     auto frags = take_unique_xptr<FragmentLoader>(fragments);
-    
+
     run_with_R_interrupt_check(
         &writeInsertionBedgraph,
         std::ref(*frags),
         std::cref(cell_groups),
+        std::cref(tile_width),
         std::cref(output_paths),
-        mode
+        mode,
+        normalization_method,
+        chrom_sizes_vec
     );
 }
 

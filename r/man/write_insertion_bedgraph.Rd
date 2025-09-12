@@ -8,7 +8,10 @@ write_insertion_bedgraph(
   fragments,
   path,
   cell_groups = rlang::rep_along(cellNames(fragments), "all"),
-  insertion_mode = c("both", "start_only", "end_only")
+  insertion_mode = c("both", "start_only", "end_only"),
+  tile_width = 1,
+  normalization_method = c("none", "cpm", "n_cells"),
+  chrom_sizes = NULL
 )
 }
 \arguments{
@@ -21,6 +24,24 @@ write_insertion_bedgraph(
 \code{cellNames(fragments)}}
 
 \item{insertion_mode}{(string) Which fragment ends to use for coverage calculation. One of "both", "start_only", or "end_only"}
+
+\item{tile_width}{(integer) Width of tiles to use for binning insertions.  All insertions in a single bin are summed.
+If \code{tile_width} is 1, then this is functionally equivalent to \code{write_insertion_bedgraph()}.}
+
+\item{normalization_method}{(character) Normalization method to use.  One of:
+\itemize{
+\item "none": No normalization
+\item "n_frags": Normalize by total number of fragments in each group, scaling to 1 million fragments (i.e. CPM).
+\item "n_cells": Normalize by total number of cells in each group.
+}}
+
+\item{chrom_sizes}{(GRanges, data.frame, list, numeric, or NULL) Chromosome sizes to clip tiles when at the end of a chromosome.
+If \code{NULL}, then tile_width is required to be 1.
+If a data.frame or list, must contain columns \code{chr} and \code{end} (See \code{help("genomic-ranges-like")}).
+If a numeric vector, then it is assumed to be the chromosome sizes in the order of \code{chrNames(fragments)}.}
+}
+\value{
+\code{NULL}
 }
 \description{
 Write insertion counts data for one or more pseudobulks to bedgraph format. This reports the total
@@ -29,10 +50,22 @@ number insertions at each basepair for each group listed in \code{cell_groups}.
 \examples{
 ## Prep data
 frags <- get_demo_frags()
-bedgraph_outputs <- file.path(tempdir(), "bedgraph_outputs", "all.tar.gz")
+bedgraph_outputs <- file.path(tempdir(), "bedgraph_outputs")
 
-
+######################################################
+## `write_insertion_bedgraph()` examples
+######################################################
 ## Write insertions
 write_insertion_bedgraph(frags, file.path(bedgraph_outputs, "all.tar.gz"))
 list.files(bedgraph_outputs)
+
+# With tiling
+chrom_sizes <- read_ucsc_chrom_sizes("./reference", genome="hg38") \%>\% 
+  dplyr::filter(chr \%in\% c("chr4", "chr11"))
+write_insertion_bedgraph(frags, file.path(bedgraph_outputs, "all_tiled.bedGraph"), 
+  chrom_sizes = chrom_sizes, normalization_method = "n_frags")
+reads <- readr::read_tsv(file.path(bedgraph_outputs, "all_tiled.bedGraph"), 
+  col_names = c("chr", "start", "end", "score"), 
+  show_col_types = FALSE)
+head(reads)
 }
