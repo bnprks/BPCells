@@ -53,10 +53,13 @@
 <url><loc>https://bnprks.github.io/BPCells/reference/call_peaks_tile.html</loc></url>
 <url><loc>https://bnprks.github.io/BPCells/reference/checksum.html</loc></url>
 <url><loc>https://bnprks.github.io/BPCells/reference/cluster.html</loc></url>
+<url><loc>https://bnprks.github.io/BPCells/reference/cluster_cells_graph.html</loc></url>
+<url><loc>https://bnprks.github.io/BPCells/reference/cluster_graph.html</loc></url>
 <url><loc>https://bnprks.github.io/BPCells/reference/cluster_membership_matrix.html</loc></url>
 <url><loc>https://bnprks.github.io/BPCells/reference/collect_features.html</loc></url>
 <url><loc>https://bnprks.github.io/BPCells/reference/concat_dimnames.html</loc></url>
 <url><loc>https://bnprks.github.io/BPCells/reference/convert_matrix_type.html</loc></url>
+<url><loc>https://bnprks.github.io/BPCells/reference/create_partial.html</loc></url>
 <url><loc>https://bnprks.github.io/BPCells/reference/demo_data.html</loc></url>
 <url><loc>https://bnprks.github.io/BPCells/reference/draw_trackplot_grid.html</loc></url>
 <url><loc>https://bnprks.github.io/BPCells/reference/ensure_downloaded.html</loc></url>
@@ -73,6 +76,8 @@
 <url><loc>https://bnprks.github.io/BPCells/reference/genomic-ranges-like.html</loc></url>
 <url><loc>https://bnprks.github.io/BPCells/reference/import_matrix_market.html</loc></url>
 <url><loc>https://bnprks.github.io/BPCells/reference/index.html</loc></url>
+<url><loc>https://bnprks.github.io/BPCells/reference/is_adjacency_matrix.html</loc></url>
+<url><loc>https://bnprks.github.io/BPCells/reference/is_knn_object.html</loc></url>
 <url><loc>https://bnprks.github.io/BPCells/reference/iterate_matrix.html</loc></url>
 <url><loc>https://bnprks.github.io/BPCells/reference/knn.html</loc></url>
 <url><loc>https://bnprks.github.io/BPCells/reference/knn_graph.html</loc></url>
@@ -99,6 +104,7 @@
 <url><loc>https://bnprks.github.io/BPCells/reference/order_ranges.html</loc></url>
 <url><loc>https://bnprks.github.io/BPCells/reference/palettes.html</loc></url>
 <url><loc>https://bnprks.github.io/BPCells/reference/parallel_split.html</loc></url>
+<url><loc>https://bnprks.github.io/BPCells/reference/partial_apply.html</loc></url>
 <url><loc>https://bnprks.github.io/BPCells/reference/peak_matrix.html</loc></url>
 <url><loc>https://bnprks.github.io/BPCells/reference/plot_dot.html</loc></url>
 <url><loc>https://bnprks.github.io/BPCells/reference/plot_embedding.html</loc></url>
