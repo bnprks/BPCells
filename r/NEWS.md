@@ -6,6 +6,7 @@
 ## Features
 - Create a wrapper function `cluster_cells_graph()` that wraps the steps of knn object creation, graph adjacency creation, and clustering all within a single function (pull request #292)
 - Add `tile_width` and `normalization` arguments to `write_insertion_bedgraph()` to allow for more flexible bedgraph creation (pull request #299)
+- Export `write_insertion_bed()`, which originally was only a helper for peak calling (pull request #302)
 
 ## To-dos
 - Add support for sparse pseudobulking in `pseudobulk_matrix()`.  Currently in progress in #268.

@@ -462,24 +462,25 @@ call_peaks_tile <- function(fragments, chromosome_sizes, cell_groups = rep.int("
   }
 }
 
-#' Write insertion counts to bedgraph file
-#' 
-#' Write insertion counts data for one or more pseudobulks to bedgraph format. This reports the total
-#' number insertions at each basepair for each group listed in `cell_groups`.
+#' Write insertion counts to bed/bedgraph file
+#'
+#' Write insertion counts data for one or more pseudobulks to bed/bedgraph format.
+#' Beds only hold chrom, start, and end data, while bedGraphs also provide a score column.
+#' This reports the total number of insertions at each basepair for each group listed in `cell_groups`.
 #'
 #' @param fragments IterableFragments object
-#' @param path (character vector) Path(s) to save bedgraph to, optionally ending in ".gz" to add gzip compression. If `cell_groups` is provided,
+#' @param path (character vector) Path(s) to save bed/bedgraphs to, optionally ending in ".gz" to add gzip compression. If `cell_groups` is provided,
 #'   `path` must be a named character vector, with one name for each level in `cell_groups`
 #' @param insertion_mode (string) Which fragment ends to use for coverage calculation. One of "both", "start_only", or "end_only"
 #' @param tile_width (integer) Width of tiles to use for binning insertions.  All insertions in a single bin are summed.
 #' If `tile_width` is 1, then this is functionally equivalent to `write_insertion_bedgraph()`.
 #' @param normalization_method (character) Normalization method to use.  One of:
-#'  - "none": No normalization
-#' - "n_frags": Normalize by total number of fragments in each group, scaling to 1 million fragments (i.e. CPM).
-#' - "n_cells": Normalize by total number of cells in each group.
+#'  - `none`: No normalization
+#' - `cpm`: Normalize by total number of fragments in each group, scaling to 1 million fragments (i.e. CPM).
+#' - `n_cells`: Normalize by total number of cells in each group.
 #' @param chrom_sizes (GRanges, data.frame, list, numeric, or NULL) Chromosome sizes to clip tiles when at the end of a chromosome.
-#' If `NULL`, then tile_width is required to be 1. 
-#' If a data.frame or list, must contain columns `chr` and `end` (See `help("genomic-ranges-like")`).  
+#' If `NULL`, then tile_width is required to be 1.
+#' If a data.frame or list, must contain columns `chr` and `end` (See `help("genomic-ranges-like")`).
 #' If a numeric vector, then it is assumed to be the chromosome sizes in the order of `chrNames(fragments)`.
 #' @examples
 #' ## Prep data
@@ -492,18 +493,21 @@ call_peaks_tile <- function(fragments, chromosome_sizes, cell_groups = rep.int("
 #' ## Write insertions
 #' write_insertion_bedgraph(frags, file.path(bedgraph_outputs, "all.tar.gz"))
 #' list.files(bedgraph_outputs)
-#' 
+#'
 #' # With tiling
 #' chrom_sizes <- read_ucsc_chrom_sizes("./reference", genome="hg38") %>% 
 #'   dplyr::filter(chr %in% c("chr4", "chr11"))
-#' write_insertion_bedgraph(frags, file.path(bedgraph_outputs, "all_tiled.bedGraph"), 
-#'   chrom_sizes = chrom_sizes, normalization_method = "n_frags")
-#' reads <- readr::read_tsv(file.path(bedgraph_outputs, "all_tiled.bedGraph"), 
-#'   col_names = c("chr", "start", "end", "score"), 
+#' write_insertion_bedgraph(frags, file.path(bedgraph_outputs, "all_tiled.bedGraph"),
+#'   chrom_sizes = chrom_sizes, normalization_method = "cpm", tile_width = 100)
+#' reads <- readr::read_tsv(file.path(bedgraph_outputs, "all_tiled.bedGraph"),
+#'   col_names = c("chr", "start", "end", "score"),
 #'   show_col_types = FALSE)
 #' head(reads)
+#'
+#'
 #' @return `NULL`
 #' @inheritParams footprint
+#' @rdname write_insertion_bedgraph
 #' @export
 write_insertion_bedgraph <- function(
   fragments, path, 
@@ -562,14 +566,30 @@ write_insertion_bedgraph <- function(
 
 
 #' Create bed files from fragments split by cell group.
-#' @param path (character vector) Path to save bed files. If `cell_groups` is provided, this must be a character vector with one name for each level in `cell_groups` 
-#' Else, this must be a character vector of length 1.
-#' @param cell_groups (character vector or factor) Cluster assignments for each cell.
 #' @param threads (int) Number of threads to use.
 #' @param verbose (bool) Whether to provide verbose progress output to console.
-#' @return `NULL`
 #' @inheritParams write_insertion_bedgraph
-#' @keywords internal
+#' @rdname write_insertion_bedgraph
+#' @examples
+#' ######################################################
+#' ## `write_insertion_bed()` examples
+#' ######################################################
+#'
+#' # We utilize two groups this time
+#' bed_outputs <- file.path(tempdir(), "bed_outputs")
+#' cell_groups <- rep(c("A", "B"), length.out = length(cellNames(frags)))
+#' bed_paths <- c(file.path(bed_outputs, "A.bed"), file.path(bed_outputs, "B.bed"))
+#' names(bed_paths) <- c("A", "B")
+#' write_insertion_bed(
+#'   frags, path = bed_paths, cell_groups = cell_groups,
+#'   verbose = TRUE
+#' )
+#' list.files(bed_outputs)
+#' head(readr::read_tsv(
+#'   file.path(bed_outputs, "A.bed"),
+#'   col_names = c("chr", "start", "end"), show_col_types = FALSE)
+#' )
+#' @export
 write_insertion_bed <- function(fragments, path,
                                 cell_groups = rlang::rep_along(cellNames(fragments), "all"),
                                 insertion_mode = c("both", "start_only",  "end_only"),
