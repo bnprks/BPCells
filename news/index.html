@@ -52,6 +52,16 @@
 <div class="section level3">
 <h3 id="features-0-4-0">Features<a class="anchor" aria-label="anchor" href="#features-0-4-0"></a></h3>
 <ul><li>Create a wrapper function <code><a href="../reference/cluster_cells_graph.html">cluster_cells_graph()</a></code> that wraps the steps of knn object creation, graph adjacency creation, and clustering all within a single function (pull request <a href="https://github.com/bnprks/BPCells/issues/292" class="external-link">#292</a>)</li>
+<li>Add <code>tile_width</code> and <code>normalization</code> arguments to <code><a href="../reference/write_insertion_bedgraph.html">write_insertion_bedgraph()</a></code> to allow for more flexible bedgraph creation (pull request <a href="https://github.com/bnprks/BPCells/issues/299" class="external-link">#299</a>)</li>
+<li>Export <code><a href="../reference/write_insertion_bedgraph.html">write_insertion_bed()</a></code>, which originally was only a helper for peak calling (pull request <a href="https://github.com/bnprks/BPCells/issues/302" class="external-link">#302</a>)</li>
+</ul></div>
+<div class="section level3">
+<h3 id="to-dos-0-4-0">To-dos<a class="anchor" aria-label="anchor" href="#to-dos-0-4-0"></a></h3>
+<ul><li>Add support for sparse pseudobulking in <code><a href="../reference/pseudobulk_matrix.html">pseudobulk_matrix()</a></code>. Currently in progress in <a href="https://github.com/bnprks/BPCells/issues/268" class="external-link">#268</a>.</li>
+<li>Add support for duplicate rows/cols in subsetting operations.</li>
+<li>Add support for matrix matrix addition.</li>
+<li>Maybe add CCA support?</li>
+<li>Refactor C++ backend to take in the logic in R S4 methods. This would allow for a cleaner seperation of R and C++ code, and would allow for much quicker porting to Python in the future.</li>
 </ul></div>
 </div>
     <div class="section level2">
