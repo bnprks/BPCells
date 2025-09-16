@@ -1,6 +1,0 @@
-﻿bpcells.experimental.import\_10x\_fragments
-===========================================
-
-.. currentmodule:: bpcells.experimental
-
-.. autofunction:: import_10x_fragments

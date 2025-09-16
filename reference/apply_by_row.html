@@ -108,10 +108,10 @@ project. For calculating colMeans on a sparse single cell RNA matrix it is about
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">rownames</a></span><span class="op">(</span><span class="va">mat</span><span class="op">)</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="st">"gene"</span>, <span class="fl">1</span><span class="op">:</span><span class="fl">4</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">mat</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>       [,1] [,2] [,3] [,4] [,5] [,6] [,7] [,8] [,9] [,10]</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> gene1    0    0    2    0    0    0    3    3    0     2</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> gene2    1    0    3    0    0    3    4    1    1     2</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> gene3    2    0    1    0    0    2    0    0    0     0</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> gene4    0    0    0    0    3    0    1    0    0     0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> gene1    0    4    0    0    4    0    0    0    0     4</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> gene2    0    0    0    4    0    2    0    0    0     2</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> gene3    2    0    0    0    2    3    0    4    2     0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> gene4    1    0    0    4    3    4    1    1    0     5</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="va">mat</span> <span class="op">&lt;-</span> <span class="va">mat</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> <span class="fu">as</span><span class="op">(</span><span class="st">"dgCMatrix"</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> <span class="fu">as</span><span class="op">(</span><span class="st">"IterableMatrix"</span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
@@ -132,12 +132,12 @@ project. For calculating colMeans on a sparse single cell RNA matrix it is about
 <span class="r-in"><span><span class="fu">apply_by_row</span><span class="op">(</span><span class="va">mat_row_order</span>, </span></span>
 <span class="r-in"><span> <span class="kw">function</span><span class="op">(</span><span class="va">val</span>, <span class="va">row</span>, <span class="va">col</span><span class="op">)</span> <span class="fu"><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum</a></span><span class="op">(</span><span class="va">val</span><span class="op">)</span> <span class="op">/</span> <span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">ncol</a></span><span class="op">(</span><span class="va">mat_row_order</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> <span class="fu"><a href="https://rdrr.io/r/base/unlist.html" class="external-link">unlist</a></span><span class="op">(</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 1.0 1.5 0.5 0.4</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 1.2 0.8 1.3 1.9</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Also analogous to running rowMeans() without names</span></span></span>
 <span class="r-in"><span><span class="fu">rowMeans</span><span class="op">(</span><span class="va">mat</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> gene1 gene2 gene3 gene4 </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   1.0   1.5   0.5   0.4 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   1.2   0.8   1.3   1.9 </span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co">#######################################################################</span></span></span>
@@ -147,7 +147,7 @@ project. For calculating colMeans on a sparse single cell RNA matrix it is about
 <span class="r-in"><span><span class="fu">apply_by_col</span><span class="op">(</span><span class="va">mat</span>, </span></span>
 <span class="r-in"><span> <span class="kw">function</span><span class="op">(</span><span class="va">val</span>, <span class="va">row</span>, <span class="va">col</span><span class="op">)</span> <span class="kw">if</span> <span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="va">val</span><span class="op">)</span> <span class="op">&gt;</span> <span class="fl">0</span><span class="op">)</span> <span class="va">row</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/which.min.html" class="external-link">which.max</a></span><span class="op">(</span><span class="va">val</span><span class="op">)</span><span class="op">]</span> <span class="kw">else</span> <span class="fl">1L</span></span></span>
 <span class="r-in"><span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> <span class="fu"><a href="https://rdrr.io/r/base/unlist.html" class="external-link">unlist</a></span><span class="op">(</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [1] 3 1 2 1 4 2 2 1 2 1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  [1] 3 1 1 2 1 4 4 3 3 4</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span></span></span>
 </code></pre></div>
@@ -161,7 +161,7 @@ project. For calculating colMeans on a sparse single cell RNA matrix it is about
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.1.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.3.</p>
 </div>
 
     </footer></div>

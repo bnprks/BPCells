@@ -52,6 +52,16 @@
 <div class="section level3">
 <h3 id="features-0-4-0">Features<a class="anchor" aria-label="anchor" href="#features-0-4-0"></a></h3>
 <ul><li>Create a wrapper function <code><a href="../reference/cluster_cells_graph.html">cluster_cells_graph()</a></code> that wraps the steps of knn object creation, graph adjacency creation, and clustering all within a single function (pull request <a href="https://github.com/bnprks/BPCells/issues/292" class="external-link">#292</a>)</li>
+<li>Add <code>tile_width</code> and <code>normalization</code> arguments to <code><a href="../reference/write_insertion_bedgraph.html">write_insertion_bedgraph()</a></code> to allow for more flexible bedgraph creation (pull request <a href="https://github.com/bnprks/BPCells/issues/299" class="external-link">#299</a>)</li>
+<li>Export <code><a href="../reference/write_insertion_bedgraph.html">write_insertion_bed()</a></code>, which originally was only a helper for peak calling (pull request <a href="https://github.com/bnprks/BPCells/issues/302" class="external-link">#302</a>)</li>
+</ul></div>
+<div class="section level3">
+<h3 id="to-dos-0-4-0">To-dos<a class="anchor" aria-label="anchor" href="#to-dos-0-4-0"></a></h3>
+<ul><li>Add support for sparse pseudobulking in <code><a href="../reference/pseudobulk_matrix.html">pseudobulk_matrix()</a></code>. Currently in progress in <a href="https://github.com/bnprks/BPCells/issues/268" class="external-link">#268</a>.</li>
+<li>Add support for duplicate rows/cols in subsetting operations.</li>
+<li>Add support for matrix matrix addition.</li>
+<li>Maybe add CCA support?</li>
+<li>Refactor C++ backend to take in the logic in R S4 methods. This would allow for a cleaner seperation of R and C++ code, and would allow for much quicker porting to Python in the future.</li>
 </ul></div>
 </div>
     <div class="section level2">
@@ -72,7 +82,7 @@
 <li>Export <code><a href="../reference/merge_peaks_iterative.html">merge_peaks_iterative()</a></code>, which helps create non-overlapping peak sets. (pull request <a href="https://github.com/bnprks/BPCells/issues/216" class="external-link">#216</a>)</li>
 <li>Add support for <code>uint16_t</code> when reading in anndata matrices using <code><a href="../reference/open_matrix_anndata_hdf5.html">open_matrix_anndata_hdf5()</a></code>. (pull request <a href="https://github.com/bnprks/BPCells/issues/248" class="external-link">#248</a>)</li>
 <li>Switch <code><a href="../reference/open_matrix_10x_hdf5.html">write_matrix_10x_hdf5()</a></code> to use signed rather than unsigned integers for <code>indices</code>, <code>indptr</code>, and <code>shape</code> to improve compatibility with 10x-produced files. (Thanks to <a href="https://github.com/ycli1995" class="external-link">@ycli1995</a> for pull request <a href="https://github.com/bnprks/BPCells/issues/256" class="external-link">#256</a>)</li>
-<li>Change behaviour during <code><a href="https://rdrr.io/r/base/cbind.html" class="external-link">cbind()</a></code> and <code><a href="https://rdrr.io/r/base/cbind.html" class="external-link">rbind()</a></code> when matrices are of different types, to upcast instead of erroring out. (pull request <a href="https://github.com/bnprks/BPCells/issues/265" class="external-link">#265</a>)</li>
+<li>Change behaviour during <code><a href="https://rdrr.io/pkg/BiocGenerics/man/cbind.html" class="external-link">cbind()</a></code> and <code><a href="https://rdrr.io/pkg/BiocGenerics/man/cbind.html" class="external-link">rbind()</a></code> when matrices are of different types, to upcast instead of erroring out. (pull request <a href="https://github.com/bnprks/BPCells/issues/265" class="external-link">#265</a>)</li>
 </ul></div>
 <div class="section level3">
 <h3 id="bug-fixes-0-3-1">Bug-fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-0-3-1"></a></h3>
@@ -225,7 +235,7 @@
 <li>Fixed bug writing fragment files with &gt;512 chromosomes.</li>
 <li>Fixed bug when reading fragment files with &gt;4 billion fragments.</li>
 <li>Fixed file permissions errors when using read-only hdf5 files (Issue <a href="https://github.com/bnprks/BPCells/issues/26" class="external-link">#26</a> reported thanks to <a href="https://github.com/ttumkaya" class="external-link">@ttumkaya</a>)</li>
-<li>Renaming <code><a href="https://rdrr.io/r/base/colnames.html" class="external-link">rownames()</a></code> or <code><a href="https://rdrr.io/r/base/colnames.html" class="external-link">colnames()</a></code> is now propagated when saving matrices (Issue <a href="https://github.com/bnprks/BPCells/issues/29" class="external-link">#29</a> reported thanks to <a href="https://github.com/realzehuali" class="external-link">@realzehuali</a>, with an additional fix after report thanks to <a href="https://github.com/Dario-Rocha" class="external-link">@Dario-Rocha</a>)</li>
+<li>Renaming <code><a href="https://rdrr.io/pkg/BiocGenerics/man/row_colnames.html" class="external-link">rownames()</a></code> or <code><a href="https://rdrr.io/pkg/BiocGenerics/man/row_colnames.html" class="external-link">colnames()</a></code> is now propagated when saving matrices (Issue <a href="https://github.com/bnprks/BPCells/issues/29" class="external-link">#29</a> reported thanks to <a href="https://github.com/realzehuali" class="external-link">@realzehuali</a>, with an additional fix after report thanks to <a href="https://github.com/Dario-Rocha" class="external-link">@Dario-Rocha</a>)</li>
 <li>Fixed 64-bit integer overflow (!) that could cause incorrect p-value calculations in <code><a href="../reference/marker_features.html">marker_features()</a></code> for features with more than 2.6 million zeros.</li>
 <li>Improved robustness of the Windows installation process for setups that do not need the -lsz linker flag to compile hdf5</li>
 <li>Fixed possible memory safety bug where wrapped R objects (such as dgCMatrix) could be potentially garbage collected while C++ was still trying to access the data in rare circumstances.</li>
@@ -298,7 +308,7 @@
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.1.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.3.</p>
 </div>
 
     </footer></div>

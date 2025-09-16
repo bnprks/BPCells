@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">BPCells</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -102,7 +102,7 @@ as <code>(monoNucleosomal + multiNucleosomal) / subNucleosomal</code>.</p>
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co">## Prep data</span></span></span>
-<span class="r-in"><span><span class="va">frags</span> <span class="op">&lt;-</span> <span class="fu"><a href="demo_data.html">get_demo_frags</a></span><span class="op">(</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">frags</span> <span class="op">&lt;-</span> <span class="fu"><a href="demo_data.html">get_demo_frags</a></span><span class="op">(</span>subset <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">reference_dir</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempdir</a></span><span class="op">(</span><span class="op">)</span>, <span class="st">"references"</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">genes</span> <span class="op">&lt;-</span> <span class="fu"><a href="read_gtf.html">read_gencode_transcripts</a></span><span class="op">(</span></span></span>
 <span class="r-in"><span>  <span class="va">reference_dir</span>, </span></span>
@@ -119,12 +119,12 @@ as <code>(monoNucleosomal + multiNucleosomal) / subNucleosomal</code>.</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># A tibble: 6 × 10</span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   cellName  TSSEnrichment nFrags subNucleosomal monoNucleosomal multiNucleosomal</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>             <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>          <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>           <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>            <span style="color: #949494; font-style: italic;">&lt;int&gt;</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">1</span> TTTAGCAA…          25.8   <span style="text-decoration: underline;">1</span>387            704             476              207</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">2</span> AGCCGGTT…          24.5   <span style="text-decoration: underline;">2</span>983           <span style="text-decoration: underline;">1</span>430            <span style="text-decoration: underline;">1</span>040              513</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">3</span> TGATTAGT…          18.5   <span style="text-decoration: underline;">1</span>093            542             367              184</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">4</span> ATTGACTC…          23.0   <span style="text-decoration: underline;">1</span>204            654             355              195</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">5</span> CGTTAGGT…          21.5   <span style="text-decoration: underline;">1</span>387            610             520              257</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">6</span> AAACCGCG…          42.9   <span style="text-decoration: underline;">2</span>650           <span style="text-decoration: underline;">1</span>279             925              446</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">1</span> TTTAGCAA…          45.1  <span style="text-decoration: underline;">16</span>363           <span style="text-decoration: underline;">8</span>069            <span style="text-decoration: underline;">5</span>588             <span style="text-decoration: underline;">2</span>706</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">2</span> AGCCGGTT…          30.9  <span style="text-decoration: underline;">33</span>313          <span style="text-decoration: underline;">15</span>855           <span style="text-decoration: underline;">11</span>868             <span style="text-decoration: underline;">5</span>590</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">3</span> TGATTAGT…          41.9  <span style="text-decoration: underline;">11</span>908           <span style="text-decoration: underline;">6</span>103            <span style="text-decoration: underline;">3</span>817             <span style="text-decoration: underline;">1</span>988</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">4</span> ATTGACTC…          43.9  <span style="text-decoration: underline;">13</span>075           <span style="text-decoration: underline;">6</span>932            <span style="text-decoration: underline;">4</span>141             <span style="text-decoration: underline;">2</span>002</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">5</span> CGTTAGGT…          31.5  <span style="text-decoration: underline;">14</span>874           <span style="text-decoration: underline;">6</span>833            <span style="text-decoration: underline;">5</span>405             <span style="text-decoration: underline;">2</span>636</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">6</span> AAACCGCG…          41.9  <span style="text-decoration: underline;">30</span>141          <span style="text-decoration: underline;">15</span>085           <span style="text-decoration: underline;">10</span>199             <span style="text-decoration: underline;">4</span>857</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># ℹ 4 more variables: ReadsInTSS &lt;dbl&gt;, ReadsFlankingTSS &lt;dbl&gt;,</span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;">#   ReadsInPromoter &lt;dbl&gt;, ReadsInBlacklist &lt;dbl&gt;</span></span>
 </code></pre></div>
@@ -138,7 +138,7 @@ as <code>(monoNucleosomal + multiNucleosomal) / subNucleosomal</code>.</p>
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.0.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.3.</p>
 </div>
 
     </footer></div>

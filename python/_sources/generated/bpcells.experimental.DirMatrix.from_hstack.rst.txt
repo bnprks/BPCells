@@ -1,6 +1,0 @@
-bpcells.experimental.DirMatrix.from\_hstack
-===========================================
-
-.. currentmodule:: bpcells.experimental
-
-.. automethod:: DirMatrix.from_hstack

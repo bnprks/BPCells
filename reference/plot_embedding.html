@@ -217,10 +217,10 @@ value stays the same.</p>
 <span class="r-in"><span><span class="va">clusts</span> <span class="op">&lt;-</span> <span class="fu"><a href="knn.html">knn_hnsw</a></span><span class="op">(</span><span class="va">pca</span>, ef <span class="op">=</span> <span class="fl">500</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span></span>
 <span class="r-in"><span>  <span class="fu"><a href="knn_graph.html">knn_to_snn_graph</a></span><span class="op">(</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span></span>
 <span class="r-in"><span>  <span class="fu"><a href="cluster_graph.html">cluster_graph_louvain</a></span><span class="op">(</span><span class="op">)</span></span></span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> 14:20:50 Building HNSW index with metric 'euclidean' ef = 200 M = 16 using 1 threads</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> 14:20:50 Finished building index</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> 14:20:50 Searching HNSW index with ef = 500 and 1 threads</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> 14:20:50 Finished searching</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> 23:55:35 Building HNSW index with metric 'euclidean' ef = 200 M = 16 using 1 threads</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> 23:55:36 Finished building index</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> 23:55:36 Searching HNSW index with ef = 500 and 1 threads</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> 23:55:36 Finished searching</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co">## Plot embedding</span></span></span>
@@ -228,7 +228,7 @@ value stays the same.</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] 2600</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="fu">plot_embedding</span><span class="op">(</span><span class="va">clusts</span>, <span class="va">umap</span><span class="op">)</span></span></span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error in names(x) &lt;- value:</span> 'names' attribute [175] must be the same length as the vector [1]</span>
+<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error in names(x) &lt;- value:</span> 'names' attribute [174] must be the same length as the vector [1]</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co">### Can also plot by features</span></span></span>
@@ -249,7 +249,7 @@ value stays the same.</p>
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.1.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.3.</p>
 </div>
 
     </footer></div>

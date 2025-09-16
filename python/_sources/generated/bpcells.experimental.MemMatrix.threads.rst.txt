@@ -1,6 +1,0 @@
-bpcells.experimental.MemMatrix.threads
-======================================
-
-.. currentmodule:: bpcells.experimental
-
-.. autoattribute:: MemMatrix.threads
