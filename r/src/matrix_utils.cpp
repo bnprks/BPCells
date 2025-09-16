@@ -1,5 +1,5 @@
 // Copyright 2021 BPCells contributors
-// 
+//
 // Licensed under the Apache License, Version 2.0 <LICENSE-APACHE or
 // https://www.apache.org/licenses/LICENSE-2.0> or the MIT license
 // <LICENSE-MIT or https://opensource.org/licenses/MIT>, at your
@@ -24,6 +24,7 @@
 #include "bpcells-cpp/matrixIterators/TSparseMatrixWriter.h"
 #include "bpcells-cpp/matrixUtils/WilcoxonRankSum.h"
 #include "bpcells-cpp/matrixUtils/Pseudobulk.h"
+#include "bpcells-cpp/matrixUtils/PseudobulkSparse.h"
 #include "bpcells-cpp/matrixUtils/Quantile.h"
 #include "bpcells-cpp/matrixIterators/MatrixAccumulators.h"
 #include "R_array_io.h"
@@ -693,7 +694,7 @@ List pseudobulk_matrix_cpp(SEXP mat,
             methodFlags = methodFlags | PseudobulkStatsMethod::NonZeros | PseudobulkStatsMethod::Mean | PseudobulkStatsMethod::Variance;
         }
     }
-    
+
     PseudobulkStats res = run_with_R_interrupt_check(
         &pseudobulk_matrix<double>,
         take_unique_xptr<MatrixLoader<double>>(mat),
@@ -707,6 +708,40 @@ List pseudobulk_matrix_cpp(SEXP mat,
         Named("mean") = res.mean,
         Named("variance") = res.var
     );
+}
+
+
+// [[Rcpp::export]]
+List pseudobulk_matrix_sparse_cpp(SEXP mat,
+                           std::vector<uint32_t> cell_groups,
+                           std::vector<std::string> method,
+                           bool transpose) {
+  PseudobulkStatsMethod methodFlags = static_cast<PseudobulkStatsMethod>(0);
+  for (std::string &m : method) {
+    if (m == "nonzeros") {
+      methodFlags = methodFlags | PseudobulkStatsMethod::NonZeros;
+    } else if (m == "sum") {
+      methodFlags = methodFlags | PseudobulkStatsMethod::Sum;
+    } else if (m == "mean") {
+      methodFlags = methodFlags | PseudobulkStatsMethod::NonZeros | PseudobulkStatsMethod::Mean;
+    } else if (m == "variance") {
+      methodFlags = methodFlags | PseudobulkStatsMethod::NonZeros | PseudobulkStatsMethod::Mean | PseudobulkStatsMethod::Variance;
+    }
+  }
+
+  PseudobulkStatsSparse res = run_with_R_interrupt_check(
+    &pseudobulk_matrix_sparse<double>,
+    take_unique_xptr<MatrixLoader<double>>(mat),
+    std::cref(cell_groups),
+    (PseudobulkStatsMethod)methodFlags,
+    transpose
+  );
+  return List::create(
+    Named("nonzeros") = res.non_zeros,
+    Named("sum") = res.sum,
+    Named("mean") = res.mean,
+    Named("variance") = res.var
+  );
 }
 
 // [[Rcpp::export]]
