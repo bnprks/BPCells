@@ -106,9 +106,9 @@ jobs:
             ${{ matrix.os == 'macos-13' && 'MACOSX_DEPLOYMENT_TARGET="10.15"' || '' }}
             BPCELLS_NUM_BUILD_JOBS=4
           CIBW_BEFORE_ALL_MACOS: >-
-            brew install ccache &&
-            python {package}/scripts/install_deps.py $GITHUB_WORKSPACE/lib-cache
-          
+            brew install ccache && 
+            ${{ steps.cache-libs.outputs.cache-hit != 'true' && 'python $GITHUB_WORKSPACE/python/scripts/install_deps.py $GITHUB_WORKSPACE/lib-cache &&' || '' }} 
+            true
           # VCPKG_BINARY_SOURCES from: https://learn.microsoft.com/en-us/vcpkg/consume/binary-caching-github-actions-cache
           CIBW_ENVIRONMENT_WINDOWS: >- 
             LIBRARY_PATH="$GITHUB_WORKSPACE\\lib-cache\\lib"
