@@ -103,6 +103,7 @@ jobs:
             CXX="ccache g++"
             CPATH="$GITHUB_WORKSPACE/lib-cache/include"
             LIBRARY_PATH="$GITHUB_WORKSPACE/lib-cache/lib:$GITHUB_WORKSPACE/lib-cache/lib64"
+            DYLD_LIBRARY_PATH="$GITHUB_WORKSPACE/lib-cache/lib:$GITHUB_WORKSPACE/lib-cache/lib64:$DYLD_LIBRARY_PATH"
             ${{ matrix.os == 'macos-13' && 'MACOSX_DEPLOYMENT_TARGET="10.15"' || '' }}
             BPCELLS_NUM_BUILD_JOBS=4
           CIBW_BEFORE_ALL_MACOS: >-
