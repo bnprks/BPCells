@@ -85,7 +85,7 @@ jobs:
           VCPKG_BINARY_SOURCES: "clear;x-gha,readwrite"
 
       - name: Build wheels
-        uses: pypa/cibuildwheel@v2.19.1
+        uses: pypa/cibuildwheel@v3.2.0
         with:
           package-dir: python
         env:
