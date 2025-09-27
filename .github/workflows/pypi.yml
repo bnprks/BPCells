@@ -98,9 +98,9 @@ jobs:
             BPCELLS_NUM_BUILD_JOBS=4
           CIBW_BEFORE_ALL_LINUX: >-
             LIB_CACHE=/host/$GITHUB_WORKSPACE/lib-cache bash {package}/scripts/install_ccache_linux.sh &&
+            export CXX="ccache g++" &&
             ${{ steps.cache-libs.outputs.cache-hit != 'true' && 'python {package}/scripts/install_deps.py /host/$GITHUB_WORKSPACE/lib-cache &&' || '' }}
-            cp -r /host/$GITHUB_WORKSPACE/lib-cache/* /usr/local &&
-            export CXX="ccache g++"
+            cp -r /host/$GITHUB_WORKSPACE/lib-cache/* /usr/local
 
           # We need to set MACOSX_DEPLOYMENT_TARGET="10.15" on macos-13 because otherwise
           # it tries to target a MacOS verision before std::filesystem is available (10.9 currently)
