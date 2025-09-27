@@ -98,7 +98,7 @@ jobs:
             LD_LIBRARY_PATH="/host${GITHUB_WORKSPACE}/lib-cache/lib:/host${GITHUB_WORKSPACE}/lib-cache/lib64:$LD_LIBRARY_PATH"
             BPCELLS_NUM_BUILD_JOBS=4
           CIBW_BEFORE_ALL_LINUX: >-
-            LIB_CACHE=/host/$LIB_CACHE bash {package}/scripts/install_ccache_linux.sh &&
+            LIB_CACHE=/host/$GITHUB_WORKSPACE/lib-cache bash {package}/scripts/install_ccache_linux.sh &&
             ${{ steps.cache-libs.outputs.cache-hit != 'true' && 'python {package}/scripts/install_deps.py /host/$GITHUB_WORKSPACE/lib-cache &&' || '' }}
             cp -r /host/$GITHUB_WORKSPACE/lib-cache/* /usr/local
 
