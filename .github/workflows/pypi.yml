@@ -90,6 +90,7 @@ jobs:
           package-dir: python
         env:
           CIBW_SKIP: "cp314-win* cp314t-win*"
+          CIBW_TEST_SKIP: "cp314-win* cp314t-win*"
           CIBW_ENVIRONMENT_LINUX: >-
             CXX="ccache g++"
             CPATH="/host${GITHUB_WORKSPACE}/lib-cache/include"
