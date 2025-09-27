@@ -92,7 +92,6 @@ jobs:
           CIBW_SKIP: "cp314-win* cp314t-win*"
           CIBW_TEST_SKIP: "cp314-win* cp314t-win*"
           CIBW_ENVIRONMENT_LINUX: >-
-            CXX="ccache g++"
             CPATH="/host${GITHUB_WORKSPACE}/lib-cache/include"
             LIBRARY_PATH="/host${GITHUB_WORKSPACE}/lib-cache/lib:/host${GITHUB_WORKSPACE}/lib-cache/lib64"
             LD_LIBRARY_PATH="/host${GITHUB_WORKSPACE}/lib-cache/lib:/host${GITHUB_WORKSPACE}/lib-cache/lib64:$LD_LIBRARY_PATH"
@@ -100,7 +99,8 @@ jobs:
           CIBW_BEFORE_ALL_LINUX: >-
             LIB_CACHE=/host/$GITHUB_WORKSPACE/lib-cache bash {package}/scripts/install_ccache_linux.sh &&
             ${{ steps.cache-libs.outputs.cache-hit != 'true' && 'python {package}/scripts/install_deps.py /host/$GITHUB_WORKSPACE/lib-cache &&' || '' }}
-            cp -r /host/$GITHUB_WORKSPACE/lib-cache/* /usr/local
+            cp -r /host/$GITHUB_WORKSPACE/lib-cache/* /usr/local &&
+            export CXX="ccache g++"
 
           # We need to set MACOSX_DEPLOYMENT_TARGET="10.15" on macos-13 because otherwise
           # it tries to target a MacOS verision before std::filesystem is available (10.9 currently)
