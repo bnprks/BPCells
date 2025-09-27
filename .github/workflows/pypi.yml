@@ -89,8 +89,7 @@ jobs:
         with:
           package-dir: python
         env:
-          CIBW_SKIP: "cp314-win* cp314t-win*"
-          CIBW_TEST_SKIP: "cp314-win* cp314t-win*"
+          CIBW_BUILD: "cp312-*"
           CIBW_ENVIRONMENT_LINUX: >-
             CPATH="/host${GITHUB_WORKSPACE}/lib-cache/include"
             LIBRARY_PATH="/host${GITHUB_WORKSPACE}/lib-cache/lib:/host${GITHUB_WORKSPACE}/lib-cache/lib64"
