@@ -1,6 +1,6 @@
 Package: BPCells
 Title: Single Cell Counts Matrices to PCA
-Version: 0.3.0
+Version: 0.3.1
 Authors@R: c(
     person(given = "Benjamin",
            family = "Parks",
@@ -50,11 +50,12 @@ Suggests:
     GenomicRanges,
     matrixStats,
     igraph,
-    pkgdown, 
-    devtools, 
-    uwot, 
-    irlba, 
     RcppHNSW,
+    RcppAnnoy,
+    pkgdown,
+    devtools,
+    uwot,
+    irlba,
     BiocManager, 
     BSgenome.Hsapiens.UCSC.hg38,
     motifmatchr, 

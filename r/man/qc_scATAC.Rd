@@ -54,7 +54,7 @@ as \code{(monoNucleosomal + multiNucleosomal) / subNucleosomal}.
 }
 \examples{
 ## Prep data
-frags <- get_demo_frags()
+frags <- get_demo_frags(subset = FALSE)
 reference_dir <- file.path(tempdir(), "references")
 genes <- read_gencode_transcripts(
   reference_dir, 

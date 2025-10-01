@@ -197,8 +197,8 @@ write_insertion_bed_cpp <- function(fragments, output_path, mode_string) {
     invisible(.Call(`_BPCells_write_insertion_bed_cpp`, fragments, output_path, mode_string))
 }
 
-write_insertion_bedgraph_cpp <- function(fragments, cell_groups, output_paths, mode_string) {
-    invisible(.Call(`_BPCells_write_insertion_bedgraph_cpp`, fragments, cell_groups, output_paths, mode_string))
+write_insertion_bedgraph_cpp <- function(fragments, cell_groups, output_paths, mode_string, tile_width, normalization_method_string, chrom_sizes) {
+    invisible(.Call(`_BPCells_write_insertion_bedgraph_cpp`, fragments, cell_groups, output_paths, mode_string, tile_width, normalization_method_string, chrom_sizes))
 }
 
 iterate_peak_matrix_cpp <- function(fragments, chr, start, end, chr_levels, mode) {

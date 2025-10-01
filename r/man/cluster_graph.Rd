@@ -7,19 +7,19 @@
 \title{Cluster an adjacency matrix}
 \usage{
 cluster_graph_leiden(
-  snn,
+  mat,
   resolution = 1,
   objective_function = c("modularity", "CPM"),
   seed = 12531,
   ...
 )
 
-cluster_graph_louvain(snn, resolution = 1, seed = 12531)
+cluster_graph_louvain(mat, resolution = 1, seed = 12531)
 
-cluster_graph_seurat(snn, resolution = 0.8, ...)
+cluster_graph_seurat(mat, resolution = 0.8, ...)
 }
 \arguments{
-\item{snn}{Symmetric adjacency matrix (dgCMatrix) output from e.g. \code{knn_to_snn_graph()} or \code{knn_to_geodesic_graph()}. Only the lower triangle is used}
+\item{mat}{Symmetric adjacency matrix (dgCMatrix) output from e.g. \code{knn_to_snn_graph()} or \code{knn_to_geodesic_graph()}. Only the lower triangle is used.}
 
 \item{resolution}{Resolution parameter. Higher values result in more clusters}
 

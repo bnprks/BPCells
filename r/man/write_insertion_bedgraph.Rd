@@ -2,37 +2,105 @@
 % Please edit documentation in R/atac_utils.R
 \name{write_insertion_bedgraph}
 \alias{write_insertion_bedgraph}
-\title{Write insertion counts to bedgraph file}
+\alias{write_insertion_bed}
+\title{Write insertion counts to bed/bedgraph file}
 \usage{
 write_insertion_bedgraph(
   fragments,
   path,
   cell_groups = rlang::rep_along(cellNames(fragments), "all"),
-  insertion_mode = c("both", "start_only", "end_only")
+  insertion_mode = c("both", "start_only", "end_only"),
+  tile_width = 1,
+  normalization_method = c("none", "cpm", "n_cells"),
+  chrom_sizes = NULL
+)
+
+write_insertion_bed(
+  fragments,
+  path,
+  cell_groups = rlang::rep_along(cellNames(fragments), "all"),
+  insertion_mode = c("both", "start_only", "end_only"),
+  verbose = FALSE,
+  threads = 1
 )
 }
 \arguments{
 \item{fragments}{IterableFragments object}
 
-\item{path}{(character vector) Path(s) to save bedgraph to, optionally ending in ".gz" to add gzip compression. If \code{cell_groups} is provided,
+\item{path}{(character vector) Path(s) to save bed/bedgraphs to, optionally ending in ".gz" to add gzip compression. If \code{cell_groups} is provided,
 \code{path} must be a named character vector, with one name for each level in \code{cell_groups}}
 
 \item{cell_groups}{Character or factor assigning a group to each cell, in order of
 \code{cellNames(fragments)}}
 
 \item{insertion_mode}{(string) Which fragment ends to use for coverage calculation. One of "both", "start_only", or "end_only"}
+
+\item{tile_width}{(integer) Width of tiles to use for binning insertions.  All insertions in a single bin are summed.
+If \code{tile_width} is 1, then this is functionally equivalent to \code{write_insertion_bedgraph()}.}
+
+\item{normalization_method}{(character) Normalization method to use.  One of:
+\itemize{
+\item \code{none}: No normalization
+\item \code{cpm}: Normalize by total number of fragments in each group, scaling to 1 million fragments (i.e. CPM).
+\item \code{n_cells}: Normalize by total number of cells in each group.
+}}
+
+\item{chrom_sizes}{(GRanges, data.frame, list, numeric, or NULL) Chromosome sizes to clip tiles when at the end of a chromosome.
+If \code{NULL}, then tile_width is required to be 1.
+If a data.frame or list, must contain columns \code{chr} and \code{end} (See \code{help("genomic-ranges-like")}).
+If a numeric vector, then it is assumed to be the chromosome sizes in the order of \code{chrNames(fragments)}.}
+
+\item{verbose}{(bool) Whether to provide verbose progress output to console.}
+
+\item{threads}{(int) Number of threads to use.}
+}
+\value{
+\code{NULL}
 }
 \description{
-Write insertion counts data for one or more pseudobulks to bedgraph format. This reports the total
-number insertions at each basepair for each group listed in \code{cell_groups}.
+Write insertion counts data for one or more pseudobulks to bed/bedgraph format.
+Beds only hold chrom, start, and end data, while bedGraphs also provide a score column.
+This reports the total number of insertions at each basepair for each group listed in \code{cell_groups}.
 }
 \examples{
 ## Prep data
 frags <- get_demo_frags()
-bedgraph_outputs <- file.path(tempdir(), "bedgraph_outputs", "all.tar.gz")
+bedgraph_outputs <- file.path(tempdir(), "bedgraph_outputs")
 
-
+######################################################
+## `write_insertion_bedgraph()` examples
+######################################################
 ## Write insertions
 write_insertion_bedgraph(frags, file.path(bedgraph_outputs, "all.tar.gz"))
 list.files(bedgraph_outputs)
+
+# With tiling
+chrom_sizes <- read_ucsc_chrom_sizes("./reference", genome="hg38") \%>\% 
+  dplyr::filter(chr \%in\% c("chr4", "chr11"))
+write_insertion_bedgraph(frags, file.path(bedgraph_outputs, "all_tiled.bedGraph"),
+  chrom_sizes = chrom_sizes, normalization_method = "cpm", tile_width = 100)
+reads <- readr::read_tsv(file.path(bedgraph_outputs, "all_tiled.bedGraph"),
+  col_names = c("chr", "start", "end", "score"),
+  show_col_types = FALSE)
+head(reads)
+
+
+######################################################
+## `write_insertion_bed()` examples
+######################################################
+
+# We utilize two groups this time
+bed_outputs <- file.path(tempdir(), "bed_outputs")
+cell_groups <- rep(c("A", "B"), length.out = length(cellNames(frags)))
+bed_paths <- c(file.path(bed_outputs, "A.bed"), file.path(bed_outputs, "B.bed"))
+names(bed_paths) <- c("A", "B")
+write_insertion_bed(
+  frags, path = bed_paths, cell_groups = cell_groups,
+  verbose = TRUE
+)
+list.files(bed_outputs)
+head(readr::read_tsv(
+  file.path(bed_outputs, "A.bed"),
+  col_names = c("chr", "start", "end"), show_col_types = FALSE)
+)
 }

@@ -1,11 +1,30 @@
-# BPCells 0.3.1 (7/16/2025)
+# BPCells 0.4.0 (in-progress main branch)
 
-The BPCells 0.3.1 release covers 7 months of changes and 39 commits from 5 contributors. Notable changes include writing matrices in AnnData's dense format, 
+## Breaking changes
+- Change first parameter name of `cluster_graph_leiden()`, `cluster_graph_louvain()` and `cluster_graph_seurat()` from `snn` to `mat` to more accurately reflect the input type.  (pull request #292)
+
+## Features
+- Create a wrapper function `cluster_cells_graph()` that wraps the steps of knn object creation, graph adjacency creation, and clustering all within a single function (pull request #292)
+- Add `tile_width` and `normalization` arguments to `write_insertion_bedgraph()` to allow for more flexible bedgraph creation (pull request #299)
+- Export `write_insertion_bed()`, which originally was only a helper for peak calling (pull request #302)
+
+## To-dos
+- Add support for sparse pseudobulking in `pseudobulk_matrix()`.  Currently in progress in #268.
+- Add support for duplicate rows/cols in subsetting operations.
+- Add support for matrix matrix addition.
+- Maybe add CCA support? 
+- Refactor C++ backend to take in the logic in R S4 methods.  This would allow for a cleaner seperation of R and C++ code, and would allow for much quicker porting
+  to Python in the future.
+
+# BPCells 0.3.1 (7/21/2025)
+
+The BPCells 0.3.1 release covers 7 months of changes and 40 commits from 5 contributors. Notable changes include writing matrices in AnnData's dense format, 
 and methods for retrieving demo data for testing and examples.
 Full details of changes below.
 
 Thanks to @ycli1995 and @mfansler for pull requests that contributed to this release, as well as to users who
-sumitted github issues to help identify and fix bugs.
+submitted github issues to help identify and fix bugs.
+
 
 ## Features
 - Add `write_matrix_anndata_hdf5_dense()` which allows writing matrices in AnnData's dense format, most commonly used for `obsm` or `varm` matrices. (Thanks to @ycli1995 for pull request #166)

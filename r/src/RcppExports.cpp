@@ -649,15 +649,18 @@ BEGIN_RCPP
 END_RCPP
 }
 // write_insertion_bedgraph_cpp
-void write_insertion_bedgraph_cpp(SEXP fragments, std::vector<uint32_t> cell_groups, std::vector<std::string> output_paths, std::string mode_string);
-RcppExport SEXP _BPCells_write_insertion_bedgraph_cpp(SEXP fragmentsSEXP, SEXP cell_groupsSEXP, SEXP output_pathsSEXP, SEXP mode_stringSEXP) {
+void write_insertion_bedgraph_cpp(SEXP fragments, std::vector<uint32_t> cell_groups, std::vector<std::string> output_paths, std::string mode_string, uint32_t tile_width, std::string normalization_method_string, std::vector<uint32_t> chrom_sizes);
+RcppExport SEXP _BPCells_write_insertion_bedgraph_cpp(SEXP fragmentsSEXP, SEXP cell_groupsSEXP, SEXP output_pathsSEXP, SEXP mode_stringSEXP, SEXP tile_widthSEXP, SEXP normalization_method_stringSEXP, SEXP chrom_sizesSEXP) {
 BEGIN_RCPP
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< SEXP >::type fragments(fragmentsSEXP);
     Rcpp::traits::input_parameter< std::vector<uint32_t> >::type cell_groups(cell_groupsSEXP);
     Rcpp::traits::input_parameter< std::vector<std::string> >::type output_paths(output_pathsSEXP);
     Rcpp::traits::input_parameter< std::string >::type mode_string(mode_stringSEXP);
-    write_insertion_bedgraph_cpp(fragments, cell_groups, output_paths, mode_string);
+    Rcpp::traits::input_parameter< uint32_t >::type tile_width(tile_widthSEXP);
+    Rcpp::traits::input_parameter< std::string >::type normalization_method_string(normalization_method_stringSEXP);
+    Rcpp::traits::input_parameter< std::vector<uint32_t> >::type chrom_sizes(chrom_sizesSEXP);
+    write_insertion_bedgraph_cpp(fragments, cell_groups, output_paths, mode_string, tile_width, normalization_method_string, chrom_sizes);
     return R_NilValue;
 END_RCPP
 }
@@ -2613,7 +2616,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_BPCells_fragment_lengths_cpp", (DL_FUNC) &_BPCells_fragment_lengths_cpp, 1},
     {"_BPCells_footprint_matrix_cpp", (DL_FUNC) &_BPCells_footprint_matrix_cpp, 8},
     {"_BPCells_write_insertion_bed_cpp", (DL_FUNC) &_BPCells_write_insertion_bed_cpp, 3},
-    {"_BPCells_write_insertion_bedgraph_cpp", (DL_FUNC) &_BPCells_write_insertion_bedgraph_cpp, 4},
+    {"_BPCells_write_insertion_bedgraph_cpp", (DL_FUNC) &_BPCells_write_insertion_bedgraph_cpp, 7},
     {"_BPCells_iterate_peak_matrix_cpp", (DL_FUNC) &_BPCells_iterate_peak_matrix_cpp, 6},
     {"_BPCells_iterate_tile_matrix_cpp", (DL_FUNC) &_BPCells_iterate_tile_matrix_cpp, 7},
     {"_BPCells_iterate_shift_cpp", (DL_FUNC) &_BPCells_iterate_shift_cpp, 3},
