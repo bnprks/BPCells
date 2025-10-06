@@ -21,7 +21,7 @@ jobs:
     strategy:
       matrix:
         # macos-13 is an intel runner, macos-14 is apple silicon
-        os: [ubuntu-latest, windows-latest, macos-13, macos-14]
+        os: [ubuntu-latest, windows-latest, macos-14]
 
     steps:
       - uses: actions/checkout@v4
@@ -93,6 +93,7 @@ jobs:
         with:
           package-dir: python
         env:
+          CIBW_BUILD: "cp39-* cp310-* cp311-* cp312-* cp313-*"
           CIBW_ENVIRONMENT_LINUX: >-
             CPATH="/host${GITHUB_WORKSPACE}/lib-cache/include"
             LIBRARY_PATH="/host${GITHUB_WORKSPACE}/lib-cache/lib:/host${GITHUB_WORKSPACE}/lib-cache/lib64"
@@ -118,7 +119,6 @@ jobs:
             true
           # VCPKG_BINARY_SOURCES from: https://learn.microsoft.com/en-us/vcpkg/consume/binary-caching-github-actions-cache
           CIBW_ENVIRONMENT_WINDOWS: >- 
-            SETUPTOOLS_DISABLE_PARALLEL_BUILD=1
             INCLUDE="$GITHUB_WORKSPACE\\lib-cache\\include;$INCLUDE"
             LIB="$GITHUB_WORKSPACE\\lib-cache\\lib;$LIB"
             PATH="$GITHUB_WORKSPACE\\lib-cache\\bin;$PATH"
