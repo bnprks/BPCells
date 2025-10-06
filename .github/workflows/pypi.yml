@@ -118,6 +118,7 @@ jobs:
             true
           # VCPKG_BINARY_SOURCES from: https://learn.microsoft.com/en-us/vcpkg/consume/binary-caching-github-actions-cache
           CIBW_ENVIRONMENT_WINDOWS: >- 
+            SETUPTOOLS_DISABLE_PARALLEL_BUILD=1
             INCLUDE="$GITHUB_WORKSPACE\\lib-cache\\include;$INCLUDE"
             LIB="$GITHUB_WORKSPACE\\lib-cache\\lib;$LIB"
             PATH="$GITHUB_WORKSPACE\\lib-cache\\bin;$PATH"
