@@ -118,8 +118,14 @@ jobs:
             true
           # VCPKG_BINARY_SOURCES from: https://learn.microsoft.com/en-us/vcpkg/consume/binary-caching-github-actions-cache
           CIBW_ENVIRONMENT_WINDOWS: >- 
-            LIBRARY_PATH="$GITHUB_WORKSPACE\\lib-cache\\lib"
+            INCLUDE="$GITHUB_WORKSPACE\\lib-cache\\include;$INCLUDE"
+            LIB="$GITHUB_WORKSPACE\\lib-cache\\lib;$LIB"
+            PATH="$GITHUB_WORKSPACE\\lib-cache\\bin;$PATH"
+            HDF5_DIR="$GITHUB_WORKSPACE\\lib-cache"
+            HDF5_INCLUDE_DIR="$GITHUB_WORKSPACE\\lib-cache\\include"
+            HDF5_LIBRARY_DIR="$GITHUB_WORKSPACE\\lib-cache\\lib"
             CPATH="$GITHUB_WORKSPACE\\lib-cache\\include"
+            LIBRARY_PATH="$GITHUB_WORKSPACE\\lib-cache\\lib"
             BPCELLS_PYTEST_DATA_CACHE="$GITHUB_WORKSPACE\\bpcells-pytest-data-cache"
             BPCELLS_NUM_BUILD_JOBS=4
           # As of 8/26/2024, a delvewheel dependency version bump (pefile) broke delvewheel, so pin these 
