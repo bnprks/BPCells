@@ -21,7 +21,7 @@ jobs:
     strategy:
       matrix:
         # macos-13 is an intel runner, macos-14 is apple silicon
-        os: [ubuntu-latest, windows-latest, macos-13, macos-14]
+        os: [ubuntu-latest, windows-latest, macos-14]
 
     steps:
       - uses: actions/checkout@v4
@@ -84,17 +84,24 @@ jobs:
         env: 
           VCPKG_BINARY_SOURCES: "clear;x-gha,readwrite"
 
+      - name: Add HDF5 to PATH (Windows)
+        if: runner.os == 'Windows'
+        run: echo "$env:GITHUB_WORKSPACE\\lib-cache\\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+        
       - name: Build wheels
-        uses: pypa/cibuildwheel@v2.19.1
+        uses: pypa/cibuildwheel@v3.2.0
         with:
           package-dir: python
         env:
+          CIBW_BUILD: "cp39-* cp310-* cp311-* cp312-* cp313-*"
           CIBW_ENVIRONMENT_LINUX: >-
-            CXX="ccache g++"
+            CPATH="/host${GITHUB_WORKSPACE}/lib-cache/include"
+            LIBRARY_PATH="/host${GITHUB_WORKSPACE}/lib-cache/lib:/host${GITHUB_WORKSPACE}/lib-cache/lib64"
+            LD_LIBRARY_PATH="/host${GITHUB_WORKSPACE}/lib-cache/lib:/host${GITHUB_WORKSPACE}/lib-cache/lib64:$LD_LIBRARY_PATH"
             BPCELLS_NUM_BUILD_JOBS=4
           CIBW_BEFORE_ALL_LINUX: >-
-            LIB_CACHE=/host/$LIB_CACHE bash {package}/scripts/install_ccache_linux.sh &&
-            ${{ steps.cache-libs.outputs.cache-hit != 'true' && 'python {package}/scripts/install_deps.py /host/$GITHUB_WORKSPACE/lib-cache &&' || '' }}
+            LIB_CACHE=/host/$GITHUB_WORKSPACE/lib-cache bash {package}/scripts/install_ccache_linux.sh &&
+            ${{ steps.cache-libs.outputs.cache-hit != 'true' && 'CXX="ccache g++" python {package}/scripts/install_deps.py /host/$GITHUB_WORKSPACE/lib-cache &&' || '' }}
             cp -r /host/$GITHUB_WORKSPACE/lib-cache/* /usr/local
 
           # We need to set MACOSX_DEPLOYMENT_TARGET="10.15" on macos-13 because otherwise
@@ -103,16 +110,23 @@ jobs:
             CXX="ccache g++"
             CPATH="$GITHUB_WORKSPACE/lib-cache/include"
             LIBRARY_PATH="$GITHUB_WORKSPACE/lib-cache/lib:$GITHUB_WORKSPACE/lib-cache/lib64"
+            DYLD_LIBRARY_PATH="$GITHUB_WORKSPACE/lib-cache/lib:$GITHUB_WORKSPACE/lib-cache/lib64:$DYLD_LIBRARY_PATH"
             ${{ matrix.os == 'macos-13' && 'MACOSX_DEPLOYMENT_TARGET="10.15"' || '' }}
             BPCELLS_NUM_BUILD_JOBS=4
           CIBW_BEFORE_ALL_MACOS: >-
-            brew install ccache &&
-            python {package}/scripts/install_deps.py $GITHUB_WORKSPACE/lib-cache
-          
+            brew install ccache && 
+            ${{ steps.cache-libs.outputs.cache-hit != 'true' && 'python $GITHUB_WORKSPACE/python/scripts/install_deps.py $GITHUB_WORKSPACE/lib-cache &&' || '' }} 
+            true
           # VCPKG_BINARY_SOURCES from: https://learn.microsoft.com/en-us/vcpkg/consume/binary-caching-github-actions-cache
           CIBW_ENVIRONMENT_WINDOWS: >- 
-            LIBRARY_PATH="$GITHUB_WORKSPACE\\lib-cache\\lib"
+            INCLUDE="$GITHUB_WORKSPACE\\lib-cache\\include;$INCLUDE"
+            LIB="$GITHUB_WORKSPACE\\lib-cache\\lib;$LIB"
+            PATH="$GITHUB_WORKSPACE\\lib-cache\\bin;$PATH"
+            HDF5_DIR="$GITHUB_WORKSPACE\\lib-cache"
+            HDF5_INCLUDE_DIR="$GITHUB_WORKSPACE\\lib-cache\\include"
+            HDF5_LIBRARY_DIR="$GITHUB_WORKSPACE\\lib-cache\\lib"
             CPATH="$GITHUB_WORKSPACE\\lib-cache\\include"
+            LIBRARY_PATH="$GITHUB_WORKSPACE\\lib-cache\\lib"
             BPCELLS_PYTEST_DATA_CACHE="$GITHUB_WORKSPACE\\bpcells-pytest-data-cache"
             BPCELLS_NUM_BUILD_JOBS=4
           # As of 8/26/2024, a delvewheel dependency version bump (pefile) broke delvewheel, so pin these 
