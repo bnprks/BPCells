@@ -739,14 +739,14 @@ rlang::on_load({
 #' 
 #' 
 #' @export
-rowMaxs <- function(x, rows = NULL, cols = NULL, na.rm = FALSE, ...) UseMethod("rowMaxs")
+rowMaxs <- function(x, rows = NULL, cols = NULL, na.rm = FALSE, ..., useNames = TRUE) UseMethod("rowMaxs")
 #' @export
 #' @method rowMaxs default
-rowMaxs.default <- function(x, rows = NULL, cols = NULL, na.rm = FALSE, ...) {
+rowMaxs.default <- function(x, rows = NULL, cols = NULL, na.rm = FALSE, ..., useNames = TRUE) {
   if (requireNamespace("MatrixGenerics", quietly = TRUE)) {
-    MatrixGenerics::rowMaxs(x, rows = rows, cols = cols, na.rm = na.rm, ...)
+    MatrixGenerics::rowMaxs(x, rows = rows, cols = cols, na.rm = na.rm, ..., useNames = useNames)
   } else if (requireNamespace("matrixStats", quietly = TRUE)) {
-    matrixStats::rowMaxs(x, rows = rows, cols = cols, na.rm = na.rm, ...)
+    matrixStats::rowMaxs(x, rows = rows, cols = cols, na.rm = na.rm, ..., useNames = useNames)
   }
   else {
     stop("Can't run rowMaxs on a non-BPCells object unless MatrixGenerics or matrixStats are installed.")
@@ -754,7 +754,7 @@ rowMaxs.default <- function(x, rows = NULL, cols = NULL, na.rm = FALSE, ...) {
 }
 #' @export
 #' @method rowMaxs IterableMatrix
-rowMaxs.IterableMatrix <- function(x, rows = NULL, cols = NULL, na.rm = FALSE, ...) {
+rowMaxs.IterableMatrix <- function(x, rows = NULL, cols = NULL, na.rm = FALSE, ..., useNames = TRUE) {
   if(!is.null(rows) || !is.null(cols) || !isFALSE(na.rm)) {
     stop("rowMaxs(IterableMatrix) doesn't support extra arguments rows, cols, or na.rm")
   }
@@ -764,7 +764,7 @@ rowMaxs.IterableMatrix <- function(x, rows = NULL, cols = NULL, na.rm = FALSE, .
   } else {
     res <- matrix_max_per_row_cpp(iter)
   }
-  names(res) <- rownames(x)
+  if (useNames) names(res) <- rownames(x)
   return(res)
 }
 rlang::on_load({
@@ -785,14 +785,14 @@ rlang::on_load({
 #' 
 #' 
 #' @export
-colMaxs <- function(x, rows = NULL, cols = NULL, na.rm = FALSE, ...) UseMethod("colMaxs")
+colMaxs <- function(x, rows = NULL, cols = NULL, na.rm = FALSE, ..., useNames = TRUE) UseMethod("colMaxs")
 #' @export
 #' @method colMaxs default
-colMaxs.default <- function(x, rows = NULL, cols = NULL, na.rm = FALSE, ...) {
+colMaxs.default <- function(x, rows = NULL, cols = NULL, na.rm = FALSE, ..., useNames = TRUE) {
   if (requireNamespace("MatrixGenerics", quietly = TRUE)) {
-    MatrixGenerics::colMaxs(x, rows = rows, cols = cols, na.rm = na.rm, ...)
+    MatrixGenerics::colMaxs(x, rows = rows, cols = cols, na.rm = na.rm, ..., useNames = useNames)
   } else if (requireNamespace("matrixStats", quietly = TRUE)) {
-    matrixStats::colMaxs(x, rows = rows, cols = cols, na.rm = na.rm, ...)
+    matrixStats::colMaxs(x, rows = rows, cols = cols, na.rm = na.rm, ..., useNames = useNames)
   }
   else {
     stop("Can't run colMaxs on a non-BPCells object unless MatrixGenerics or matrixStats are installed.")
@@ -800,14 +800,14 @@ colMaxs.default <- function(x, rows = NULL, cols = NULL, na.rm = FALSE, ...) {
 }
 #' @export
 #' @method colMaxs IterableMatrix
-colMaxs.IterableMatrix <- function(x, rows = NULL, cols = NULL, na.rm = FALSE, ...) {
+colMaxs.IterableMatrix <- function(x, rows = NULL, cols = NULL, na.rm = FALSE, ..., useNames = TRUE) {
   iter <- iterate_matrix(convert_matrix_type(x, "double"))
   if(x@transpose == TRUE) {
     res <- matrix_max_per_row_cpp(iter)
   } else {
     res <- matrix_max_per_col_cpp(iter)
   }
-  names(res) <- colnames(x)
+  if (useNames) names(res) <- colnames(x)
   return(res)
 }
 rlang::on_load({
@@ -1745,7 +1745,7 @@ transpose_storage_order <- function(matrix, outdir = tempfile("transpose"), tmpd
 #' as it can only be applied to the indexes of each entry but not the values.
 #' There will still be some space savings, but far less than for counts matrices.
 #'
-#' @param matrix Input matrix, either IterableMatrix or dgCMatrix
+#' @param mat Input matrix, either IterableMatrix or dgCMatrix
 #' @param compress Whether or not to compress the data.
 #' @return BPCells matrix object
 #' @examples
@@ -2393,6 +2393,7 @@ setMethod("short_description", "AnnDataMatrixH5", function(x) {
 #' than the dense variant (see details for more information).
 #'
 #' @inheritParams open_matrix_hdf5
+#' @param mat IterableMatrix to write to hdf5 file
 #' @return AnnDataMatrixH5 object, with cells as the columns.
 #' @details 
 #'   **Efficiency considerations**: Reading from a dense AnnData matrix will generally be slower
@@ -2999,17 +3000,21 @@ convert_matrix_type <- function(matrix, type = c("uint32_t", "double", "float"))
 
 #' Convert between BPCells matrix and R objects.
 #'
-#' BPCells matrices can be interconverted with Matrix package 
+#' BPCells matrices can be interconverted with Matrix package
 #' dgCMatrix sparse matrices, as well as base R
 #' dense matrices (though this may result in high memory usage for large matrices)
 #'
+#' @aliases as as.matrix
+#'
 #' @usage
 #' # Convert to R from BPCells
-#' as(bpcells_mat, "dgCMatrix") # Sparse matrix conversion
-#' as.matrix(bpcells_mat) # Dense matrix conversion
-#' 
+#' as(x, "dgCMatrix") # Sparse matrix conversion
+#' as.matrix(x, ...) # Dense matrix conversion
+#'
 #' # Convert to BPCells from R
-#' as(dgc_mat, "IterableMatrix")
+#' as(x, "IterableMatrix")
+#' @param x Matrix object to convert
+#' @param ... Additional arguments passed to methods
 #' @examples
 #' mat <- get_demo_mat()[1:2, 1:2]
 #' mat
@@ -3214,7 +3219,8 @@ matrix_stats <- function(matrix,
 
 
 #' @export
-svds <- function (A, k, nu = k, nv = k, opts = list(), ...) UseMethod("svds")
+#' @param ... Additional arguments passed to `Rspectra::svds()` if svd is ran on a non-BPCells matrix
+svds <- function (A, k, nu = k, nv = k, opts = list(), threads = 0L, ...) UseMethod("svds")
 
 # RSpectra exports svds as an S3 Generic, but is a suggested dependency
 # With this approach, IterableMatrix objects will work with RSpectra::svds,

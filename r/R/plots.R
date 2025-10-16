@@ -320,6 +320,7 @@ plot_fragment_length <- function(fragments, max_length = 500, return_data = FALS
 #' @inheritParams footprint
 #' @param genes Coordinate ranges for genes (must include strand)
 #' @param smooth Number of bases to smooth over (rolling average)
+#' @param colors Discrete color palette to use for cell groups
 #' @seealso `footprint()`, `plot_tf_footprint()`
 #' @examples
 #' ## Prep data
@@ -390,6 +391,7 @@ plot_tss_profile <- function(fragments, genes, cell_groups = rlang::rep_along(ce
 #' @inheritParams footprint
 #' @param motif_positions Coordinate ranges for motifs (must include strand) and
 #'   have constant width
+#' @param colors Discrete color palette to use for cell groups
 #' @seealso `footprint()`, `plot_tss_profile()`
 #' @export
 plot_tf_footprint <- function(fragments, motif_positions, cell_groups = rlang::rep_along(cellNames(fragments), "all"),
@@ -827,11 +829,9 @@ rotate_x_labels <- function(degrees = 45) {
 #' ## Plot dot
 #' plot <- plot_dot(mat, c("MS4A1", "CD3E"), cell_types)
 #' 
-#' \dontrun{
 #'  BPCells:::render_plot_from_storage(
 #'    plot, width = 4, height = 5
-#' }
-#' 
+#' )
 #' @export
 plot_dot <- function(source, features, groups, group_order = NULL, gene_mapping = human_gene_mapping,
                      colors = c("lightgrey", "#4682B4"),

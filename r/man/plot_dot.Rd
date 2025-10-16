@@ -46,9 +46,7 @@ cell_types <- paste("Group", rep(1:3, length.out = length(colnames(mat))))
 ## Plot dot
 plot <- plot_dot(mat, c("MS4A1", "CD3E"), cell_types)
 
-\dontrun{
  BPCells:::render_plot_from_storage(
    plot, width = 4, height = 5
-}
-
+)
 }

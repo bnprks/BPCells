@@ -16,6 +16,8 @@ min_by_col(mat, vals)
 \item{mat}{IterableMatrix}
 
 \item{val}{Single positive numeric value}
+
+\item{vals}{Numeric vector of positive values, with length equal to the number of rows (min_by_row) or columns (min_by_col)}
 }
 \value{
 IterableMatrix

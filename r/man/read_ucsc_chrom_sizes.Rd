@@ -11,6 +11,16 @@ read_ucsc_chrom_sizes(
   timeout = 300
 )
 }
+\arguments{
+\item{dir}{Output directory to cache the downloaded chrom sizes file}
+
+\item{genome}{Genome name. Defaults to hg38}
+
+\item{keep_chromosomes}{Regular expression with which chromosomes to keep.
+Defaults to standard chromosomes (chr1-22, chrX, chrY)}
+
+\item{timeout}{Maximum time in seconds to wait for download from UCSC}
+}
 \description{
 Read chromosome sizes from UCSC and return as a tibble with one row per
 chromosome.

@@ -21,6 +21,8 @@ normalize_ranges(
 
 \item{zero_based_coords}{If true, coordinates start and 0 and the end coordinate is not included in the range.
 If false, coordinates start at 1 and the end coordinate is included in the range}
+
+\item{n}{How many call frames to go up when printing errors}
 }
 \value{
 data frame with zero-based coordinates, and elements chr (factor), start (int), and end (int).

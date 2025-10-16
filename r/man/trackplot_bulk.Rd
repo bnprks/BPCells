@@ -24,7 +24,7 @@ trackplot_bulk(
 \item{fragments}{Fragments object}
 
 \item{region}{GRanges of length 1 with region to plot, or list/data.frame with
-one entry each for chr, start, end. See \code{gene_region()} or \link{genomic-ranges} for details}
+one entry each for chr, start, end. See \code{gene_region()} or \link{genomic-ranges-like} for details}
 
 \item{groups}{Vector with one entry per cell, specifying the cell's group}
 

@@ -106,6 +106,7 @@ setMethod("cellNames", "IterableFragments", function(x) {
 #' Set cell names
 #' @param x an IterableFragments object
 #' @param value Character vector of new names
+#' @param ... Additional arguments (not used)
 #' @details * `cellNames<-` It is only possible to replace names, not add new names.
 #' @describeIn IterableFragments-methods Set cell names
 #' @examples
@@ -652,10 +653,12 @@ open_fragments_hdf5 <- function(path, group = "fragments", buffer_size = 16384L)
 #' Convert between BPCells fragments and R objects.
 #'
 #' BPCells fragments can be interconverted with GRanges and data.frame R objects.
-#' The main conversion method is R's builtin `as()` function, though the 
-#' `convert_to_fragments()` helper is also available. For all R objects except 
+#' The main conversion method is R's builtin `as()` function, though the
+#' `convert_to_fragments()` helper is also available. For all R objects except
 #' GRanges, BPCells assumes a 0-based, end-exclusive coordinate system. (See
 #' [genomic-ranges-like] reference for details)
+#'
+#' @aliases as as.data.frame
 #'
 #' @usage 
 #' # Convert from R to BPCells
@@ -663,15 +666,16 @@ open_fragments_hdf5 <- function(path, group = "fragments", buffer_size = 16384L)
 #' as(x, "IterableFragments")
 #' 
 #' # Convert from BPCells to R
-#' as.data.frame(bpcells_fragments)
-#' as(bpcells_fragments, "data.frame")
-#' as(bpcells_fragments, "GRanges")
+#' as.data.frame(x, ...)
+#' as(x, "data.frame")
+#' as(x, "GRanges")
 #'
 #' @param x `r document_granges("Fragment coordinates", extras=c("cell_id" = "cell barcodes or unique identifiers as string or factor"))`
 #' @param zero_based_coords Whether to convert the ranges from a 1-based end-inclusive
 #'    coordinate system to a 0-based end-exclusive coordinate system. Defaults to true
 #'    for GRanges and false for other formats
 #'    (see this [archived UCSC blogpost](https://web.archive.org/web/20210920203703/http://genome.ucsc.edu/blog/the-ucsc-genome-browser-coordinate-counting-systems/))
+#' @param ... Additional arguments passed to methods
 #' @return **convert_to_fragments()**: IterableFragments object
 #' @examples
 #' frags_table <- tibble::tibble(

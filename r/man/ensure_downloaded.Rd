@@ -9,9 +9,9 @@ ensure_downloaded(path, backup_url, timeout)
 \arguments{
 \item{path}{Output path to write file}
 
-\item{timeout}{timeout in seconds}
+\item{backup_url}{to download from}
 
-\item{url}{to download from}
+\item{timeout}{timeout in seconds}
 }
 \description{
 Download a file with a custom timeout

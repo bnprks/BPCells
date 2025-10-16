@@ -10,8 +10,30 @@
 #' @importFrom Rcpp sourceCpp
 #' @importClassesFrom Matrix dgCMatrix
 #' @importFrom Matrix t
-#' @importFrom methods .hasSlot Arith as callNextMethod cbind2 Compare is Math Math2 new rbind2 setAs setClass setGeneric setMethod show
+#' @importFrom methods .hasSlot Arith as callNextMethod canCoerce cbind2 Compare is Math Math2 new rbind2 setAs setClass setGeneric setMethod show
+#' @importFrom stats as.formula end model.matrix p.adjust ppois qpois quantile start
+#' @importFrom utils download.file head tail untar
+#' @importFrom graphics text
+#' @importFrom ggplot2 theme element_text
 NULL
+
+# Suppress CMD check warnings for legitimate NSE usage
+utils::globalVariables(c(
+  # Data manipulation variables (dplyr/data.table style)
+  ".", "chr", "start", "end", "strand", "counts", "group", "tile", "enrichment",
+  "p_val", "q_val", "group_rank", "from", "to", "neighbor_dist", "start_dist",
+  "end_dist", "idx", "pos", "normalized_insertions", "row_number", "start_tmp",
+  "feature", "transcript_id", "y", "size", "gene_name", "label", "color", "x",
+  "loop_id", "right", "left", "text", "origin",
+
+  # Plot variables
+  "average", "percent", "proportion", "reads", "xmin", "xmax", "ymin", "ymax",
+  "nFrags", "TSSEnrichment", "cellName", "smoothed_enrichment", "position",
+  "genes", ".env", "track_label",
+
+  # Data objects/mappings
+  "human_gene_mapping"
+))
 
 #' @importFrom magrittr %>%
 #' @export

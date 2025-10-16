@@ -39,6 +39,8 @@ otherwise it is interpreted as a discrete color palette in \code{ggplot2::scale_
 
 \item{annotation_size}{size for annotation lines in mm}
 
+\item{track_label}{Label to put on the side of the track}
+
 \item{return_data}{If true, return data from just before plotting rather than a plot.}
 }
 \value{
@@ -65,12 +67,10 @@ peaks <- tibble::tibble(
 region <- "chr4:3034877-3044877"
 
 ## Plot peaks
-\dontrun{
- BPCells:::render_plot_from_storage(
-   trackplot_genome_annotation(peaks, region, color_by = "enrichment"),
-   width = 6, height = 1
- )
-}
+BPCells:::render_plot_from_storage(
+  trackplot_genome_annotation(peaks, region, color_by = "enrichment"),
+  width = 6, height = 1
+)
 }
 \seealso{
 \code{trackplot_combine()}, \code{trackplot_coverage()}, \code{trackplot_loop()}, \code{trackplot_scalebar()}, \code{trackplot_gene()}

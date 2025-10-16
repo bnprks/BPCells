@@ -14,7 +14,7 @@ Description: > Efficient operations for single cell ATAC-seq fragments and
     RNA counts matrices. Interoperable with standard file formats, and introduces
     efficient bit-packed formats that allow large storage savings and increased
     read speeds.
-License: Apache-2.0 or MIT
+License: Apache License (>= 2) | MIT + file LICENSE
 Encoding: UTF-8
 LazyData: true
 RoxygenNote: 7.3.2
@@ -23,9 +23,12 @@ URL: https://bnprks.github.io/BPCells, https://github.com/bnprks/BPCells
 LinkingTo: 
     Rcpp,
     RcppEigen
-Imports: 
+Imports:
     methods,
     grDevices,
+    graphics,
+    stats,
+    utils,
     magrittr,
     Matrix,
     Rcpp,
@@ -40,6 +43,7 @@ Imports:
     ggplot2 (>= 3.4.0),
     scales,
     patchwork,
+    purrr,
     scattermore,
     ggrepel,
     RColorBrewer,
@@ -48,22 +52,29 @@ Suggests:
     hexbin,
     tidyr,
     GenomicRanges,
+    GenomeInfoDb,
+    S4Vectors,
     matrixStats,
+    MatrixGenerics,
+    RSpectra,
     igraph,
     RcppHNSW,
     RcppAnnoy,
+    Seurat,
     pkgdown,
     devtools,
     uwot,
     irlba,
-    BiocManager, 
+    BiocManager,
     BSgenome.Hsapiens.UCSC.hg38,
-    motifmatchr, 
-    chromVARmotifs, 
-    png
+    motifmatchr,
+    chromVARmotifs,
+    png,
+    testthat (>= 3.0.0)
 Additional_repositories: 
     https://bioconductor.org/packages/release/data/annotation,
     https://immanuelazn.github.io/drat
 Depends: 
     R (>= 4.0.0)
+SystemRequirements: C++17
 Config/Needs/website: pkgdown, devtools, uwot, irlba, RcppHNSW, igraph, BiocManager, bioc::BSgenome.Hsapiens.UCSC.hg38, github::GreenleafLab/motifmatchr, github::GreenleafLab/chromVARmotifs, png

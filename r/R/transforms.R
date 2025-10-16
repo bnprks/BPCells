@@ -256,6 +256,7 @@ setMethod("short_description", "TransformMinByRow", function(x) {
 })
 
 #' @rdname min_elementwise
+#' @param vals Numeric vector of positive values, with length equal to the number of rows (min_by_row) or columns (min_by_col)
 #' @description **min_by_row**: Take the minimum with a per-row constant
 #' @examples
 #' #######################################################################

@@ -320,10 +320,8 @@ render_plot_from_storage <- function(plot, width, height) {
 #' plot <- trackplot_combine(
 #'     list(plot_scalebar, plot_coverage, plot_gene + ggplot2::guides(color = "none"))
 #' )
-#' \dontrun{
-#'  BPCells:::render_plot_from_storage(
-#'    plot, width = 6, height = 4)
-#' }
+#' BPCells:::render_plot_from_storage(
+#'   plot, width = 6, height = 4)
 #' @export
 trackplot_combine <- function(tracks, side_plot = NULL, title = NULL, side_plot_width = 0.3) {
   for (plot in tracks) {
@@ -464,7 +462,7 @@ trackplot_combine <- function(tracks, side_plot = NULL, title = NULL, side_plot_
 #' `TRUE`, the return value will be modified accordingly.
 #' @seealso `trackplot_combine()`, `trackplot_gene()`, `trackplot_loop()`, `trackplot_scalebar()`
 #' @examples
-## Prep data
+#' ## Prep data
 #' frags <- get_demo_frags()
 #' 
 #' ## Use genes and blacklist to determine proper number of reads per cell
@@ -478,15 +476,13 @@ trackplot_combine <- function(tracks, side_plot = NULL, title = NULL, side_plot_
 #' region <- "chr4:3034877-4034877"
 #' cell_types <- paste("Group", rep(1:3, length.out = length(cellNames(frags))))
 #' 
-#' \dontrun{
-#'  BPCells:::render_plot_from_storage(
-#'    trackplot_coverage(
-#'      frags, region, groups = cell_types, 
-#'      cell_read_counts = read_counts
-#'    ),
-#'    width = 6, height = 3
-#'  )
-#' }
+#' BPCells:::render_plot_from_storage(
+#'   trackplot_coverage(
+#'     frags, region, groups = cell_types, 
+#'     cell_read_counts = read_counts
+#'   ),
+#'   width = 6, height = 3
+#' )
 #' @export
 trackplot_coverage <- function(fragments, region, groups,
                            cell_read_counts,
@@ -583,11 +579,10 @@ trackplot_coverage <- function(fragments, region, groups,
 #'    
 #'    Usually given as the output from `read_gencode_transcripts()`
 #' @inheritParams trackplot_coverage
-#' @param labels Character vector with labels for each item in transcripts. NA for items that should not be labeled
 #' @param exon_size size for exon lines in units of mm
 #' @param gene_size size for intron/gene lines in units of mm
-#' @param transcript_size size for transcript lines in units of mm
 #' @param label_size size for transcript labels in units of mm
+#' @param track_label Label to put on the side of the track
 #' @return Plot of gene locations
 #' @seealso `trackplot_combine()`, `trackplot_coverage()`, `trackplot_loop()`, `trackplot_scalebar()`
 #' @examples
@@ -601,9 +596,7 @@ trackplot_coverage <- function(fragments, region, groups,
 #' 
 #' ## Plot gene trackplot
 #' plot <- trackplot_gene(transcripts, region)
-#' \dontrun{
-#'  BPCells:::render_plot_from_storage(plot, width = 6, height = 1)
-#' }
+#' BPCells:::render_plot_from_storage(plot, width = 6, height = 1)
 #' @export
 trackplot_gene <- function(transcripts, region, exon_size = 2.5, gene_size = 0.5, label_size = 11*.8/ggplot2::.pt, track_label="Genes", return_data = FALSE) {
   region <- normalize_ranges(region)
@@ -699,6 +692,7 @@ trackplot_gene <- function(transcripts, region, exon_size = 2.5, gene_size = 0.5
 #' @param colors Vector of hex color codes to use for the color scale. For numeric `color_by` data, this is passed to `ggplot2::scale_color_gradientn()`,
 #'               otherwise it is interpreted as a discrete color palette in `ggplot2::scale_color_manual()`
 #' @param show_strand If TRUE, show strand direction as arrows
+#' @param track_label Label to put on the side of the track
 #' @return Plot of genomic loci if return_data is FALSE, otherwise returns the data frame used to generate the plot
 #' @seealso `trackplot_combine()`, `trackplot_coverage()`, `trackplot_loop()`, `trackplot_scalebar()`, `trackplot_gene()`
 #' @examples
@@ -719,12 +713,10 @@ trackplot_gene <- function(transcripts, region, exon_size = 2.5, gene_size = 0.5
 #' region <- "chr4:3034877-3044877"
 #' 
 #' ## Plot peaks
-#' \dontrun{
-#'  BPCells:::render_plot_from_storage(
-#'    trackplot_genome_annotation(peaks, region, color_by = "enrichment"),
-#'    width = 6, height = 1
-#'  )
-#' }
+#' BPCells:::render_plot_from_storage(
+#'   trackplot_genome_annotation(peaks, region, color_by = "enrichment"),
+#'   width = 6, height = 1
+#' )
 #' @export
 trackplot_genome_annotation <- function(loci, region, color_by = NULL, colors = NULL, label_by = NULL, label_size = 11*.8/ggplot2::.pt, show_strand=FALSE,
                                         annotation_size = 2.5, track_label="Peaks", return_data = FALSE) {
@@ -843,6 +835,7 @@ trackplot_genome_annotation <- function(loci, region, color_by = NULL, colors = 
 #'               otherwise it is interpreted as a discrete color palette in `ggplot2::scale_color_manual()`
 #' @param allow_truncated If FALSE, remove any loops that are not fully contained within `region`
 #' @param curvature Curvature value between 0 and 1. 1 is a 180-degree arc, and 0 is flat lines.
+#' @param track_label Label to put on the side of the track
 #' @inheritParams trackplot_coverage
 #' 
 #' @return Plot of loops connecting genomic coordinates
@@ -859,9 +852,7 @@ trackplot_genome_annotation <- function(loci, region, color_by = NULL, colors = 
 #' 
 #' ## Plot loops
 #' plot <- trackplot_loop(loops, region, color_by = "score")
-#' \dontrun{
-#'  BPCells:::render_plot_from_storage(plot, width = 6, height = 1.5)
-#' }
+#' BPCells:::render_plot_from_storage(plot, width = 6, height = 1.5)
 #' @export
 trackplot_loop <- function(loops, region, color_by=NULL, colors=NULL, allow_truncated=TRUE, curvature=0.75, track_label="Links", return_data = FALSE) {
   region <- normalize_ranges(region)
@@ -961,11 +952,9 @@ trackplot_loop <- function(loops, region, color_by=NULL, colors=NULL, allow_trun
 #' @seealso `trackplot_combine()`, `trackplot_coverage()`, `trackplot_gene()`, `trackplot_loop()`
 #' @examples
 #' region <- "chr4:3034877-3044877"
-#' \dontrun{
-#'  BPCells:::render_plot_from_storage(
-#'    trackplot_scalebar(region), width = 6, height = 1
-#'  )
-#' }
+#' BPCells:::render_plot_from_storage(
+#'   trackplot_scalebar(region), width = 6, height = 1
+#' )
 #' @export
 trackplot_scalebar <- function(region, font_pt=11) {
   region <- normalize_ranges(region)
@@ -1150,7 +1139,7 @@ draw_trackplot_grid <- function(..., labels, title = NULL,
 #' @inheritParams plot_embedding
 #' @inheritParams convert_to_fragments
 #' @param region GRanges of length 1 with region to plot, or list/data.frame with
-#'    one entry each for chr, start, end. See `gene_region()` or [genomic-ranges] for details
+#'    one entry each for chr, start, end. See `gene_region()` or [genomic-ranges-like] for details
 #' @param fragments Fragments object
 #' @param cell_read_counts Numeric vector of read counts for each cell (used for normalization)
 #' @param bins Number of bins to plot across the region

@@ -195,6 +195,7 @@ normalize_unique_file_names <- function(names, replacement="_") {
 #' @param metadata_cols Optional list of metadata columns to require & extract
 #' @param zero_based_coords If true, coordinates start and 0 and the end coordinate is not included in the range.
 #'  If false, coordinates start at 1 and the end coordinate is included in the range
+#' @param n How many call frames to go up when printing errors
 #' @return data frame with zero-based coordinates, and elements chr (factor), start (int), and end (int).
 #' If `ranges` does not have chr level information, chr levels are the sorted unique values of chr.
 #'

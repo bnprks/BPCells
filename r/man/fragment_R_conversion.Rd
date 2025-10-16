@@ -2,6 +2,8 @@
 % Please edit documentation in R/fragments.R
 \name{convert_to_fragments}
 \alias{convert_to_fragments}
+\alias{as}
+\alias{as.data.frame}
 \title{Convert between BPCells fragments and R objects.}
 \usage{
 # Convert from R to BPCells
@@ -9,9 +11,9 @@ convert_to_fragments(x, zero_based_coords = !is(x, "GRanges"))
 as(x, "IterableFragments")
 
 # Convert from BPCells to R
-as.data.frame(bpcells_fragments)
-as(bpcells_fragments, "data.frame")
-as(bpcells_fragments, "GRanges")
+as.data.frame(x, ...)
+as(x, "data.frame")
+as(x, "GRanges")
 }
 \arguments{
 \item{x}{Fragment coordinates given as GRanges, data.frame, or list. See \code{help("genomic-ranges-like")} for details on format and coordinate systems. Required attributes:
@@ -24,6 +26,8 @@ as(bpcells_fragments, "GRanges")
 coordinate system to a 0-based end-exclusive coordinate system. Defaults to true
 for GRanges and false for other formats
 (see this \href{https://web.archive.org/web/20210920203703/http://genome.ucsc.edu/blog/the-ucsc-genome-browser-coordinate-counting-systems/}{archived UCSC blogpost})}
+
+\item{...}{Additional arguments passed to methods}
 }
 \value{
 \strong{convert_to_fragments()}: IterableFragments object

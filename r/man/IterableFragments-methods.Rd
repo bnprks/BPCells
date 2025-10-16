@@ -24,6 +24,8 @@ chrNames(x, ...) <- value
 
 \item{x}{an IterableFragments object}
 
+\item{...}{Additional arguments (not used)}
+
 \item{value}{Character vector of new names}
 }
 \value{

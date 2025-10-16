@@ -59,6 +59,7 @@ Plot a pseudobulk genome track, showing the number of fragment insertions
 across a region for each cell type or group.
 }
 \examples{
+## Prep data
 frags <- get_demo_frags()
 
 ## Use genes and blacklist to determine proper number of reads per cell
@@ -72,15 +73,13 @@ read_counts <- qc_scATAC(frags, genes, blacklist)$nFrags
 region <- "chr4:3034877-4034877"
 cell_types <- paste("Group", rep(1:3, length.out = length(cellNames(frags))))
 
-\dontrun{
- BPCells:::render_plot_from_storage(
-   trackplot_coverage(
-     frags, region, groups = cell_types, 
-     cell_read_counts = read_counts
-   ),
-   width = 6, height = 3
- )
-}
+BPCells:::render_plot_from_storage(
+  trackplot_coverage(
+    frags, region, groups = cell_types, 
+    cell_read_counts = read_counts
+  ),
+  width = 6, height = 3
+)
 }
 \seealso{
 \code{trackplot_combine()}, \code{trackplot_gene()}, \code{trackplot_loop()}, \code{trackplot_scalebar()}

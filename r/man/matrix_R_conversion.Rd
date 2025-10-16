@@ -2,14 +2,21 @@
 % Please edit documentation in R/matrix.R
 \name{matrix_R_conversion}
 \alias{matrix_R_conversion}
+\alias{as}
+\alias{as.matrix}
 \title{Convert between BPCells matrix and R objects.}
 \usage{
 # Convert to R from BPCells
-as(bpcells_mat, "dgCMatrix") # Sparse matrix conversion
-as.matrix(bpcells_mat) # Dense matrix conversion
+as(x, "dgCMatrix") # Sparse matrix conversion
+as.matrix(x, ...) # Dense matrix conversion
 
 # Convert to BPCells from R
-as(dgc_mat, "IterableMatrix")
+as(x, "IterableMatrix")
+}
+\arguments{
+\item{x}{Matrix object to convert}
+
+\item{...}{Additional arguments passed to methods}
 }
 \description{
 BPCells matrices can be interconverted with Matrix package

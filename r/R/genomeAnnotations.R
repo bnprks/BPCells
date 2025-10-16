@@ -9,7 +9,7 @@
 #' Download a file with a custom timeout
 #'
 #' @param path Output path to write file
-#' @param url to download from
+#' @param backup_url to download from
 #' @param timeout timeout in seconds
 #' @keywords internal
 ensure_downloaded <- function(path, backup_url, timeout) {
@@ -267,6 +267,11 @@ read_encode_blacklist <- function(dir, genome = c("hg38", "mm10", "hg19", "dm6",
 #' read_ucsc_chrom_sizes("./reference")
 
 #' @export
+#' @param dir Output directory to cache the downloaded chrom sizes file
+#' @param genome Genome name. Defaults to hg38
+#' @param keep_chromosomes Regular expression with which chromosomes to keep.
+#'   Defaults to standard chromosomes (chr1-22, chrX, chrY)
+#' @param timeout Maximum time in seconds to wait for download from UCSC
 read_ucsc_chrom_sizes <- function(dir, genome = c("hg38", "mm39", "mm10", "mm9", "hg19"),
                                   keep_chromosomes = "chr[0-9]+|chrX|chrY", timeout = 300) {
   genome <- match.arg(genome)
