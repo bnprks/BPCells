@@ -47,6 +47,33 @@ wrap_trackplot <- function(plot, height=NULL, takes_sideplot=FALSE, region=NULL,
   plot
 }
 
+# Internal helper function to extract patches from patchwork objects
+# Replicates the logic of patchwork:::get_patches() to avoid using unexported functions
+get_patchwork_patches <- function(plot) {
+  if (inherits(plot, "patchwork")) {
+    patches <- plot$patches
+    if (is.null(patches)) patches <- list(plots = list())
+    
+    # Extract the base plot (without patchwork components)
+    base_plot <- plot
+    base_plot$patches <- NULL
+    class(base_plot) <- setdiff(class(base_plot), "patchwork")
+    if (inherits(base_plot, "free_plot")) {
+      attr(base_plot, "patchwork_free_settings") <- NULL
+      if (is.null(attr(base_plot, "free_settings"))) {
+        class(base_plot) <- setdiff(class(base_plot), "free_plot")
+      }
+    }
+
+    # Combine existing patches with the base plot
+    patches$plots <- c(patches$plots, list(base_plot))
+    return(patches)
+  } else {
+    # Return a patches object with just the single plot
+    return(list(plots = list(plot)))
+  }
+}
+
 # Internal helper function to return empty track plots if there's no data to be plotted
 trackplot_empty <- function(region, label) {
   ggplot2::ggplot(tibble::tibble(label=label)) +
@@ -449,7 +476,6 @@ trackplot_combine <- function(tracks, side_plot = NULL, title = NULL, side_plot_
 #'    or list/data.frame/GRanges of length 1 specifying chr, start, end. See `help("genomic-ranges-like")` for details
 #' @param fragments Fragments object
 #' @param cell_read_counts Numeric vector of read counts for each cell (used for normalization)
-#' @param scale_bar Whether to include a scale bar in the top track (`TRUE` or `FALSE`)
 #' @param bins Number of bins to plot across the region
 #' @param clip_quantile (optional) Quantile of values for clipping y-axis limits. Default of 0.999 will crop out
 #'    just the most extreme outliers across the region. NULL to disable clipping
@@ -1081,7 +1107,7 @@ draw_trackplot_grid <- function(..., labels, title = NULL,
         new_heights[next_index] <- heights[i]
         next_index <- next_index + 1
       } else {
-        plot_list <- patchwork:::get_patches(plots[[i]])$plots
+        plot_list <- get_patchwork_patches(plots[[i]])$plots
         names(plot_list) <- plots[[i]]$patchwork$labels
         if (is.null(names(plot_list))) {
           names(plot_list) <- rep("", length(plot_list))

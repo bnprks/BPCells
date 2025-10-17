@@ -57,7 +57,7 @@ ensure_downloaded <- function(path, backup_url, timeout) {
 #' species <- "Saccharomyces_cerevisiae"
 #' version <- "GCF_000146045.2_R64"
 #' head(read_gtf(
-#'  path = sprintf("./reference/%s_genomic.gtf.gz", version),
+#'  path = sprintf("%s/%s_genomic.gtf.gz", file.path(tempdir(), "reference"), version),
 #'  backup_url = sprintf(
 #'    "https://ftp.ncbi.nlm.nih.gov/genomes/refseq/fungi/%s/reference/%s/%s_genomic.gtf.gz",
 #'    species, version, version
@@ -107,7 +107,7 @@ read_gtf <- function(path, attributes = c("gene_id"), tags = character(0), featu
 #' #######################################################################
 #' ## read_gencode_genes() example
 #' #######################################################################
-#' read_gencode_genes("./references", release = "42", timeout = 3000)
+#' read_gencode_genes(file.path(tempdir(), "reference"), release = "42", timeout = 3000)
 #' 
 #' 
 #' @export
@@ -159,7 +159,7 @@ read_gencode_genes <- function(dir, release = "latest",
 #' #######################################################################
 #' ## If read_gencode_genes() was already ran on the same release, 
 #' ## will reuse previously downloaded annotations
-#' read_gencode_transcripts("./references", release = "42", timeout = 3000)
+#' read_gencode_transcripts(file.path(tempdir(), "reference"), release = "42", timeout = 3000)
 #' 
 #' 
 #' @export 
@@ -246,7 +246,7 @@ read_bed <- function(path, additional_columns = character(0), backup_url = NULL,
 #' #######################################################################
 #' ## read_encode_blacklist() example
 #' #######################################################################
-#' read_encode_blacklist("./reference")
+#' read_encode_blacklist(file.path(tempdir(), "reference"))
 #' 
 #' 
 #' @export
@@ -264,7 +264,7 @@ read_encode_blacklist <- function(dir, genome = c("hg38", "mm10", "hg19", "dm6",
 #' The underlying data is pulled from here: <https://hgdownload.soe.ucsc.edu/downloads.html>
 #'
 #' @examples
-#' read_ucsc_chrom_sizes("./reference")
+#' read_ucsc_chrom_sizes(file.path(tempdir(), "reference"))
 
 #' @export
 #' @param dir Output directory to cache the downloaded chrom sizes file

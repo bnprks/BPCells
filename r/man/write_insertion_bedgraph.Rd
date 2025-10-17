@@ -75,7 +75,7 @@ write_insertion_bedgraph(frags, file.path(bedgraph_outputs, "all.tar.gz"))
 list.files(bedgraph_outputs)
 
 # With tiling
-chrom_sizes <- read_ucsc_chrom_sizes("./reference", genome="hg38") \%>\% 
+chrom_sizes <- read_ucsc_chrom_sizes(file.path(tempdir(), "reference"), genome="hg38") \%>\% 
   dplyr::filter(chr \%in\% c("chr4", "chr11"))
 write_insertion_bedgraph(frags, file.path(bedgraph_outputs, "all_tiled.bedGraph"),
   chrom_sizes = chrom_sizes, normalization_method = "cpm", tile_width = 100)

@@ -658,7 +658,7 @@ open_fragments_hdf5 <- function(path, group = "fragments", buffer_size = 16384L)
 #' GRanges, BPCells assumes a 0-based, end-exclusive coordinate system. (See
 #' [genomic-ranges-like] reference for details)
 #'
-#' @aliases as as.data.frame
+#' @aliases as.data.frame
 #'
 #' @usage 
 #' # Convert from R to BPCells
@@ -671,6 +671,9 @@ open_fragments_hdf5 <- function(path, group = "fragments", buffer_size = 16384L)
 #' as(x, "GRanges")
 #'
 #' @param x `r document_granges("Fragment coordinates", extras=c("cell_id" = "cell barcodes or unique identifiers as string or factor"))`
+#' @param IterableFragments BPCells IterableFragments object
+#' @param data.frame Data frame with columns chr, start, end, and cell_id
+#' @param GRanges GenomicRanges object with metadata column cell_id
 #' @param zero_based_coords Whether to convert the ranges from a 1-based end-inclusive
 #'    coordinate system to a 0-based end-exclusive coordinate system. Defaults to true
 #'    for GRanges and false for other formats

@@ -2,7 +2,6 @@
 % Please edit documentation in R/fragments.R
 \name{convert_to_fragments}
 \alias{convert_to_fragments}
-\alias{as}
 \alias{as.data.frame}
 \title{Convert between BPCells fragments and R objects.}
 \usage{
@@ -26,6 +25,12 @@ as(x, "GRanges")
 coordinate system to a 0-based end-exclusive coordinate system. Defaults to true
 for GRanges and false for other formats
 (see this \href{https://web.archive.org/web/20210920203703/http://genome.ucsc.edu/blog/the-ucsc-genome-browser-coordinate-counting-systems/}{archived UCSC blogpost})}
+
+\item{IterableFragments}{BPCells IterableFragments object}
+
+\item{data.frame}{Data frame with columns chr, start, end, and cell_id}
+
+\item{GRanges}{GenomicRanges object with metadata column cell_id}
 
 \item{...}{Additional arguments passed to methods}
 }

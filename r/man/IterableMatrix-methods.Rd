@@ -142,6 +142,8 @@ expm1_slow(x)
 
 \item{na.rm}{(Logical) Should missing values (NA) be removed?}
 
+\item{center}{Optional center values (vector of length nrow(x) or ncol(x))}
+
 \item{useNames}{(Logical) Whether to use row and column names in the output.}
 
 \item{probs}{(Numeric) Quantile value(s) to be computed, between 0 and 1.}
@@ -149,6 +151,10 @@ expm1_slow(x)
 \item{type}{(Integer) between 4 and 9 selecting which quantile algorithm to use, detailed in \code{matrixStats::rowQuantiles()}}
 
 \item{drop}{(Logical) If TRUE and only one quantile is requested, the result is coerced to a vector (For non-BPCells objects).}
+
+\item{e1}{First element of comparison}
+
+\item{e2}{Second element of comparison}
 }
 \value{
 \itemize{
@@ -355,6 +361,8 @@ rowQuantiles(transpose_storage_order(mat))
 ## colQuantiles() example
 #######################################################################
 colQuantiles(mat)
+
+
 #######################################################################
 ## log1p() example
 #######################################################################

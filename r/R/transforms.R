@@ -373,6 +373,8 @@ setMethod("<", signature(e1= "IterableMatrix", e2= "numeric"), function(e1, e2) 
   stop("matrix < numeric not supported for IterableMatrix objects")
 })
 #' @describeIn IterableMatrix-methods Binarize matrix according to numeric < matrix comparison
+#' @param e1 First element of comparison
+#' @param e2 Second element of comparison
 #' @examples
 #' #######################################################################
 #' ## `e1 < e2` example

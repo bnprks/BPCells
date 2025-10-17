@@ -663,6 +663,7 @@ setMethod("colMeans", signature(x = "IterableMatrix"), function(x) colSums(x) / 
 #    MatrixGenerics::colVars. matrixStats::rowVars and matrixStats::colVars will only work on base R matrix objects.
 
 #' @describeIn IterableMatrix-methods Calculate colVars (replacement for `matrixStats::colVars()`)
+#' @param center Optional center values (vector of length nrow(x) or ncol(x))
 #' @return * `colVars()`: vector of col variance
 #' @examples
 #' #######################################################################
@@ -3004,7 +3005,7 @@ convert_matrix_type <- function(matrix, type = c("uint32_t", "double", "float"))
 #' dgCMatrix sparse matrices, as well as base R
 #' dense matrices (though this may result in high memory usage for large matrices)
 #'
-#' @aliases as as.matrix
+#' @aliases as.matrix
 #'
 #' @usage
 #' # Convert to R from BPCells
@@ -3014,6 +3015,8 @@ convert_matrix_type <- function(matrix, type = c("uint32_t", "double", "float"))
 #' # Convert to BPCells from R
 #' as(x, "IterableMatrix")
 #' @param x Matrix object to convert
+#' @param dgCMatrix Sparse matrix in dgCMatrix format
+#' @param IterableMatrix IterableMatrix object
 #' @param ... Additional arguments passed to methods
 #' @examples
 #' mat <- get_demo_mat()[1:2, 1:2]

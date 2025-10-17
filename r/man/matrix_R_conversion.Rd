@@ -2,7 +2,6 @@
 % Please edit documentation in R/matrix.R
 \name{matrix_R_conversion}
 \alias{matrix_R_conversion}
-\alias{as}
 \alias{as.matrix}
 \title{Convert between BPCells matrix and R objects.}
 \usage{
@@ -15,6 +14,10 @@ as(x, "IterableMatrix")
 }
 \arguments{
 \item{x}{Matrix object to convert}
+
+\item{dgCMatrix}{Sparse matrix in dgCMatrix format}
+
+\item{IterableMatrix}{IterableMatrix object}
 
 \item{...}{Additional arguments passed to methods}
 }

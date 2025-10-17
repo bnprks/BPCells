@@ -114,7 +114,7 @@ Read transcript models from GENCODE, for use with trackplot_gene()
 species <- "Saccharomyces_cerevisiae"
 version <- "GCF_000146045.2_R64"
 head(read_gtf(
- path = sprintf("./reference/\%s_genomic.gtf.gz", version),
+ path = sprintf("\%s/\%s_genomic.gtf.gz", file.path(tempdir(), "reference"), version),
  backup_url = sprintf(
    "https://ftp.ncbi.nlm.nih.gov/genomes/refseq/fungi/\%s/reference/\%s/\%s_genomic.gtf.gz",
    species, version, version
@@ -125,7 +125,7 @@ head(read_gtf(
 #######################################################################
 ## read_gencode_genes() example
 #######################################################################
-read_gencode_genes("./references", release = "42", timeout = 3000)
+read_gencode_genes(file.path(tempdir(), "reference"), release = "42", timeout = 3000)
 
 
 #######################################################################
@@ -133,7 +133,7 @@ read_gencode_genes("./references", release = "42", timeout = 3000)
 #######################################################################
 ## If read_gencode_genes() was already ran on the same release, 
 ## will reuse previously downloaded annotations
-read_gencode_transcripts("./references", release = "42", timeout = 3000)
+read_gencode_transcripts(file.path(tempdir(), "reference"), release = "42", timeout = 3000)
 
 
 }

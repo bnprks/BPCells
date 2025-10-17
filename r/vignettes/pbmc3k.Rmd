@@ -239,7 +239,7 @@ the name of a directory to save the files in. This also allows us to skip re-dow
 the same files next time.
 ```{r}
 genes <- read_gencode_transcripts(
-  "./references", 
+  file.path(tempdir(), "references"), 
   release="42", 
   transcript_choice="MANE_Select",
   annotation_set = "basic", 
@@ -249,12 +249,12 @@ head(genes)
 ```
 
 ```{r}
-blacklist <- read_encode_blacklist("./references", genome="hg38")
+blacklist <- read_encode_blacklist(file.path(tempdir(), "references"), genome="hg38")
 head(blacklist)
 ```
 
 ```{r}
-chrom_sizes <- read_ucsc_chrom_sizes("./references", genome="hg38")
+chrom_sizes <- read_ucsc_chrom_sizes(file.path(tempdir(), "referencs"), genome="hg38")
 head(chrom_sizes)
 ```
 
@@ -778,7 +778,7 @@ coverage_plot
 This is much more useful with a gene annotation track added in. For this we'll
 get a set of canonical transcripts (one per gene) from Gencode
 ```{r}
-transcripts <- read_gencode_transcripts("./references", release="42")
+transcripts <- read_gencode_transcripts("references", release="42")
 head(transcripts)
 ```
 

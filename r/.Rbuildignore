@@ -1,11 +1,20 @@
 ^_pkgdown\.yml$
+^compile_commands\.json$
+^index\.md$
 ^docs$
+^scripts$
+^data-raw$
 ^pkgdown$
 ^.*\.Rproj$
 ^\.Rproj\.user$
+^LICENSE$
+
 
 ^\.idea
+^\.cache$
 ^bench$
+^vignettes$
+^tools/highway/
 
 .*\.o$
 .*\.so$
@@ -16,4 +25,5 @@ build/$
 cmake-build-debug/
 \.vscode/
 \.snakemake/
+
 

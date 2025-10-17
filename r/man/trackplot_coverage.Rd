@@ -45,8 +45,6 @@ for GRanges and false for other formats
 (see this \href{https://web.archive.org/web/20210920203703/http://genome.ucsc.edu/blog/the-ucsc-genome-browser-coordinate-counting-systems/}{archived UCSC blogpost})}
 
 \item{return_data}{If true, return data from just before plotting rather than a plot.}
-
-\item{scale_bar}{Whether to include a scale bar in the top track (\code{TRUE} or \code{FALSE})}
 }
 \value{
 Returns a combined plot of pseudobulk genome tracks. For compatability with
