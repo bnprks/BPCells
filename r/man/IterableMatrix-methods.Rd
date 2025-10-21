@@ -4,44 +4,80 @@
 \alias{IterableMatrix-methods}
 \alias{matrix_type}
 \alias{storage_order}
+\alias{storage_order,IterableMatrix-method}
 \alias{show,IterableMatrix-method}
 \alias{t,IterableMatrix-method}
 \alias{\%*\%,IterableMatrix,matrix-method}
+\alias{\%*\%,matrix,IterableMatrix-method}
+\alias{\%*\%,IterableMatrix,numeric-method}
+\alias{\%*\%,numeric,IterableMatrix-method}
+\alias{\%*\%,IterableMatrix,IterableMatrix-method}
+\alias{\%*\%,IterableMatrix,dgCMatrix-method}
+\alias{\%*\%,dgCMatrix,IterableMatrix-method}
 \alias{rowSums,IterableMatrix-method}
 \alias{colSums,IterableMatrix-method}
 \alias{rowMeans,IterableMatrix-method}
 \alias{colMeans,IterableMatrix-method}
 \alias{colVars}
 \alias{rowVars}
+\alias{rowVars.IterableMatrix}
 \alias{rowMaxs}
+\alias{rowMaxs.IterableMatrix}
 \alias{colMaxs}
+\alias{[,IterableMatrix,ANY,ANY,ANY-method}
+\alias{[<-,IterableMatrix,ANY,ANY,ANY-method}
+\alias{dimnames<-,IterableMatrix,list-method}
+\alias{dimnames<-,IterableMatrix,NULL-method}
 \alias{rowQuantiles}
+\alias{rowQuantiles.IterableMatrix}
 \alias{colQuantiles}
+\alias{colQuantiles.IterableMatrix}
 \alias{log1p,IterableMatrix-method}
 \alias{log1p_slow}
 \alias{expm1,IterableMatrix-method}
 \alias{expm1_slow}
 \alias{^,IterableMatrix,numeric-method}
+\alias{<,IterableMatrix,numeric-method}
 \alias{<,numeric,IterableMatrix-method}
 \alias{>,IterableMatrix,numeric-method}
+\alias{>,numeric,IterableMatrix-method}
+\alias{<=,IterableMatrix,numeric-method}
 \alias{<=,numeric,IterableMatrix-method}
 \alias{>=,IterableMatrix,numeric-method}
+\alias{>=,numeric,IterableMatrix-method}
 \alias{round,IterableMatrix-method}
 \alias{*,IterableMatrix,numeric-method}
+\alias{*,numeric,IterableMatrix-method}
 \alias{+,IterableMatrix,numeric-method}
+\alias{+,numeric,IterableMatrix-method}
 \alias{/,IterableMatrix,numeric-method}
 \alias{-,IterableMatrix,numeric-method}
+\alias{-,numeric,IterableMatrix-method}
 \title{IterableMatrix methods}
 \usage{
 matrix_type(x)
 
 storage_order(x)
 
+\S4method{storage_order}{IterableMatrix}(x)
+
 \S4method{show}{IterableMatrix}(object)
 
 \S4method{t}{IterableMatrix}(x)
 
 \S4method{\%*\%}{IterableMatrix,matrix}(x, y)
+
+\S4method{\%*\%}{matrix,IterableMatrix}(x, y)
+
+\S4method{\%*\%}{IterableMatrix,numeric}(x, y)
+
+\S4method{\%*\%}{numeric,IterableMatrix}(x, y)
+
+\S4method{\%*\%}{IterableMatrix,IterableMatrix}(x, y)
+
+\S4method{\%*\%}{IterableMatrix,dgCMatrix}(x, y)
+
+\S4method{\%*\%}{dgCMatrix,IterableMatrix}(x, y)
 
 \S4method{rowSums}{IterableMatrix}(x)
 
@@ -71,11 +107,44 @@ rowVars(
   useNames = TRUE
 )
 
+\method{rowVars}{IterableMatrix}(
+  x,
+  rows = NULL,
+  cols = NULL,
+  na.rm = FALSE,
+  center = NULL,
+  ...,
+  useNames = TRUE
+)
+
 rowMaxs(x, rows = NULL, cols = NULL, na.rm = FALSE, ..., useNames = TRUE)
+
+\method{rowMaxs}{IterableMatrix}(x, rows = NULL, cols = NULL, na.rm = FALSE, ..., useNames = TRUE)
 
 colMaxs(x, rows = NULL, cols = NULL, na.rm = FALSE, ..., useNames = TRUE)
 
+\S4method{[}{IterableMatrix,ANY,ANY,ANY}(x, i, j, ..., drop = TRUE)
+
+\S4method{[}{IterableMatrix,ANY,ANY,ANY}(x, i, j, ...) <- value
+
+\S4method{dimnames}{IterableMatrix,list}(x) <- value
+
+\S4method{dimnames}{IterableMatrix,NULL}(x) <- value
+
 rowQuantiles(
+  x,
+  rows = NULL,
+  cols = NULL,
+  probs = seq(from = 0, to = 1, by = 0.25),
+  na.rm = FALSE,
+  type = 7L,
+  digits = 7L,
+  ...,
+  useNames = TRUE,
+  drop = TRUE
+)
+
+\method{rowQuantiles}{IterableMatrix}(
   x,
   rows = NULL,
   cols = NULL,
@@ -101,6 +170,19 @@ colQuantiles(
   drop = TRUE
 )
 
+colQuantiles.IterableMatrix(
+  x,
+  rows = NULL,
+  cols = NULL,
+  probs = seq(from = 0, to = 1, by = 0.25),
+  na.rm = FALSE,
+  type = 7L,
+  digits = 7L,
+  ...,
+  useNames = TRUE,
+  drop = TRUE
+)
+
 \S4method{log1p}{IterableMatrix}(x)
 
 log1p_slow(x)
@@ -111,23 +193,37 @@ expm1_slow(x)
 
 \S4method{^}{IterableMatrix,numeric}(e1, e2)
 
+\S4method{<}{IterableMatrix,numeric}(e1, e2)
+
 \S4method{<}{numeric,IterableMatrix}(e1, e2)
 
 \S4method{>}{IterableMatrix,numeric}(e1, e2)
+
+\S4method{>}{numeric,IterableMatrix}(e1, e2)
+
+\S4method{<=}{IterableMatrix,numeric}(e1, e2)
 
 \S4method{<=}{numeric,IterableMatrix}(e1, e2)
 
 \S4method{>=}{IterableMatrix,numeric}(e1, e2)
 
+\S4method{>=}{numeric,IterableMatrix}(e1, e2)
+
 \S4method{round}{IterableMatrix}(x, digits = 0)
 
 \S4method{*}{IterableMatrix,numeric}(e1, e2)
 
+\S4method{*}{numeric,IterableMatrix}(e1, e2)
+
 \S4method{+}{IterableMatrix,numeric}(e1, e2)
+
+\S4method{+}{numeric,IterableMatrix}(e1, e2)
 
 \S4method{/}{IterableMatrix,numeric}(e1, e2)
 
 \S4method{-}{IterableMatrix,numeric}(e1, e2)
+
+\S4method{-}{numeric,IterableMatrix}(e1, e2)
 }
 \arguments{
 \item{x}{IterableMatrix object or a matrix-like object.}
@@ -144,13 +240,23 @@ expm1_slow(x)
 
 \item{center}{Optional center values (vector of length nrow(x) or ncol(x))}
 
+\item{...}{Additional arguments passed to methods}
+
 \item{useNames}{(Logical) Whether to use row and column names in the output.}
+
+\item{i}{Row indices or selection helpers.}
+
+\item{j}{Column indices or selection helpers.}
+
+\item{drop}{(Logical) If TRUE and only one quantile is requested, the result is coerced to a vector (For non-BPCells objects).}
+
+\item{value}{New dimnames (list of length 2, or NULL)}
 
 \item{probs}{(Numeric) Quantile value(s) to be computed, between 0 and 1.}
 
 \item{type}{(Integer) between 4 and 9 selecting which quantile algorithm to use, detailed in \code{matrixStats::rowQuantiles()}}
 
-\item{drop}{(Logical) If TRUE and only one quantile is requested, the result is coerced to a vector (For non-BPCells objects).}
+\item{digits}{Number of decimal places for quantile calculations}
 
 \item{e1}{First element of comparison}
 
@@ -214,13 +320,27 @@ Generic methods and built-in functions for IterableMatrix objects
 \itemize{
 \item \code{matrix_type()}: Get the matrix data type (mat_uint32_t, mat_float, or mat_double for now)
 
-\item \code{storage_order()}: Get the matrix storage order ("row" or "col")
+\item \code{storage_order()}: Get the matrix storage order ("row" or "col") (generic)
+
+\item \code{storage_order(IterableMatrix)}: Get the matrix storage order ("row" or "col")
 
 \item \code{show(IterableMatrix)}: Display an IterableMatrix
 
 \item \code{t(IterableMatrix)}: Transpose an IterableMatrix
 
 \item \code{x \%*\% y}: Multiply by a dense matrix
+
+\item \code{x \%*\% y}: Multiply a dense matrix by an IterableMatrix
+
+\item \code{x \%*\% y}: Multiply an IterableMatrix by a numeric vector
+
+\item \code{x \%*\% y}: Multiply a numeric row vector by an IterableMatrix
+
+\item \code{x \%*\% y}: Multiply two IterableMatrix objects
+
+\item \code{x \%*\% y}: Multiply an IterableMatrix by a dgCMatrix
+
+\item \code{x \%*\% y}: Multiply a dgCMatrix by an IterableMatrix
 
 \item \code{rowSums(IterableMatrix)}: Calculate rowSums
 
@@ -232,15 +352,31 @@ Generic methods and built-in functions for IterableMatrix objects
 
 \item \code{colVars()}: Calculate colVars (replacement for \code{matrixStats::colVars()})
 
-\item \code{rowVars()}: Calculate rowVars (replacement for \code{matrixStats::rowVars()})
+\item \code{rowVars()}: Calculate rowVars (replacement for \code{matrixStats::rowVars()}) (generic)
 
-\item \code{rowMaxs()}: Calculate rowMaxs (replacement for \code{matrixStats::rowMaxs()})
+\item \code{rowVars(IterableMatrix)}: Calculate rowVars (replacement for \code{matrixStats::rowVars()})
+
+\item \code{rowMaxs()}: Calculate rowMaxs (replacement for \code{matrixStats::rowMaxs()}) (generic)
+
+\item \code{rowMaxs(IterableMatrix)}: Calculate rowMaxs (replacement for \code{matrixStats::rowMaxs()})
 
 \item \code{colMaxs()}: Calculate colMax (replacement for \code{matrixStats::colMax()})
 
-\item \code{rowQuantiles()}: Calculate rowQuantiles (replacement for \code{matrixStats::rowQuantiles})
+\item \code{x[i}: Subset an IterableMatrix
 
-\item \code{colQuantiles()}: Calculate colQuantiles (replacement for \code{matrixStats::colQuantiles})
+\item \code{`[`(x = IterableMatrix, i = ANY, j = ANY) <- value}: Assign into an IterableMatrix
+
+\item \code{dimnames(x = IterableMatrix) <- value}: Set dimnames of an IterableMatrix, similar to base R \verb{dimnames<-()}
+
+\item \code{dimnames(x = IterableMatrix) <- value}: Remove dimnames of an IterableMatrix
+
+\item \code{rowQuantiles()}: Calculate rowQuantiles (generic)
+
+\item \code{rowQuantiles(IterableMatrix)}: Calculate rowQuantiles (replacement for \code{matrixStats::rowQuantiles})
+
+\item \code{colQuantiles()}: Calculate colQuantiles (generic)
+
+\item \code{colQuantiles.IterableMatrix()}: Calculate colQuantiles (replacement for \code{matrixStats::colQuantiles})
 
 \item \code{log1p(IterableMatrix)}: Calculate log(x + 1)
 
@@ -252,23 +388,37 @@ Generic methods and built-in functions for IterableMatrix objects
 
 \item \code{e1^e2}: Calculate x^y (elementwise; y > 0)
 
+\item \code{e1 < e2}: Perform matrix < numeric comparison (unsupported)
+
 \item \code{e1 < e2}: Binarize matrix according to numeric < matrix comparison
 
 \item \code{e1 > e2}: Binarize matrix according to matrix > numeric comparison
+
+\item \code{e1 > e2}: Perform numeric > matrix comparison (unsupported)
+
+\item \code{e1 <= e2}: Perform matrix <= numeric comparison (unsupported)
 
 \item \code{e1 <= e2}: Binarize matrix according to numeric <= matrix comparison
 
 \item \code{e1 >= e2}: Binarize matrix according to matrix >= numeric comparison
 
+\item \code{e1 >= e2}: Compare a numeric value to an IterableMatrix using >= (numeric left operand)
+
 \item \code{round(IterableMatrix)}: round to nearest integer (digits must be 0)
 
 \item \code{e1 * e2}: Multiply by a constant, or multiply rows by a vector length nrow(mat)
 
+\item \code{e1 * e2}: Multiply an IterableMatrix by a numeric value or row-wise vector (numeric left operand)
+
 \item \code{e1 + e2}: Add a constant, or row-wise addition with a vector length nrow(mat)
+
+\item \code{e1 + e2}: Add an IterableMatrix to a numeric value or row-wise vector (numeric left operand)
 
 \item \code{e1 / e2}: Divide by a constant, or divide rows by a vector length nrow(mat)
 
 \item \code{e1 - e2}: Subtract a constant, or row-wise subtraction with a vector length nrow(mat)
+
+\item \code{e1 - e2}: Subtract matrix from a numeric constant/vector
 
 }}
 \examples{

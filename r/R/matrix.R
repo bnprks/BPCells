@@ -10,8 +10,33 @@
 #'
 #' Generic methods and built-in functions for IterableMatrix objects
 #'
+#' @param ... Additional arguments passed to methods
+#' @param digits Number of decimal places for quantile calculations
+#' @param i Row indices or selection helpers.
+#' @param j Column indices or selection helpers.
+#' @param drop Logical indicating whether to drop dimensions when subsetting.
+#' @param value Replacement value supplied to assignment methods.
 #' @name IterableMatrix-methods
 #' @rdname IterableMatrix-methods
+NULL
+
+#' IterableMatrix subclass methods
+#'
+#' Methods for classes that extend `IterableMatrix` but are not dispatched
+#' directly on the base class. These are typically helper objects that wrap
+#' another matrix or alter behaviour (e.g., concatenation, on-disk access).
+#'
+#' @param x An object inheriting from `IterableMatrix`.
+#' @param i Row indices or selection helpers.
+#' @param j Column indices or selection helpers.
+#' @param drop Logical indicating whether to drop dimensions (for subsetting).
+#' @param e1 Left operand for binary operations.
+#' @param e2 Right operand for binary operations.
+#' @param ... Additional arguments passed through the call.
+#' @name IterableMatrix-misc-methods
+#' @rdname IterableMatrix-misc-methods
+#' @docType methods
+#' @keywords internal
 NULL
 
 setClass("IterableMatrix",
@@ -74,7 +99,7 @@ setGeneric("iterate_matrix", function(x) standardGeneric("iterate_matrix"))
 #' @export
 setGeneric("matrix_type", function(x) standardGeneric("matrix_type"))
 
-#' @describeIn IterableMatrix-methods Get the matrix storage order ("row" or "col")
+#' @describeIn IterableMatrix-methods Get the matrix storage order ("row" or "col") (generic)
 #' @examples
 #' #######################################################################
 #' ## storage_order() example
@@ -85,6 +110,7 @@ setGeneric("matrix_type", function(x) standardGeneric("matrix_type"))
 #' @export
 setGeneric("storage_order", function(x) standardGeneric("storage_order"))
 
+#' @describeIn IterableMatrix-methods Get the matrix storage order ("row" or "col")
 setMethod("storage_order", "IterableMatrix", function(x) if(x@transpose) "row" else "col")
 
 #' Return a list of input matrices to the current matrix (experimental)
@@ -264,6 +290,7 @@ setMethod("%*%", signature(x = "IterableMatrix", y = "matrix"), function(x, y) {
   res
 })
 
+#' @describeIn IterableMatrix-methods Multiply a dense matrix by an IterableMatrix
 setMethod("%*%", signature(x = "matrix", y = "IterableMatrix"), function(x, y) {
   iter <- iterate_matrix(convert_matrix_type(y, "double"))
   if (y@transpose) {
@@ -276,6 +303,7 @@ setMethod("%*%", signature(x = "matrix", y = "IterableMatrix"), function(x, y) {
   res
 })
 
+#' @describeIn IterableMatrix-methods Multiply an IterableMatrix by a numeric vector
 setMethod("%*%", signature(x = "IterableMatrix", y = "numeric"), function(x, y) {
   iter <- iterate_matrix(convert_matrix_type(x, "double"))
   if (x@transpose) {
@@ -288,6 +316,7 @@ setMethod("%*%", signature(x = "IterableMatrix", y = "numeric"), function(x, y) 
   res
 })
 
+#' @describeIn IterableMatrix-methods Multiply a numeric row vector by an IterableMatrix
 setMethod("%*%", signature(x = "numeric", y = "IterableMatrix"), function(x, y) {
   iter <- iterate_matrix(convert_matrix_type(y, "double"))
   if (y@transpose) {
@@ -328,6 +357,18 @@ linear_operator <- function(mat) {
   new("LinearOperator", dim = dim(mat), xptr = iterate_matrix(convert_matrix_type(mat, "double")), transpose = mat@transpose)
 }
 
+#' LinearOperator multiplication helpers
+#'
+#' Methods enabling `\%*%` between `LinearOperator` objects and dense matrices or numeric vectors.
+#'
+#' @param x Left operand.
+#' @param y Right operand.
+#' @name LinearOperator-math
+#' @docType methods
+#' @keywords internal
+NULL
+
+#' @describeIn LinearOperator-math Multiply a LinearOperator by a dense matrix
 setMethod("%*%", signature(x = "LinearOperator", y = "matrix"), function(x, y) {
   if (x@transpose) {
     return(t(dense_multiply_left_preserve_loader_cpp(x@xptr, t(y))))
@@ -336,6 +377,7 @@ setMethod("%*%", signature(x = "LinearOperator", y = "matrix"), function(x, y) {
   }
 })
 
+#' @describeIn LinearOperator-math Multiply a dense matrix by a LinearOperator
 setMethod("%*%", signature(x = "matrix", y = "LinearOperator"), function(x, y) {
   if (y@transpose) {
     return(t(dense_multiply_right_preserve_loader_cpp(y@xptr, t(x))))
@@ -344,6 +386,7 @@ setMethod("%*%", signature(x = "matrix", y = "LinearOperator"), function(x, y) {
   }
 })
 
+#' @describeIn LinearOperator-math Multiply a LinearOperator by a numeric vector
 setMethod("%*%", signature(x = "LinearOperator", y = "numeric"), function(x, y) {
   if (x@transpose) {
     return(vec_multiply_left_preserve_loader_cpp(x@xptr, y))
@@ -352,6 +395,7 @@ setMethod("%*%", signature(x = "LinearOperator", y = "numeric"), function(x, y) 
   }
 })
 
+#' @describeIn LinearOperator-math Multiply a numeric vector by a LinearOperator
 setMethod("%*%", signature(x = "numeric", y = "LinearOperator"), function(x, y) {
   if (y@transpose) {
     return(vec_multiply_right_preserve_loader_cpp(y@xptr, x))
@@ -373,6 +417,7 @@ setClass("MatrixMultiply",
     right = NULL
   )
 )
+#' @describeIn IterableMatrix-misc-methods Matrix data type for MatrixMultiply objects
 setMethod("matrix_type", signature(x = "MatrixMultiply"), function(x) matrix_type(x@left))
 setMethod("matrix_inputs", "MatrixMultiply", function(x) list(x@left, x@right))
 setMethod("matrix_inputs<-", "MatrixMultiply", function(x, ..., value) {
@@ -406,6 +451,7 @@ setMethod("short_description", "MatrixMultiply", function(x) {
   }
 })
 
+#' @describeIn IterableMatrix-methods Multiply two IterableMatrix objects
 setMethod("%*%", signature(x = "IterableMatrix", y = "IterableMatrix"), function(x, y) {
   if (x@transpose != y@transpose) stop("Cannot multiply matrices with different internal transpose states.\nPlease use transpose_storage_order().")
   if (x@transpose) {
@@ -425,6 +471,7 @@ setMethod("%*%", signature(x = "IterableMatrix", y = "IterableMatrix"), function
   new("MatrixMultiply", left = x, right = y, transpose = FALSE, dim = dim, dimnames = dimnames)
 })
 
+#' @describeIn IterableMatrix-methods Multiply an IterableMatrix by a dgCMatrix
 setMethod("%*%", signature(x = "IterableMatrix", y = "dgCMatrix"), function(x, y) {
   if (x@transpose) {
     t(as(t(y), "IterableMatrix") %*% t(x))
@@ -433,6 +480,7 @@ setMethod("%*%", signature(x = "IterableMatrix", y = "dgCMatrix"), function(x, y
   }
 })
 
+#' @describeIn IterableMatrix-methods Multiply a dgCMatrix by an IterableMatrix
 setMethod("%*%", signature(x = "dgCMatrix", y = "IterableMatrix"), function(x, y) {
   if (y@transpose) {
     t(t(y) %*% as(t(x), "IterableMatrix"))
@@ -443,6 +491,7 @@ setMethod("%*%", signature(x = "dgCMatrix", y = "IterableMatrix"), function(x, y
 
 
 # Subsetting on MatrixMultiply
+#' @describeIn IterableMatrix-misc-methods Subset MatrixMultiply results
 setMethod("[", "MatrixMultiply", function(x, i, j, ...) {
   if (missing(x)) stop("x is missing in matrix selection")
   # Handle transpose via recursive call
@@ -478,6 +527,7 @@ setClass("MatrixMask",
     invert = FALSE
   )
 )
+#' @describeIn IterableMatrix-misc-methods Matrix data type for MatrixMask objects
 setMethod("matrix_type", signature(x = "MatrixMask"), function(x) matrix_type(x@matrix))
 setMethod("matrix_inputs", "MatrixMask", function(x) list(x@matrix, x@mask))
 setMethod("matrix_inputs<-", "MatrixMask", function(x, ..., value) {
@@ -544,6 +594,7 @@ setClass("MatrixRankTransform",
     matrix = NULL
   )
 )
+#' @describeIn IterableMatrix-misc-methods Matrix data type for MatrixRankTransform objects
 setMethod("matrix_type", signature(x = "MatrixRankTransform"), function(x) "double")
 setMethod("iterate_matrix", "MatrixRankTransform", function(x) {
   iter_function <- get(sprintf("iterate_matrix_rank_%s_cpp", matrix_type(x@matrix)))
@@ -699,7 +750,7 @@ rlang::on_load({
   }
 })
 
-#' @describeIn IterableMatrix-methods Calculate rowVars (replacement for `matrixStats::rowVars()`)
+#' @describeIn IterableMatrix-methods Calculate rowVars (replacement for `matrixStats::rowVars()`) (generic)
 #' @return * `rowVars()`: vector of row variance
 #' @export
 rowVars <- function(x, rows = NULL, cols = NULL, na.rm = FALSE, center = NULL, ..., useNames = TRUE) UseMethod("rowVars")
@@ -715,6 +766,7 @@ rowVars.default <- function(x, rows = NULL, cols = NULL, na.rm = FALSE, center =
   }
 }
 #' @export
+#' @describeIn IterableMatrix-methods Calculate rowVars (replacement for `matrixStats::rowVars()`)
 #' @method rowVars IterableMatrix
 rowVars.IterableMatrix <- function(x, rows = NULL, cols = NULL, na.rm = FALSE, center = NULL, ..., useNames = TRUE) {
   if (!is.null(rows) || !is.null(cols) || !isFALSE(na.rm) || !is.null(center) || !isTRUE(useNames)) {
@@ -731,7 +783,7 @@ rlang::on_load({
 #' Get the max of each row in an iterable matrix
 #' @param x IterableMatrix object/dgCMatrix object
 #' @return * `rowMaxs()`: vector of maxes for every row
-#' @describeIn IterableMatrix-methods Calculate rowMaxs (replacement for `matrixStats::rowMaxs()`)
+#' @describeIn IterableMatrix-methods Calculate rowMaxs (replacement for `matrixStats::rowMaxs()`) (generic)
 #' @examples
 #' #######################################################################
 #' ## rowMaxs() example
@@ -754,6 +806,7 @@ rowMaxs.default <- function(x, rows = NULL, cols = NULL, na.rm = FALSE, ..., use
   }
 }
 #' @export
+#' @describeIn IterableMatrix-methods Calculate rowMaxs (replacement for `matrixStats::rowMaxs()`)
 #' @method rowMaxs IterableMatrix
 rowMaxs.IterableMatrix <- function(x, rows = NULL, cols = NULL, na.rm = FALSE, ..., useNames = TRUE) {
   if(!is.null(rows) || !is.null(cols) || !isFALSE(na.rm)) {
@@ -832,6 +885,7 @@ setClass("MatrixSubset",
     zero_dims = c(FALSE, FALSE)
   )
 )
+#' @describeIn IterableMatrix-misc-methods Matrix data type for MatrixSubset objects
 setMethod("matrix_type", signature(x = "MatrixSubset"), function(x) matrix_type(x@matrix))
 
 # Helper function to convert logical/character indexing into numeric indexing
@@ -885,6 +939,7 @@ unsplit_selection <- function(selection) {
   selection$subset[selection$reorder]
 }
 
+#' @describeIn IterableMatrix-methods Subset an IterableMatrix
 setMethod("[", "IterableMatrix", function(x, i, j, ...) {
   if (missing(x)) stop("x is missing in matrix selection")
   if (rlang::is_missing(i) && rlang::is_missing(j)) {
@@ -921,6 +976,7 @@ setMethod("[", "IterableMatrix", function(x, i, j, ...) {
 # Simulate assigning to a subset of the matrix.
 # We concatenate the un-modified matrix subsets with the new values,
 # then reorder rows/columns appropriately
+#' @describeIn IterableMatrix-methods Assign into an IterableMatrix
 setMethod("[<-", "IterableMatrix", function(x, i, j, ..., value) {
   # Do type conversions if needed
   if (is.matrix(value)) value <- as(value, "dgCMatrix")
@@ -982,6 +1038,7 @@ setMethod("[<-", "IterableMatrix", function(x, i, j, ..., value) {
   return(x)
 })
 
+#' @describeIn IterableMatrix-misc-methods Subset MatrixSubset transforms
 setMethod("[", "MatrixSubset", function(x, i, j, ...) {
   if (missing(x)) stop("x is missing in matrix selection")
   
@@ -1063,6 +1120,7 @@ setClass("RenameDims",
     matrix = "IterableMatrix"
   )
 )
+#' @describeIn IterableMatrix-misc-methods Matrix data type for RenameDims objects
 setMethod("matrix_type", "RenameDims", function(x) matrix_type(x@matrix))
 setMethod("iterate_matrix", "RenameDims", function(x) {
   if (x@transpose) {
@@ -1077,6 +1135,7 @@ setMethod("iterate_matrix", "RenameDims", function(x) {
   iter_function(iterate_matrix(x@matrix), row_names, col_names, is.null(rownames(x)), is.null(colnames(x)))
 })
 
+#' @describeIn IterableMatrix-misc-methods Subset RenameDims transforms
 setMethod("[", "RenameDims", function(x, i, j, ...) {
   if (missing(x)) stop("x is missing in matrix selection")
 
@@ -1099,6 +1158,9 @@ setMethod("short_description", "RenameDims", function(x) {
     sprintf("Reset dimnames")
   )
 })
+#' @export
+#' @param value New dimnames (list of length 2, or NULL)
+#' @describeIn IterableMatrix-methods Set dimnames of an IterableMatrix, similar to base R `dimnames<-()`
 setMethod("dimnames<-", signature(x = "IterableMatrix", value = "list"), function(x, value) {
   if (identical(dimnames(x), value)) return(x)
   d <- dim(x)
@@ -1123,6 +1185,8 @@ setMethod("dimnames<-", signature(x = "IterableMatrix", value = "list"), functio
   }
   x
 })
+#' @export
+#' @describeIn IterableMatrix-methods Remove dimnames of an IterableMatrix
 setMethod("dimnames<-", signature(x = "IterableMatrix", value = "NULL"), function(x, value) {
   if (identical(dimnames(x), value)) return(x)
   if (!is(x, "RenameDims")) {
@@ -1178,6 +1242,7 @@ setClass("RowBindMatrices",
     threads = 0L
   )
 )
+#' @describeIn IterableMatrix-misc-methods Matrix data type for RowBindMatrices objects
 setMethod("matrix_type", signature(x = "RowBindMatrices"), function(x) matrix_type(x@matrix_list[[1]]))
 
 setMethod("iterate_matrix", "RowBindMatrices", function(x) {
@@ -1286,6 +1351,7 @@ setClass("ColBindMatrices",
     threads = 0L
   )
 )
+#' @describeIn IterableMatrix-misc-methods Matrix data type for ColBindMatrices objects
 setMethod("matrix_type", signature(x = "ColBindMatrices"), function(x) matrix_type(x@matrix_list[[1]]))
 
 setMethod("iterate_matrix", "ColBindMatrices", function(x) {
@@ -1368,6 +1434,7 @@ setMethod("cbind2", signature(x = "IterableMatrix", y = "dgCMatrix"), function(x
 setMethod("cbind2", signature(x = "dgCMatrix", y = "IterableMatrix"), function(x, y, ...) cbind2(as(x, "IterableMatrix"), y))
 
 # Row bind needs specialization because there's not a default row-seek operation
+#' @describeIn IterableMatrix-misc-methods Subset RowBindMatrices transforms
 setMethod("[", "RowBindMatrices", function(x, i, j, ...) {
   if (missing(x)) stop("x is missing in matrix selection")
   # Handle transpose via recursive call
@@ -1438,6 +1505,7 @@ setMethod("[", "RowBindMatrices", function(x, i, j, ...) {
   return(x)
 })
 
+#' @describeIn IterableMatrix-misc-methods Subset ColBindMatrices transforms
 setMethod("[", "ColBindMatrices", function(x, i, j, ...) {
   if (missing(x)) stop("x is missing in matrix selection")
   # Handle transpose via recursive call
@@ -1588,6 +1656,7 @@ setClass("PackedMatrixMem_uint32_t",
     val_idx_offsets = numeric(0)
   )
 )
+#' @describeIn IterableMatrix-misc-methods Matrix data type for PackedMatrixMem_uint32_t objects
 setMethod("matrix_type", "PackedMatrixMem_uint32_t", function(x) "uint32_t")
 setMethod("iterate_matrix", "PackedMatrixMem_uint32_t", function(x) {
   if (x@transpose) x <- t(x)
@@ -1600,6 +1669,7 @@ setClass("PackedMatrixMem_float",
   slots = c(val = "integer"),
   prototype = list(val = integer(0))
 )
+#' @describeIn IterableMatrix-misc-methods Matrix data type for PackedMatrixMem_float objects
 setMethod("matrix_type", "PackedMatrixMem_float", function(x) "float")
 setMethod("iterate_matrix", "PackedMatrixMem_float", function(x) {
   if (x@transpose) x <- t(x)
@@ -1612,6 +1682,7 @@ setClass("PackedMatrixMem_double",
   slots = c(val = "numeric"),
   prototype = list(val = numeric(0))
 )
+#' @describeIn IterableMatrix-misc-methods Matrix data type for PackedMatrixMem_double objects
 setMethod("matrix_type", "PackedMatrixMem_double", function(x) "double")
 setMethod("iterate_matrix", "PackedMatrixMem_double", function(x) {
   if (x@transpose) x <- t(x)
@@ -1643,6 +1714,7 @@ setClass("UnpackedMatrixMem_uint32_t",
   slots = c(val = "integer"),
   prototype = list(val = integer())
 )
+#' @describeIn IterableMatrix-misc-methods Matrix data type for UnpackedMatrixMem_uint32_t objects
 setMethod("matrix_type", "UnpackedMatrixMem_uint32_t", function(x) "uint32_t")
 setMethod("iterate_matrix", "UnpackedMatrixMem_uint32_t", function(x) {
   if (x@transpose) x <- t(x)
@@ -1655,6 +1727,7 @@ setClass("UnpackedMatrixMem_float",
   slots = c(val = "integer"),
   prototype = list(val = integer(0))
 )
+#' @describeIn IterableMatrix-misc-methods Matrix data type for UnpackedMatrixMem_float objects
 setMethod("matrix_type", "UnpackedMatrixMem_float", function(x) "float")
 setMethod("iterate_matrix", "UnpackedMatrixMem_float", function(x) {
   if (x@transpose) x <- t(x)
@@ -1667,6 +1740,7 @@ setClass("UnpackedMatrixMem_double",
   slots = c(val = "numeric"),
   prototype = list(val = numeric(0))
 )
+#' @describeIn IterableMatrix-misc-methods Matrix data type for UnpackedMatrixMem_double objects
 setMethod("matrix_type", "UnpackedMatrixMem_double", function(x) "double")
 setMethod("iterate_matrix", "UnpackedMatrixMem_double", function(x) {
   if (x@transpose) x <- t(x)
@@ -1810,6 +1884,7 @@ setClass("MatrixDir",
     type = character(0)
   )
 )
+#' @describeIn IterableMatrix-misc-methods Matrix data type for MatrixDir objects
 setMethod("matrix_type", "MatrixDir", function(x) x@type)
 setMethod("matrix_inputs", "MatrixDir", function(x) list())
 
@@ -1928,6 +2003,7 @@ setClass("EXPERIMENTAL_MatrixDirCompressedCol",
     buffer_size = integer(0)
   )
 )
+#' @describeIn IterableMatrix-misc-methods Matrix data type for EXPERIMENTAL_MatrixDirCompressedCol objects
 setMethod("matrix_type", "EXPERIMENTAL_MatrixDirCompressedCol", function(x) "uint32_t")
 setMethod("matrix_inputs", "EXPERIMENTAL_MatrixDirCompressedCol", function(x) list())
 
@@ -2031,6 +2107,7 @@ setClass("MatrixH5",
     type = character(0)
   )
 )
+#' @describeIn IterableMatrix-misc-methods Matrix data type for MatrixH5 objects
 setMethod("matrix_type", "MatrixH5", function(x) x@type)
 setMethod("matrix_inputs", "MatrixH5", function(x) list())
 
@@ -2168,6 +2245,7 @@ setClass("10xMatrixH5",
     buffer_size = integer(0)
   )
 )
+#' @describeIn IterableMatrix-misc-methods Matrix data type for 10xMatrixH5 objects
 setMethod("matrix_type", "10xMatrixH5", function(x) x@type)
 setMethod("matrix_inputs", "10xMatrixH5", function(x) list())
 setMethod("iterate_matrix", "10xMatrixH5", function(x) {
@@ -2367,6 +2445,7 @@ setClass("AnnDataMatrixH5",
     buffer_size = integer(0)
   )
 )
+#' @describeIn IterableMatrix-misc-methods Matrix data type for AnnDataMatrixH5 objects
 setMethod("matrix_type", "AnnDataMatrixH5", function(x) x@type)
 setMethod("matrix_inputs", "AnnDataMatrixH5", function(x) list())
 setMethod("iterate_matrix", "AnnDataMatrixH5", function(x) {
@@ -2615,6 +2694,7 @@ setClass("PeakMatrix",
     mode = "insertions"
   )
 )
+#' @describeIn IterableMatrix-misc-methods Matrix data type for PeakMatrix objects
 setMethod("matrix_type", "PeakMatrix", function(x) "uint32_t")
 setMethod("matrix_inputs", "PeakMatrix", function(x) list())
 
@@ -2706,6 +2786,7 @@ setMethod("short_description", "PeakMatrix", function(x) {
   )
 })
 
+#' @describeIn IterableMatrix-misc-methods Subset a PeakMatrix
 setMethod("[", "PeakMatrix", function(x, i, j, ...) {
     if (missing(x)) stop("x is missing in matrix selection")
   # Handle transpose via recursive call
@@ -2757,6 +2838,7 @@ setClass("TileMatrix",
     mode = character(0)
   )
 )
+#' @describeIn IterableMatrix-misc-methods Matrix data type for TileMatrix objects
 setMethod("matrix_type", "TileMatrix", function(x) "uint32_t")
 setMethod("matrix_inputs", "TileMatrix", function(x) list())
 
@@ -2884,6 +2966,7 @@ setMethod("short_description", "TileMatrix", function(x) {
   )
 })
 
+#' @describeIn IterableMatrix-misc-methods Subset a TileMatrix
 setMethod("[", "TileMatrix", function(x, i, j, ...) {
   if (missing(x)) stop("x is missing in matrix selection")
 
@@ -2936,6 +3019,7 @@ setClass("ConvertMatrixType",
     type = character(0)
   )
 )
+#' @describeIn IterableMatrix-misc-methods Matrix data type for ConvertMatrixType objects
 setMethod("matrix_type", signature(x = "ConvertMatrixType"), function(x) x@type)
 setMethod("iterate_matrix", "ConvertMatrixType", function(x) {
   iter_function <- get(sprintf("convert_matrix_%s_%s_cpp", matrix_type(x@matrix), matrix_type(x)))
@@ -2949,6 +3033,7 @@ setMethod("short_description", "ConvertMatrixType", function(x) {
   )
 })
 
+#' @describeIn IterableMatrix-misc-methods Subset ConvertMatrixType transforms
 setMethod("[", "ConvertMatrixType", function(x, i, j, ...) {
   if (missing(x)) stop("x is missing in matrix selection")
 
@@ -3005,19 +3090,18 @@ convert_matrix_type <- function(matrix, type = c("uint32_t", "double", "float"))
 #' dgCMatrix sparse matrices, as well as base R
 #' dense matrices (though this may result in high memory usage for large matrices)
 #'
-#' @aliases as.matrix
+#' @aliases as.matrix.IterableMatrix
+#' @aliases as.matrix,IterableMatrix-method
 #'
-#' @usage
-#' # Convert to R from BPCells
-#' as(x, "dgCMatrix") # Sparse matrix conversion
-#' as.matrix(x, ...) # Dense matrix conversion
-#'
-#' # Convert to BPCells from R
-#' as(x, "IterableMatrix")
+#' @details Use base R's `as()` to convert between BPCells matrices and
+#' `dgCMatrix`/`matrix` representations, while `as.matrix()` materialises
+#' dense matrices directly when needed.
 #' @param x Matrix object to convert
 #' @param dgCMatrix Sparse matrix in dgCMatrix format
 #' @param IterableMatrix IterableMatrix object
 #' @param ... Additional arguments passed to methods
+#' @param from Object supplied to `base::coerce()` (typically generated by `as()`)
+#' @param to Target class name for coercion
 #' @examples
 #' mat <- get_demo_mat()[1:2, 1:2]
 #' mat
@@ -3042,6 +3126,20 @@ convert_matrix_type <- function(matrix, type = c("uint32_t", "double", "float"))
 #' as(mat_dgc, "IterableMatrix")
 #' 
 #' 
+#' @rdname matrix_R_conversion
+#' @name matrix_R_conversion_coercions
+#' @aliases coerce,dgCMatrix,IterableMatrix-method
+#' @aliases coerce,IterableMatrix,dgCMatrix-method
+#' @aliases coerce,matrix,IterableMatrix-method
+#' @aliases coerce,IterableMatrix,matrix-method
+#' @usage
+#' \method{as.matrix}{IterableMatrix}(x, ...)
+#' \S4method{coerce}{dgCMatrix,IterableMatrix}(from, to, ...)
+#' \S4method{coerce}{IterableMatrix,dgCMatrix}(from, to, ...)
+#' \S4method{coerce}{matrix,IterableMatrix}(from, to, ...)
+#' \S4method{coerce}{IterableMatrix,matrix}(from, to, ...)
+NULL
+
 #' @name matrix_R_conversion
 NULL
 
@@ -3054,6 +3152,7 @@ setClass("Iterable_dgCMatrix_wrapper",
     mat = NULL
   )
 )
+#' @describeIn IterableMatrix-misc-methods Matrix data type for Iterable_dgCMatrix_wrapper objects
 setMethod("matrix_type", signature(x = "Iterable_dgCMatrix_wrapper"), function(x) "double")
 setMethod("matrix_inputs", "Iterable_dgCMatrix_wrapper", function(x) list())
 
@@ -3400,4 +3499,3 @@ apply_by_col <- function(mat, fun, ...) {
   }
   apply_matrix_double_cpp(iterate_matrix(convert_matrix_type(mat, "double")), f, FALSE)
 }
-

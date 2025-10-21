@@ -10,6 +10,12 @@
 #'
 #' Methods for IterableFragments objects
 #'
+#' @param x an IterableFragments object
+#' @param ... Additional arguments (not used unless specified)
+#' @param row.names Optional row names for compatibility with `as.data.frame()`.
+#'   Ignored by IterableFragments methods.
+#' @param optional Logical flag for compatibility with `as.data.frame()`; ignored.
+#' @param value Replacement value (when applicable).
 #' @name IterableFragments-methods
 #' @rdname IterableFragments-methods
 NULL
@@ -96,6 +102,7 @@ setMethod("show", "IterableFragments", function(object) {
 #' 
 #' @export
 setGeneric("cellNames", function(x) standardGeneric("cellNames"))
+#' @describeIn IterableFragments-methods Get cell names for IterableFragments
 setMethod("cellNames", "IterableFragments", function(x) {
   if (.hasSlot(x, "fragments")) {
     return(cellNames(x@fragments))
@@ -119,6 +126,7 @@ setMethod("cellNames", "IterableFragments", function(x) {
 #' 
 #' @export
 setGeneric("cellNames<-", function(x, ..., value) standardGeneric("cellNames<-"))
+#' @describeIn IterableFragments-methods Set cell names for IterableFragments
 setMethod("cellNames<-", "IterableFragments", function(x, ..., value) {
   if (is.null(cellNames(x))) {
     stop("Assigning new cellNames is not allowed, only renaming")
@@ -141,6 +149,7 @@ setMethod("cellNames<-", "IterableFragments", function(x, ..., value) {
 #' 
 #' @export
 setGeneric("chrNames", function(x) standardGeneric("chrNames"))
+#' @describeIn IterableFragments-methods Get chromosome names for IterableFragments
 setMethod("chrNames", "IterableFragments", function(x) {
   if (.hasSlot(x, "fragments")) {
     return(chrNames(x@fragments))
@@ -163,6 +172,7 @@ setMethod("chrNames", "IterableFragments", function(x) {
 #' 
 #' @export
 setGeneric("chrNames<-", function(x, ..., value) standardGeneric("chrNames<-"))
+#' @describeIn IterableFragments-methods Set chromosome names for IterableFragments
 setMethod("chrNames<-", "IterableFragments", function(x, ..., value) {
   if (is.null(chrNames(x))) {
     stop("Assigning new chrNames is not allowed, only renaming")
@@ -184,7 +194,9 @@ setClass("FragmentsTsv",
     comment = ""
   )
 )
+#' @describeIn IterableFragments-misc-methods Get chromosome names for FragmentsTsv
 setMethod("chrNames", "FragmentsTsv", function(x) NULL)
+#' @describeIn IterableFragments-misc-methods Get cell names for FragmentsTsv
 setMethod("cellNames", "FragmentsTsv", function(x) NULL)
 
 setMethod("iterate_fragments", "FragmentsTsv", function(x) iterate_10x_fragments_cpp(normalizePath(x@path), x@comment))
@@ -306,7 +318,9 @@ setClass("UnpackedMemFragments",
     version = character(0)
   )
 )
+#' @describeIn IterableFragments-misc-methods Get chromosome names for UnpackedMemFragments
 setMethod("chrNames", "UnpackedMemFragments", function(x) x@chr_names)
+#' @describeIn IterableFragments-misc-methods Get cell names for UnpackedMemFragments
 setMethod("cellNames", "UnpackedMemFragments", function(x) x@cell_names)
 setMethod("iterate_fragments", "UnpackedMemFragments", function(x) {
   iterate_unpacked_fragments_cpp(x)
@@ -352,7 +366,9 @@ setClass("PackedMemFragments",
     version = character(0)
   )
 )
+#' @describeIn IterableFragments-misc-methods Get chromosome names for PackedMemFragments
 setMethod("chrNames", "PackedMemFragments", function(x) x@chr_names)
+#' @describeIn IterableFragments-misc-methods Get cell names for PackedMemFragments
 setMethod("cellNames", "PackedMemFragments", function(x) x@cell_names)
 setMethod("iterate_fragments", "PackedMemFragments", function(x) {
   iterate_packed_fragments_cpp(x)
@@ -424,7 +440,9 @@ setClass("FragmentsDir",
     cell_names = character(0)
   )
 )
+#' @describeIn IterableFragments-misc-methods Get chromosome names for FragmentsDir
 setMethod("chrNames", "FragmentsDir", function(x) x@chr_names)
+#' @describeIn IterableFragments-misc-methods Get cell names for FragmentsDir
 setMethod("cellNames", "FragmentsDir", function(x) x@cell_names)
 setMethod("iterate_fragments", "FragmentsDir", function(x) {
   if (x@compressed) {
@@ -534,7 +552,9 @@ setClass("FragmentsHDF5",
     cell_names = character(0)
   )
 )
+#' @describeIn IterableFragments-misc-methods Get chromosome names for FragmentsHDF5
 setMethod("chrNames", "FragmentsHDF5", function(x) x@chr_names)
+#' @describeIn IterableFragments-misc-methods Get cell names for FragmentsHDF5
 setMethod("cellNames", "FragmentsHDF5", function(x) x@cell_names)
 setMethod("iterate_fragments", "FragmentsHDF5", function(x) {
   if (x@compressed) {
@@ -658,27 +678,27 @@ open_fragments_hdf5 <- function(path, group = "fragments", buffer_size = 16384L)
 #' GRanges, BPCells assumes a 0-based, end-exclusive coordinate system. (See
 #' [genomic-ranges-like] reference for details)
 #'
-#' @aliases as.data.frame
+#' @details Coercions rely on base R's `as()`; for example `as(frags, "data.frame")`
+#' converts BPCells fragments back to a tabular format, while `as(x, "IterableFragments")`
+#' materialises supported R objects as fragment stores. Coercions to and from
+#' `GRanges` require the GenomicRanges package to be installed.
 #'
-#' @usage 
-#' # Convert from R to BPCells
-#' convert_to_fragments(x, zero_based_coords = !is(x, "GRanges"))
-#' as(x, "IterableFragments")
-#' 
-#' # Convert from BPCells to R
-#' as.data.frame(x, ...)
-#' as(x, "data.frame")
-#' as(x, "GRanges")
+#' @aliases as.data.frame.IterableFragments
 #'
 #' @param x `r document_granges("Fragment coordinates", extras=c("cell_id" = "cell barcodes or unique identifiers as string or factor"))`
 #' @param IterableFragments BPCells IterableFragments object
 #' @param data.frame Data frame with columns chr, start, end, and cell_id
 #' @param GRanges GenomicRanges object with metadata column cell_id
+#' @param from Object supplied to `base::coerce()` (typically generated by `as()`)
+#' @param to Target class name for coercion
 #' @param zero_based_coords Whether to convert the ranges from a 1-based end-inclusive
 #'    coordinate system to a 0-based end-exclusive coordinate system. Defaults to true
 #'    for GRanges and false for other formats
 #'    (see this [archived UCSC blogpost](https://web.archive.org/web/20210920203703/http://genome.ucsc.edu/blog/the-ucsc-genome-browser-coordinate-counting-systems/))
 #' @param ... Additional arguments passed to methods
+#' @param row.names Optional row names for compatibility with `as.data.frame()`.
+#'   Ignored for IterableFragments objects.
+#' @param optional Logical flag for compatibility with `as.data.frame()`; ignored.
 #' @return **convert_to_fragments()**: IterableFragments object
 #' @examples
 #' frags_table <- tibble::tibble(
@@ -722,6 +742,33 @@ open_fragments_hdf5 <- function(path, group = "fragments", buffer_size = 16384L)
 #' frags_granges
 #' 
 #' 
+#' @rdname fragment_R_conversion
+#' @name fragment_R_conversion_coercions
+#' @aliases coerce,data.frame,IterableFragments-method
+#' @aliases coerce,IterableFragments,data.frame-method
+#' @aliases coerce,GRanges,IterableFragments-method
+#' @aliases coerce,IterableFragments,GRanges-method
+#' @usage
+#' \method{as.data.frame}{IterableFragments}(x, row.names = NULL, optional = FALSE, ...)
+#' \S4method{coerce}{data.frame,IterableFragments}(from, to, ...)
+#' \S4method{coerce}{IterableFragments,data.frame}(from, to, ...)
+#' \S4method{coerce}{IterableFragments,GRanges}(from, to, ...)
+#' \S4method{coerce}{GRanges,IterableFragments}(from, to, ...)
+NULL
+
+#' IterableFragments subclass methods
+#'
+#' Methods defined for classes that extend `IterableFragments`, providing access
+#' to metadata or specialised behaviours for storage backends and selection
+#' wrappers.
+#'
+#' @param x An object inheriting from `IterableFragments`.
+#' @name IterableFragments-misc-methods
+#' @rdname IterableFragments-misc-methods
+#' @docType methods
+#' @keywords internal
+NULL
+
 #' @rdname fragment_R_conversion
 #' @export
 convert_to_fragments <- function(x, zero_based_coords = !is(x, "GRanges")) {
@@ -801,9 +848,11 @@ setAs("IterableFragments", "data.frame", function(from) {
 })
 
 #' @exportS3Method base::as.data.frame
-as.data.frame.IterableFragments <- function(x, ...) as(x, "data.frame")
+as.data.frame.IterableFragments <- function(x, row.names = NULL, optional = FALSE, ...) as(x, "data.frame")
 #' @export
+#' @describeIn IterableFragments-methods Coerce IterableFragments to a data.frame
 setMethod("as.data.frame", signature(x = "IterableFragments"), function(x, ...) as(x, "data.frame"))
+
 setAs("data.frame", "IterableFragments", function(from) {
   convert_to_fragments(from)
 }) 
@@ -935,6 +984,7 @@ setClass("ChrSelectName",
     chr_names = character(0)
   )
 )
+#' @describeIn IterableFragments-misc-methods Get chromosome names for ChrSelectName
 setMethod("chrNames", "ChrSelectName", function(x) x@chr_names)
 setMethod("iterate_fragments", "ChrSelectName", function(x) {
   iterate_chr_name_select_cpp(iterate_fragments(x@fragments), x@chr_names)
@@ -960,6 +1010,7 @@ setClass("ChrSelectIndex",
     chr_index_selection = NA_integer_
   )
 )
+#' @describeIn IterableFragments-misc-methods Get chromosome names for ChrSelectIndex
 setMethod("chrNames", "ChrSelectIndex", function(x) chrNames(x@fragments)[x@chr_index_selection])
 setMethod("iterate_fragments", "ChrSelectIndex", function(x) {
   iterate_chr_index_select_cpp(iterate_fragments(x@fragments), x@chr_index_selection - 1)
@@ -1038,6 +1089,7 @@ setClass("CellSelectName",
     cell_names = character(0)
   )
 )
+#' @describeIn IterableFragments-misc-methods Get cell names for CellSelectName
 setMethod("cellNames", "CellSelectName", function(x) x@cell_names)
 setMethod("iterate_fragments", "CellSelectName", function(x) {
   iterate_cell_name_select_cpp(iterate_fragments(x@fragments), x@cell_names)
@@ -1063,6 +1115,7 @@ setClass("CellSelectIndex",
     cell_index_selection = NA_integer_
   )
 )
+#' @describeIn IterableFragments-misc-methods Get cell names for CellSelectIndex
 setMethod("cellNames", "CellSelectIndex", function(x) cellNames(x@fragments)[x@cell_index_selection])
 setMethod("iterate_fragments", "CellSelectIndex", function(x) {
   iterate_cell_index_select_cpp(iterate_fragments(x@fragments), x@cell_index_selection - 1)
@@ -1138,6 +1191,7 @@ setClass("CellMerge",
     group_names = character(0)
   )
 )
+#' @describeIn IterableFragments-misc-methods Get cell names for CellMerge
 setMethod("cellNames", "CellMerge", function(x) x@group_names)
 setMethod("iterate_fragments", "CellMerge", function(x) {
   iterate_cell_merge_cpp(iterate_fragments(x@fragments), x@group_ids, x@group_names)
@@ -1196,6 +1250,7 @@ setClass("ChrRename",
     chr_names = character(0)
   )
 )
+#' @describeIn IterableFragments-misc-methods Get chromosome names for ChrRename
 setMethod("chrNames", "ChrRename", function(x) x@chr_names)
 setMethod("iterate_fragments", "ChrRename", function(x) {
   iterate_chr_rename_cpp(iterate_fragments(x@fragments), x@chr_names)
@@ -1219,6 +1274,7 @@ setClass("CellRename",
     cell_names = character(0)
   )
 )
+#' @describeIn IterableFragments-misc-methods Get cell names for CellRename
 setMethod("cellNames", "CellRename", function(x) x@cell_names)
 setMethod("iterate_fragments", "CellRename", function(x) {
   iterate_cell_rename_cpp(iterate_fragments(x@fragments), x@cell_names)
@@ -1241,6 +1297,7 @@ setClass("CellPrefix",
     prefix = ""
   )
 )
+#' @describeIn IterableFragments-misc-methods Get cell names for CellPrefix
 setMethod("cellNames", "CellPrefix", function(x) {
   if (is.null(cellNames(x@fragments))) return(NULL)
   paste0(x@prefix, cellNames(x@fragments))
@@ -1376,9 +1433,11 @@ setClass("MergeFragments",
     fragments_list = list()
   )
 )
+#' @describeIn IterableFragments-misc-methods Get chromosome names for MergeFragments
 setMethod("chrNames", "MergeFragments", function(x) {
   Reduce(union, lapply(x@fragments_list, chrNames))
 })
+#' @describeIn IterableFragments-misc-methods Get cell names for MergeFragments
 setMethod("cellNames", "MergeFragments", function(x) {
   do.call(c, lapply(x@fragments_list, cellNames))
 })
@@ -1396,6 +1455,7 @@ setMethod("short_description", "MergeFragments", function(x) {
 })
 
 # Allow merging fragments using standard concatenation method
+#' @describeIn IterableFragments-methods Concatenate IterableFragments objects
 setMethod("c", "IterableFragments", function(x, ...) {
   tail <- list(...)
   if (length(tail) == 1 && is.null(tail[[1]])) {
