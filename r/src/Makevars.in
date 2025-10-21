@@ -90,3 +90,28 @@ vendor/md5/md5.o \
 # matrixIterators/MatrixOps.o \
 # matrixIterators/PackedMatrix.o \
 # matrixIterators/UnpackedMatrix.o \
+
+# Automatically strip debug symbols from the shared library unless opted out
+ifeq ($(strip $(BP_DISABLE_STRIP)),)
+STRIP ?= $(shell "${R_HOME}/bin/R" CMD config STRIP 2>/dev/null)
+ifeq ($(strip $(STRIP)),)
+STRIP := $(shell command -v strip 2>/dev/null)
+endif
+STRIPFLAGS ?= --strip-debug
+ifeq ($(shell uname -s 2>/dev/null),Darwin)
+STRIPFLAGS := -S
+endif
+
+ifeq ($(strip $(STRIP)),)
+strip-shlib: $(SHLIB)
+	@echo "Skipping shared library stripping; no strip tool detected"
+else
+strip-shlib: $(SHLIB)
+	@echo "Stripping debug symbols from $(SHLIB)"
+	@$(STRIP) $(STRIPFLAGS) $(SHLIB) || true
+endif
+
+.PHONY: strip-shlib
+all: strip-shlib
+endif
+

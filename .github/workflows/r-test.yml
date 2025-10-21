@@ -38,6 +38,9 @@ jobs:
         with:
           Ncpus: '3'
           use-public-rspm: true
+          extra-repositories: |
+            https://bioconductor.org/packages/release/data/annotation
+            https://bpcells.github.io/drat
       - uses: r-lib/actions/setup-r-dependencies@v2
         with:
           cache-version: 1
@@ -45,9 +48,6 @@ jobs:
             any::testthat
             any::decor
           working-directory: 'r'
-          extra-repositories: |
-            https://bioconductor.org/packages/release/data/annotation
-            https://bpcells.github.io/drat
       # Do a normal install rather than a pkgbuild-mediated install so we can control compilation flags via Makevars file
       - name: Install BPCells
         run: Rscript -e 'install.packages("r", repos=NULL, type="source")'
