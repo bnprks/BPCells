@@ -222,21 +222,6 @@ else
     printf "\nFound working highway SIMD library\n"
 fi
 
-############################
-# Compiler flag compatibility check
-############################
-
-OPTIONAL_CXXFLAGS=""
-
-# # Test for -Wno-ignored-attributes support
-# if $CXX -xc++ -c -Wno-ignored-attributes /dev/null -o /dev/null 2>/dev/null; then
-#     OPTIONAL_CXXFLAGS="$OPTIONAL_CXXFLAGS -Wno-ignored-attributes"
-# fi
-
-# # Test for -Wno-unknown-pragmas support
-# if $CXX -xc++ -c -Wno-unknown-pragmas /dev/null -o /dev/null 2>/dev/null; then
-#     OPTIONAL_CXXFLAGS="$OPTIONAL_CXXFLAGS -Wno-unknown-pragmas"
-# fi
 
 # Make substitutions in Makevars.in
 sed \
@@ -247,7 +232,6 @@ sed \
     -e "s|%HWY_LIBS%|${HWY_LIBS}|g" \
     -e "s|%ENV_CFLAGS%|${ENV_CFLAGS}|g" \
     -e "s|%ENV_LDFLAGS%|${ENV_LDFLAGS}|g" \
-    -e "s|%OPTIONAL_CXXFLAGS%|${OPTIONAL_CXXFLAGS}|g" \
     src/Makevars.in > src/Makevars
 
 # Clean up highway build directory to avoid CRAN NOTE about object files

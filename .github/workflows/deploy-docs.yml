@@ -24,6 +24,9 @@ jobs:
         cache-version: 1
         working-directory: 'r'
         needs: website
+        extra-repositories: |
+            https://bioconductor.org/packages/release/data/annotation
+            https://bpcells.github.io/drat
     - name: Install BPCells
       run: |
         Rscript -e 'install.packages("r", repos=NULL, type="source")'

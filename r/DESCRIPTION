@@ -1,6 +1,6 @@
 Package: BPCells
 Title: Single Cell Counts Matrices to PCA
-Version: 0.3.1
+Version: 0.3.2
 Authors@R: c(
     person(given = "Benjamin",
            family = "Parks",
@@ -73,7 +73,7 @@ Suggests:
     testthat (>= 3.0.0)
 Additional_repositories: 
     https://bioconductor.org/packages/release/data/annotation,
-    https://immanuelazn.github.io/drat
+    https://bpcells.github.io/drat
 Depends: 
     R (>= 4.0.0)
 SystemRequirements: C++17
