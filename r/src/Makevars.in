@@ -3,6 +3,8 @@ CXX_STD = CXX17
 PKG_CXXFLAGS = %HDF5_CFLAGS% %HWY_CFLAGS% %ENV_CFLAGS% -Ivendor -DRCPP_EIGEN -DEIGEN_PERMANENTLY_DISABLE_STUPID_WARNINGS # -Wall -Wextra -Wpedantic
 PKG_LIBS = -lz %HDF5_LIBS% %CXX_FS_FLAG% %HWY_LIBS% %ENV_LDFLAGS%
 
+
+
 # PKG_CXXFLAGS = -Wno-deprecated-declarations -Wno-unused-but-set-variable -fsanitize=undefined %HDF5_CFLAGS% %HWY_CFLAGS% -DRCPP_EIGEN -DEIGEN_PERMANENTLY_DISABLE_STUPID_WARNINGS # -Wall -Wextra -Wpedantic
 # PKG_LIBS = -fsanitize=undefined -lz %HDF5_LIBS% %CXX_FS_FLAG% %HWY_LIBS%
 
@@ -91,27 +93,4 @@ vendor/md5/md5.o \
 # matrixIterators/PackedMatrix.o \
 # matrixIterators/UnpackedMatrix.o \
 
-# Automatically strip debug symbols from the shared library unless opted out
-ifeq ($(strip $(BP_DISABLE_STRIP)),)
-STRIP ?= $(shell "${R_HOME}/bin/R" CMD config STRIP 2>/dev/null)
-ifeq ($(strip $(STRIP)),)
-STRIP := $(shell command -v strip 2>/dev/null)
-endif
-STRIPFLAGS ?= --strip-debug
-ifeq ($(shell uname -s 2>/dev/null),Darwin)
-STRIPFLAGS := -S
-endif
-
-ifeq ($(strip $(STRIP)),)
-strip-shlib: $(SHLIB)
-	@echo "Skipping shared library stripping; no strip tool detected"
-else
-strip-shlib: $(SHLIB)
-	@echo "Stripping debug symbols from $(SHLIB)"
-	@$(STRIP) $(STRIPFLAGS) $(SHLIB) || true
-endif
-
-.PHONY: strip-shlib
-all: strip-shlib
-endif
 
