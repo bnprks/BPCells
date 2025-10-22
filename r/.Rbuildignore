@@ -13,7 +13,6 @@
 ^\.cache$
 ^bench$
 ^vignettes$
-^tools/highway/
 
 .*\.o$
 .*\.so$
