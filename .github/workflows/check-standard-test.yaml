@@ -14,7 +14,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest, macos-13]
+        os: [ubuntu-latest, windows-latest, macos-latest]
 
     env:
       GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
@@ -75,5 +75,5 @@ jobs:
           working-directory: r
           build_args: c("--no-build-vignettes")
           upload-snapshots: false
-          error-on: error
+          error-on: "error"
 
