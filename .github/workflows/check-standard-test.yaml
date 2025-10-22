@@ -75,5 +75,5 @@ jobs:
           working-directory: r
           build_args: c("--no-build-vignettes")
           upload-snapshots: false
-          error-on: "error"
+          error-on: '"error"'
 
