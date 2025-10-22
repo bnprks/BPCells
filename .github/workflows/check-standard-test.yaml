@@ -29,14 +29,15 @@ jobs:
         shell: bash
         run: |
           sudo apt-get update
-          sudo apt-get install -y libhdf5-dev
+          sudo apt-get install -y libhdf5-dev libhwy-dev
+          sudo apt-get isntall -y libhwy-dev || true
 
       - name: Install binary dependencies on macOS
         if: matrix.os == 'macos-latest' || matrix.os == 'macos-13'
         shell: bash
         run: |
           brew update
-          brew install hdf5
+          brew install hdf5 pkg-config highway
 
       - name: Configure compilation flags
         shell: bash
@@ -45,6 +46,31 @@ jobs:
           MAKEFLAGS=--jobs=3
           MAKEVARS
           echo "R_MAKEVARS_USER=$GITHUB_WORKSPACE/Makevars.user" >> "$GITHUB_ENV"
+
+      - name: Install Highway on Windows (MSYS2 UCRT64)
+        if: matrix.os == 'windows-latest'
+        uses: msys2/setup-msys2@v2
+        with:
+          release: false
+          update: true
+          cache: true
+          install: >-
+            base-devel
+            git
+            mingw-w64-ucrt-x86_64-toolchain
+            mingw-w64-ucrt-x86_64-pkgconf
+            mingw-w64-ucrt-x86_64-highway
+          msystem: UCRT64
+          path-type: minimal
+          
+      - name: Expose UCRT64 pkg-config to PATH (Windows)
+        if: matrix.os == 'windows-latest'
+        shell: bash
+        run: |
+          echo "C:/msys64/ucrt64/bin" >> $GITHUB_PATH
+          # Ensure pkg-config finds the .pc files for UCRT64
+          echo "PKG_CONFIG_PATH=C:/msys64/ucrt64/lib/pkgconfig" >> $GITHUB_ENV
+          echo "PKG_CONFIG=C:/msys64/ucrt64/bin/pkg-config.exe" >> $GITHUB_ENV
 
       - name: Handle Windows big object files
         if: matrix.os == 'windows-latest'
