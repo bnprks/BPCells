@@ -1,0 +1,80 @@
+name: R-CMD-check
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+  workflow_dispatch:
+
+jobs:
+  R-CMD-check:
+    runs-on: ${{ matrix.os }}
+    name: ${{ matrix.os }}
+    timeout-minutes: 120
+
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest, macos-13]
+
+    env:
+      GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
+      R_KEEP_PKG_SOURCE: yes
+      ENABLE_INSTALL_COUNTING: no
+      _R_CHECK_BUILD_VIGNETTES_: false
+
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install binary dependencies on ubuntu
+        if: matrix.os == 'ubuntu-latest'
+        shell: bash
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libhdf5-dev
+
+      - name: Install binary dependencies on macOS
+        if: matrix.os == 'macos-latest' || matrix.os == 'macos-13'
+        shell: bash
+        run: |
+          brew update
+          brew install hdf5
+
+      - name: Configure compilation flags
+        shell: bash
+        run: |
+          cat <<'MAKEVARS' > "$GITHUB_WORKSPACE/Makevars.user"
+          MAKEFLAGS=--jobs=3
+          MAKEVARS
+          echo "R_MAKEVARS_USER=$GITHUB_WORKSPACE/Makevars.user" >> "$GITHUB_ENV"
+
+      - name: Handle Windows big object files
+        if: matrix.os == 'windows-latest'
+        shell: bash
+        run: |
+          echo "CXXFLAGS += -Wa,-mbig-obj" >> "$GITHUB_WORKSPACE/Makevars.user"
+
+      - uses: r-lib/actions/setup-r@v2
+        with:
+          Ncpus: '3'
+          use-public-rspm: true
+          extra-repositories: |
+            https://bioconductor.org/packages/release/data/annotation
+            https://bpcells.github.io/drat
+
+      - uses: r-lib/actions/setup-r-dependencies@v2
+        with:
+          cache-version: 1
+          extra-packages: |
+            any::testthat
+            any::decor
+          working-directory: 'r'
+          needs: check
+
+      - name: Check package
+        uses: r-lib/actions/check-r-package@v2
+        with:
+          working-directory: r
+          args: 'c("--no-manual", "--no-build-vignettes")'
+          build-args: 'c("--no-manual", "--no-build-vignettes")'
+          upload-snapshots: true
