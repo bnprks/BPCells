@@ -7,7 +7,7 @@
 ^pkgdown$
 ^.*\.Rproj$
 ^\.Rproj\.user$
-
+^tools/highway$
 
 ^\.idea
 ^\.cache$
