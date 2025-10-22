@@ -689,24 +689,22 @@ write_insertion_bed <- function(fragments, path,
 #' To run MACS manually, you will first run `call_peaks_macs()` with `step="prep-inputs`. Then, manually run all of the
 #' shell scripts generated at `<path>/input/<group>.sh`. Finally, run `call_peaks_macs()` again with the same original arguments, but
 #' setting `step="read-outputs"`.
-#' @examples
-#' if (macs_path_is_valid()) {
-#'   macs_files <- file.path(tempdir(), "peaks")
-#'   frags <- get_demo_frags()
+#' @examplesIf tryCatch({ macs_path_is_valid(); TRUE }, error = function(e) FALSE)
+#' macs_files <- file.path(tempdir(), "peaks")
+#' frags <- get_demo_frags()
 #'
-#'   head(call_peaks_macs(frags, macs_files))
+#' head(call_peaks_macs(frags, macs_files))
 #'
-#'   ## Can also just run the input prep, then run macs manually
-#'   ## by setting step to 'prep_inputs'
-#'   macs_script <- call_peaks_macs(frags, macs_files, step = "prep-inputs")
-#'   system2("bash", macs_script[1], stdout = FALSE, stderr = FALSE)
+#' ## Can also just run the input prep, then run macs manually
+#' ## by setting step to 'prep_inputs'
+#' macs_script <- call_peaks_macs(frags, macs_files, step = "prep-inputs")
+#' system2("bash", macs_script[1], stdout = FALSE, stderr = FALSE)
 #'
-#'   ## Then read the narrow peaks files
-#'   list.files(file.path(macs_files, "output", "all"))
+#' ## Then read the narrow peaks files
+#' list.files(file.path(macs_files, "output", "all"))
 #'
-#'   ## call_peaks_macs() can also solely perform the output reading step
-#'   head(call_peaks_macs(frags, macs_files, step = "read-outputs"))
-#' }
+#' ## call_peaks_macs() can also solely perform the output reading step
+#' head(call_peaks_macs(frags, macs_files, step = "read-outputs"))
 #' @inheritParams call_peaks_tile
 #' @export
 call_peaks_macs <- function(fragments, path,
@@ -833,7 +831,7 @@ call_macs_peaks <- function(...) {
 #' Test if MACS executable is valid.
 #' If macs_executable is NULL, this function will try to auto-detect MACS from PATH, with preference for MACS3 over MACS2.
 #' If macs_executable is provided, this function will check if MACS can be called.
-#' @return MACS executable path.
+#' @return MACS executable path if valid, otherwise throws an error.
 #' @inheritParams call_peaks_macs
 #' @keywords internal
 macs_path_is_valid <- function(macs_executable) {
