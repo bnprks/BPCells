@@ -234,12 +234,11 @@ sed \
     -e "s|%ENV_LDFLAGS%|${ENV_LDFLAGS}|g" \
     src/Makevars.in > src/Makevars
 
-# Clean up highway build directory to avoid CRAN NOTE about object files
-# The highway library will be rebuilt as needed during installation
-rm -rf tools/highway/
+# # Clean up highway build directory to avoid CRAN NOTE about object files
+# # The highway library will be rebuilt as needed during installation
+# rm -rf tools/highway/
 
 if [ "$ENABLE_INSTALL_COUNTING" = "yes" ]; then
     curl --silent https://plausible.benparks.net/flask-plausible/bpcells-configure-success > /dev/null 2> /dev/null \
         || true
 fi
-
