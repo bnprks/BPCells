@@ -76,5 +76,9 @@ Additional_repositories:
     https://bpcells.github.io/drat
 Depends: 
     R (>= 4.0.0)
-SystemRequirements: C++17
+SystemRequirements: C++17,
+    HDF5 (>= 1.10) [optional; detected via pkg-config 'hdf5' or 'h5cc'; 
+        else set HDF5_CFLAGS/HDF5_LIBS],
+    Highway (>= 1.0.5) [optional; detected via pkg-config 'libhwy'/'hwy'; 
+        falls back to vendored build if not found]
 Config/Needs/website: pkgdown, devtools, uwot, irlba, RcppHNSW, igraph, BiocManager, bioc::BSgenome.Hsapiens.UCSC.hg38, github::GreenleafLab/motifmatchr, github::GreenleafLab/chromVARmotifs, png
