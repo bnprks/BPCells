@@ -240,7 +240,7 @@ read_bed <- function(path, additional_columns = character(0), backup_url = NULL,
 #' @rdname read_bed
 #' @details **read_encode_blacklist**
 #'
-#' Downloads the Boyle Lab blacklist, as described in <https://doi.org/10.1038/s41598-019-45839-z>
+#' Downloads the Boyle Lab blacklist, as described in \doi{10.1038/s41598-019-45839-z}
 #' @param genome genome name
 #' @examples 
 #' #######################################################################

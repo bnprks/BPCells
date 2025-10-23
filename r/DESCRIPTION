@@ -10,7 +10,7 @@ Authors@R: c(
     person("Immanuel", "Abdi", role = "aut"),
     person("Stanford University", role=c("cph", "fnd")),
     person("Genentech, Inc.", role=c("cph", "fnd")))
-Description: > Efficient operations for single cell ATAC-seq fragments and
+Description: Efficient operations for single cell ATAC-seq fragments and
     RNA counts matrices. Interoperable with standard file formats, and introduces
     efficient bit-packed formats that allow large storage savings and increased
     read speeds.
