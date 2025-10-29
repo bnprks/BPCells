@@ -370,7 +370,7 @@ binarize <- function(mat, threshold=0, strict_inequality=TRUE) {
              global_params=c(threshold, strict_inequality))
   convert_matrix_type(res, "uint32_t")
 }
-#' @describeIn IterableMatrix-methods Perform matrix < numeric comparison (unsupported)
+#' @describeIn IterableMatrix-methods-misc Perform matrix < numeric comparison (unsupported)
 setMethod("<", signature(e1= "IterableMatrix", e2= "numeric"), function(e1, e2) {
   stop("matrix < numeric not supported for IterableMatrix objects")
 })
@@ -398,11 +398,11 @@ setMethod("<", signature(e1= "numeric", e2= "IterableMatrix"), function(e1, e2) 
 setMethod(">", signature(e1= "IterableMatrix", e2= "numeric"), function(e1, e2) {
   binarize(e1, threshold=e2, strict_inequality=TRUE)
 })
-#' @describeIn IterableMatrix-methods Perform numeric > matrix comparison (unsupported)
+#' @describeIn IterableMatrix-methods-misc Perform numeric > matrix comparison (unsupported)
 setMethod(">", signature(e1= "numeric", e2= "IterableMatrix"), function(e1, e2) {
   stop("numeric > matrix not supported for IterableMatrix objects")
 })
-#' @describeIn IterableMatrix-methods Perform matrix <= numeric comparison (unsupported)
+#' @describeIn IterableMatrix-methods-misc Perform matrix <= numeric comparison (unsupported)
 setMethod("<=", signature(e1= "IterableMatrix", e2= "numeric"), function(e1, e2) {
   stop("matrix <= numeric not supported for IterableMatrix objects")
 })
@@ -428,7 +428,7 @@ setMethod("<=", signature(e1= "numeric", e2= "IterableMatrix"), function(e1, e2)
 setMethod(">=", signature(e1= "IterableMatrix", e2= "numeric"), function(e1, e2) {
   binarize(e1, threshold=e2, strict_inequality=FALSE)
 })
-#' @describeIn IterableMatrix-methods Compare a numeric value to an IterableMatrix using >= (numeric left operand)
+#' @describeIn IterableMatrix-methods-misc Compare a numeric value to an IterableMatrix using >= (numeric left operand)
 setMethod(">=", signature(e1= "numeric", e2= "IterableMatrix"), function(e1, e2) {
   stop("numeric >= matrix not supported for IterableMatrix objects")
 })
@@ -730,7 +730,7 @@ setMethod("*", signature(e1 = "IterableMatrix", e2 = "numeric"), function(e1, e2
   e1 <- wrapMatrix("TransformScaleShift", convert_matrix_type(e1, "double"))
   e1 * e2
 })
-#' @describeIn IterableMatrix-methods Multiply an IterableMatrix by a numeric value or row-wise vector (numeric left operand)
+#' @describeIn IterableMatrix-methods-misc Multiply an IterableMatrix by a numeric value or row-wise vector (numeric left operand)
 setMethod("*", signature(e1 = "numeric", e2 = "IterableMatrix"), function(e1, e2) {
   e2 <- wrapMatrix("TransformScaleShift", convert_matrix_type(e2, "double"))
   e2 * e1
@@ -752,7 +752,7 @@ setMethod("+", signature(e1 = "IterableMatrix", e2 = "numeric"), function(e1, e2
   e1 <- wrapMatrix("TransformScaleShift", convert_matrix_type(e1, "double"))
   e1 + e2
 })
-#' @describeIn IterableMatrix-methods Add an IterableMatrix to a numeric value or row-wise vector (numeric left operand)
+#' @describeIn IterableMatrix-methods-misc Add an IterableMatrix to a numeric value or row-wise vector (numeric left operand)
 setMethod("+", signature(e1 = "numeric", e2 = "IterableMatrix"), function(e1, e2) {
   if (all(e1 == 0)) return(e2)
   e2 <- wrapMatrix("TransformScaleShift", convert_matrix_type(e2, "double"))
@@ -789,7 +789,7 @@ setMethod("/", signature(e1 = "IterableMatrix", e2 = "numeric"), function(e1, e2
 setMethod("-", signature(e1 = "IterableMatrix", e2 = "numeric"), function(e1, e2) {
   e1 + (-e2)
 })
-#' @describeIn IterableMatrix-methods Subtract matrix from a numeric constant/vector
+#' @describeIn IterableMatrix-methods-misc Subtract matrix from a numeric constant/vector
 setMethod("-", signature(e1 = "numeric", e2 = "IterableMatrix"), function(e1, e2) {
   e2 * -1 + e1
 })

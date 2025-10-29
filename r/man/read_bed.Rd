@@ -45,7 +45,7 @@ Read a bed file from disk or a url.
 
 \strong{read_encode_blacklist}
 
-Downloads the Boyle Lab blacklist, as described in \url{https://doi.org/10.1038/s41598-019-45839-z}
+Downloads the Boyle Lab blacklist, as described in \doi{10.1038/s41598-019-45839-z}
 }
 \examples{
 ## Dummy bed file creation

@@ -20,6 +20,25 @@
 #' @rdname IterableMatrix-methods
 NULL
 
+
+#' IterableMatrix methods miscellaneous
+#'
+#' Generic methods and built-in functions for IterableMatrix objects.  These include 
+#' methods that are described in `IterableMatrix-methods` but have some sense of redundancy.
+#' For instance, `%*%` is described between `IterableMatrix` and `matrix` on the left and right respectively.
+#' We do not need to show the method `IterableMatrix` on the right instead.
+#' 
+#' @param ... Additional arguments passed to methods
+#' @param digits Number of decimal places for quantile calculations
+#' @param i Row indices or selection helpers.
+#' @param j Column indices or selection helpers.
+#' @param drop Logical indicating whether to drop dimensions when subsetting.
+#' @param value Replacement value supplied to assignment methods.
+#' @name IterableMatrix-methods-misc
+#' @rdname IterableMatrix-methods-misc
+#' @keywords internal
+NULL
+
 #' IterableMatrix subclass methods
 #'
 #' Methods for classes that extend `IterableMatrix` but are not dispatched
@@ -290,7 +309,7 @@ setMethod("%*%", signature(x = "IterableMatrix", y = "matrix"), function(x, y) {
   res
 })
 
-#' @describeIn IterableMatrix-methods Multiply a dense matrix by an IterableMatrix
+#' @describeIn IterableMatrix-methods-misc Multiply a dense matrix by an IterableMatrix
 setMethod("%*%", signature(x = "matrix", y = "IterableMatrix"), function(x, y) {
   iter <- iterate_matrix(convert_matrix_type(y, "double"))
   if (y@transpose) {
@@ -316,7 +335,7 @@ setMethod("%*%", signature(x = "IterableMatrix", y = "numeric"), function(x, y) 
   res
 })
 
-#' @describeIn IterableMatrix-methods Multiply a numeric row vector by an IterableMatrix
+#' @describeIn IterableMatrix-methods-misc Multiply a numeric row vector by an IterableMatrix
 setMethod("%*%", signature(x = "numeric", y = "IterableMatrix"), function(x, y) {
   iter <- iterate_matrix(convert_matrix_type(y, "double"))
   if (y@transpose) {
@@ -480,7 +499,7 @@ setMethod("%*%", signature(x = "IterableMatrix", y = "dgCMatrix"), function(x, y
   }
 })
 
-#' @describeIn IterableMatrix-methods Multiply a dgCMatrix by an IterableMatrix
+#' @describeIn IterableMatrix-methods-misc Multiply a dgCMatrix by an IterableMatrix
 setMethod("%*%", signature(x = "dgCMatrix", y = "IterableMatrix"), function(x, y) {
   if (y@transpose) {
     t(t(y) %*% as(t(x), "IterableMatrix"))
