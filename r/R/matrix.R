@@ -30,10 +30,7 @@ NULL
 #' 
 #' @param ... Additional arguments passed to methods
 #' @param digits Number of decimal places for quantile calculations
-#' @param i Row indices or selection helpers.
-#' @param j Column indices or selection helpers.
 #' @param drop Logical indicating whether to drop dimensions when subsetting.
-#' @param value Replacement value supplied to assignment methods.
 #' @name IterableMatrix-methods-misc
 #' @rdname IterableMatrix-methods-misc
 #' @keywords internal
