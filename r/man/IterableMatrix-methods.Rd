@@ -198,11 +198,11 @@ expm1_slow(x)
 
 \item{type}{(Integer) between 4 and 9 selecting which quantile algorithm to use, detailed in \code{matrixStats::rowQuantiles()}}
 
+\item{digits}{Number of decimal places for quantile calculations}
+
 \item{e1}{First element of comparison}
 
 \item{e2}{Second element of comparison}
-
-\item{digits}{Number of decimal places for quantile calculations}
 }
 \value{
 \itemize{

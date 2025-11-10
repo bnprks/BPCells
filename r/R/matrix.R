@@ -2737,6 +2737,7 @@ setMethod("matrix_inputs", "PeakMatrix", function(x) list())
 #'    spans the peak even if neither the start or end falls within the peak
 #' @examples
 #' ## Prep demo data
+#' \dontrun{
 #' frags <- get_demo_frags(subset = FALSE)
 #' chrom_sizes <- read_ucsc_chrom_sizes(file.path(tempdir(), "references"), genome="hg38")
 #' blacklist <- read_encode_blacklist(file.path(tempdir(), "references"), genome="hg38")
@@ -2751,6 +2752,7 @@ setMethod("matrix_inputs", "PeakMatrix", function(x) list())
 #' 
 #' ## Get peak matrix
 #' peak_matrix(frags_filter_blacklist, top_peaks, mode="insertions")
+#' }
 #' @export
 peak_matrix <- function(fragments, ranges, mode = c("insertions", "fragments", "overlaps"), zero_based_coords = !is(ranges, "GRanges"), explicit_peak_names = TRUE) {
   assert_is(fragments, "IterableFragments")

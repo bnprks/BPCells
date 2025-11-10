@@ -68,12 +68,6 @@ colQuantiles.IterableMatrix(
 \item{...}{Additional arguments passed to methods}
 
 \item{drop}{Logical indicating whether to drop dimensions when subsetting.}
-
-\item{i}{Row indices or selection helpers.}
-
-\item{j}{Column indices or selection helpers.}
-
-\item{value}{Replacement value supplied to assignment methods.}
 }
 \description{
 Generic methods and built-in functions for IterableMatrix objects.  These include

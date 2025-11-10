@@ -54,6 +54,7 @@ provide the ordering of chromosomes to expect while reading the tsv.
 }
 \examples{
 ## Prep demo data
+\dontrun{
 frags <- get_demo_frags(subset = FALSE)
 chrom_sizes <- read_ucsc_chrom_sizes(file.path(tempdir(), "references"), genome="hg38")
 blacklist <- read_encode_blacklist(file.path(tempdir(), "references"), genome="hg38")
@@ -68,4 +69,5 @@ top_peaks <- top_peaks[order_ranges(top_peaks, chrNames(frags)),]
 
 ## Get peak matrix
 peak_matrix(frags_filter_blacklist, top_peaks, mode="insertions")
+}
 }
