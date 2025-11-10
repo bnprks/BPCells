@@ -34,6 +34,8 @@ write_matrix_hdf5(
 open_matrix_hdf5(path, group, buffer_size = 16384L)
 }
 \arguments{
+\item{mat}{Input matrix, either IterableMatrix or dgCMatrix}
+
 \item{compress}{Whether or not to compress the data.}
 
 \item{dir}{Directory to save the data into}
@@ -54,8 +56,6 @@ to an existing hdf5 file this group must not already be in use}
 \item{gzip_level}{Gzip compression level. Default is 0 (no compression). This is recommended when both compression and
 compatibility with outside programs is required. Otherwise, using compress=TRUE is recommended
 as it is >10x faster with often similar compression levels.}
-
-\item{matrix}{Input matrix, either IterableMatrix or dgCMatrix}
 }
 \value{
 BPCells matrix object

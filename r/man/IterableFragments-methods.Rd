@@ -4,27 +4,52 @@
 \alias{IterableFragments-methods}
 \alias{show,IterableFragments-method}
 \alias{cellNames}
+\alias{cellNames,IterableFragments-method}
 \alias{cellNames<-}
+\alias{cellNames<-,IterableFragments-method}
 \alias{chrNames}
+\alias{chrNames,IterableFragments-method}
 \alias{chrNames<-}
+\alias{chrNames<-,IterableFragments-method}
+\alias{as.data.frame,IterableFragments-method}
+\alias{c,IterableFragments-method}
 \title{IterableFragments methods}
 \usage{
 \S4method{show}{IterableFragments}(object)
 
 cellNames(x)
 
+\S4method{cellNames}{IterableFragments}(x)
+
 cellNames(x, ...) <- value
+
+\S4method{cellNames}{IterableFragments}(x, ...) <- value
 
 chrNames(x)
 
+\S4method{chrNames}{IterableFragments}(x)
+
 chrNames(x, ...) <- value
+
+\S4method{chrNames}{IterableFragments}(x, ...) <- value
+
+\S4method{as.data.frame}{IterableFragments}(x, row.names = NULL, optional = FALSE, ...)
+
+\S4method{c}{IterableFragments}(x, ...)
 }
 \arguments{
 \item{object}{IterableFragments object}
 
 \item{x}{an IterableFragments object}
 
+\item{...}{Additional arguments (not used)}
+
 \item{value}{Character vector of new names}
+
+\item{row.names}{Optional row names for compatibility with \code{as.data.frame()}.
+Ignored by IterableFragments methods.}
+
+\item{optional}{Logical flag for compatibility with \code{as.data.frame()}; ignored.}
 }
 \value{
 \itemize{
@@ -53,11 +78,23 @@ Methods for IterableFragments objects
 
 \item \code{cellNames()}: Get cell names
 
+\item \code{cellNames(IterableFragments)}: Get cell names for IterableFragments
+
 \item \code{cellNames(x, ...) <- value}: Set cell names
+
+\item \code{cellNames(IterableFragments) <- value}: Set cell names for IterableFragments
 
 \item \code{chrNames()}: Set chromosome names
 
+\item \code{chrNames(IterableFragments)}: Get chromosome names for IterableFragments
+
 \item \code{chrNames(x, ...) <- value}: Set chromosome names
+
+\item \code{chrNames(IterableFragments) <- value}: Set chromosome names for IterableFragments
+
+\item \code{as.data.frame(IterableFragments)}: Coerce IterableFragments to a data.frame
+
+\item \code{c(IterableFragments)}: Concatenate IterableFragments objects
 
 }}
 \examples{

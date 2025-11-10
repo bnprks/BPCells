@@ -1,6 +1,20 @@
 #!/usr/bin/env bash
 
-set -euo pipefail
+if [ -z "${BASH_VERSION:-}" ]; then
+    if command -v bash >/dev/null 2>&1; then
+        exec bash "$0" "$@"
+    else
+        echo "Error: bash is required to run this script" >&2
+        exit 1
+    fi
+fi
+
+set -eu
+if command -v bash >/dev/null 2>&1 && [ -n "$BASH_VERSION" ]; then
+    set -o pipefail
+else
+    (set -o pipefail >/dev/null 2>&1) && set -o pipefail || true
+fi
 
 # This is a fairly direct translation of the google/highway CMakeLists.txt from version 1.0.5
 # https://github.com/google/highway/blob/1.0.5/CMakeLists.txt

@@ -40,7 +40,7 @@ can be used as the \code{region} argument for trackplot functions such as
 genes <- read_gencode_transcripts(
   file.path(tempdir(), "references"), release = "42",
   annotation_set = "basic",
-  features = "transcript"
+  features = "transcript", timeout = 3000
 )
 
 ## Get gene region

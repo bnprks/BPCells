@@ -18,7 +18,7 @@
 #' @param A The matrix whose truncated SVD is to be computed.
 #' @param k Number of singular values requested.
 #' @param nu Number of left singular vectors to be computed. This must be between 0 and 'k'. (Must be equal to 'k' for BPCells IterableMatrix) 
-#' @param nu Number of right singular vectors to be computed. This must be between 0 and 'k'. (Must be equal to 'k' for BPCells IterableMatrix) 
+#' @param nv Number of right singular vectors to be computed. This must be between 0 and 'k'. (Must be equal to 'k' for BPCells IterableMatrix) 
 #' @param opts Control parameters related to computing algorithm. See *Details* below
 #' @param threads Control threads to use calculating mat-vec producs (BPCells specific)
 #' @return A list with the following components:

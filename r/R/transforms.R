@@ -20,9 +20,11 @@ setClass("TransformedMatrix",
     global_params = numeric(0)
   )
 )
+#' @describeIn IterableMatrix-misc-methods Matrix data type for TransformedMatrix objects
 setMethod("matrix_type", "TransformedMatrix", function(x) "double")
 
 # Subsetting on TransformedMatrix objects
+#' @describeIn IterableMatrix-misc-methods Subset TransformedMatrix results
 setMethod("[", "TransformedMatrix", function(x, i, j, ...) {
   if (missing(x)) stop("x is missing in matrix selection")
   # Handle transpose via recursive call
@@ -256,6 +258,7 @@ setMethod("short_description", "TransformMinByRow", function(x) {
 })
 
 #' @rdname min_elementwise
+#' @param vals Numeric vector of positive values, with length equal to the number of rows (min_by_row) or columns (min_by_col)
 #' @description **min_by_row**: Take the minimum with a per-row constant
 #' @examples
 #' #######################################################################
@@ -367,11 +370,13 @@ binarize <- function(mat, threshold=0, strict_inequality=TRUE) {
              global_params=c(threshold, strict_inequality))
   convert_matrix_type(res, "uint32_t")
 }
-
+#' @describeIn IterableMatrix-methods-misc Perform matrix < numeric comparison (unsupported)
 setMethod("<", signature(e1= "IterableMatrix", e2= "numeric"), function(e1, e2) {
   stop("matrix < numeric not supported for IterableMatrix objects")
 })
 #' @describeIn IterableMatrix-methods Binarize matrix according to numeric < matrix comparison
+#' @param e1 First element of comparison
+#' @param e2 Second element of comparison
 #' @examples
 #' #######################################################################
 #' ## `e1 < e2` example
@@ -393,10 +398,11 @@ setMethod("<", signature(e1= "numeric", e2= "IterableMatrix"), function(e1, e2) 
 setMethod(">", signature(e1= "IterableMatrix", e2= "numeric"), function(e1, e2) {
   binarize(e1, threshold=e2, strict_inequality=TRUE)
 })
+#' @describeIn IterableMatrix-methods-misc Perform numeric > matrix comparison (unsupported)
 setMethod(">", signature(e1= "numeric", e2= "IterableMatrix"), function(e1, e2) {
   stop("numeric > matrix not supported for IterableMatrix objects")
 })
-
+#' @describeIn IterableMatrix-methods-misc Perform matrix <= numeric comparison (unsupported)
 setMethod("<=", signature(e1= "IterableMatrix", e2= "numeric"), function(e1, e2) {
   stop("matrix <= numeric not supported for IterableMatrix objects")
 })
@@ -422,6 +428,7 @@ setMethod("<=", signature(e1= "numeric", e2= "IterableMatrix"), function(e1, e2)
 setMethod(">=", signature(e1= "IterableMatrix", e2= "numeric"), function(e1, e2) {
   binarize(e1, threshold=e2, strict_inequality=FALSE)
 })
+#' @describeIn IterableMatrix-methods-misc Compare a numeric value to an IterableMatrix using >= (numeric left operand)
 setMethod(">=", signature(e1= "numeric", e2= "IterableMatrix"), function(e1, e2) {
   stop("numeric >= matrix not supported for IterableMatrix objects")
 })
@@ -723,6 +730,7 @@ setMethod("*", signature(e1 = "IterableMatrix", e2 = "numeric"), function(e1, e2
   e1 <- wrapMatrix("TransformScaleShift", convert_matrix_type(e1, "double"))
   e1 * e2
 })
+#' @describeIn IterableMatrix-methods-misc Multiply an IterableMatrix by a numeric value or row-wise vector (numeric left operand)
 setMethod("*", signature(e1 = "numeric", e2 = "IterableMatrix"), function(e1, e2) {
   e2 <- wrapMatrix("TransformScaleShift", convert_matrix_type(e2, "double"))
   e2 * e1
@@ -744,6 +752,7 @@ setMethod("+", signature(e1 = "IterableMatrix", e2 = "numeric"), function(e1, e2
   e1 <- wrapMatrix("TransformScaleShift", convert_matrix_type(e1, "double"))
   e1 + e2
 })
+#' @describeIn IterableMatrix-methods-misc Add an IterableMatrix to a numeric value or row-wise vector (numeric left operand)
 setMethod("+", signature(e1 = "numeric", e2 = "IterableMatrix"), function(e1, e2) {
   if (all(e1 == 0)) return(e2)
   e2 <- wrapMatrix("TransformScaleShift", convert_matrix_type(e2, "double"))
@@ -780,11 +789,13 @@ setMethod("/", signature(e1 = "IterableMatrix", e2 = "numeric"), function(e1, e2
 setMethod("-", signature(e1 = "IterableMatrix", e2 = "numeric"), function(e1, e2) {
   e1 + (-e2)
 })
+#' @describeIn IterableMatrix-methods-misc Subtract matrix from a numeric constant/vector
 setMethod("-", signature(e1 = "numeric", e2 = "IterableMatrix"), function(e1, e2) {
   e2 * -1 + e1
 })
 
 # Full dispatch for scaling/shifting
+#' @describeIn IterableMatrix-misc-methods Scale TransformScaleShift results by numeric values
 setMethod("*", signature(e1 = "TransformScaleShift", e2 = "numeric"), function(e1, e2) {
   # Convenience renaming - x is matrix, y is vector/scalar
   x <- e1
@@ -856,6 +867,7 @@ setMethod("*", signature(e1 = "TransformScaleShift", e2 = "numeric"), function(e
   }
   return(x)
 })
+#' @describeIn IterableMatrix-misc-methods Shift TransformScaleShift results by numeric values
 setMethod("+", signature(e1 = "TransformScaleShift", e2 = "numeric"), function(e1, e2) {
   if (all(e2 == 0)) return(e1)
   # Convenience renaming - x is matrix, y is vector/scalar
@@ -894,9 +906,11 @@ setMethod("+", signature(e1 = "TransformScaleShift", e2 = "numeric"), function(e
   return(x)
 })
 # Just take advantage of commutative property to only implement half
+#' @describeIn IterableMatrix-misc-methods Apply numeric scaling on the left to TransformScaleShift results
 setMethod("*", signature(e1 = "numeric", e2 = "TransformScaleShift"), function(e1, e2) {
   e2 * e1
 })
+#' @describeIn IterableMatrix-misc-methods Add TransformScaleShift results to numeric values (numeric left operand)
 setMethod("+", signature(e1 = "numeric", e2 = "TransformScaleShift"), function(e1, e2) {
   e2 + e1
 })

@@ -33,6 +33,8 @@ otherwise it is interpreted as a discrete color palette in \code{ggplot2::scale_
 
 \item{curvature}{Curvature value between 0 and 1. 1 is a 180-degree arc, and 0 is flat lines.}
 
+\item{track_label}{Label to put on the side of the track}
+
 \item{return_data}{If true, return data from just before plotting rather than a plot.}
 }
 \value{

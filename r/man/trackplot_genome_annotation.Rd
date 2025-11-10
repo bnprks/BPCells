@@ -39,6 +39,8 @@ otherwise it is interpreted as a discrete color palette in \code{ggplot2::scale_
 
 \item{annotation_size}{size for annotation lines in mm}
 
+\item{track_label}{Label to put on the side of the track}
+
 \item{return_data}{If true, return data from just before plotting rather than a plot.}
 }
 \value{

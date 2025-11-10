@@ -35,6 +35,8 @@ to an existing hdf5 file this group must not already be in use}
 \item{buffer_size}{For performance tuning only. The number of items to be buffered
 in memory before calling writes to disk.}
 
+\item{mat}{IterableMatrix to write to hdf5 file}
+
 \item{chunk_size}{For performance tuning only. The chunk size used for the HDF5 array storage.}
 
 \item{gzip_level}{Gzip compression level. Default is 0 (no compression)}

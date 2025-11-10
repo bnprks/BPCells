@@ -34,7 +34,7 @@ frags <- get_demo_frags(filter_qc = FALSE, subset = FALSE)
 genes <- read_gencode_transcripts(
   file.path(tempdir(), "references"), release = "42",
   annotation_set = "basic",
-  features = "transcript"
+  features = "transcript", timeout = 3000
 )
 blacklist <- read_encode_blacklist(file.path(tempdir(), "references"), genome="hg38")
 atac_qc <- qc_scATAC(frags, genes, blacklist)

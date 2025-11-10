@@ -19,7 +19,7 @@ are the corresponding canonical gene symbol
 \source{
 \strong{human_gene_mapping}
 
-\url{http://ftp.ebi.ac.uk/pub/databases/genenames/hgnc/tsv/non_alt_loci_set.txt}
+\url{http://ftp.ebi.ac.uk/pub/databases/genenames/out_of_date_hgnc/tsv/non_alt_loci_set.txt}
 
 \strong{mouse_gene_mapping}
 

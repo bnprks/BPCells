@@ -139,8 +139,9 @@ reference:
   - checksum
   - apply_by_row
   - regress_out
-  - IterableMatrix-methods
   - pseudobulk_matrix
+  - IterableMatrix-methods
+  
 
 - title: "Reference Annotations"
 - contents:
@@ -193,3 +194,4 @@ reference:
 - title: "Data"
 - contents:
   - get_demo_mat
+

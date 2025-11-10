@@ -47,6 +47,33 @@ wrap_trackplot <- function(plot, height=NULL, takes_sideplot=FALSE, region=NULL,
   plot
 }
 
+# Internal helper function to extract patches from patchwork objects
+# Replicates the logic of patchwork:::get_patches() to avoid using unexported functions
+get_patchwork_patches <- function(plot) {
+  if (inherits(plot, "patchwork")) {
+    patches <- plot$patches
+    if (is.null(patches)) patches <- list(plots = list())
+    
+    # Extract the base plot (without patchwork components)
+    base_plot <- plot
+    base_plot$patches <- NULL
+    class(base_plot) <- setdiff(class(base_plot), "patchwork")
+    if (inherits(base_plot, "free_plot")) {
+      attr(base_plot, "patchwork_free_settings") <- NULL
+      if (is.null(attr(base_plot, "free_settings"))) {
+        class(base_plot) <- setdiff(class(base_plot), "free_plot")
+      }
+    }
+
+    # Combine existing patches with the base plot
+    patches$plots <- c(patches$plots, list(base_plot))
+    return(patches)
+  } else {
+    # Return a patches object with just the single plot
+    return(list(plots = list(plot)))
+  }
+}
+
 # Internal helper function to return empty track plots if there's no data to be plotted
 trackplot_empty <- function(region, label) {
   ggplot2::ggplot(tibble::tibble(label=label)) +
@@ -292,7 +319,7 @@ render_plot_from_storage <- function(plot, width, height) {
 #' genes <- read_gencode_transcripts(
 #'   file.path(tempdir(), "references"), release = "42",
 #'   annotation_set = "basic",
-#'   features = "transcript"
+#'   features = "transcript", timeout = 3000
 #' )
 #' blacklist <- read_encode_blacklist(file.path(tempdir(), "references"), genome="hg38")
 #' read_counts <- qc_scATAC(frags, genes, blacklist)$nFrags
@@ -300,23 +327,28 @@ render_plot_from_storage <- function(plot, width, height) {
 #' cell_types <- paste("Group", rep(1:3, length.out = length(cellNames(frags))))
 #' transcripts <- read_gencode_transcripts(
 #'   file.path(tempdir(), "references"), release = "42",
-#'   annotation_set = "basic"
+#'   annotation_set = "basic", timeout = 3000
 #' )
 #' region <- "chr4:3034877-4034877"
 #' 
-#' 
+#'
 #' ## Get all trackplots and scalebars to combine
 #' plot_scalebar <- trackplot_scalebar(region)
 #' plot_gene <- trackplot_gene(transcripts, region)
-#' plot_coverage <- trackplot_coverage(frags, region, groups = cell_types, cell_read_counts = read_counts)
-#' 
-#' 
+#' plot_coverage <- trackplot_coverage(
+#'   frags,
+#'   region,
+#'   groups = cell_types,
+#'   cell_read_counts = read_counts
+#' )
+#'
 #' ## Combine trackplots and render
 #' ## Also remove colors from gene track
 #' plot <- trackplot_combine(
 #'     list(plot_scalebar, plot_coverage, plot_gene + ggplot2::guides(color = "none"))
 #' )
-#' BPCells:::render_plot_from_storage(plot, width = 6, height = 4)
+#' BPCells:::render_plot_from_storage(
+#'   plot, width = 6, height = 4)
 #' @export
 trackplot_combine <- function(tracks, side_plot = NULL, title = NULL, side_plot_width = 0.3) {
   for (plot in tracks) {
@@ -444,7 +476,6 @@ trackplot_combine <- function(tracks, side_plot = NULL, title = NULL, side_plot_
 #'    or list/data.frame/GRanges of length 1 specifying chr, start, end. See `help("genomic-ranges-like")` for details
 #' @param fragments Fragments object
 #' @param cell_read_counts Numeric vector of read counts for each cell (used for normalization)
-#' @param scale_bar Whether to include a scale bar in the top track (`TRUE` or `FALSE`)
 #' @param bins Number of bins to plot across the region
 #' @param clip_quantile (optional) Quantile of values for clipping y-axis limits. Default of 0.999 will crop out
 #'    just the most extreme outliers across the region. NULL to disable clipping
@@ -457,23 +488,25 @@ trackplot_combine <- function(tracks, side_plot = NULL, title = NULL, side_plot_
 #' `TRUE`, the return value will be modified accordingly.
 #' @seealso `trackplot_combine()`, `trackplot_gene()`, `trackplot_loop()`, `trackplot_scalebar()`
 #' @examples
-## Prep data
+#' ## Prep data
 #' frags <- get_demo_frags()
 #' 
 #' ## Use genes and blacklist to determine proper number of reads per cell
 #' genes <- read_gencode_transcripts(
 #'   file.path(tempdir(), "references"), release = "42",
 #'   annotation_set = "basic",
-#'   features = "transcript"
+#'   features = "transcript", timeout = 3000
 #' )
 #' blacklist <- read_encode_blacklist(file.path(tempdir(), "references"), genome="hg38")
 #' read_counts <- qc_scATAC(frags, genes, blacklist)$nFrags
 #' region <- "chr4:3034877-4034877"
 #' cell_types <- paste("Group", rep(1:3, length.out = length(cellNames(frags))))
 #' 
-#' 
 #' BPCells:::render_plot_from_storage(
-#'   trackplot_coverage(frags, region, groups = cell_types, cell_read_counts = read_counts),
+#'   trackplot_coverage(
+#'     frags, region, groups = cell_types, 
+#'     cell_read_counts = read_counts
+#'   ),
 #'   width = 6, height = 3
 #' )
 #' @export
@@ -572,18 +605,17 @@ trackplot_coverage <- function(fragments, region, groups,
 #'    
 #'    Usually given as the output from `read_gencode_transcripts()`
 #' @inheritParams trackplot_coverage
-#' @param labels Character vector with labels for each item in transcripts. NA for items that should not be labeled
 #' @param exon_size size for exon lines in units of mm
 #' @param gene_size size for intron/gene lines in units of mm
-#' @param transcript_size size for transcript lines in units of mm
 #' @param label_size size for transcript labels in units of mm
+#' @param track_label Label to put on the side of the track
 #' @return Plot of gene locations
 #' @seealso `trackplot_combine()`, `trackplot_coverage()`, `trackplot_loop()`, `trackplot_scalebar()`
 #' @examples
 #' ## Prep data
 #' transcripts <- read_gencode_transcripts(
 #'   file.path(tempdir(), "references"), release = "42",
-#'   annotation_set = "basic", features = "transcript"
+#'   annotation_set = "basic", features = "transcript", timeout = 3000
 #' )
 #' region <- "chr4:3034877-4034877"
 #' 
@@ -686,6 +718,7 @@ trackplot_gene <- function(transcripts, region, exon_size = 2.5, gene_size = 0.5
 #' @param colors Vector of hex color codes to use for the color scale. For numeric `color_by` data, this is passed to `ggplot2::scale_color_gradientn()`,
 #'               otherwise it is interpreted as a discrete color palette in `ggplot2::scale_color_manual()`
 #' @param show_strand If TRUE, show strand direction as arrows
+#' @param track_label Label to put on the side of the track
 #' @return Plot of genomic loci if return_data is FALSE, otherwise returns the data frame used to generate the plot
 #' @seealso `trackplot_combine()`, `trackplot_coverage()`, `trackplot_loop()`, `trackplot_scalebar()`, `trackplot_gene()`
 #' @examples
@@ -828,6 +861,7 @@ trackplot_genome_annotation <- function(loci, region, color_by = NULL, colors = 
 #'               otherwise it is interpreted as a discrete color palette in `ggplot2::scale_color_manual()`
 #' @param allow_truncated If FALSE, remove any loops that are not fully contained within `region`
 #' @param curvature Curvature value between 0 and 1. 1 is a 180-degree arc, and 0 is flat lines.
+#' @param track_label Label to put on the side of the track
 #' @inheritParams trackplot_coverage
 #' 
 #' @return Plot of loops connecting genomic coordinates
@@ -1073,7 +1107,7 @@ draw_trackplot_grid <- function(..., labels, title = NULL,
         new_heights[next_index] <- heights[i]
         next_index <- next_index + 1
       } else {
-        plot_list <- patchwork:::get_patches(plots[[i]])$plots
+        plot_list <- get_patchwork_patches(plots[[i]])$plots
         names(plot_list) <- plots[[i]]$patchwork$labels
         if (is.null(names(plot_list))) {
           names(plot_list) <- rep("", length(plot_list))
@@ -1131,7 +1165,7 @@ draw_trackplot_grid <- function(..., labels, title = NULL,
 #' @inheritParams plot_embedding
 #' @inheritParams convert_to_fragments
 #' @param region GRanges of length 1 with region to plot, or list/data.frame with
-#'    one entry each for chr, start, end. See `gene_region()` or [genomic-ranges] for details
+#'    one entry each for chr, start, end. See `gene_region()` or [genomic-ranges-like] for details
 #' @param fragments Fragments object
 #' @param cell_read_counts Numeric vector of read counts for each cell (used for normalization)
 #' @param bins Number of bins to plot across the region

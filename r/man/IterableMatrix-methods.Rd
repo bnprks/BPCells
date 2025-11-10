@@ -4,17 +4,27 @@
 \alias{IterableMatrix-methods}
 \alias{matrix_type}
 \alias{storage_order}
+\alias{storage_order,IterableMatrix-method}
 \alias{show,IterableMatrix-method}
 \alias{t,IterableMatrix-method}
 \alias{\%*\%,IterableMatrix,matrix-method}
+\alias{\%*\%,IterableMatrix,numeric-method}
+\alias{\%*\%,IterableMatrix,IterableMatrix-method}
+\alias{\%*\%,IterableMatrix,dgCMatrix-method}
 \alias{rowSums,IterableMatrix-method}
 \alias{colSums,IterableMatrix-method}
 \alias{rowMeans,IterableMatrix-method}
 \alias{colMeans,IterableMatrix-method}
 \alias{colVars}
 \alias{rowVars}
+\alias{rowVars.IterableMatrix}
 \alias{rowMaxs}
+\alias{rowMaxs.IterableMatrix}
 \alias{colMaxs}
+\alias{[,IterableMatrix,ANY,ANY,ANY-method}
+\alias{[<-,IterableMatrix,ANY,ANY,ANY-method}
+\alias{dimnames<-,IterableMatrix,list-method}
+\alias{dimnames<-,IterableMatrix,NULL-method}
 \alias{rowQuantiles}
 \alias{colQuantiles}
 \alias{log1p,IterableMatrix-method}
@@ -37,11 +47,19 @@ matrix_type(x)
 
 storage_order(x)
 
+\S4method{storage_order}{IterableMatrix}(x)
+
 \S4method{show}{IterableMatrix}(object)
 
 \S4method{t}{IterableMatrix}(x)
 
 \S4method{\%*\%}{IterableMatrix,matrix}(x, y)
+
+\S4method{\%*\%}{IterableMatrix,numeric}(x, y)
+
+\S4method{\%*\%}{IterableMatrix,IterableMatrix}(x, y)
+
+\S4method{\%*\%}{IterableMatrix,dgCMatrix}(x, y)
 
 \S4method{rowSums}{IterableMatrix}(x)
 
@@ -71,9 +89,29 @@ rowVars(
   useNames = TRUE
 )
 
+\method{rowVars}{IterableMatrix}(
+  x,
+  rows = NULL,
+  cols = NULL,
+  na.rm = FALSE,
+  center = NULL,
+  ...,
+  useNames = TRUE
+)
+
 rowMaxs(x, rows = NULL, cols = NULL, na.rm = FALSE, ..., useNames = TRUE)
 
+\method{rowMaxs}{IterableMatrix}(x, rows = NULL, cols = NULL, na.rm = FALSE, ..., useNames = TRUE)
+
 colMaxs(x, rows = NULL, cols = NULL, na.rm = FALSE, ..., useNames = TRUE)
+
+\S4method{[}{IterableMatrix,ANY,ANY,ANY}(x, i, j, ..., drop = TRUE)
+
+\S4method{[}{IterableMatrix,ANY,ANY,ANY}(x, i, j, ...) <- value
+
+\S4method{dimnames}{IterableMatrix,list}(x) <- value
+
+\S4method{dimnames}{IterableMatrix,NULL}(x) <- value
 
 rowQuantiles(
   x,
@@ -136,9 +174,35 @@ expm1_slow(x)
 
 \item{y}{matrix}
 
+\item{rows}{(Integer) Optional vector of row indices to operate over.}
+
+\item{cols}{(Integer) Optional vector of column indices to operate over.}
+
+\item{na.rm}{(Logical) Should missing values (NA) be removed?}
+
+\item{center}{Optional center values (vector of length nrow(x) or ncol(x))}
+
+\item{...}{Additional arguments passed to methods}
+
+\item{useNames}{(Logical) Whether to use row and column names in the output.}
+
+\item{i}{Row indices or selection helpers.}
+
+\item{j}{Column indices or selection helpers.}
+
+\item{drop}{(Logical) If TRUE and only one quantile is requested, the result is coerced to a vector (For non-BPCells objects).}
+
+\item{value}{New dimnames (list of length 2, or NULL)}
+
 \item{probs}{(Numeric) Quantile value(s) to be computed, between 0 and 1.}
 
 \item{type}{(Integer) between 4 and 9 selecting which quantile algorithm to use, detailed in \code{matrixStats::rowQuantiles()}}
+
+\item{digits}{Number of decimal places for quantile calculations}
+
+\item{e1}{First element of comparison}
+
+\item{e2}{Second element of comparison}
 }
 \value{
 \itemize{
@@ -198,13 +262,21 @@ Generic methods and built-in functions for IterableMatrix objects
 \itemize{
 \item \code{matrix_type()}: Get the matrix data type (mat_uint32_t, mat_float, or mat_double for now)
 
-\item \code{storage_order()}: Get the matrix storage order ("row" or "col")
+\item \code{storage_order()}: Get the matrix storage order ("row" or "col") (generic)
+
+\item \code{storage_order(IterableMatrix)}: Get the matrix storage order ("row" or "col")
 
 \item \code{show(IterableMatrix)}: Display an IterableMatrix
 
 \item \code{t(IterableMatrix)}: Transpose an IterableMatrix
 
 \item \code{x \%*\% y}: Multiply by a dense matrix
+
+\item \code{x \%*\% y}: Multiply an IterableMatrix by a numeric vector
+
+\item \code{x \%*\% y}: Multiply two IterableMatrix objects
+
+\item \code{x \%*\% y}: Multiply an IterableMatrix by a dgCMatrix
 
 \item \code{rowSums(IterableMatrix)}: Calculate rowSums
 
@@ -216,11 +288,23 @@ Generic methods and built-in functions for IterableMatrix objects
 
 \item \code{colVars()}: Calculate colVars (replacement for \code{matrixStats::colVars()})
 
-\item \code{rowVars()}: Calculate rowVars (replacement for \code{matrixStats::rowVars()})
+\item \code{rowVars()}: Calculate rowVars (replacement for \code{matrixStats::rowVars()}) (generic)
 
-\item \code{rowMaxs()}: Calculate rowMaxs (replacement for \code{matrixStats::rowMaxs()})
+\item \code{rowVars(IterableMatrix)}: Calculate rowVars (replacement for \code{matrixStats::rowVars()})
+
+\item \code{rowMaxs()}: Calculate rowMaxs (replacement for \code{matrixStats::rowMaxs()}) (generic)
+
+\item \code{rowMaxs(IterableMatrix)}: Calculate rowMaxs (replacement for \code{matrixStats::rowMaxs()})
 
 \item \code{colMaxs()}: Calculate colMax (replacement for \code{matrixStats::colMax()})
+
+\item \code{x[i}: Subset an IterableMatrix
+
+\item \code{`[`(x = IterableMatrix, i = ANY, j = ANY) <- value}: Assign into an IterableMatrix
+
+\item \code{dimnames(x = IterableMatrix) <- value}: Set dimnames of an IterableMatrix, similar to base R \verb{dimnames<-()}
+
+\item \code{dimnames(x = IterableMatrix) <- value}: Remove dimnames of an IterableMatrix
 
 \item \code{rowQuantiles()}: Calculate rowQuantiles (replacement for \code{matrixStats::rowQuantiles})
 

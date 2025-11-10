@@ -35,11 +35,9 @@ or list/data.frame/GRanges of length 1 specifying chr, start, end. See \code{hel
 
 \item{label_size}{size for transcript labels in units of mm}
 
+\item{track_label}{Label to put on the side of the track}
+
 \item{return_data}{If true, return data from just before plotting rather than a plot.}
-
-\item{labels}{Character vector with labels for each item in transcripts. NA for items that should not be labeled}
-
-\item{transcript_size}{size for transcript lines in units of mm}
 }
 \value{
 Plot of gene locations
@@ -51,7 +49,7 @@ Plot transcript models
 ## Prep data
 transcripts <- read_gencode_transcripts(
   file.path(tempdir(), "references"), release = "42",
-  annotation_set = "basic", features = "transcript"
+  annotation_set = "basic", features = "transcript", timeout = 3000
 )
 region <- "chr4:3034877-4034877"
 

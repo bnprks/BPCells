@@ -27,8 +27,6 @@ It converts to little-endian order on big-endian architecture although this has 
 been tested.
 }
 \examples{
-library(Matrix)
-library(BPCells)
 m1 <- matrix(seq(1,12), nrow=3)
 m2 <- as(m1, 'dgCMatrix')
 m3 <- as(m2, 'IterableMatrix')

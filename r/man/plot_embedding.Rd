@@ -100,10 +100,11 @@ value stays the same.
 set.seed(123)
 mat <- get_demo_mat()
 ## Normalize matrix
-mat_norm <- log1p(multiply_cols(mat, 1/colSums(mat)) * 10000) \%>\% write_matrix_memory(compress = FALSE)
+mat_norm <- log1p(multiply_cols(mat, 1/colSums(mat)) * 10000) \%>\%
+  write_matrix_memory(compress = FALSE)
 ## Get variable genes
 stats <- matrix_stats(mat, row_stats = "variance")
-variable_genes <- order(stats$row_stats["variance",], decreasing=TRUE) \%>\% 
+variable_genes <- order(stats$row_stats["variance",], decreasing=TRUE) \%>\%
   head(1000) \%>\% 
   sort()
 # Z score normalize genes

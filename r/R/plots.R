@@ -191,7 +191,7 @@ plot_read_count_knee <- function(read_counts, cutoff = NULL, return_data = FALSE
 #' genes <- read_gencode_transcripts(
 #'   file.path(tempdir(), "references"), release = "42",
 #'   annotation_set = "basic",
-#'   features = "transcript"
+#'   features = "transcript", timeout = 3000
 #' )
 #' blacklist <- read_encode_blacklist(file.path(tempdir(), "references"), genome="hg38")
 #' atac_qc <- qc_scATAC(frags, genes, blacklist)
@@ -320,6 +320,7 @@ plot_fragment_length <- function(fragments, max_length = 500, return_data = FALS
 #' @inheritParams footprint
 #' @param genes Coordinate ranges for genes (must include strand)
 #' @param smooth Number of bases to smooth over (rolling average)
+#' @param colors Discrete color palette to use for cell groups
 #' @seealso `footprint()`, `plot_tf_footprint()`
 #' @examples
 #' ## Prep data
@@ -327,7 +328,7 @@ plot_fragment_length <- function(fragments, max_length = 500, return_data = FALS
 #' genes <- read_gencode_transcripts(
 #'   file.path(tempdir(), "references"), release = "42",
 #'   annotation_set = "basic",
-#'   features = "transcript"
+#'   features = "transcript", timeout = 3000
 #' )
 #' 
 #' ## Plot tss profile
@@ -390,6 +391,7 @@ plot_tss_profile <- function(fragments, genes, cell_groups = rlang::rep_along(ce
 #' @inheritParams footprint
 #' @param motif_positions Coordinate ranges for motifs (must include strand) and
 #'   have constant width
+#' @param colors Discrete color palette to use for cell groups
 #' @seealso `footprint()`, `plot_tss_profile()`
 #' @export
 plot_tf_footprint <- function(fragments, motif_positions, cell_groups = rlang::rep_along(cellNames(fragments), "all"),
@@ -525,10 +527,11 @@ collect_features <- function(source, features = NULL, gene_mapping = human_gene_
 #' set.seed(123)
 #' mat <- get_demo_mat()
 #' ## Normalize matrix
-#' mat_norm <- log1p(multiply_cols(mat, 1/colSums(mat)) * 10000) %>% write_matrix_memory(compress = FALSE)
+#' mat_norm <- log1p(multiply_cols(mat, 1/colSums(mat)) * 10000) %>%
+#'   write_matrix_memory(compress = FALSE)
 #' ## Get variable genes
 #' stats <- matrix_stats(mat, row_stats = "variance")
-#' variable_genes <- order(stats$row_stats["variance",], decreasing=TRUE) %>% 
+#' variable_genes <- order(stats$row_stats["variance",], decreasing=TRUE) %>%
 #'   head(1000) %>% 
 #'   sort()
 #' # Z score normalize genes
@@ -826,8 +829,8 @@ rotate_x_labels <- function(degrees = 45) {
 #' ## Plot dot
 #' plot <- plot_dot(mat, c("MS4A1", "CD3E"), cell_types)
 #' 
-#' BPCells:::render_plot_from_storage(
-#'   plot, width = 4, height = 5
+#'  BPCells:::render_plot_from_storage(
+#'    plot, width = 4, height = 5
 #' )
 #' @export
 plot_dot <- function(source, features, groups, group_order = NULL, gene_mapping = human_gene_mapping,

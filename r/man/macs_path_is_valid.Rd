@@ -12,7 +12,7 @@ macs_path_is_valid(macs_executable)
 \item{macs_executable}{(string) Path to either MACS2/3 executable. Default (\code{NULL}) will autodetect from PATH.}
 }
 \value{
-MACS executable path.
+MACS executable path if valid, otherwise throws an error.
 }
 \description{
 Test if MACS executable is valid.

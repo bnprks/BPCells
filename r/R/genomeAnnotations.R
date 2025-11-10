@@ -9,7 +9,7 @@
 #' Download a file with a custom timeout
 #'
 #' @param path Output path to write file
-#' @param url to download from
+#' @param backup_url to download from
 #' @param timeout timeout in seconds
 #' @keywords internal
 ensure_downloaded <- function(path, backup_url, timeout) {
@@ -57,7 +57,7 @@ ensure_downloaded <- function(path, backup_url, timeout) {
 #' species <- "Saccharomyces_cerevisiae"
 #' version <- "GCF_000146045.2_R64"
 #' head(read_gtf(
-#'  path = sprintf("./reference/%s_genomic.gtf.gz", version),
+#'  path = sprintf("%s/%s_genomic.gtf.gz", file.path(tempdir(), "reference"), version),
 #'  backup_url = sprintf(
 #'    "https://ftp.ncbi.nlm.nih.gov/genomes/refseq/fungi/%s/reference/%s/%s_genomic.gtf.gz",
 #'    species, version, version
@@ -107,7 +107,7 @@ read_gtf <- function(path, attributes = c("gene_id"), tags = character(0), featu
 #' #######################################################################
 #' ## read_gencode_genes() example
 #' #######################################################################
-#' read_gencode_genes("./references", release = "42")
+#' read_gencode_genes(file.path(tempdir(), "reference"), release = "42", timeout = 3000)
 #' 
 #' 
 #' @export
@@ -159,7 +159,7 @@ read_gencode_genes <- function(dir, release = "latest",
 #' #######################################################################
 #' ## If read_gencode_genes() was already ran on the same release, 
 #' ## will reuse previously downloaded annotations
-#' read_gencode_transcripts("./references", release = "42")
+#' read_gencode_transcripts(file.path(tempdir(), "reference"), release = "42", timeout = 3000)
 #' 
 #' 
 #' @export 
@@ -211,17 +211,18 @@ read_gencode_transcripts <- function(dir, release = "latest", transcript_choice 
 #' @return Data frame with coordinates using the 0-based convention.
 #' @examples
 #' ## Dummy bed file creation
+#' file_name <- tempfile(fileext = ".bed")
 #' data.frame(
 #'  chrom = rep("chr1", 6),
 #'  start = seq(20, 121, 20),
 #'  end = seq(39, 140, 20)
-#' ) %>% write.table("./references/example.bed", row.names = FALSE, col.names = FALSE, sep = "\t")
+#' ) %>% write.table(file_name, row.names = FALSE, col.names = FALSE, sep = "\t")
 #' 
 #' 
 #' #######################################################################
 #' ## read_bed() example
 #' #######################################################################
-#' read_bed("./references/example.bed")
+#' read_bed(file_name)
 #' 
 #' 
 #' @seealso [read_gtf()], [read_gencode_genes()]
@@ -239,13 +240,13 @@ read_bed <- function(path, additional_columns = character(0), backup_url = NULL,
 #' @rdname read_bed
 #' @details **read_encode_blacklist**
 #'
-#' Downloads the Boyle Lab blacklist, as described in <https://doi.org/10.1038/s41598-019-45839-z>
+#' Downloads the Boyle Lab blacklist, as described in \doi{10.1038/s41598-019-45839-z}
 #' @param genome genome name
 #' @examples 
 #' #######################################################################
 #' ## read_encode_blacklist() example
 #' #######################################################################
-#' read_encode_blacklist("./reference")
+#' read_encode_blacklist(file.path(tempdir(), "reference"))
 #' 
 #' 
 #' @export
@@ -263,9 +264,14 @@ read_encode_blacklist <- function(dir, genome = c("hg38", "mm10", "hg19", "dm6",
 #' The underlying data is pulled from here: <https://hgdownload.soe.ucsc.edu/downloads.html>
 #'
 #' @examples
-#' read_ucsc_chrom_sizes("./reference")
+#' read_ucsc_chrom_sizes(file.path(tempdir(), "reference"))
 
 #' @export
+#' @param dir Output directory to cache the downloaded chrom sizes file
+#' @param genome Genome name. Defaults to hg38
+#' @param keep_chromosomes Regular expression with which chromosomes to keep.
+#'   Defaults to standard chromosomes (chr1-22, chrX, chrY)
+#' @param timeout Maximum time in seconds to wait for download from UCSC
 read_ucsc_chrom_sizes <- function(dir, genome = c("hg38", "mm39", "mm10", "mm9", "hg19"),
                                   keep_chromosomes = "chr[0-9]+|chrX|chrY", timeout = 300) {
   genome <- match.arg(genome)
@@ -420,7 +426,7 @@ canonical_gene_symbol <- function(query, gene_mapping = human_gene_mapping) {
 #' genes <- read_gencode_transcripts(
 #'   file.path(tempdir(), "references"), release = "42",
 #'   annotation_set = "basic",
-#'   features = "transcript"
+#'   features = "transcript", timeout = 3000
 #' )
 #' 
 #' ## Get gene region
@@ -430,7 +436,7 @@ gene_region <- function(genes, gene_symbol, extend_bp = c(1e4, 1e4), gene_mappin
   genes <- normalize_ranges(genes, metadata_cols = c("strand", "gene_name"))
   idx <- match_gene_symbol(gene_symbol, genes$gene_name)
   if (is.na(idx)) {
-    rlang::stop("Could not locate gene")
+    rlang::abort("Could not locate gene")
   }
   if (length(extend_bp) == 1) {
     extend_bp <- c(extend_bp, extend_bp)

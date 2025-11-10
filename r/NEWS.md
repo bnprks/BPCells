@@ -1,13 +1,4 @@
-# BPCells 0.4.0 (in-progress main branch)
-
-## Breaking changes
-- Change first parameter name of `cluster_graph_leiden()`, `cluster_graph_louvain()` and `cluster_graph_seurat()` from `snn` to `mat` to more accurately reflect the input type.  (pull request #292)
-
-## Features
-- Create a wrapper function `cluster_cells_graph()` that wraps the steps of knn object creation, graph adjacency creation, and clustering all within a single function (pull request #292)
-- Add `tile_width` and `normalization` arguments to `write_insertion_bedgraph()` to allow for more flexible bedgraph creation (pull request #299)
-- Export `write_insertion_bed()`, which originally was only a helper for peak calling (pull request #302)
-
+# BPCells 0.4.0 (in-progress main branch) 
 ## To-dos
 - Add support for sparse pseudobulking in `pseudobulk_matrix()`.  Currently in progress in #268.
 - Add support for duplicate rows/cols in subsetting operations.
@@ -15,6 +6,23 @@
 - Maybe add CCA support? 
 - Refactor C++ backend to take in the logic in R S4 methods.  This would allow for a cleaner seperation of R and C++ code, and would allow for much quicker porting
   to Python in the future.
+
+# BPCells 0.3.2
+The BPCells 0.3.2 release covers 3 months of changes and 4 commits from @immanuelazn.
+Most notably, this release prepares (finally!) BPCells for CRAN submission. This means that users can easily install BPCells using pre-compiled binaries, rather than having to compile from source.
+Full details of changes below.
+
+## Breaking changes
+- Change first parameter name of `cluster_graph_leiden()`, `cluster_graph_louvain()` and `cluster_graph_seurat()` from `snn` to `mat` to more accurately reflect the input type.  (pull request #292)
+
+## Improvements
+- Prepare BPCells for CRAN submission by adjusting styling and adding additional documentation for S3/S4 methods of IterableMatrix/IterableFragments. (pull request #311)
+
+## Features
+- Create a wrapper function `cluster_cells_graph()` that wraps the steps of knn object creation, graph adjacency creation, and clustering all within a single function (pull request #292)
+- Add `tile_width` and `normalization` arguments to `write_insertion_bedgraph()` to allow for more flexible bedgraph creation (pull request #299)
+- Export `write_insertion_bed()`, which originally was only a helper for peak calling (pull request #302)
+
 
 # BPCells 0.3.1 (7/21/2025)
 

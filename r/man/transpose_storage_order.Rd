@@ -47,7 +47,8 @@ mat
 ## A regular transpose operation switches a user's rows and cols 
 t(mat)
 
-## Running `transpose_storage_order()` instead changes whether the storage is in row-major or col-major,
+## Running `transpose_storage_order()` instead changes whether 
+## the storage is in row-major or col-major,
 ## but does not switch the rows and cols
 transpose_storage_order(mat)
 }
