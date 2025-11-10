@@ -6,7 +6,7 @@ To prep the source tree starting from the highway root dir, run:
 ```bash
 mkdir -p lib-copy
 cp -r hwy lib-copy
-rm -r lib-copy/hwy/{examples,tests,*_test.cc} lib-copy/hwy/contrib/{bit_pack,dot,image,sort,unroller}
+rm -r lib-copy/hwy/{examples,tests,*_test.cc} lib-copy/hwy/contrib/{bit_pack,dot,image,sort,unroller,random,thread_pool,matvec}
 ```
 
 The files in `manual-build` are custom scripts for manually building the library without a cmake dependency
