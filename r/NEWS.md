@@ -8,6 +8,9 @@
 - Add `tile_width` and `normalization` arguments to `write_insertion_bedgraph()` to allow for more flexible bedgraph creation (pull request #299)
 - Export `write_insertion_bed()`, which originally was only a helper for peak calling (pull request #302)
 
+## Bug-fixes
+- Fix error in documentation examples for `plot_embedding()`, resulting from the way documentation examples use nested function calls (pull request #316).
+
 ## To-dos
 - Add support for sparse pseudobulking in `pseudobulk_matrix()`.  Currently in progress in #268.
 - Add support for duplicate rows/cols in subsetting operations.
