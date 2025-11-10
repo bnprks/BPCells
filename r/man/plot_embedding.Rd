@@ -124,7 +124,7 @@ clusts <- knn_hnsw(pca, ef = 500) \%>\%
   cluster_graph_louvain()
 
 
-## Plot embedding
+## Plot embeddings
 print(length(clusts))
 
 plot_embedding(clusts, umap)

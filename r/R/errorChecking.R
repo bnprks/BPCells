@@ -1,4 +1,4 @@
-# Copyright 2021 BPCells contributors
+# Copyright 2025 BPCells contributors
 # 
 # Licensed under the Apache License, Version 2.0 <LICENSE-APACHE or
 # https://www.apache.org/licenses/LICENSE-2.0> or the MIT license
@@ -16,11 +16,46 @@
 #   skip over during error printing.
 
 argument_name <- function(arg, n) {
-  arg_name <- substitute(arg)
-  for (f in seq_len(n)) {
-    arg_name <- do.call(substitute, list(arg_name, parent.frame(f)))
+  substitute_if_present <- function(expr, env) {
+    if (is.null(env) || !is.symbol(expr)) return(expr)
+    symbol <- as.character(expr)
+    if (!exists(symbol, envir = env, inherits = FALSE)) return(expr)
+    result <- do.call(substitute, list(expr, env))
+    if (!is.language(result)) return(expr)
+    result
   }
-  arg_name <- deparse(arg_name)
+
+  arg_name <- substitute(arg)
+  if (n > 0) {
+    for (f in seq_len(n)) {
+      env <- parent.frame(f)
+      arg_name <- substitute_if_present(arg_name, env)
+    }
+  }
+
+  # Continue walking up the call stack so wrappers (e.g., pkgdown example helpers)
+  # don't collapse names to temporary argument placeholders.
+  frame <- n
+  extra_steps <- 0
+  max_extra <- 200
+  while (extra_steps < max_extra) {
+    frame <- frame + 1
+    env <- parent.frame(frame)
+    arg_name_new <- substitute_if_present(arg_name, env)
+    if (identical(arg_name_new, arg_name)) {
+      if (identical(env, globalenv()) || identical(env, baseenv()) || identical(env, emptyenv())) break
+      extra_steps <- extra_steps + 1
+      next
+    }
+    arg_name <- arg_name_new
+    if (identical(env, globalenv()) || identical(env, baseenv()) || identical(env, emptyenv())) break
+    extra_steps <- extra_steps + 1
+  }
+
+  # `deparse()` can return multi-line output (length > 1) for large expressions.
+  # Collapse to a single string so downstream consumers that expect a scalar
+  # name (e.g., column labels) don't get tripped up by long vectors.
+  arg_name <- paste(deparse(arg_name), collapse = "")
   return(arg_name)
 }
 
