@@ -765,6 +765,10 @@ matrix_max_per_col_cpp <- function(matrix) {
     .Call(`_BPCells_matrix_max_per_col_cpp`, matrix)
 }
 
+dense_transpose_multiply_cpp <- function(matrix, buffer_bytes, threads) {
+    .Call(`_BPCells_dense_transpose_multiply_cpp`, matrix, buffer_bytes, threads)
+}
+
 pseudobulk_matrix_cpp <- function(mat, cell_groups, method, transpose) {
     .Call(`_BPCells_pseudobulk_matrix_cpp`, mat, cell_groups, method, transpose)
 }

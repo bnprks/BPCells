@@ -139,6 +139,7 @@ reference:
   - checksum
   - apply_by_row
   - regress_out
+  - crossprod_dense
   - IterableMatrix-methods
   - pseudobulk_matrix
 
