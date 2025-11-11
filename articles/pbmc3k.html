@@ -8,8 +8,8 @@
 <title>Basic tutorial • BPCells</title>
 <script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <link href="../deps/bootstrap-5.3.1/bootstrap.min.css" rel="stylesheet">
-<script src="../deps/bootstrap-5.3.1/bootstrap.bundle.min.js"></script><link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
-<link href="../deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet">
+<script src="../deps/bootstrap-5.3.1/bootstrap.bundle.min.js"></script><link href="../deps/font-awesome-6.4.2/css/all.min.css" rel="stylesheet">
+<link href="../deps/font-awesome-6.4.2/css/v4-shims.min.css" rel="stylesheet">
 <script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><link href="../extra.css" rel="stylesheet">
 <meta property="og:title" content="Basic tutorial">
 <script defer data-domain="benparks.net" src="https://plausible.benparks.net/js/visit-counts.js"></script><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.15/dist/katex.min.css" integrity="sha384-Htz9HMhiwV8GuQ28Xr9pEs1B4qJiYu/nYLLwlDklR53QibDfmQzi7rYxXhMH/5/u" crossorigin="anonymous">
@@ -23,7 +23,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">BPCells</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -205,7 +205,7 @@ data.</p>
 <span><span class="co">## Storage order: column major</span></span>
 <span><span class="co">## </span></span>
 <span><span class="co">## Queued Operations:</span></span>
-<span><span class="co">## 1. Load compressed matrix from directory /home/bparks/dev/github/bnprks/BPCells/r/vignettes/pbmc-3k-data/pbmc_3k_rna_raw</span></span></code></pre>
+<span><span class="co">## 1. Load compressed matrix from directory /mnt/c/Users/Immanuel/PycharmProjects/BPCells/r/vignettes/pbmc-3k-data/pbmc_3k_rna_raw</span></span></code></pre>
 <p>Convert the ATAC-seq fragments</p>
 <div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Check if we already ran import</span></span>
@@ -222,7 +222,7 @@ data.</p>
 <span><span class="co">## Chromosomes: 39 chromosomes with names chr1, chr10 ... KI270713.1</span></span>
 <span><span class="co">## </span></span>
 <span><span class="co">## Queued Operations:</span></span>
-<span><span class="co">## 1. Read compressed fragments from directory /home/bparks/dev/github/bnprks/BPCells/r/vignettes/pbmc-3k-data/pbmc_3k_frags</span></span></code></pre>
+<span><span class="co">## 1. Read compressed fragments from directory /mnt/c/Users/Immanuel/PycharmProjects/BPCells/r/vignettes/pbmc-3k-data/pbmc_3k_frags</span></span></code></pre>
 <details><summary><strong>How much storage space did we save with bitpacking
 compression?</strong>
 </summary><p>ATAC storage space dropped from 468 MB for the gzipped 10x file to
@@ -442,7 +442,7 @@ needed.</p>
 <span><span class="co">## Storage order: column major</span></span>
 <span><span class="co">## </span></span>
 <span><span class="co">## Queued Operations:</span></span>
-<span><span class="co">## 1. Load compressed matrix from directory /home/bparks/dev/github/bnprks/BPCells/r/vignettes/pbmc-3k-data/pbmc_3k_rna_raw</span></span>
+<span><span class="co">## 1. Load compressed matrix from directory /mnt/c/Users/Immanuel/PycharmProjects/BPCells/r/vignettes/pbmc-3k-data/pbmc_3k_rna_raw</span></span>
 <span><span class="co">## 2. Select rows: 87, 171 ... 36568 and cols: 640783, 89020 ... 504383</span></span>
 <span><span class="co">## 3. Convert type from uint32_t to double</span></span>
 <span><span class="co">## 4. Scale by 1e+04</span></span>
@@ -483,18 +483,18 @@ parallelization support.</p>
 <span><span class="co">##           [,1]       [,2]       [,3]</span></span>
 <span><span class="co">## [1,] 15.167732  0.8951489 -2.3650024</span></span>
 <span><span class="co">## [2,]  6.599775  7.2484737  4.4369185</span></span>
-<span><span class="co">## [3,] 14.621697 -1.1929478 -0.6439663</span></span>
+<span><span class="co">## [3,] 14.621697 -1.1929478 -0.6439662</span></span>
 <span><span class="co">## [4,]  8.142875  1.0977223 -2.5066235</span></span></code></pre>
 <p>Next we calculate UMAP coordinates</p>
 <div class="sourceCode" id="cb33"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">12341512</span><span class="op">)</span></span>
 <span><span class="va">umap</span> <span class="op">&lt;-</span> <span class="fu">uwot</span><span class="fu">::</span><span class="fu"><a href="https://jlmelville.github.io/uwot/reference/umap.html" class="external-link">umap</a></span><span class="op">(</span><span class="va">pca</span><span class="op">)</span></span>
 <span><span class="va">umap</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">4</span>,<span class="op">]</span></span></code></pre></div>
-<pre><code><span><span class="co">##            [,1]        [,2]</span></span>
-<span><span class="co">## [1,]  9.9284977   2.8806480</span></span>
-<span><span class="co">## [2,] -0.7640393 -11.7900724</span></span>
-<span><span class="co">## [3,]  9.8782410   3.1049877</span></span>
-<span><span class="co">## [4,]  7.7622828   0.5004428</span></span></code></pre>
+<pre><code><span><span class="co">##           [,1]      [,2]</span></span>
+<span><span class="co">## [1,] 10.280173  3.032208</span></span>
+<span><span class="co">## [2,] -1.513292 -9.496552</span></span>
+<span><span class="co">## [3,] 10.052034  3.215374</span></span>
+<span><span class="co">## [4,]  8.457198  0.609063</span></span></code></pre>
 </div>
 <div class="section level3">
 <h3 id="clustering">Clustering<a class="anchor" aria-label="anchor" href="#clustering"></a>
@@ -504,7 +504,7 @@ coordinates.</p>
 <div class="sourceCode" id="cb35"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">clusts</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/knn.html">knn_hnsw</a></span><span class="op">(</span><span class="va">pca</span>, ef<span class="op">=</span><span class="fl">500</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> <span class="co"># Find approximate nearest neighbors</span></span>
 <span>  <span class="fu"><a href="../reference/knn_graph.html">knn_to_snn_graph</a></span><span class="op">(</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> <span class="co"># Convert to a SNN graph</span></span>
-<span>  <span class="fu"><a href="../reference/cluster.html">cluster_graph_louvain</a></span><span class="op">(</span><span class="op">)</span> <span class="co"># Perform graph-based clustering</span></span></code></pre></div>
+<span>  <span class="fu"><a href="../reference/cluster_graph.html">cluster_graph_louvain</a></span><span class="op">(</span><span class="op">)</span> <span class="co"># Perform graph-based clustering</span></span></code></pre></div>
 <div class="sourceCode" id="cb36"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/sprintf.html" class="external-link">sprintf</a></span><span class="op">(</span><span class="st">"Clusts length: %s\n"</span>, <span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="va">clusts</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="va">clusts</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">10</span><span class="op">]</span></span></code></pre></div>
@@ -629,7 +629,7 @@ disk.</p>
 <span><span class="co">## Storage order: row major</span></span>
 <span><span class="co">## </span></span>
 <span><span class="co">## Queued Operations:</span></span>
-<span><span class="co">## 1. Read compressed fragments from directory /home/bparks/dev/github/bnprks/BPCells/r/vignettes/pbmc-3k-data/pbmc_3k_frags</span></span>
+<span><span class="co">## 1. Read compressed fragments from directory /mnt/c/Users/Immanuel/PycharmProjects/BPCells/r/vignettes/pbmc-3k-data/pbmc_3k_frags</span></span>
 <span><span class="co">## 2. Select 2600 cells by name: TTTAGCAAGGTAGCTT-1, AGCCGGTTCCGGAACC-1 ... TACTAAGTCCAATAGC-1</span></span>
 <span><span class="co">## 3. Calculate 2600 peaks over 50000 ranges: chr1:817201-817400 ... chrX:155881201-155881400</span></span>
 <span><span class="co">## 4. Convert type from uint32_t to double</span></span>
@@ -662,7 +662,7 @@ our data and run PCA as usual</p>
 <span><span class="va">pca_atac</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/mat_norm.html">multiply_cols</a></span><span class="op">(</span><span class="va">svd_atac</span><span class="op">$</span><span class="va">v</span>, <span class="va">svd_atac</span><span class="op">$</span><span class="va">d</span><span class="op">)</span></span>
 <span><span class="va">pca_atac</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">4</span>,<span class="fl">1</span><span class="op">:</span><span class="fl">4</span><span class="op">]</span></span></code></pre></div>
 <pre><code><span><span class="co">##            [,1]       [,2]       [,3]      [,4]</span></span>
-<span><span class="co">## [1,] -103.64071   1.553515   2.436148  21.22977</span></span>
+<span><span class="co">## [1,] -103.64071   1.553515   2.436147  21.22977</span></span>
 <span><span class="co">## [2,]  -44.75342 -28.737622 -12.681591 -10.01745</span></span>
 <span><span class="co">## [3,]  -90.74857   3.266168   3.627660  12.95109</span></span>
 <span><span class="co">## [4,]  -90.74640  -6.447103   6.853840 -15.76629</span></span></code></pre>
@@ -671,16 +671,16 @@ our data and run PCA as usual</p>
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">12341512</span><span class="op">)</span></span>
 <span><span class="va">umap_atac</span> <span class="op">&lt;-</span> <span class="fu">uwot</span><span class="fu">::</span><span class="fu"><a href="https://jlmelville.github.io/uwot/reference/umap.html" class="external-link">umap</a></span><span class="op">(</span><span class="va">pca_atac</span><span class="op">)</span></span>
 <span><span class="va">umap_atac</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">4</span>,<span class="op">]</span></span></code></pre></div>
-<pre><code><span><span class="co">##           [,1]      [,2]</span></span>
-<span><span class="co">## [1,]  6.380669  4.681697</span></span>
-<span><span class="co">## [2,] -6.929080 -1.873173</span></span>
-<span><span class="co">## [3,]  6.416005  9.665938</span></span>
-<span><span class="co">## [4,]  7.895295  1.542123</span></span></code></pre>
+<pre><code><span><span class="co">##          [,1]        [,2]</span></span>
+<span><span class="co">## [1,] 7.341801  4.20816287</span></span>
+<span><span class="co">## [2,] 5.417667 -0.05818889</span></span>
+<span><span class="co">## [3,] 4.133997  9.12835273</span></span>
+<span><span class="co">## [4,] 8.743609  0.89240464</span></span></code></pre>
 <p>Then we cluster, just like for the RNA</p>
 <div class="sourceCode" id="cb54"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">clusts_atac</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/knn.html">knn_hnsw</a></span><span class="op">(</span><span class="va">pca_atac</span>, ef<span class="op">=</span><span class="fl">500</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> <span class="co"># Find approximate nearest neighbors</span></span>
 <span>  <span class="fu"><a href="../reference/knn_graph.html">knn_to_snn_graph</a></span><span class="op">(</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> <span class="co"># Convert to a SNN graph</span></span>
-<span>  <span class="fu"><a href="../reference/cluster.html">cluster_graph_louvain</a></span><span class="op">(</span><span class="op">)</span> <span class="co"># Perform graph-based clustering</span></span></code></pre></div>
+<span>  <span class="fu"><a href="../reference/cluster_graph.html">cluster_graph_louvain</a></span><span class="op">(</span><span class="op">)</span> <span class="co"># Perform graph-based clustering</span></span></code></pre></div>
 <p>And we can plot our ATAC-seq embedding with ATAC-derived clusters,
 and easily compare that to the RNA-derived clusters from earlier.</p>
 <div class="sourceCode" id="cb55"><pre class="downlit sourceCode r">
