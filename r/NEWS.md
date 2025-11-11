@@ -10,6 +10,7 @@
 
 ## Bug-fixes
 - Fix error in documentation examples for `plot_embedding()`, resulting from the way documentation examples use nested function calls (pull request #316).
+- Fix error in `qc_scATAC()` when fragments are near the start of a chromosome (pull request #317).
 
 ## To-dos
 - Add support for sparse pseudobulking in `pseudobulk_matrix()`.  Currently in progress in #268.
