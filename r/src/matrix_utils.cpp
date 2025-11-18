@@ -1,5 +1,5 @@
 // Copyright 2021 BPCells contributors
-// 
+//
 // Licensed under the Apache License, Version 2.0 <LICENSE-APACHE or
 // https://www.apache.org/licenses/LICENSE-2.0> or the MIT license
 // <LICENSE-MIT or https://opensource.org/licenses/MIT>, at your
@@ -22,9 +22,10 @@
 #include "bpcells-cpp/matrixIterators/RenameDims.h"
 #include "bpcells-cpp/matrixIterators/SVD.h"
 #include "bpcells-cpp/matrixIterators/TSparseMatrixWriter.h"
-#include "bpcells-cpp/matrixUtils/WilcoxonRankSum.h"
+#include "bpcells-cpp/matrixUtils/DenseTransposeMultiply.h"
 #include "bpcells-cpp/matrixUtils/Pseudobulk.h"
 #include "bpcells-cpp/matrixUtils/Quantile.h"
+#include "bpcells-cpp/matrixUtils/WilcoxonRankSum.h"
 #include "bpcells-cpp/matrixIterators/MatrixAccumulators.h"
 #include "R_array_io.h"
 #include "R_interrupts.h"
@@ -675,6 +676,16 @@ NumericVector matrix_max_per_col_cpp(SEXP matrix) {
     return Rcpp::wrap(result);
 }
 
+// Compute x * t(x) as a dense output
+// [[Rcpp::export]]
+Eigen::MatrixXd dense_transpose_multiply_cpp(SEXP matrix, size_t buffer_bytes, size_t threads) {
+    return run_with_R_interrupt_check(
+        &dense_transpose_multiply,
+        take_unique_xptr<MatrixLoader<double>>(matrix),
+        buffer_bytes,
+        threads
+    );
+}
 
 // [[Rcpp::export]]
 List pseudobulk_matrix_cpp(SEXP mat,
@@ -693,7 +704,6 @@ List pseudobulk_matrix_cpp(SEXP mat,
             methodFlags = methodFlags | PseudobulkStatsMethod::NonZeros | PseudobulkStatsMethod::Mean | PseudobulkStatsMethod::Variance;
         }
     }
-    
     PseudobulkStats res = run_with_R_interrupt_check(
         &pseudobulk_matrix<double>,
         take_unique_xptr<MatrixLoader<double>>(mat),
