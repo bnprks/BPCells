@@ -47,9 +47,9 @@ Imports:
     scattermore,
     ggrepel,
     RColorBrewer,
+    hexbin
 Suggests:
     IRanges,
-    hexbin,
     tidyr,
     GenomicRanges,
     GenomeInfoDb,
