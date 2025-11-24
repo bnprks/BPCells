@@ -552,7 +552,7 @@ collect_features <- function(source, features = NULL, gene_mapping = human_gene_
 #'   cluster_graph_louvain()
 #' 
 #' 
-#' ## Plot embedding
+#' ## Plot embeddings
 #' print(length(clusts))
 #' 
 #' plot_embedding(clusts, umap)

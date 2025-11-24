@@ -206,17 +206,29 @@ qc_scATAC <- function(fragments, genes, blacklist) {
 
   # Compute signal & background regions for TSSEnrichment calculation
   tss_window_width <- 101L
-  tss_window <- tss %>% dplyr::mutate(start = start - 50L, end = start + tss_window_width)
+  tss_window <- tss %>%
+    dplyr::mutate(
+      start = as.integer(pmax(start - 50L, 0L)),
+      end = start + tss_window_width
+    )
 
   tss_flank_width <- 100L
   tss_flank <- dplyr::bind_rows(
-    dplyr::mutate(tss, start = start + 1901L, end = start + tss_flank_width),
-    dplyr::mutate(tss, start = start - 2000L, end = start + tss_flank_width)
+    dplyr::mutate(
+      tss,
+      start = as.integer(pmax(start + 1901L, 0L)),
+      end = start + tss_flank_width
+    ),
+    dplyr::mutate(
+      tss,
+      start = as.integer(pmax(start - 2000L, 0L)),
+      end = start + tss_flank_width
+    )
   )
 
   promoters <- genes %>%
     dplyr::mutate(
-      start = dplyr::if_else(strand, start - 2000L, end - 101L),
+      start = as.integer(pmax(dplyr::if_else(strand, start - 2000L, end - 101L), 0L)),
       end = start + 2000L + 101L
     )
 

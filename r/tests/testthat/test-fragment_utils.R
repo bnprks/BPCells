@@ -191,6 +191,7 @@ test_that("Merge cells works", {
 
 test_that("GRanges conversion round-trips", {
   skip_if_not_installed("GenomicRanges")
+  skip_if_not_installed("GenomeInfoDb")
   frags <- open_fragments_10x("../data/mini_fragments.tsv.gz") #nolint
   raw <- write_fragments_memory(frags)
   ranges <- as(raw, "GRanges")

@@ -716,3 +716,28 @@ test_that("Regression test for gene_score_archr() Issues 185 + 188", {
   bp_ans <- gene_score_archr(bp_frags, genes, chromosome_sizes, tile_width=1000)
   expect_identical(as(bp_ans, "dgCMatrix"), ans)
 })
+
+test_that("qc_scATAC handles genes near the start of a chromosome", {
+  frag_tbl <- tibble::tibble(
+    chr = "chr1",
+    start = c(0L, 25L, 50L, 75L),
+    end = start + 20L,
+    cell_id = rep(c("cell1", "cell2"), each = 2)
+  )
+  fragments <- convert_to_fragments(frag_tbl)
+
+  genes <- tibble::tibble(
+    chr = "chr1",
+    start = c(0L, 25L),
+    end = c(75L, 80L),
+    strand = c("+", "-")
+  )
+  blacklist <- tibble::tibble(
+    chr = "chr1",
+    start = 500L,
+    end = 550L
+  )
+
+  qc <- qc_scATAC(fragments, genes, blacklist)
+  expect_identical(sort(qc$cellName), sort(cellNames(fragments)))
+})
