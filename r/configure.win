@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 
 if [ -z $BPCELLS_DEBUG_INSTALL ]; then 
     exec 3>/dev/null
@@ -15,7 +15,7 @@ fi
 # or set the CI or ENABLE_INSTALL_COUNTING environment variables ahead of installation.
 if [ -z "$CI" ]; then ENABLE_INSTALL_COUNTING=${ENABLE_INSTALL_COUNTING:-yes}; fi
 
-if [ "$ENABLE_INSTALL_COUNTING" == "yes" ]; then
+if [ "$ENABLE_INSTALL_COUNTING" = "yes" ]; then
     curl --silent "https://plausible.benparks.net/flask-plausible/bpcells-configure" > /dev/null 2> /dev/null \
         || true
     echo "Recording install count metrics"
@@ -180,7 +180,7 @@ sed \
     -e "s|%ENV_LDFLAGS%|${ENV_LDFLAGS}|g" \
     src/Makevars.in > src/Makevars
 
-if [ "$ENABLE_INSTALL_COUNTING" == "yes" ]; then
+if [ "$ENABLE_INSTALL_COUNTING" = "yes" ]; then
     curl --silent https://plausible.benparks.net/flask-plausible/bpcells-configure-success > /dev/null 2> /dev/null \
         || true
 fi
