@@ -18,10 +18,10 @@ trackplot_theme <- function(base_size=11) {
   ggplot2::theme(
     panel.grid = ggplot2::element_blank(),
     panel.spacing.y = ggplot2::unit(0, "pt"),
-    strip.text.y.left = ggplot2::element_text(angle=0, hjust=1, size=ggplot2::rel(1.2)),
+    strip.text.y.left = ggplot2::element_text(angle=0, hjust=1, size=ggplot2::rel(1.2)) + importFrom(ggplot2, element_text),
     strip.background = ggplot2::element_blank(),
     strip.placement = "outside",
-    axis.title.y.left = ggplot2::element_text(size=ggplot2::rel(1))
+    axis.title.y.left = ggplot2::element_text(size=ggplot2::rel(1)) + importFrom(ggplot2, element_text)
   )
 }
 
@@ -441,7 +441,7 @@ trackplot_combine <- function(tracks, side_plot = NULL, title = NULL, side_plot_
     )
   }
   if (!is.null(title)) {
-    patch <- patch + patchwork::plot_annotation(title = title, theme = ggplot2::theme(plot.title = ggplot2::element_text(hjust = 0.5)))
+    patch <- patch + patchwork::plot_annotation(title = title, theme = ggplot2::theme(plot.title = ggplot2::element_text(hjust = 0.5) + importFrom(ggplot2, element_text)))
   }
   return(patch)
 }
@@ -1125,7 +1125,7 @@ draw_trackplot_grid <- function(..., labels, title = NULL,
   patch <- Reduce(`+`, c(labels_plots, data_plots)) +
     patchwork::plot_layout(ncol = 2, byrow = FALSE, widths = c(label_width, 1), heights = heights, guides = "collect")
   if (!is.null(title)) {
-    patch <- patch + patchwork::plot_annotation(title = title, theme = theme(plot.title = element_text(hjust = 0.5)))
+    patch <- patch + patchwork::plot_annotation(title = title, theme = theme(plot.title = element_text(hjust = 0.5) + importFrom(ggplot2, element_text)))
   }
   return(patch)
 }
