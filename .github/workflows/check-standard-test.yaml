@@ -106,3 +106,5 @@ jobs:
           build_args: c("--no-build-vignettes")
           upload-snapshots: false
           error-on: '"error"'
+        env:
+          _R_CHECK_FUTURE_FILE_TIMESTAMPS_: "FALSE"
