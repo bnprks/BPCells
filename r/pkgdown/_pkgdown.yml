@@ -190,8 +190,12 @@ reference:
   - discrete_palette
   - collect_features
   - rotate_x_labels
+  - ragg_wrap
+  - scale_next_plot_height
   
 - title: "Data"
 - contents:
   - get_demo_mat
 
+figures:
+ dev: BPCells::ragg_wrap

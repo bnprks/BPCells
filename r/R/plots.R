@@ -827,11 +827,9 @@ rotate_x_labels <- function(degrees = 45) {
 #' cell_types <- paste("Group", rep(1:3, length.out = length(colnames(mat))))
 #' 
 #' ## Plot dot
-#' plot <- plot_dot(mat, c("MS4A1", "CD3E"), cell_types)
-#' 
-#'  BPCells:::render_plot_from_storage(
-#'    plot, width = 4, height = 5
-#' )
+#' scale_next_plot_height(0.8)
+#' plot_dot(mat, c("MS4A1", "CD3E"), cell_types)
+
 #' @export
 plot_dot <- function(source, features, groups, group_order = NULL, gene_mapping = human_gene_mapping,
                      colors = c("lightgrey", "#4682B4"),

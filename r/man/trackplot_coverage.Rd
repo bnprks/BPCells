@@ -71,12 +71,10 @@ read_counts <- qc_scATAC(frags, genes, blacklist)$nFrags
 region <- "chr4:3034877-4034877"
 cell_types <- paste("Group", rep(1:3, length.out = length(cellNames(frags))))
 
-BPCells:::render_plot_from_storage(
-  trackplot_coverage(
-    frags, region, groups = cell_types, 
-    cell_read_counts = read_counts
-  ),
-  width = 6, height = 3
+scale_next_plot_height(0.5)
+trackplot_coverage(
+  frags, region, groups = cell_types, 
+  cell_read_counts = read_counts
 )
 }
 \seealso{

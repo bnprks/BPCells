@@ -279,21 +279,6 @@ trackplot_normalize_ranges_with_metadata <- function(data, metadata) {
   return(data)
 }
 
-#' Render a plot with intermediate disk storage step
-#' 
-#' Take a plotting object and save in temp storage, so it can be outputted with exact dimensions.
-#' Primarily used to allow for adjusting plot dimensions within function reference examples.
-#' @param plot (ggplot) ggplot output from a plotting function
-#' @param width (numeric) width of rendered plot
-#' @param height (numeric) height of rendered plot
-#' @keywords internal
-render_plot_from_storage <- function(plot, width, height) {
-  assert_is(plot, "ggplot")
-  image_path <- tempfile(fileext = ".png")
-  ggplot2::ggsave(image_path, plot, width = width, height = height)
-  img <- png::readPNG(image_path)
-  grid::grid.raster(img)
-}
 
 #' Combine track plots
 #' 
@@ -344,11 +329,11 @@ render_plot_from_storage <- function(plot, width, height) {
 #'
 #' ## Combine trackplots and render
 #' ## Also remove colors from gene track
-#' plot <- trackplot_combine(
+#' scale_next_plot_height(0.6)
+#' trackplot_combine(
 #'     list(plot_scalebar, plot_coverage, plot_gene + ggplot2::guides(color = "none"))
 #' )
-#' BPCells:::render_plot_from_storage(
-#'   plot, width = 6, height = 4)
+#' plot
 #' @export
 trackplot_combine <- function(tracks, side_plot = NULL, title = NULL, side_plot_width = 0.3) {
   for (plot in tracks) {
@@ -502,12 +487,10 @@ trackplot_combine <- function(tracks, side_plot = NULL, title = NULL, side_plot_
 #' region <- "chr4:3034877-4034877"
 #' cell_types <- paste("Group", rep(1:3, length.out = length(cellNames(frags))))
 #' 
-#' BPCells:::render_plot_from_storage(
-#'   trackplot_coverage(
-#'     frags, region, groups = cell_types, 
-#'     cell_read_counts = read_counts
-#'   ),
-#'   width = 6, height = 3
+#' scale_next_plot_height(0.5)
+#' trackplot_coverage(
+#'   frags, region, groups = cell_types, 
+#'   cell_read_counts = read_counts
 #' )
 #' @export
 trackplot_coverage <- function(fragments, region, groups,
@@ -618,11 +601,10 @@ trackplot_coverage <- function(fragments, region, groups,
 #'   annotation_set = "basic", features = "transcript", timeout = 3000
 #' )
 #' region <- "chr4:3034877-4034877"
-#' 
-#' 
+#'
 #' ## Plot gene trackplot
-#' plot <- trackplot_gene(transcripts, region)
-#' BPCells:::render_plot_from_storage(plot, width = 6, height = 1)
+#' scale_next_plot_height(0.3)
+#' trackplot_gene(transcripts, region)
 #' @export
 trackplot_gene <- function(transcripts, region, exon_size = 2.5, gene_size = 0.5, label_size = 11*.8/ggplot2::.pt, track_label="Genes", return_data = FALSE) {
   region <- normalize_ranges(region)
@@ -739,10 +721,8 @@ trackplot_gene <- function(transcripts, region, exon_size = 2.5, gene_size = 0.5
 #' region <- "chr4:3034877-3044877"
 #' 
 #' ## Plot peaks
-#' BPCells:::render_plot_from_storage(
-#'   trackplot_genome_annotation(peaks, region, color_by = "enrichment"),
-#'   width = 6, height = 1
-#' )
+#' scale_next_plot_height(0.3)
+#' trackplot_genome_annotation(peaks, region, color_by = "enrichment")
 #' @export
 trackplot_genome_annotation <- function(loci, region, color_by = NULL, colors = NULL, label_by = NULL, label_size = 11*.8/ggplot2::.pt, show_strand=FALSE,
                                         annotation_size = 2.5, track_label="Peaks", return_data = FALSE) {
@@ -877,8 +857,8 @@ trackplot_genome_annotation <- function(loci, region, color_by = NULL, colors = 
 #' region <- "chr4:3034877-4034877"
 #' 
 #' ## Plot loops
-#' plot <- trackplot_loop(loops, region, color_by = "score")
-#' BPCells:::render_plot_from_storage(plot, width = 6, height = 1.5)
+#' scale_next_plot_height(0.3)
+#' trackplot_loop(loops, region, color_by = "score")
 #' @export
 trackplot_loop <- function(loops, region, color_by=NULL, colors=NULL, allow_truncated=TRUE, curvature=0.75, track_label="Links", return_data = FALSE) {
   region <- normalize_ranges(region)
@@ -978,9 +958,8 @@ trackplot_loop <- function(loops, region, color_by=NULL, colors=NULL, allow_trun
 #' @seealso `trackplot_combine()`, `trackplot_coverage()`, `trackplot_gene()`, `trackplot_loop()`
 #' @examples
 #' region <- "chr4:3034877-3044877"
-#' BPCells:::render_plot_from_storage(
-#'   trackplot_scalebar(region), width = 6, height = 1
-#' )
+#' scale_next_plot_height(0.3)
+#' trackplot_scalebar(region)
 #' @export
 trackplot_scalebar <- function(region, font_pt=11) {
   region <- normalize_ranges(region)
@@ -1287,4 +1266,47 @@ trackplot_bulk <- function(fragments, region, groups,
     plot$patchwork$labels <- names(trackplots)
     return(plot)
   }
+}
+
+#' Temporarily scale the height of the next plot device
+#'
+#' Stores a scaling factor that `ragg_wrap()` consumes once, letting you tweak
+#' the rendered height of the next PNG device without modifying the plot code.
+#'
+#' @param scale Numeric multiplier applied to the `height` argument the next
+#'   time `ragg_wrap()` is called.
+#' @return Returns the previous option value (as returned by `options()`).
+#' @export
+scale_next_plot_height <- function(scale) {
+  options("BPCells.scale_next_plot_height" = scale)
+}
+
+#' Wrap `ragg::agg_png()` with optional one-shot height scaling
+#'
+#' Use `scale_next_plot_height()` to temporarily adjust the height of the *next*
+#' call to `ragg_wrap()`. This is handy when a downstream plot (e.g., produced
+#' by `trackplot_combine()`) renders too tall/short in a pipeline and you want a
+#' quick scaling tweak without touching the plot code itself. The scaling factor
+#' is applied once and then cleared.
+#' @return A graphics device as returned by `ragg::agg_png()`.
+#' @export
+ragg_wrap <- function(
+  filename = "Rplot%03d.png", width = 480, height = 480, 
+  units = "px", pointsize = 12, background = "white", res = 72, scaling = 1, snap_rect = TRUE, bitsize = 8, bg
+) {
+  height_scale <- getOption("BPCells.scale_next_plot_height", default = 1)
+  options("BPCells.scale_next_plot_height" = NULL)
+  ragg::agg_png(
+    filename = filename,
+    width = width,
+    height = height * height_scale,
+    units = units,
+    pointsize = pointsize,
+    background = background,
+    res = res,
+    scaling = scaling,
+    snap_rect = snap_rect,
+    bitsize = bitsize,
+    bg = bg
+  )
 }

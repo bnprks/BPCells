@@ -53,10 +53,9 @@ transcripts <- read_gencode_transcripts(
 )
 region <- "chr4:3034877-4034877"
 
-
 ## Plot gene trackplot
-plot <- trackplot_gene(transcripts, region)
-BPCells:::render_plot_from_storage(plot, width = 6, height = 1)
+scale_next_plot_height(0.3)
+trackplot_gene(transcripts, region)
 }
 \seealso{
 \code{trackplot_combine()}, \code{trackplot_coverage()}, \code{trackplot_loop()}, \code{trackplot_scalebar()}

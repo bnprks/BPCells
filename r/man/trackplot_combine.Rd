@@ -65,11 +65,11 @@ plot_coverage <- trackplot_coverage(
 
 ## Combine trackplots and render
 ## Also remove colors from gene track
-plot <- trackplot_combine(
+scale_next_plot_height(0.6)
+trackplot_combine(
     list(plot_scalebar, plot_coverage, plot_gene + ggplot2::guides(color = "none"))
 )
-BPCells:::render_plot_from_storage(
-  plot, width = 6, height = 4)
+plot
 }
 \seealso{
 \code{trackplot_coverage()}, \code{trackplot_gene()}, \code{trackplot_loop()}, \code{trackplot_scalebar()}
