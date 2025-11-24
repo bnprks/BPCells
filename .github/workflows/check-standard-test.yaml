@@ -104,4 +104,5 @@ jobs:
         # Skip fragile future-timestamp check on Windows (file.mtime() can be NA)
         env:
           _R_CHECK_SYSTEM_CLOCK_: 0
+          _R_CHECK_FUTURE_FILE_TIMESTAMPS_: false
 
