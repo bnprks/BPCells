@@ -94,11 +94,6 @@ jobs:
             any::decor
           working-directory: 'r'
           needs: check
-      # Skip fragile future-timestamp check on Windows (file.mtime() can be NA)
-      - name: Disable future timestamp check on Windows
-        if: matrix.os == 'windows-latest'
-        shell: bash
-        run: echo "_R_CHECK_FUTURE_FILE_TIMESTAMPS_=FALSE" >> "$GITHUB_ENV"
       - name: Check package
         uses: r-lib/actions/check-r-package@v2
         with:
@@ -106,5 +101,7 @@ jobs:
           build_args: c("--no-build-vignettes")
           upload-snapshots: false
           error-on: '"error"'
+        # Skip fragile future-timestamp check on Windows (file.mtime() can be NA)
         env:
-          _R_CHECK_FUTURE_FILE_TIMESTAMPS_: "FALSE"
+          _R_CHECK_SYSTEM_CLOCK_: 0
+
