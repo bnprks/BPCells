@@ -21,6 +21,8 @@ jobs:
       R_KEEP_PKG_SOURCE: yes
       ENABLE_INSTALL_COUNTING: no
       _R_CHECK_BUILD_VIGNETTES_: false
+      _R_CHECK_SYSTEM_CLOCK_: 0
+      _R_CHECK_FUTURE_FILE_TIMESTAMPS_: false
 
     steps:
       - uses: actions/checkout@v4
@@ -101,8 +103,5 @@ jobs:
           build_args: c("--no-build-vignettes")
           upload-snapshots: false
           error-on: '"error"'
-        # Skip fragile future-timestamp check on Windows (file.mtime() can be NA)
-        env:
-          _R_CHECK_SYSTEM_CLOCK_: 0
-          _R_CHECK_FUTURE_FILE_TIMESTAMPS_: false
+
 
