@@ -94,7 +94,12 @@ jobs:
             any::decor
           working-directory: 'r'
           needs: check
-
+      # Do this because Windows has an error with file timestamps
+      - name: Touch files on Windows
+        if: matrix.os == 'windows-latest'
+        shell: bash
+        run: |
+          find r -type f -exec touch {} +
       - name: Check package
         uses: r-lib/actions/check-r-package@v2
         with:
