@@ -94,12 +94,11 @@ jobs:
             any::decor
           working-directory: 'r'
           needs: check
-      # Do this because Windows has an error with file timestamps
-      - name: Touch files on Windows
+      # Skip fragile future-timestamp check on Windows (file.mtime() can be NA)
+      - name: Disable future timestamp check on Windows
         if: matrix.os == 'windows-latest'
         shell: bash
-        run: |
-          find r -type f -exec touch {} +
+        run: echo "_R_CHECK_FUTURE_FILE_TIMESTAMPS_=FALSE" >> "$GITHUB_ENV"
       - name: Check package
         uses: r-lib/actions/check-r-package@v2
         with:
@@ -107,4 +106,3 @@ jobs:
           build_args: c("--no-build-vignettes")
           upload-snapshots: false
           error-on: '"error"'
-
