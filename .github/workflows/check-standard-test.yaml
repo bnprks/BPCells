@@ -103,6 +103,7 @@ jobs:
         uses: r-lib/actions/check-r-package@v2
         with:
           working-directory: r
+          check-script: check-wrapper.R
           build_args: c("--no-build-vignettes")
           upload-snapshots: false
           error-on: '"error"'
