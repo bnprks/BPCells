@@ -188,7 +188,7 @@ get_demo_mat <- function(filter_qc = TRUE, subset = TRUE) {
         if (!file.exists(file.path(data_dir, paste0(mat_name, ".tar.gz")))) {
             prepare_demo_data(data_dir, filter_qc = filter_qc, subset = subset)
         } else {
-            untar(file.path(data_dir, paste0(mat_name, ".tar.gz")), exdir=data_dir) + importFrom(utils, untar)
+            untar(file.path(data_dir, paste0(mat_name, ".tar.gz")), exdir=data_dir)
             file.remove(file.path(data_dir, paste0(mat_name, ".tar.gz")))
         }
     }
@@ -222,7 +222,7 @@ get_demo_frags <- function(filter_qc = TRUE, subset = TRUE) {
         if (!file.exists(file.path(data_dir, paste0(frags_name, ".tar.gz")))) {
             prepare_demo_data(data_dir)
         } else {
-            untar(file.path(data_dir, paste0(frags_name, ".tar.gz")), exdir = data_dir) + importFrom(utils, untar)
+            untar(file.path(data_dir, paste0(frags_name, ".tar.gz")), exdir = data_dir)
             file.remove(file.path(data_dir, paste0(frags_name, ".tar.gz")))
         }
     }

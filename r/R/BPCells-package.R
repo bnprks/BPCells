@@ -12,9 +12,9 @@
 #' @importFrom Matrix t
 #' @importFrom methods .hasSlot Arith as callNextMethod canCoerce cbind2 Compare is Math Math2 new rbind2 setAs setClass setGeneric setMethod show
 #' @importFrom stats as.formula end model.matrix p.adjust ppois qpois quantile start
-#' @importFrom utils download.file head tail
+#' @importFrom utils download.file head tail untar
 #' @importFrom graphics text
-#' @importFrom ggplot2 theme
+#' @importFrom ggplot2 theme element_text
 NULL
 
 # Suppress CMD check warnings for legitimate NSE usage
