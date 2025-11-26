@@ -46,11 +46,11 @@ Imports:
     purrr,
     scattermore,
     ggrepel,
-    RColorBrewer,
-    hexbin
+    RColorBrewer
 Suggests:
     IRanges,
     tidyr,
+    hexbin,
     GenomicRanges,
     GenomeInfoDb,
     S4Vectors,

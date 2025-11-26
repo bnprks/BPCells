@@ -201,6 +201,7 @@ plot_read_count_knee <- function(read_counts, cutoff = NULL, return_data = FALSE
 #' plot_tss_scatter(atac_qc, min_frags = 1000, min_tss = 10)
 #' @export
 plot_tss_scatter <- function(atac_qc, min_frags = NULL, min_tss = NULL, bins = 100, apply_styling = TRUE) {
+  assert_has_package("hexbin")
   assert_is(atac_qc, "data.frame")
   if (!is.null(min_frags)) {
     assert_is_numeric(min_frags)

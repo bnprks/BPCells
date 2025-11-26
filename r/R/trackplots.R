@@ -1288,6 +1288,24 @@ scale_next_plot_height <- function(scale) {
 #' by `trackplot_combine()`) renders too tall/short in a pipeline and you want a
 #' quick scaling tweak without touching the plot code itself. The scaling factor
 #' is applied once and then cleared.
+#' @param filename The name of the file. Follows the same semantics as the file naming in `grDevices::png()`, 
+#' meaning that you can provide a sprintf() compliant string format to name multiple plots (such as the default value)
+#' @param width,height The dimensions of the device
+#' @param units The unit width and height is measured in, 
+#' in either pixels `('px')`, inches `('in')`, millimeters `('mm')`, or centimeter `('cm')`.
+#' @param pointsize The default pointsize of the device in pt. 
+#' This will in general not have any effect on grid graphics (including ggplot2) as text size is always set explicitly there.
+#' @param background The background color of the device
+#' @param res The resolution of the device. 
+#' This setting will govern how device dimensions given in inches, centimeters, or millimeters will be converted to pixels. 
+#' Further, it will be used to scale text sizes and linewidths
+#' @param scaling A scaling factor to apply to the rendered line width and text size. Useful for getting the right dimensions 
+#' at the resolution that you need. If e.g. you need to render a plot at 4000x3000 pixels for it to fit into a layout,
+#' but you find that the result appears to small, you can increase the `scaling` argument to make everything appear bigger at the same resolution.
+#' @param snap_rect Should axis-aligned rectangles drawn with only fill snap to the pixel grid.
+#' This will prevent anti-aliasing artifacts when two rectangles are touching at their border.
+#' @param bitsize Should the dvice record colour as 8 or 16bit
+#' @param bg Same as `background` for compatibility with old graphic device APIs`
 #' @return A graphics device as returned by `ragg::agg_png()`.
 #' @export
 ragg_wrap <- function(
