@@ -18,6 +18,35 @@ ragg_wrap(
   bg
 )
 }
+\arguments{
+\item{filename}{The name of the file. Follows the same semantics as the file naming in \code{grDevices::png()},
+meaning that you can provide a sprintf() compliant string format to name multiple plots (such as the default value)}
+
+\item{width, height}{The dimensions of the device}
+
+\item{units}{The unit width and height is measured in,
+in either pixels \code{('px')}, inches \code{('in')}, millimeters \code{('mm')}, or centimeter \code{('cm')}.}
+
+\item{pointsize}{The default pointsize of the device in pt.
+This will in general not have any effect on grid graphics (including ggplot2) as text size is always set explicitly there.}
+
+\item{background}{The background color of the device}
+
+\item{res}{The resolution of the device.
+This setting will govern how device dimensions given in inches, centimeters, or millimeters will be converted to pixels.
+Further, it will be used to scale text sizes and linewidths}
+
+\item{scaling}{A scaling factor to apply to the rendered line width and text size. Useful for getting the right dimensions
+at the resolution that you need. If e.g. you need to render a plot at 4000x3000 pixels for it to fit into a layout,
+but you find that the result appears to small, you can increase the \code{scaling} argument to make everything appear bigger at the same resolution.}
+
+\item{snap_rect}{Should axis-aligned rectangles drawn with only fill snap to the pixel grid.
+This will prevent anti-aliasing artifacts when two rectangles are touching at their border.}
+
+\item{bitsize}{Should the dvice record colour as 8 or 16bit}
+
+\item{bg}{Same as \code{background} for compatibility with old graphic device APIs`}
+}
 \value{
 A graphics device as returned by \code{ragg::agg_png()}.
 }
