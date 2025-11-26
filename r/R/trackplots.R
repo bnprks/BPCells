@@ -1288,6 +1288,7 @@ scale_next_plot_height <- function(scale) {
 #' by `trackplot_combine()`) renders too tall/short in a pipeline and you want a
 #' quick scaling tweak without touching the plot code itself. The scaling factor
 #' is applied once and then cleared.
+#' @importFrom ragg agg_png
 #' @param filename The name of the file. Follows the same semantics as the file naming in `grDevices::png()`, 
 #' meaning that you can provide a sprintf() compliant string format to name multiple plots (such as the default value)
 #' @param width,height The dimensions of the device

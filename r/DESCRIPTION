@@ -43,6 +43,7 @@ Imports:
     ggplot2 (>= 3.4.0),
     scales,
     patchwork,
+    ragg,
     purrr,
     scattermore,
     ggrepel,
