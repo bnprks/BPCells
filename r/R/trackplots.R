@@ -441,7 +441,7 @@ trackplot_combine <- function(tracks, side_plot = NULL, title = NULL, side_plot_
     )
   }
   if (!is.null(title)) {
-    patch <- patch + patchwork::plot_annotation(title = title, theme = ggplot2::theme(plot.title = ggplot2::element_text(hjust = 0.5)
+    patch <- patch + patchwork::plot_annotation(title = title, theme = ggplot2::theme(plot.title = ggplot2::element_text(hjust = 0.5)))
   }
   return(patch)
 }
