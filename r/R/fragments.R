@@ -221,15 +221,25 @@ setMethod("short_description", "FragmentsTsv", function(x) {
 #'     10x default, though it's not quite standard for the bed file format.
 #' @return 10x fragments file object
 #' @examples
-#' ## Download example fragments from pbmc 500 dataset and save in temp directory
+#' #######################################################################
+#' ## write_fragments_10x() example
+#' #######################################################################
+#' ## Prep data
+#' frags_table <- tibble::tribble(
+#'    ~chr, ~start, ~end, ~cell_id,
+#'     "chr1", 0, 5, "cell1",
+#'     "chr1", 2, 4, "cell2",
+#'     "chr2", 3, 6, "cell1",
+#'     "chr3", 7, 9, "cell2"
+#' )
+#' frags_table
+#' frags <- frags_table %>% convert_to_fragments()
+#' 
 #' data_dir <- file.path(tempdir(), "frags_10x")
+#' frags_file <- "demo_10x_frags.tsv.gz"
 #' dir.create(data_dir, recursive = TRUE, showWarnings = FALSE)
-#' url_base <- "https://cf.10xgenomics.com/samples/cell-atac/2.0.0/atac_pbmc_500_nextgem/"
-#' frags_file <- "atac_pbmc_500_nextgem_fragments.tsv.gz"
-#' atac_raw_url <- paste0(url_base, frags_file)
-#' if (!file.exists(file.path(data_dir, frags_file))) {
-#'  download.file(atac_raw_url, file.path(data_dir, frags_file), mode="wb")
-#' }
+#' write_fragments_10x(frags, file.path(data_dir, frags_file))
+#' 
 #' 
 #' #######################################################################
 #' ## open_fragments_10x() example
@@ -242,7 +252,7 @@ setMethod("short_description", "FragmentsTsv", function(x) {
 #' frags
 #' 
 #' frags %>% write_fragments_dir(
-#'  file.path(data_dir, "demo_frags_from_h5"), 
+#'  file.path(data_dir, "new_demo_10x_frags"), 
 #'  overwrite = TRUE
 #' )
 #' 
@@ -268,17 +278,6 @@ open_fragments_10x <- function(path, comment = "#", end_inclusive = TRUE) {
 #' @details **write_fragments_10x**
 #'
 #' Fragments will be written to disk immediately, then returned in a readable object.
-#' @examples
-#' #######################################################################
-#' ## write_fragments_10x() example
-#' #######################################################################
-#' frags <- write_fragments_10x(
-#'  frags,
-#'  file.path(data_dir, paste0("new_", frags_file))
-#' )
-#' frags
-#' 
-#' 
 #' @export
 write_fragments_10x <- function(fragments, path, end_inclusive = TRUE, append_5th_column = FALSE) {
   assert_is_file(path, must_exist = FALSE, extension = c(".tsv", ".tsv.gz"))
@@ -699,11 +698,12 @@ open_fragments_hdf5 <- function(path, group = "fragments", buffer_size = 16384L)
 #' @param optional Logical flag for compatibility with `as.data.frame()`; ignored.
 #' @return **convert_to_fragments()**: IterableFragments object
 #' @examples
-#' frags_table <- tibble::tibble(
-#'   chr = paste0("chr", 1:10),
-#'   start = 0,
-#'   end = 5,
-#'   cell_id = "cell1"
+#' frags_table <- tibble::tribble(
+#'    ~chr, ~start, ~end, ~cell_id,
+#'     "chr1", 0, 5, "cell1",
+#'     "chr1", 2, 4, "cell2",
+#'     "chr2", 3, 6, "cell1",
+#'     "chr3", 7, 9, "cell2"
 #' )
 #' frags_table
 #' 

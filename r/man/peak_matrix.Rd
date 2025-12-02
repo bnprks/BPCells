@@ -54,20 +54,41 @@ provide the ordering of chromosomes to expect while reading the tsv.
 }
 \examples{
 ## Prep demo data
-\dontrun{
-frags <- get_demo_frags(subset = FALSE)
-chrom_sizes <- read_ucsc_chrom_sizes(file.path(tempdir(), "references"), genome="hg38")
-blacklist <- read_encode_blacklist(file.path(tempdir(), "references"), genome="hg38")
-frags_filter_blacklist <- frags \%>\% select_regions(blacklist, invert_selection = TRUE)
-peaks <- call_peaks_tile(
-  frags_filter_blacklist, 
-  chrom_sizes,
-  effective_genome_size = 2.8e9
+frags <- tibble::tribble(
+   ~chr, ~start, ~end, ~cell_id,
+    "chr1", 0, 5, "cell1",
+    "chr1", 2, 4, "cell2",
+    "chr2", 3, 6, "cell1",
+    "chr3", 7, 9, "cell2"
+) \%>\% convert_to_fragments()
+frags
+
+# Note: this is how we would normally call peaks given this data
+# We use a toy example here
+# chrom_sizes <- read_ucsc_chrom_sizes(file.path(tempdir(), "references"), genome="hg38")
+# blacklist <- read_encode_blacklist(file.path(tempdir(), "references"), genome="hg38")
+# frags \%>\% select_regions(blacklist, invert_selection = TRUE)
+# peaks <- call_peaks_tile(
+#   frags_filter_blacklist, 
+#   chrom_sizes,
+#   effective_genome_size = 2.8e9
+# )
+peaks <- tibble::tribble(
+  ~chr, ~start, ~end, ~group, ~p_val, ~q_val, ~enrichment,
+ "chr1", 1, 4, "all", 0, 0, 767,
+ "chr2", 2, 8, "all", 0, 0, 766,
+ "chr3", 5, 10, "all", 0, 0, 645
 )
-top_peaks <- head(peaks, 5000)
-top_peaks <- top_peaks[order_ranges(top_peaks, chrNames(frags)),]
+peaks
+
+# We would normally select the top peaks like this:
+# peaks <- head(peaks, 5000)
+# peaks <- peaks[order_ranges(peaks, chrNames(frags)),]
 
 ## Get peak matrix
-peak_matrix(frags_filter_blacklist, top_peaks, mode="insertions")
-}
+peak_matrix(frags, peaks, mode="insertions")
+peak_matrix
+
+peak_matrix \%>\% as("dgCMatrix")
+
 }

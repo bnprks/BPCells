@@ -27,5 +27,5 @@ chromosome.
 The underlying data is pulled from here: \url{https://hgdownload.soe.ucsc.edu/downloads.html}
 }
 \examples{
-read_ucsc_chrom_sizes(file.path(tempdir(), "reference"))
+read_ucsc_chrom_sizes(file.path(tempdir(), "references"))
 }

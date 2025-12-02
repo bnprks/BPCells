@@ -66,7 +66,7 @@ read_bed(file_name)
 #######################################################################
 ## read_encode_blacklist() example
 #######################################################################
-read_encode_blacklist(file.path(tempdir(), "reference"))
+read_encode_blacklist(file.path(tempdir(), "references"))
 
 
 }

@@ -29,9 +29,12 @@ Use base R's \code{as()} to convert between BPCells matrices and
 dense matrices directly when needed.
 }
 \examples{
-mat <- get_demo_mat()[1:2, 1:2]
+# setup data
+mat <- matrix(1:25, nrow=5, ncol=5)
+rownames(mat) <- paste0("gene", seq_len(5))
+colnames(mat) <- paste0("cell", seq_len(5))
+mat <- mat \%>\% as("IterableMatrix")
 mat
-
 
 #######################################################################
 ## as(bpcells_mat, "dgCMatrix") example

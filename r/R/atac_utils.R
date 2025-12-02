@@ -380,7 +380,23 @@ merge_peaks_iterative <- function(peaks) {
 #' 
 #' 
 #' ## Call peaks
+#' \dontrun{
 #' call_peaks_tile(frags_filter_blacklist, chrom_sizes, effective_genome_size = 2.8e9)
+#' }
+#' #> # A tibble: 73,160 × 7
+#' #>    chr       start       end group p_val q_val enrichment
+#' #>    <fct>     <int>     <int> <chr> <dbl> <dbl>      <dbl>
+#' #>  1 chr11  65615400  65615600 all       0     0      6764.
+#' #>  2 chr4    2262266   2262466 all       0     0      6422.
+#' #>  3 chr11 119057200 119057400 all       0     0      6188.
+#' #>  4 chr11    695133    695333 all       0     0      6180.
+#' #>  5 chr11   2400400   2400600 all       0     0      6166.
+#' #>  6 chr4    1346933   1347133 all       0     0      6109.
+#' #>  7 chr11   3797600   3797800 all       0     0      6017.
+#' #>  8 chr11  64878600  64878800 all       0     0      5948.
+#' #>  9 chr11  57667733  57667933 all       0     0      5946.
+#' #> 10 chr11  83156933  83157133 all       0     0      5913.
+#' #> # ℹ 73,150 more rows
 #' @export
 call_peaks_tile <- function(fragments, chromosome_sizes, cell_groups = rep.int("all", length(cellNames(fragments))),
                             effective_genome_size = NULL,
@@ -508,7 +524,7 @@ call_peaks_tile <- function(fragments, chromosome_sizes, cell_groups = rep.int("
 #' list.files(bedgraph_outputs)
 #'
 #' # With tiling
-#' chrom_sizes <- read_ucsc_chrom_sizes(file.path(tempdir(), "reference"), genome="hg38") %>% 
+#' chrom_sizes <- read_ucsc_chrom_sizes(file.path(tempdir(), "references"), genome="hg38") %>% 
 #'   dplyr::filter(chr %in% c("chr4", "chr11"))
 #' write_insertion_bedgraph(frags, file.path(bedgraph_outputs, "all_tiled.bedGraph"),
 #'   chrom_sizes = chrom_sizes, normalization_method = "cpm", tile_width = 100)
@@ -890,3 +906,4 @@ range_overlaps <- function(a, b) {
     } %>%
     dplyr::arrange(from, to)
 }
+  

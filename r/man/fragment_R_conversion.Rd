@@ -52,11 +52,12 @@ materialises supported R objects as fragment stores. Coercions to and from
 \code{GRanges} require the GenomicRanges package to be installed.
 }
 \examples{
-frags_table <- tibble::tibble(
-  chr = paste0("chr", 1:10),
-  start = 0,
-  end = 5,
-  cell_id = "cell1"
+frags_table <- tibble::tribble(
+   ~chr, ~start, ~end, ~cell_id,
+    "chr1", 0, 5, "cell1",
+    "chr1", 2, 4, "cell2",
+    "chr2", 3, 6, "cell1",
+    "chr3", 7, 9, "cell2"
 )
 frags_table
 

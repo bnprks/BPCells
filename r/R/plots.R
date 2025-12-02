@@ -154,16 +154,7 @@ plot_read_count_knee <- function(read_counts, cutoff = NULL, return_data = FALSE
       y = max(log10(data$data$reads))
     )
     rectangle_highlight <- tibble::tibble(
-      xmin = -Inf, xmax = Inf,
-      ymin = log10(cutoff), ymax = Inf
-    )
-    plot <- plot +
-      ggplot2::geom_hline(yintercept = log10(cutoff), linetype = "dashed") +
-      ggplot2::geom_text(data = cell_label, ggplot2::aes(x, y, label = label), hjust = "inward", vjust = "inward") +
-      ggplot2::geom_rect(
-        ggplot2::aes(xmin = xmin, xmax = xmax, ymin = ymin, ymax = ymax, x = NULL, y = NULL),
-        data = rectangle_highlight,
-        alpha = 0.1
+      xmin = -Inf, xmax = Inf,xxxxxx
       )
   }
 
@@ -278,7 +269,7 @@ plot_tss_scatter <- function(atac_qc, min_frags = NULL, min_tss = NULL, bins = 1
 #' @inheritParams plot_embedding
 #' @return Numeric vector where index i contans the number of length-i fragments
 #' @examples
-#' frags <- get_demo_frags(filter_qc = FALSE, subset = FALSE)
+#' frags <- get_demo_frags()
 #' plot_fragment_length(frags)
 #' @export
 plot_fragment_length <- function(fragments, max_length = 500, return_data = FALSE, apply_styling = TRUE) {
