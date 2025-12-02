@@ -3,8 +3,14 @@
 \name{IterableMatrix-methods-misc}
 \alias{IterableMatrix-methods-misc}
 \alias{\%*\%,matrix,IterableMatrix-method}
+\alias{\%*\%,IterableMatrix,numeric-method}
 \alias{\%*\%,numeric,IterableMatrix-method}
+\alias{\%*\%,IterableMatrix,IterableMatrix-method}
+\alias{\%*\%,IterableMatrix,dgCMatrix-method}
 \alias{\%*\%,dgCMatrix,IterableMatrix-method}
+\alias{rowVars.IterableMatrix}
+\alias{rowMaxs.IterableMatrix}
+\alias{dimnames<-,IterableMatrix,NULL-method}
 \alias{rowQuantiles.IterableMatrix}
 \alias{colQuantiles.IterableMatrix}
 \alias{<,IterableMatrix,numeric-method}
@@ -18,9 +24,29 @@
 \usage{
 \S4method{\%*\%}{matrix,IterableMatrix}(x, y)
 
+\S4method{\%*\%}{IterableMatrix,numeric}(x, y)
+
 \S4method{\%*\%}{numeric,IterableMatrix}(x, y)
 
+\S4method{\%*\%}{IterableMatrix,IterableMatrix}(x, y)
+
+\S4method{\%*\%}{IterableMatrix,dgCMatrix}(x, y)
+
 \S4method{\%*\%}{dgCMatrix,IterableMatrix}(x, y)
+
+\method{rowVars}{IterableMatrix}(
+  x,
+  rows = NULL,
+  cols = NULL,
+  na.rm = FALSE,
+  center = NULL,
+  ...,
+  useNames = TRUE
+)
+
+\method{rowMaxs}{IterableMatrix}(x, rows = NULL, cols = NULL, na.rm = FALSE, ..., useNames = TRUE)
+
+\S4method{dimnames}{IterableMatrix,NULL}(x) <- value
 
 \method{rowQuantiles}{IterableMatrix}(
   x,
@@ -63,9 +89,15 @@ colQuantiles.IterableMatrix(
 \S4method{-}{numeric,IterableMatrix}(e1, e2)
 }
 \arguments{
-\item{digits}{Number of decimal places for quantile calculations}
+\item{x}{IterableMatrix object or compatible operand}
+
+\item{y}{IterableMatrix object or compatible operand}
 
 \item{...}{Additional arguments passed to methods}
+
+\item{value}{Replacement value supplied to assignment methods.}
+
+\item{digits}{Number of decimal places for quantile calculations}
 
 \item{drop}{Logical indicating whether to drop dimensions when subsetting.}
 }
@@ -79,9 +111,21 @@ We do not need to show the method \code{IterableMatrix} on the right instead.
 \itemize{
 \item \code{x \%*\% y}: Multiply a dense matrix by an IterableMatrix
 
+\item \code{x \%*\% y}: Multiply an IterableMatrix by a numeric vector
+
 \item \code{x \%*\% y}: Multiply a numeric row vector by an IterableMatrix
 
+\item \code{x \%*\% y}: Multiply two IterableMatrix objects
+
+\item \code{x \%*\% y}: Multiply an IterableMatrix by a dgCMatrix
+
 \item \code{x \%*\% y}: Multiply a dgCMatrix by an IterableMatrix
+
+\item \code{rowVars(IterableMatrix)}: Calculate rowVars (replacement for \code{matrixStats::rowVars()})
+
+\item \code{rowMaxs(IterableMatrix)}: Calculate rowMaxs (replacement for \code{matrixStats::rowMaxs()})
+
+\item \code{dimnames(x = IterableMatrix) <- value}: Remove dimnames of an IterableMatrix
 
 \item \code{rowQuantiles(IterableMatrix)}: Calculate rowQuantiles (replacement for \code{matrixStats::rowQuantiles})
 

@@ -28,8 +28,11 @@ NULL
 #' For instance, `%*%` is described between `IterableMatrix` and `matrix` on the left and right respectively.
 #' We do not need to show the method `IterableMatrix` on the right instead.
 #' 
+#' @param x IterableMatrix object or compatible operand
+#' @param y IterableMatrix object or compatible operand
 #' @param ... Additional arguments passed to methods
 #' @param digits Number of decimal places for quantile calculations
+#' @param value Replacement value supplied to assignment methods.
 #' @param drop Logical indicating whether to drop dimensions when subsetting.
 #' @name IterableMatrix-methods-misc
 #' @rdname IterableMatrix-methods-misc
@@ -319,7 +322,7 @@ setMethod("%*%", signature(x = "matrix", y = "IterableMatrix"), function(x, y) {
   res
 })
 
-#' @describeIn IterableMatrix-methods Multiply an IterableMatrix by a numeric vector
+#' @describeIn IterableMatrix-methods-misc Multiply an IterableMatrix by a numeric vector
 setMethod("%*%", signature(x = "IterableMatrix", y = "numeric"), function(x, y) {
   iter <- iterate_matrix(convert_matrix_type(x, "double"))
   if (x@transpose) {
@@ -467,7 +470,7 @@ setMethod("short_description", "MatrixMultiply", function(x) {
   }
 })
 
-#' @describeIn IterableMatrix-methods Multiply two IterableMatrix objects
+#' @describeIn IterableMatrix-methods-misc Multiply two IterableMatrix objects
 setMethod("%*%", signature(x = "IterableMatrix", y = "IterableMatrix"), function(x, y) {
   if (x@transpose != y@transpose) stop("Cannot multiply matrices with different internal transpose states.\nPlease use transpose_storage_order().")
   if (x@transpose) {
@@ -487,7 +490,7 @@ setMethod("%*%", signature(x = "IterableMatrix", y = "IterableMatrix"), function
   new("MatrixMultiply", left = x, right = y, transpose = FALSE, dim = dim, dimnames = dimnames)
 })
 
-#' @describeIn IterableMatrix-methods Multiply an IterableMatrix by a dgCMatrix
+#' @describeIn IterableMatrix-methods-misc Multiply an IterableMatrix by a dgCMatrix
 setMethod("%*%", signature(x = "IterableMatrix", y = "dgCMatrix"), function(x, y) {
   if (x@transpose) {
     t(as(t(y), "IterableMatrix") %*% t(x))
@@ -782,7 +785,7 @@ rowVars.default <- function(x, rows = NULL, cols = NULL, na.rm = FALSE, center =
   }
 }
 #' @export
-#' @describeIn IterableMatrix-methods Calculate rowVars (replacement for `matrixStats::rowVars()`)
+#' @describeIn IterableMatrix-methods-misc Calculate rowVars (replacement for `matrixStats::rowVars()`)
 #' @method rowVars IterableMatrix
 rowVars.IterableMatrix <- function(x, rows = NULL, cols = NULL, na.rm = FALSE, center = NULL, ..., useNames = TRUE) {
   if (!is.null(rows) || !is.null(cols) || !isFALSE(na.rm) || !is.null(center) || !isTRUE(useNames)) {
@@ -822,7 +825,7 @@ rowMaxs.default <- function(x, rows = NULL, cols = NULL, na.rm = FALSE, ..., use
   }
 }
 #' @export
-#' @describeIn IterableMatrix-methods Calculate rowMaxs (replacement for `matrixStats::rowMaxs()`)
+#' @describeIn IterableMatrix-methods-misc Calculate rowMaxs (replacement for `matrixStats::rowMaxs()`)
 #' @method rowMaxs IterableMatrix
 rowMaxs.IterableMatrix <- function(x, rows = NULL, cols = NULL, na.rm = FALSE, ..., useNames = TRUE) {
   if(!is.null(rows) || !is.null(cols) || !isFALSE(na.rm)) {
@@ -1202,7 +1205,7 @@ setMethod("dimnames<-", signature(x = "IterableMatrix", value = "list"), functio
   x
 })
 #' @export
-#' @describeIn IterableMatrix-methods Remove dimnames of an IterableMatrix
+#' @describeIn IterableMatrix-methods-misc Remove dimnames of an IterableMatrix
 setMethod("dimnames<-", signature(x = "IterableMatrix", value = "NULL"), function(x, value) {
   if (identical(dimnames(x), value)) return(x)
   if (!is(x, "RenameDims")) {

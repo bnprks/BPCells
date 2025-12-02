@@ -8,23 +8,17 @@
 \alias{show,IterableMatrix-method}
 \alias{t,IterableMatrix-method}
 \alias{\%*\%,IterableMatrix,matrix-method}
-\alias{\%*\%,IterableMatrix,numeric-method}
-\alias{\%*\%,IterableMatrix,IterableMatrix-method}
-\alias{\%*\%,IterableMatrix,dgCMatrix-method}
 \alias{rowSums,IterableMatrix-method}
 \alias{colSums,IterableMatrix-method}
 \alias{rowMeans,IterableMatrix-method}
 \alias{colMeans,IterableMatrix-method}
 \alias{colVars}
 \alias{rowVars}
-\alias{rowVars.IterableMatrix}
 \alias{rowMaxs}
-\alias{rowMaxs.IterableMatrix}
 \alias{colMaxs}
 \alias{[,IterableMatrix,ANY,ANY,ANY-method}
 \alias{[<-,IterableMatrix,ANY,ANY,ANY-method}
 \alias{dimnames<-,IterableMatrix,list-method}
-\alias{dimnames<-,IterableMatrix,NULL-method}
 \alias{rowQuantiles}
 \alias{colQuantiles}
 \alias{log1p,IterableMatrix-method}
@@ -55,12 +49,6 @@ storage_order(x)
 
 \S4method{\%*\%}{IterableMatrix,matrix}(x, y)
 
-\S4method{\%*\%}{IterableMatrix,numeric}(x, y)
-
-\S4method{\%*\%}{IterableMatrix,IterableMatrix}(x, y)
-
-\S4method{\%*\%}{IterableMatrix,dgCMatrix}(x, y)
-
 \S4method{rowSums}{IterableMatrix}(x)
 
 \S4method{colSums}{IterableMatrix}(x)
@@ -89,19 +77,7 @@ rowVars(
   useNames = TRUE
 )
 
-\method{rowVars}{IterableMatrix}(
-  x,
-  rows = NULL,
-  cols = NULL,
-  na.rm = FALSE,
-  center = NULL,
-  ...,
-  useNames = TRUE
-)
-
 rowMaxs(x, rows = NULL, cols = NULL, na.rm = FALSE, ..., useNames = TRUE)
-
-\method{rowMaxs}{IterableMatrix}(x, rows = NULL, cols = NULL, na.rm = FALSE, ..., useNames = TRUE)
 
 colMaxs(x, rows = NULL, cols = NULL, na.rm = FALSE, ..., useNames = TRUE)
 
@@ -110,8 +86,6 @@ colMaxs(x, rows = NULL, cols = NULL, na.rm = FALSE, ..., useNames = TRUE)
 \S4method{[}{IterableMatrix,ANY,ANY,ANY}(x, i, j, ...) <- value
 
 \S4method{dimnames}{IterableMatrix,list}(x) <- value
-
-\S4method{dimnames}{IterableMatrix,NULL}(x) <- value
 
 rowQuantiles(
   x,
@@ -272,12 +246,6 @@ Generic methods and built-in functions for IterableMatrix objects
 
 \item \code{x \%*\% y}: Multiply by a dense matrix
 
-\item \code{x \%*\% y}: Multiply an IterableMatrix by a numeric vector
-
-\item \code{x \%*\% y}: Multiply two IterableMatrix objects
-
-\item \code{x \%*\% y}: Multiply an IterableMatrix by a dgCMatrix
-
 \item \code{rowSums(IterableMatrix)}: Calculate rowSums
 
 \item \code{colSums(IterableMatrix)}: Calculate colSums
@@ -290,11 +258,7 @@ Generic methods and built-in functions for IterableMatrix objects
 
 \item \code{rowVars()}: Calculate rowVars (replacement for \code{matrixStats::rowVars()}) (generic)
 
-\item \code{rowVars(IterableMatrix)}: Calculate rowVars (replacement for \code{matrixStats::rowVars()})
-
 \item \code{rowMaxs()}: Calculate rowMaxs (replacement for \code{matrixStats::rowMaxs()}) (generic)
-
-\item \code{rowMaxs(IterableMatrix)}: Calculate rowMaxs (replacement for \code{matrixStats::rowMaxs()})
 
 \item \code{colMaxs()}: Calculate colMax (replacement for \code{matrixStats::colMax()})
 
@@ -303,8 +267,6 @@ Generic methods and built-in functions for IterableMatrix objects
 \item \code{`[`(x = IterableMatrix, i = ANY, j = ANY) <- value}: Assign into an IterableMatrix
 
 \item \code{dimnames(x = IterableMatrix) <- value}: Set dimnames of an IterableMatrix, similar to base R \verb{dimnames<-()}
-
-\item \code{dimnames(x = IterableMatrix) <- value}: Remove dimnames of an IterableMatrix
 
 \item \code{rowQuantiles()}: Calculate rowQuantiles (replacement for \code{matrixStats::rowQuantiles})
 
