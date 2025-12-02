@@ -236,7 +236,6 @@ sed \
 
 # # Clean up highway build directory to avoid CRAN NOTE about object files
 # # The highway library will be rebuilt as needed during installation
-# rm -rf tools/highway/
 
 if [ "$ENABLE_INSTALL_COUNTING" = "yes" ]; then
     curl --silent https://plausible.benparks.net/flask-plausible/bpcells-configure-success > /dev/null 2> /dev/null \
