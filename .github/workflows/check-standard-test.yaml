@@ -94,16 +94,10 @@ jobs:
             any::decor
           working-directory: 'r'
           needs: check
-      - name: Normalize timestamps (Windows)
-        if: matrix.os == 'windows-latest'
-        shell: bash
-        run: |
-          find r -type f -exec touch -d "2020-01-01 00:00:00" {} +
       - name: Check package
         uses: r-lib/actions/check-r-package@v2
         with:
           working-directory: r
-          check-script: check-wrapper.R
           build_args: c("--no-build-vignettes")
           upload-snapshots: false
           error-on: '"error"'
