@@ -17,7 +17,7 @@
 #' @param drop (Logical) If TRUE and only one quantile is requested, the result is coerced to a vector (For non-BPCells objects).
 #' @return  - `rowQuantiles():` If `length(probs) == 1`, return a numeric with number of entries equal to the number of rows in the matrix.
 #' Else, return a Matrix of quantile values, with cols representing each quantile, and each row representing a row in the input matrix.
-#' @describeIn IterableMatrix-methods Calculate rowQuantiles (replacement for `matrixStats::rowQuantiles`)
+#' @describeIn IterableMatrix-methods-stats Calculate rowQuantiles (replacement for `matrixStats::rowQuantiles`)
 #' @usage rowQuantiles(
 #'   x,
 #'   rows = NULL,
@@ -60,7 +60,7 @@ rowQuantiles.default <- function(x, rows = NULL, cols = NULL,
 }
 #' @export
 #' @method rowQuantiles IterableMatrix
-#' @describeIn IterableMatrix-methods-misc Calculate rowQuantiles (replacement for `matrixStats::rowQuantiles`)
+#' @describeIn IterableMatrix-methods-stats Calculate rowQuantiles (replacement for `matrixStats::rowQuantiles`)
 rowQuantiles.IterableMatrix <- function(x, rows = NULL, cols = NULL,
                                         probs = seq(from = 0, to = 1, by = 0.25),
                                         na.rm = FALSE, type = 7L, digits = 7L, ...,
@@ -102,7 +102,7 @@ rowQuantiles.IterableMatrix <- function(x, rows = NULL, cols = NULL,
 #' Find the nth quantile value(s) of each column in a matrix. Only supports non-transposed matrices.
 #' @return - `colQuantiles():` If `length(probs) == 1`, return a numeric with number of entries equal to the number of columns in the matrix. 
 #' Else, return a Matrix of quantile values, with cols representing each quantile, and each row representing a col in the input matrix.
-#' @describeIn IterableMatrix-methods Calculate colQuantiles (replacement for `matrixStats::colQuantiles`)
+#' @describeIn IterableMatrix-methods-stats Calculate colQuantiles (replacement for `matrixStats::colQuantiles`)
 #' @usage colQuantiles(
 #'   x,
 #'   rows = NULL,
@@ -145,7 +145,7 @@ colQuantiles.default <- function(x, rows = NULL, cols = NULL,
 }
 #' Find the nth quantile value(s) of each column in a matrix. Only supports non-transposed matrices.
 #' @export
-#' @describeIn IterableMatrix-methods-misc Calculate colQuantiles (replacement for `matrixStats::colQuantiles`)
+#' @describeIn IterableMatrix-methods-stats Calculate colQuantiles (replacement for `matrixStats::colQuantiles`)
 colQuantiles.IterableMatrix <- function(x, rows = NULL, cols = NULL, 
                                         probs = seq(from = 0, to = 1, by = 0.25), 
                                         na.rm = FALSE, type = 7L, digits = 7L, ...,

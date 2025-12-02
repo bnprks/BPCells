@@ -86,9 +86,9 @@ peaks
 # peaks <- peaks[order_ranges(peaks, chrNames(frags)),]
 
 ## Get peak matrix
-peak_matrix(frags, peaks, mode="insertions")
-peak_matrix
+peak_mat <- peak_matrix(frags, peaks, mode="insertions")
+peak_mat
 
-peak_matrix \%>\% as("dgCMatrix")
+peak_mat \%>\% as("dgCMatrix")
 
 }

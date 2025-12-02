@@ -140,7 +140,9 @@ reference:
   - apply_by_row
   - regress_out
   - pseudobulk_matrix
-  - IterableMatrix-methods
+  - IterableMatrix-methods-core
+  - IterableMatrix-methods-ops
+  - IterableMatrix-methods-stats
   
 
 - title: "Reference Annotations"

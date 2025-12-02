@@ -6,37 +6,61 @@
 # option. This file may not be copied, modified, or distributed
 # except according to those terms.
 
-#' IterableMatrix methods
+#' IterableMatrix core methods
 #'
-#' Generic methods and built-in functions for IterableMatrix objects
+#' Core operations for IterableMatrix objects: inspection, transpose, subsetting, and dimnames.
 #'
-#' @param ... Additional arguments passed to methods
-#' @param digits Number of decimal places for quantile calculations
+#' @param x IterableMatrix object
+#' @param object IterableMatrix object
 #' @param i Row indices or selection helpers.
 #' @param j Column indices or selection helpers.
-#' @param drop Logical indicating whether to drop dimensions when subsetting.
 #' @param value Replacement value supplied to assignment methods.
-#' @name IterableMatrix-methods
-#' @rdname IterableMatrix-methods
+#' @param drop Logical indicating whether to drop dimensions when subsetting.
+#' @param ... Additional arguments passed to methods
+#' @name IterableMatrix-methods-core
+#' @rdname IterableMatrix-methods-core
 NULL
 
 
-#' IterableMatrix methods miscellaneous
-#'
-#' Generic methods and built-in functions for IterableMatrix objects.  These include 
-#' methods that are described in `IterableMatrix-methods` but have some sense of redundancy.
-#' For instance, `%*%` is described between `IterableMatrix` and `matrix` on the left and right respectively.
-#' We do not need to show the method `IterableMatrix` on the right instead.
+#' IterableMatrix summary statistics
 #' 
+#' Summaries and reductions for IterableMatrix objects (sums, means, variances, quantiles, extrema).
+#' 
+#' @param x IterableMatrix object or matrix-like object.
+#' @param rows (Integer) Optional vector of row indices to operate over.
+#' @param cols (Integer) Optional vector of column indices to operate over.
+#' @param na.rm (Logical) Should missing values (NA) be removed?
+#' @param center Optional center values (vector of length nrow(x) or ncol(x))
+#' @param probs (Numeric) Quantile value(s) to be computed, between 0 and 1.
+#' @param type (Integer) between 4 and 9 selecting which quantile algorithm to use, detailed in `matrixStats::rowQuantiles()`
+#' @param digits Number of decimal places for quantile calculations
+#' @param drop (Logical) If TRUE and only one quantile is requested, the result is coerced to a vector (For non-BPCells objects).
+#' @param useNames (Logical) Whether to use row and column names in the output.
+#' @param ... Additional arguments passed to methods
+#' @name IterableMatrix-methods-stats
+#' @rdname IterableMatrix-methods-stats
+NULL
+
+#' IterableMatrix operations
+#'
+#' Matrix multiplication, arithmetic, and comparison operations for IterableMatrix objects.
+#'
 #' @param x IterableMatrix object or compatible operand
 #' @param y IterableMatrix object or compatible operand
-#' @param ... Additional arguments passed to methods
-#' @param digits Number of decimal places for quantile calculations
-#' @param value Replacement value supplied to assignment methods.
-#' @param drop Logical indicating whether to drop dimensions when subsetting.
-#' @name IterableMatrix-methods-misc
-#' @rdname IterableMatrix-methods-misc
+#' @param e1 Left operand for binary operations.
+#' @param e2 Right operand for binary operations.
+#' @param digits Number of decimal places for rounding
+#' @name IterableMatrix-methods-ops
+#' @rdname IterableMatrix-methods-ops
+NULL
+
+#' IterableMatrix operations (additional overloads)
+#'
+#' Extra operator overloads documented separately to avoid duplicate entries in the main reference.
+#'
 #' @keywords internal
+#' @name IterableMatrix-methods-ops-misc
+#' @rdname IterableMatrix-methods-ops-misc
 NULL
 
 #' IterableMatrix subclass methods
@@ -100,7 +124,7 @@ denormalize_dimnames <- function(dimnames) {
 #' @keywords internal
 setGeneric("iterate_matrix", function(x) standardGeneric("iterate_matrix"))
 
-#' @describeIn IterableMatrix-methods Get the matrix data type (mat_uint32_t, mat_float, or mat_double for now)
+#' @describeIn IterableMatrix-methods-core Get the matrix data type (mat_uint32_t, mat_float, or mat_double for now)
 #' @examples
 #' ## Prep data
 #' mat <- matrix(1:25, nrow = 5) %>% as("dgCMatrix")
@@ -118,7 +142,7 @@ setGeneric("iterate_matrix", function(x) standardGeneric("iterate_matrix"))
 #' @export
 setGeneric("matrix_type", function(x) standardGeneric("matrix_type"))
 
-#' @describeIn IterableMatrix-methods Get the matrix storage order ("row" or "col") (generic)
+#' @describeIn IterableMatrix-methods-core Get the matrix storage order ("row" or "col") (generic)
 #' @examples
 #' #######################################################################
 #' ## storage_order() example
@@ -129,7 +153,7 @@ setGeneric("matrix_type", function(x) standardGeneric("matrix_type"))
 #' @export
 setGeneric("storage_order", function(x) standardGeneric("storage_order"))
 
-#' @describeIn IterableMatrix-methods Get the matrix storage order ("row" or "col")
+#' @describeIn IterableMatrix-methods-core Get the matrix storage order ("row" or "col")
 setMethod("storage_order", "IterableMatrix", function(x) if(x@transpose) "row" else "col")
 
 #' Return a list of input matrices to the current matrix (experimental)
@@ -228,7 +252,7 @@ setMethod("short_description", "IterableMatrix", function(x) {
 })
 
 
-#' @describeIn IterableMatrix-methods Display an IterableMatrix
+#' @describeIn IterableMatrix-methods-core Display an IterableMatrix
 #' @param object IterableMatrix object
 #' @examples
 #' #######################################################################
@@ -263,7 +287,7 @@ setMethod("show", "IterableMatrix", function(object) {
 })
 
 
-#' @describeIn IterableMatrix-methods Transpose an IterableMatrix
+#' @describeIn IterableMatrix-methods-core Transpose an IterableMatrix
 #' @param x IterableMatrix object
 #' @return * `t()` Transposed object
 #' @examples
@@ -288,9 +312,15 @@ setMethod("t", signature(x = "IterableMatrix"), function(x) {
 
 #' @param x IterableMatrix object
 #' @param y matrix
-#' @describeIn IterableMatrix-methods Multiply by a dense matrix
+#' @describeIn IterableMatrix-methods-ops Multiply by a dense matrix
 #' @return * `x %*% y`: dense matrix result
 #' @examples
+#' ## Prep data
+#' mat <- matrix(1:25, nrow = 5) %>% as("dgCMatrix")
+#' mat
+#' mat <- as(mat, "IterableMatrix")
+#' mat
+#' 
 #' #######################################################################
 #' ## `x %*% y` example
 #' #######################################################################
@@ -309,7 +339,7 @@ setMethod("%*%", signature(x = "IterableMatrix", y = "matrix"), function(x, y) {
   res
 })
 
-#' @describeIn IterableMatrix-methods-misc Multiply a dense matrix by an IterableMatrix
+#' @describeIn IterableMatrix-misc-methods Multiply a dense matrix by an IterableMatrix
 setMethod("%*%", signature(x = "matrix", y = "IterableMatrix"), function(x, y) {
   iter <- iterate_matrix(convert_matrix_type(y, "double"))
   if (y@transpose) {
@@ -322,7 +352,7 @@ setMethod("%*%", signature(x = "matrix", y = "IterableMatrix"), function(x, y) {
   res
 })
 
-#' @describeIn IterableMatrix-methods-misc Multiply an IterableMatrix by a numeric vector
+#' @describeIn IterableMatrix-misc-methods Multiply an IterableMatrix by a numeric vector
 setMethod("%*%", signature(x = "IterableMatrix", y = "numeric"), function(x, y) {
   iter <- iterate_matrix(convert_matrix_type(x, "double"))
   if (x@transpose) {
@@ -335,7 +365,7 @@ setMethod("%*%", signature(x = "IterableMatrix", y = "numeric"), function(x, y) 
   res
 })
 
-#' @describeIn IterableMatrix-methods-misc Multiply a numeric row vector by an IterableMatrix
+#' @describeIn IterableMatrix-misc-methods Multiply a numeric row vector by an IterableMatrix
 setMethod("%*%", signature(x = "numeric", y = "IterableMatrix"), function(x, y) {
   iter <- iterate_matrix(convert_matrix_type(y, "double"))
   if (y@transpose) {
@@ -470,7 +500,7 @@ setMethod("short_description", "MatrixMultiply", function(x) {
   }
 })
 
-#' @describeIn IterableMatrix-methods-misc Multiply two IterableMatrix objects
+#' @describeIn IterableMatrix-misc-methods Multiply two IterableMatrix objects
 setMethod("%*%", signature(x = "IterableMatrix", y = "IterableMatrix"), function(x, y) {
   if (x@transpose != y@transpose) stop("Cannot multiply matrices with different internal transpose states.\nPlease use transpose_storage_order().")
   if (x@transpose) {
@@ -490,7 +520,7 @@ setMethod("%*%", signature(x = "IterableMatrix", y = "IterableMatrix"), function
   new("MatrixMultiply", left = x, right = y, transpose = FALSE, dim = dim, dimnames = dimnames)
 })
 
-#' @describeIn IterableMatrix-methods-misc Multiply an IterableMatrix by a dgCMatrix
+#' @describeIn IterableMatrix-misc-methods Multiply an IterableMatrix by a dgCMatrix
 setMethod("%*%", signature(x = "IterableMatrix", y = "dgCMatrix"), function(x, y) {
   if (x@transpose) {
     t(as(t(y), "IterableMatrix") %*% t(x))
@@ -499,7 +529,7 @@ setMethod("%*%", signature(x = "IterableMatrix", y = "dgCMatrix"), function(x, y
   }
 })
 
-#' @describeIn IterableMatrix-methods-misc Multiply a dgCMatrix by an IterableMatrix
+#' @describeIn IterableMatrix-misc-methods Multiply a dgCMatrix by an IterableMatrix
 setMethod("%*%", signature(x = "dgCMatrix", y = "IterableMatrix"), function(x, y) {
   if (y@transpose) {
     t(t(y) %*% as(t(x), "IterableMatrix"))
@@ -657,9 +687,15 @@ rank_transform <- function(mat, axis) {
 # Row sums and row means
 
 #' @param x IterableMatrix object
-#' @describeIn IterableMatrix-methods Calculate rowSums
+#' @describeIn IterableMatrix-methods-stats Calculate rowSums
 #' @return * `rowSums()`: vector of row sums
 #' @examples
+#' ## Prep data
+#' mat <- matrix(1:25, nrow = 5) %>% as("dgCMatrix")
+#' mat
+#' mat <- as(mat, "IterableMatrix")
+#' mat
+#' 
 #' #######################################################################
 #' ## rowSums() example
 #' #######################################################################
@@ -678,7 +714,7 @@ setMethod("rowSums", signature(x = "IterableMatrix"), function(x) {
 })
 
 #' @param x IterableMatrix object
-#' @describeIn IterableMatrix-methods Calculate colSums
+#' @describeIn IterableMatrix-methods-stats Calculate colSums
 #' @return * `colSums()`: vector of col sums
 #' @examples
 #' #######################################################################
@@ -699,7 +735,7 @@ setMethod("colSums", signature(x = "IterableMatrix"), function(x) {
 })
 
 #' @param x IterableMatrix object
-#' @describeIn IterableMatrix-methods Calculate rowMeans
+#' @describeIn IterableMatrix-methods-stats Calculate rowMeans
 #' @return * `rowMeans()`: vector of row means
 #' @examples
 #' #######################################################################
@@ -711,7 +747,7 @@ setMethod("colSums", signature(x = "IterableMatrix"), function(x) {
 setMethod("rowMeans", signature(x = "IterableMatrix"), function(x) rowSums(x) / ncol(x))
 
 #' @param x IterableMatrix object
-#' @describeIn IterableMatrix-methods Calculate colMeans
+#' @describeIn IterableMatrix-methods-stats Calculate colMeans
 #' @return * `colMeans()`: vector of col means
 #' @examples
 #' #######################################################################
@@ -732,7 +768,7 @@ setMethod("colMeans", signature(x = "IterableMatrix"), function(x) colSums(x) / 
 #  - In summary, BPCells::rowVars and BPCells::colVars will work on all inputs, and so will MatrixGenerics::rowVars and
 #    MatrixGenerics::colVars. matrixStats::rowVars and matrixStats::colVars will only work on base R matrix objects.
 
-#' @describeIn IterableMatrix-methods Calculate colVars (replacement for `matrixStats::colVars()`)
+#' @describeIn IterableMatrix-methods-stats Calculate colVars (replacement for `matrixStats::colVars()`)
 #' @param center Optional center values (vector of length nrow(x) or ncol(x))
 #' @return * `colVars()`: vector of col variance
 #' @examples
@@ -769,8 +805,15 @@ rlang::on_load({
   }
 })
 
-#' @describeIn IterableMatrix-methods Calculate rowVars (replacement for `matrixStats::rowVars()`) (generic)
+#' @describeIn IterableMatrix-methods-stats Calculate rowVars (replacement for `matrixStats::rowVars()`) (generic)
 #' @return * `rowVars()`: vector of row variance
+#' @examples
+#' #######################################################################
+#' ## rowVars() example
+#' #######################################################################
+#' rowVars(mat)
+#' 
+#' 
 #' @export
 rowVars <- function(x, rows = NULL, cols = NULL, na.rm = FALSE, center = NULL, ..., useNames = TRUE) UseMethod("rowVars")
 #' @export
@@ -785,7 +828,7 @@ rowVars.default <- function(x, rows = NULL, cols = NULL, na.rm = FALSE, center =
   }
 }
 #' @export
-#' @describeIn IterableMatrix-methods-misc Calculate rowVars (replacement for `matrixStats::rowVars()`)
+#' @describeIn IterableMatrix-methods-stats Calculate rowVars (replacement for `matrixStats::rowVars()`)
 #' @method rowVars IterableMatrix
 rowVars.IterableMatrix <- function(x, rows = NULL, cols = NULL, na.rm = FALSE, center = NULL, ..., useNames = TRUE) {
   if (!is.null(rows) || !is.null(cols) || !isFALSE(na.rm) || !is.null(center) || !isTRUE(useNames)) {
@@ -802,7 +845,7 @@ rlang::on_load({
 #' Get the max of each row in an iterable matrix
 #' @param x IterableMatrix object/dgCMatrix object
 #' @return * `rowMaxs()`: vector of maxes for every row
-#' @describeIn IterableMatrix-methods Calculate rowMaxs (replacement for `matrixStats::rowMaxs()`) (generic)
+#' @describeIn IterableMatrix-methods-stats Calculate rowMaxs (replacement for `matrixStats::rowMaxs()`) (generic)
 #' @examples
 #' #######################################################################
 #' ## rowMaxs() example
@@ -825,7 +868,7 @@ rowMaxs.default <- function(x, rows = NULL, cols = NULL, na.rm = FALSE, ..., use
   }
 }
 #' @export
-#' @describeIn IterableMatrix-methods-misc Calculate rowMaxs (replacement for `matrixStats::rowMaxs()`)
+#' @describeIn IterableMatrix-methods-stats Calculate rowMaxs (replacement for `matrixStats::rowMaxs()`)
 #' @method rowMaxs IterableMatrix
 rowMaxs.IterableMatrix <- function(x, rows = NULL, cols = NULL, na.rm = FALSE, ..., useNames = TRUE) {
   if(!is.null(rows) || !is.null(cols) || !isFALSE(na.rm)) {
@@ -849,7 +892,7 @@ rlang::on_load({
 #' Get the max of each col in an interable matrix
 #' @param x IterableMatrix/dgCMatrix object
 #' @return * `colMaxs()`: vector of column maxes
-#' @describeIn IterableMatrix-methods Calculate colMax (replacement for `matrixStats::colMax()`)
+#' @describeIn IterableMatrix-methods-stats Calculate colMax (replacement for `matrixStats::colMax()`)
 #' @examples
 #' #######################################################################
 #' ## colMaxs() example
@@ -958,7 +1001,7 @@ unsplit_selection <- function(selection) {
   selection$subset[selection$reorder]
 }
 
-#' @describeIn IterableMatrix-methods Subset an IterableMatrix
+#' @describeIn IterableMatrix-methods-core Subset an IterableMatrix
 setMethod("[", "IterableMatrix", function(x, i, j, ...) {
   if (missing(x)) stop("x is missing in matrix selection")
   if (rlang::is_missing(i) && rlang::is_missing(j)) {
@@ -995,7 +1038,7 @@ setMethod("[", "IterableMatrix", function(x, i, j, ...) {
 # Simulate assigning to a subset of the matrix.
 # We concatenate the un-modified matrix subsets with the new values,
 # then reorder rows/columns appropriately
-#' @describeIn IterableMatrix-methods Assign into an IterableMatrix
+#' @describeIn IterableMatrix-methods-core Assign into an IterableMatrix
 setMethod("[<-", "IterableMatrix", function(x, i, j, ..., value) {
   # Do type conversions if needed
   if (is.matrix(value)) value <- as(value, "dgCMatrix")
@@ -1179,7 +1222,7 @@ setMethod("short_description", "RenameDims", function(x) {
 })
 #' @export
 #' @param value New dimnames (list of length 2, or NULL)
-#' @describeIn IterableMatrix-methods Set dimnames of an IterableMatrix, similar to base R `dimnames<-()`
+#' @describeIn IterableMatrix-methods-core Set dimnames of an IterableMatrix, similar to base R `dimnames<-()`
 setMethod("dimnames<-", signature(x = "IterableMatrix", value = "list"), function(x, value) {
   if (identical(dimnames(x), value)) return(x)
   d <- dim(x)
@@ -1205,7 +1248,7 @@ setMethod("dimnames<-", signature(x = "IterableMatrix", value = "list"), functio
   x
 })
 #' @export
-#' @describeIn IterableMatrix-methods-misc Remove dimnames of an IterableMatrix
+#' @describeIn IterableMatrix-methods-core Remove dimnames of an IterableMatrix
 setMethod("dimnames<-", signature(x = "IterableMatrix", value = "NULL"), function(x, value) {
   if (identical(dimnames(x), value)) return(x)
   if (!is(x, "RenameDims")) {
@@ -2774,10 +2817,10 @@ setMethod("matrix_inputs", "PeakMatrix", function(x) list())
 #' # peaks <- peaks[order_ranges(peaks, chrNames(frags)),]
 #' 
 #' ## Get peak matrix
-#' peak_matrix(frags, peaks, mode="insertions")
-#' peak_matrix
+#' peak_mat <- peak_matrix(frags, peaks, mode="insertions")
+#' peak_mat
 #' 
-#' peak_matrix %>% as("dgCMatrix")
+#' peak_mat %>% as("dgCMatrix")
 #' 
 #' @export
 peak_matrix <- function(fragments, ranges, mode = c("insertions", "fragments", "overlaps"), zero_based_coords = !is(ranges, "GRanges"), explicit_peak_names = TRUE) {
@@ -3141,8 +3184,6 @@ convert_matrix_type <- function(matrix, type = c("uint32_t", "double", "float"))
 #' `dgCMatrix`/`matrix` representations, while `as.matrix()` materialises
 #' dense matrices directly when needed.
 #' @param x Matrix object to convert
-#' @param dgCMatrix Sparse matrix in dgCMatrix format
-#' @param IterableMatrix IterableMatrix object
 #' @param ... Additional arguments passed to methods
 #' @examples
 #' # setup data
@@ -3381,8 +3422,47 @@ matrix_stats <- function(matrix,
 }
 
 
+#' Calculate svds
+#'
+#' Use the C++ Spectra solver (same as RSpectra package) to compute the largest
+#' `k` singular values and corresponding singular vectors. Empirically, memory
+#' use is much lower than `irlba::irlba()` because the solver runs entirely in C++.
+#'
+#' When RSpectra is installed, this adds a method to `RSpectra::svds()` for
+#' `IterableMatrix` objects; otherwise it falls back to the bundled implementation.
+#'
+#' @param A The matrix whose truncated SVD is to be computed.
+#' @param k Number of singular values requested.
+#' @param nu Number of left singular vectors to compute (must equal `k` for IterableMatrix).
+#' @param nv Number of right singular vectors to compute (must equal `k` for IterableMatrix).
+#' @param opts Control parameters related to the computing algorithm (see Details).
+#' @param threads Threads to use for matrix-vector products (BPCells specific).
+#' @param ... Additional arguments passed to `RSpectra::svds()` when running on non-BPCells matrices.
+#' @return A list with components `d`, `u`, `v`, `nconv`, `niter`, and `nops`.
+#' @details
+#' The `opts` list may include:
+#' * `ncv`: Number of Lanczos basis vectors (`k < ncv <= min(m, n)`). Default `min(p, max(2*k+1, 20))`.
+#' * `tol`: Precision parameter (default `1e-10`).
+#' * `maxitr`: Maximum iterations (default `1000`).
+#' * `center`, `scale`: Centering/scaling options (ignored for BPCells).
+#' @examples
+#' mat <- matrix(rnorm(500), nrow = 50, ncol = 10)
+#' rownames(mat) <- paste0("gene", seq_len(50))
+#' colnames(mat) <- paste0("cell", seq_len(10))
+#' mat <- mat %>% as("dgCMatrix") %>% as("IterableMatrix")
+#'
+#' svd_res <- svds(mat, k = 5)
+#' names(svd_res)
+#' svd_res$d
+#' dim(svd_res$u)
+#' dim(svd_res$v)
+#'
+#' # Can also pass values directly into RSpectra::svds
+#' svd_res <- svds(mat, k = 5, opts = c(maxitr = 500))
+#'
+#' @references
+#' Qiu Y, Mei J (2022). RSpectra: Solvers for Large-Scale Eigenvalue and SVD Problems. R package version 0.16-1.
 #' @export
-#' @param ... Additional arguments passed to `Rspectra::svds()` if svd is ran on a non-BPCells matrix
 svds <- function (A, k, nu = k, nv = k, opts = list(), threads = 0L, ...) UseMethod("svds")
 
 # RSpectra exports svds as an S3 Generic, but is a suggested dependency
@@ -3394,7 +3474,15 @@ rlang::on_load({
   vctrs::s3_register("RSpectra::svds", "IterableMatrix")
 })
 
+#' Internal svds methods
+#' @keywords internal
+#' @name svds-internal
+#' @rdname svds-internal
+NULL
+
 #' @export
+#' @rdname svds-internal
+#' @keywords internal
 svds.default <- function(A, k, nu = k, nv = k, opts = list(), ...) {
   if (requireNamespace("RSpectra", quietly = TRUE)) {
     RSpectra::svds(A=A, k=k, nu=nu, nv=nv, opts=opts, ...)
@@ -3404,6 +3492,8 @@ svds.default <- function(A, k, nu = k, nv = k, opts = list(), ...) {
 }
 
 #' @export
+#' @rdname svds-internal
+#' @keywords internal
 svds.IterableMatrix <- function(A, k, nu = k, nv = k, opts = list(), threads=0, ...) {
   assert_is_wholenumber(threads)
   assert_is_wholenumber(k)
@@ -3445,7 +3535,7 @@ svds.IterableMatrix <- function(A, k, nu = k, nv = k, opts = list(), threads=0, 
 #'   hexidecimal format.
 #' @details
 #'   `checksum()` converts the non-zero elements of the sparse input matrix to double
-#'   precision, concatenates each element value with the element row and column index words,
+#'   precision, concatenates each element value with theF element row and column index words,
 #'   and uses these 16-byte blocks along with the matrix dimensions and row and column
 #'   names to calculate the checksum. The checksum value depends on the storage order so
 #'   column- and row-order matrices with the same element values give different checksum

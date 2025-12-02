@@ -3,7 +3,13 @@
 \docType{methods}
 \name{IterableMatrix-misc-methods}
 \alias{IterableMatrix-misc-methods}
+\alias{\%*\%,matrix,IterableMatrix-method}
+\alias{\%*\%,IterableMatrix,numeric-method}
+\alias{\%*\%,numeric,IterableMatrix-method}
 \alias{matrix_type,MatrixMultiply-method}
+\alias{\%*\%,IterableMatrix,IterableMatrix-method}
+\alias{\%*\%,IterableMatrix,dgCMatrix-method}
+\alias{\%*\%,dgCMatrix,IterableMatrix-method}
 \alias{[,MatrixMultiply,ANY,ANY,ANY-method}
 \alias{matrix_type,MatrixMask-method}
 \alias{matrix_type,MatrixRankTransform-method}
@@ -41,7 +47,19 @@
 \alias{+,numeric,TransformScaleShift-method}
 \title{IterableMatrix subclass methods}
 \usage{
+\S4method{\%*\%}{matrix,IterableMatrix}(x, y)
+
+\S4method{\%*\%}{IterableMatrix,numeric}(x, y)
+
+\S4method{\%*\%}{numeric,IterableMatrix}(x, y)
+
 \S4method{matrix_type}{MatrixMultiply}(x)
+
+\S4method{\%*\%}{IterableMatrix,IterableMatrix}(x, y)
+
+\S4method{\%*\%}{IterableMatrix,dgCMatrix}(x, y)
+
+\S4method{\%*\%}{dgCMatrix,IterableMatrix}(x, y)
 
 \S4method{[}{MatrixMultiply,ANY,ANY,ANY}(x, i, j, ..., drop = TRUE)
 
@@ -135,7 +153,19 @@ another matrix or alter behaviour (e.g., concatenation, on-disk access).
 }
 \section{Functions}{
 \itemize{
+\item \code{x \%*\% y}: Multiply a dense matrix by an IterableMatrix
+
+\item \code{x \%*\% y}: Multiply an IterableMatrix by a numeric vector
+
+\item \code{x \%*\% y}: Multiply a numeric row vector by an IterableMatrix
+
 \item \code{matrix_type(MatrixMultiply)}: Matrix data type for MatrixMultiply objects
+
+\item \code{x \%*\% y}: Multiply two IterableMatrix objects
+
+\item \code{x \%*\% y}: Multiply an IterableMatrix by a dgCMatrix
+
+\item \code{x \%*\% y}: Multiply a dgCMatrix by an IterableMatrix
 
 \item \code{x[i}: Subset MatrixMultiply results
 

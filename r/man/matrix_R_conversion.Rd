@@ -12,10 +12,6 @@
 \arguments{
 \item{x}{Matrix object to convert}
 
-\item{dgCMatrix}{Sparse matrix in dgCMatrix format}
-
-\item{IterableMatrix}{IterableMatrix object}
-
 \item{...}{Additional arguments passed to methods}
 }
 \description{
