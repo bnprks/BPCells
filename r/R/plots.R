@@ -154,7 +154,7 @@ plot_read_count_knee <- function(read_counts, cutoff = NULL, return_data = FALSE
       y = max(log10(data$data$reads))
     )
     rectangle_highlight <- tibble::tibble(
-      xmin = -Inf, xmax = Inf,xxxxxx
+      xmin = -Inf, xmax = Inf,
       )
   }
 
