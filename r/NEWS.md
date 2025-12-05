@@ -8,6 +8,8 @@
   to Python in the future.
 
 # BPCells 0.3.2
+* Initial CRAN submission.
+
 The BPCells 0.3.2 release covers 3 months of changes and 4 commits from @immanuelazn.
 Most notably, this release prepares (finally!) BPCells for CRAN submission. This means that users can easily install BPCells using pre-compiled binaries, rather than having to compile from source.
 Full details of changes below.

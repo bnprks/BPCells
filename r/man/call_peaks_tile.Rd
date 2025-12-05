@@ -92,10 +92,10 @@ chrom_sizes <- read_ucsc_chrom_sizes(reference_dir, genome="hg38") \%>\%
 
 
 ## Call peaks
-\dontrun{
+if (interactive()) {
 call_peaks_tile(frags_filter_blacklist, chrom_sizes, effective_genome_size = 2.8e9)
 }
-#> # A tibble: 73,160 × 7
+#> # A tibble: 73,160 x 7
 #>    chr       start       end group p_val q_val enrichment
 #>    <fct>     <int>     <int> <chr> <dbl> <dbl>      <dbl>
 #>  1 chr11  65615400  65615600 all       0     0      6764.
@@ -108,5 +108,5 @@ call_peaks_tile(frags_filter_blacklist, chrom_sizes, effective_genome_size = 2.8
 #>  8 chr11  64878600  64878800 all       0     0      5948.
 #>  9 chr11  57667733  57667933 all       0     0      5946.
 #> 10 chr11  83156933  83157133 all       0     0      5913.
-#> # ℹ 73,150 more rows
+#> # i 73,150 more rows
 }

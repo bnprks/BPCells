@@ -111,7 +111,7 @@ Read transcript models from GENCODE, for use with trackplot_gene()
 #######################################################################
 ## read_gtf() example
 #######################################################################
-\dontrun{
+if (interactive()) {
 
 species <- "Saccharomyces_cerevisiae"
 version <- "GCF_000146045.2_R64"
@@ -122,14 +122,14 @@ head(read_gtf(
    species, version, version
  )
 ))
-#> # A tibble: 6 × 9
-#>   chr         source feature start   end score strand frame gene_id  
-#>   <chr>       <chr>  <chr>   <dbl> <int> <chr> <chr>  <chr> <chr>    
-#> 1 NC_001133.9 RefSeq gene     1806  2169 .     -      .     YAL068C  
-#> 2 NC_001133.9 RefSeq gene     2479  2707 .     +      .     YAL067W-A
-#> 3 NC_001133.9 RefSeq gene     7234  9016 .     -      .     YAL067C  
-#> 4 NC_001133.9 RefSeq gene    11564 11951 .     -      .     YAL065C  
-#> 5 NC_001133.9 RefSeq gene    12045 12426 .     +      .     YAL064W-B
+#> # A tibble: 6 x 9
+#>   chr         source feature start   end score strand frame gene_id   
+#>   <chr>       <chr>  <chr>   <dbl> <int> <chr> <chr>  <chr> <chr>     
+#> 1 NC_001133.9 RefSeq gene     1806  2169 .     -      .     YAL068C   
+#> 2 NC_001133.9 RefSeq gene     2479  2707 .     +      .     YAL067W-A 
+#> 3 NC_001133.9 RefSeq gene     7234  9016 .     -      .     YAL067C   
+#> 4 NC_001133.9 RefSeq gene    11564 11951 .     -      .     YAL065C   
+#> 5 NC_001133.9 RefSeq gene    12045 12426 .     +      .     YAL064W-B 
 #> 6 NC_001133.9 RefSeq gene    13362 13743 .     -      .     YAL064C-A
 }
 
@@ -137,23 +137,23 @@ head(read_gtf(
 #######################################################################
 ## read_gencode_genes() example
 #######################################################################
-\dontrun{
+if (interactive()) {
 read_gencode_genes(file.path(tempdir(), "references"), release = "42", timeout = 3000)
-#> # A tibble: 39,319 × 11
-#>    chr   source feature  start    end score strand frame gene_id       gene_type
-#>    <chr> <chr>  <chr>    <dbl>  <int> <chr> <chr>  <chr> <chr>         <chr>    
-#>  1 chr1  HAVANA gene     11868  14409 .     +      .     ENSG00000290… lncRNA   
-#>  2 chr1  HAVANA gene     29553  31109 .     +      .     ENSG00000243… lncRNA   
-#>  3 chr1  HAVANA gene     34553  36081 .     -      .     ENSG00000237… lncRNA   
-#>  4 chr1  HAVANA gene     57597  64116 .     +      .     ENSG00000290… lncRNA   
-#>  5 chr1  HAVANA gene     65418  71585 .     +      .     ENSG00000186… protein_…
-#>  6 chr1  HAVANA gene     89294 133723 .     -      .     ENSG00000238… lncRNA   
-#>  7 chr1  HAVANA gene     89550  91105 .     -      .     ENSG00000239… lncRNA   
-#>  8 chr1  HAVANA gene    139789 140339 .     -      .     ENSG00000239… lncRNA   
-#>  9 chr1  HAVANA gene    141473 173862 .     -      .     ENSG00000241… lncRNA   
-#> 10 chr1  HAVANA gene    160445 161525 .     +      .     ENSG00000241… lncRNA   
-#> # ℹ 39,309 more rows
-#> # ℹ 1 more variable: gene_name <chr>
+#> # A tibble: 39,319 x 11
+#>    chr   source feature  start    end score strand frame gene_id        gene_type
+#>    <chr> <chr>  <chr>    <dbl>  <int> <chr> <chr>  <chr> <chr>          <chr>    
+#>  1 chr1  HAVANA gene     11868  14409 .     +      .     ENSG00000290... lncRNA   
+#>  2 chr1  HAVANA gene     29553  31109 .     +      .     ENSG00000243... lncRNA   
+#>  3 chr1  HAVANA gene     34553  36081 .     -      .     ENSG00000237... lncRNA   
+#>  4 chr1  HAVANA gene     57597  64116 .     +      .     ENSG00000290... lncRNA   
+#>  5 chr1  HAVANA gene     65418  71585 .     +      .     ENSG00000186... protein_...
+#>  6 chr1  HAVANA gene     89294 133723 .     -      .     ENSG00000238... lncRNA   
+#>  7 chr1  HAVANA gene     89550  91105 .     -      .     ENSG00000239... lncRNA   
+#>  8 chr1  HAVANA gene    139789 140339 .     -      .     ENSG00000239... lncRNA   
+#>  9 chr1  HAVANA gene    141473 173862 .     -      .     ENSG00000241... lncRNA   
+#> 10 chr1  HAVANA gene    160445 161525 .     +      .     ENSG00000241... lncRNA   
+#> # i 39,309 more rows
+#> # i 1 more variable: gene_name <chr>
 }
 
 
@@ -162,23 +162,23 @@ read_gencode_genes(file.path(tempdir(), "references"), release = "42", timeout =
 #######################################################################
 ## If read_gencode_genes() was already ran on the same release, 
 ## will reuse previously downloaded annotations
-\dontrun{
+if (interactive()) {
 read_gencode_transcripts(file.path(tempdir(), "references"), release = "42", timeout = 3000)
-#> # A tibble: 220,296 × 13
-#>    chr   source feature     start    end score strand frame gene_id    gene_type
-#>    <chr> <chr>  <chr>       <dbl>  <int> <chr> <chr>  <chr> <chr>      <chr>    
-#>  1 chr1  HAVANA transcript  65418  71585 .     +      .     ENSG00000… protein_…
-#>  2 chr1  HAVANA exon        65418  65433 .     +      .     ENSG00000… protein_…
-#>  3 chr1  HAVANA exon        65519  65573 .     +      .     ENSG00000… protein_…
-#>  4 chr1  HAVANA exon        69036  71585 .     +      .     ENSG00000… protein_…
-#>  5 chr1  HAVANA transcript 450739 451678 .     -      .     ENSG00000… protein_…
-#>  6 chr1  HAVANA exon       450739 451678 .     -      .     ENSG00000… protein_…
-#>  7 chr1  HAVANA transcript 685715 686654 .     -      .     ENSG00000… protein_…
-#>  8 chr1  HAVANA exon       685715 686654 .     -      .     ENSG00000… protein_…
-#>  9 chr1  HAVANA transcript 923922 944574 .     +      .     ENSG00000… protein_…
-#> 10 chr1  HAVANA exon       923922 924948 .     +      .     ENSG00000… protein_…
-#> # ℹ 220,286 more rows
-#> # ℹ 3 more variables: gene_name <chr>, transcript_id <chr>, MANE_Select <lgl>
+#> # A tibble: 220,296 x 13
+#>    chr   source feature     start    end score strand frame gene_id     gene_type
+#>    <chr> <chr>  <chr>       <dbl>  <int> <chr> <chr>  <chr> <chr>       <chr>    
+#>  1 chr1  HAVANA transcript  65418  71585 .     +      .     ENSG00000... protein_...
+#>  2 chr1  HAVANA exon        65418  65433 .     +      .     ENSG00000... protein_...
+#>  3 chr1  HAVANA exon        65519  65573 .     +      .     ENSG00000... protein_...
+#>  4 chr1  HAVANA exon        69036  71585 .     +      .     ENSG00000... protein_...
+#>  5 chr1  HAVANA transcript 450739 451678 .     -      .     ENSG00000... protein_...
+#>  6 chr1  HAVANA exon       450739 451678 .     -      .     ENSG00000... protein_...
+#>  7 chr1  HAVANA transcript 685715 686654 .     -      .     ENSG00000... protein_...
+#>  8 chr1  HAVANA exon       685715 686654 .     -      .     ENSG00000... protein_...
+#>  9 chr1  HAVANA transcript 923922 944574 .     +      .     ENSG00000... protein_...
+#> 10 chr1  HAVANA exon       923922 924948 .     +      .     ENSG00000... protein_...
+#> # i 220,286 more rows
+#> # i 3 more variables: gene_name <chr>, transcript_id <chr>, MANE_Select <lgl>
 }
 }
 \seealso{
