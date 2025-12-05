@@ -333,7 +333,6 @@ trackplot_normalize_ranges_with_metadata <- function(data, metadata) {
 #' trackplot_combine(
 #'     list(plot_scalebar, plot_coverage, plot_gene + ggplot2::guides(color = "none"))
 #' )
-#' plot
 #' @export
 trackplot_combine <- function(tracks, side_plot = NULL, title = NULL, side_plot_width = 0.3) {
   for (plot in tracks) {
@@ -1315,6 +1314,13 @@ ragg_wrap <- function(
 ) {
   height_scale <- getOption("BPCells.scale_next_plot_height", default = 1)
   options("BPCells.scale_next_plot_height" = NULL)
+  
+  # Heuristic: if dimensions are very small (<20) and units are pixels, assume inches were intended.
+  # This fixes issues where knitr passes inches to this custom device but defaults to px units.
+  if (units == "px" && width < 20 && height < 20) {
+    units <- "in"
+  }
+
   ragg::agg_png(
     filename = filename,
     width = width,

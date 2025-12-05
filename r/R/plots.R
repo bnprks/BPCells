@@ -155,6 +155,15 @@ plot_read_count_knee <- function(read_counts, cutoff = NULL, return_data = FALSE
     )
     rectangle_highlight <- tibble::tibble(
       xmin = -Inf, xmax = Inf,
+      ymin = log10(cutoff), ymax = Inf
+    )
+    plot <- plot +
+      ggplot2::geom_hline(yintercept = log10(cutoff), linetype = "dashed") +
+      ggplot2::geom_text(data = cell_label, ggplot2::aes(x, y, label = label), hjust = "inward", vjust = "inward") +
+      ggplot2::geom_rect(
+        ggplot2::aes(xmin = xmin, xmax = xmax, ymin = ymin, ymax = ymax, x = NULL, y = NULL),
+        data = rectangle_highlight,
+        alpha = 0.1
       )
   }
 
