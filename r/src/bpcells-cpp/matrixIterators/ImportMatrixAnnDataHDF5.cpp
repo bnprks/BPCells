@@ -568,7 +568,7 @@ std::string getAnnDataMatrixType(std::string file, std::string group) {
         return "double";
     }
     throw std::runtime_error(
-        "getAnnDataMatrixType: unrecognized type for group " + group + " in file " + file
+        "getAnnDataMatrixType: unrecognized type for group " + group + " in file: " + file + ", type: " + t.string()
     );
 }
 
