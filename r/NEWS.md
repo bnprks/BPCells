@@ -7,7 +7,7 @@
 - Create a wrapper function `cluster_cells_graph()` that wraps the steps of knn object creation, graph adjacency creation, and clustering all within a single function (pull request #292)
 - Add `tile_width` and `normalization` arguments to `write_insertion_bedgraph()` to allow for more flexible bedgraph creation (pull request #299)
 - Export `write_insertion_bed()`, which originally was only a helper for peak calling (pull request #302).
-- Add support for reading 64 bit Anndata matrices, as well as reading signed integer matrices.  Note, signed integers are converted to float/double matrices when read in.
+- Add support for reading 64 bit Anndata matrices, as well as reading signed integer matrices.  Note, signed integers are converted to float/double matrices when read in. (pull request #330)
 
 ## Bug-fixes
 - Fix error in documentation examples for `plot_embedding()`, resulting from the way documentation examples use nested function calls (pull request #316).
