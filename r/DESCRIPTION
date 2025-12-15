@@ -17,7 +17,7 @@ Description: Efficient operations for single cell ATAC-seq fragments and
 License: Apache License (>= 2) | MIT + file LICENSE
 Encoding: UTF-8
 LazyData: true
-RoxygenNote: 7.3.2
+RoxygenNote: 7.3.3
 Roxygen: list(markdown = TRUE)
 URL: https://bnprks.github.io/BPCells/, https://github.com/bnprks/BPCells
 LinkingTo: 

@@ -69,7 +69,6 @@ scale_next_plot_height(0.6)
 trackplot_combine(
     list(plot_scalebar, plot_coverage, plot_gene + ggplot2::guides(color = "none"))
 )
-plot
 }
 \seealso{
 \code{trackplot_coverage()}, \code{trackplot_gene()}, \code{trackplot_loop()}, \code{trackplot_scalebar()}
