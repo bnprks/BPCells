@@ -12,6 +12,10 @@ if [ -f tools/h5write.exe ]; then
     rm tools/h5write.exe
 fi
 
-if [ -d tools/highway/lib ]; then
+if [ -f tools/highway/lib ]; then
     rm -r tools/highway/lib
+fi
+
+if [ -f tools/cxx17_filesystem]; then
+    rm tools/cxx17_filesystem
 fi
