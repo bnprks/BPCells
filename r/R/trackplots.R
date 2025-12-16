@@ -150,13 +150,14 @@ get_trackplot_height <- function(plot) {
 }
 
 #' Calculate y positions for trackplot segments to avoid overlap
+#' 
 #' Steps:
 #' 1. Calculate the maximum overlap depth of transcripts
 #' 2. Iterate through start/end of segments in sorted order
 #' 3. Randomly assign each segment a y-coordinate between 1 and max overlap depth,
-#'   with the restriction that a segment can't have the same y-coordinate as an overlapping segment
+#'   with the restriction that a segment cannot have the same y-coordinate as an overlapping segment
 #' @param data tibble of genome ranges with start and end columns, assumed to be on same chromosome. 
-#' @return Vector of y coordinates, one per input row, such that no ranges at the same y coordinate overlap
+#' @return Vector of y coordinates, one per input row, such that no ranges at the same y coordinate overlap.
 #' @keywords internal
 trackplot_calculate_segment_height <- function(data) {
   data$row_number <- seq_len(nrow(data))
