@@ -112,6 +112,9 @@ footprint <- function(fragments, ranges, zero_based_coords = !is(ranges, "GRange
   assert_is_wholenumber(flank)
 
   chr <- as.integer(factor(ranges$chr, chrNames(fragments))) - 1
+  # Filter to ranges that overlap the chromosomes from `fragments`
+  ranges <- ranges[!is.na(chr),]
+  chr <- chr[!is.na(chr)]
   cell_groups <- as.factor(cell_groups)
 
   iter <- iterate_fragments(fragments)
