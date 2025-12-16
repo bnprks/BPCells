@@ -42,7 +42,7 @@ just the most extreme outliers across the region. NULL to disable clipping}
 \item{zero_based_coords}{Whether to convert the ranges from a 1-based end-inclusive
 coordinate system to a 0-based end-exclusive coordinate system. Defaults to true
 for GRanges and false for other formats
-(see this \href{https://web.archive.org/web/20210920203703/http://genome.ucsc.edu/blog/the-ucsc-genome-browser-coordinate-counting-systems/}{archived UCSC blogpost})}
+(see this \href{https://web.archive.org/web/20210920203703/https://genome.ucsc.edu/blog/the-ucsc-genome-browser-coordinate-counting-systems/}{archived UCSC blogpost})}
 
 \item{return_data}{If true, return data from just before plotting rather than a plot.}
 }

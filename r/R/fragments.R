@@ -691,7 +691,7 @@ open_fragments_hdf5 <- function(path, group = "fragments", buffer_size = 16384L)
 #' @param zero_based_coords Whether to convert the ranges from a 1-based end-inclusive
 #'    coordinate system to a 0-based end-exclusive coordinate system. Defaults to true
 #'    for GRanges and false for other formats
-#'    (see this [archived UCSC blogpost](https://web.archive.org/web/20210920203703/http://genome.ucsc.edu/blog/the-ucsc-genome-browser-coordinate-counting-systems/))
+#'    (see this [archived UCSC blogpost](https://web.archive.org/web/20210920203703/https://genome.ucsc.edu/blog/the-ucsc-genome-browser-coordinate-counting-systems/))
 #' @param ... Additional arguments passed to methods
 #' @param row.names Optional row names for compatibility with `as.data.frame()`.
 #'   Ignored for IterableFragments objects.

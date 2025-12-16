@@ -268,7 +268,7 @@ remove_demo_data <- function() {
 #' `data-raw/mouse_gene_mapping.R` for exactly how these mappings were made.
 #' @source **human_gene_mapping**
 #'
-#' <http://ftp.ebi.ac.uk/pub/databases/genenames/out_of_date_hgnc/tsv/non_alt_loci_set.txt>
+#' <https://ftp.ebi.ac.uk/pub/databases/genenames/out_of_date_hgnc/tsv/non_alt_loci_set.txt>
 #'
 #' @examples
 #' #######################################################################
@@ -286,8 +286,8 @@ remove_demo_data <- function() {
 #'
 #' @source **mouse_gene_mapping**
 #'
-#' <http://www.informatics.jax.org/downloads/reports/MGI_EntrezGene.rpt>
-#' <http://www.informatics.jax.org/downloads/reports/MRK_ENSEMBL.rpt>
+#' <https://www.informatics.jax.org/downloads/reports/MGI_EntrezGene.rpt>
+#' <https://www.informatics.jax.org/downloads/reports/MRK_ENSEMBL.rpt>
 #' @examples
 #' #######################################################################
 #' ## mouse_gene_mapping

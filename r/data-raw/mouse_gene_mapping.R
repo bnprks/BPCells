@@ -15,14 +15,14 @@ library(dplyr)
 
 # A full list of non-withdrawn gene IDs
 mgi_list <- readr::read_tsv(
-  "http://www.informatics.jax.org/downloads/reports/MRK_List2.rpt"
+  "https://www.informatics.jax.org/downloads/reports/MRK_List2.rpt"
 ) %>%
   select(mgi_id = "MGI Accession ID", symbol = "Marker Symbol", status = "Status", name = "Marker Name", type = "Marker Type", alias = "Marker Synonyms (pipe-separated)")
 
 
 # Contains some withdrawn IDs, and a superset of the current mgi_list
 mgi_entrez <- readr::read_tsv(
-  "http://www.informatics.jax.org/downloads/reports/MGI_EntrezGene.rpt",
+  "https://www.informatics.jax.org/downloads/reports/MGI_EntrezGene.rpt",
   col_names = c("mgi_id", "symbol", "status", "name", "cM_pos", "chr", "type", "secondary_ids", "entrez_id", "alias", "feature_type", "start", "end", "strand", "biotype")
 ) %>%
   select(mgi_id, symbol, status, name, secondary_ids, entrez_id, alias) %>%
@@ -44,7 +44,7 @@ mgi_entrez_mapping <- select(mgi_entrez, symbol, alt = alias) %>%
 stopifnot(all.equal(mgi_list_mapping, mgi_entrez_mapping))
 
 mgi_ensembl <- readr::read_tsv(
-  "http://www.informatics.jax.org/downloads/reports/MRK_ENSEMBL.rpt",
+  "https://www.informatics.jax.org/downloads/reports/MRK_ENSEMBL.rpt",
   col_names = c("mgi_id", "symbol", "name", "cM_pos", "chr", "ensembl_id", "ensembl_transcript", "ensembl_prot", "feature_type", "start", "end", "strand", "biotypes")
 ) %>% select(mgi_id, symbol, name, ensembl_id)
 
