@@ -370,7 +370,7 @@ binarize <- function(mat, threshold=0, strict_inequality=TRUE) {
              global_params=c(threshold, strict_inequality))
   convert_matrix_type(res, "uint32_t")
 }
-#' @describeIn IterableMatrix-methods-ops Perform matrix < numeric comparison (IterableMatrix left)
+#' @describeIn IterableMatrix-methods-ops-misc Perform matrix < numeric comparison (IterableMatrix left)
 setMethod("<", signature(e1= "IterableMatrix", e2= "numeric"), function(e1, e2) {
   stop("matrix < numeric not supported for IterableMatrix objects")
 })

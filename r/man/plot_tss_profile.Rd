@@ -44,7 +44,7 @@ small bump downstream around 220bp downstream of the TSS for the +1 nucleosome.
 }
 \examples{
 ## Prep data
-frags <- get_demo_frags(filter_qc = FALSE, subset = FALSE)
+frags <- get_demo_frags()
 genes <- read_gencode_transcripts(
   file.path(tempdir(), "references"), release = "42",
   annotation_set = "basic",

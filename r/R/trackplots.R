@@ -599,7 +599,7 @@ trackplot_coverage <- function(fragments, region, groups,
 #'   file.path(tempdir(), "references"), release = "42",
 #'   annotation_set = "basic", features = "transcript", timeout = 3000
 #' )
-#' region <- "chr4:3034877-4034877"
+#' region <- "chr4:3264877-3634877" 
 #'
 #' ## Plot gene trackplot
 #' scale_next_plot_height(0.3)

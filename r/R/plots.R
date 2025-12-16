@@ -325,7 +325,7 @@ plot_fragment_length <- function(fragments, max_length = 500, return_data = FALS
 #' @seealso `footprint()`, `plot_tf_footprint()`
 #' @examples
 #' ## Prep data
-#' frags <- get_demo_frags(filter_qc = FALSE, subset = FALSE)
+#' frags <- get_demo_frags()
 #' genes <- read_gencode_transcripts(
 #'   file.path(tempdir(), "references"), release = "42",
 #'   annotation_set = "basic",

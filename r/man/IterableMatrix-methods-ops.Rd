@@ -4,7 +4,6 @@
 \alias{IterableMatrix-methods-ops}
 \alias{\%*\%,IterableMatrix,matrix-method}
 \alias{^,IterableMatrix,numeric-method}
-\alias{<,IterableMatrix,numeric-method}
 \alias{<,numeric,IterableMatrix-method}
 \alias{>,IterableMatrix,numeric-method}
 \alias{<=,numeric,IterableMatrix-method}
@@ -19,8 +18,6 @@
 \S4method{\%*\%}{IterableMatrix,matrix}(x, y)
 
 \S4method{^}{IterableMatrix,numeric}(e1, e2)
-
-\S4method{<}{IterableMatrix,numeric}(e1, e2)
 
 \S4method{<}{numeric,IterableMatrix}(e1, e2)
 
@@ -64,8 +61,6 @@ Matrix multiplication, arithmetic, and comparison operations for IterableMatrix 
 \item \code{x \%*\% y}: Multiply by a dense matrix
 
 \item \code{e1^e2}: Calculate x^y (elementwise; y > 0)
-
-\item \code{e1 < e2}: Perform matrix < numeric comparison (IterableMatrix left)
 
 \item \code{e1 < e2}: Perform numeric < matrix comparison (numeric left)
 

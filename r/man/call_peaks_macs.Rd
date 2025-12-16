@@ -89,7 +89,7 @@ shell scripts generated at \verb{<path>/input/<group>.sh}. Finally, run \code{ca
 setting \code{step="read-outputs"}.
 }
 \examples{
-\dontshow{if (tryCatch({ macs_path_is_valid(); TRUE }, error = function(e) FALSE)) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
+\dontshow{if (tryCatch({ macs_path_is_valid(); TRUE }, error = function(e) FALSE)) withAutoprint(\{ # examplesIf}
 macs_files <- file.path(tempdir(), "peaks")
 frags <- get_demo_frags()
 

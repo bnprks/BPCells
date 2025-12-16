@@ -2,6 +2,7 @@
 % Please edit documentation in R/matrix.R, R/transforms.R
 \name{IterableMatrix-methods-ops-misc}
 \alias{IterableMatrix-methods-ops-misc}
+\alias{<,IterableMatrix,numeric-method}
 \alias{>,numeric,IterableMatrix-method}
 \alias{<=,IterableMatrix,numeric-method}
 \alias{>=,numeric,IterableMatrix-method}
@@ -10,6 +11,8 @@
 \alias{-,numeric,IterableMatrix-method}
 \title{IterableMatrix operations (additional overloads)}
 \usage{
+\S4method{<}{IterableMatrix,numeric}(e1, e2)
+
 \S4method{>}{numeric,IterableMatrix}(e1, e2)
 
 \S4method{<=}{IterableMatrix,numeric}(e1, e2)
@@ -27,6 +30,8 @@ Extra operator overloads documented separately to avoid duplicate entries in the
 }
 \section{Functions}{
 \itemize{
+\item \code{e1 < e2}: Perform matrix < numeric comparison (IterableMatrix left)
+
 \item \code{e1 > e2}: Perform numeric > matrix comparison (numeric left)
 
 \item \code{e1 <= e2}: Perform matrix <= numeric comparison (IterableMatrix left)
