@@ -2550,6 +2550,10 @@ setMethod("short_description", "AnnDataMatrixH5", function(x) {
 #'   **Dimension names:** Dimnames are inferred from `obs/_index` or `var/_index` based on length matching.
 #'   This helps to infer dimnames for `obsp`,` varm`, etc. If the number of `len(obs) == len(var)`,
 #'   dimname inference will be disabled.
+#' 
+#'   **Signed integers:** When int32 and int64 matrices are read, they will be converted to float and double matrices respectively.
+#'   This is because BPCells only supports unsigned integer matrices, and signed integer matrices would have their negative values
+#'   misinterpreted as zeros.
 #' @examples
 #' ## Create temporary directory to keep demo matrix
 #' data_dir <- file.path(tempdir(), "mat_anndata")

@@ -553,22 +553,19 @@ std::string getAnnDataMatrixType(std::string file, std::string group) {
     } else {
         t = h5file.getDataSet(group).getDataType();
     }
+    auto cls  = t.getClass();
+    auto size = t.getSize();
+    hid_t tid = t.getId();
+    H5T_sign_t sign = H5Tget_sign(tid);
 
-    if (t == HighFive::AtomicType<int>()) {
-        return "uint32_t";
-    } else if (t == HighFive::AtomicType<uint16_t>()) {
-        return "uint32_t";
-    } else if (t == HighFive::AtomicType<uint32_t>()) {
-        return "uint32_t";
-    } else if (t == HighFive::AtomicType<uint64_t>()) {
-        return "uint64_t";
-    } else if (t == HighFive::AtomicType<float>()) {
-        return "float";
-    } else if (t == HighFive::AtomicType<double>()) {
-        return "double";
+    if (cls == HighFive::DataTypeClass::Integer && sign == H5T_SGN_NONE) {
+        if (size == 8) return "uint64_t";
+        if (size <= 4) return "uint32_t";
     }
+    if (size == 8) return "double";
+    if (size <= 4) return "float";
     throw std::runtime_error(
-        "getAnnDataMatrixType: unrecognized type for group " + group + " in file " + file
+        "getAnnDataMatrixType: unrecognized type for group " + group + " in file: " + file + ", type: " + t.string()
     );
 }
 

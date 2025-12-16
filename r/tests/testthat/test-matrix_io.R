@@ -267,7 +267,12 @@ test_that("AnnData read backwards compatibility", {
   varm_ans <- t(ans[,1:2])
   rownames(varm_ans) <- NULL 
 
-  test_files <- c("mini_mat.anndata-v0.6.22.h5ad", "mini_mat.anndata-v0.7.h5ad", "mini_mat.anndata-v0.10.9.h5ad", "mini_mat_uint_16.anndata-v0.10.9.h5ad")
+  test_files <- c(
+    "mini_mat.anndata-v0.6.22.h5ad", 
+    "mini_mat.anndata-v0.7.h5ad", 
+    "mini_mat.anndata-v0.10.9.h5ad", 
+    "mini_mat_uint_16.anndata-v0.10.9.h5ad"
+  )
   for (f in test_files) {
     file.copy(file.path("../data", f), file.path(dir, f))
     open_matrix_anndata_hdf5(file.path(dir, f)) %>%
@@ -286,6 +291,59 @@ test_that("AnnData read backwards compatibility", {
     open_matrix_anndata_hdf5(file.path(dir, f), group="varm/var_mat") %>%
       as("dgCMatrix") %>%
       expect_identical(varm_ans)
+  }
+})
+
+test_that("Anndata reads work with 64 bit datasets", {
+  test_files <- c(
+    "mini_mat_int_64_neg.anndata-v0.12.6.h5ad",
+    "mini_mat_int_64.anndata-v0.12.6.h5ad"
+  )
+
+  ans_neg <- matrix(
+    c(
+      -83,  54,  30, -13, -14,  71,
+      -83,  39, -60, -82,   5,  95,
+       47,  52,  43,  57,   2, -75,
+       67, -10,   0, -26, -64,  85,
+       56,  28, -20,  64,   9, -12
+    ),
+    nrow = 6,
+    ncol = 5
+  ) %>% as("dgCMatrix")
+  ans <- matrix(
+    c(
+      45, 22,  9, 55, 88,  6,
+      85, 82, 27, 63, 16, 75,
+      70, 35,  6, 97, 44, 89,
+      67, 77, 75, 19, 36, 46,
+      49,  4, 54, 15, 74, 68
+    ),
+    nrow = 6,
+    ncol = 5
+  ) %>% as("dgCMatrix")
+
+  for (f in test_files) {
+    mat_x <- open_matrix_anndata_hdf5(file.path("../data", f)) %>% as("dgCMatrix")
+    mat_transpose <- open_matrix_anndata_hdf5(file.path("../data", f), group="layers/transpose") %>% as("dgCMatrix")
+    mat_dense <- open_matrix_anndata_hdf5(file.path("../data", f), group="layers/dense") %>% as("dgCMatrix")
+    mat_obs <- open_matrix_anndata_hdf5(file.path("../data", f), group="obsm/obs_mat") %>% as("dgCMatrix")
+    mat_var <- open_matrix_anndata_hdf5(file.path("../data", f), group="varm/var_mat") %>% as("dgCMatrix")
+    rownames(mat_obs) <- c("0", "1")
+    rownames(mat_var) <- c("0", "1")
+
+    if (grepl("neg", f)) {
+      res <- ans_neg
+    } else {
+      res <- ans
+    }
+    rownames(res) <- as.character(0:(nrow(res)-1))
+    colnames(res) <- as.character(0:(ncol(res)-1))
+    expect_identical(mat_x, res)
+    expect_identical(mat_transpose, res)
+    expect_identical(mat_dense, res)
+    expect_identical(mat_obs, res[1:2, ])
+    expect_identical(mat_var, t(res[, 1:2]) )
   }
 })
 

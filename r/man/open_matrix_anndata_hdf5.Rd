@@ -69,6 +69,10 @@ See the \href{https://anndata.readthedocs.io/en/latest/fileformat-prose.html#den
 \strong{Dimension names:} Dimnames are inferred from \verb{obs/_index} or \verb{var/_index} based on length matching.
 This helps to infer dimnames for \code{obsp},\code{ varm}, etc. If the number of \code{len(obs) == len(var)},
 dimname inference will be disabled.
+
+\strong{Signed integers:} When int32 and int64 matrices are read, they will be converted to float and double matrices respectively.
+This is because BPCells only supports unsigned integer matrices, and signed integer matrices would have their negative values
+misinterpreted as zeros.
 }
 \examples{
 ## Create temporary directory to keep demo matrix
