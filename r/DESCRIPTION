@@ -1,6 +1,6 @@
 Package: BPCells
 Title: Single Cell Counts Matrices to PCA
-Version: 0.3.1
+Version: 0.3.2
 Authors@R: c(
     person(given = "Benjamin",
            family = "Parks",
@@ -10,22 +10,25 @@ Authors@R: c(
     person("Immanuel", "Abdi", role = "aut"),
     person("Stanford University", role=c("cph", "fnd")),
     person("Genentech, Inc.", role=c("cph", "fnd")))
-Description: > Efficient operations for single cell ATAC-seq fragments and
+Description: Efficient operations for single cell ATAC-seq fragments and
     RNA counts matrices. Interoperable with standard file formats, and introduces
     efficient bit-packed formats that allow large storage savings and increased
     read speeds.
-License: Apache-2.0 or MIT
+License: Apache License (>= 2) | MIT + file LICENSE
 Encoding: UTF-8
 LazyData: true
-RoxygenNote: 7.3.2
+RoxygenNote: 7.3.3
 Roxygen: list(markdown = TRUE)
-URL: https://bnprks.github.io/BPCells, https://github.com/bnprks/BPCells
+URL: https://bnprks.github.io/BPCells/, https://github.com/bnprks/BPCells
 LinkingTo: 
     Rcpp,
     RcppEigen
-Imports: 
+Imports:
     methods,
     grDevices,
+    graphics,
+    stats,
+    utils,
     magrittr,
     Matrix,
     Rcpp,
@@ -36,22 +39,47 @@ Imports:
     stringr,
     tibble,
     dplyr (>= 1.0.0),
-    tidyr,
     readr,
     ggplot2 (>= 3.4.0),
     scales,
     patchwork,
+    ragg,
+    purrr,
     scattermore,
     ggrepel,
-    RColorBrewer,
-    hexbin
+    RColorBrewer
 Suggests:
     IRanges,
+    tidyr,
+    hexbin,
     GenomicRanges,
+    GenomeInfoDb,
+    S4Vectors,
     matrixStats,
+    MatrixGenerics,
+    RSpectra,
     igraph,
     RcppHNSW,
-    RcppAnnoy
+    RcppAnnoy,
+    Seurat,
+    pkgdown,
+    devtools,
+    uwot,
+    irlba,
+    BiocManager,
+    BSgenome.Hsapiens.UCSC.hg38,
+    motifmatchr,
+    chromVARmotifs,
+    png,
+    testthat (>= 3.0.0)
+Additional_repositories: 
+    https://bioconductor.org/packages/release/data/annotation,
+    https://bpcells.github.io/drat
 Depends: 
     R (>= 4.0.0)
-Config/Needs/website: pkgdown, devtools, uwot, irlba, RcppHNSW, igraph, BiocManager, bioc::BSgenome.Hsapiens.UCSC.hg38, github::GreenleafLab/motifmatchr, github::GreenleafLab/chromVARmotifs, png, magrittr
+SystemRequirements: C++17,
+    HDF5 (>= 1.10) [optional; detected via pkg-config 'hdf5' or 'h5cc'; 
+        else set HDF5_CFLAGS/HDF5_LIBS],
+    Highway (>= 1.0.5) [optional; detected via pkg-config 'libhwy'/'hwy'; 
+        falls back to vendored build if not found]
+Config/Needs/website: pkgdown, devtools, uwot, irlba, RcppHNSW, igraph, BiocManager, bioc::BSgenome.Hsapiens.UCSC.hg38, github::GreenleafLab/motifmatchr, github::GreenleafLab/chromVARmotifs, png

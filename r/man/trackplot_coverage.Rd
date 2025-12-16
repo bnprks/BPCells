@@ -42,11 +42,9 @@ just the most extreme outliers across the region. NULL to disable clipping}
 \item{zero_based_coords}{Whether to convert the ranges from a 1-based end-inclusive
 coordinate system to a 0-based end-exclusive coordinate system. Defaults to true
 for GRanges and false for other formats
-(see this \href{https://web.archive.org/web/20210920203703/http://genome.ucsc.edu/blog/the-ucsc-genome-browser-coordinate-counting-systems/}{archived UCSC blogpost})}
+(see this \href{https://web.archive.org/web/20210920203703/https://genome.ucsc.edu/blog/the-ucsc-genome-browser-coordinate-counting-systems/}{archived UCSC blogpost})}
 
 \item{return_data}{If true, return data from just before plotting rather than a plot.}
-
-\item{scale_bar}{Whether to include a scale bar in the top track (\code{TRUE} or \code{FALSE})}
 }
 \value{
 Returns a combined plot of pseudobulk genome tracks. For compatability with
@@ -59,23 +57,24 @@ Plot a pseudobulk genome track, showing the number of fragment insertions
 across a region for each cell type or group.
 }
 \examples{
+## Prep data
 frags <- get_demo_frags()
 
 ## Use genes and blacklist to determine proper number of reads per cell
 genes <- read_gencode_transcripts(
   file.path(tempdir(), "references"), release = "42",
   annotation_set = "basic",
-  features = "transcript"
+  features = "transcript", timeout = 3000
 )
 blacklist <- read_encode_blacklist(file.path(tempdir(), "references"), genome="hg38")
 read_counts <- qc_scATAC(frags, genes, blacklist)$nFrags
 region <- "chr4:3034877-4034877"
 cell_types <- paste("Group", rep(1:3, length.out = length(cellNames(frags))))
 
-
-BPCells:::render_plot_from_storage(
-  trackplot_coverage(frags, region, groups = cell_types, cell_read_counts = read_counts),
-  width = 6, height = 3
+scale_next_plot_height(0.5)
+trackplot_coverage(
+  frags, region, groups = cell_types, 
+  cell_read_counts = read_counts
 )
 }
 \seealso{

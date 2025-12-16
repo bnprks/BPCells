@@ -191,7 +191,7 @@ plot_read_count_knee <- function(read_counts, cutoff = NULL, return_data = FALSE
 #' genes <- read_gencode_transcripts(
 #'   file.path(tempdir(), "references"), release = "42",
 #'   annotation_set = "basic",
-#'   features = "transcript"
+#'   features = "transcript", timeout = 3000
 #' )
 #' blacklist <- read_encode_blacklist(file.path(tempdir(), "references"), genome="hg38")
 #' atac_qc <- qc_scATAC(frags, genes, blacklist)
@@ -201,6 +201,7 @@ plot_read_count_knee <- function(read_counts, cutoff = NULL, return_data = FALSE
 #' plot_tss_scatter(atac_qc, min_frags = 1000, min_tss = 10)
 #' @export
 plot_tss_scatter <- function(atac_qc, min_frags = NULL, min_tss = NULL, bins = 100, apply_styling = TRUE) {
+  assert_has_package("hexbin")
   assert_is(atac_qc, "data.frame")
   if (!is.null(min_frags)) {
     assert_is_numeric(min_frags)
@@ -277,7 +278,7 @@ plot_tss_scatter <- function(atac_qc, min_frags = NULL, min_tss = NULL, bins = 1
 #' @inheritParams plot_embedding
 #' @return Numeric vector where index i contans the number of length-i fragments
 #' @examples
-#' frags <- get_demo_frags(filter_qc = FALSE, subset = FALSE)
+#' frags <- get_demo_frags()
 #' plot_fragment_length(frags)
 #' @export
 plot_fragment_length <- function(fragments, max_length = 500, return_data = FALSE, apply_styling = TRUE) {
@@ -320,14 +321,15 @@ plot_fragment_length <- function(fragments, max_length = 500, return_data = FALS
 #' @inheritParams footprint
 #' @param genes Coordinate ranges for genes (must include strand)
 #' @param smooth Number of bases to smooth over (rolling average)
+#' @param colors Discrete color palette to use for cell groups
 #' @seealso `footprint()`, `plot_tf_footprint()`
 #' @examples
 #' ## Prep data
-#' frags <- get_demo_frags(filter_qc = FALSE, subset = FALSE)
+#' frags <- get_demo_frags()
 #' genes <- read_gencode_transcripts(
 #'   file.path(tempdir(), "references"), release = "42",
 #'   annotation_set = "basic",
-#'   features = "transcript"
+#'   features = "transcript", timeout = 3000
 #' )
 #' 
 #' ## Plot tss profile
@@ -390,6 +392,7 @@ plot_tss_profile <- function(fragments, genes, cell_groups = rlang::rep_along(ce
 #' @inheritParams footprint
 #' @param motif_positions Coordinate ranges for motifs (must include strand) and
 #'   have constant width
+#' @param colors Discrete color palette to use for cell groups
 #' @seealso `footprint()`, `plot_tss_profile()`
 #' @export
 plot_tf_footprint <- function(fragments, motif_positions, cell_groups = rlang::rep_along(cellNames(fragments), "all"),
@@ -525,10 +528,11 @@ collect_features <- function(source, features = NULL, gene_mapping = human_gene_
 #' set.seed(123)
 #' mat <- get_demo_mat()
 #' ## Normalize matrix
-#' mat_norm <- log1p(multiply_cols(mat, 1/colSums(mat)) * 10000) %>% write_matrix_memory(compress = FALSE)
+#' mat_norm <- log1p(multiply_cols(mat, 1/colSums(mat)) * 10000) %>%
+#'   write_matrix_memory(compress = FALSE)
 #' ## Get variable genes
 #' stats <- matrix_stats(mat, row_stats = "variance")
-#' variable_genes <- order(stats$row_stats["variance",], decreasing=TRUE) %>% 
+#' variable_genes <- order(stats$row_stats["variance",], decreasing=TRUE) %>%
 #'   head(1000) %>% 
 #'   sort()
 #' # Z score normalize genes
@@ -824,11 +828,9 @@ rotate_x_labels <- function(degrees = 45) {
 #' cell_types <- paste("Group", rep(1:3, length.out = length(colnames(mat))))
 #' 
 #' ## Plot dot
-#' plot <- plot_dot(mat, c("MS4A1", "CD3E"), cell_types)
-#' 
-#' BPCells:::render_plot_from_storage(
-#'   plot, width = 4, height = 5
-#' )
+#' scale_next_plot_height(0.8)
+#' plot_dot(mat, c("MS4A1", "CD3E"), cell_types)
+
 #' @export
 plot_dot <- function(source, features, groups, group_order = NULL, gene_mapping = human_gene_mapping,
                      colors = c("lightgrey", "#4682B4"),

@@ -11,7 +11,7 @@ library(magrittr)
 # Pull data from HGNC, and make a named vector that maps non-canonical gene names/
 # symbols to their canonical names. Only unambiguous mappings will be stored
 hgnc <- readr::read_tsv(
-  "http://ftp.ebi.ac.uk/pub/databases/genenames/hgnc/tsv/non_alt_loci_set.txt",
+  "https://ftp.ebi.ac.uk/pub/databases/genenames/out_of_date_hgnc/tsv/non_alt_loci_set.txt",
   col_types=readr::cols(.default=readr::col_character())
 )
 

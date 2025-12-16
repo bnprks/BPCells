@@ -108,7 +108,7 @@ cluster_order = sorted(set(clusters))
 cell_groups_array = bpcells.experimental.build_cell_groups(fragments_bpcells_path, barcodes, clusters, cluster_order)
 
 # We could provide a dict or local file path, but URL is easier
-chrom_sizes = "http://hgdownload.cse.ucsc.edu/goldenpath/hg38/bigZips/hg38.chrom.sizes"
+chrom_sizes = "https://hgdownload.cse.ucsc.edu/goldenpath/hg38/bigZips/hg38.chrom.sizes"
 
 insertions_matrix_path = os.path.join(tmpdir.name, "bpcells_insertions_matrix")
 

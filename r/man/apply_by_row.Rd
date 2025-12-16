@@ -54,10 +54,12 @@ mat <- mat \%>\% as("dgCMatrix") \%>\% as("IterableMatrix")
 ## Get mean of every row
 
 ## expect an error in the case that col-major matrix is passed
-apply_by_row(mat, function(val, row, col) {sum(val) / nrow(mat)}) \%>\% 
- unlist()
-
+try(
+ apply_by_row(mat, function(val, row, col) {sum(val) / nrow(mat)}) \%>\% 
+  unlist()
+)
 ## Need to transpose matrix to make sure it is in row-order
+
 mat_row_order <- transpose_storage_order(mat)
 
 ## works as expected for row major

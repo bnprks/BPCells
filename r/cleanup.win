@@ -1,0 +1,21 @@
+#!/bin/sh
+
+if [ -f src/Makevars ]; then
+    rm src/Makevars
+fi
+
+if [ -f tools/h5write ]; then
+    rm tools/h5write
+fi
+
+if [ -f tools/h5write.exe ]; then
+    rm tools/h5write.exe
+fi
+
+if [ -f tools/highway/lib ]; then
+    rm -r tools/highway/lib
+fi
+
+if [ -f tools/cxx17_filesystem]; then
+    rm tools/cxx17_filesystem
+fi

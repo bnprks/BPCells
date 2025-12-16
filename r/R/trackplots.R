@@ -47,6 +47,33 @@ wrap_trackplot <- function(plot, height=NULL, takes_sideplot=FALSE, region=NULL,
   plot
 }
 
+# Internal helper function to extract patches from patchwork objects
+# Replicates the logic of patchwork:::get_patches() to avoid using unexported functions
+get_patchwork_patches <- function(plot) {
+  if (inherits(plot, "patchwork")) {
+    patches <- plot$patches
+    if (is.null(patches)) patches <- list(plots = list())
+    
+    # Extract the base plot (without patchwork components)
+    base_plot <- plot
+    base_plot$patches <- NULL
+    class(base_plot) <- setdiff(class(base_plot), "patchwork")
+    if (inherits(base_plot, "free_plot")) {
+      attr(base_plot, "patchwork_free_settings") <- NULL
+      if (is.null(attr(base_plot, "free_settings"))) {
+        class(base_plot) <- setdiff(class(base_plot), "free_plot")
+      }
+    }
+
+    # Combine existing patches with the base plot
+    patches$plots <- c(patches$plots, list(base_plot))
+    return(patches)
+  } else {
+    # Return a patches object with just the single plot
+    return(list(plots = list(plot)))
+  }
+}
+
 # Internal helper function to return empty track plots if there's no data to be plotted
 trackplot_empty <- function(region, label) {
   ggplot2::ggplot(tibble::tibble(label=label)) +
@@ -123,13 +150,14 @@ get_trackplot_height <- function(plot) {
 }
 
 #' Calculate y positions for trackplot segments to avoid overlap
+#' 
 #' Steps:
 #' 1. Calculate the maximum overlap depth of transcripts
 #' 2. Iterate through start/end of segments in sorted order
 #' 3. Randomly assign each segment a y-coordinate between 1 and max overlap depth,
-#'   with the restriction that a segment can't have the same y-coordinate as an overlapping segment
+#'   with the restriction that a segment cannot have the same y-coordinate as an overlapping segment
 #' @param data tibble of genome ranges with start and end columns, assumed to be on same chromosome. 
-#' @return Vector of y coordinates, one per input row, such that no ranges at the same y coordinate overlap
+#' @return Vector of y coordinates, one per input row, such that no ranges at the same y coordinate overlap.
 #' @keywords internal
 trackplot_calculate_segment_height <- function(data) {
   data$row_number <- seq_len(nrow(data))
@@ -252,21 +280,6 @@ trackplot_normalize_ranges_with_metadata <- function(data, metadata) {
   return(data)
 }
 
-#' Render a plot with intermediate disk storage step
-#' 
-#' Take a plotting object and save in temp storage, so it can be outputted with exact dimensions.
-#' Primarily used to allow for adjusting plot dimensions within function reference examples.
-#' @param plot (ggplot) ggplot output from a plotting function
-#' @param width (numeric) width of rendered plot
-#' @param height (numeric) height of rendered plot
-#' @keywords internal
-render_plot_from_storage <- function(plot, width, height) {
-  assert_is(plot, "ggplot")
-  image_path <- tempfile(fileext = ".png")
-  ggplot2::ggsave(image_path, plot, width = width, height = height)
-  img <- png::readPNG(image_path)
-  grid::grid.raster(img)
-}
 
 #' Combine track plots
 #' 
@@ -292,7 +305,7 @@ render_plot_from_storage <- function(plot, width, height) {
 #' genes <- read_gencode_transcripts(
 #'   file.path(tempdir(), "references"), release = "42",
 #'   annotation_set = "basic",
-#'   features = "transcript"
+#'   features = "transcript", timeout = 3000
 #' )
 #' blacklist <- read_encode_blacklist(file.path(tempdir(), "references"), genome="hg38")
 #' read_counts <- qc_scATAC(frags, genes, blacklist)$nFrags
@@ -300,23 +313,27 @@ render_plot_from_storage <- function(plot, width, height) {
 #' cell_types <- paste("Group", rep(1:3, length.out = length(cellNames(frags))))
 #' transcripts <- read_gencode_transcripts(
 #'   file.path(tempdir(), "references"), release = "42",
-#'   annotation_set = "basic"
+#'   annotation_set = "basic", timeout = 3000
 #' )
 #' region <- "chr4:3034877-4034877"
 #' 
-#' 
+#'
 #' ## Get all trackplots and scalebars to combine
 #' plot_scalebar <- trackplot_scalebar(region)
 #' plot_gene <- trackplot_gene(transcripts, region)
-#' plot_coverage <- trackplot_coverage(frags, region, groups = cell_types, cell_read_counts = read_counts)
-#' 
-#' 
+#' plot_coverage <- trackplot_coverage(
+#'   frags,
+#'   region,
+#'   groups = cell_types,
+#'   cell_read_counts = read_counts
+#' )
+#'
 #' ## Combine trackplots and render
 #' ## Also remove colors from gene track
-#' plot <- trackplot_combine(
+#' scale_next_plot_height(0.6)
+#' trackplot_combine(
 #'     list(plot_scalebar, plot_coverage, plot_gene + ggplot2::guides(color = "none"))
 #' )
-#' BPCells:::render_plot_from_storage(plot, width = 6, height = 4)
 #' @export
 trackplot_combine <- function(tracks, side_plot = NULL, title = NULL, side_plot_width = 0.3) {
   for (plot in tracks) {
@@ -444,7 +461,6 @@ trackplot_combine <- function(tracks, side_plot = NULL, title = NULL, side_plot_
 #'    or list/data.frame/GRanges of length 1 specifying chr, start, end. See `help("genomic-ranges-like")` for details
 #' @param fragments Fragments object
 #' @param cell_read_counts Numeric vector of read counts for each cell (used for normalization)
-#' @param scale_bar Whether to include a scale bar in the top track (`TRUE` or `FALSE`)
 #' @param bins Number of bins to plot across the region
 #' @param clip_quantile (optional) Quantile of values for clipping y-axis limits. Default of 0.999 will crop out
 #'    just the most extreme outliers across the region. NULL to disable clipping
@@ -457,24 +473,24 @@ trackplot_combine <- function(tracks, side_plot = NULL, title = NULL, side_plot_
 #' `TRUE`, the return value will be modified accordingly.
 #' @seealso `trackplot_combine()`, `trackplot_gene()`, `trackplot_loop()`, `trackplot_scalebar()`
 #' @examples
-## Prep data
+#' ## Prep data
 #' frags <- get_demo_frags()
 #' 
 #' ## Use genes and blacklist to determine proper number of reads per cell
 #' genes <- read_gencode_transcripts(
 #'   file.path(tempdir(), "references"), release = "42",
 #'   annotation_set = "basic",
-#'   features = "transcript"
+#'   features = "transcript", timeout = 3000
 #' )
 #' blacklist <- read_encode_blacklist(file.path(tempdir(), "references"), genome="hg38")
 #' read_counts <- qc_scATAC(frags, genes, blacklist)$nFrags
 #' region <- "chr4:3034877-4034877"
 #' cell_types <- paste("Group", rep(1:3, length.out = length(cellNames(frags))))
 #' 
-#' 
-#' BPCells:::render_plot_from_storage(
-#'   trackplot_coverage(frags, region, groups = cell_types, cell_read_counts = read_counts),
-#'   width = 6, height = 3
+#' scale_next_plot_height(0.5)
+#' trackplot_coverage(
+#'   frags, region, groups = cell_types, 
+#'   cell_read_counts = read_counts
 #' )
 #' @export
 trackplot_coverage <- function(fragments, region, groups,
@@ -572,25 +588,23 @@ trackplot_coverage <- function(fragments, region, groups,
 #'    
 #'    Usually given as the output from `read_gencode_transcripts()`
 #' @inheritParams trackplot_coverage
-#' @param labels Character vector with labels for each item in transcripts. NA for items that should not be labeled
 #' @param exon_size size for exon lines in units of mm
 #' @param gene_size size for intron/gene lines in units of mm
-#' @param transcript_size size for transcript lines in units of mm
 #' @param label_size size for transcript labels in units of mm
+#' @param track_label Label to put on the side of the track
 #' @return Plot of gene locations
 #' @seealso `trackplot_combine()`, `trackplot_coverage()`, `trackplot_loop()`, `trackplot_scalebar()`
 #' @examples
 #' ## Prep data
 #' transcripts <- read_gencode_transcripts(
 #'   file.path(tempdir(), "references"), release = "42",
-#'   annotation_set = "basic", features = "transcript"
+#'   annotation_set = "basic", features = "transcript", timeout = 3000
 #' )
-#' region <- "chr4:3034877-4034877"
-#' 
-#' 
+#' region <- "chr4:3264877-3634877" 
+#'
 #' ## Plot gene trackplot
-#' plot <- trackplot_gene(transcripts, region)
-#' BPCells:::render_plot_from_storage(plot, width = 6, height = 1)
+#' scale_next_plot_height(0.3)
+#' trackplot_gene(transcripts, region)
 #' @export
 trackplot_gene <- function(transcripts, region, exon_size = 2.5, gene_size = 0.5, label_size = 11*.8/ggplot2::.pt, track_label="Genes", return_data = FALSE) {
   region <- normalize_ranges(region)
@@ -686,6 +700,7 @@ trackplot_gene <- function(transcripts, region, exon_size = 2.5, gene_size = 0.5
 #' @param colors Vector of hex color codes to use for the color scale. For numeric `color_by` data, this is passed to `ggplot2::scale_color_gradientn()`,
 #'               otherwise it is interpreted as a discrete color palette in `ggplot2::scale_color_manual()`
 #' @param show_strand If TRUE, show strand direction as arrows
+#' @param track_label Label to put on the side of the track
 #' @return Plot of genomic loci if return_data is FALSE, otherwise returns the data frame used to generate the plot
 #' @seealso `trackplot_combine()`, `trackplot_coverage()`, `trackplot_loop()`, `trackplot_scalebar()`, `trackplot_gene()`
 #' @examples
@@ -706,10 +721,8 @@ trackplot_gene <- function(transcripts, region, exon_size = 2.5, gene_size = 0.5
 #' region <- "chr4:3034877-3044877"
 #' 
 #' ## Plot peaks
-#' BPCells:::render_plot_from_storage(
-#'   trackplot_genome_annotation(peaks, region, color_by = "enrichment"),
-#'   width = 6, height = 1
-#' )
+#' scale_next_plot_height(0.3)
+#' trackplot_genome_annotation(peaks, region, color_by = "enrichment")
 #' @export
 trackplot_genome_annotation <- function(loci, region, color_by = NULL, colors = NULL, label_by = NULL, label_size = 11*.8/ggplot2::.pt, show_strand=FALSE,
                                         annotation_size = 2.5, track_label="Peaks", return_data = FALSE) {
@@ -828,6 +841,7 @@ trackplot_genome_annotation <- function(loci, region, color_by = NULL, colors = 
 #'               otherwise it is interpreted as a discrete color palette in `ggplot2::scale_color_manual()`
 #' @param allow_truncated If FALSE, remove any loops that are not fully contained within `region`
 #' @param curvature Curvature value between 0 and 1. 1 is a 180-degree arc, and 0 is flat lines.
+#' @param track_label Label to put on the side of the track
 #' @inheritParams trackplot_coverage
 #' 
 #' @return Plot of loops connecting genomic coordinates
@@ -843,8 +857,8 @@ trackplot_genome_annotation <- function(loci, region, color_by = NULL, colors = 
 #' region <- "chr4:3034877-4034877"
 #' 
 #' ## Plot loops
-#' plot <- trackplot_loop(loops, region, color_by = "score")
-#' BPCells:::render_plot_from_storage(plot, width = 6, height = 1.5)
+#' scale_next_plot_height(0.3)
+#' trackplot_loop(loops, region, color_by = "score")
 #' @export
 trackplot_loop <- function(loops, region, color_by=NULL, colors=NULL, allow_truncated=TRUE, curvature=0.75, track_label="Links", return_data = FALSE) {
   region <- normalize_ranges(region)
@@ -944,9 +958,8 @@ trackplot_loop <- function(loops, region, color_by=NULL, colors=NULL, allow_trun
 #' @seealso `trackplot_combine()`, `trackplot_coverage()`, `trackplot_gene()`, `trackplot_loop()`
 #' @examples
 #' region <- "chr4:3034877-3044877"
-#' BPCells:::render_plot_from_storage(
-#'   trackplot_scalebar(region), width = 6, height = 1
-#' )
+#' scale_next_plot_height(0.3)
+#' trackplot_scalebar(region)
 #' @export
 trackplot_scalebar <- function(region, font_pt=11) {
   region <- normalize_ranges(region)
@@ -1073,7 +1086,7 @@ draw_trackplot_grid <- function(..., labels, title = NULL,
         new_heights[next_index] <- heights[i]
         next_index <- next_index + 1
       } else {
-        plot_list <- patchwork:::get_patches(plots[[i]])$plots
+        plot_list <- get_patchwork_patches(plots[[i]])$plots
         names(plot_list) <- plots[[i]]$patchwork$labels
         if (is.null(names(plot_list))) {
           names(plot_list) <- rep("", length(plot_list))
@@ -1112,7 +1125,7 @@ draw_trackplot_grid <- function(..., labels, title = NULL,
   patch <- Reduce(`+`, c(labels_plots, data_plots)) +
     patchwork::plot_layout(ncol = 2, byrow = FALSE, widths = c(label_width, 1), heights = heights, guides = "collect")
   if (!is.null(title)) {
-    patch <- patch + patchwork::plot_annotation(title = title, theme = theme(plot.title = element_text(hjust = 0.5)))
+    patch <- patch + patchwork::plot_annotation(title = title, theme = ggplot2::theme(plot.title = ggplot2::element_text(hjust = 0.5)))
   }
   return(patch)
 }
@@ -1131,7 +1144,7 @@ draw_trackplot_grid <- function(..., labels, title = NULL,
 #' @inheritParams plot_embedding
 #' @inheritParams convert_to_fragments
 #' @param region GRanges of length 1 with region to plot, or list/data.frame with
-#'    one entry each for chr, start, end. See `gene_region()` or [genomic-ranges] for details
+#'    one entry each for chr, start, end. See `gene_region()` or [genomic-ranges-like] for details
 #' @param fragments Fragments object
 #' @param cell_read_counts Numeric vector of read counts for each cell (used for normalization)
 #' @param bins Number of bins to plot across the region
@@ -1253,4 +1266,73 @@ trackplot_bulk <- function(fragments, region, groups,
     plot$patchwork$labels <- names(trackplots)
     return(plot)
   }
+}
+
+#' Temporarily scale the height of the next plot device
+#'
+#' Stores a scaling factor that `ragg_wrap()` consumes once, letting you tweak
+#' the rendered height of the next PNG device without modifying the plot code.
+#'
+#' @param scale Numeric multiplier applied to the `height` argument the next
+#'   time `ragg_wrap()` is called.
+#' @return Returns the previous option value (as returned by `options()`).
+#' @export
+scale_next_plot_height <- function(scale) {
+  options("BPCells.scale_next_plot_height" = scale)
+}
+
+#' Wrap `ragg::agg_png()` with optional one-shot height scaling
+#'
+#' Use `scale_next_plot_height()` to temporarily adjust the height of the *next*
+#' call to `ragg_wrap()`. This is handy when a downstream plot (e.g., produced
+#' by `trackplot_combine()`) renders too tall/short in a pipeline and you want a
+#' quick scaling tweak without touching the plot code itself. The scaling factor
+#' is applied once and then cleared.
+#' @importFrom ragg agg_png
+#' @param filename The name of the file. Follows the same semantics as the file naming in `grDevices::png()`, 
+#' meaning that you can provide a sprintf() compliant string format to name multiple plots (such as the default value)
+#' @param width,height The dimensions of the device
+#' @param units The unit width and height is measured in, 
+#' in either pixels `('px')`, inches `('in')`, millimeters `('mm')`, or centimeter `('cm')`.
+#' @param pointsize The default pointsize of the device in pt. 
+#' This will in general not have any effect on grid graphics (including ggplot2) as text size is always set explicitly there.
+#' @param background The background color of the device
+#' @param res The resolution of the device. 
+#' This setting will govern how device dimensions given in inches, centimeters, or millimeters will be converted to pixels. 
+#' Further, it will be used to scale text sizes and linewidths
+#' @param scaling A scaling factor to apply to the rendered line width and text size. Useful for getting the right dimensions 
+#' at the resolution that you need. If e.g. you need to render a plot at 4000x3000 pixels for it to fit into a layout,
+#' but you find that the result appears to small, you can increase the `scaling` argument to make everything appear bigger at the same resolution.
+#' @param snap_rect Should axis-aligned rectangles drawn with only fill snap to the pixel grid.
+#' This will prevent anti-aliasing artifacts when two rectangles are touching at their border.
+#' @param bitsize Should the dvice record colour as 8 or 16bit
+#' @param bg Same as `background` for compatibility with old graphic device APIs`
+#' @return A graphics device as returned by `ragg::agg_png()`.
+#' @export
+ragg_wrap <- function(
+  filename = "Rplot%03d.png", width = 480, height = 480, 
+  units = "px", pointsize = 12, background = "white", res = 72, scaling = 1, snap_rect = TRUE, bitsize = 8, bg
+) {
+  height_scale <- getOption("BPCells.scale_next_plot_height", default = 1)
+  options("BPCells.scale_next_plot_height" = NULL)
+  
+  # Heuristic: if dimensions are very small (<20) and units are pixels, assume inches were intended.
+  # This fixes issues where knitr passes inches to this custom device but defaults to px units.
+  if (units == "px" && width < 20 && height < 20) {
+    units <- "in"
+  }
+
+  ragg::agg_png(
+    filename = filename,
+    width = width,
+    height = height * height_scale,
+    units = units,
+    pointsize = pointsize,
+    background = background,
+    res = res,
+    scaling = scaling,
+    snap_rect = snap_rect,
+    bitsize = bitsize,
+    bg = bg
+  )
 }

@@ -112,6 +112,9 @@ footprint <- function(fragments, ranges, zero_based_coords = !is(ranges, "GRange
   assert_is_wholenumber(flank)
 
   chr <- as.integer(factor(ranges$chr, chrNames(fragments))) - 1
+  # Filter to ranges that overlap the chromosomes from `fragments`
+  ranges <- ranges[!is.na(chr),]
+  chr <- chr[!is.na(chr)]
   cell_groups <- as.factor(cell_groups)
 
   iter <- iterate_fragments(fragments)
@@ -375,11 +378,28 @@ merge_peaks_iterative <- function(peaks) {
 #' ## Remove blacklist regions from fragments
 #' blacklist <- read_encode_blacklist(reference_dir, genome="hg38")
 #' frags_filter_blacklist <- select_regions(frags, blacklist, invert_selection = TRUE)
-#' chrom_sizes <- read_ucsc_chrom_sizes(reference_dir, genome="hg38") %>% dplyr::filter(chr %in% c("chr4", "chr11"))
+#' chrom_sizes <- read_ucsc_chrom_sizes(reference_dir, genome="hg38") %>% 
+#'   dplyr::filter(chr %in% c("chr4", "chr11"))
 #' 
 #' 
 #' ## Call peaks
+#' if (interactive()) {
 #' call_peaks_tile(frags_filter_blacklist, chrom_sizes, effective_genome_size = 2.8e9)
+#' }
+#' #> # A tibble: 73,160 x 7
+#' #>    chr       start       end group p_val q_val enrichment
+#' #>    <fct>     <int>     <int> <chr> <dbl> <dbl>      <dbl>
+#' #>  1 chr11  65615400  65615600 all       0     0      6764.
+#' #>  2 chr4    2262266   2262466 all       0     0      6422.
+#' #>  3 chr11 119057200 119057400 all       0     0      6188.
+#' #>  4 chr11    695133    695333 all       0     0      6180.
+#' #>  5 chr11   2400400   2400600 all       0     0      6166.
+#' #>  6 chr4    1346933   1347133 all       0     0      6109.
+#' #>  7 chr11   3797600   3797800 all       0     0      6017.
+#' #>  8 chr11  64878600  64878800 all       0     0      5948.
+#' #>  9 chr11  57667733  57667933 all       0     0      5946.
+#' #> 10 chr11  83156933  83157133 all       0     0      5913.
+#' #> # i 73,150 more rows
 #' @export
 call_peaks_tile <- function(fragments, chromosome_sizes, cell_groups = rep.int("all", length(cellNames(fragments))),
                             effective_genome_size = NULL,
@@ -507,7 +527,7 @@ call_peaks_tile <- function(fragments, chromosome_sizes, cell_groups = rep.int("
 #' list.files(bedgraph_outputs)
 #'
 #' # With tiling
-#' chrom_sizes <- read_ucsc_chrom_sizes("./reference", genome="hg38") %>% 
+#' chrom_sizes <- read_ucsc_chrom_sizes(file.path(tempdir(), "references"), genome="hg38") %>% 
 #'   dplyr::filter(chr %in% c("chr4", "chr11"))
 #' write_insertion_bedgraph(frags, file.path(bedgraph_outputs, "all_tiled.bedGraph"),
 #'   chrom_sizes = chrom_sizes, normalization_method = "cpm", tile_width = 100)
@@ -700,20 +720,20 @@ write_insertion_bed <- function(fragments, path,
 #' To run MACS manually, you will first run `call_peaks_macs()` with `step="prep-inputs`. Then, manually run all of the
 #' shell scripts generated at `<path>/input/<group>.sh`. Finally, run `call_peaks_macs()` again with the same original arguments, but
 #' setting `step="read-outputs"`.
-#' @examples
+#' @examplesIf tryCatch({ macs_path_is_valid(); TRUE }, error = function(e) FALSE)
 #' macs_files <- file.path(tempdir(), "peaks")
 #' frags <- get_demo_frags()
-#' 
+#'
 #' head(call_peaks_macs(frags, macs_files))
-#' 
+#'
 #' ## Can also just run the input prep, then run macs manually
 #' ## by setting step to 'prep_inputs'
 #' macs_script <- call_peaks_macs(frags, macs_files, step = "prep-inputs")
 #' system2("bash", macs_script[1], stdout = FALSE, stderr = FALSE)
-#' 
+#'
 #' ## Then read the narrow peaks files
 #' list.files(file.path(macs_files, "output", "all"))
-#' 
+#'
 #' ## call_peaks_macs() can also solely perform the output reading step
 #' head(call_peaks_macs(frags, macs_files, step = "read-outputs"))
 #' @inheritParams call_peaks_tile
@@ -842,7 +862,7 @@ call_macs_peaks <- function(...) {
 #' Test if MACS executable is valid.
 #' If macs_executable is NULL, this function will try to auto-detect MACS from PATH, with preference for MACS3 over MACS2.
 #' If macs_executable is provided, this function will check if MACS can be called.
-#' @return MACS executable path.
+#' @return MACS executable path if valid, otherwise throws an error.
 #' @inheritParams call_peaks_macs
 #' @keywords internal
 macs_path_is_valid <- function(macs_executable) {
@@ -889,3 +909,4 @@ range_overlaps <- function(a, b) {
     } %>%
     dplyr::arrange(from, to)
 }
+  

@@ -18,7 +18,7 @@ gene_score_tiles_archr(
 \item \code{strand}: +/- or TRUE/FALSE for positive or negative strand
 }}
 
-\item{chromosome_sizes}{(optional) Size of chromosomes as a \link{genomic-ranges} object}
+\item{chromosome_sizes}{(optional) Size of chromosomes as a \link{genomic-ranges-like} object}
 
 \item{tile_width}{Size of tiles to consider}
 

@@ -88,7 +88,7 @@ range_distance_to_nearest <- function(ranges, addArchRBug = FALSE, zero_based_co
 #' @inheritParams normalize_ranges
 #' @param upstream Number of bases to extend each range upstream (negative to shrink width)
 #' @param downstream Number of bases to extend each range downstream (negative to shrink width)
-#' @param chromosome_sizes (optional) Size of chromosomes as a [genomic-ranges] object
+#' @param chromosome_sizes (optional) Size of chromosomes as a [genomic-ranges-like] object
 #' @details Note that ranges will be blocked from extending past the beginning of the chromosome (base 0),
 #' and if `chromosome_sizes` is given then they will also be blocked from extending past the end of the chromosome
 #' @examples
@@ -234,8 +234,10 @@ gene_score_tiles_archr <- function(genes, chromosome_sizes = NULL, tile_width = 
 #'   release="42", 
 #'   annotation_set = "basic", 
 #' ) %>% dplyr::filter(chr %in% c("chr4", "chr11"))
-#' blacklist <- read_encode_blacklist(reference_dir, genome="hg38") %>% dplyr::filter(chr %in% c("chr4", "chr11"))
-#' chrom_sizes <- read_ucsc_chrom_sizes(reference_dir, genome="hg38") %>% dplyr::filter(chr %in% c("chr4", "chr11"))
+#' blacklist <- read_encode_blacklist(reference_dir, genome="hg38") %>% 
+#'   dplyr::filter(chr %in% c("chr4", "chr11"))
+#' chrom_sizes <- read_ucsc_chrom_sizes(reference_dir, genome="hg38") %>% 
+#'   dplyr::filter(chr %in% c("chr4", "chr11"))
 #' chrom_sizes$tile_width = 500
 #' 
 #' 

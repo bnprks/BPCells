@@ -38,6 +38,9 @@ jobs:
         with:
           Ncpus: '3'
           use-public-rspm: true
+          extra-repositories: |
+            https://bioconductor.org/packages/release/data/annotation
+            https://bpcells.github.io/drat
       - uses: r-lib/actions/setup-r-dependencies@v2
         with:
           cache-version: 1

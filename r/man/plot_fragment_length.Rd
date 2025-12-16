@@ -30,6 +30,6 @@ x-axis, and proportion of fragments on the y-axis. Typical plots will show
 width (about 150bp).
 }
 \examples{
-frags <- get_demo_frags(filter_qc = FALSE, subset = FALSE)
+frags <- get_demo_frags()
 plot_fragment_length(frags)
 }

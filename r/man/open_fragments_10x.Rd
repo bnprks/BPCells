@@ -47,15 +47,25 @@ No disk operations will take place until the fragments are used in a function
 Fragments will be written to disk immediately, then returned in a readable object.
 }
 \examples{
-## Download example fragments from pbmc 500 dataset and save in temp directory
+#######################################################################
+## write_fragments_10x() example
+#######################################################################
+## Prep data
+frags_table <- tibble::tribble(
+   ~chr, ~start, ~end, ~cell_id,
+    "chr1", 0, 5, "cell1",
+    "chr1", 2, 4, "cell2",
+    "chr2", 3, 6, "cell1",
+    "chr3", 7, 9, "cell2"
+)
+frags_table
+frags <- frags_table \%>\% convert_to_fragments()
+
 data_dir <- file.path(tempdir(), "frags_10x")
+frags_file <- "demo_10x_frags.tsv.gz"
 dir.create(data_dir, recursive = TRUE, showWarnings = FALSE)
-url_base <- "https://cf.10xgenomics.com/samples/cell-atac/2.0.0/atac_pbmc_500_nextgem/"
-frags_file <- "atac_pbmc_500_nextgem_fragments.tsv.gz"
-atac_raw_url <- paste0(url_base, frags_file)
-if (!file.exists(file.path(data_dir, frags_file))) {
- download.file(atac_raw_url, file.path(data_dir, frags_file), mode="wb")
-}
+write_fragments_10x(frags, file.path(data_dir, frags_file))
+
 
 #######################################################################
 ## open_fragments_10x() example
@@ -68,19 +78,9 @@ frags <- open_fragments_10x(
 frags
 
 frags \%>\% write_fragments_dir(
- file.path(data_dir, "demo_frags_from_h5"), 
+ file.path(data_dir, "new_demo_10x_frags"), 
  overwrite = TRUE
 )
-
-
-#######################################################################
-## write_fragments_10x() example
-#######################################################################
-frags <- write_fragments_10x(
- frags,
- file.path(data_dir, paste0("new_", frags_file))
-)
-frags
 
 
 }

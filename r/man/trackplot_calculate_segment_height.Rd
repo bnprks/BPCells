@@ -2,14 +2,7 @@
 % Please edit documentation in R/trackplots.R
 \name{trackplot_calculate_segment_height}
 \alias{trackplot_calculate_segment_height}
-\title{Calculate y positions for trackplot segments to avoid overlap
-Steps:
-\enumerate{
-\item Calculate the maximum overlap depth of transcripts
-\item Iterate through start/end of segments in sorted order
-\item Randomly assign each segment a y-coordinate between 1 and max overlap depth,
-with the restriction that a segment can't have the same y-coordinate as an overlapping segment
-}}
+\title{Calculate y positions for trackplot segments to avoid overlap}
 \usage{
 trackplot_calculate_segment_height(data)
 }
@@ -17,16 +10,15 @@ trackplot_calculate_segment_height(data)
 \item{data}{tibble of genome ranges with start and end columns, assumed to be on same chromosome.}
 }
 \value{
-Vector of y coordinates, one per input row, such that no ranges at the same y coordinate overlap
+Vector of y coordinates, one per input row, such that no ranges at the same y coordinate overlap.
 }
 \description{
-Calculate y positions for trackplot segments to avoid overlap
 Steps:
 \enumerate{
 \item Calculate the maximum overlap depth of transcripts
 \item Iterate through start/end of segments in sorted order
 \item Randomly assign each segment a y-coordinate between 1 and max overlap depth,
-with the restriction that a segment can't have the same y-coordinate as an overlapping segment
+with the restriction that a segment cannot have the same y-coordinate as an overlapping segment
 }
 }
 \keyword{internal}
