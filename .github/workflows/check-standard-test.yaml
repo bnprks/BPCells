@@ -21,6 +21,7 @@ jobs:
       R_KEEP_PKG_SOURCE: yes
       ENABLE_INSTALL_COUNTING: no
       _R_CHECK_BUILD_VIGNETTES_: false
+      NOT_CRAN: false
 
     steps:
       - uses: actions/checkout@v4
