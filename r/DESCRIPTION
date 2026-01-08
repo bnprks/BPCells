@@ -68,6 +68,7 @@ Suggests:
     irlba,
     BiocManager,
     BSgenome.Hsapiens.UCSC.hg38,
+    TFMPvalue (>= 1.0.0),
     motifmatchr,
     chromVARmotifs,
     png,
