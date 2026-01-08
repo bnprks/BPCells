@@ -37,14 +37,13 @@ HWY_FLAGS=(
     -O2 
     -g 
     -DNDEBUG
+    -DHWY_NO_ABORT
 )
 
 # Skip the CONTRIB, since we don't need sorting or image libraries
 HWY_SOURCES=(
     hwy/aligned_allocator.cc 
-    hwy/nanobenchmark.cc
     hwy/per_target.cc
-    hwy/print.cc
     hwy/targets.cc
 )
 

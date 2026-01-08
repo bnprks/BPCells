@@ -214,9 +214,24 @@ namespace hwy {
 // 4 instances of a given literal value, useful as input to LoadDup128.
 #define HWY_REP4(literal) literal, literal, literal, literal
 
+#ifndef HWY_NO_ABORT
 HWY_DLLEXPORT HWY_NORETURN void HWY_FORMAT(3, 4)
     Abort(const char* file, int line, const char* format, ...);
+#endif
 
+#ifdef HWY_NO_ABORT
+#define HWY_ABORT(format, ...) \
+  do {                         \
+    (void)(format);            \
+    (void)(__FILE__);          \
+    (void)(__LINE__);          \
+  } while (0)
+
+#define HWY_ASSERT(condition) \
+  do {                        \
+    (void)(condition);        \
+  } while (0)
+#else
 #define HWY_ABORT(format, ...) \
   ::hwy::Abort(__FILE__, __LINE__, format, ##__VA_ARGS__)
 
@@ -227,6 +242,7 @@ HWY_DLLEXPORT HWY_NORETURN void HWY_FORMAT(3, 4)
       HWY_ABORT("Assert %s", #condition); \
     }                                     \
   } while (0)
+#endif
 
 #if HWY_HAS_FEATURE(memory_sanitizer) || defined(MEMORY_SANITIZER)
 #define HWY_IS_MSAN 1

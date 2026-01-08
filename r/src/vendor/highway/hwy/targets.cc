@@ -469,12 +469,13 @@ int64_t DetectTargets() {
   if ((bits & HWY_ENABLED_BASELINE) != HWY_ENABLED_BASELINE) {
     const uint64_t bits_u = static_cast<uint64_t>(bits);
     const uint64_t enabled = static_cast<uint64_t>(HWY_ENABLED_BASELINE);
-    fprintf(stderr,
+    (void)bits_u; (void)enabled;
+    /*fprintf(stderr,
             "WARNING: CPU supports 0x%08x%08x, software requires 0x%08x%08x\n",
             static_cast<uint32_t>(bits_u >> 32),
             static_cast<uint32_t>(bits_u & 0xFFFFFFFF),
             static_cast<uint32_t>(enabled >> 32),
-            static_cast<uint32_t>(enabled & 0xFFFFFFFF));
+            static_cast<uint32_t>(enabled & 0xFFFFFFFF));*/
   }
 
   return bits;
@@ -482,6 +483,7 @@ int64_t DetectTargets() {
 
 }  // namespace
 
+#ifndef HWY_NO_ABORT
 HWY_DLLEXPORT HWY_NORETURN void HWY_FORMAT(3, 4)
     Abort(const char* file, int line, const char* format, ...) {
   char buf[800];
@@ -509,6 +511,7 @@ HWY_DLLEXPORT HWY_NORETURN void HWY_FORMAT(3, 4)
   abort();  // Compile error without this due to HWY_NORETURN.
 #endif
 }
+#endif // HWY_NO_ABORT
 
 HWY_DLLEXPORT void DisableTargets(int64_t disabled_targets) {
   supported_mask_ = static_cast<int64_t>(~disabled_targets);
