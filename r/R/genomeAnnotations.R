@@ -465,7 +465,7 @@ canonical_gene_symbol <- function(query, gene_mapping = human_gene_mapping) {
 #' @param extend_bp Bases to extend region upstream and downstream of gene. If length 1, extension is 
 #'     symmetric. If length 2, provide upstream extension then downstream extension as positive distances.
 #' @return List of chr, start, end positions for use with trackplot functions.
-#' @examples
+#' @examplesIf identical(Sys.getenv("NOT_CRAN"), "true")
 #' ## Prep data
 #' genes <- read_gencode_transcripts(
 #'   file.path(tempdir(), "references"), release = "42",

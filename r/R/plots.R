@@ -185,7 +185,7 @@ plot_read_count_knee <- function(read_counts, cutoff = NULL, return_data = FALSE
 #' @param min_tss Minimum TSS Enrichment cutoff
 #' @param bins Number of bins for density calculation
 #' @inheritParams plot_embedding
-#' @examples
+#' @examplesIf identical(Sys.getenv("NOT_CRAN"), "true")
 #' ## Prep data
 #' frags <- get_demo_frags(filter_qc = FALSE, subset = FALSE)
 #' genes <- read_gencode_transcripts(
@@ -323,7 +323,7 @@ plot_fragment_length <- function(fragments, max_length = 500, return_data = FALS
 #' @param smooth Number of bases to smooth over (rolling average)
 #' @param colors Discrete color palette to use for cell groups
 #' @seealso `footprint()`, `plot_tf_footprint()`
-#' @examples
+#' @examplesIf identical(Sys.getenv("NOT_CRAN"), "true")
 #' ## Prep data
 #' frags <- get_demo_frags()
 #' genes <- read_gencode_transcripts(
@@ -523,7 +523,7 @@ collect_features <- function(source, features = NULL, gene_mapping = human_gene_
 #' @return By default, returns a ggplot2 object with all the requested features plotted
 #' in a grid. If `return_data` or `return_plot_list` is called, the return value will
 #' match that argument.
-#' @examples
+#' @examplesIf identical(Sys.getenv("NOT_CRAN"), "true")
 ## Prep data
 #' set.seed(123)
 #' mat <- get_demo_mat()
