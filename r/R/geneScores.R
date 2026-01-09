@@ -151,7 +151,8 @@ extend_ranges <- function(ranges, upstream = 0, downstream = 0, metadata_cols = 
 #' start coordinate than the gene and the gene is on the + strand, distance will
 #' be negative. The distance of adjacent but non-overlapping regions is 1bp, counting
 #' up from there.
-#' @examplesIf identical(Sys.getenv("R_RUN_LONG_EXAMPLES"), "true")
+#' @examples
+#' \dontrun{
 #' ## Prep data
 #' directory  <- file.path(tempdir(), "references")
 #' genes <- read_gencode_genes(
@@ -165,6 +166,7 @@ extend_ranges <- function(ranges, upstream = 0, downstream = 0, metadata_cols = 
 #' gene_score_tiles_archr(
 #'     genes
 #' )
+#' }
 #' @export
 gene_score_tiles_archr <- function(genes, chromosome_sizes = NULL, tile_width = 500, addArchRBug = FALSE) {
   assert_is_wholenumber(tile_width)
@@ -225,7 +227,8 @@ gene_score_tiles_archr <- function(genes, chromosome_sizes = NULL, tile_width = 
 #' @return **gene_score_weights_archr**
 #' 
 #' Weight matrix of dimension genes x tiles
-#' @examplesIf identical(Sys.getenv("R_RUN_LONG_EXAMPLES"), "true")
+#' @examples
+#' \dontrun{
 #' ## Prep data
 #' reference_dir <- file.path(tempdir(), "references")
 #' frags <- get_demo_frags()
@@ -254,6 +257,7 @@ gene_score_tiles_archr <- function(genes, chromosome_sizes = NULL, tile_width = 
 #' 
 #' ## Get gene scores per cell 
 #' gene_score_weights %*% tiles
+#' }
 #' 
 #' 
 #' @export
@@ -316,13 +320,15 @@ gene_score_weights_archr <- function(genes, chromosome_sizes, blacklist = NULL, 
 #' @return **gene_score_archr**
 #' 
 #' Gene score matrix of dimension genes x cells.
-#' @examplesIf identical(Sys.getenv("R_RUN_LONG_EXAMPLES"), "true")
+#' @examples
+#' \dontrun{
 #' #######################################################################
 #' ## gene_score_archr() example
 #' #######################################################################
 #' ## This is a wrapper that creates both the gene score weight 
 #' ## matrix and tile matrix together
 #' gene_score_archr(frags, genes, chrom_sizes, blacklist)
+#' }
 #' 
 #' 
 #' @export

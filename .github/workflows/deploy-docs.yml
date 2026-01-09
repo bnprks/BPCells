@@ -7,8 +7,6 @@ jobs:
   build_docs:
     name: Build and Deploy Documentation
     runs-on: ubuntu-latest
-    env:
-      R_RUN_LONG_EXAMPLES: true
     steps:
     - name: Checkout repository
       uses: actions/checkout@v4

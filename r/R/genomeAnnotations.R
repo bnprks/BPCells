@@ -465,7 +465,8 @@ canonical_gene_symbol <- function(query, gene_mapping = human_gene_mapping) {
 #' @param extend_bp Bases to extend region upstream and downstream of gene. If length 1, extension is 
 #'     symmetric. If length 2, provide upstream extension then downstream extension as positive distances.
 #' @return List of chr, start, end positions for use with trackplot functions.
-#' @examplesIf identical(Sys.getenv("R_RUN_LONG_EXAMPLES"), "true")
+#' @examples
+#' \dontrun{
 #' ## Prep data
 #' genes <- read_gencode_transcripts(
 #'   file.path(tempdir(), "references"), release = "42",
@@ -475,6 +476,7 @@ canonical_gene_symbol <- function(query, gene_mapping = human_gene_mapping) {
 #' 
 #' ## Get gene region
 #' gene_region(genes, "CD19", extend_bp = 1e5)
+#' }
 #' @export
 gene_region <- function(genes, gene_symbol, extend_bp = c(1e4, 1e4), gene_mapping = human_gene_mapping) {
   genes <- normalize_ranges(genes, metadata_cols = c("strand", "gene_name"))

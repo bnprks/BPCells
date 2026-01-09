@@ -297,7 +297,8 @@ trackplot_normalize_ranges_with_metadata <- function(data, metadata) {
 #'    the text label, y-axis, and plot body. The relative height of each row is given
 #'    by heights. A shared title and x-axis are put at the top.
 #' @seealso `trackplot_coverage()`, `trackplot_gene()`, `trackplot_loop()`, `trackplot_scalebar()`
-#' @examplesIf identical(Sys.getenv("R_RUN_LONG_EXAMPLES"), "true")
+#' @examples
+#' \dontrun{
 #' ## Prep data
 #' frags <- get_demo_frags()
 #' 
@@ -334,6 +335,7 @@ trackplot_normalize_ranges_with_metadata <- function(data, metadata) {
 #' trackplot_combine(
 #'     list(plot_scalebar, plot_coverage, plot_gene + ggplot2::guides(color = "none"))
 #' )
+#' }
 #' @export
 trackplot_combine <- function(tracks, side_plot = NULL, title = NULL, side_plot_width = 0.3) {
   for (plot in tracks) {

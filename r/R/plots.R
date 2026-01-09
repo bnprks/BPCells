@@ -185,7 +185,8 @@ plot_read_count_knee <- function(read_counts, cutoff = NULL, return_data = FALSE
 #' @param min_tss Minimum TSS Enrichment cutoff
 #' @param bins Number of bins for density calculation
 #' @inheritParams plot_embedding
-#' @examplesIf identical(Sys.getenv("R_RUN_LONG_EXAMPLES"), "true")
+#' @examples
+#' \dontrun{
 #' ## Prep data
 #' frags <- get_demo_frags(filter_qc = FALSE, subset = FALSE)
 #' genes <- read_gencode_transcripts(
@@ -199,6 +200,7 @@ plot_read_count_knee <- function(read_counts, cutoff = NULL, return_data = FALSE
 #' 
 #' ## Render tss enrichment vs fragment plot
 #' plot_tss_scatter(atac_qc, min_frags = 1000, min_tss = 10)
+#' }
 #' @export
 plot_tss_scatter <- function(atac_qc, min_frags = NULL, min_tss = NULL, bins = 100, apply_styling = TRUE) {
   assert_has_package("hexbin")
@@ -323,7 +325,8 @@ plot_fragment_length <- function(fragments, max_length = 500, return_data = FALS
 #' @param smooth Number of bases to smooth over (rolling average)
 #' @param colors Discrete color palette to use for cell groups
 #' @seealso `footprint()`, `plot_tf_footprint()`
-#' @examplesIf identical(Sys.getenv("R_RUN_LONG_EXAMPLES"), "true")
+#' @example
+#' \dontrun{
 #' ## Prep data
 #' frags <- get_demo_frags()
 #' genes <- read_gencode_transcripts(
@@ -334,6 +337,7 @@ plot_fragment_length <- function(fragments, max_length = 500, return_data = FALS
 #' 
 #' ## Plot tss profile
 #' plot_tss_profile(frags, genes)
+#' }
 #' @export
 plot_tss_profile <- function(fragments, genes, cell_groups = rlang::rep_along(cellNames(fragments), "all"),
                              flank = 2000L, smooth = 0L, zero_based_coords = !is(genes, "GRanges"),
@@ -523,7 +527,8 @@ collect_features <- function(source, features = NULL, gene_mapping = human_gene_
 #' @return By default, returns a ggplot2 object with all the requested features plotted
 #' in a grid. If `return_data` or `return_plot_list` is called, the return value will
 #' match that argument.
-#' @examplesIf identical(Sys.getenv("R_RUN_LONG_EXAMPLES"), "true")
+#' @examples
+#' \dontrun{
 ## Prep data
 #' set.seed(123)
 #' mat <- get_demo_mat()
@@ -565,7 +570,7 @@ collect_features <- function(source, features = NULL, gene_mapping = human_gene_
 #' #  umap,
 #' #  features = c("MS4A1", "CD3E"),
 #' #)
-#' 
+#' }
 #' @export
 plot_embedding <- function(source, embedding, features = NULL,
                            quantile_range = c(0.01, 0.99),

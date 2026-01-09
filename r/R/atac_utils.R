@@ -176,8 +176,8 @@ footprint <- function(fragments, ranges, zero_based_coords = !is(ranges, "GRange
 #'
 #' ArchR's `PromoterRatio` and `BlacklistRatio` are not included in the output, as they can be easily calculated
 #' from `ReadsInPromoter / nFrags` and  `ReadsInBlacklist / nFrags`. Similarly, ArchR's `NucleosomeRatio` can be calculated
-#' as `(monoNucleosomal + multiNucleosomal) / subNucleosomal`.
-#' @examplesIf identical(Sys.getenv("R_RUN_LONG_EXAMPLES"), "true")
+#' @examples
+#' \dontrun{
 #' ## Prep data
 #' frags <- get_demo_frags(subset = FALSE)
 #' reference_dir <- file.path(tempdir(), "references")
@@ -193,6 +193,7 @@ footprint <- function(fragments, ranges, zero_based_coords = !is(ranges, "GRange
 #'
 #' ## Run qc
 #' head(qc_scATAC(frags, genes, blacklist))
+#' }
 #' @export
 qc_scATAC <- function(fragments, genes, blacklist) {
   assert_is(fragments, "IterableFragments")
@@ -514,7 +515,8 @@ call_peaks_tile <- function(fragments, chromosome_sizes, cell_groups = rep.int("
 #' If `NULL`, then tile_width is required to be 1.
 #' If a data.frame or list, must contain columns `chr` and `end` (See `help("genomic-ranges-like")`).
 #' If a numeric vector, then it is assumed to be the chromosome sizes in the order of `chrNames(fragments)`.
-#' @examplesIf identical(Sys.getenv("R_RUN_LONG_EXAMPLES"), "true")
+#' @examples
+#' \dontrun{
 #' ## Prep data
 #' frags <- get_demo_frags()
 #' bedgraph_outputs <- file.path(tempdir(), "bedgraph_outputs")
