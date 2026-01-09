@@ -310,18 +310,26 @@ trackplot_normalize_ranges_with_metadata <- function(data, metadata) {
 #' )
 #' blacklist <- read_encode_blacklist(file.path(tempdir(), "references"), genome="hg38")
 #' read_counts <- qc_scATAC(frags, genes, blacklist)$nFrags
+#' }
+#' 
+#' ## We use pre-generated data for this example
+#' frags <- get_demo_frags()
 #' region <- "chr4:3034877-4034877"
 #' cell_types <- paste("Group", rep(1:3, length.out = length(cellNames(frags))))
-#' transcripts <- read_gencode_transcripts(
-#'   file.path(tempdir(), "references"), release = "42",
-#'   annotation_set = "basic", timeout = 3000
+#' genes <- readr::read_delim(
+#'   file.path(system.file("extdata", package = "BPCells"), "transcripts_filtered_example_chr_4.tsv.gz"),
+#'   delim = "\t", show_col_types = FALSE
 #' )
+#' read_counts <- readr::read_delim(
+#'  file.path(system.file("extdata", package = "BPCells"), "qc_results_filtered_example_chr_4.tsv.gz"),
+#'  delim = "\t", show_col_types = FALSE
+#' )$nFrags
 #' region <- "chr4:3034877-4034877"
 #' 
 #'
 #' ## Get all trackplots and scalebars to combine
 #' plot_scalebar <- trackplot_scalebar(region)
-#' plot_gene <- trackplot_gene(transcripts, region)
+#' plot_gene <- trackplot_gene(genes, region)
 #' plot_coverage <- trackplot_coverage(
 #'   frags,
 #'   region,
@@ -335,7 +343,7 @@ trackplot_normalize_ranges_with_metadata <- function(data, metadata) {
 #' trackplot_combine(
 #'     list(plot_scalebar, plot_coverage, plot_gene + ggplot2::guides(color = "none"))
 #' )
-#' }
+#' 
 #' @export
 trackplot_combine <- function(tracks, side_plot = NULL, title = NULL, side_plot_width = 0.3) {
   for (plot in tracks) {
@@ -477,7 +485,9 @@ trackplot_combine <- function(tracks, side_plot = NULL, title = NULL, side_plot_
 #' @examples
 #' ## Prep data
 #' frags <- get_demo_frags()
+#' cell_types <- paste("Group", rep(1:3, length.out = length(cellNames(frags))))
 #' 
+#' \dontrun{
 #' ## Use genes and blacklist to determine proper number of reads per cell
 #' genes <- read_gencode_transcripts(
 #'   file.path(tempdir(), "references"), release = "42",
@@ -485,9 +495,17 @@ trackplot_combine <- function(tracks, side_plot = NULL, title = NULL, side_plot_
 #'   features = "transcript", timeout = 3000
 #' )
 #' blacklist <- read_encode_blacklist(file.path(tempdir(), "references"), genome="hg38")
+#' 
 #' read_counts <- qc_scATAC(frags, genes, blacklist)$nFrags
+#' }
 #' region <- "chr4:3034877-4034877"
-#' cell_types <- paste("Group", rep(1:3, length.out = length(cellNames(frags))))
+#' 
+#' ## We use pre-generated data for this example
+#' read_counts <- readr::read_delim(
+#'  file.path(system.file("extdata", package = "BPCells"), "qc_results_filtered_example_chr_4.tsv.gz"),
+#'  delim = "\t", show_col_types = FALSE
+#' )$nFrags
+#' 
 #' 
 #' scale_next_plot_height(0.5)
 #' trackplot_coverage(
@@ -597,11 +615,19 @@ trackplot_coverage <- function(fragments, region, groups,
 #' @return Plot of gene locations
 #' @seealso `trackplot_combine()`, `trackplot_coverage()`, `trackplot_loop()`, `trackplot_scalebar()`
 #' @examples
+#' \dontrun{
 #' ## Prep data
 #' transcripts <- read_gencode_transcripts(
 #'   file.path(tempdir(), "references"), release = "42",
 #'   annotation_set = "basic", features = "transcript", timeout = 3000
 #' )
+#' }
+#' 
+#' ## We use pre-generated data for this example
+#' transcripts <- readr::read_delim(
+#'   file.path(system.file("extdata", package = "BPCells"),
+#'   "transcripts_filtered_example_chr_4.tsv.gz"))
+#' 
 #' region <- "chr4:3264877-3634877" 
 #'
 #' ## Plot gene trackplot

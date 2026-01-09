@@ -29,6 +29,7 @@ enrichment on the y-axis. This plot is most useful to select which cell barcodes
 in an experiment correspond to high-quality cells
 }
 \examples{
+\dontrun{
 ## Prep data
 frags <- get_demo_frags(filter_qc = FALSE, subset = FALSE)
 genes <- read_gencode_transcripts(
@@ -38,8 +39,15 @@ genes <- read_gencode_transcripts(
 )
 blacklist <- read_encode_blacklist(file.path(tempdir(), "references"), genome="hg38")
 atac_qc <- qc_scATAC(frags, genes, blacklist)
+}
 
 
+## Use pre-computed QC metrics for chr4
+atac_qc <- readr::read_delim(
+ file.path(system.file("extdata", package = "BPCells"), "qc_results_filtered_example_chr_4.tsv.gz"),
+ delim = "\t", show_col_types = FALSE
+)
 ## Render tss enrichment vs fragment plot
 plot_tss_scatter(atac_qc, min_frags = 1000, min_tss = 10)
+
 }

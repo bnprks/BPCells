@@ -46,11 +46,19 @@ Plot of gene locations
 Plot transcript models
 }
 \examples{
+\dontrun{
 ## Prep data
 transcripts <- read_gencode_transcripts(
   file.path(tempdir(), "references"), release = "42",
   annotation_set = "basic", features = "transcript", timeout = 3000
 )
+}
+
+## We use pre-generated data for this example
+transcripts <- readr::read_delim(
+  file.path(system.file("extdata", package = "BPCells"),
+  "transcripts_filtered_example_chr_4.tsv.gz"))
+
 region <- "chr4:3264877-3634877" 
 
 ## Plot gene trackplot

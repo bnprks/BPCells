@@ -160,13 +160,19 @@ extend_ranges <- function(ranges, upstream = 0, downstream = 0, metadata_cols = 
 #'     release = "42",
 #'     annotation_set = "basic",
 #' )
-#'
+#' }
+#' 
+#' ## Use pre-generated data for this example
+#' ## Use pre-computed transcripts for chr4
+#' genes <- readr::read_delim(
+#'   file.path(system.file("extdata", package = "BPCells"), "transcripts_filtered_example_chr_4.tsv.gz"),
+#'   delim = "\t", show_col_types = FALSE
+#' )
 #'
 #' ## Get gene scores by tile
 #' gene_score_tiles_archr(
 #'     genes
 #' )
-#' }
 #' @export
 gene_score_tiles_archr <- function(genes, chromosome_sizes = NULL, tile_width = 500, addArchRBug = FALSE) {
   assert_is_wholenumber(tile_width)

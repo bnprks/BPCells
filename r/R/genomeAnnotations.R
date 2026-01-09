@@ -476,6 +476,14 @@ canonical_gene_symbol <- function(query, gene_mapping = human_gene_mapping) {
 #' 
 #' ## Get gene region
 #' gene_region(genes, "CD19", extend_bp = 1e5)
+#' #> $chr
+#' #> [1] "chr16"
+#' #> 
+#' #> $start
+#' #> [1] 28831970
+#' #> 
+#' #> $end
+#' #> [1] 29039342
 #' }
 #' @export
 gene_region <- function(genes, gene_symbol, extend_bp = c(1e4, 1e4), gene_mapping = human_gene_mapping) {

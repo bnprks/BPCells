@@ -196,11 +196,17 @@ plot_read_count_knee <- function(read_counts, cutoff = NULL, return_data = FALSE
 #' )
 #' blacklist <- read_encode_blacklist(file.path(tempdir(), "references"), genome="hg38")
 #' atac_qc <- qc_scATAC(frags, genes, blacklist)
+#' }
 #' 
 #' 
+#' ## Use pre-computed QC metrics for chr4
+#' atac_qc <- readr::read_delim(
+#'  file.path(system.file("extdata", package = "BPCells"), "qc_results_filtered_example_chr_4.tsv.gz"),
+#'  delim = "\t", show_col_types = FALSE
+#' )
 #' ## Render tss enrichment vs fragment plot
 #' plot_tss_scatter(atac_qc, min_frags = 1000, min_tss = 10)
-#' }
+#' 
 #' @export
 plot_tss_scatter <- function(atac_qc, min_frags = NULL, min_tss = NULL, bins = 100, apply_styling = TRUE) {
   assert_has_package("hexbin")
@@ -325,19 +331,28 @@ plot_fragment_length <- function(fragments, max_length = 500, return_data = FALS
 #' @param smooth Number of bases to smooth over (rolling average)
 #' @param colors Discrete color palette to use for cell groups
 #' @seealso `footprint()`, `plot_tf_footprint()`
-#' @example
-#' \dontrun{
+#' @examples
+#' 
 #' ## Prep data
 #' frags <- get_demo_frags()
+#' \dontrun{
 #' genes <- read_gencode_transcripts(
 #'   file.path(tempdir(), "references"), release = "42",
 #'   annotation_set = "basic",
 #'   features = "transcript", timeout = 3000
 #' )
+#' }
+#' 
+#' ## Use pre-computed transcripts for chr4
+#' genes <- readr::read_delim(
+#'   file.path(system.file("extdata", package = "BPCells"), "transcripts_filtered_example_chr_4.tsv.gz"),
+#'   delim = "\t", show_col_types = FALSE
+#' )
+#' 
 #' 
 #' ## Plot tss profile
 #' plot_tss_profile(frags, genes)
-#' }
+#' 
 #' @export
 plot_tss_profile <- function(fragments, genes, cell_groups = rlang::rep_along(cellNames(fragments), "all"),
                              flank = 2000L, smooth = 0L, zero_based_coords = !is(genes, "GRanges"),
@@ -528,10 +543,9 @@ collect_features <- function(source, features = NULL, gene_mapping = human_gene_
 #' in a grid. If `return_data` or `return_plot_list` is called, the return value will
 #' match that argument.
 #' @examples
-#' \dontrun{
-## Prep data
+#' ## Prep data
 #' set.seed(123)
-#' mat <- get_demo_mat()
+#' mat <- get_demo_mat()[,sample(1:ncol(get_demo_mat()), 200)]
 #' ## Normalize matrix
 #' mat_norm <- log1p(multiply_cols(mat, 1/colSums(mat)) * 10000) %>%
 #'   write_matrix_memory(compress = FALSE)
@@ -570,7 +584,6 @@ collect_features <- function(source, features = NULL, gene_mapping = human_gene_
 #' #  umap,
 #' #  features = c("MS4A1", "CD3E"),
 #' #)
-#' }
 #' @export
 plot_embedding <- function(source, embedding, features = NULL,
                            quantile_range = c(0.01, 0.99),

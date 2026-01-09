@@ -59,7 +59,9 @@ across a region for each cell type or group.
 \examples{
 ## Prep data
 frags <- get_demo_frags()
+cell_types <- paste("Group", rep(1:3, length.out = length(cellNames(frags))))
 
+\dontrun{
 ## Use genes and blacklist to determine proper number of reads per cell
 genes <- read_gencode_transcripts(
   file.path(tempdir(), "references"), release = "42",
@@ -67,9 +69,17 @@ genes <- read_gencode_transcripts(
   features = "transcript", timeout = 3000
 )
 blacklist <- read_encode_blacklist(file.path(tempdir(), "references"), genome="hg38")
+
 read_counts <- qc_scATAC(frags, genes, blacklist)$nFrags
+}
 region <- "chr4:3034877-4034877"
-cell_types <- paste("Group", rep(1:3, length.out = length(cellNames(frags))))
+
+## We use pre-generated data for this example
+read_counts <- readr::read_delim(
+ file.path(system.file("extdata", package = "BPCells"), "qc_results_filtered_example_chr_4.tsv.gz"),
+ delim = "\t", show_col_types = FALSE
+)$nFrags
+
 
 scale_next_plot_height(0.5)
 trackplot_coverage(

@@ -86,6 +86,7 @@ calculate a weight matrix of dimensions genes x tiles. This matrix can be
 multiplied with a tile matrix to obtain ArchR-compatible gene activity scores.
 }
 \examples{
+\dontrun{
 ## Prep data
 reference_dir <- file.path(tempdir(), "references")
 frags <- get_demo_frags()
@@ -114,14 +115,17 @@ tiles <- tile_matrix(frags, chrom_sizes, mode = "fragments")
 
 ## Get gene scores per cell 
 gene_score_weights \%*\% tiles
+}
 
 
+\dontrun{
 #######################################################################
 ## gene_score_archr() example
 #######################################################################
 ## This is a wrapper that creates both the gene score weight 
 ## matrix and tile matrix together
 gene_score_archr(frags, genes, chrom_sizes, blacklist)
+}
 
 
 }
