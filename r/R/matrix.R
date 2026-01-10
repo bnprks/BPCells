@@ -828,7 +828,6 @@ rowVars.default <- function(x, rows = NULL, cols = NULL, na.rm = FALSE, center =
   }
 }
 #' @export
-#' @describeIn IterableMatrix-methods-stats Calculate rowVars (replacement for `matrixStats::rowVars()`)
 #' @method rowVars IterableMatrix
 rowVars.IterableMatrix <- function(x, rows = NULL, cols = NULL, na.rm = FALSE, center = NULL, ..., useNames = TRUE) {
   if (!is.null(rows) || !is.null(cols) || !isFALSE(na.rm) || !is.null(center) || !isTRUE(useNames)) {
@@ -868,7 +867,6 @@ rowMaxs.default <- function(x, rows = NULL, cols = NULL, na.rm = FALSE, ..., use
   }
 }
 #' @export
-#' @describeIn IterableMatrix-methods-stats Calculate rowMaxs (replacement for `matrixStats::rowMaxs()`)
 #' @method rowMaxs IterableMatrix
 rowMaxs.IterableMatrix <- function(x, rows = NULL, cols = NULL, na.rm = FALSE, ..., useNames = TRUE) {
   if(!is.null(rows) || !is.null(cols) || !isFALSE(na.rm)) {
@@ -1002,6 +1000,11 @@ unsplit_selection <- function(selection) {
 }
 
 #' @describeIn IterableMatrix-methods-core Subset an IterableMatrix
+#' @examples
+#' #' ####################################################################
+#' ## x[i, j, ..., drop = TRUE] example
+#' #######################################################################
+#' mat[1:2, 1:2]
 setMethod("[", "IterableMatrix", function(x, i, j, ...) {
   if (missing(x)) stop("x is missing in matrix selection")
   if (rlang::is_missing(i) && rlang::is_missing(j)) {
@@ -1038,6 +1041,16 @@ setMethod("[", "IterableMatrix", function(x, i, j, ...) {
 # Simulate assigning to a subset of the matrix.
 # We concatenate the un-modified matrix subsets with the new values,
 # then reorder rows/columns appropriately
+#' @examples
+#' #######################################################################
+#' ## x[i, j, ...] <- value example
+#' #######################################################################
+#' mat_changed <- mat
+#' new_mat <- matrix(rep(2,4), nrow = 2) %>% as("IterableMatrix")
+#' mat_changed[1:2, 1:2] <- new_mat
+#' mat_changed %>% as("dgCMatrix")
+#' 
+#' 
 #' @describeIn IterableMatrix-methods-core Assign into an IterableMatrix
 setMethod("[<-", "IterableMatrix", function(x, i, j, ..., value) {
   # Do type conversions if needed

@@ -44,7 +44,9 @@ atac_qc <- qc_scATAC(frags, genes, blacklist)
 
 ## Use pre-computed QC metrics for chr4
 atac_qc <- readr::read_delim(
- file.path(system.file("extdata", package = "BPCells"), "qc_results_filtered_example_chr_4.tsv.gz"),
+ file.path(
+  system.file("extdata", package = "BPCells"), 
+  "qc_results_filtered_example_chr_4.tsv.gz"),
  delim = "\t", show_col_types = FALSE
 )
 ## Render tss enrichment vs fragment plot

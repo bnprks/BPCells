@@ -97,7 +97,6 @@ value stays the same.
 }
 }
 \examples{
-\dontrun{
 ## Prep data
 set.seed(123)
 mat <- get_demo_mat()[,sample(1:ncol(get_demo_mat()), 200)]
@@ -139,5 +138,4 @@ plot_embedding(clusts, umap)
 #  umap,
 #  features = c("MS4A1", "CD3E"),
 #)
-}
 }

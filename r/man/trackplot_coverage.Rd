@@ -76,7 +76,8 @@ region <- "chr4:3034877-4034877"
 
 ## We use pre-generated data for this example
 read_counts <- readr::read_delim(
- file.path(system.file("extdata", package = "BPCells"), "qc_results_filtered_example_chr_4.tsv.gz"),
+ file.path(system.file("extdata", package = "BPCells"), 
+  "qc_results_filtered_example_chr_4.tsv.gz"),
  delim = "\t", show_col_types = FALSE
 )$nFrags
 

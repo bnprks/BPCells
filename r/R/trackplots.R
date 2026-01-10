@@ -317,11 +317,15 @@ trackplot_normalize_ranges_with_metadata <- function(data, metadata) {
 #' region <- "chr4:3034877-4034877"
 #' cell_types <- paste("Group", rep(1:3, length.out = length(cellNames(frags))))
 #' genes <- readr::read_delim(
-#'   file.path(system.file("extdata", package = "BPCells"), "transcripts_filtered_example_chr_4.tsv.gz"),
+#'   file.path(
+#'     system.file("extdata", package = "BPCells"), 
+#'     "transcripts_filtered_example_chr_4.tsv.gz"),
 #'   delim = "\t", show_col_types = FALSE
 #' )
 #' read_counts <- readr::read_delim(
-#'  file.path(system.file("extdata", package = "BPCells"), "qc_results_filtered_example_chr_4.tsv.gz"),
+#'  file.path(
+#'     system.file("extdata", package = "BPCells"), 
+#'     "qc_results_filtered_example_chr_4.tsv.gz"),
 #'  delim = "\t", show_col_types = FALSE
 #' )$nFrags
 #' region <- "chr4:3034877-4034877"
@@ -502,7 +506,8 @@ trackplot_combine <- function(tracks, side_plot = NULL, title = NULL, side_plot_
 #' 
 #' ## We use pre-generated data for this example
 #' read_counts <- readr::read_delim(
-#'  file.path(system.file("extdata", package = "BPCells"), "qc_results_filtered_example_chr_4.tsv.gz"),
+#'  file.path(system.file("extdata", package = "BPCells"), 
+#'   "qc_results_filtered_example_chr_4.tsv.gz"),
 #'  delim = "\t", show_col_types = FALSE
 #' )$nFrags
 #' 

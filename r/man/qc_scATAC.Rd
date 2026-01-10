@@ -72,7 +72,10 @@ head(qc_scATAC(frags, genes, blacklist))
 
 ## Read precomputed
 head(readr::read_delim(
- file.path(system.file("extdata", package = "BPCells"), "qc_results_filtered_example_chr_4.tsv.gz"),
+ file.path(
+  system.file("extdata", package = "BPCells"), 
+  "qc_results_filtered_example_chr_4.tsv.gz"
+ ),
  delim = "\t", show_col_types = FALSE
 ))
 }

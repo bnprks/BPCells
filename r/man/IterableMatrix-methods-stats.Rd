@@ -8,14 +8,10 @@
 \alias{colMeans,IterableMatrix-method}
 \alias{colVars}
 \alias{rowVars}
-\alias{rowVars.IterableMatrix}
 \alias{rowMaxs}
-\alias{rowMaxs.IterableMatrix}
 \alias{colMaxs}
 \alias{rowQuantiles}
-\alias{rowQuantiles.IterableMatrix}
 \alias{colQuantiles}
-\alias{colQuantiles.IterableMatrix}
 \alias{log1p,IterableMatrix-method}
 \alias{log1p_slow}
 \alias{expm1,IterableMatrix-method}
@@ -50,19 +46,7 @@ rowVars(
   useNames = TRUE
 )
 
-\method{rowVars}{IterableMatrix}(
-  x,
-  rows = NULL,
-  cols = NULL,
-  na.rm = FALSE,
-  center = NULL,
-  ...,
-  useNames = TRUE
-)
-
 rowMaxs(x, rows = NULL, cols = NULL, na.rm = FALSE, ..., useNames = TRUE)
-
-\method{rowMaxs}{IterableMatrix}(x, rows = NULL, cols = NULL, na.rm = FALSE, ..., useNames = TRUE)
 
 colMaxs(x, rows = NULL, cols = NULL, na.rm = FALSE, ..., useNames = TRUE)
 
@@ -79,33 +63,7 @@ rowQuantiles(
   drop = TRUE
 )
 
-\method{rowQuantiles}{IterableMatrix}(
-  x,
-  rows = NULL,
-  cols = NULL,
-  probs = seq(from = 0, to = 1, by = 0.25),
-  na.rm = FALSE,
-  type = 7L,
-  digits = 7L,
-  ...,
-  useNames = TRUE,
-  drop = TRUE
-)
-
 colQuantiles(
-  x,
-  rows = NULL,
-  cols = NULL,
-  probs = seq(from = 0, to = 1, by = 0.25),
-  na.rm = FALSE,
-  type = 7L,
-  digits = 7L,
-  ...,
-  useNames = TRUE,
-  drop = TRUE
-)
-
-colQuantiles.IterableMatrix(
   x,
   rows = NULL,
   cols = NULL,
@@ -209,21 +167,13 @@ Summaries and reductions for IterableMatrix objects (sums, means, variances, qua
 
 \item \code{rowVars()}: Calculate rowVars (replacement for \code{matrixStats::rowVars()}) (generic)
 
-\item \code{rowVars(IterableMatrix)}: Calculate rowVars (replacement for \code{matrixStats::rowVars()})
-
 \item \code{rowMaxs()}: Calculate rowMaxs (replacement for \code{matrixStats::rowMaxs()}) (generic)
-
-\item \code{rowMaxs(IterableMatrix)}: Calculate rowMaxs (replacement for \code{matrixStats::rowMaxs()})
 
 \item \code{colMaxs()}: Calculate colMax (replacement for \code{matrixStats::colMax()})
 
 \item \code{rowQuantiles()}: Calculate rowQuantiles (replacement for \code{matrixStats::rowQuantiles})
 
-\item \code{rowQuantiles(IterableMatrix)}: Calculate rowQuantiles (replacement for \code{matrixStats::rowQuantiles})
-
 \item \code{colQuantiles()}: Calculate colQuantiles (replacement for \code{matrixStats::colQuantiles})
-
-\item \code{colQuantiles.IterableMatrix()}: Calculate colQuantiles (replacement for \code{matrixStats::colQuantiles})
 
 \item \code{log1p(IterableMatrix)}: Calculate log(x + 1)
 

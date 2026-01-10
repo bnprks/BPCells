@@ -201,7 +201,9 @@ plot_read_count_knee <- function(read_counts, cutoff = NULL, return_data = FALSE
 #' 
 #' ## Use pre-computed QC metrics for chr4
 #' atac_qc <- readr::read_delim(
-#'  file.path(system.file("extdata", package = "BPCells"), "qc_results_filtered_example_chr_4.tsv.gz"),
+#'  file.path(
+#'   system.file("extdata", package = "BPCells"), 
+#'   "qc_results_filtered_example_chr_4.tsv.gz"),
 #'  delim = "\t", show_col_types = FALSE
 #' )
 #' ## Render tss enrichment vs fragment plot
@@ -345,7 +347,9 @@ plot_fragment_length <- function(fragments, max_length = 500, return_data = FALS
 #' 
 #' ## Use pre-computed transcripts for chr4
 #' genes <- readr::read_delim(
-#'   file.path(system.file("extdata", package = "BPCells"), "transcripts_filtered_example_chr_4.tsv.gz"),
+#'   file.path(
+#'     system.file("extdata", package = "BPCells"), 
+#'     "transcripts_filtered_example_chr_4.tsv.gz"),
 #'   delim = "\t", show_col_types = FALSE
 #' )
 #' 

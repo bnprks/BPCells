@@ -52,11 +52,15 @@ frags <- get_demo_frags()
 region <- "chr4:3034877-4034877"
 cell_types <- paste("Group", rep(1:3, length.out = length(cellNames(frags))))
 genes <- readr::read_delim(
-  file.path(system.file("extdata", package = "BPCells"), "transcripts_filtered_example_chr_4.tsv.gz"),
+  file.path(
+    system.file("extdata", package = "BPCells"), 
+    "transcripts_filtered_example_chr_4.tsv.gz"),
   delim = "\t", show_col_types = FALSE
 )
 read_counts <- readr::read_delim(
- file.path(system.file("extdata", package = "BPCells"), "qc_results_filtered_example_chr_4.tsv.gz"),
+ file.path(
+    system.file("extdata", package = "BPCells"), 
+    "qc_results_filtered_example_chr_4.tsv.gz"),
  delim = "\t", show_col_types = FALSE
 )$nFrags
 region <- "chr4:3034877-4034877"
