@@ -751,7 +751,7 @@ setMethod("rowMeans", signature(x = "IterableMatrix"), function(x) rowSums(x) / 
 #' @return * `colMeans()`: vector of col means
 #' @examples
 #' #######################################################################
-#' ## colMeans() example
+#' # colMeans() example
 #' #######################################################################
 #' colMeans(mat)
 #' 
@@ -780,7 +780,18 @@ setMethod("colMeans", signature(x = "IterableMatrix"), function(x) colSums(x) / 
 #' 
 #' @export
 colVars <- function(x, rows = NULL, cols = NULL, na.rm = FALSE, center = NULL, ..., useNames = TRUE) UseMethod("colVars")
-#' @export
+#' @describeIn IterableMatrix-matrixgenerics Calculate colVars (replacement for `matrixStats::colVars()`)
+#' @param center Optional center values (vector of length nrow(x) or ncol(x))
+#' @return * `colVars(<default>)`: vector of col variance
+#' @examples
+#' mat <- matrix(1:25, nrow = 5) %>% as("dgCMatrix")
+#' mat
+#' mat <- as(mat, "IterableMatrix")
+#' #######################################################################
+#' ## colVars(<default>) example
+#' #######################################################################
+#' colVars(mat)
+#' 
 #' @method colVars default
 colVars.default <- function(x, rows = NULL, cols = NULL, na.rm = FALSE, center = NULL, ..., useNames = TRUE) {
   if (requireNamespace("MatrixGenerics", quietly = TRUE)) {
@@ -792,7 +803,15 @@ colVars.default <- function(x, rows = NULL, cols = NULL, na.rm = FALSE, center =
   }
 }
 #' @export
-#' @method colVars IterableMatrix
+#' @param center Optional center values (vector of length nrow(x) or ncol(x))
+#' @return * `colVars(<IterableMatrix>)`: vector of col variance
+#' @examples
+#' #######################################################################
+#' ## colVars(<IterableMatrix>) example
+#' #######################################################################
+#' colVars(mat)
+#' 
+#' @describeIn IterableMatrix-matrixgenerics Calculate colVars (replacement for `matrixStats::colVars()`)
 colVars.IterableMatrix <- function(x, rows = NULL, cols = NULL, na.rm = FALSE, center = NULL, ..., useNames = TRUE) {
   if (!is.null(rows) || !is.null(cols) || !isFALSE(na.rm) || !is.null(center) || !isTRUE(useNames)) {
     stop("colVars(IterableMatrix) doesn't support extra arguments rows, cols, na.rm, center, or useNames")
@@ -912,6 +931,14 @@ colMaxs.default <- function(x, rows = NULL, cols = NULL, na.rm = FALSE, ..., use
     stop("Can't run colMaxs on a non-BPCells object unless MatrixGenerics or matrixStats are installed.")
   }
 }
+#' @rdname IterableMatrix-matrixgenerics
+#' @examples
+#' #######################################################################
+#' ## colMaxs() example
+#' #######################################################################
+#' colMaxs(mat)
+#' 
+#' 
 #' @export
 #' @method colMaxs IterableMatrix
 colMaxs.IterableMatrix <- function(x, rows = NULL, cols = NULL, na.rm = FALSE, ..., useNames = TRUE) {
