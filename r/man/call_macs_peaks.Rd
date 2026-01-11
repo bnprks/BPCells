@@ -11,4 +11,7 @@ call_macs_peaks(...)
 
 This function has been renamed to \code{call_peaks_macs()}
 }
+\examples{
+# See ?call_peaks_macs for examples
+}
 \keyword{internal}

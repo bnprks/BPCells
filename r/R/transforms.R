@@ -354,6 +354,17 @@ setMethod("short_description", "TransformBinarize", function(x) {
 #'   comparison to the threshold is >= (strict_inequality=FALSE)
 #'   or > (strict_inequality=TRUE).
 #' @return binarized IterableMatrix object
+#' @examples
+#' set.seed(12345)
+#' mat <- matrix(rpois(40, lambda = 5), nrow = 4)
+#' rownames(mat) <- paste0("gene", 1:4)
+#' mat <- as(mat, "dgCMatrix") %>% as("IterableMatrix")
+#' 
+#' #######################################################################
+#' ## binarize() example
+#' #######################################################################
+#' binarize(mat, threshold = 4) %>% as("dgCMatrix")
+#' 
 #' @export
 binarize <- function(mat, threshold=0, strict_inequality=TRUE) {
   assert_is(mat, "IterableMatrix")
@@ -534,6 +545,20 @@ setMethod("short_description", "SCTransformPearsonTransposeSlow", function(x) {
 #' @param columns_are_cells Whether the columns of the matrix correspond to cells (default) or genes
 #' @param slow If TRUE, use a 10x slower but more precise implementation (default FALSE)
 #' @return IterableMatrix
+#' @examples
+#' set.seed(12345)
+#' mat <- matrix(rpois(1000 * 100, lambda = 0.5), nrow = 1000, ncol = 100)
+#' rownames(mat) <- paste0("gene", 1:1000)
+#' colnames(mat) <- paste0("cell", 1:100)
+#' mat <- as(mat, "dgCMatrix") %>% as("IterableMatrix")
+#' 
+#' # Calculate dummy parameters
+#' gene_theta <- runif(1000, 0.1, 10)
+#' gene_beta <- runif(1000, 0.1, 10)
+#' cell_read_counts <- runif(100, 1000, 10000)
+#' 
+#' res <- sctransform_pearson(mat, gene_theta, gene_beta, cell_read_counts)
+#' 
 #' @export
 sctransform_pearson <- function(mat, gene_theta, gene_beta, cell_read_counts, min_var = -Inf, clip_range = c(-10, 10), columns_are_cells=TRUE, slow=FALSE) {
   assert_is(mat, "IterableMatrix")
@@ -1062,6 +1087,21 @@ setMethod("short_description", "TransformLinearResidual", function(x) {
 #' (e.g. the gene axis in typical single cell analysis). Options include "row" (default) and "col". 
 #'
 #' @return IterableMatrix 
+#' @examples
+#' set.seed(12345)
+#' mat <- matrix(rnorm(1000 * 100), nrow = 1000, ncol = 100)
+#' rownames(mat) <- paste0("gene", 1:1000)
+#' colnames(mat) <- paste0("cell", 1:100)
+#' mat <- as(mat, "dgCMatrix") %>% as("IterableMatrix")
+#' 
+#' latent_data <- data.frame(
+#'   batch = sample(c("A", "B"), 100, replace = TRUE),
+#'   age = rnorm(100, mean = 30, sd = 10)
+#' )
+#' 
+#' # Regress out batch and age
+#' res <- regress_out(mat, latent_data, prediction_axis = "row")
+#' 
 #' @export
 regress_out <- function(mat, latent_data, prediction_axis = c("row", "col")) {
   prediction_axis <- match.arg(prediction_axis)

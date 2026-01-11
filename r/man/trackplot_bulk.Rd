@@ -67,4 +67,7 @@ This function has been renamed to \code{trackplot_coverage()}
 Plot a pseudobulk genome track, showing the number of fragment insertions
 across a region.
 }
+\examples{
+# See ?trackplot_coverage for examples
+}
 \keyword{internal}

@@ -100,6 +100,13 @@ get_patchwork_plots <- function(patchwork) {
 #' @param labels character vector of labels -- must match existing number of facets in plot
 #' @return **set_trackplot_label**: ggplot object with adjusted facet labels
 #' @rdname trackplot_utils
+#' @examples
+#' region <- "chr4:3034877-3044877"
+#' plot <- trackplot_scalebar(region)
+#' plot_labeled <- set_trackplot_label(plot, "Scalebar")
+#' 
+#' plot_height_set <- set_trackplot_height(plot, 2)
+#' get_trackplot_height(plot_height_set)
 #' @export
 set_trackplot_label <- function(plot, labels) {
   stopifnot(is(plot, "ggplot"))
@@ -1083,6 +1090,8 @@ trackplot_helper <- function(gene, clusters, fragments, cell_read_counts, transc
 #' @return A plot object with aligned genome plots. Each aligned row has
 #'    the text label, y-axis, and plot body. The relative height of each row is given
 #'    by heights. A shared title and x-axis are put at the top.
+#' @examples
+#' # See ?trackplot_combine for examples
 #' @export
 #' @keywords internal
 draw_trackplot_grid <- function(..., labels, title = NULL,
@@ -1190,6 +1199,8 @@ draw_trackplot_grid <- function(..., labels, title = NULL,
 #' `draw_trackplot_grid()`, the extra attribute `$patches$labels` will be added to
 #' specify the labels for each track. If `return_data` or `return_plot_list` is
 #' `TRUE`, the return value will be modified accordingly.
+#' @examples
+#' # See ?trackplot_coverage for examples
 #' @export
 #' @keywords internal
 trackplot_bulk <- function(fragments, region, groups,

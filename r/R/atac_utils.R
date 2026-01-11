@@ -871,6 +871,8 @@ call_peaks_macs <- function(fragments, path,
 #' `r lifecycle::badge("deprecated")` 
 #'
 #' This function has been renamed to `call_peaks_macs()`
+#' @examples
+#' # See ?call_peaks_macs for examples
 #' @export
 #' @keywords internal
 call_macs_peaks <- function(...) {

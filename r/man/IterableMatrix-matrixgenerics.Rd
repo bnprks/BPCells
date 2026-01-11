@@ -4,7 +4,16 @@
 \name{colVars.default}
 \alias{colVars.default}
 \alias{colVars.IterableMatrix}
+\alias{rowVars.default}
+\alias{rowVars.IterableMatrix}
+\alias{rowMaxs.default}
+\alias{rowMaxs.IterableMatrix}
+\alias{colMaxs.default}
 \alias{colMaxs.IterableMatrix}
+\alias{rowQuantiles.default}
+\alias{rowQuantiles.IterableMatrix}
+\alias{colQuantiles.default}
+\alias{colQuantiles.IterableMatrix}
 \alias{IterableMatrix-matrixgenerics}
 \alias{rowQuantiles,IterableMatrix-method}
 \alias{colQuantiles,IterableMatrix-method}
@@ -34,14 +43,122 @@ colVars.IterableMatrix(
   useNames = TRUE
 )
 
-\method{colMaxs}{IterableMatrix}(x, rows = NULL, cols = NULL, na.rm = FALSE, ..., useNames = TRUE)
+\method{rowVars}{default}(
+  x,
+  rows = NULL,
+  cols = NULL,
+  na.rm = FALSE,
+  center = NULL,
+  ...,
+  useNames = TRUE
+)
+
+rowVars.IterableMatrix(
+  x,
+  rows = NULL,
+  cols = NULL,
+  na.rm = FALSE,
+  center = NULL,
+  ...,
+  useNames = TRUE
+)
+
+\method{rowMaxs}{default}(x, rows = NULL, cols = NULL, na.rm = FALSE, ..., useNames = TRUE)
+
+rowMaxs.IterableMatrix(
+  x,
+  rows = NULL,
+  cols = NULL,
+  na.rm = FALSE,
+  ...,
+  useNames = TRUE
+)
+
+\method{colMaxs}{default}(x, rows = NULL, cols = NULL, na.rm = FALSE, ..., useNames = TRUE)
+
+colMaxs.IterableMatrix(
+  x,
+  rows = NULL,
+  cols = NULL,
+  na.rm = FALSE,
+  ...,
+  useNames = TRUE
+)
+
+\method{rowQuantiles}{default}(
+  x,
+  rows = NULL,
+  cols = NULL,
+  probs = seq(from = 0, to = 1, by = 0.25),
+  na.rm = FALSE,
+  type = 7L,
+  digits = 7L,
+  ...,
+  useNames = TRUE,
+  drop = TRUE
+)
+
+rowQuantiles.IterableMatrix(
+  x,
+  rows = NULL,
+  cols = NULL,
+  probs = seq(from = 0, to = 1, by = 0.25),
+  na.rm = FALSE,
+  type = 7L,
+  digits = 7L,
+  ...,
+  useNames = TRUE,
+  drop = TRUE
+)
+
+\method{colQuantiles}{default}(
+  x,
+  rows = NULL,
+  cols = NULL,
+  probs = seq(from = 0, to = 1, by = 0.25),
+  na.rm = FALSE,
+  type = 7L,
+  digits = 7L,
+  ...,
+  useNames = TRUE,
+  drop = TRUE
+)
+
+colQuantiles.IterableMatrix(
+  x,
+  rows = NULL,
+  cols = NULL,
+  probs = seq(from = 0, to = 1, by = 0.25),
+  na.rm = FALSE,
+  type = 7L,
+  digits = 7L,
+  ...,
+  useNames = TRUE,
+  drop = TRUE
+)
 }
 \arguments{
 \item{x}{An \code{IterableMatrix}.}
 
+\item{rows}{(Integer) Optional vector of row indices to operate over.}
+
+\item{cols}{(Integer) Optional vector of column indices to operate over.}
+
+\item{na.rm}{(Logical) Should missing values (NA) be removed?}
+
 \item{center}{Optional center values (vector of length nrow(x) or ncol(x))}
 
 \item{...}{Passed to the underlying implementation.}
+
+\item{useNames}{(Logical) Whether to use row and column names in the output.}
+
+\item{probs}{(Numeric) Quantile value(s) to be computed, between 0 and 1.}
+
+\item{type}{(Integer) between 4 and 9 selecting which quantile algorithm to use, detailed in \code{matrixStats::rowQuantiles()}}
+
+\item{digits}{Number of decimal places for quantile calculations}
+
+\item{drop}{(Logical) If TRUE and only one quantile is requested, the result is coerced to a vector (For non-BPCells objects).}
 }
 \value{
 \itemize{
@@ -50,6 +167,46 @@ colVars.IterableMatrix(
 
 \itemize{
 \item \verb{colVars(<IterableMatrix>)}: vector of col variance
+}
+
+\itemize{
+\item \verb{rowVars(<default>)}: vector of row variance
+}
+
+\itemize{
+\item \verb{rowVars(<IterableMatrix>)}: vector of row variance
+}
+
+\itemize{
+\item \verb{rowMaxs(<default>)}: vector of row maxs
+}
+
+\itemize{
+\item \verb{rowMaxs(<IterableMatrix>)}: vector of row maxs
+}
+
+\itemize{
+\item \verb{colMaxs(<default>)}: vector of col maxs
+}
+
+\itemize{
+\item \verb{colMaxs(<IterableMatrix>)}: vector of col maxs
+}
+
+\itemize{
+\item \verb{rowQuantiles(<default>)}: If \code{length(probs) == 1}, return a numeric with number of entries equal to the number of rows in the matrix. Else, return a Matrix of quantile values, with cols representing each quantile, and each row representing a row in the input matrix.
+}
+
+\itemize{
+\item \verb{rowQuantiles(<IterableMatrix>)}: If \code{length(probs) == 1}, return a numeric with number of entries equal to the number of rows in the matrix. Else, return a Matrix of quantile values, with cols representing each quantile, and each row representing a row in the input matrix.
+}
+
+\itemize{
+\item \verb{colQuantiles(<default>)}: If \code{length(probs) == 1}, return a numeric with number of entries equal to the number of columns in the matrix. Else, return a Matrix of quantile values, with cols representing each quantile, and each row representing a col in the input matrix.
+}
+
+\itemize{
+\item \verb{colQuantiles(<IterableMatrix>)}: If \code{length(probs) == 1}, return a numeric with number of entries equal to the number of columns in the matrix. Else, return a Matrix of quantile values, with cols representing each quantile, and each row representing a col in the input matrix.
 }
 }
 \description{
@@ -63,6 +220,26 @@ when MatrixGenerics is available.
 \item \code{colVars(default)}: Calculate colVars (replacement for \code{matrixStats::colVars()})
 
 \item \code{colVars.IterableMatrix()}: Calculate colVars (replacement for \code{matrixStats::colVars()})
+
+\item \code{rowVars(default)}: Calculate rowVars (replacement for \code{matrixStats::rowVars()})
+
+\item \code{rowVars.IterableMatrix()}: Calculate rowVars (replacement for \code{matrixStats::rowVars()})
+
+\item \code{rowMaxs(default)}: Calculate rowMaxs (replacement for \code{matrixStats::rowMaxs()})
+
+\item \code{rowMaxs.IterableMatrix()}: Calculate rowMaxs (replacement for \code{matrixStats::rowMaxs()})
+
+\item \code{colMaxs(default)}: Calculate colMaxs (replacement for \code{matrixStats::colMaxs()})
+
+\item \code{colMaxs.IterableMatrix()}: Calculate colMaxs (replacement for \code{matrixStats::colMaxs()})
+
+\item \code{rowQuantiles(default)}: Calculate rowQuantiles (replacement for \code{matrixStats::rowQuantiles})
+
+\item \code{rowQuantiles.IterableMatrix()}: Calculate rowQuantiles (replacement for \code{matrixStats::rowQuantiles})
+
+\item \code{colQuantiles(default)}: Calculate colQuantiles (replacement for \code{matrixStats::colQuantiles})
+
+\item \code{colQuantiles.IterableMatrix()}: Calculate colQuantiles (replacement for \code{matrixStats::colQuantiles})
 
 }}
 \section{Availability}{
@@ -85,11 +262,70 @@ colVars(mat)
 #######################################################################
 colVars(mat)
 
+mat <- matrix(1:25, nrow = 5) \%>\% as("dgCMatrix")
+mat
+mat <- as(mat, "IterableMatrix")
 #######################################################################
-## colMaxs() example
+## rowVars(<default>) example
+#######################################################################
+rowVars(mat)
+
+#######################################################################
+## rowVars(<IterableMatrix>) example
+#######################################################################
+rowVars(mat)
+
+mat <- matrix(1:25, nrow = 5) \%>\% as("dgCMatrix")
+mat
+mat <- as(mat, "IterableMatrix")
+#######################################################################
+## rowMaxs(<default>) example
+#######################################################################
+rowMaxs(mat)
+
+#######################################################################
+## rowMaxs(<IterableMatrix>) example
+#######################################################################
+rowMaxs(mat)
+
+mat <- matrix(1:25, nrow = 5) \%>\% as("dgCMatrix")
+mat
+mat <- as(mat, "IterableMatrix")
+#######################################################################
+## colMaxs(<default>) example
 #######################################################################
 colMaxs(mat)
 
+#######################################################################
+## colMaxs(<IterableMatrix>) example
+#######################################################################
+colMaxs(mat)
+
+mat <- matrix(1:25, nrow = 5) \%>\% as("dgCMatrix")
+mat
+mat <- as(mat, "IterableMatrix")
+#######################################################################
+## rowQuantiles(<default>) example
+#######################################################################
+rowQuantiles(transpose_storage_order(mat))
+
+#######################################################################
+## rowQuantiles(<IterableMatrix>) example
+#######################################################################
+rowQuantiles(transpose_storage_order(mat))
+
+mat <- matrix(1:25, nrow = 5) \%>\% as("dgCMatrix")
+mat
+mat <- as(mat, "IterableMatrix")
+#######################################################################
+## colQuantiles(<default>) example
+#######################################################################
+colQuantiles(mat)
+
+#######################################################################
+## colQuantiles(<IterableMatrix>) example
+#######################################################################
+colQuantiles(mat)
 
 }
 \seealso{

@@ -431,9 +431,22 @@ plot_tss_profile <- function(fragments, genes, cell_groups = rlang::rep_along(ce
 #'   have constant width
 #' @param colors Discrete color palette to use for cell groups
 #' @seealso `footprint()`, `plot_tss_profile()`
+#' @examples
+#' \dontrun{
+#' 
+#' plot_tf_footprint(
+#'   frags,
+#'   motif_positions$CEBPA,
+#'   cell_groups = cell_types,
+#'   flank = 250,
+#'   smooth = 2
+#' ) +
+#'   ggplot2::labs(title="CEBPA")
+#' }
+#' # See example in vignette Getting Started
 #' @export
 plot_tf_footprint <- function(fragments, motif_positions, cell_groups = rlang::rep_along(cellNames(fragments), "all"),
-                              flank = 250L, smooth = 0L, zero_based_coords = !is(genes, "GRanges"),
+                              flank = 250L, smooth = 0L, zero_based_coords = !is(motif_positions, "GRanges"),
                               colors = discrete_palette("stallion"),
                               return_data = FALSE, apply_styling = TRUE) {
   assert_is(fragments, "IterableFragments")

@@ -46,3 +46,25 @@ good default when \code{objective_function = "modularity"} per the default.
 
 \strong{cluster_graph_seurat}: Seurat's clustering algorithm \code{Seurat::FindClusters()}
 }
+\examples{
+set.seed(123)
+mat <- matrix(rnorm(1000 * 10), nrow = 1000)
+knn <- knn_hnsw(mat, k = 10)
+graph <- knn_to_snn_graph(knn)
+clusters <- cluster_graph_leiden(graph, resolution = 0.5)
+
+set.seed(123)
+mat <- matrix(rnorm(1000 * 10), nrow = 1000)
+knn <- knn_hnsw(mat, k = 10)
+graph <- knn_to_snn_graph(knn)
+clusters <- cluster_graph_louvain(graph, resolution = 0.5)
+
+\dontrun{
+set.seed(123)
+mat <- matrix(rnorm(1000 * 10), nrow = 1000)
+knn <- knn_hnsw(mat, k = 10)
+graph <- knn_to_snn_graph(knn)
+clusters <- cluster_graph_seurat(graph, resolution = 0.5)
+}
+
+}

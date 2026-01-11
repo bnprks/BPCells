@@ -47,3 +47,18 @@ log-scale to represent the cell_read_counts and gene_beta variables. It also
 does not support the addition of arbitrary cell metadata (e.g. batch) to add to the
 negative binomial regression.
 }
+\examples{
+set.seed(12345)
+mat <- matrix(rpois(1000 * 100, lambda = 0.5), nrow = 1000, ncol = 100)
+rownames(mat) <- paste0("gene", 1:1000)
+colnames(mat) <- paste0("cell", 1:100)
+mat <- as(mat, "dgCMatrix") \%>\% as("IterableMatrix")
+
+# Calculate dummy parameters
+gene_theta <- runif(1000, 0.1, 10)
+gene_beta <- runif(1000, 0.1, 10)
+cell_read_counts <- runif(100, 1000, 10000)
+
+res <- sctransform_pearson(mat, gene_theta, gene_beta, cell_read_counts)
+
+}

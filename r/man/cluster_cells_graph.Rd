@@ -73,6 +73,13 @@ For cells \code{i} and \code{j}, their similarity score is in \code{adjacency_ma
 \strong{cluster_graph_method}: First argument is a weighted similarity graph as returned by \code{knn_to_graph_method}.
 Returns a factor vector of length \code{cells} with a cluster assignment for each cell.
 }
+\examples{
+set.seed(123)
+mat <- matrix(rnorm(1000 * 10), nrow = 1000)
+clusters <- cluster_cells_graph(mat, threads = 1)
+table(clusters)
+
+}
 \seealso{
 \code{knn_hnsw()} \code{knn_annoy()} \code{knn_to_graph()} \code{knn_to_snn_graph()} \code{knn_to_geodesic_graph()} \code{cluster_graph_leiden()} \code{cluster_graph_louvain()} \code{cluster_graph_seurat()}
 }

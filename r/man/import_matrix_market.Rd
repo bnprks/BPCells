@@ -68,3 +68,31 @@ files will be slower to import due to gzip decompression.
 When importing from 10x mtx files, the row and column names can be read automatically
 using the \code{import_matrix_market_10x()} convenience function.
 }
+\examples{
+# Create a dummy matrix market file
+matrix_market_path <- file.path(tempdir(), "matrix.mtx")
+lines <- c(
+  "\%\%MatrixMarket matrix coordinate integer general",
+  "\% This is a comment",
+  "5 10 3",
+  "1 1 1",
+  "2 2 2",
+  "5 10 3"
+)
+writeLines(lines, matrix_market_path)
+
+# Import the matrix market file
+mat <- import_matrix_market(matrix_market_path)
+mat
+
+# Clean up
+unlink(matrix_market_path)
+
+\dontrun{
+# Import 10x matrix market directory
+mat <- import_matrix_market_10x(
+  "path/to/10x/matrix_market_dir"
+)
+}
+
+}

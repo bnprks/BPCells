@@ -31,3 +31,11 @@ get_trackplot_height(plot)
 Adjust labels and heights on trackplots. Labels are set as facet labels in ggplot2, and heights
 are additional properties read by \code{trackplot_combine()} to determine relative height of input plots.
 }
+\examples{
+region <- "chr4:3034877-3044877"
+plot <- trackplot_scalebar(region)
+plot_labeled <- set_trackplot_label(plot, "Scalebar")
+
+plot_height_set <- set_trackplot_height(plot, 2)
+get_trackplot_height(plot_height_set)
+}

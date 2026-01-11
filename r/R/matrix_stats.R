@@ -44,7 +44,17 @@ rowQuantiles <- function(x, rows = NULL, cols = NULL,
                          useNames = TRUE, drop = TRUE) {
   UseMethod("rowQuantiles")
 }
-#' @export
+#' @describeIn IterableMatrix-matrixgenerics Calculate rowQuantiles (replacement for `matrixStats::rowQuantiles`)
+#' @return * `rowQuantiles(<default>)`: If `length(probs) == 1`, return a numeric with number of entries equal to the number of rows in the matrix. Else, return a Matrix of quantile values, with cols representing each quantile, and each row representing a row in the input matrix.
+#' @examples
+#' mat <- matrix(1:25, nrow = 5) %>% as("dgCMatrix")
+#' mat
+#' mat <- as(mat, "IterableMatrix")
+#' #######################################################################
+#' ## rowQuantiles(<default>) example
+#' #######################################################################
+#' rowQuantiles(transpose_storage_order(mat))
+#' 
 #' @method rowQuantiles default
 rowQuantiles.default <- function(x, rows = NULL, cols = NULL,
                                  probs = seq(from = 0, to = 1, by = 0.25),
@@ -59,7 +69,14 @@ rowQuantiles.default <- function(x, rows = NULL, cols = NULL,
   }
 }
 #' @export
-#' @method rowQuantiles IterableMatrix
+#' @return * `rowQuantiles(<IterableMatrix>)`: If `length(probs) == 1`, return a numeric with number of entries equal to the number of rows in the matrix. Else, return a Matrix of quantile values, with cols representing each quantile, and each row representing a row in the input matrix.
+#' @examples
+#' #######################################################################
+#' ## rowQuantiles(<IterableMatrix>) example
+#' #######################################################################
+#' rowQuantiles(transpose_storage_order(mat))
+#' 
+#' @describeIn IterableMatrix-matrixgenerics Calculate rowQuantiles (replacement for `matrixStats::rowQuantiles`)
 rowQuantiles.IterableMatrix <- function(x, rows = NULL, cols = NULL,
                                         probs = seq(from = 0, to = 1, by = 0.25),
                                         na.rm = FALSE, type = 7L, digits = 7L, ...,
@@ -128,7 +145,17 @@ colQuantiles <- function(x, rows = NULL, cols = NULL,
                          useNames = TRUE, drop = TRUE) {
   UseMethod("colQuantiles")
 }
-#' @export
+#' @describeIn IterableMatrix-matrixgenerics Calculate colQuantiles (replacement for `matrixStats::colQuantiles`)
+#' @return * `colQuantiles(<default>)`: If `length(probs) == 1`, return a numeric with number of entries equal to the number of columns in the matrix. Else, return a Matrix of quantile values, with cols representing each quantile, and each row representing a col in the input matrix.
+#' @examples
+#' mat <- matrix(1:25, nrow = 5) %>% as("dgCMatrix")
+#' mat
+#' mat <- as(mat, "IterableMatrix")
+#' #######################################################################
+#' ## colQuantiles(<default>) example
+#' #######################################################################
+#' colQuantiles(mat)
+#' 
 #' @method colQuantiles default
 colQuantiles.default <- function(x, rows = NULL, cols = NULL, 
                                  probs = seq(from = 0, to = 1, by = 0.25),
@@ -142,8 +169,15 @@ colQuantiles.default <- function(x, rows = NULL, cols = NULL,
     rlang::abort("Cannot run colQuantiles on a non-BPCells object unless MatrixGenerics or matrixStats is installed.")
   }
 }
-#' @method colQuantiles IterableMatrix
 #' @export
+#' @return * `colQuantiles(<IterableMatrix>)`: If `length(probs) == 1`, return a numeric with number of entries equal to the number of columns in the matrix. Else, return a Matrix of quantile values, with cols representing each quantile, and each row representing a col in the input matrix.
+#' @examples
+#' #######################################################################
+#' ## colQuantiles(<IterableMatrix>) example
+#' #######################################################################
+#' colQuantiles(mat)
+#' 
+#' @describeIn IterableMatrix-matrixgenerics Calculate colQuantiles (replacement for `matrixStats::colQuantiles`)
 colQuantiles.IterableMatrix <- function(x, rows = NULL, cols = NULL, 
                                         probs = seq(from = 0, to = 1, by = 0.25), 
                                         na.rm = FALSE, type = 7L, digits = 7L, ...,
@@ -200,6 +234,15 @@ rlang::on_load({
 #' nothing is registered and the generics fall back as usual.
 #'
 #' @param x An \code{IterableMatrix}.
+#' @param rows (Integer) Optional vector of row indices to operate over.
+#' @param cols (Integer) Optional vector of column indices to operate over.
+#' @param na.rm (Logical) Should missing values (NA) be removed?
+#' @param center Optional center values (vector of length nrow(x) or ncol(x))
+#' @param probs (Numeric) Quantile value(s) to be computed, between 0 and 1.
+#' @param type (Integer) between 4 and 9 selecting which quantile algorithm to use, detailed in `matrixStats::rowQuantiles()`
+#' @param digits Number of decimal places for quantile calculations
+#' @param drop (Logical) If TRUE and only one quantile is requested, the result is coerced to a vector (For non-BPCells objects).
+#' @param useNames (Logical) Whether to use row and column names in the output.
 #' @param ... Passed to the underlying implementation.
 #'
 #' @name IterableMatrix-matrixgenerics

@@ -200,6 +200,15 @@ setMethod("matrix_inputs<-", "IterableMatrix", function(x, ..., value) {
 #' @param value List of IterableMatrix objects
 #' @return List of IterableMatrix objects. If a matrix `m` is itself an input object, then 
 #'   `all_matrix_inputs(m)` will return `list(m)`.
+#' @examples
+#' mat <- matrix(1:9, nrow=3) %>% as("IterableMatrix")
+#' 
+#' # Just returns the matrix itself
+#' all_matrix_inputs(mat)
+#' 
+#' # Returns the matrix twice, as they are the inputs to the cbind
+#' all_matrix_inputs(cbind(mat, mat))
+#' 
 #' @export
 all_matrix_inputs <- function(x) {
   assert_is(x, "IterableMatrix")
@@ -835,7 +844,18 @@ rlang::on_load({
 #' 
 #' @export
 rowVars <- function(x, rows = NULL, cols = NULL, na.rm = FALSE, center = NULL, ..., useNames = TRUE) UseMethod("rowVars")
-#' @export
+#' @describeIn IterableMatrix-matrixgenerics Calculate rowVars (replacement for `matrixStats::rowVars()`)
+#' @param center Optional center values (vector of length nrow(x) or ncol(x))
+#' @return * `rowVars(<default>)`: vector of row variance
+#' @examples
+#' mat <- matrix(1:25, nrow = 5) %>% as("dgCMatrix")
+#' mat
+#' mat <- as(mat, "IterableMatrix")
+#' #######################################################################
+#' ## rowVars(<default>) example
+#' #######################################################################
+#' rowVars(mat)
+#' 
 #' @method rowVars default
 rowVars.default <- function(x, rows = NULL, cols = NULL, na.rm = FALSE, center = NULL, ..., useNames = TRUE) {
   if (requireNamespace("MatrixGenerics", quietly = TRUE)) {
@@ -847,7 +867,15 @@ rowVars.default <- function(x, rows = NULL, cols = NULL, na.rm = FALSE, center =
   }
 }
 #' @export
-#' @method rowVars IterableMatrix
+#' @param center Optional center values (vector of length nrow(x) or ncol(x))
+#' @return * `rowVars(<IterableMatrix>)`: vector of row variance
+#' @examples
+#' #######################################################################
+#' ## rowVars(<IterableMatrix>) example
+#' #######################################################################
+#' rowVars(mat)
+#' 
+#' @describeIn IterableMatrix-matrixgenerics Calculate rowVars (replacement for `matrixStats::rowVars()`)
 rowVars.IterableMatrix <- function(x, rows = NULL, cols = NULL, na.rm = FALSE, center = NULL, ..., useNames = TRUE) {
   if (!is.null(rows) || !is.null(cols) || !isFALSE(na.rm) || !is.null(center) || !isTRUE(useNames)) {
     stop("rowVars(IterableMatrix) doesn't support extra arguments rows, cols, na.rm, center, or useNames")
@@ -873,7 +901,17 @@ rlang::on_load({
 #' 
 #' @export
 rowMaxs <- function(x, rows = NULL, cols = NULL, na.rm = FALSE, ..., useNames = TRUE) UseMethod("rowMaxs")
-#' @export
+#' @describeIn IterableMatrix-matrixgenerics Calculate rowMaxs (replacement for `matrixStats::rowMaxs()`)
+#' @return * `rowMaxs(<default>)`: vector of row maxs
+#' @examples
+#' mat <- matrix(1:25, nrow = 5) %>% as("dgCMatrix")
+#' mat
+#' mat <- as(mat, "IterableMatrix")
+#' #######################################################################
+#' ## rowMaxs(<default>) example
+#' #######################################################################
+#' rowMaxs(mat)
+#' 
 #' @method rowMaxs default
 rowMaxs.default <- function(x, rows = NULL, cols = NULL, na.rm = FALSE, ..., useNames = TRUE) {
   if (requireNamespace("MatrixGenerics", quietly = TRUE)) {
@@ -886,7 +924,14 @@ rowMaxs.default <- function(x, rows = NULL, cols = NULL, na.rm = FALSE, ..., use
   }
 }
 #' @export
-#' @method rowMaxs IterableMatrix
+#' @return * `rowMaxs(<IterableMatrix>)`: vector of row maxs
+#' @examples
+#' #######################################################################
+#' ## rowMaxs(<IterableMatrix>) example
+#' #######################################################################
+#' rowMaxs(mat)
+#' 
+#' @describeIn IterableMatrix-matrixgenerics Calculate rowMaxs (replacement for `matrixStats::rowMaxs()`)
 rowMaxs.IterableMatrix <- function(x, rows = NULL, cols = NULL, na.rm = FALSE, ..., useNames = TRUE) {
   if(!is.null(rows) || !is.null(cols) || !isFALSE(na.rm)) {
     stop("rowMaxs(IterableMatrix) doesn't support extra arguments rows, cols, or na.rm")
@@ -919,7 +964,17 @@ rlang::on_load({
 #' 
 #' @export
 colMaxs <- function(x, rows = NULL, cols = NULL, na.rm = FALSE, ..., useNames = TRUE) UseMethod("colMaxs")
-#' @export
+#' @describeIn IterableMatrix-matrixgenerics Calculate colMaxs (replacement for `matrixStats::colMaxs()`)
+#' @return * `colMaxs(<default>)`: vector of col maxs
+#' @examples
+#' mat <- matrix(1:25, nrow = 5) %>% as("dgCMatrix")
+#' mat
+#' mat <- as(mat, "IterableMatrix")
+#' #######################################################################
+#' ## colMaxs(<default>) example
+#' #######################################################################
+#' colMaxs(mat)
+#' 
 #' @method colMaxs default
 colMaxs.default <- function(x, rows = NULL, cols = NULL, na.rm = FALSE, ..., useNames = TRUE) {
   if (requireNamespace("MatrixGenerics", quietly = TRUE)) {
@@ -931,16 +986,15 @@ colMaxs.default <- function(x, rows = NULL, cols = NULL, na.rm = FALSE, ..., use
     stop("Can't run colMaxs on a non-BPCells object unless MatrixGenerics or matrixStats are installed.")
   }
 }
-#' @rdname IterableMatrix-matrixgenerics
+#' @export
+#' @return * `colMaxs(<IterableMatrix>)`: vector of col maxs
 #' @examples
 #' #######################################################################
-#' ## colMaxs() example
+#' ## colMaxs(<IterableMatrix>) example
 #' #######################################################################
 #' colMaxs(mat)
 #' 
-#' 
-#' @export
-#' @method colMaxs IterableMatrix
+#' @describeIn IterableMatrix-matrixgenerics Calculate colMaxs (replacement for `matrixStats::colMaxs()`)
 colMaxs.IterableMatrix <- function(x, rows = NULL, cols = NULL, na.rm = FALSE, ..., useNames = TRUE) {
   iter <- iterate_matrix(convert_matrix_type(x, "double"))
   if(x@transpose == TRUE) {
@@ -2714,6 +2768,26 @@ write_matrix_anndata_hdf5_dense <- function(mat, path, dataset = "X", buffer_siz
 #'   
 #'   When importing from 10x mtx files, the row and column names can be read automatically
 #'   using the `import_matrix_market_10x()` convenience function.
+#' @examples
+#' # Create a dummy matrix market file
+#' matrix_market_path <- file.path(tempdir(), "matrix.mtx")
+#' lines <- c(
+#'   "%%MatrixMarket matrix coordinate integer general",
+#'   "% This is a comment",
+#'   "5 10 3",
+#'   "1 1 1",
+#'   "2 2 2",
+#'   "5 10 3"
+#' )
+#' writeLines(lines, matrix_market_path)
+#' 
+#' # Import the matrix market file
+#' mat <- import_matrix_market(matrix_market_path)
+#' mat
+#' 
+#' # Clean up
+#' unlink(matrix_market_path)
+#' 
 #' @export
 import_matrix_market <- function(
   mtx_path, outdir = tempfile("matrix_market"), row_names = NULL, col_names = NULL, row_major = FALSE,
@@ -2746,6 +2820,14 @@ import_matrix_market <- function(
 #' @rdname import_matrix_market
 #' @param mtx_dir Directory holding matrix.mtx.gz, barcodes.tsv.gz, and features.tsv.gz
 #' @param feature_type String or vector of feature types to include. (cellranger 3.0 and newer)
+#' @examples
+#' \dontrun{
+#' # Import 10x matrix market directory
+#' mat <- import_matrix_market_10x(
+#'   "path/to/10x/matrix_market_dir"
+#' )
+#' }
+#' 
 #' @export
 import_matrix_market_10x <- function(
   mtx_dir, outdir = tempfile("matrix_market"), feature_type=NULL, row_major = FALSE, 
