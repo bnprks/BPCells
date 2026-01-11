@@ -12,3 +12,14 @@ rotate_x_labels(degrees = 45)
 \description{
 Rotate ggplot x axis labels
 }
+\examples{
+mat <- get_demo_mat()
+cell_types <- paste("Group", rep(1:3, length.out = length(colnames(mat))))
+
+## Plot dot
+scale_next_plot_height(0.8)
+plot_dot(mat, c("MS4A1", "CD3E"), cell_types)
+
+scale_next_plot_height(0.8)
+plot_dot(mat, c("MS4A1", "CD3E"), cell_types) + rotate_x_labels(90)
+}

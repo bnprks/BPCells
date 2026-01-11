@@ -35,3 +35,19 @@ If \code{source} is a data.frame, features will be drawn from the columns. If
 \code{source} is a matrix object (\code{IterableMatrix}, \code{dgCMatrix}, or \code{matrix}), features
 will be drawn from rows.
 }
+\examples{
+# Collect features from a matrix
+mat <- get_demo_mat()
+# By ID
+features_id <- collect_features(mat, "ENSG00000272602", gene_mapping = NULL)
+head(features_id)
+
+# By Gene Symbol (using default human_gene_mapping)
+features_symbol <- collect_features(mat, "MS4A1")
+head(features_symbol)
+
+# Collect features from a data frame
+df <- data.frame(a = 1:5, b = 6:10)
+features_df <- collect_features(df, c("a", "b"))
+head(features_df)
+}

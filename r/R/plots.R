@@ -20,6 +20,13 @@
 #' @param n Minimum number of colors needed
 #' @return Character vector of hex color codes
 #' @rdname palettes
+#' @examples
+#' #######################################################################
+#' ## discrete_palette() example
+#' #######################################################################
+#' discrete_palette("stallion")
+#' 
+#' 
 #' @export
 discrete_palette <- function(name, n = 1) {
   palettes <- list(
@@ -85,6 +92,13 @@ discrete_palette <- function(name, n = 1) {
 }
 
 #' @rdname palettes
+#' @examples
+#' #######################################################################
+#' ## continuous_palette() example
+#' #######################################################################
+#' continuous_palette("bluePurpleDark")
+#' 
+#' 
 #' @export
 continuous_palette <- function(name) {
   palettes <- list(
@@ -458,6 +472,21 @@ plot_tf_footprint <- function(fragments, motif_positions, cell_groups = rlang::r
 #' @param n Internal-use parameter marking the number of nested calls. This is used for
 #'   finding the name of the "source" input variable from the caller's perspective
 #' @return Data frame with one column for each feature requested
+#' @examples
+#' # Collect features from a matrix
+#' mat <- get_demo_mat()
+#' # By ID
+#' features_id <- collect_features(mat, "ENSG00000272602", gene_mapping = NULL)
+#' head(features_id)
+#' 
+#' # By Gene Symbol (using default human_gene_mapping)
+#' features_symbol <- collect_features(mat, "MS4A1")
+#' head(features_symbol)
+#' 
+#' # Collect features from a data frame
+#' df <- data.frame(a = 1:5, b = 6:10)
+#' features_df <- collect_features(df, c("a", "b"))
+#' head(features_df)
 #' @export
 collect_features <- function(source, features = NULL, gene_mapping = human_gene_mapping, n = 1) {
   if (!is.null(features)) {
@@ -826,6 +855,16 @@ plot_embedding <- function(source, embedding, features = NULL,
 
 #' Rotate ggplot x axis labels
 #' @param degrees Number of degrees to rotate by
+#' @examples
+#' mat <- get_demo_mat()
+#' cell_types <- paste("Group", rep(1:3, length.out = length(colnames(mat))))
+#' 
+#' ## Plot dot
+#' scale_next_plot_height(0.8)
+#' plot_dot(mat, c("MS4A1", "CD3E"), cell_types)
+#' 
+#' scale_next_plot_height(0.8)
+#' plot_dot(mat, c("MS4A1", "CD3E"), cell_types) + rotate_x_labels(90)
 #' @export
 rotate_x_labels <- function(degrees = 45) {
   ggplot2::theme(axis.text.x = ggplot2::element_text(angle = degrees, hjust = 1, vjust = 1))
@@ -852,7 +891,6 @@ rotate_x_labels <- function(degrees = 45) {
 #' ## Plot dot
 #' scale_next_plot_height(0.8)
 #' plot_dot(mat, c("MS4A1", "CD3E"), cell_types)
-
 #' @export
 plot_dot <- function(source, features, groups, group_order = NULL, gene_mapping = human_gene_mapping,
                      colors = c("lightgrey", "#4682B4"),

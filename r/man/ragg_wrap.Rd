@@ -57,3 +57,21 @@ by \code{trackplot_combine()}) renders too tall/short in a pipeline and you want
 quick scaling tweak without touching the plot code itself. The scaling factor
 is applied once and then cleared.
 }
+\examples{
+# Create a simple plot using ragg_wrap
+tmp_file <- tempfile(fileext = ".png")
+ragg_wrap(tmp_file, width = 400, height = 300)
+plot(1:10, 1:10)
+dev.off()
+
+# Use scale_next_plot_height to adjust height
+scale_next_plot_height(2)
+tmp_file_scaled <- tempfile(fileext = ".png")
+# Height will be effectively 600
+ragg_wrap(tmp_file_scaled, width = 400, height = 300) 
+plot(1:10, 1:10)
+dev.off()
+
+# Clean up
+unlink(c(tmp_file, tmp_file_scaled))
+}

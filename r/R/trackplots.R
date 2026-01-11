@@ -1309,6 +1309,26 @@ trackplot_bulk <- function(fragments, region, groups,
 #' @param scale Numeric multiplier applied to the `height` argument the next
 #'   time `ragg_wrap()` is called.
 #' @return Returns the previous option value (as returned by `options()`).
+#' @examples
+#' ## Prep data
+#' ## Peaks generated from demo frags, as input into `call_peaks_tile()`
+#' peaks <- tibble::tibble(
+#'   chr = factor(rep("chr4", 16)),
+#'   start = c(3041400, 3041733, 3037400, 3041933, 3040466, 3041200, 
+#'             3038200, 3038000, 3040266, 3037733, 3040800, 3042133, 
+#'             3038466, 3037200, 3043333, 3040066),
+#'   end = c(3041600, 3041933, 3037600, 3042133, 3040666, 3041400, 
+#'           3038400, 3038200, 3040466, 3037933, 3041000, 3042333, 
+#'           3038666, 3037400, 3043533, 3040266),
+#'   enrichment = c(46.4, 43.5, 28.4, 27.3, 17.3, 11.7, 
+#'                  10.5, 7.95, 7.22, 6.86, 6.32, 6.14, 
+#'                  5.96, 5.06, 4.51, 3.43)
+#' )
+#' region <- "chr4:3034877-3044877"
+#' 
+#' ## Plot peaks
+#' scale_next_plot_height(0.3)
+#' trackplot_genome_annotation(peaks, region, color_by = "enrichment")
 #' @export
 scale_next_plot_height <- function(scale) {
   options("BPCells.scale_next_plot_height" = scale)
@@ -1341,6 +1361,23 @@ scale_next_plot_height <- function(scale) {
 #' @param bitsize Should the dvice record colour as 8 or 16bit
 #' @param bg Same as `background` for compatibility with old graphic device APIs`
 #' @return A graphics device as returned by `ragg::agg_png()`.
+#' @examples
+#' # Create a simple plot using ragg_wrap
+#' tmp_file <- tempfile(fileext = ".png")
+#' ragg_wrap(tmp_file, width = 400, height = 300)
+#' plot(1:10, 1:10)
+#' dev.off()
+#' 
+#' # Use scale_next_plot_height to adjust height
+#' scale_next_plot_height(2)
+#' tmp_file_scaled <- tempfile(fileext = ".png")
+#' # Height will be effectively 600
+#' ragg_wrap(tmp_file_scaled, width = 400, height = 300) 
+#' plot(1:10, 1:10)
+#' dev.off()
+#' 
+#' # Clean up
+#' unlink(c(tmp_file, tmp_file_scaled))
 #' @export
 ragg_wrap <- function(
   filename = "Rplot%03d.png", width = 480, height = 480, 
