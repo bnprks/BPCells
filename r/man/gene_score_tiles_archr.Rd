@@ -61,7 +61,9 @@ genes <- read_gencode_genes(
 ## Use pre-generated data for this example
 ## Use pre-computed transcripts for chr4
 genes <- readr::read_delim(
-  file.path(system.file("extdata", package = "BPCells"), "transcripts_filtered_example_chr_4.tsv.gz"),
+  file.path(
+    system.file("extdata", package = "BPCells"), 
+    "transcripts_filtered_example_chr_4.tsv.gz"),
   delim = "\t", show_col_types = FALSE
 )
 
