@@ -17,6 +17,6 @@ below to see their documentation.
 \describe{
   \item{magrittr}{\code{\link[magrittr:pipe]{\%>\%}}}
 
-  \item{Matrix}{\code{\link[Matrix:colSums]{colMeans}}, \code{\link[Matrix]{colSums}}, \code{\link[Matrix:colSums]{rowMeans}}, \code{\link[Matrix:colSums]{rowSums}}}
+  \item{Matrix}{\code{\link[Matrix:colSums-methods]{colMeans}}, \code{\link[Matrix:colSums-methods]{colSums}}, \code{\link[Matrix:colSums-methods]{rowMeans}}, \code{\link[Matrix:colSums-methods]{rowSums}}}
 }}
 

@@ -626,7 +626,7 @@ write_insertion_bedgraph <- function(
 #' ######################################################
 #' ## `write_insertion_bed()` examples
 #' ######################################################
-#'
+#' \dontrun{
 #' # We utilize two groups this time
 #' bed_outputs <- file.path(tempdir(), "bed_outputs")
 #' cell_groups <- rep(c("A", "B"), length.out = length(cellNames(frags)))
@@ -636,11 +636,29 @@ write_insertion_bedgraph <- function(
 #'   frags, path = bed_paths, cell_groups = cell_groups,
 #'   verbose = TRUE
 #' )
+#' #> 2026-01-08 21:19:41 Writing bed file for cluster: A
+#' #> 2026-01-08 21:19:41 Bed file for cluster: A written to: 
+#' #>   /tmp/RtmpgF9rbP/bed_outputs/A.bed
+#' #> 2026-01-08 21:19:41 Writing bed file for cluster: B
+#' #> 2026-01-08 21:19:42 Bed file for cluster: B written to: 
+#' #>   /tmp/RtmpgF9rbP/bed_outputs/B.bed
+#' #> 2026-01-08 21:19:42 Finished writing bed files
 #' list.files(bed_outputs)
+#' #> [1] "A.bed" "B.bed"
 #' head(readr::read_tsv(
 #'   file.path(bed_outputs, "A.bed"),
 #'   col_names = c("chr", "start", "end"), show_col_types = FALSE)
 #' )
+#' #> # A tibble: 6 × 3
+#' #>   chr   start   end
+#' #>   <chr> <dbl> <dbl>
+#' #> 1 chr4  10035 10036
+#' #> 2 chr4  10045 10046
+#' #> 3 chr4  10045 10046
+#' #> 4 chr4  10046 10047
+#' #> 5 chr4  10046 10047
+#' #> 6 chr4  10066 10067
+#' }
 #' @export
 write_insertion_bed <- function(fragments, path,
                                 cell_groups = rlang::rep_along(cellNames(fragments), "all"),
