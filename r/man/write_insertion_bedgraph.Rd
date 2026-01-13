@@ -63,7 +63,7 @@ Beds only hold chrom, start, and end data, while bedGraphs also provide a score 
 This reports the total number of insertions at each basepair for each group listed in \code{cell_groups}.
 }
 \examples{
-
+\dontrun{
 ## Prep data
 frags <- get_demo_frags()
 bedgraph_outputs <- file.path(tempdir(), "bedgraph_outputs")
@@ -72,7 +72,6 @@ bedgraph_outputs <- file.path(tempdir(), "bedgraph_outputs")
 ## `write_insertion_bedgraph()` examples
 ######################################################
 ## Write insertions
-\dontrun{
 write_insertion_bedgraph(frags, file.path(bedgraph_outputs, "all.tar.gz"))
 list.files(bedgraph_outputs)
 

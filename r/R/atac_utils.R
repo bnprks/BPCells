@@ -525,7 +525,7 @@ call_peaks_tile <- function(fragments, chromosome_sizes, cell_groups = rep.int("
 #' If a data.frame or list, must contain columns `chr` and `end` (See `help("genomic-ranges-like")`).
 #' If a numeric vector, then it is assumed to be the chromosome sizes in the order of `chrNames(fragments)`.
 #' @examples
-#' 
+#' \dontrun{
 #' ## Prep data
 #' frags <- get_demo_frags()
 #' bedgraph_outputs <- file.path(tempdir(), "bedgraph_outputs")
@@ -534,7 +534,6 @@ call_peaks_tile <- function(fragments, chromosome_sizes, cell_groups = rep.int("
 #' ## `write_insertion_bedgraph()` examples
 #' ######################################################
 #' ## Write insertions
-#' \dontrun{
 #' write_insertion_bedgraph(frags, file.path(bedgraph_outputs, "all.tar.gz"))
 #' list.files(bedgraph_outputs)
 #'
