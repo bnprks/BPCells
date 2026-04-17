@@ -31,6 +31,8 @@ plot_tss_profile(
 \item{zero_based_coords}{If true, coordinates start and 0 and the end coordinate is not included in the range.
 If false, coordinates start at 1 and the end coordinate is included in the range}
 
+\item{colors}{Discrete color palette to use for cell groups}
+
 \item{return_data}{If true, return data from just before plotting rather than a plot.}
 
 \item{apply_styling}{If false, return a plot without pretty styling applied}
@@ -41,16 +43,29 @@ Typically, this plot shows strong enrichment of insertions near a TSS, and a
 small bump downstream around 220bp downstream of the TSS for the +1 nucleosome.
 }
 \examples{
+
 ## Prep data
-frags <- get_demo_frags(filter_qc = FALSE, subset = FALSE)
+frags <- get_demo_frags()
+\dontrun{
 genes <- read_gencode_transcripts(
   file.path(tempdir(), "references"), release = "42",
   annotation_set = "basic",
-  features = "transcript"
+  features = "transcript", timeout = 3000
 )
+}
+
+## Use pre-computed transcripts for chr4
+genes <- readr::read_delim(
+  file.path(
+    system.file("extdata", package = "BPCells"), 
+    "transcripts_filtered_example_chr_4.tsv.gz"),
+  delim = "\t", show_col_types = FALSE
+)
+
 
 ## Plot tss profile
 plot_tss_profile(frags, genes)
+
 }
 \seealso{
 \code{footprint()}, \code{plot_tf_footprint()}

@@ -88,7 +88,7 @@ range_distance_to_nearest <- function(ranges, addArchRBug = FALSE, zero_based_co
 #' @inheritParams normalize_ranges
 #' @param upstream Number of bases to extend each range upstream (negative to shrink width)
 #' @param downstream Number of bases to extend each range downstream (negative to shrink width)
-#' @param chromosome_sizes (optional) Size of chromosomes as a [genomic-ranges] object
+#' @param chromosome_sizes (optional) Size of chromosomes as a [genomic-ranges-like] object
 #' @details Note that ranges will be blocked from extending past the beginning of the chromosome (base 0),
 #' and if `chromosome_sizes` is given then they will also be blocked from extending past the end of the chromosome
 #' @examples
@@ -152,15 +152,25 @@ extend_ranges <- function(ranges, upstream = 0, downstream = 0, metadata_cols = 
 #' be negative. The distance of adjacent but non-overlapping regions is 1bp, counting
 #' up from there.
 #' @examples
+#' \dontrun{
 #' ## Prep data
 #' directory  <- file.path(tempdir(), "references")
 #' genes <- read_gencode_genes(
 #'     directory,
 #'     release = "42",
-#'     annotation_set = "basic",    
+#'     annotation_set = "basic",
 #' )
+#' }
 #' 
-#' 
+#' ## Use pre-generated data for this example
+#' ## Use pre-computed transcripts for chr4
+#' genes <- readr::read_delim(
+#'   file.path(
+#'     system.file("extdata", package = "BPCells"), 
+#'     "transcripts_filtered_example_chr_4.tsv.gz"),
+#'   delim = "\t", show_col_types = FALSE
+#' )
+#'
 #' ## Get gene scores by tile
 #' gene_score_tiles_archr(
 #'     genes
@@ -226,6 +236,7 @@ gene_score_tiles_archr <- function(genes, chromosome_sizes = NULL, tile_width = 
 #' 
 #' Weight matrix of dimension genes x tiles
 #' @examples
+#' \dontrun{
 #' ## Prep data
 #' reference_dir <- file.path(tempdir(), "references")
 #' frags <- get_demo_frags()
@@ -234,8 +245,10 @@ gene_score_tiles_archr <- function(genes, chromosome_sizes = NULL, tile_width = 
 #'   release="42", 
 #'   annotation_set = "basic", 
 #' ) %>% dplyr::filter(chr %in% c("chr4", "chr11"))
-#' blacklist <- read_encode_blacklist(reference_dir, genome="hg38") %>% dplyr::filter(chr %in% c("chr4", "chr11"))
-#' chrom_sizes <- read_ucsc_chrom_sizes(reference_dir, genome="hg38") %>% dplyr::filter(chr %in% c("chr4", "chr11"))
+#' blacklist <- read_encode_blacklist(reference_dir, genome="hg38") %>% 
+#'   dplyr::filter(chr %in% c("chr4", "chr11"))
+#' chrom_sizes <- read_ucsc_chrom_sizes(reference_dir, genome="hg38") %>% 
+#'   dplyr::filter(chr %in% c("chr4", "chr11"))
 #' chrom_sizes$tile_width = 500
 #' 
 #' 
@@ -252,6 +265,7 @@ gene_score_tiles_archr <- function(genes, chromosome_sizes = NULL, tile_width = 
 #' 
 #' ## Get gene scores per cell 
 #' gene_score_weights %*% tiles
+#' }
 #' 
 #' 
 #' @export
@@ -315,12 +329,14 @@ gene_score_weights_archr <- function(genes, chromosome_sizes, blacklist = NULL, 
 #' 
 #' Gene score matrix of dimension genes x cells.
 #' @examples
+#' \dontrun{
 #' #######################################################################
 #' ## gene_score_archr() example
 #' #######################################################################
 #' ## This is a wrapper that creates both the gene score weight 
 #' ## matrix and tile matrix together
 #' gene_score_archr(frags, genes, chrom_sizes, blacklist)
+#' }
 #' 
 #' 
 #' @export

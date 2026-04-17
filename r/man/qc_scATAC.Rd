@@ -50,9 +50,9 @@ re-calculate the ArchR QC stats.
 
 ArchR's \code{PromoterRatio} and \code{BlacklistRatio} are not included in the output, as they can be easily calculated
 from \code{ReadsInPromoter / nFrags} and  \code{ReadsInBlacklist / nFrags}. Similarly, ArchR's \code{NucleosomeRatio} can be calculated
-as \code{(monoNucleosomal + multiNucleosomal) / subNucleosomal}.
 }
 \examples{
+\dontrun{
 ## Prep data
 frags <- get_demo_frags(subset = FALSE)
 reference_dir <- file.path(tempdir(), "references")
@@ -68,4 +68,14 @@ blacklist <- read_encode_blacklist(reference_dir, genome = "hg38")
 
 ## Run qc
 head(qc_scATAC(frags, genes, blacklist))
+}
+
+## Read precomputed
+head(readr::read_delim(
+ file.path(
+  system.file("extdata", package = "BPCells"), 
+  "qc_results_filtered_example_chr_4.tsv.gz"
+ ),
+ delim = "\t", show_col_types = FALSE
+))
 }

@@ -80,6 +80,12 @@ is_adjacency_matrix <- function(mat) {
 #'  Returns a factor vector of length `cells` with a cluster assignment for each cell.
 #'
 #' @seealso `knn_hnsw()` `knn_annoy()` `knn_to_graph()` `knn_to_snn_graph()` `knn_to_geodesic_graph()` `cluster_graph_leiden()` `cluster_graph_louvain()` `cluster_graph_seurat()` 
+#' @examples
+#' set.seed(123)
+#' mat <- matrix(rnorm(1000 * 10), nrow = 1000)
+#' clusters <- cluster_cells_graph(mat, threads = 1)
+#' table(clusters)
+#' 
 #' @export
 cluster_cells_graph <- function(
   mat, knn_method = knn_hnsw, 
@@ -161,6 +167,12 @@ knn_to_graph <- function(knn, use_weights = FALSE, self_loops = TRUE) {
 #'      List of 3 equal-length vectors `i`, `j`, and `weight`, along with an integer `dim`. 
 #'      These correspond to the rows, cols, and values of non-zero entries in the lower triangle
 #'      adjacency matrix. `dim` is the total number of vertices (cells) in the graph 
+#' @examples
+#' set.seed(123)
+#' mat <- matrix(rnorm(1000 * 10), nrow = 1000)
+#' knn <- knn_hnsw(mat, k = 10)
+#' graph <- knn_to_snn_graph(knn)
+#' 
 #' @export
 knn_to_snn_graph <- function(knn, min_val = 1 / 15, self_loops = FALSE, return_type=c("matrix", "list")) {
   return_type <- match.arg(return_type)
@@ -215,6 +227,12 @@ knn_to_snn_graph <- function(knn, min_val = 1 / 15, self_loops = FALSE, return_t
 #'      List of 3 equal-length vectors `i`, `j`, and `weight`, along with an integer `dim`. 
 #'      These correspond to the rows, cols, and values of non-zero entries in the lower triangle
 #'      adjacency matrix. `dim` is the total number of vertices (cells) in the graph 
+#' @examples
+#' set.seed(123)
+#' mat <- matrix(rnorm(1000 * 10), nrow = 1000)
+#' knn <- knn_hnsw(mat, k = 10)
+#' graph <- knn_to_geodesic_graph(knn)
+#' 
 #' @export
 knn_to_geodesic_graph <- function(knn, return_type = c("matrix", "list"), threads = 0L) {
   return_type <- match.arg(return_type)
@@ -247,6 +265,13 @@ knn_to_geodesic_graph <- function(knn, return_type = c("matrix", "list"), thread
 #' @param seed Random seed for clustering initialization
 #' @param ... Additional arguments to underlying clustering function
 #' @return Factor vector containing the cluster assignment for each cell.
+#' @examples
+#' set.seed(123)
+#' mat <- matrix(rnorm(1000 * 10), nrow = 1000)
+#' knn <- knn_hnsw(mat, k = 10)
+#' graph <- knn_to_snn_graph(knn)
+#' clusters <- cluster_graph_leiden(graph, resolution = 0.5)
+#' 
 #' @export
 cluster_graph_leiden <- function(
   mat, resolution = 1, objective_function = c("modularity", "CPM"),
@@ -270,6 +295,13 @@ cluster_graph_leiden <- function(
 
 #' @rdname cluster_graph
 #' @details **cluster_graph_louvain**: Louvain graph clustering algorithm `igraph::cluster_louvain()`
+#' @examples
+#' set.seed(123)
+#' mat <- matrix(rnorm(1000 * 10), nrow = 1000)
+#' knn <- knn_hnsw(mat, k = 10)
+#' graph <- knn_to_snn_graph(knn)
+#' clusters <- cluster_graph_louvain(graph, resolution = 0.5)
+#' 
 #' @export
 cluster_graph_louvain <- function(
   mat, resolution = 1, seed = 12531
@@ -290,6 +322,15 @@ cluster_graph_louvain <- function(
 
 #' @rdname cluster_graph
 #' @details **cluster_graph_seurat**: Seurat's clustering algorithm `Seurat::FindClusters()`
+#' @examples
+#' \dontrun{
+#' set.seed(123)
+#' mat <- matrix(rnorm(1000 * 10), nrow = 1000)
+#' knn <- knn_hnsw(mat, k = 10)
+#' graph <- knn_to_snn_graph(knn)
+#' clusters <- cluster_graph_seurat(graph, resolution = 0.5)
+#' }
+#' 
 #' @export
 cluster_graph_seurat <- function(
   mat, resolution = 0.8, ...
@@ -357,6 +398,16 @@ cluster_membership_matrix <- function(groups, group_order = NULL) {
 #'
 #'  If no query is given, nearest neighbors are found by mapping the data matrix to itself, 
 #'  likely including self-neighbors (i.e. `idx[c,1] == c` for most cells).
+#' @examples
+#' ############################################
+#' ## knn_annoy() example
+#' ############################################
+#' set.seed(123)
+#' mat <- matrix(rnorm(100 * 10), nrow = 10)
+#' rownames(mat) <- paste0("cell", 1:10)
+#' knn <- knn_hnsw(mat, k = 10)
+#' knn
+#' 
 #' @export
 knn_hnsw <- function(data, query = NULL, k = 10, metric = c("euclidean", "cosine"), verbose = TRUE, threads = 1, ef = 100) {
   metric <- match.arg(metric)
@@ -396,6 +447,15 @@ knn_hnsw <- function(data, query = NULL, k = 10, metric = c("euclidean", "cosine
 #' @details **knn_annoy**: Use RcppAnnoy as knn engine
 #' @param n_trees Number of trees during index build time. More trees gives higher accuracy
 #' @param search_k Number of nodes to inspect during the query, or -1 for default value. Higher number gives higher accuracy
+#' @examples
+#' ############################################
+#' ## knn_annoy() example
+#' ############################################
+#' set.seed(123)
+#' mat <- matrix(rnorm(100 * 10), nrow = 10)
+#' rownames(mat) <- paste0("cell", 1:10)
+#' knn <- knn_annoy(mat, k = 10)
+#' knn
 #' @export
 knn_annoy <- function(data, query = NULL, k = 10, metric = c("euclidean", "cosine", "manhattan", "hamming"), n_trees = 50, search_k = -1) {
   metric <- match.arg(metric)

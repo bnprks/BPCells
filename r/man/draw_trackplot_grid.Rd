@@ -40,4 +40,7 @@ by heights. A shared title and x-axis are put at the top.
 
 This function has been renamed to \code{trackplot_combine()}.
 }
+\examples{
+# See ?trackplot_combine for examples
+}
 \keyword{internal}

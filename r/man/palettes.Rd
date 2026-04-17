@@ -27,3 +27,17 @@ large sets of distinguishable colors
 If the requested number of colors is too large, a new palette will be constructed
 via interpolation from the requested palette
 }
+\examples{
+#######################################################################
+## discrete_palette() example
+#######################################################################
+discrete_palette("stallion")
+
+
+#######################################################################
+## continuous_palette() example
+#######################################################################
+continuous_palette("bluePurpleDark")
+
+
+}

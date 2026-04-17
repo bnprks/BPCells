@@ -63,6 +63,7 @@ Beds only hold chrom, start, and end data, while bedGraphs also provide a score 
 This reports the total number of insertions at each basepair for each group listed in \code{cell_groups}.
 }
 \examples{
+\dontrun{
 ## Prep data
 frags <- get_demo_frags()
 bedgraph_outputs <- file.path(tempdir(), "bedgraph_outputs")
@@ -75,7 +76,7 @@ write_insertion_bedgraph(frags, file.path(bedgraph_outputs, "all.tar.gz"))
 list.files(bedgraph_outputs)
 
 # With tiling
-chrom_sizes <- read_ucsc_chrom_sizes("./reference", genome="hg38") \%>\% 
+chrom_sizes <- read_ucsc_chrom_sizes(file.path(tempdir(), "references"), genome="hg38") \%>\% 
   dplyr::filter(chr \%in\% c("chr4", "chr11"))
 write_insertion_bedgraph(frags, file.path(bedgraph_outputs, "all_tiled.bedGraph"),
   chrom_sizes = chrom_sizes, normalization_method = "cpm", tile_width = 100)
@@ -83,12 +84,20 @@ reads <- readr::read_tsv(file.path(bedgraph_outputs, "all_tiled.bedGraph"),
   col_names = c("chr", "start", "end", "score"),
   show_col_types = FALSE)
 head(reads)
-
-
+#> A tibble: 6 × 4                                                                                                  
+#>   chr   start   end score
+#>   <chr> <dbl> <dbl> <dbl>
+#> 1 chr4  10000 10100 1.45 
+#> 2 chr4  10100 10200 0.869
+#> 3 chr4  10300 10400 0.290
+#> 4 chr4  10400 10500 0.145
+#> 5 chr4  10600 10700 0.434
+#> 6 chr4  11100 11200 0.145
+}
 ######################################################
 ## `write_insertion_bed()` examples
 ######################################################
-
+\dontrun{
 # We utilize two groups this time
 bed_outputs <- file.path(tempdir(), "bed_outputs")
 cell_groups <- rep(c("A", "B"), length.out = length(cellNames(frags)))
@@ -98,9 +107,27 @@ write_insertion_bed(
   frags, path = bed_paths, cell_groups = cell_groups,
   verbose = TRUE
 )
+#> 2026-01-08 21:19:41 Writing bed file for cluster: A
+#> 2026-01-08 21:19:41 Bed file for cluster: A written to: 
+#>   /tmp/RtmpgF9rbP/bed_outputs/A.bed
+#> 2026-01-08 21:19:41 Writing bed file for cluster: B
+#> 2026-01-08 21:19:42 Bed file for cluster: B written to: 
+#>   /tmp/RtmpgF9rbP/bed_outputs/B.bed
+#> 2026-01-08 21:19:42 Finished writing bed files
 list.files(bed_outputs)
+#> [1] "A.bed" "B.bed"
 head(readr::read_tsv(
   file.path(bed_outputs, "A.bed"),
   col_names = c("chr", "start", "end"), show_col_types = FALSE)
 )
+#> # A tibble: 6 × 3
+#>   chr   start   end
+#>   <chr> <dbl> <dbl>
+#> 1 chr4  10035 10036
+#> 2 chr4  10045 10046
+#> 3 chr4  10045 10046
+#> 4 chr4  10046 10047
+#> 5 chr4  10046 10047
+#> 6 chr4  10066 10067
+}
 }

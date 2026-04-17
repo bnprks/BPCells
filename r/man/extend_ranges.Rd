@@ -25,7 +25,7 @@ extend_ranges(
 
 \item{metadata_cols}{Optional list of metadata columns to require & extract}
 
-\item{chromosome_sizes}{(optional) Size of chromosomes as a \link{genomic-ranges} object}
+\item{chromosome_sizes}{(optional) Size of chromosomes as a \link{genomic-ranges-like} object}
 
 \item{zero_based_coords}{If true, coordinates start and 0 and the end coordinate is not included in the range.
 If false, coordinates start at 1 and the end coordinate is included in the range}

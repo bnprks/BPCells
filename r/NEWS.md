@@ -1,7 +1,24 @@
-# BPCells 0.4.0 (in-progress main branch)
+# BPCells 0.4.0 (in-progress main branch) 
+## To-dos
+- Add support for sparse pseudobulking in `pseudobulk_matrix()`.  Currently in progress in #268.
+- Add support for duplicate rows/cols in subsetting operations.
+- Add support for matrix matrix addition.
+- Maybe add CCA support? 
+- Refactor C++ backend to take in the logic in R S4 methods.  This would allow for a cleaner seperation of R and C++ code, and would allow for much quicker porting
+  to Python in the future.
+
+# BPCells 0.3.2
+* Initial CRAN submission.
+
+The BPCells 0.3.2 release covers 6 months of changes and 8 commits from @immanuelazn.
+Most notably, this release prepares (finally!) BPCells for CRAN submission. This means that users can easily install BPCells using pre-compiled binaries, rather than having to compile from source.
+Full details of changes below.
 
 ## Breaking changes
 - Change first parameter name of `cluster_graph_leiden()`, `cluster_graph_louvain()` and `cluster_graph_seurat()` from `snn` to `mat` to more accurately reflect the input type.  (pull request #292)
+
+## Improvements
+- Prepare BPCells for CRAN submission by adjusting styling and adding additional documentation for S3/S4 methods of IterableMatrix/IterableFragments. (pull request #311)
 
 ## Features
 - Create a wrapper function `cluster_cells_graph()` that wraps the steps of knn object creation, graph adjacency creation, and clustering all within a single function (pull request #292)
@@ -13,13 +30,6 @@
 - Fix error in documentation examples for `plot_embedding()`, resulting from the way documentation examples use nested function calls (pull request #316).
 - Fix error in `qc_scATAC()` when fragments are near the start of a chromosome (pull request #320).
 
-## To-dos
-- Add support for sparse pseudobulking in `pseudobulk_matrix()`.  Currently in progress in #268.
-- Add support for duplicate rows/cols in subsetting operations.
-- Add support for matrix matrix addition.
-- Maybe add CCA support? 
-- Refactor C++ backend to take in the logic in R S4 methods.  This would allow for a cleaner seperation of R and C++ code, and would allow for much quicker porting
-  to Python in the future.
 
 # BPCells 0.3.1 (7/21/2025)
 

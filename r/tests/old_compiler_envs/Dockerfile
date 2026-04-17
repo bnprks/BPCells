@@ -25,7 +25,7 @@ ENV LANG en_US.UTF-8
 
 ## Install backported R 4.0
 RUN apt-key adv --keyserver keyserver.ubuntu.com --recv-key '95C0FAF38DB3CCAD0C080A7BDC78B2DDEABC47B7' && \
-    echo "deb http://cloud.r-project.org/bin/linux/debian buster-cran40/" >> /etc/apt/sources.list
+    echo "deb https://cloud.r-project.org/bin/linux/debian buster-cran40/" >> /etc/apt/sources.list
 
 ENV R_BASE_VERSION=4.2.2
 

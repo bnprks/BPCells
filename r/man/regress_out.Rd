@@ -40,3 +40,19 @@ Generally, \code{n_features == ncol(latent_data)}, but for categorical variables
 category will be expanded into its own indicator variable. Memory usage will therefore be higher when
 using categorical input variables with many (i.e. >100) distinct values.
 }
+\examples{
+set.seed(12345)
+mat <- matrix(rnorm(1000 * 100), nrow = 1000, ncol = 100)
+rownames(mat) <- paste0("gene", 1:1000)
+colnames(mat) <- paste0("cell", 1:100)
+mat <- as(mat, "dgCMatrix") \%>\% as("IterableMatrix")
+
+latent_data <- data.frame(
+  batch = sample(c("A", "B"), 100, replace = TRUE),
+  age = rnorm(100, mean = 30, sd = 10)
+)
+
+# Regress out batch and age
+res <- regress_out(mat, latent_data, prediction_axis = "row")
+
+}

@@ -87,9 +87,26 @@ frags <- get_demo_frags()
 ## Remove blacklist regions from fragments
 blacklist <- read_encode_blacklist(reference_dir, genome="hg38")
 frags_filter_blacklist <- select_regions(frags, blacklist, invert_selection = TRUE)
-chrom_sizes <- read_ucsc_chrom_sizes(reference_dir, genome="hg38") \%>\% dplyr::filter(chr \%in\% c("chr4", "chr11"))
+chrom_sizes <- read_ucsc_chrom_sizes(reference_dir, genome="hg38") \%>\% 
+  dplyr::filter(chr \%in\% c("chr4", "chr11"))
 
 
 ## Call peaks
+if (interactive()) {
 call_peaks_tile(frags_filter_blacklist, chrom_sizes, effective_genome_size = 2.8e9)
+}
+#> # A tibble: 73,160 x 7
+#>    chr       start       end group p_val q_val enrichment
+#>    <fct>     <int>     <int> <chr> <dbl> <dbl>      <dbl>
+#>  1 chr11  65615400  65615600 all       0     0      6764.
+#>  2 chr4    2262266   2262466 all       0     0      6422.
+#>  3 chr11 119057200 119057400 all       0     0      6188.
+#>  4 chr11    695133    695333 all       0     0      6180.
+#>  5 chr11   2400400   2400600 all       0     0      6166.
+#>  6 chr4    1346933   1347133 all       0     0      6109.
+#>  7 chr11   3797600   3797800 all       0     0      6017.
+#>  8 chr11  64878600  64878800 all       0     0      5948.
+#>  9 chr11  57667733  57667933 all       0     0      5946.
+#> 10 chr11  83156933  83157133 all       0     0      5913.
+#> # i 73,150 more rows
 }

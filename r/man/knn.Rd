@@ -68,3 +68,22 @@ utilizing both data and query.
 
 \strong{knn_annoy}: Use RcppAnnoy as knn engine
 }
+\examples{
+############################################
+## knn_annoy() example
+############################################
+set.seed(123)
+mat <- matrix(rnorm(100 * 10), nrow = 10)
+rownames(mat) <- paste0("cell", 1:10)
+knn <- knn_hnsw(mat, k = 10)
+knn
+
+############################################
+## knn_annoy() example
+############################################
+set.seed(123)
+mat <- matrix(rnorm(100 * 10), nrow = 10)
+rownames(mat) <- paste0("cell", 1:10)
+knn <- knn_annoy(mat, k = 10)
+knn
+}

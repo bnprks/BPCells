@@ -8,11 +8,16 @@
 
 #' Find the nth quantile value(s) of each row in a matrix. Only supports transposed matrices.
 #' @param x IterableMatrix object or a matrix-like object.
+#' @param rows (Integer) Optional vector of row indices to operate over.
+#' @param cols (Integer) Optional vector of column indices to operate over.
 #' @param probs (Numeric) Quantile value(s) to be computed, between 0 and 1.
+#' @param na.rm (Logical) Should missing values (NA) be removed?
 #' @param type (Integer) between 4 and 9 selecting which quantile algorithm to use, detailed in `matrixStats::rowQuantiles()`
+#' @param useNames (Logical) Whether to use row and column names in the output.
+#' @param drop (Logical) If TRUE and only one quantile is requested, the result is coerced to a vector (For non-BPCells objects).
 #' @return  - `rowQuantiles():` If `length(probs) == 1`, return a numeric with number of entries equal to the number of rows in the matrix.
 #' Else, return a Matrix of quantile values, with cols representing each quantile, and each row representing a row in the input matrix.
-#' @describeIn IterableMatrix-methods Calculate rowQuantiles (replacement for `matrixStats::rowQuantiles`)
+#' @describeIn IterableMatrix-methods-stats Calculate rowQuantiles (replacement for `matrixStats::rowQuantiles`)
 #' @usage rowQuantiles(
 #'   x,
 #'   rows = NULL,
@@ -39,7 +44,18 @@ rowQuantiles <- function(x, rows = NULL, cols = NULL,
                          useNames = TRUE, drop = TRUE) {
   UseMethod("rowQuantiles")
 }
-#' @export
+#' @describeIn IterableMatrix-matrixgenerics Calculate rowQuantiles (replacement for `matrixStats::rowQuantiles`)
+#' @return * `rowQuantiles(<default>)`: If `length(probs) == 1`, return a numeric with number of entries equal to the number of rows in the matrix. Else, return a Matrix of quantile values, with cols representing each quantile, and each row representing a row in the input matrix.
+#' @examples
+#' mat <- matrix(1:25, nrow = 5) %>% as("dgCMatrix")
+#' mat
+#' mat <- as(mat, "IterableMatrix")
+#' #######################################################################
+#' ## rowQuantiles(<default>) example
+#' #######################################################################
+#' rowQuantiles(transpose_storage_order(mat))
+#' 
+#' @method rowQuantiles default
 rowQuantiles.default <- function(x, rows = NULL, cols = NULL,
                                  probs = seq(from = 0, to = 1, by = 0.25),
                                  na.rm = FALSE, type = 7L, digits = 7L, ...,
@@ -53,6 +69,14 @@ rowQuantiles.default <- function(x, rows = NULL, cols = NULL,
   }
 }
 #' @export
+#' @return * `rowQuantiles(<IterableMatrix>)`: If `length(probs) == 1`, return a numeric with number of entries equal to the number of rows in the matrix. Else, return a Matrix of quantile values, with cols representing each quantile, and each row representing a row in the input matrix.
+#' @examples
+#' #######################################################################
+#' ## rowQuantiles(<IterableMatrix>) example
+#' #######################################################################
+#' rowQuantiles(transpose_storage_order(mat))
+#' 
+#' @describeIn IterableMatrix-matrixgenerics Calculate rowQuantiles (replacement for `matrixStats::rowQuantiles`)
 rowQuantiles.IterableMatrix <- function(x, rows = NULL, cols = NULL,
                                         probs = seq(from = 0, to = 1, by = 0.25),
                                         na.rm = FALSE, type = 7L, digits = 7L, ...,
@@ -94,8 +118,7 @@ rowQuantiles.IterableMatrix <- function(x, rows = NULL, cols = NULL,
 #' Find the nth quantile value(s) of each column in a matrix. Only supports non-transposed matrices.
 #' @return - `colQuantiles():` If `length(probs) == 1`, return a numeric with number of entries equal to the number of columns in the matrix. 
 #' Else, return a Matrix of quantile values, with cols representing each quantile, and each row representing a col in the input matrix.
-#' @describeIn IterableMatrix-methods Calculate colQuantiles (replacement for `matrixStats::colQuantiles`)
-#' @inheritParams rowQuantiles
+#' @describeIn IterableMatrix-methods-stats Calculate colQuantiles (replacement for `matrixStats::colQuantiles`)
 #' @usage colQuantiles(
 #'   x,
 #'   rows = NULL,
@@ -122,7 +145,18 @@ colQuantiles <- function(x, rows = NULL, cols = NULL,
                          useNames = TRUE, drop = TRUE) {
   UseMethod("colQuantiles")
 }
-#' @export
+#' @describeIn IterableMatrix-matrixgenerics Calculate colQuantiles (replacement for `matrixStats::colQuantiles`)
+#' @return * `colQuantiles(<default>)`: If `length(probs) == 1`, return a numeric with number of entries equal to the number of columns in the matrix. Else, return a Matrix of quantile values, with cols representing each quantile, and each row representing a col in the input matrix.
+#' @examples
+#' mat <- matrix(1:25, nrow = 5) %>% as("dgCMatrix")
+#' mat
+#' mat <- as(mat, "IterableMatrix")
+#' #######################################################################
+#' ## colQuantiles(<default>) example
+#' #######################################################################
+#' colQuantiles(mat)
+#' 
+#' @method colQuantiles default
 colQuantiles.default <- function(x, rows = NULL, cols = NULL, 
                                  probs = seq(from = 0, to = 1, by = 0.25),
                                  na.rm = FALSE, type = 7L, digits = 7L, ...,
@@ -136,6 +170,14 @@ colQuantiles.default <- function(x, rows = NULL, cols = NULL,
   }
 }
 #' @export
+#' @return * `colQuantiles(<IterableMatrix>)`: If `length(probs) == 1`, return a numeric with number of entries equal to the number of columns in the matrix. Else, return a Matrix of quantile values, with cols representing each quantile, and each row representing a col in the input matrix.
+#' @examples
+#' #######################################################################
+#' ## colQuantiles(<IterableMatrix>) example
+#' #######################################################################
+#' colQuantiles(mat)
+#' 
+#' @describeIn IterableMatrix-matrixgenerics Calculate colQuantiles (replacement for `matrixStats::colQuantiles`)
 colQuantiles.IterableMatrix <- function(x, rows = NULL, cols = NULL, 
                                         probs = seq(from = 0, to = 1, by = 0.25), 
                                         na.rm = FALSE, type = 7L, digits = 7L, ...,
@@ -179,3 +221,42 @@ rlang::on_load({
     setMethod(MatrixGenerics::rowQuantiles, "IterableMatrix", rowQuantiles.IterableMatrix)
   }
 })
+
+#' MatrixGenerics methods for IterableMatrix
+#'
+#' S4 methods enabling MatrixGenerics generics (e.g., \code{rowQuantiles},
+#' \code{colQuantiles}, \code{rowVars}, \code{colVars}, \code{rowMaxs}, \code{colMaxs})
+#' to operate on \code{IterableMatrix}. These are registered at runtime only
+#' when MatrixGenerics is available.
+#'
+#' @section Availability:
+#' Methods are registered conditionally; if MatrixGenerics is not installed,
+#' nothing is registered and the generics fall back as usual.
+#'
+#' @param x An \code{IterableMatrix}.
+#' @param rows (Integer) Optional vector of row indices to operate over.
+#' @param cols (Integer) Optional vector of column indices to operate over.
+#' @param na.rm (Logical) Should missing values (NA) be removed?
+#' @param center Optional center values (vector of length nrow(x) or ncol(x))
+#' @param probs (Numeric) Quantile value(s) to be computed, between 0 and 1.
+#' @param type (Integer) between 4 and 9 selecting which quantile algorithm to use, detailed in `matrixStats::rowQuantiles()`
+#' @param digits Number of decimal places for quantile calculations
+#' @param drop (Logical) If TRUE and only one quantile is requested, the result is coerced to a vector (For non-BPCells objects).
+#' @param useNames (Logical) Whether to use row and column names in the output.
+#' @param ... Passed to the underlying implementation.
+#'
+#' @name IterableMatrix-matrixgenerics
+#' @docType methods
+#'
+#' @aliases rowQuantiles,IterableMatrix-method
+#' @aliases colQuantiles,IterableMatrix-method
+#' @aliases rowVars,IterableMatrix-method
+#' @aliases colVars,IterableMatrix-method
+#' @aliases rowMaxs,IterableMatrix-method
+#' @aliases colMaxs,IterableMatrix-method
+#'
+#' @seealso \code{\link{rowQuantiles}}, \code{\link{colQuantiles}},
+#'   \code{\link{rowVars}}, \code{\link{colVars}},
+#'   \code{\link{rowMaxs}}, \code{\link{colMaxs}}
+#' @keywords internal
+NULL

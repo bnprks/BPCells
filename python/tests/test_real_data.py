@@ -40,7 +40,7 @@ def test_500_pbmc_matrix(tmp_path, fetch_cached_file):
     peaks_path = fetch_cached_file("https://cf.10xgenomics.com/samples/cell-atac/2.0.0/atac_pbmc_500_nextgem/atac_pbmc_500_nextgem_peaks.bed")
     peak_matrix_path = fetch_cached_file("https://cf.10xgenomics.com/samples/cell-atac/2.0.0/atac_pbmc_500_nextgem/atac_pbmc_500_nextgem_raw_peak_bc_matrix.h5")
     barcode_metrics_path = fetch_cached_file("https://cf.10xgenomics.com/samples/cell-atac/2.0.0/atac_pbmc_500_nextgem/atac_pbmc_500_nextgem_singlecell.csv")
-    chrom_sizes_path = fetch_cached_file("http://hgdownload.cse.ucsc.edu/goldenpath/hg38/bigZips/hg38.chrom.sizes")
+    chrom_sizes_path = fetch_cached_file("https://hgdownload.cse.ucsc.edu/goldenpath/hg38/bigZips/hg38.chrom.sizes")
 
 
     # Convert BPCells fragments

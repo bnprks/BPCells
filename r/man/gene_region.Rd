@@ -36,13 +36,23 @@ can be used as the \code{region} argument for trackplot functions such as
 \code{trackplot_coverage()} or \code{trackplot_gene()}
 }
 \examples{
+\dontrun{
 ## Prep data
 genes <- read_gencode_transcripts(
   file.path(tempdir(), "references"), release = "42",
   annotation_set = "basic",
-  features = "transcript"
+  features = "transcript", timeout = 3000
 )
 
 ## Get gene region
 gene_region(genes, "CD19", extend_bp = 1e5)
+#> $chr
+#> [1] "chr16"
+#> 
+#> $start
+#> [1] 28831970
+#> 
+#> $end
+#> [1] 29039342
+}
 }

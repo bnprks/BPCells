@@ -1,11 +1,18 @@
 ^_pkgdown\.yml$
+^compile_commands\.json$
+^index\.md$
 ^docs$
+^scripts$
+^data-raw$
 ^pkgdown$
 ^.*\.Rproj$
 ^\.Rproj\.user$
+^tools/highway$
 
 ^\.idea
+^\.cache$
 ^bench$
+^vignettes$
 
 .*\.o$
 .*\.so$
@@ -16,3 +23,5 @@ build/$
 cmake-build-debug/
 \.vscode/
 \.snakemake/
+
+^cran-comments\.md$

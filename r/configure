@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 
 if [ -z $BPCELLS_DEBUG_INSTALL ]; then 
     exec 3>/dev/null
@@ -16,7 +16,7 @@ fi
 # or set the CI or ENABLE_INSTALL_COUNTING environment variables ahead of installation.
 if [ -z "$CI" ]; then ENABLE_INSTALL_COUNTING=${ENABLE_INSTALL_COUNTING:-yes}; fi
 
-if [ "$ENABLE_INSTALL_COUNTING" == "yes" ]; then
+if [ "$ENABLE_INSTALL_COUNTING" = "yes" ]; then
     curl --silent "https://plausible.benparks.net/flask-plausible/bpcells-configure" > /dev/null 2> /dev/null \
         || true
     echo "Recording install count metrics"
@@ -150,6 +150,7 @@ if [ -z $CXX17_OK ]; then
     printf "\n\nUnable to compile program with C++17 std::filesystem.\nPlease install a newer compiler version and set CC and CXX in ~/.R/Makevars\n"
     exit 1
 fi
+rm -f tools/cxx17_filesystem
 
 ############################
 # Build Highway SIMD library
@@ -158,7 +159,9 @@ printf "\nTesting availability of highway SIMD library...\n"
 HWY_OK=""
 # Minimum required version (may override via env var HWY_MIN_VERSION=X.Y.Z)
 HWY_MIN_VERSION=${HWY_MIN_VERSION:-1.0.5}
-IFS=. read -r HWY_MIN_MAJOR HWY_MIN_MINOR HWY_MIN_PATCH <<< "$HWY_MIN_VERSION"
+HWY_MIN_MAJOR=$(echo "$HWY_MIN_VERSION" | cut -d. -f1)
+HWY_MIN_MINOR=$(echo "$HWY_MIN_VERSION" | cut -d. -f2)
+HWY_MIN_PATCH=$(echo "$HWY_MIN_VERSION" | cut -d. -f3)
 sed \
   -e "s/@HWY_MIN_MAJOR@/$HWY_MIN_MAJOR/g" \
   -e "s/@HWY_MIN_MINOR@/$HWY_MIN_MINOR/g" \
@@ -187,14 +190,16 @@ else
         HWY_LIBS=""
     fi
     # Only attempt second compile if pkg-config succeeded
-    if [ -n "$HWY_LIBS" ] && $CXX tools/hwy-test.cpp -o tools/hwy-test $CXXFLAGS $LDFLAGS $HWY_CFLAGS $HWY_LIBS > /dev/null 2> "$HWY_COMPILE_LOG"; then
-        HWY_VERSION_OUTPUT=$(tools/hwy-test)
-        printf "$HWY_VERSION_OUTPUT"
-        HWY_OK="yes"
-    elif grep -q "Highway too old" "$HWY_COMPILE_LOG"; then
+    if [ -n "$HWY_LIBS" ]; then
+        if $CXX tools/hwy-test.cpp -o tools/hwy-test $CXXFLAGS $LDFLAGS $HWY_CFLAGS $HWY_LIBS > /dev/null 2> "$HWY_COMPILE_LOG"; then
+            HWY_VERSION_OUTPUT=$(tools/hwy-test)
+            printf "$HWY_VERSION_OUTPUT"
+            HWY_OK="yes"
+        elif grep -q "Highway too old" "$HWY_COMPILE_LOG"; then
             printf "\nHighway is installed but too old: %s\n" "$(sed -n 's/.*#pragma message: //p' "$HWY_COMPILE_LOG")"
-    else
+        else
             printf "Highway not found or unusable\n"
+        fi
     fi
 fi
 rm -f tools/hwy-test "$HWY_COMPILE_LOG" tools/hwy-test.cpp
@@ -202,7 +207,7 @@ rm -f tools/hwy-test "$HWY_COMPILE_LOG" tools/hwy-test.cpp
 if [ -z $HWY_OK ]; then
     if [ ! -f tools/highway/lib/libhwy.a ]; then
         printf "\nBuilding highway SIMD library from source\n"
-        CXX=$CXX bash src/vendor/highway/manual-build/build_highway.sh src/vendor/highway tools/highway && HWY_OK="yes";
+        CXX=$CXX sh src/vendor/highway/manual-build/build_highway.sh src/vendor/highway tools/highway && HWY_OK="yes";
         if [ -z $HWY_OK ]; then
             printf "\n\nUnable to build highway SIMD library from source\n"
             exit 1
@@ -217,6 +222,7 @@ else
     printf "\nFound working highway SIMD library\n"
 fi
 
+
 # Make substitutions in Makevars.in
 sed \
     -e "s|%HDF5_CFLAGS%|${HDF5_CFLAGS}|g" \
@@ -228,7 +234,10 @@ sed \
     -e "s|%ENV_LDFLAGS%|${ENV_LDFLAGS}|g" \
     src/Makevars.in > src/Makevars
 
-if [ "$ENABLE_INSTALL_COUNTING" == "yes" ]; then
+# # Clean up highway build directory to avoid CRAN NOTE about object files
+# # The highway library will be rebuilt as needed during installation
+
+if [ "$ENABLE_INSTALL_COUNTING" = "yes" ]; then
     curl --silent https://plausible.benparks.net/flask-plausible/bpcells-configure-success > /dev/null 2> /dev/null \
         || true
 fi

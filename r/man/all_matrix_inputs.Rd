@@ -25,3 +25,13 @@ getter and setter functions allow accessing the base-level input matrices as a l
 changing them. This is useful if you want to re-locate data on disk without losing your
 transformed BPCells matrix. (Note: experimental API; potentially subject to revisions).
 }
+\examples{
+mat <- matrix(1:9, nrow=3) \%>\% as("IterableMatrix")
+
+# Just returns the matrix itself
+all_matrix_inputs(mat)
+
+# Returns the matrix twice, as they are the inputs to the cbind
+all_matrix_inputs(cbind(mat, mat))
+
+}

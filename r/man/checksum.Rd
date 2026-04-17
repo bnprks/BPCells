@@ -18,7 +18,7 @@ hexidecimal format.
 }
 \details{
 \code{checksum()} converts the non-zero elements of the sparse input matrix to double
-precision, concatenates each element value with the element row and column index words,
+precision, concatenates each element value with theF element row and column index words,
 and uses these 16-byte blocks along with the matrix dimensions and row and column
 names to calculate the checksum. The checksum value depends on the storage order so
 column- and row-order matrices with the same element values give different checksum
@@ -27,8 +27,6 @@ It converts to little-endian order on big-endian architecture although this has 
 been tested.
 }
 \examples{
-library(Matrix)
-library(BPCells)
 m1 <- matrix(seq(1,12), nrow=3)
 m2 <- as(m1, 'dgCMatrix')
 m3 <- as(m2, 'IterableMatrix')

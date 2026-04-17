@@ -86,6 +86,7 @@ calculate a weight matrix of dimensions genes x tiles. This matrix can be
 multiplied with a tile matrix to obtain ArchR-compatible gene activity scores.
 }
 \examples{
+\dontrun{
 ## Prep data
 reference_dir <- file.path(tempdir(), "references")
 frags <- get_demo_frags()
@@ -94,8 +95,10 @@ genes <- read_gencode_genes(
   release="42", 
   annotation_set = "basic", 
 ) \%>\% dplyr::filter(chr \%in\% c("chr4", "chr11"))
-blacklist <- read_encode_blacklist(reference_dir, genome="hg38") \%>\% dplyr::filter(chr \%in\% c("chr4", "chr11"))
-chrom_sizes <- read_ucsc_chrom_sizes(reference_dir, genome="hg38") \%>\% dplyr::filter(chr \%in\% c("chr4", "chr11"))
+blacklist <- read_encode_blacklist(reference_dir, genome="hg38") \%>\% 
+  dplyr::filter(chr \%in\% c("chr4", "chr11"))
+chrom_sizes <- read_ucsc_chrom_sizes(reference_dir, genome="hg38") \%>\% 
+  dplyr::filter(chr \%in\% c("chr4", "chr11"))
 chrom_sizes$tile_width = 500
 
 
@@ -112,14 +115,17 @@ tiles <- tile_matrix(frags, chrom_sizes, mode = "fragments")
 
 ## Get gene scores per cell 
 gene_score_weights \%*\% tiles
+}
 
 
+\dontrun{
 #######################################################################
 ## gene_score_archr() example
 #######################################################################
 ## This is a wrapper that creates both the gene score weight 
 ## matrix and tile matrix together
 gene_score_archr(frags, genes, chrom_sizes, blacklist)
+}
 
 
 }

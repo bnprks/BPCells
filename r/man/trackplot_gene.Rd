@@ -35,11 +35,9 @@ or list/data.frame/GRanges of length 1 specifying chr, start, end. See \code{hel
 
 \item{label_size}{size for transcript labels in units of mm}
 
+\item{track_label}{Label to put on the side of the track}
+
 \item{return_data}{If true, return data from just before plotting rather than a plot.}
-
-\item{labels}{Character vector with labels for each item in transcripts. NA for items that should not be labeled}
-
-\item{transcript_size}{size for transcript lines in units of mm}
 }
 \value{
 Plot of gene locations
@@ -48,17 +46,24 @@ Plot of gene locations
 Plot transcript models
 }
 \examples{
+\dontrun{
 ## Prep data
 transcripts <- read_gencode_transcripts(
   file.path(tempdir(), "references"), release = "42",
-  annotation_set = "basic", features = "transcript"
+  annotation_set = "basic", features = "transcript", timeout = 3000
 )
-region <- "chr4:3034877-4034877"
+}
 
+## We use pre-generated data for this example
+transcripts <- readr::read_delim(
+  file.path(system.file("extdata", package = "BPCells"),
+  "transcripts_filtered_example_chr_4.tsv.gz"))
+
+region <- "chr4:3264877-3634877" 
 
 ## Plot gene trackplot
-plot <- trackplot_gene(transcripts, region)
-BPCells:::render_plot_from_storage(plot, width = 6, height = 1)
+scale_next_plot_height(0.3)
+trackplot_gene(transcripts, region)
 }
 \seealso{
 \code{trackplot_combine()}, \code{trackplot_coverage()}, \code{trackplot_loop()}, \code{trackplot_scalebar()}

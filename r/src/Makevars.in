@@ -1,9 +1,10 @@
-# CXX_STD = CXX17
-
-PKG_CXXFLAGS = %HDF5_CFLAGS% %HWY_CFLAGS% %ENV_CFLAGS% -Ivendor -std=c++17 -DRCPP_EIGEN -DEIGEN_PERMANENTLY_DISABLE_STUPID_WARNINGS -Wno-ignored-attributes -Wno-unknown-pragmas # -Wall -Wextra -Wpedantic
+CXX_STD = CXX17
+PKG_CXXFLAGS = %HDF5_CFLAGS% %HWY_CFLAGS% %ENV_CFLAGS% -Ivendor -DRCPP_EIGEN -DEIGEN_PERMANENTLY_DISABLE_STUPID_WARNINGS # -Wall -Wextra -Wpedantic
 PKG_LIBS = -lz %HDF5_LIBS% %CXX_FS_FLAG% %HWY_LIBS% %ENV_LDFLAGS%
 
-# PKG_CXXFLAGS = -Wno-deprecated-declarations -Wno-unused-but-set-variable -fsanitize=undefined %HDF5_CFLAGS% %HWY_CFLAGS% -std=c++17 -DRCPP_EIGEN -DEIGEN_PERMANENTLY_DISABLE_STUPID_WARNINGS -Wno-ignored-attributes -Wno-unknown-pragmas # -Wall -Wextra -Wpedantic
+
+
+# PKG_CXXFLAGS = -Wno-deprecated-declarations -Wno-unused-but-set-variable -fsanitize=undefined %HDF5_CFLAGS% %HWY_CFLAGS% -DRCPP_EIGEN -DEIGEN_PERMANENTLY_DISABLE_STUPID_WARNINGS # -Wall -Wextra -Wpedantic
 # PKG_LIBS = -fsanitize=undefined -lz %HDF5_LIBS% %CXX_FS_FLAG% %HWY_LIBS%
 
 OBJECTS=\
@@ -90,3 +91,5 @@ vendor/md5/md5.o \
 # matrixIterators/MatrixOps.o \
 # matrixIterators/PackedMatrix.o \
 # matrixIterators/UnpackedMatrix.o \
+
+

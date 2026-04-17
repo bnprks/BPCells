@@ -19,12 +19,12 @@ are the corresponding canonical gene symbol
 \source{
 \strong{human_gene_mapping}
 
-\url{http://ftp.ebi.ac.uk/pub/databases/genenames/hgnc/tsv/non_alt_loci_set.txt}
+\url{https://ftp.ebi.ac.uk/pub/databases/genenames/out_of_date_hgnc/tsv/non_alt_loci_set.txt}
 
 \strong{mouse_gene_mapping}
 
-\url{http://www.informatics.jax.org/downloads/reports/MGI_EntrezGene.rpt}
-\url{http://www.informatics.jax.org/downloads/reports/MRK_ENSEMBL.rpt}
+\url{https://www.informatics.jax.org/downloads/reports/MGI_EntrezGene.rpt}
+\url{https://www.informatics.jax.org/downloads/reports/MRK_ENSEMBL.rpt}
 }
 \usage{
 human_gene_mapping

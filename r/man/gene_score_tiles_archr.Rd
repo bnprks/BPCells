@@ -18,7 +18,7 @@ gene_score_tiles_archr(
 \item \code{strand}: +/- or TRUE/FALSE for positive or negative strand
 }}
 
-\item{chromosome_sizes}{(optional) Size of chromosomes as a \link{genomic-ranges} object}
+\item{chromosome_sizes}{(optional) Size of chromosomes as a \link{genomic-ranges-like} object}
 
 \item{tile_width}{Size of tiles to consider}
 
@@ -48,14 +48,24 @@ beyond a neighboring gene are not considered
 }
 }
 \examples{
+\dontrun{
 ## Prep data
 directory  <- file.path(tempdir(), "references")
 genes <- read_gencode_genes(
     directory,
     release = "42",
-    annotation_set = "basic",    
+    annotation_set = "basic",
 )
+}
 
+## Use pre-generated data for this example
+## Use pre-computed transcripts for chr4
+genes <- readr::read_delim(
+  file.path(
+    system.file("extdata", package = "BPCells"), 
+    "transcripts_filtered_example_chr_4.tsv.gz"),
+  delim = "\t", show_col_types = FALSE
+)
 
 ## Get gene scores by tile
 gene_score_tiles_archr(

@@ -33,6 +33,7 @@ Combines multiple track plots of the same region into a single grid.
 Uses the \code{patchwork} package to perform the alignment.
 }
 \examples{
+\dontrun{
 ## Prep data
 frags <- get_demo_frags()
 
@@ -40,31 +41,48 @@ frags <- get_demo_frags()
 genes <- read_gencode_transcripts(
   file.path(tempdir(), "references"), release = "42",
   annotation_set = "basic",
-  features = "transcript"
+  features = "transcript", timeout = 3000
 )
 blacklist <- read_encode_blacklist(file.path(tempdir(), "references"), genome="hg38")
 read_counts <- qc_scATAC(frags, genes, blacklist)$nFrags
+}
+
+## We use pre-generated data for this example
+frags <- get_demo_frags()
 region <- "chr4:3034877-4034877"
 cell_types <- paste("Group", rep(1:3, length.out = length(cellNames(frags))))
-transcripts <- read_gencode_transcripts(
-  file.path(tempdir(), "references"), release = "42",
-  annotation_set = "basic"
+genes <- readr::read_delim(
+  file.path(
+    system.file("extdata", package = "BPCells"), 
+    "transcripts_filtered_example_chr_4.tsv.gz"),
+  delim = "\t", show_col_types = FALSE
 )
+read_counts <- readr::read_delim(
+ file.path(
+    system.file("extdata", package = "BPCells"), 
+    "qc_results_filtered_example_chr_4.tsv.gz"),
+ delim = "\t", show_col_types = FALSE
+)$nFrags
 region <- "chr4:3034877-4034877"
 
 
 ## Get all trackplots and scalebars to combine
 plot_scalebar <- trackplot_scalebar(region)
-plot_gene <- trackplot_gene(transcripts, region)
-plot_coverage <- trackplot_coverage(frags, region, groups = cell_types, cell_read_counts = read_counts)
-
+plot_gene <- trackplot_gene(genes, region)
+plot_coverage <- trackplot_coverage(
+  frags,
+  region,
+  groups = cell_types,
+  cell_read_counts = read_counts
+)
 
 ## Combine trackplots and render
 ## Also remove colors from gene track
-plot <- trackplot_combine(
+scale_next_plot_height(0.6)
+trackplot_combine(
     list(plot_scalebar, plot_coverage, plot_gene + ggplot2::guides(color = "none"))
 )
-BPCells:::render_plot_from_storage(plot, width = 6, height = 4)
+
 }
 \seealso{
 \code{trackplot_coverage()}, \code{trackplot_gene()}, \code{trackplot_loop()}, \code{trackplot_scalebar()}

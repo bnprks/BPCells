@@ -84,3 +84,15 @@ less memory and return a sparser graph than \code{knn_to_snn_graph} which comput
 neighbor, results may differ slightly from \code{umap._umap.fuzzy_simplicial_set}, which
 assumes self is always successfully found in the approximate nearest neighbor search.
 }
+\examples{
+set.seed(123)
+mat <- matrix(rnorm(1000 * 10), nrow = 1000)
+knn <- knn_hnsw(mat, k = 10)
+graph <- knn_to_snn_graph(knn)
+
+set.seed(123)
+mat <- matrix(rnorm(1000 * 10), nrow = 1000)
+knn <- knn_hnsw(mat, k = 10)
+graph <- knn_to_geodesic_graph(knn)
+
+}

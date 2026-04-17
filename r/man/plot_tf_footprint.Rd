@@ -10,7 +10,7 @@ plot_tf_footprint(
   cell_groups = rlang::rep_along(cellNames(fragments), "all"),
   flank = 250L,
   smooth = 0L,
-  zero_based_coords = !is(genes, "GRanges"),
+  zero_based_coords = !is(motif_positions, "GRanges"),
   colors = discrete_palette("stallion"),
   return_data = FALSE,
   apply_styling = TRUE
@@ -33,12 +33,28 @@ weights for smoothing.}
 \item{zero_based_coords}{If true, coordinates start and 0 and the end coordinate is not included in the range.
 If false, coordinates start at 1 and the end coordinate is included in the range}
 
+\item{colors}{Discrete color palette to use for cell groups}
+
 \item{return_data}{If true, return data from just before plotting rather than a plot.}
 
 \item{apply_styling}{If false, return a plot without pretty styling applied}
 }
 \description{
 Plot the footprinting around TF motif sites
+}
+\examples{
+\dontrun{
+
+plot_tf_footprint(
+  frags,
+  motif_positions$CEBPA,
+  cell_groups = cell_types,
+  flank = 250,
+  smooth = 2
+) +
+  ggplot2::labs(title="CEBPA")
+}
+# See example in vignette Getting Started
 }
 \seealso{
 \code{footprint()}, \code{plot_tss_profile()}
