@@ -84,6 +84,13 @@ test_that("tile_ranges works", {
 })
 
 test_that("merge_peaks works", {
+  peaks0 <- tibble::tibble(
+    chr = "chr1",
+    start = as.integer(c(1, 5)),
+    end = start + 2L
+  )
+  expect_identical(merge_peaks_iterative(peaks0), peaks0)
+
   peaks1 <- tibble::tibble(
     chr = "chr1",
     start = as.integer(1:10),
@@ -95,6 +102,18 @@ test_that("merge_peaks works", {
     end = start + 2L
   )
   expect_identical(merge_peaks_iterative(peaks1), res1)
+
+  peaks1_chain <- tibble::tibble(
+    chr = "chr1",
+    start = as.integer(1:3),
+    end = start + 2L
+  )
+  res1_chain <- tibble::tibble(
+    chr = "chr1",
+    start = as.integer(c(1, 3)),
+    end = start + 2L
+  )
+  expect_identical(merge_peaks_iterative(peaks1_chain), res1_chain)
 
   peaks2 <- tibble::tibble(
     chr = "chr1",

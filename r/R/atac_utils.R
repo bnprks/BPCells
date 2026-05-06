@@ -296,25 +296,33 @@ merge_peaks_iterative <- function(peaks) {
   peaks <- tibble::as_tibble(peaks) %>%
     dplyr::distinct(chr, start, end, .keep_all = TRUE)
 
-  overlaps <- range_overlaps(peaks, peaks)
-  # Initialize keeper set with any non-overlapping peaks
-  keeper_sets <- list(setdiff(seq_len(nrow(peaks)), overlaps$from))
+  # Only keep one direction for each overlap. With peaks ordered by priority,
+  # lower row numbers have higher priority.
+  overlaps <- range_overlaps(peaks, peaks) %>%
+    dplyr::filter(from < to)
 
-  # Maintain invariant: overlaps contains only overlap pairs where we have not
-  #    permanently kept or discarded either of the elements in the pair
-  overlaps <- dplyr::filter(overlaps, from < to)
-  while (nrow(overlaps) > 0) {
-    # Add peaks with no higher-ranked overlap to the keeper set
-    keeper_set <- setdiff(overlaps$from, overlaps$to)
+  remaining <- seq_len(nrow(peaks))
+  keeper_sets <- list()
+  while (length(remaining) > 0) {
+    if (nrow(overlaps) == 0) {
+      keeper_sets <- c(keeper_sets, list(remaining))
+      break
+    }
+
+    # Add peaks with no higher-ranked overlap to the keeper set. This includes
+    # peaks that are isolated from the start or become isolated after discards.
+    keeper_set <- setdiff(remaining, overlaps$to)
     keeper_sets <- c(keeper_sets, list(keeper_set))
+
     # Mark peaks that overlap directly with the keeper set
-    discard_set <- overlaps$to[overlaps$from %in% keeper_set] %>% unique()
+    discard_set <- overlaps$to[overlaps$from %in% keeper_set] %>%
+      unique()
+    remove_set <- c(keeper_set, discard_set)
+    remaining <- setdiff(remaining, remove_set)
+
     # Discard all overlap information on the keeper and discard sets
     overlaps <- overlaps %>%
-      dplyr::filter(
-        !(to %in% discard_set), !(from %in% discard_set),
-        !(from %in% keeper_set)
-      )
+      dplyr::filter(!(from %in% remove_set), !(to %in% remove_set))
   }
   return(peaks[sort(unlist(keeper_sets)), ])
 }
