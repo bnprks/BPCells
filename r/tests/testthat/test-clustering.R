@@ -59,6 +59,7 @@ test_that("igraph clustering doesn't crash", {
     test_data <- readRDS("../data/iris_geodesic_graph.rds")
     knn <- test_data$knn
     graph <- knn_to_geodesic_graph(knn)
+    graph_list <- knn_to_geodesic_graph(knn, return_type="list")
 
     # The `resolution_parameter` param in igraph `cluster_leiden()` is deprecated,
     # causing `expect_no_condition()` to fail. This workaround avoids test failures from 
@@ -70,8 +71,14 @@ test_that("igraph clustering doesn't crash", {
         expect_no_error(cluster_graph_leiden(graph))
         expect_no_error(cluster_graph_leiden(graph, objective_function="CPM"))
     })
+    expect_identical(
+        suppressWarnings(cluster_graph_leiden(graph)),
+        suppressWarnings(cluster_graph_leiden(graph_list))
+    )
 
     expect_no_condition(cluster_graph_louvain(graph))
+    expect_no_condition(cluster_graph_louvain(graph_list))
+    expect_identical(cluster_graph_louvain(graph), cluster_graph_louvain(graph_list))
 })
 
 test_that("knn_hnsw rownames come from query", {
