@@ -150,7 +150,7 @@ template <typename T> class MatrixAddition : public MatrixLoader<T> {
                     uint32_t out_row = l_pick ? lr_v : rr_v;
                     T out_val = l_pick ? (r_pick ? lv_v + rv_v : lv_v) : rv_v;
 
-                    bool emit = (lr_v != rr_v) | (out_val != T(0));
+                    bool emit = out_val != T(0);
                     row_buffer[loaded] = out_row;
                     val_buffer[loaded] = out_val;
                     loaded += emit;

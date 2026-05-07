@@ -938,7 +938,7 @@ test_that("Generic methods work", {
     expect_identical(rowSums(trans), rowSums(m))
     expect_identical(colSums(trans), colSums(m))
 
-    if (i %in% c("shift_scale_1", "shift_scale_2", "add", "subtract")) {
+    if (i %in% c("shift_scale_1", "shift_scale_2")) {
       expect_identical(as.matrix(as(trans, "dgCMatrix")), as.matrix(m))
     } else {
       expect_identical(as(trans, "dgCMatrix"), m)
