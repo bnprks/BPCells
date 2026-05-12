@@ -304,10 +304,6 @@ merge_peaks_iterative <- function(peaks) {
   remaining <- seq_len(nrow(peaks))
   keeper_sets <- list()
   while (length(remaining) > 0) {
-    if (nrow(overlaps) == 0) {
-      keeper_sets <- c(keeper_sets, list(remaining))
-      break
-    }
 
     # Add peaks with no higher-ranked overlap to the keeper set. This includes
     # peaks that are isolated from the start or become isolated after discards.
