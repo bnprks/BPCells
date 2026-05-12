@@ -301,6 +301,7 @@ merge_peaks_iterative <- function(peaks) {
   overlaps <- range_overlaps(peaks, peaks) %>%
     dplyr::filter(from < to)
 
+  # Track peak indices which are neither conclusively excluded or included from a keeper set
   remaining <- seq_len(nrow(peaks))
   keeper_sets <- list()
   while (length(remaining) > 0) {
