@@ -1099,3 +1099,55 @@ regress_out <- function(mat, latent_data, prediction_axis = c("row", "col")) {
     vars_to_regress = vars_to_regress
   )
 }
+
+#################
+# Bernoulli sample
+#################
+
+setClass("MatrixBernoulliSample",
+  contains = "IterableMatrix",
+  slots = c(
+    matrix = "IterableMatrix",
+    prob = "numeric",
+    seed = "integer"
+  ),
+  prototype = list(
+    matrix = NULL,
+    prob = 1,
+    seed = 0L
+  )
+)
+
+setMethod("matrix_type", "MatrixBernoulliSample", function(x) matrix_type(x@matrix))
+setMethod("iterate_matrix", "MatrixBernoulliSample", function(x) {
+  iter_fn <- get(sprintf("iterate_matrix_bernoulli_sample_%s_cpp", matrix_type(x)))
+  iter_fn(iterate_matrix(x@matrix), x@prob, x@seed)
+})
+
+setMethod("short_description", "MatrixBernoulliSample", function(x) {
+  c(
+    short_description(x@matrix),
+    sprintf("Bernoulli sample non-zero entries (prob=%.3g, seed=%d)", x@prob, x@seed)
+  )
+})
+
+#' Randomly drop non-zero matrix entries given probability and seed
+#'
+#' Keep each non-zero entry independently with probability `prob`. The
+#' keep/drop decision is a deterministic function of `(seed, row, col)`
+#'
+#' @param mat IterableMatrix
+#' @param prob Numeric value in (0, 1]. Keep probability per non-zero entry
+#' @param seed Reproducibility seed
+#' @return IterableMatrix
+#' @export
+bernoulli_sample <- function(mat, prob, seed) {
+  assert_is(mat, "IterableMatrix")
+  assert_is_numeric(prob)
+  assert_len(prob, 1)
+  assert_true(!is.na(prob) && prob > 0 && prob <= 1)
+  assert_is_wholenumber(seed)
+  assert_len(seed, 1)
+  if (prob == 1) return(mat)
+  wrapMatrix("MatrixBernoulliSample", mat, prob = prob, seed = as.integer(seed))
+}

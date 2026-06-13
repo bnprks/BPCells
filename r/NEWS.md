@@ -8,6 +8,7 @@
 - Add `tile_width` and `normalization` arguments to `write_insertion_bedgraph()` to allow for more flexible bedgraph creation (pull request #299)
 - Export `write_insertion_bed()`, which originally was only a helper for peak calling (pull request #302).
 - Add support for reading 64 bit Anndata matrices, as well as reading signed integer matrices.  Note, signed integers are converted to float/double matrices when read in. (pull request #330)
+- Add `bernoulli_sample()`, a lazy `IterableMatrix` transform that keeps each non-zero entry independently with probability `prob` using a reproducible, stateless hash of `(seed, row, col)`.
 
 ## Bug-fixes
 - Fix error in documentation examples for `plot_embedding()`, resulting from the way documentation examples use nested function calls (pull request #316).

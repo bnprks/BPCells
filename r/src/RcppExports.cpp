@@ -2287,6 +2287,45 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// iterate_matrix_bernoulli_sample_uint32_t_cpp
+SEXP iterate_matrix_bernoulli_sample_uint32_t_cpp(SEXP mat, double prob, int seed);
+RcppExport SEXP _BPCells_iterate_matrix_bernoulli_sample_uint32_t_cpp(SEXP matSEXP, SEXP probSEXP, SEXP seedSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type mat(matSEXP);
+    Rcpp::traits::input_parameter< double >::type prob(probSEXP);
+    Rcpp::traits::input_parameter< int >::type seed(seedSEXP);
+    rcpp_result_gen = Rcpp::wrap(iterate_matrix_bernoulli_sample_uint32_t_cpp(mat, prob, seed));
+    return rcpp_result_gen;
+END_RCPP
+}
+// iterate_matrix_bernoulli_sample_float_cpp
+SEXP iterate_matrix_bernoulli_sample_float_cpp(SEXP mat, double prob, int seed);
+RcppExport SEXP _BPCells_iterate_matrix_bernoulli_sample_float_cpp(SEXP matSEXP, SEXP probSEXP, SEXP seedSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type mat(matSEXP);
+    Rcpp::traits::input_parameter< double >::type prob(probSEXP);
+    Rcpp::traits::input_parameter< int >::type seed(seedSEXP);
+    rcpp_result_gen = Rcpp::wrap(iterate_matrix_bernoulli_sample_float_cpp(mat, prob, seed));
+    return rcpp_result_gen;
+END_RCPP
+}
+// iterate_matrix_bernoulli_sample_double_cpp
+SEXP iterate_matrix_bernoulli_sample_double_cpp(SEXP mat, double prob, int seed);
+RcppExport SEXP _BPCells_iterate_matrix_bernoulli_sample_double_cpp(SEXP matSEXP, SEXP probSEXP, SEXP seedSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type mat(matSEXP);
+    Rcpp::traits::input_parameter< double >::type prob(probSEXP);
+    Rcpp::traits::input_parameter< int >::type seed(seedSEXP);
+    rcpp_result_gen = Rcpp::wrap(iterate_matrix_bernoulli_sample_double_cpp(mat, prob, seed));
+    return rcpp_result_gen;
+END_RCPP
+}
 // iterate_matrix_rank_uint32_t_cpp
 SEXP iterate_matrix_rank_uint32_t_cpp(SEXP matrix);
 RcppExport SEXP _BPCells_iterate_matrix_rank_uint32_t_cpp(SEXP matrixSEXP) {
@@ -2774,6 +2813,9 @@ static const R_CallMethodDef CallEntries[] = {
     {"_BPCells_iterate_matrix_mask_uint32_t_cpp", (DL_FUNC) &_BPCells_iterate_matrix_mask_uint32_t_cpp, 3},
     {"_BPCells_iterate_matrix_mask_float_cpp", (DL_FUNC) &_BPCells_iterate_matrix_mask_float_cpp, 3},
     {"_BPCells_iterate_matrix_mask_double_cpp", (DL_FUNC) &_BPCells_iterate_matrix_mask_double_cpp, 3},
+    {"_BPCells_iterate_matrix_bernoulli_sample_uint32_t_cpp", (DL_FUNC) &_BPCells_iterate_matrix_bernoulli_sample_uint32_t_cpp, 3},
+    {"_BPCells_iterate_matrix_bernoulli_sample_float_cpp", (DL_FUNC) &_BPCells_iterate_matrix_bernoulli_sample_float_cpp, 3},
+    {"_BPCells_iterate_matrix_bernoulli_sample_double_cpp", (DL_FUNC) &_BPCells_iterate_matrix_bernoulli_sample_double_cpp, 3},
     {"_BPCells_iterate_matrix_rank_uint32_t_cpp", (DL_FUNC) &_BPCells_iterate_matrix_rank_uint32_t_cpp, 1},
     {"_BPCells_iterate_matrix_rank_float_cpp", (DL_FUNC) &_BPCells_iterate_matrix_rank_float_cpp, 1},
     {"_BPCells_iterate_matrix_rank_double_cpp", (DL_FUNC) &_BPCells_iterate_matrix_rank_double_cpp, 1},
