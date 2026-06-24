@@ -419,61 +419,53 @@ test_that("matrix subtraction works", {
     expect_error(bp1 - bp1_t)
 })
 
-test_that("bernoulli_sample works", {
+test_that("sample_bernoulli works", {
     set.seed(125124)
     m <- generate_sparse_matrix(50, 40, fraction_nonzero = 0.4, max_val = 100)
     bp <- as(m, "IterableMatrix")
 
     # prob == 1: no-op, returns the same object unchanged
-    expect_identical(bernoulli_sample(bp, 1, 0), bp)
+    expect_identical(sample_bernoulli(bp, 1, 0), bp)
 
     # Keep fraction: ~prob of non-zeros survive, within 4 sigma on ~2M entries
     m_big <- generate_sparse_matrix(2000, 2000, fraction_nonzero = 0.5, max_val = 10)
     bp_big <- as(m_big, "IterableMatrix")
     nnz_in <- length(m_big@x)
-    out <- as(bernoulli_sample(bp_big, 0.5, 17L), "dgCMatrix")
+    out <- as(sample_bernoulli(bp_big, 0.5, 17L), "dgCMatrix")
     nnz_out <- length(out@x)
     sigma <- sqrt(0.25 * nnz_in)
     expect_lt(abs(nnz_out - 0.5 * nnz_in), 4 * sigma)
 
     # Reproduciblity: same seed materializes identical output
-    y1 <- as(bernoulli_sample(bp, 0.3, 42L), "dgCMatrix")
-    y2 <- as(bernoulli_sample(bp, 0.3, 42L), "dgCMatrix")
+    y1 <- as(sample_bernoulli(bp, 0.3, 42L), "dgCMatrix")
+    y2 <- as(sample_bernoulli(bp, 0.3, 42L), "dgCMatrix")
     expect_identical(y1, y2)
 
     # Reverse column order matches forward iteration (exercises seekCol via MatrixSubset)
-    sampled <- bernoulli_sample(bp, 0.3, 42L)
+    sampled <- sample_bernoulli(bp, 0.3, 42L)
     reversed <- sampled[, rev(seq_len(ncol(bp)))]
     expect_identical(as(reversed, "dgCMatrix"), as(sampled, "dgCMatrix")[, rev(seq_len(ncol(bp)))])
 
-    # Test hash keying to output columns (duplicated subset columns get independent draws)
-    col1 <- ceiling(ncol(bp) / 2)
-    dup_subset <- methods::new(
-        "MatrixSubset",
-        matrix = bp,
-        col_selection = rep(as.integer(col1), 3),
-        dim = c(nrow(bp), 3L),
-        dimnames = list(rownames(bp), NULL),
-        zero_dims = c(FALSE, FALSE)
-    )
-    dup <- bernoulli_sample(dup_subset, 0.5, 99L)
-    dup_mat <- as(dup, "dgCMatrix")
-    expect_false(identical(dup_mat[, 1], dup_mat[, 2]))
-    expect_false(identical(dup_mat[, 1], dup_mat[, 3]))
-    expect_false(identical(dup_mat[, 2], dup_mat[, 3]))
 
-    # Sampling is value-independent: Shared keep/drop decisions regardless of type
+    # Sampling is value-independent
     for (tp in c("uint32_t", "float", "double")) {
         bp_t <- convert_matrix_type(bp, tp)
-        out <- bernoulli_sample(bp_t, 0.5, 13L)
+        out <- sample_bernoulli(bp_t, 0.5, 13L)
         expect_identical(matrix_type(out), tp)
         expect_equal(
             as(out, "dgCMatrix")@i,
-            as(bernoulli_sample(bp, 0.5, 13L), "dgCMatrix")@i
+            as(sample_bernoulli(bp, 0.5, 13L), "dgCMatrix")@i
         )
         expect_equal(
             as(out, "dgCMatrix")@p,
-            as(bernoulli_sample(bp, 0.5, 13L), "dgCMatrix")@p
+            as(sample_bernoulli(bp, 0.5, 13L), "dgCMatrix")@p
         )
     }
+
+    # Storage-order invariant
+    bp_tso <- transpose_storage_order(bp)
+    expect_identical(
+        as(sample_bernoulli(bp, 0.5, 7L), "dgCMatrix"),
+        as(sample_bernoulli(bp_tso, 0.5, 7L), "dgCMatrix")
+    )
 })

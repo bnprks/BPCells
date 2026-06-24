@@ -17,19 +17,28 @@
 namespace BPCells {
 
 // Keep each non-zero entry independently with probability `prob`, with the
-// keep/drop decision a deterministic function of (seed, col, row) via splitmix64.
-template <typename T> class BernoulliSample : public MatrixLoaderWrapper<T> {
+// keep/drop decision a deterministic function of (seed, col, row) via splitmix64 and invariant to storage order.
+template <typename T, bool Transpose = false> class BernoulliSample : public MatrixLoaderWrapper<T> {
   private:
     uint64_t seed;
     uint32_t threshold;
     size_t loaded = 0;
 
-    // Hash algorithm
-    static inline uint64_t splitmix64(uint64_t x) {
-        x += 0x9e3779b97f4a7c15ULL;
-        x = (x ^ (x >> 30)) * 0xbf58476d1ce4e5b9ULL;
-        x = (x ^ (x >> 27)) * 0x94d049bb133111ebULL;
-        return x ^ (x >> 31);
+    // splitmix64 via Daniel Lemire's testingRNG:
+    // https://github.com/lemire/testingRNG/blob/master/source/splitmix64.h
+    static constexpr uint64_t GOLDEN_GAMMA = UINT64_C(0x9E3779B97F4A7C15);
+
+    static inline uint64_t splitmix64_r(uint64_t *seed) {
+        uint64_t z = (*seed += GOLDEN_GAMMA);
+        z = (z ^ (z >> 30)) * UINT64_C(0xBF58476D1CE4E5B9);
+        z = (z ^ (z >> 27)) * UINT64_C(0x94D049BB133111EB);
+        return z ^ (z >> 31);
+    }
+
+    // returns the value of splitmix64 "offset" steps from seed
+    static inline uint64_t splitmix64_stateless(uint64_t seed, uint64_t offset) {
+        seed += offset * GOLDEN_GAMMA;
+        return splitmix64_r(&seed);
     }
 
   public:
@@ -45,20 +54,21 @@ template <typename T> class BernoulliSample : public MatrixLoaderWrapper<T> {
 
     bool load() override {
         loaded = 0;
+        const uint64_t nrow = this->loader->rows();
+        const uint64_t ncol = this->loader->cols();
 
         while (loaded == 0) {
             if (!this->loader->load()) return false;
             uint32_t *row_data = this->loader->rowData();
             T *val_data = this->loader->valData();
             size_t cap = this->loader->capacity();
-
-            // Calculate per-column hash
-            uint64_t col_mix = splitmix64(seed ^ (uint64_t(this->loader->currentCol()) << 32));
-
+            uint32_t col = this->loader->currentCol();
+            
             for (size_t i = 0; i < cap; i++) {
-                // Calculate final hash with row number
-                uint32_t h = static_cast<uint32_t>(splitmix64(col_mix ^ row_data[i]));
-                row_data[loaded] = row_data[i];
+                uint32_t row = row_data[i];
+                uint64_t offset = !Transpose ? (col * nrow + row) : (row * ncol + col);
+                uint32_t h = static_cast<uint32_t>(splitmix64_stateless(seed, offset));
+                row_data[loaded] = row;
                 val_data[loaded] = val_data[i];
                 loaded += h < threshold;
             }

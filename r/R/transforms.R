@@ -1121,7 +1121,7 @@ setClass("MatrixBernoulliSample",
 setMethod("matrix_type", "MatrixBernoulliSample", function(x) matrix_type(x@matrix))
 setMethod("iterate_matrix", "MatrixBernoulliSample", function(x) {
   iter_fn <- get(sprintf("iterate_matrix_bernoulli_sample_%s_cpp", matrix_type(x)))
-  iter_fn(iterate_matrix(x@matrix), x@prob, x@seed)
+  iter_fn(iterate_matrix(x@matrix), x@prob, x@seed, x@transpose)
 })
 
 setMethod("short_description", "MatrixBernoulliSample", function(x) {
@@ -1141,7 +1141,7 @@ setMethod("short_description", "MatrixBernoulliSample", function(x) {
 #' @param seed Reproducibility seed
 #' @return IterableMatrix
 #' @export
-bernoulli_sample <- function(mat, prob, seed) {
+sample_bernoulli <- function(mat, prob, seed) {
   assert_is(mat, "IterableMatrix")
   assert_is_numeric(prob)
   assert_len(prob, 1)
