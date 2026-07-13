@@ -15,16 +15,13 @@
 
 #include "hwy/targets.h"
 
-#include <stdarg.h>
+#include <stdint.h>
 #include <stdio.h>
-#include <stdlib.h>  // abort / exit
 
+#include "hwy/base.h"
+#include "hwy/detect_targets.h"
 #include "hwy/highway.h"
 #include "hwy/per_target.h"  // VectorBytes
-
-#if HWY_IS_ASAN || HWY_IS_MSAN || HWY_IS_TSAN
-#include "sanitizer/common_interface_defs.h"  // __sanitizer_print_stack_trace
-#endif
 
 #if HWY_ARCH_X86
 #include <xmmintrin.h>
@@ -34,17 +31,23 @@
 #include <cpuid.h>
 #endif  // HWY_COMPILER_MSVC
 
-#elif (HWY_ARCH_ARM || HWY_ARCH_PPC) && HWY_OS_LINUX
+#elif (HWY_ARCH_ARM || HWY_ARCH_PPC || HWY_ARCH_S390X || HWY_ARCH_RISCV) && \
+    HWY_OS_LINUX
 // sys/auxv.h does not always include asm/hwcap.h, or define HWCAP*, hence we
 // still include this directly. See #1199.
 #ifndef TOOLCHAIN_MISS_ASM_HWCAP_H
 #include <asm/hwcap.h>
 #endif
-#ifndef TOOLCHAIN_MISS_SYS_AUXV_H
+#if HWY_HAVE_AUXV
 #include <sys/auxv.h>
 #endif
 
 #endif  // HWY_ARCH_*
+
+#if HWY_OS_APPLE
+#include <sys/sysctl.h>
+#include <sys/utsname.h>
+#endif  // HWY_OS_APPLE
 
 namespace hwy {
 namespace {
@@ -55,6 +58,71 @@ int64_t supported_targets_for_test_ = 0;
 
 // Mask of targets disabled at runtime with DisableTargets.
 int64_t supported_mask_ = LimitsMax<int64_t>();
+
+#if HWY_OS_APPLE
+static HWY_INLINE HWY_MAYBE_UNUSED bool HasCpuFeature(
+    const char* feature_name) {
+  int result = 0;
+  size_t len = sizeof(int);
+  return (sysctlbyname(feature_name, &result, &len, nullptr, 0) == 0 &&
+          result != 0);
+}
+
+static HWY_INLINE HWY_MAYBE_UNUSED bool ParseU32(const char*& ptr,
+                                                 uint32_t& parsed_val) {
+  uint64_t parsed_u64 = 0;
+
+  const char* start_ptr = ptr;
+  for (char ch; (ch = (*ptr)) != '\0'; ++ptr) {
+    unsigned digit = static_cast<unsigned>(static_cast<unsigned char>(ch)) -
+                     static_cast<unsigned>(static_cast<unsigned char>('0'));
+    if (digit > 9u) {
+      break;
+    }
+
+    parsed_u64 = (parsed_u64 * 10u) + digit;
+    if (parsed_u64 > 0xFFFFFFFFu) {
+      return false;
+    }
+  }
+
+  parsed_val = static_cast<uint32_t>(parsed_u64);
+  return (ptr != start_ptr);
+}
+
+static HWY_INLINE HWY_MAYBE_UNUSED bool IsMacOs12_2OrLater() {
+  utsname uname_buf;
+  ZeroBytes(&uname_buf, sizeof(utsname));
+
+  if ((uname(&uname_buf)) != 0) {
+    return false;
+  }
+
+  const char* ptr = uname_buf.release;
+  if (!ptr) {
+    return false;
+  }
+
+  uint32_t major;
+  uint32_t minor;
+  if (!ParseU32(ptr, major)) {
+    return false;
+  }
+
+  if (*ptr != '.') {
+    return false;
+  }
+
+  ++ptr;
+  if (!ParseU32(ptr, minor)) {
+    return false;
+  }
+
+  // We are running on macOS 12.2 or later if the Darwin kernel version is 21.3
+  // or later
+  return (major > 21 || (major == 21 && minor >= 3));
+}
+#endif  // HWY_OS_APPLE
 
 #if HWY_ARCH_X86 && HWY_HAVE_RUNTIME_DISPATCH
 namespace x86 {
@@ -136,6 +204,7 @@ enum class FeatureIndex : uint32_t {
   kAVX512DQ,
   kAVX512BW,
   kAVX512FP16,
+  kAVX512BF16,
 
   kVNNI,
   kVPCLMULQDQ,
@@ -203,6 +272,9 @@ uint64_t FlagsFromCPUID() {
     flags |= IsBitSet(abcd[2], 14) ? Bit(FeatureIndex::kPOPCNTDQ) : 0;
 
     flags |= IsBitSet(abcd[3], 23) ? Bit(FeatureIndex::kAVX512FP16) : 0;
+
+    Cpuid(7, 1, abcd);
+    flags |= IsBitSet(abcd[0], 5) ? Bit(FeatureIndex::kAVX512BF16) : 0;
   }
 
   return flags;
@@ -252,14 +324,17 @@ constexpr uint64_t kGroupAVX3_DL =
     Bit(FeatureIndex::kVAES) | Bit(FeatureIndex::kPOPCNTDQ) |
     Bit(FeatureIndex::kBITALG) | Bit(FeatureIndex::kGFNI) | kGroupAVX3;
 
+constexpr uint64_t kGroupAVX3_ZEN4 =
+    Bit(FeatureIndex::kAVX512BF16) | kGroupAVX3_DL;
+
 constexpr uint64_t kGroupAVX3_SPR =
-    Bit(FeatureIndex::kAVX512FP16) | kGroupAVX3_DL;
+    Bit(FeatureIndex::kAVX512FP16) | kGroupAVX3_ZEN4;
 
 int64_t DetectTargets() {
   int64_t bits = 0;  // return value of supported targets.
-#if HWY_ARCH_X86_64
-  bits |= HWY_SSE2;  // always present in x64
-#endif
+  HWY_IF_CONSTEXPR(HWY_ARCH_X86_64) {
+    bits |= HWY_SSE2;  // always present in x64
+  }
 
   const uint64_t flags = FlagsFromCPUID();
   // Set target bit(s) if all their group's flags are all set.
@@ -281,48 +356,93 @@ int64_t DetectTargets() {
   if ((flags & kGroupSSSE3) == kGroupSSSE3) {
     bits |= HWY_SSSE3;
   }
-#if HWY_ARCH_X86_32
-  if ((flags & kGroupSSE2) == kGroupSSE2) {
-    bits |= HWY_SSE2;
+  HWY_IF_CONSTEXPR(HWY_ARCH_X86_32) {
+    if ((flags & kGroupSSE2) == kGroupSSE2) {
+      bits |= HWY_SSE2;
+    }
   }
-#endif
 
-  // Clear bits if the OS does not support XSAVE - otherwise, registers
-  // are not preserved across context switches.
+  // Clear AVX2/AVX3 bits if the CPU or OS does not support XSAVE - otherwise,
+  // YMM/ZMM registers are not preserved across context switches.
+
+  // The lower 128 bits of XMM0-XMM15 are guaranteed to be preserved across
+  // context switches on x86_64
+
+  // The following OS's are known to preserve the lower 128 bits of XMM
+  // registers across context switches on x86 CPU's that support SSE (even in
+  // 32-bit mode):
+  // - Windows 2000 or later
+  // - Linux 2.4.0 or later
+  // - Mac OS X 10.4 or later
+  // - FreeBSD 4.4 or later
+  // - NetBSD 1.6 or later
+  // - OpenBSD 3.5 or later
+  // - UnixWare 7 Release 7.1.1 or later
+  // - Solaris 9 4/04 or later
+
   uint32_t abcd[4];
   Cpuid(1, 0, abcd);
+  const bool has_xsave = IsBitSet(abcd[2], 26);
   const bool has_osxsave = IsBitSet(abcd[2], 27);
-  if (has_osxsave) {
-    const uint32_t xcr0 = ReadXCR0();
-    const int64_t min_avx3 = HWY_AVX3 | HWY_AVX3_DL | HWY_AVX3_SPR;
-    const int64_t min_avx2 = HWY_AVX2 | min_avx3;
-    // XMM
-    if (!IsBitSet(xcr0, 1)) {
-#if HWY_ARCH_X86_64
-      // The HWY_SSE2, HWY_SSSE3, and HWY_SSE4 bits do not need to be
-      // cleared on x86_64, even if bit 1 of XCR0 is not set, as
-      // the lower 128 bits of XMM0-XMM15 are guaranteed to be
-      // preserved across context switches on x86_64
+  constexpr int64_t min_avx2 = HWY_AVX2 | (HWY_AVX2 - 1);
 
-      // Only clear the AVX2/AVX3 bits on x86_64 if bit 1 of XCR0 is not set
-      bits &= ~min_avx2;
-#else
-      bits &= ~(HWY_SSE2 | HWY_SSSE3 | HWY_SSE4 | min_avx2);
+  if (has_xsave && has_osxsave) {
+#if HWY_OS_APPLE
+    // On macOS, check for AVX3 XSAVE support by checking that we are running on
+    // macOS 12.2 or later and HasCpuFeature("hw.optional.avx512f") returns true
+
+    // There is a bug in macOS 12.1 or earlier that can cause ZMM16-ZMM31, the
+    // upper 256 bits of the ZMM registers, and K0-K7 (the AVX512 mask
+    // registers) to not be properly preserved across a context switch on
+    // macOS 12.1 or earlier.
+
+    // This bug on macOS 12.1 or earlier on x86_64 CPU's with AVX3 support is
+    // described at
+    // https://community.intel.com/t5/Software-Tuning-Performance/MacOS-Darwin-kernel-bug-clobbers-AVX-512-opmask-register-state/m-p/1327259,
+    // https://github.com/golang/go/issues/49233, and
+    // https://github.com/simdutf/simdutf/pull/236.
+
+    // In addition to the bug that is there on macOS 12.1 or earlier, bits 5, 6,
+    // and 7 can be set to 0 on x86_64 CPU's with AVX3 support on macOS until
+    // the first AVX512 instruction is executed as macOS only preserves
+    // ZMM16-ZMM31, the upper 256 bits of the ZMM registers, and K0-K7 across a
+    // context switch on threads that have executed an AVX512 instruction.
+
+    // Checking for AVX3 XSAVE support on macOS using
+    // HasCpuFeature("hw.optional.avx512f") avoids false negative results
+    // on x86_64 CPU's that have AVX3 support.
+    const bool have_avx3_xsave_support =
+        IsMacOs12_2OrLater() && HasCpuFeature("hw.optional.avx512f");
 #endif
-    }
-    // YMM
-    if (!IsBitSet(xcr0, 2)) {
+
+    const uint32_t xcr0 = ReadXCR0();
+    constexpr int64_t min_avx3 = HWY_AVX3 | HWY_AVX3_DL | HWY_AVX3_SPR;
+    // XMM/YMM
+    if (!IsBitSet(xcr0, 1) || !IsBitSet(xcr0, 2)) {
+      // Clear the AVX2/AVX3 bits if XMM/YMM XSAVE is not enabled
       bits &= ~min_avx2;
     }
+
+#if !HWY_OS_APPLE
+    // On OS's other than macOS, check for AVX3 XSAVE support by checking that
+    // bits 5, 6, and 7 of XCR0 are set.
+    const bool have_avx3_xsave_support =
+        IsBitSet(xcr0, 5) && IsBitSet(xcr0, 6) && IsBitSet(xcr0, 7);
+#endif
+
     // opmask, ZMM lo/hi
-    if (!IsBitSet(xcr0, 5) || !IsBitSet(xcr0, 6) || !IsBitSet(xcr0, 7)) {
+    if (!have_avx3_xsave_support) {
       bits &= ~min_avx3;
     }
-  }  // has_osxsave
+  } else {  // !has_xsave || !has_osxsave
+    // Clear the AVX2/AVX3 bits if the CPU or OS does not support XSAVE
+    bits &= ~min_avx2;
+  }
 
   // This is mainly to work around the slow Zen4 CompressStore. It's unclear
   // whether subsequent AMD models will be affected; assume yes.
-  if ((bits & HWY_AVX3_DL) && IsAMD()) {
+  if ((bits & HWY_AVX3_DL) && (flags & kGroupAVX3_ZEN4) == kGroupAVX3_ZEN4 &&
+      IsAMD()) {
     bits |= HWY_AVX3_ZEN4;
   }
 
@@ -333,18 +453,43 @@ int64_t DetectTargets() {
 #elif HWY_ARCH_ARM && HWY_HAVE_RUNTIME_DISPATCH
 namespace arm {
 int64_t DetectTargets() {
-  int64_t bits = 0;               // return value of supported targets.
+  int64_t bits = 0;  // return value of supported targets.
+
   using CapBits = unsigned long;  // NOLINT
+#if HWY_OS_APPLE
+  const CapBits hw = 0UL;
+#else
+  // For Android, this has been supported since API 20 (2014).
   const CapBits hw = getauxval(AT_HWCAP);
+#endif
   (void)hw;
 
 #if HWY_ARCH_ARM_A64
   bits |= HWY_NEON_WITHOUT_AES;  // aarch64 always has NEON and VFPv4..
 
+#if HWY_OS_APPLE
+  if (HasCpuFeature("hw.optional.arm.FEAT_AES")) {
+    bits |= HWY_NEON;
+
+    if (HasCpuFeature("hw.optional.AdvSIMD_HPFPCvt") &&
+        HasCpuFeature("hw.optional.arm.FEAT_DotProd") &&
+        HasCpuFeature("hw.optional.arm.FEAT_BF16")) {
+      bits |= HWY_NEON_BF16;
+    }
+  }
+#else  // !HWY_OS_APPLE
   // .. but not necessarily AES, which is required for HWY_NEON.
 #if defined(HWCAP_AES)
   if (hw & HWCAP_AES) {
     bits |= HWY_NEON;
+
+#if defined(HWCAP_ASIMDHP) && defined(HWCAP_ASIMDDP) && defined(HWCAP2_BF16)
+    const CapBits hw2 = getauxval(AT_HWCAP2);
+    const int64_t kGroupF16Dot = HWCAP_ASIMDHP | HWCAP_ASIMDDP;
+    if ((hw & kGroupF16Dot) == kGroupF16Dot && (hw2 & HWCAP2_BF16)) {
+      bits |= HWY_NEON_BF16;
+    }
+#endif  // HWCAP_ASIMDHP && HWCAP_ASIMDDP && HWCAP2_BF16
   }
 #endif  // HWCAP_AES
 
@@ -354,12 +499,17 @@ int64_t DetectTargets() {
   }
 #endif
 
-#if defined(HWCAP2_SVE2) && defined(HWCAP2_SVEAES)
+#ifndef HWCAP2_SVE2
+#define HWCAP2_SVE2 (1 << 1)
+#endif
+#ifndef HWCAP2_SVEAES
+#define HWCAP2_SVEAES (1 << 2)
+#endif
   const CapBits hw2 = getauxval(AT_HWCAP2);
   if ((hw2 & HWCAP2_SVE2) && (hw2 & HWCAP2_SVEAES)) {
     bits |= HWY_SVE2;
   }
-#endif
+#endif  // HWY_OS_APPLE
 
 #else  // !HWY_ARCH_ARM_A64
 
@@ -441,7 +591,91 @@ int64_t DetectTargets() {
   return bits;
 }
 }  // namespace ppc
-#endif  // HWY_ARCH_X86
+#elif HWY_ARCH_S390X && HWY_HAVE_RUNTIME_DISPATCH
+namespace s390x {
+
+#ifndef HWCAP_S390_VX
+#define HWCAP_S390_VX 2048
+#endif
+
+#ifndef HWCAP_S390_VXE
+#define HWCAP_S390_VXE 8192
+#endif
+
+#ifndef HWCAP_S390_VXRS_EXT2
+#define HWCAP_S390_VXRS_EXT2 32768
+#endif
+
+using CapBits = unsigned long;  // NOLINT
+
+constexpr CapBits kGroupZ14 = HWCAP_S390_VX | HWCAP_S390_VXE;
+constexpr CapBits kGroupZ15 =
+    HWCAP_S390_VX | HWCAP_S390_VXE | HWCAP_S390_VXRS_EXT2;
+
+int64_t DetectTargets() {
+  int64_t bits = 0;
+
+#if defined(AT_HWCAP)
+  const CapBits hw = getauxval(AT_HWCAP);
+
+  if ((hw & kGroupZ14) == kGroupZ14) {
+    bits |= HWY_Z14;
+  }
+
+  if ((hw & kGroupZ15) == kGroupZ15) {
+    bits |= HWY_Z15;
+  }
+#endif
+
+  return bits;
+}
+}  // namespace s390x
+#elif HWY_ARCH_RISCV && HWY_HAVE_RUNTIME_DISPATCH
+namespace rvv {
+
+#ifndef HWCAP_RVV
+#define COMPAT_HWCAP_ISA_V (1 << ('V' - 'A'))
+#endif
+
+using CapBits = unsigned long;  // NOLINT
+
+int64_t DetectTargets() {
+  int64_t bits = 0;
+
+  const CapBits hw = getauxval(AT_HWCAP);
+
+  if ((hw & COMPAT_HWCAP_ISA_V) == COMPAT_HWCAP_ISA_V) {
+    size_t e8m1_vec_len;
+#if HWY_ARCH_RISCV_64
+    int64_t vtype_reg_val;
+#else
+    int32_t vtype_reg_val;
+#endif
+
+    // Check that a vuint8m1_t vector is at least 16 bytes and that tail
+    // agnostic and mask agnostic mode are supported
+    asm volatile(
+        // Avoid compiler error on GCC or Clang if -march=rv64gcv1p0 or
+        // -march=rv32gcv1p0 option is not specified on the command line
+        ".option push\n\t"
+        ".option arch, +v\n\t"
+        "vsetvli %0, zero, e8, m1, ta, ma\n\t"
+        "csrr %1, vtype\n\t"
+        ".option pop"
+        : "=r"(e8m1_vec_len), "=r"(vtype_reg_val));
+
+    // The RVV target is supported if the VILL bit of VTYPE (the MSB bit of
+    // VTYPE) is not set and the length of a vuint8m1_t vector is at least 16
+    // bytes
+    if (vtype_reg_val >= 0 && e8m1_vec_len >= 16) {
+      bits |= HWY_RVV;
+    }
+  }
+
+  return bits;
+}
+}  // namespace rvv
+#endif  // HWY_ARCH_*
 
 // Returns targets supported by the CPU, independently of DisableTargets.
 // Factored out of SupportedTargets to make its structure more obvious. Note
@@ -457,9 +691,13 @@ int64_t DetectTargets() {
   bits |= arm::DetectTargets();
 #elif HWY_ARCH_PPC && HWY_HAVE_RUNTIME_DISPATCH
   bits |= ppc::DetectTargets();
+#elif HWY_ARCH_S390X && HWY_HAVE_RUNTIME_DISPATCH
+  bits |= s390x::DetectTargets();
+#elif HWY_ARCH_RISCV && HWY_HAVE_RUNTIME_DISPATCH
+  bits |= rvv::DetectTargets();
 
 #else
-  // TODO(janwas): detect support for WASM/RVV.
+  // TODO(janwas): detect support for WASM.
   // This file is typically compiled without HWY_IS_TEST, but targets_test has
   // it set, and will expect all of its HWY_TARGETS (= all attainable) to be
   // supported.
@@ -469,46 +707,17 @@ int64_t DetectTargets() {
   if ((bits & HWY_ENABLED_BASELINE) != HWY_ENABLED_BASELINE) {
     const uint64_t bits_u = static_cast<uint64_t>(bits);
     const uint64_t enabled = static_cast<uint64_t>(HWY_ENABLED_BASELINE);
-    fprintf(stderr,
-            "WARNING: CPU supports 0x%08x%08x, software requires 0x%08x%08x\n",
-            static_cast<uint32_t>(bits_u >> 32),
-            static_cast<uint32_t>(bits_u & 0xFFFFFFFF),
-            static_cast<uint32_t>(enabled >> 32),
-            static_cast<uint32_t>(enabled & 0xFFFFFFFF));
+    HWY_WARN("CPU supports 0x%08x%08x, software requires 0x%08x%08x\n",
+             static_cast<uint32_t>(bits_u >> 32),
+             static_cast<uint32_t>(bits_u & 0xFFFFFFFF),
+             static_cast<uint32_t>(enabled >> 32),
+             static_cast<uint32_t>(enabled & 0xFFFFFFFF));
   }
 
   return bits;
 }
 
 }  // namespace
-
-HWY_DLLEXPORT HWY_NORETURN void HWY_FORMAT(3, 4)
-    Abort(const char* file, int line, const char* format, ...) {
-  char buf[800];
-  va_list args;
-  va_start(args, format);
-  vsnprintf(buf, sizeof(buf), format, args);
-  va_end(args);
-
-  fprintf(stderr, "Abort at %s:%d: %s\n", file, line, buf);
-
-// If compiled with any sanitizer, they can also print a stack trace.
-#if HWY_IS_ASAN || HWY_IS_MSAN || HWY_IS_TSAN
-  __sanitizer_print_stack_trace();
-#endif  // HWY_IS_*
-  fflush(stderr);
-
-// Now terminate the program:
-#if HWY_ARCH_RVV
-  exit(1);  // trap/abort just freeze Spike.
-#elif HWY_IS_DEBUG_BUILD && !HWY_COMPILER_MSVC
-  // Facilitates breaking into a debugger, but don't use this in non-debug
-  // builds because it looks like "illegal instruction", which is misleading.
-  __builtin_trap();
-#else
-  abort();  // Compile error without this due to HWY_NORETURN.
-#endif
-}
 
 HWY_DLLEXPORT void DisableTargets(int64_t disabled_targets) {
   supported_mask_ = static_cast<int64_t>(~disabled_targets);

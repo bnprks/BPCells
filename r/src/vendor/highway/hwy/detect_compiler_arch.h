@@ -73,7 +73,13 @@
 // https://github.com/simd-everywhere/simde/blob/47d6e603de9d04ee05cdfbc57cf282a02be1bf2a/simde/simde-detect-clang.h#L59.
 // Please send updates below to them as well, thanks!
 #if defined(__apple_build_version__) || __clang_major__ >= 999
-#if __has_attribute(nouwtable)  // no new warnings in 16.0
+#if __has_warning("-Woverriding-option")
+#define HWY_COMPILER_CLANG 1801
+// No new warnings in 17.0, and Apple LLVM 15.3, which should be 1600, already
+// has the unsafe_buffer_usage attribute, so we instead check for new builtins.
+#elif __has_builtin(__builtin_nondeterministic_value)
+#define HWY_COMPILER_CLANG 1700
+#elif __has_attribute(nouwtable)  // no new warnings in 16.0
 #define HWY_COMPILER_CLANG 1600
 #elif __has_warning("-Warray-parameter")
 #define HWY_COMPILER_CLANG 1500
@@ -113,7 +119,8 @@
 #define HWY_COMPILER3_CLANG 0
 #endif
 
-#if HWY_COMPILER_GCC && !HWY_COMPILER_CLANG && !HWY_COMPILER_ICC
+#if HWY_COMPILER_GCC && !HWY_COMPILER_CLANG && !HWY_COMPILER_ICC && \
+    !HWY_COMPILER_ICX
 #define HWY_COMPILER_GCC_ACTUAL HWY_COMPILER_GCC
 #else
 #define HWY_COMPILER_GCC_ACTUAL 0
@@ -121,16 +128,19 @@
 
 // More than one may be nonzero, but we want at least one.
 #if 0 == (HWY_COMPILER_MSVC + HWY_COMPILER_CLANGCL + HWY_COMPILER_ICC + \
-          HWY_COMPILER_GCC + HWY_COMPILER_CLANG)
+          HWY_COMPILER_ICX + HWY_COMPILER_GCC + HWY_COMPILER_CLANG)
 #error "Unsupported compiler"
 #endif
 
-// We should only detect one of these (only clang/clangcl overlap)
-#if 1 <                                                                     \
-    (!!HWY_COMPILER_MSVC + !!HWY_COMPILER_ICC + !!HWY_COMPILER_GCC_ACTUAL + \
-     !!(HWY_COMPILER_CLANGCL | HWY_COMPILER_CLANG))
+// We should only detect one of these (only clang/clangcl/icx overlap)
+#if 1 < (!!HWY_COMPILER_MSVC + (!!HWY_COMPILER_ICC & !HWY_COMPILER_ICX) + \
+         !!HWY_COMPILER_GCC_ACTUAL +                                      \
+         !!(HWY_COMPILER_ICX | HWY_COMPILER_CLANGCL | HWY_COMPILER_CLANG))
 #error "Detected multiple compilers"
 #endif
+
+//------------------------------------------------------------------------------
+// Compiler features and C++ version
 
 #ifdef __has_builtin
 #define HWY_HAS_BUILTIN(name) __has_builtin(name)
@@ -154,6 +164,32 @@
 #define HWY_HAS_FEATURE(name) __has_feature(name)
 #else
 #define HWY_HAS_FEATURE(name) 0
+#endif
+
+// NOTE: clang ~17 does not correctly handle wrapping __has_include in a macro.
+
+#if HWY_COMPILER_MSVC && defined(_MSVC_LANG) && _MSVC_LANG > __cplusplus
+#define HWY_CXX_LANG _MSVC_LANG
+#else
+#define HWY_CXX_LANG __cplusplus
+#endif
+
+#if defined(__cpp_constexpr) && __cpp_constexpr >= 201603L
+#define HWY_CXX17_CONSTEXPR constexpr
+#else
+#define HWY_CXX17_CONSTEXPR
+#endif
+
+#if defined(__cpp_constexpr) && __cpp_constexpr >= 201304L
+#define HWY_CXX14_CONSTEXPR constexpr
+#else
+#define HWY_CXX14_CONSTEXPR
+#endif
+
+#if HWY_CXX_LANG >= 201703L
+#define HWY_IF_CONSTEXPR if constexpr
+#else
+#define HWY_IF_CONSTEXPR if
 #endif
 
 //------------------------------------------------------------------------------
@@ -185,6 +221,12 @@
 #define HWY_ARCH_PPC 1
 #else
 #define HWY_ARCH_PPC 0
+#endif
+
+#if defined(__powerpc64__) || (HWY_ARCH_PPC && defined(__64BIT__))
+#define HWY_ARCH_PPC_64 1
+#else
+#define HWY_ARCH_PPC_64 0
 #endif
 
 // aarch32 is currently not supported; please raise an issue if you want it.
@@ -225,17 +267,51 @@
 #endif
 
 #ifdef __riscv
-#define HWY_ARCH_RVV 1
+#define HWY_ARCH_RISCV 1
 #else
-#define HWY_ARCH_RVV 0
+#define HWY_ARCH_RISCV 0
+#endif
+// DEPRECATED names; please use HWY_ARCH_RISCV instead.
+#define HWY_ARCH_RVV HWY_ARCH_RISCV
+
+#if HWY_ARCH_RISCV && defined(__riscv_xlen)
+
+#if __riscv_xlen == 32
+#define HWY_ARCH_RISCV_32 1
+#else
+#define HWY_ARCH_RISCV_32 0
+#endif
+
+#if __riscv_xlen == 64
+#define HWY_ARCH_RISCV_64 1
+#else
+#define HWY_ARCH_RISCV_64 0
+#endif
+
+#else  // !HWY_ARCH_RISCV || !defined(__riscv_xlen)
+#define HWY_ARCH_RISCV_32 0
+#define HWY_ARCH_RISCV_64 0
+#endif  // HWY_ARCH_RISCV && defined(__riscv_xlen)
+
+#if HWY_ARCH_RISCV_32 && HWY_ARCH_RISCV_64
+#error "Cannot have both RISCV_32 and RISCV_64"
+#endif
+
+#if defined(__s390x__)
+#define HWY_ARCH_S390X 1
+#else
+#define HWY_ARCH_S390X 0
 #endif
 
 // It is an error to detect multiple architectures at the same time, but OK to
 // detect none of the above.
 #if (HWY_ARCH_X86 + HWY_ARCH_PPC + HWY_ARCH_ARM + HWY_ARCH_ARM_OLD + \
-     HWY_ARCH_WASM + HWY_ARCH_RVV) > 1
+     HWY_ARCH_WASM + HWY_ARCH_RISCV + HWY_ARCH_S390X) > 1
 #error "Must not detect more than one architecture"
 #endif
+
+//------------------------------------------------------------------------------
+// Operating system
 
 #if defined(_WIN32) || defined(_WIN64)
 #define HWY_OS_WIN 1
@@ -247,6 +323,25 @@
 #define HWY_OS_LINUX 1
 #else
 #define HWY_OS_LINUX 0
+#endif
+
+// iOS or Mac
+#if defined(__APPLE__)
+#define HWY_OS_APPLE 1
+#else
+#define HWY_OS_APPLE 0
+#endif
+
+#if defined(__FreeBSD__)
+#define HWY_OS_FREEBSD 1
+#else
+#define HWY_OS_FREEBSD 0
+#endif
+
+// It is an error to detect multiple OSes at the same time, but OK to
+// detect none of the above.
+#if (HWY_OS_WIN + HWY_OS_LINUX + HWY_OS_APPLE + HWY_OS_FREEBSD) > 1
+#error "Must not detect more than one OS"
 #endif
 
 //------------------------------------------------------------------------------
