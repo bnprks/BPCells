@@ -4,7 +4,7 @@
 \alias{cluster_graph_leiden}
 \alias{cluster_graph_louvain}
 \alias{cluster_graph_seurat}
-\title{Cluster an adjacency matrix}
+\title{Cluster an adjacency matrix or graph edge list}
 \usage{
 cluster_graph_leiden(
   mat,
@@ -19,7 +19,7 @@ cluster_graph_louvain(mat, resolution = 1, seed = 12531)
 cluster_graph_seurat(mat, resolution = 0.8, ...)
 }
 \arguments{
-\item{mat}{Symmetric adjacency matrix (dgCMatrix) output from e.g. \code{knn_to_snn_graph()} or \code{knn_to_geodesic_graph()}. Only the lower triangle is used.}
+\item{mat}{Symmetric adjacency matrix (dgCMatrix) or graph list output from e.g. \code{knn_to_snn_graph()} or \code{knn_to_geodesic_graph()}. Only the lower triangle is used for matrix inputs.}
 
 \item{resolution}{Resolution parameter. Higher values result in more clusters}
 
@@ -34,7 +34,7 @@ For the meaning of each option, see \code{igraph::cluster_leiden()}.}
 Factor vector containing the cluster assignment for each cell.
 }
 \description{
-Cluster an adjacency matrix
+Cluster an adjacency matrix or graph edge list
 }
 \details{
 \strong{cluster_graph_leiden}: Leiden clustering algorithm \code{igraph::cluster_leiden()}.

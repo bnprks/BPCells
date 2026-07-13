@@ -234,13 +234,13 @@ knn_to_geodesic_graph <- function(knn, return_type = c("matrix", "list"), thread
   return(res)
 }
 
-#' Cluster an adjacency matrix
+#' Cluster an adjacency matrix or graph edge list
 #' @rdname cluster_graph
 #' @details **cluster_graph_leiden**: Leiden clustering algorithm `igraph::cluster_leiden()`. 
 #'    Note that when using `objective_function = "CPM"` the number of clusters empirically scales with `cells * resolution`,
 #'    so 1e-3 is a good resolution for 10k cells, but 1M cells is better with a 1e-5 resolution. A resolution of 1 is a 
 #'    good default when `objective_function = "modularity"` per the default.
-#' @param mat Symmetric adjacency matrix (dgCMatrix) output from e.g. `knn_to_snn_graph()` or `knn_to_geodesic_graph()`. Only the lower triangle is used.
+#' @param mat Symmetric adjacency matrix (dgCMatrix) or graph list output from e.g. `knn_to_snn_graph()` or `knn_to_geodesic_graph()`. Only the lower triangle is used for matrix inputs.
 #' @param resolution Resolution parameter. Higher values result in more clusters
 #' @param objective_function Graph statistic to optimize during clustering. Modularity is the default as it keeps resolution independent of dataset size (see details below). 
 #'    For the meaning of each option, see `igraph::cluster_leiden()`.
@@ -261,7 +261,7 @@ cluster_graph_leiden <- function(
 
   objective_function <- match.arg(objective_function)
 
-  igraph::graph_from_adjacency_matrix(mat, weighted = TRUE, diag = FALSE, mode = "lower") %>%
+  graph_from_clustering_input(mat) %>%
     igraph::cluster_leiden(resolution_parameter = resolution, objective_function=objective_function, ...) %>%
     igraph::membership() %>%
     as.factor()
@@ -282,10 +282,24 @@ cluster_graph_louvain <- function(
   on.exit(restore_seed(prev_seed), add = TRUE)
   set.seed(seed)
 
-  igraph::graph_from_adjacency_matrix(mat, weighted = TRUE, diag = FALSE, mode = "lower") %>%
+  graph_from_clustering_input(mat) %>%
     igraph::cluster_louvain(resolution = resolution) %>%
     igraph::membership() %>%
     as.factor()
+}
+
+graph_from_clustering_input <- function(mat) {
+  if (is.list(mat) && all(c("i", "j", "weight", "dim") %in% names(mat))) {
+    graph <- igraph::make_empty_graph(n = mat$dim, directed = FALSE)
+    keepers <- mat$i != mat$j
+    if (!any(keepers)) return(graph)
+    return(igraph::add_edges(
+      graph,
+      as.vector(rbind(mat$i[keepers] + 1L, mat$j[keepers] + 1L)),
+      attr = list(weight = mat$weight[keepers])
+    ))
+  }
+  igraph::graph_from_adjacency_matrix(mat, weighted = TRUE, diag = FALSE, mode = "lower")
 }
 
 #' @rdname cluster_graph
