@@ -685,6 +685,18 @@ iterate_matrix_mask_double_cpp <- function(mat, mask, invert) {
     .Call(`_BPCells_iterate_matrix_mask_double_cpp`, mat, mask, invert)
 }
 
+iterate_matrix_bernoulli_sample_uint32_t_cpp <- function(mat, prob, seed, transpose) {
+    .Call(`_BPCells_iterate_matrix_bernoulli_sample_uint32_t_cpp`, mat, prob, seed, transpose)
+}
+
+iterate_matrix_bernoulli_sample_float_cpp <- function(mat, prob, seed, transpose) {
+    .Call(`_BPCells_iterate_matrix_bernoulli_sample_float_cpp`, mat, prob, seed, transpose)
+}
+
+iterate_matrix_bernoulli_sample_double_cpp <- function(mat, prob, seed, transpose) {
+    .Call(`_BPCells_iterate_matrix_bernoulli_sample_double_cpp`, mat, prob, seed, transpose)
+}
+
 iterate_matrix_rank_uint32_t_cpp <- function(matrix) {
     .Call(`_BPCells_iterate_matrix_rank_uint32_t_cpp`, matrix)
 }

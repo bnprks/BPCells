@@ -248,7 +248,8 @@ Generic methods and built-in functions for IterableMatrix objects
 
 \item \code{e1 * e2}: Multiply by a constant, or multiply rows by a vector length nrow(mat)
 
-\item \code{e1 + e2}: Add a constant, or row-wise addition with a vector length nrow(mat)
+\item \code{e1 + e2}: Add a constant, row-wise addition with a vector length nrow(mat),
+or element-wise addition of two IterableMatrix objects
 
 \item \code{e1 / e2}: Divide by a constant, or divide rows by a vector length nrow(mat)
 
@@ -420,6 +421,8 @@ mat + 5
 ## Adding row-wise by a vector of length `nrow(mat)`
 mat + 1:nrow(mat)
 
+## Element-wise addition of two IterableMatrix objects
+mat + (mat * 2)
 
 #######################################################################
 ## `e1 / e2` example

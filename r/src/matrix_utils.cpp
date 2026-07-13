@@ -10,6 +10,7 @@
 #define RCPP_NO_SUGAR
 #include <Rcpp.h>
 #include <RcppEigen.h>
+#include "bpcells-cpp/matrixIterators/BernoulliSample.h"
 #include "bpcells-cpp/matrixIterators/CSparseMatrix.h"
 #include "bpcells-cpp/matrixIterators/ColwiseRank.h"
 #include "bpcells-cpp/matrixIterators/MatrixAddition.h"
@@ -343,6 +344,39 @@ SEXP iterate_matrix_mask_double_cpp(SEXP mat, SEXP mask, bool invert) {
             take_unique_xptr<MatrixLoader<double>>(mat),
             take_unique_xptr<MatrixLoader<uint32_t>>(mask)
         );
+}
+
+// [[Rcpp::export]]
+SEXP iterate_matrix_bernoulli_sample_uint32_t_cpp(SEXP mat, double prob, int seed, bool transpose) {
+    uint64_t s = static_cast<uint64_t>(static_cast<uint32_t>(seed));
+    if (transpose)
+        return make_unique_xptr<BernoulliSample<uint32_t, true>>(
+            take_unique_xptr<MatrixLoader<uint32_t>>(mat), prob, s);
+    else
+        return make_unique_xptr<BernoulliSample<uint32_t, false>>(
+            take_unique_xptr<MatrixLoader<uint32_t>>(mat), prob, s);
+}
+
+// [[Rcpp::export]]
+SEXP iterate_matrix_bernoulli_sample_float_cpp(SEXP mat, double prob, int seed, bool transpose) {
+    uint64_t s = static_cast<uint64_t>(static_cast<uint32_t>(seed));
+    if (transpose)
+        return make_unique_xptr<BernoulliSample<float, true>>(
+            take_unique_xptr<MatrixLoader<float>>(mat), prob, s);
+    else
+        return make_unique_xptr<BernoulliSample<float, false>>(
+            take_unique_xptr<MatrixLoader<float>>(mat), prob, s);
+}
+
+// [[Rcpp::export]]
+SEXP iterate_matrix_bernoulli_sample_double_cpp(SEXP mat, double prob, int seed, bool transpose) {
+    uint64_t s = static_cast<uint64_t>(static_cast<uint32_t>(seed));
+    if (transpose)
+        return make_unique_xptr<BernoulliSample<double, true>>(
+            take_unique_xptr<MatrixLoader<double>>(mat), prob, s);
+    else
+        return make_unique_xptr<BernoulliSample<double, false>>(
+            take_unique_xptr<MatrixLoader<double>>(mat), prob, s);
 }
 
 // [[Rcpp::export]]
