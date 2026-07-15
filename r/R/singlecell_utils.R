@@ -1,5 +1,5 @@
 # Copyright 2023 BPCells contributors
-# 
+#
 # Licensed under the Apache License, Version 2.0 <LICENSE-APACHE or
 # https://www.apache.org/licenses/LICENSE-2.0> or the MIT license
 # <LICENSE-MIT or https://opensource.org/licenses/MIT>, at your
@@ -10,8 +10,8 @@
 #'
 #' Given a features x cells matrix, perform one-vs-all differential
 #' tests to find markers.
-#' 
-#' Tips for using the values from this function:  
+#'
+#' Tips for using the values from this function:
 #' - Use `dplyr::mutate()` to add columns for e.g. adjusted p-value and log fold change.
 #' - Use `dplyr::filter()` to get only differential genes above some given threshold
 #' - To get adjusted p-values, use R `p.adjust()`, recommended method is "BH"
@@ -21,9 +21,9 @@
 #'
 #' @param mat IterableMatrix object of dimensions features x cells
 #' @param groups Character/factor vector of cell groups/clusters. Length #cells
-#' @param method Test method to use. Current options are:  
+#' @param method Test method to use. Current options are:
 #'   - `wilcoxon`: Wilconxon rank-sum test a.k.a Mann-Whitney U test
-#' @return tibble with the following columns:  
+#' @return tibble with the following columns:
 #'  - **foreground**: Group ID used for the foreground
 #'  - **background**: Group ID used for the background (or NA if comparing to rest of cells)
 #'  - **feature**: ID of the feature
@@ -67,7 +67,7 @@ marker_features <- function(mat, groups, method="wilcoxon") {
     foreground_means <- multiply_rows(group_sums, 1 / as.numeric(table(groups)))
     background_means <- add_cols(-group_sums, colSums(group_sums)) %>%
       multiply_rows(1 / (length(groups) - as.numeric(table(groups))))
-    
+
     feature_names <- if (is.null(rownames(mat))) seq_len(nrow(mat)) else rownames(mat)
 
     tibble::tibble(
@@ -89,6 +89,7 @@ marker_features <- function(mat, groups, method="wilcoxon") {
 #'
 #' Current options are: `nonzeros`, `sum`, `mean`, `variance`.
 #' @param threads (integer) Number of threads to use.
+#' @param sparse (logical) Whether or not to return sparse matrices.
 #' @return
 #'  - If `method` is length `1`, returns a matrix of shape `(features x groups)`.
 #'  - If `method` is greater than length `1`, returns a list of matrices with each matrix representing a pseudobulk matrix with a different aggregation method.
@@ -124,7 +125,7 @@ marker_features <- function(mat, groups, method="wilcoxon") {
 #' pseudobulk_res_multi$mean
 #' @inheritParams marker_features
 #' @export
-pseudobulk_matrix <- function(mat, cell_groups, method = "sum", threads = 0L) {
+pseudobulk_matrix <- function(mat, cell_groups, method = "sum", threads = 0L, sparse = FALSE) {
   assert_is(mat, "IterableMatrix")
   assert_is(cell_groups, c("factor", "character", "numeric"))
   assert_true(length(cell_groups) == ncol(mat))
@@ -138,12 +139,21 @@ pseudobulk_matrix <- function(mat, cell_groups, method = "sum", threads = 0L) {
   }
   assert_is_wholenumber(threads)
 
-  it <- mat %>%
-    convert_matrix_type("double") %>%
-    parallel_split(threads, threads*4) %>%
-    iterate_matrix()
-  
-  res <- pseudobulk_matrix_cpp(it, cell_groups = as.integer(cell_groups) - 1, method = method, transpose = mat@transpose)
+  if (sparse) {
+    new.order <- order(cell_groups)
+    cell_groups <- cell_groups[new.order]
+    it <- mat[, new.order] %>%
+      convert_matrix_type("double") %>%
+      parallel_split(threads, threads*4) %>%
+      iterate_matrix()
+    res <- pseudobulk_matrix_sparse_cpp(it, cell_groups = as.integer(cell_groups) - 1, method = method, transpose = mat@transpose)
+  } else {
+    it <- mat %>%
+      convert_matrix_type("double") %>%
+      parallel_split(threads, threads*4) %>%
+      iterate_matrix()
+    res <- pseudobulk_matrix_cpp(it, cell_groups = as.integer(cell_groups) - 1, method = method, transpose = mat@transpose)
+  }
   # if res is a single matrix, return with colnames and rownames
   if (length(method) == 1) {
     colnames(res[[method]]) <- levels(cell_groups)

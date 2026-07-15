@@ -1,5 +1,5 @@
 # Copyright 2023 BPCells contributors
-# 
+#
 # Licensed under the Apache License, Version 2.0 <LICENSE-APACHE or
 # https://www.apache.org/licenses/LICENSE-2.0> or the MIT license
 # <LICENSE-MIT or https://opensource.org/licenses/MIT>, at your
@@ -28,7 +28,7 @@ test_that("Wilcoxon rank sum works (small)", {
     colnames(X) <- c("centered", "uncentered")
     Y <- factor(c(rep.int("X", length(x)), rep.int("Y", length(y))))
 
-    m <- as(X, "dgCMatrix") %>% 
+    m <- as(X, "dgCMatrix") %>%
         as("IterableMatrix") %>%
         t()
 
@@ -36,7 +36,7 @@ test_that("Wilcoxon rank sum works (small)", {
         dplyr::filter(foreground == "X", feature == "centered")
     res_bp_2 <- marker_features(m, Y) %>%
         dplyr::filter(foreground == "Y", feature == "uncentered")
-    
+
     expect_equal(res_bp_1$p_val_raw, res_r$p.value)
     expect_equal(res_bp_1$p_val_raw, res_bp_2$p_val_raw)
 
@@ -45,7 +45,7 @@ test_that("Wilcoxon rank sum works (small)", {
 
     expect_equal(res_bp_2$foreground_mean, mean(y))
     expect_equal(res_bp_2$background_mean, mean(x))
-    
+
     expect_equal(res_bp_1$feature, "centered")
 })
 
@@ -57,14 +57,14 @@ test_that("Wilcoxon rank sum matches immunogenomics::presto", {
     clusters <- pbmc3k.SeuratData::pbmc3k.final@active.ident
     res_presto <- presto::wilcoxauc(mat, clusters) %>%
         tibble::as_tibble()
-    
-    mat_bpcells <- mat %>% 
-        t() %>% 
-        as("IterableMatrix") %>% 
+
+    mat_bpcells <- mat %>%
+        t() %>%
+        as("IterableMatrix") %>%
         t()
     res_bpcells <- marker_features(mat_bpcells, clusters) %>%
         dplyr::arrange(match(foreground, levels(clusters)), match(feature, rownames(mat)))
-    
+
     expect_equal(res_bpcells$feature, res_presto$feature)
     expect_equal(res_bpcells$foreground, res_presto$group)
     expect_equal(res_bpcells$p_val_raw, res_presto$pval)
@@ -116,11 +116,25 @@ test_that("Pseudobulk aggregation works", {
       # check for clipping if matrix isn't transposed
       expect_equal(m_mean, m_bpcells_mean)
       expect_equal(m_non_zeros, m_bpcells_non_zeros)
+      # check for `sparse = TRUE` works
+      m_bpcells_sum <- pseudobulk_matrix(m_bpcells, cell_group, method = "sum", sparse = TRUE)
+      m_bpcells_mean <- pseudobulk_matrix(m_bpcells, cell_group, method = "mean", sparse = TRUE)
+      m_bpcells_non_zeros <- pseudobulk_matrix(m_bpcells, cell_group, method = "nonzeros", sparse = TRUE)
+      expect_s4_class(m_bpcells_sum, "dgCMatrix")
+      expect_s4_class(m_bpcells_mean, "dgCMatrix")
+      expect_s4_class(m_bpcells_non_zeros, "dgCMatrix")
+      expect_equal(m_sum, as.matrix(m_bpcells_sum))
+      expect_equal(m_mean, as.matrix(m_bpcells_mean))
+      expect_equal(m_non_zeros, as.matrix(m_bpcells_non_zeros))
       # make sure that we dont check for variances if we have number of groups == number of cells
       if (length(unique(cell_group)) < ncol(m)) {
         m_var <- create_pseudobulk_r(m, cell_group, "var")
         m_bpcells_var <- pseudobulk_matrix(m_bpcells, cell_group, method = "variance")
         expect_equal(m_var, m_bpcells_var, info = paste("Transposed:", m_bpcells@transpose))
+        # check for `sparse = TRUE` works
+        m_bpcells_var <- pseudobulk_matrix(m_bpcells, cell_group, method = "variance", sparse = TRUE)
+        expect_s4_class(m_bpcells_var, "dgCMatrix")
+        expect_equal(m_var, as.matrix(m_bpcells_var), info = paste("Transposed:", m_bpcells@transpose))
       }
     }
   }
@@ -157,6 +171,27 @@ test_that("Pseudobulk aggregation works with multiple return types", {
         }
         if ("nonzeros" %in% methods_of_interest) {
           expect_equal(m_non_zeros, m_bpcells_res$nonzeros)
+        }
+      }
+      # check for `sparse = TRUE` works
+      for (second_method_idx in seq(first_method_idx+1, length(methods))) {
+        methods_of_interest <- c(methods[first_method_idx], methods[second_method_idx])
+        m_bpcells_res <- pseudobulk_matrix(m_bpcells, cell_group, method = methods_of_interest, sparse = TRUE)
+        if ("variance" %in% methods_of_interest) {
+          expect_s4_class(m_bpcells_res$var, "dgCMatrix")
+          expect_equal(m_var, as.matrix(m_bpcells_res$var))
+        }
+        if ("mean" %in% methods_of_interest) {
+          expect_s4_class(m_bpcells_res$mean, "dgCMatrix")
+          expect_equal(m_mean, as.matrix(m_bpcells_res$mean))
+        }
+        if ("sum" %in% methods_of_interest) {
+          expect_s4_class(m_bpcells_res$sum, "dgCMatrix")
+          expect_equal(m_sum, as.matrix(m_bpcells_res$sum))
+        }
+        if ("nonzeros" %in% methods_of_interest) {
+          expect_s4_class(m_bpcells_res$nonzeros, "dgCMatrix")
+          expect_equal(m_non_zeros, as.matrix(m_bpcells_res$nonzeros))
         }
       }
     }
