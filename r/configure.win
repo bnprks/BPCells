@@ -54,7 +54,7 @@ if [ -z $HDF5_OK ]; then
 fi
 
 if [ -z $HDF5_OK ]; then
-    printf "\n\nUnable to locate libhdf5. Please install manually or edit compiler flags.\n"
+    printf "\n\nUnable to locate libhdf5 (>= 1.12.0). Please install manually or edit compiler flags.\n"
     exit 1
 fi
 

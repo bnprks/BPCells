@@ -18,6 +18,10 @@
 
 #include "hdf5.h"
 
+#if H5_VERS_MAJOR < 1 || (H5_VERS_MAJOR == 1 && H5_VERS_MINOR < 12)
+#error "HDF5 version 1.12.0 or greater required"
+#endif
+
 #define H5FILE_NAME "SDS.h5"
 #define DATASETNAME "IntArray"
 #define NX 5 /* dataset dimensions */
