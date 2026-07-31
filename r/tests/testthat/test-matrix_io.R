@@ -294,6 +294,32 @@ test_that("AnnData read backwards compatibility", {
   }
 })
 
+test_that("AnnData read handles NULLPAD/ASCII variable-length obs/var index strings", {
+  # Regression test: obs/_index and var/_index are variable-length string
+  # datasets. HDF5 allows encoding them with STRPAD=NULLPAD/CSET=ASCII (what
+  # R's rhdf5 package writes for character vectors, and therefore what
+  # anndataR::write_h5ad() produces) as well as with
+  # STRPAD=NULLTERM/CSET=UTF8 (what anndata's own h5py-based writer always
+  # uses). Both are valid encodings of the same data, but the NULLPAD/ASCII
+  # variant used to crash with `std::length_error: basic_string::_M_replace`
+  # because the length of the string, if not represented as null-terminated,
+  # would be interpreted as the value of a placeholder.
+  dir <- withr::local_tempdir()
+  f <- "mini_mat_nullpad_strings.anndata.h5ad"
+  file.copy(file.path("../data", f), file.path(dir, f))
+
+  ans <- matrix(c(1., 2., 0., 3., 0.,
+                  0., 0., 2., 2., 1.,
+                  0., 0., 2., 0., 2.), ncol=3) %>%
+         as("dgCMatrix")
+  rownames(ans) <- as.character(0:4)
+  colnames(ans) <- as.character(0:2)
+
+  open_matrix_anndata_hdf5(file.path(dir, f)) %>%
+    as("dgCMatrix") %>%
+    expect_identical(ans)
+})
+
 test_that("Anndata reads work with 64 bit datasets", {
   test_files <- c(
     "mini_mat_int_64_neg.anndata-v0.12.6.h5ad",

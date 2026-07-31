@@ -227,8 +227,20 @@ struct StringBuffer {
         /// the null character. Hence, if storing this string as a
         /// null-terminated string, the destination buffer needs to be at least
         /// `length() + 1` bytes long.
+        ///
+        /// For variable-length strings, `buffer.string_length` is a
+        /// placeholder derived from the sentinel `string_size == size_t(-1)`
+        /// (see StringBuffer's constructor) and is never a valid length in
+        /// its own right. The HDF5 vlen string mechanism always returns a
+        /// null-terminated `char*` per element regardless of the source
+        /// dataset's STRPAD, so variable-length strings must always be
+        /// measured with `char_buffer_size`, independent of
+        /// `isNullTerminated()`. That padding flag only carries real meaning
+        /// for fixed-length strings, which is the one case where returning
+        /// `buffer.string_length` directly is correct: a NULLPAD fixed-length
+        /// string has no terminator to search for.
         size_t length() const {
-            if (buffer.isNullTerminated()) {
+            if (buffer.isVariableLengthString() || buffer.isNullTerminated()) {
                 return char_buffer_size(data(), buffer.string_length);
             } else {
                 return buffer.string_length;
