@@ -13,6 +13,7 @@
 ## Bug-fixes
 - Fix error in documentation examples for `plot_embedding()`, resulting from the way documentation examples use nested function calls (pull request #316).
 - Fix error in `qc_scATAC()` when fragments are near the start of a chromosome (pull request #320).
+- Fix `open_matrix_anndata_hdf5()` crashing when `obs`/`var` index datasets use a variable-length string encoding (`STRPAD=NULLPAD`/`CSET=ASCII`) that R's `rhdf5` package writes, e.g. via `anndataR::write_h5ad()` (pull request #343).
 
 ## To-dos
 - Add support for sparse pseudobulking in `pseudobulk_matrix()`.  Currently in progress in #268.
