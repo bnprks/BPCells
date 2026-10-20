@@ -80,7 +80,8 @@ class BedFragments : public FragmentLoader {
     // Returns empty string at eof
     std::string_view parse_line(uint32_t &start, uint32_t &end, uint32_t &cell_id);
 
-    bool validInt(const char *c);
+    // Parse the unsigned integer field starting at c, returning a pointer to the tab that ends it
+    const char *parseInt(const char *c, uint32_t &value);
 };
 
 class BedFragmentsWriter : public FragmentWriter {

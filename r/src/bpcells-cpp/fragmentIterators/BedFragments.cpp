@@ -7,6 +7,7 @@
 // except according to those terms.
 
 #include <atomic>
+#include <charconv>
 #include "BedFragments.h"
 #include "../utils/filesystem_compat.h"
 
@@ -78,17 +79,8 @@ std::string_view BedFragments::parse_line(uint32_t &start, uint32_t &end, uint32
     if (next_field == cur_field) return chr;
     if (*next_field != '\t') throw std::runtime_error("Invalid TSV file");
 
-    cur_field = next_field + 1;
-    next_field = nextField(cur_field);
-    if (cur_field == next_field || *next_field != '\t')
-        throw std::runtime_error("Invalid TSV file");
-    start = atoi(cur_field);
-
-    cur_field = next_field + 1;
-    next_field = nextField(cur_field);
-    if (cur_field == next_field || *next_field != '\t')
-        throw std::runtime_error("Invalid TSV file");
-    end = atoi(cur_field);
+    next_field = parseInt(next_field + 1, start);
+    next_field = parseInt(next_field + 1, end);
 
     cur_field = next_field + 1;
     next_field = nextField(cur_field);
@@ -103,12 +95,10 @@ std::string_view BedFragments::parse_line(uint32_t &start, uint32_t &end, uint32
     return chr;
 }
 
-bool BedFragments::validInt(const char *c) {
-    while (*c != '\0' && *c != '\t' && *c != '\n') {
-        if (!isdigit(*c)) return false;
-        c++;
-    }
-    return true;
+const char *BedFragments::parseInt(const char *c, uint32_t &value) {
+    auto [field_end, error] = std::from_chars(c, line_buf.data() + line_buf.size(), value);
+    if (error != std::errc() || *field_end != '\t') throw std::runtime_error("Invalid TSV file");
+    return field_end;
 }
 
 void BedFragments::restart() {

@@ -207,6 +207,15 @@ test_that("Dir overwrite works", {
   )
 })
 
+test_that("10x fragments with invalid coordinates give an error", {
+  dir <- withr::local_tempdir()
+  for (coordinate in c("1x", "-1", "+1", "4294967296", "")) {
+    path <- file.path(dir, "invalid.tsv")
+    writeLines(c("chr1\t5\t10\tcell1", sprintf("chr1\t%s\t20\tcell2", coordinate)), path)
+    expect_error(as.data.frame(open_fragments_10x(path)), "Invalid TSV file")
+  }
+})
+
 test_that("Regression test on multiple of 128 fragments", {
   frags_table <- tibble::tibble(
     chr = as.factor("chr1"),
