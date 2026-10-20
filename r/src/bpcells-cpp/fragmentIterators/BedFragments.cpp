@@ -84,15 +84,30 @@ std::string_view BedFragments::parse_line(uint32_t &start, uint32_t &end, uint32
 
     cur_field = next_field + 1;
     next_field = nextField(cur_field);
-    auto cell_id_res =
-        cell_id_lookup.emplace(std::string(cur_field, next_field - cur_field), next_cell_id);
-    if (cell_id_res.second) {
-        cell_names.push_back(std::string(cur_field, next_field - cur_field));
-        next_cell_id++;
-    }
-    cell_id = cell_id_res.first->second;
+    cell_id = lookupCellID(std::string_view(cur_field, next_field - cur_field));
 
     return chr;
+}
+
+uint32_t BedFragments::lookupCellID(std::string_view name) {
+    size_t mask = cell_id_slots.size() - 1;
+    size_t slot = std::hash<std::string_view>()(name) & mask;
+    for (; cell_id_slots[slot] != 0; slot = (slot + 1) & mask) {
+        if (cell_names[cell_id_slots[slot] - 1] == name) return cell_id_slots[slot] - 1;
+    }
+    cell_names.emplace_back(name);
+    cell_id_slots[slot] = cell_names.size();
+    // Keep the table at most half full by doubling its size and re-inserting all names
+    if (2 * cell_names.size() > cell_id_slots.size()) {
+        cell_id_slots.assign(2 * cell_id_slots.size(), 0);
+        mask = cell_id_slots.size() - 1;
+        for (uint32_t i = 0; i < cell_names.size(); i++) {
+            slot = std::hash<std::string_view>()(cell_names[i]) & mask;
+            while (cell_id_slots[slot] != 0) slot = (slot + 1) & mask;
+            cell_id_slots[slot] = i + 1;
+        }
+    }
+    return cell_names.size() - 1;
 }
 
 const char *BedFragments::parseInt(const char *c, uint32_t &value) {
@@ -113,9 +128,8 @@ void BedFragments::restart() {
     chr_names.clear();
     next_chr_id = 0;
 
-    cell_id_lookup.clear();
+    cell_id_slots.assign(1024, 0);
     cell_names.clear();
-    next_cell_id = 0;
 
     cell.resize(0);
     start.resize(0);
