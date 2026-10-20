@@ -58,7 +58,7 @@ class BedFragments : public FragmentLoader {
   private:
     std::string path;
     gzFileWrapper f;
-    std::array<char, 1 << 10> line_buf;
+    std::array<char, 1 << 10> line_buf = {};
     std::vector<std::string> chr_names, cell_names;
     std::unordered_map<std::string, uint32_t> chr_lookup;
     // Open-addressing hash table of cell_id + 1 (0 marks an empty slot), indexed by name hash.
