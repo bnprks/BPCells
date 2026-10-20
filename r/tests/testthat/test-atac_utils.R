@@ -736,6 +736,31 @@ test_that("Regression test for gene_score_archr() Issues 185 + 188", {
   expect_identical(as(bp_ans, "dgCMatrix"), ans)
 })
 
+test_that("gene_score_weights_archr() keeps a row for genes with all tiles blacklisted", {
+  genes <- tibble::tibble(
+    chr = "chr1",
+    start = c(10000, 300000, 600000),
+    end = start + 2000,
+    strand = "+",
+    gene_id = c("gene1", "gene2", "gene3")
+  )
+  chromosome_sizes <- tibble::tibble(chr = "chr1", start = 0, end = 1e6)
+  no_blacklist <- gene_score_weights_archr(genes, chromosome_sizes)
+
+  # Blacklist all tiles of the last gene
+  weights <- gene_score_weights_archr(genes, chromosome_sizes, tibble::tibble(chr = "chr1", start = 450000, end = 1e6))
+  expect_identical(dim(weights), dim(no_blacklist))
+  expect_identical(rownames(weights), genes$gene_id)
+  expect_identical(weights[1:2, ], no_blacklist[1:2, ])
+  expect_identical(Matrix::rowSums(weights)[[3]], 0)
+
+  # Blacklists that overlap no tiles leave the weights unchanged
+  far_blacklist <- tibble::tibble(chr = "chr1", start = 999500, end = 1e6)
+  empty_blacklist <- tibble::tibble(chr = character(0), start = integer(0), end = integer(0))
+  expect_identical(gene_score_weights_archr(genes, chromosome_sizes, far_blacklist), no_blacklist)
+  expect_identical(gene_score_weights_archr(genes, chromosome_sizes, empty_blacklist), no_blacklist)
+})
+
 test_that("qc_scATAC handles genes near the start of a chromosome", {
   frag_tbl <- tibble::tibble(
     chr = "chr1",
