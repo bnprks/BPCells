@@ -79,4 +79,6 @@ void run_parallel_with_R_interrupt_check(F &&f, size_t n_tasks, size_t n_threads
         }
     }
     if (interrupt) throw Rcpp::internal::InterruptedException();
+    // Re-throw any exception from the tasks
+    for (auto &task : task_vec) task.get();
 }
