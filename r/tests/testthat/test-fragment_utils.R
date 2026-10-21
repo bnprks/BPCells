@@ -387,6 +387,13 @@ test_that("Concatenate/merge different chromosome sets works", {
   )
 })
 
+test_that("Concatenating one fragments object returns it unchanged", {
+  frags <- open_fragments_10x("../data/mini_fragments.tsv.gz") %>%
+    write_fragments_memory()
+  expect_identical(c(frags), frags)
+  expect_identical(do.call(c, list(frags)), frags)
+})
+
 test_that("Generic methods work", {
   frags <- open_fragments_10x("../data/mini_fragments.tsv.gz") %>% #nolint
     write_fragments_memory()
