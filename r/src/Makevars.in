@@ -53,6 +53,7 @@ bpcells-cpp/matrixTransforms/Round.o \
 bpcells-cpp/matrixTransforms/SCTransform.o \
 bpcells-cpp/matrixTransforms/Scale.o \
 bpcells-cpp/matrixTransforms/Shift.o \
+bpcells-cpp/matrixUtils/DenseTransposeMultiply.o \
 bpcells-cpp/matrixUtils/WilcoxonRankSum.o \
 bpcells-cpp/matrixUtils/Pseudobulk.o \
 bpcells-cpp/matrixUtils/Quantile.o \
