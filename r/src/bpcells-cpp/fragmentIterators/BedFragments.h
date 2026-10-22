@@ -58,10 +58,13 @@ class BedFragments : public FragmentLoader {
   private:
     std::string path;
     gzFileWrapper f;
-    std::array<char, 1 << 10> line_buf;
+    std::array<char, 1 << 10> line_buf = {};
     std::vector<std::string> chr_names, cell_names;
-    std::unordered_map<std::string, uint32_t> chr_lookup, cell_id_lookup;
-    uint32_t next_chr_id, next_cell_id;
+    std::unordered_map<std::string, uint32_t> chr_lookup;
+    // Open-addressing hash table of cell_id + 1 (0 marks an empty slot), indexed by name hash.
+    // One lookup per fragment makes this much faster than std::unordered_map<std::string>.
+    std::vector<uint32_t> cell_id_slots;
+    uint32_t next_chr_id;
     bool eof = false;
     std::string current_chr;
     std::string comment;
@@ -80,7 +83,11 @@ class BedFragments : public FragmentLoader {
     // Returns empty string at eof
     std::string_view parse_line(uint32_t &start, uint32_t &end, uint32_t &cell_id);
 
-    bool validInt(const char *c);
+    // Return the cell_id for name, assigning the next one if the name is new
+    uint32_t lookupCellID(std::string_view name);
+
+    // Parse the unsigned integer field starting at c, returning a pointer to the tab that ends it
+    const char *parseInt(const char *c, uint32_t &value);
 };
 
 class BedFragmentsWriter : public FragmentWriter {
