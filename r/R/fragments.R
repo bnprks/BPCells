@@ -1409,7 +1409,7 @@ setMethod("c", "IterableFragments", function(x, ...) {
     }
   }
   if (length(fragments_list) == 1) {
-    return(fragments_list)[[1]]
+    return(fragments_list[[1]])
   }
   res <- new("MergeFragments", fragments_list = fragments_list)
   if (anyDuplicated(cellNames(res))) {

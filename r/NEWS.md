@@ -13,6 +13,7 @@
 ## Bug-fixes
 - Fix error in documentation examples for `plot_embedding()`, resulting from the way documentation examples use nested function calls (pull request #316).
 - Fix error in `qc_scATAC()` when fragments are near the start of a chromosome (pull request #320).
+- Fix `c()` of a single fragments object, which returned a list instead of the object.
 - Fix errors in `gene_score_weights_archr()` and `gene_score_archr()` when the last genes have all of their tiles blacklisted, or when the blacklist overlaps no tiles (including an empty blacklist). The weight matrix now always has one row per gene.
 
 ## To-dos
