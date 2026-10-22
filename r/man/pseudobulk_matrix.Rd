@@ -4,7 +4,13 @@
 \alias{pseudobulk_matrix}
 \title{Aggregate counts matrices by cell group or feature.}
 \usage{
-pseudobulk_matrix(mat, cell_groups, method = "sum", threads = 0L)
+pseudobulk_matrix(
+  mat,
+  cell_groups,
+  method = "sum",
+  threads = 0L,
+  sparse = FALSE
+)
 }
 \arguments{
 \item{mat}{IterableMatrix object of dimensions features x cells}
@@ -16,6 +22,8 @@ pseudobulk_matrix(mat, cell_groups, method = "sum", threads = 0L)
 Current options are: \code{nonzeros}, \code{sum}, \code{mean}, \code{variance}.}
 
 \item{threads}{(integer) Number of threads to use.}
+
+\item{sparse}{(logical) Whether or not to return sparse matrices.}
 }
 \value{
 \itemize{
