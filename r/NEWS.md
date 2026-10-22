@@ -11,7 +11,7 @@
 - Add `sample_bernoulli()`, a lazy `IterableMatrix` transform that keeps each non-zero entry independently with probability `prob` using a reproducible, stateless hash of `(seed, row, col)`. Transform is invariant to storage order (`transpose_storage_order()`).
 
 ## Improvements
-- `marker_features()` computes group means with `pseudobulk_matrix()` rather than a sparse matrix multiply, roughly halving its run time.
+- `marker_features()` computes group means with `pseudobulk_matrix()` rather than a sparse matrix multiply, roughly halving its run time. (Thanks to @koefoeden for pull request #348)
 
 ## Bug-fixes
 - Fix error in documentation examples for `plot_embedding()`, resulting from the way documentation examples use nested function calls (pull request #316).
