@@ -735,11 +735,15 @@ NumericVector matrix_max_per_col_cpp(SEXP matrix) {
 }
 
 
+// mats: one matrix, or if transposed, consecutive column ranges of one matrix to aggregate in parallel
 // [[Rcpp::export]]
-List pseudobulk_matrix_cpp(SEXP mat,
+List pseudobulk_matrix_cpp(List mats,
                            std::vector<uint32_t> cell_groups,
                            std::vector<std::string> method,
-                           bool transpose) {
+                           bool transpose,
+                           int threads,
+                           SEXP feature_names,
+                           SEXP group_names) {
     PseudobulkStatsMethod methodFlags = static_cast<PseudobulkStatsMethod>(0);
     for (std::string &m : method) {
         if (m == "nonzeros") {
@@ -753,18 +757,54 @@ List pseudobulk_matrix_cpp(SEXP mat,
         }
     }
     
-    PseudobulkStats res = run_with_R_interrupt_check(
-        &pseudobulk_matrix<double>,
-        take_unique_xptr<MatrixLoader<double>>(mat),
-        std::cref(cell_groups),
-        (PseudobulkStatsMethod)methodFlags,
-        transpose
+    std::vector<std::unique_ptr<MatrixLoader<double>>> loaders;
+    std::vector<uint32_t> feature_offsets;
+    uint32_t num_features = 0;
+    for (R_xlen_t i = 0; i < mats.size(); i++) {
+        SEXP elem = mats[i];
+        loaders.push_back(take_unique_xptr<MatrixLoader<double>>(elem));
+        if ((transpose ? loaders.back()->rows() : loaders.back()->cols()) != cell_groups.size()) {
+            stop("Pseudobulk_matrix(): Cell groups must match the number of columns in the matrix");
+        }
+        feature_offsets.push_back(num_features);
+        num_features += transpose ? loaders.back()->cols() : loaders.back()->rows();
+    }
+    uint32_t num_groups = cell_groups.empty() ? 0 : *std::max_element(cell_groups.begin(), cell_groups.end()) + 1;
+
+    // Allocate the outputs as R matrices, so they are filled in place and returned without a copy.
+    // Transposed aggregation writes every output entry, so it needs no zero initialization.
+    auto computed = [&](PseudobulkStatsMethod m) { return (methodFlags & m) == m; };
+    auto output = [&](PseudobulkStatsMethod m) {
+        if (!computed(m)) return NumericMatrix(0, 0);
+        return transpose ? NumericMatrix(no_init_matrix(num_features, num_groups)) : NumericMatrix(num_features, num_groups);
+    };
+    NumericMatrix non_zeros = output(PseudobulkStatsMethod::NonZeros), sum = output(PseudobulkStatsMethod::Sum),
+                  mean = output(PseudobulkStatsMethod::Mean), var = output(PseudobulkStatsMethod::Variance);
+    auto map = [](NumericMatrix &m) { return Eigen::Map<Eigen::ArrayXXd>(m.begin(), m.nrow(), m.ncol()); };
+    Eigen::Map<Eigen::ArrayXXd> non_zeros_map = map(non_zeros), sum_map = map(sum), mean_map = map(mean), var_map = map(var);
+    PseudobulkStats res{non_zeros_map, sum_map, mean_map, var_map};
+
+    run_parallel_with_R_interrupt_check(
+        [&](size_t start, size_t end, std::atomic<bool> *interrupt) {
+            for (size_t i = start; i < end; i++) {
+                pseudobulk_matrix<double>(std::move(loaders[i]), cell_groups, methodFlags, transpose, feature_offsets[i], res, interrupt);
+            }
+        },
+        loaders.size(),
+        transpose ? threads : 1
     );
+    pseudobulk_finalize(res, cell_groups, methodFlags);
+
+    List dimnames = List::create(feature_names, group_names);
+    if (computed(PseudobulkStatsMethod::NonZeros)) non_zeros.attr("dimnames") = dimnames;
+    if (computed(PseudobulkStatsMethod::Sum)) sum.attr("dimnames") = dimnames;
+    if (computed(PseudobulkStatsMethod::Mean)) mean.attr("dimnames") = dimnames;
+    if (computed(PseudobulkStatsMethod::Variance)) var.attr("dimnames") = dimnames;
     return List::create(
-        Named("nonzeros") = res.non_zeros,
-        Named("sum") = res.sum,
-        Named("mean") = res.mean,
-        Named("variance") = res.var
+        Named("nonzeros") = non_zeros,
+        Named("sum") = sum,
+        Named("mean") = mean,
+        Named("variance") = var
     );
 }
 

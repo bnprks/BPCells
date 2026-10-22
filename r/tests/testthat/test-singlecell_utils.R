@@ -162,3 +162,17 @@ test_that("Pseudobulk aggregation works with multiple return types", {
     }
   }
 })
+
+test_that("Pseudobulk aggregation is identical with multiple threads", {
+  # More features than one aggregation block, in both storage orders
+  m <- generate_sparse_matrix(150, 40) |> as("IterableMatrix")
+  cell_group <- rep(c("a", "b", "c"), length.out = ncol(m))
+  methods <- c("nonzeros", "sum", "mean", "variance")
+  for (m_bpcells in list(m, transpose_storage_order(m))) {
+    expected <- pseudobulk_matrix(m_bpcells, cell_group, method = methods)
+    for (threads in c(2L, 3L, 200L)) {
+      expect_identical(pseudobulk_matrix(m_bpcells, cell_group, method = methods, threads = threads), expected)
+    }
+    expect_identical(pseudobulk_matrix(m_bpcells, cell_group, method = "sum", threads = 2L), expected$sum)
+  }
+})
