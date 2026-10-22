@@ -11,7 +11,7 @@
 - Add `sample_bernoulli()`, a lazy `IterableMatrix` transform that keeps each non-zero entry independently with probability `prob` using a reproducible, stateless hash of `(seed, row, col)`. Transform is invariant to storage order (`transpose_storage_order()`).
 
 ## Improvements
-- `pseudobulk_matrix()` now uses its `threads` argument for matrices stored feature-major (`transpose = TRUE`), and builds its results in place, roughly halving its peak memory use. Results are unchanged.
+- `pseudobulk_matrix()` now uses its `threads` argument for matrices stored feature-major (`transpose = TRUE`), and builds its results in place, roughly halving its peak memory use. Results are unchanged. (Thanks to @koefoeden for pull request #349)
 
 ## Bug-fixes
 - Fix error in documentation examples for `plot_embedding()`, resulting from the way documentation examples use nested function calls (pull request #316).
