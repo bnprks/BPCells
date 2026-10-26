@@ -88,7 +88,7 @@ marker_features <- function(mat, groups, method="wilcoxon") {
 #' @param method (Character vector) Method(s) to aggregate counts. If one method is provided, the output will be a matrix. If multiple methods are provided, the output will be a named list of matrices.
 #'
 #' Current options are: `nonzeros`, `sum`, `mean`, `variance`.
-#' @param threads (integer) Number of threads to use.
+#' @param threads (integer) Number of threads to use. Threads aggregate separate features, so they apply to matrices in row-major storage order (see `storage_order()`).
 #' @return
 #'  - If `method` is length `1`, returns a matrix of shape `(features x groups)`.
 #'  - If `method` is greater than length `1`, returns a list of matrices with each matrix representing a pseudobulk matrix with a different aggregation method.
@@ -138,27 +138,21 @@ pseudobulk_matrix <- function(mat, cell_groups, method = "sum", threads = 0L) {
   }
   assert_is_wholenumber(threads)
 
-  it <- mat %>%
-    convert_matrix_type("double") %>%
-    parallel_split(threads, threads*4) %>%
-    iterate_matrix()
-  
-  res <- pseudobulk_matrix_cpp(it, cell_groups = as.integer(cell_groups) - 1, method = method, transpose = mat@transpose)
-  # if res is a single matrix, return with colnames and rownames
+  mat <- convert_matrix_type(mat, "double")
+  # Consecutive feature ranges of a transposed matrix are aggregated in parallel
+  chunks <- list(mat)
+  if (mat@transpose && threads > 1L && nrow(mat) >= threads) {
+    bounds <- floor(seq(0, nrow(mat), length.out = threads + 1L))
+    chunks <- lapply(seq_len(threads), function(i) mat[seq.int(bounds[i] + 1, bounds[i + 1]), ])
+  }
+
+  res <- pseudobulk_matrix_cpp(
+    lapply(chunks, iterate_matrix), cell_groups = as.integer(cell_groups) - 1, method = method, transpose = mat@transpose,
+    threads = threads, feature_names = rownames(mat), group_names = levels(cell_groups)
+  )
   if (length(method) == 1) {
-    colnames(res[[method]]) <- levels(cell_groups)
-    rownames(res[[method]]) <- rownames(mat)
     return(res[[method]])
   }
-  # give colnames and rownames for each matrix in res, which is a named list
-  for (res_slot in names(res)) {
-    # Filter out methods that weren't requested
-    if (!(res_slot %in% method)) {
-      res[[res_slot]] <- NULL
-    } else {
-      colnames(res[[res_slot]]) <- levels(cell_groups)
-      rownames(res[[res_slot]]) <- rownames(mat)
-    }
-  }
-  return(res)
+  # Filter out methods that weren't requested
+  return(res[names(res) %in% method])
 }

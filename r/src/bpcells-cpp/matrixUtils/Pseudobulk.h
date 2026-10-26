@@ -25,11 +25,13 @@ inline PseudobulkStatsMethod operator|(PseudobulkStatsMethod a, PseudobulkStatsM
     return static_cast<PseudobulkStatsMethod>(static_cast<int>(a) | static_cast<int>(b));
 }
 
+// Caller-owned output arrays of shape (num_features, num_groups), initialized to zero.
+// Arrays of statistics that are not calculated may be empty.
 struct PseudobulkStats {
-    Eigen::ArrayXXd non_zeros;
-    Eigen::ArrayXXd sum;
-    Eigen::ArrayXXd mean;
-    Eigen::ArrayXXd var;
+    Eigen::Ref<Eigen::ArrayXXd> non_zeros;
+    Eigen::Ref<Eigen::ArrayXXd> sum;
+    Eigen::Ref<Eigen::ArrayXXd> mean;
+    Eigen::Ref<Eigen::ArrayXXd> var;
 };
 
 // Take a matrix and do a pseudobulk aggregation on the matrix.
@@ -39,12 +41,18 @@ struct PseudobulkStats {
 // - cell_groups: Mapping of columns to groups.
 // - method: method to use for calculating pseudobulk stats, constructed using bitflags from PseudobulkStatsMethod.
 // - transpose: Whether the matrix is transposed. If false, groups columns and calculates stats per-row. If true, groups rows and calculates stats per-column.
-// Returns:
-// - PseudobulkStats struct containing each of the requested pseudobulk aggregations, in the shape of (num_features, num_groups).
+// - feature_offset: Output row of the first feature in mat. If transposed, disjoint column ranges of a matrix
+//   can thus be aggregated in parallel into the same output.
+// - res: Output arrays, which hold running means and variances until pseudobulk_finalize() is called.
 template <typename T>
-PseudobulkStats pseudobulk_matrix(std::unique_ptr<MatrixLoader<T>> &&mat,
-                                  const std::vector<uint32_t>& cell_groups,
-                                  PseudobulkStatsMethod method,
-                                  bool transpose,
-                                  std::atomic<bool> *user_interrupt);
+void pseudobulk_matrix(std::unique_ptr<MatrixLoader<T>> &&mat,
+                       const std::vector<uint32_t>& cell_groups,
+                       PseudobulkStatsMethod method,
+                       bool transpose,
+                       uint32_t feature_offset,
+                       PseudobulkStats &res,
+                       std::atomic<bool> *user_interrupt);
+
+// Correct the running means and variances in res for the zeros of each group, once all features are aggregated.
+void pseudobulk_finalize(PseudobulkStats &res, const std::vector<uint32_t>& cell_groups, PseudobulkStatsMethod method);
 } // namespace BPCells

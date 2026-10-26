@@ -15,7 +15,7 @@ pseudobulk_matrix(mat, cell_groups, method = "sum", threads = 0L)
 
 Current options are: \code{nonzeros}, \code{sum}, \code{mean}, \code{variance}.}
 
-\item{threads}{(integer) Number of threads to use.}
+\item{threads}{(integer) Number of threads to use. Threads aggregate separate features, so they apply to matrices in row-major storage order (see \code{storage_order()}).}
 }
 \value{
 \itemize{
