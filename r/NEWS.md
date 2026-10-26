@@ -10,6 +10,9 @@
 - Add support for reading 64 bit Anndata matrices, as well as reading signed integer matrices.  Note, signed integers are converted to float/double matrices when read in. (pull request #330)
 - Add `sample_bernoulli()`, a lazy `IterableMatrix` transform that keeps each non-zero entry independently with probability `prob` using a reproducible, stateless hash of `(seed, row, col)`. Transform is invariant to storage order (`transpose_storage_order()`).
 
+## Improvements
+- Reading 10x fragment files with `open_fragments_10x()` took 40% less time on a 5 GB file: coordinates are parsed with `std::from_chars()` and cell barcodes are looked up in a flat hash table. Coordinates that are not unsigned 32-bit integers now give an error instead of being misread. (Thanks to @koefoeden for pull request #347)
+
 ## Bug-fixes
 - Fix error in documentation examples for `plot_embedding()`, resulting from the way documentation examples use nested function calls (pull request #316).
 - Fix error in `qc_scATAC()` when fragments are near the start of a chromosome (pull request #320).
