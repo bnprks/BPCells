@@ -278,8 +278,9 @@ gene_score_weights_archr <- function(genes, chromosome_sizes, blacklist = NULL, 
   tiles$distance <- tiles$distance - sign(tiles$distance)
   # Filter out blacklist if requested
   if (!is.null(blacklist)) {
-    blacklist_tiles <- unique(range_overlaps(tiles, blacklist)$from)
-    tiles <- tiles[-blacklist_tiles, ]
+    keep <- rep_len(TRUE, nrow(tiles))
+    keep[range_overlaps(tiles, blacklist)$from] <- FALSE
+    tiles <- tiles[keep, ]
   }
 
   tile_width <- tiles$end[1] - tiles$start[1]
@@ -292,7 +293,7 @@ gene_score_weights_archr <- function(genes, chromosome_sizes, blacklist = NULL, 
     i = tiles$gene_idx,
     j = start_tile[as.character(tiles$chr)] + tiles$start %/% tile_width + 1,
     x = exp(-abs(tiles$distance) / 5000) + exp(-1),
-    dims = c(max(tiles$gene_idx), sum(tile_count))
+    dims = c(nrow(genes), sum(tile_count))
   )
   if (!is.null(gene_name_column)) {
     rownames(res) <- gene_names
